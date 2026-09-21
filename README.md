@@ -228,22 +228,33 @@ auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist:
      Ergebnisse erscheinen zusätzlich in den neuen Registern **Glossar**
      (Abschnitt "Aus Ticket-Daten erkannte Begriffe") und **Abkürzungen**.
   4. *Releaseversion* – tabellarische Übersicht aller geladenen Tickets
-     mit Domain, ein Abgleich gegen eine eigene Release-Ticketliste (ein
-     Key pro Zeile, zeigt fehlende Tickets, Web-App-Pendant zu
-     `match-release` aus dem CLI-Tool) sowie eine Bewertung, welche
-     Tickets anhand des Jira-Feldes "Typ" als Benutzerhandbuch-Kandidat
-     gelten und welche nur intern/Bug sind (fehlt der Typ im Export, wird
-     das als "Unbekannt" ausgewiesen statt geraten).
-  5. *Jira Liste* – alle importierten Jira-Nummern mit Status und Datum,
-     inklusive prominent angezeigter Gesamtanzahl der importierten Tickets.
+     mit Domäne, Beschreibung, Priorität (Punkte) und Labels, ein Abgleich
+     gegen eine eigene Release-Ticketliste (ein Key pro Zeile, zeigt
+     fehlende Tickets, Web-App-Pendant zu `match-release` aus dem
+     CLI-Tool) sowie eine Bewertung, welche Tickets anhand des Jira-Feldes
+     "Typ" als Benutzerhandbuch-Kandidat gelten und welche nur intern/Bug
+     sind (fehlt der Typ im Export, wird das als "Unbekannt" ausgewiesen
+     statt geraten).
+  5. *Jira Liste* – alle importierten Jira-Nummern mit Status, Datum,
+     Domäne, Beschreibung, Priorität (Punkte) und Labels, inklusive
+     prominent angezeigter Gesamtanzahl der importierten Tickets.
   6. *Domänen-Übersicht* – alle geladenen Tickets werden thematisch nach
      Domäne gruppiert (eine eigene "Thema"-Kennzeichnung gibt es im
      Jira-Export nicht, die Domain ist die vorhandene thematische
      Einordnung) und innerhalb jeder Domäne chronologisch zusammengeführt
      (ältestes zuerst, nach letztem Aktualisierungs-, ersatzweise
      Erstellungsdatum); Domänen selbst alphabetisch, Tickets ohne Domäne
-     bilden eine eigene Gruppe am Ende. Export als XLSX/DOCX/PDF liefert
-     dieselbe Gruppierung als einen eigenen Abschnitt pro Domäne.
+     bilden eine eigene Gruppe am Ende, zusätzlich mit Beschreibung,
+     Priorität (Punkte) und Labels je Ticket. Export als XLSX/DOCX/PDF
+     liefert dieselbe Gruppierung als einen eigenen Abschnitt pro Domäne.
+
+  Die Spalten **Priorität (Punkte)** und **Labels** in Jobs 4-6 werden
+  automatisch beim Verarbeiten befüllt (siehe Einstellungen unten):
+  Priorität aus dem konfigurierbaren Punkte-System je Tickettyp (Jira-Feld
+  "Typ"), Labels per reinem Text-Abgleich der konfigurierten Labelliste
+  gegen Zusammenfassung/Beschreibung/Domäne des Tickets – keine KI, und
+  fehlt ein Tickettyp im Punkte-System, wird ehrlich "Unbekannt" statt
+  geraten angezeigt.
 - **Releaseletter / Benutzerhandbuch / Clickanweisung** – Textentwürfe aus
   ausgewählten Tickets (aktuelle Dashboard-Filterung oder Ticket-Keys),
   Vorschau + Markdown-Download.
@@ -275,11 +286,32 @@ auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist:
   erzeugt.
 - **Infobox / Glossar / Abkürzungen** – Kurzerklärung der App, Begriffsliste
   bzw. extrahierte Abkürzungen (siehe Verarbeitung → 3.).
-- **Einstellungen** – Admin-Bereich mit Funktion "Alle Daten löschen": leert
-  die komplette Sitzung (Tickets, Imports, Protokoll, Vergleiche,
-  Extraktionen) unwiderruflich, mit Sicherheitsabfrage. Anders als "Sitzung
-  zurücksetzen" im Import-Bereich werden dabei **nicht** wieder die
-  eingebetteten Ausgangsdaten geladen, sondern alles auf 0 Tickets geleert.
+- **Einstellungen**
+  - *Admin-Bereich* – Funktion "Alle Daten löschen": leert die komplette
+    Sitzung (Tickets, Imports, Protokoll, Vergleiche, Extraktionen)
+    unwiderruflich, mit Sicherheitsabfrage. Anders als "Sitzung
+    zurücksetzen" im Import-Bereich werden dabei **nicht** wieder die
+    eingebetteten Ausgangsdaten geladen, sondern alles auf 0 Tickets geleert.
+  - *Punkte-System (nach Tickettyp)* – editierbare Liste Tickettyp → Punkte
+    (Standard: Epic 5, Bug 1, Feature 3, Change Request 3, Reporting 2),
+    Einträge hinzufügen/bearbeiten/löschen. Wird beim Verarbeiten jedem
+    Ticket anhand des Jira-Feldes "Typ" zugeordnet und ist sofort in den
+    Tabellen unter Verarbeitung sichtbar; unbekannte Tickettypen bleiben
+    ehrlich "Unbekannt" statt einen Wert zu raten.
+  - *Labels* – frei editierbare Stichwortliste (Standard: Market, HQ,
+    Dealer, Vehicle, Finance, Claim, Product, Van, PC, Price,
+    Prolongation), hinzufügen/entfernen über Chips. Wird beim Verarbeiten
+    per reinem Text-Abgleich (keine KI) gegen Zusammenfassung/Beschreibung/
+    Domäne jedes Tickets automatisch zugeordnet.
+  - *Testergebnisse* – eingebetteter Bericht der automatisierten Tests
+    (Browsertests der Web-App + pytest für das CLI-Tool) aus dem letzten
+    Verifikationslauf während der Entwicklung dieser Version, gruppiert
+    nach Testgruppe mit Datum und Status je Check (auf-/zuklappbar). Läuft
+    nicht live im Browser, sondern ist ein zum Build-Zeitpunkt
+    eingebetteter Stand.
+  - Punkte-System und Labels sind Konfiguration (kein Sitzungsdatensatz)
+    und bleiben daher auch nach "Sitzung zurücksetzen"/"Alle Daten
+    löschen" erhalten.
 - Word-Exporte (`.docx`) und Detail-HTML-Exports (ein Abschnitt pro
   Ticket statt einer Tabelle) werden von der Web-App **nicht**
   unterstützt – dafür das CLI-Tool verwenden.

@@ -162,6 +162,24 @@
   .comment-cell .comment-edit-row .text-input { min-width: 160px; }
   .comment-edit-btn { font-size: 11.5px; padding: 3px 8px; margin-top: 3px; }
   .comment-hint { color: var(--text-muted); font-style: italic; }
+  .chip-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .label-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 6px 5px 12px; border-radius: 100px;
+    background: var(--accent-soft); border: 1px solid var(--border); font-size: 12.5px; font-weight: 600; color: var(--text);
+  }
+  .label-chip button {
+    background: none; border: none; cursor: pointer; color: var(--text-muted); width: 18px; height: 18px;
+    border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; line-height: 1;
+  }
+  .label-chip button:hover { background: var(--surface-2); color: var(--blocked); }
+  .points-value-input { width: 80px; }
+  .test-group-row td { background: var(--surface-2); font-weight: 700; color: var(--text); cursor: pointer; }
+  .test-group-toggle {
+    background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 11px; margin-right: 6px;
+    width: 16px; display: inline-block;
+  }
+  .test-status-pass { color: var(--done); font-weight: 700; }
+  .test-status-fail { color: var(--blocked); font-weight: 700; }
 
   .paste-panel { display: flex; flex-direction: column; gap: 8px; }
   .paste-panel textarea {
@@ -768,7 +786,7 @@
             <p class="section-label">Alle geladenen Tickets (<span id="releaseversion-total">0</span>)</p>
             <div class="panel table-wrap" style="max-height:340px; overflow:auto;">
               <table class="simple-table" id="releaseversion-table">
-                <thead><tr><th>Ticket</th><th>Domain</th><th>Status</th></tr></thead>
+                <thead><tr><th>Ticket</th><th>Domäne</th><th>Status</th><th>Beschreibung</th><th>Priorität (Punkte)</th><th>Labels</th></tr></thead>
                 <tbody id="releaseversion-tbody"></tbody>
               </table>
             </div>
@@ -824,7 +842,7 @@
           </div>
           <div class="panel table-wrap" style="max-height:440px; overflow:auto;">
             <table class="simple-table" id="jiraliste-table">
-              <thead><tr><th>Ticket</th><th>Status</th><th>Datum</th></tr></thead>
+              <thead><tr><th>Ticket</th><th>Status</th><th>Datum</th><th>Domäne</th><th>Beschreibung</th><th>Priorität (Punkte)</th><th>Labels</th></tr></thead>
               <tbody id="jiraliste-tbody"></tbody>
             </table>
           </div>
@@ -847,7 +865,7 @@
           </div>
           <div class="panel table-wrap" style="max-height:520px; overflow:auto;">
             <table class="simple-table" id="domainoverview-table">
-              <thead><tr><th>Ticket</th><th>Status</th><th>Datum</th><th>Zusammenfassung</th></tr></thead>
+              <thead><tr><th>Ticket</th><th>Status</th><th>Datum</th><th>Zusammenfassung</th><th>Beschreibung</th><th>Priorität (Punkte)</th><th>Labels</th></tr></thead>
               <tbody id="domainoverview-tbody"></tbody>
             </table>
             <div class="empty-hint" id="domainoverview-empty">Noch keine Tickets geladen.</div>
@@ -1046,6 +1064,63 @@
             <button class="btn danger" id="delete-all-data-btn" type="button">Alle Daten löschen</button>
           </div>
         </section>
+
+        <section>
+          <p class="section-label">Punkte-System (nach Tickettyp)</p>
+          <div class="callout">
+            Jedem Ticket wird beim Verarbeiten automatisch eine Punktzahl auf Basis des Jira-Felds "Typ" (issue_type)
+            zugeordnet &ndash; sichtbar in den Tabellen unter Verarbeitung (Spalte "Priorität (Punkte)"). Tickettypen,
+            die hier nicht gepflegt sind, bleiben ehrlich als "Unbekannt" markiert statt einen Wert zu raten.
+            Groß-/Kleinschreibung wird beim Abgleich ignoriert.
+          </div>
+          <div class="panel table-wrap">
+            <table class="simple-table" id="points-table">
+              <thead><tr><th>Tickettyp (Jira-Feld "Typ")</th><th>Punkte</th><th>Aktion</th></tr></thead>
+              <tbody id="points-tbody"></tbody>
+            </table>
+          </div>
+          <div class="paste-actions" style="margin-top:10px; align-items:center;">
+            <input type="text" class="text-input" id="points-new-type" placeholder="Tickettyp, z. B. Story" style="max-width:220px;">
+            <input type="number" class="text-input" id="points-new-value" placeholder="Punkte" style="max-width:100px;" min="0" step="1">
+            <button class="btn primary" id="points-add-btn" type="button">Hinzufügen</button>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">Labels</p>
+          <div class="callout">
+            Diese Labels werden beim Verarbeiten automatisch jedem Ticket zugeordnet, dessen Zusammenfassung,
+            Beschreibung oder Domäne das Label als Stichwort enthält (Groß-/Kleinschreibung wird ignoriert) &ndash;
+            reiner Text-Abgleich, keine KI. Sichtbar in den Tabellen unter Verarbeitung (Spalte "Labels").
+          </div>
+          <div class="chip-list" id="labels-list"></div>
+          <div class="paste-actions" style="margin-top:10px; align-items:center;">
+            <input type="text" class="text-input" id="labels-new-input" placeholder="Neues Label, z. B. Market" style="max-width:220px;">
+            <button class="btn primary" id="labels-add-btn" type="button">Hinzufügen</button>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">Testergebnisse</p>
+          <div class="callout">
+            Ergebnisse der automatisierten Tests (Browsertests für die Web-App via jsdom/Playwright + pytest für das
+            Python-CLI-Tool) aus dem letzten Verifikationslauf während der Entwicklung dieser Version. Läuft
+            <b>nicht live</b> in diesem Browser, sondern ist ein zum Build-Zeitpunkt eingebetteter Bericht. Stand:
+            <b id="test-results-date"></b>.
+          </div>
+          <div class="stat-line" style="margin: 10px 0 14px;">
+            <div class="chip"><b class="mono" id="test-results-suites">0</b> Testgruppen</div>
+            <div class="chip"><b class="mono" id="test-results-total">0</b> Checks gesamt</div>
+            <div class="chip"><b class="mono" id="test-results-passed">0</b> bestanden</div>
+            <div class="chip"><b class="mono" id="test-results-failed">0</b> fehlgeschlagen</div>
+          </div>
+          <div class="panel table-wrap" style="max-height:520px; overflow:auto;">
+            <table class="simple-table" id="test-results-table">
+              <thead><tr><th>Testgruppe / Check</th><th>Status</th><th>Datum</th></tr></thead>
+              <tbody id="test-results-tbody"></tbody>
+            </table>
+          </div>
+        </section>
       </section>
 
     </div>
@@ -1101,6 +1176,1932 @@
 
 <script id="initial-ticket-data" type="application/json">__TICKET_DATA__</script>
 <script id="initial-ticket-meta" type="application/json">__TICKET_META__</script>
+<script id="test-results-data" type="application/json">[
+  {
+    "file": "test_pipeline.py",
+    "label": "Python CLI-Pipeline (pytest)",
+    "checks": [
+      {
+        "text": "test_parsers_extract_all_tickets[sample_export.xml]",
+        "status": "pass"
+      },
+      {
+        "text": "test_parsers_extract_all_tickets[sample_export.html]",
+        "status": "pass"
+      },
+      {
+        "text": "test_parsers_extract_all_tickets[sample_export.docx]",
+        "status": "pass"
+      },
+      {
+        "text": "test_html_issue_table_format_is_recognized",
+        "status": "pass"
+      },
+      {
+        "text": "test_cleaner_anonymizes_and_drops_pii",
+        "status": "pass"
+      },
+      {
+        "text": "test_empty_fields_are_dropped_from_export_dict",
+        "status": "pass"
+      },
+      {
+        "text": "test_md_and_pdf_export",
+        "status": "pass"
+      },
+      {
+        "text": "test_release_matcher_finds_missing_tickets",
+        "status": "pass"
+      },
+      {
+        "text": "test_build_documents_creates_all_four_drafts",
+        "status": "pass"
+      },
+      {
+        "text": "test_build_webapp_embeds_ticket_data_and_meta",
+        "status": "pass"
+      },
+      {
+        "text": "test_build_webapp_without_meta_leaves_valid_placeholder",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "abbrev_suggestion_test.js",
+    "label": "Abkürzungen: Bedeutungsvorschläge",
+    "checks": [
+      {
+        "text": "Extraktion fand Abkürzungen aus dem neuen Ticket",
+        "status": "pass"
+      },
+      {
+        "text": "Job-3-Tabelle hat 5 Spalten inkl. Vorschlag DE/EN",
+        "status": "pass"
+      },
+      {
+        "text": "Spalte 'Vorschlag Deutsch' vorhanden (Job 3)",
+        "status": "pass"
+      },
+      {
+        "text": "Spalte 'Vorschlag Englisch' vorhanden (Job 3)",
+        "status": "pass"
+      },
+      {
+        "text": "Register-Tabelle hat 5 Spalten inkl. Vorschlag DE/EN",
+        "status": "pass"
+      },
+      {
+        "text": "Zeile für 'API' vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "API: Deutsch-Vorschlag nennt 'Programmierschnittstelle'",
+        "status": "pass"
+      },
+      {
+        "text": "API: Englisch-Vorschlag nennt 'Application Programming Interface'",
+        "status": "pass"
+      },
+      {
+        "text": "Zeile für 'PDF' vorhanden mit Vorschlag",
+        "status": "pass"
+      },
+      {
+        "text": "Zeile für 'JSON' vorhanden mit Vorschlag",
+        "status": "pass"
+      },
+      {
+        "text": "Zeile für 'UI' vorhanden mit Vorschlag",
+        "status": "pass"
+      },
+      {
+        "text": "Zeile für 'BRABUS' (firmenspezifisch) vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "BRABUS: kein erfundener Deutsch-Vorschlag (zeigt '–')",
+        "status": "pass"
+      },
+      {
+        "text": "BRABUS: kein erfundener Englisch-Vorschlag (zeigt '–')",
+        "status": "pass"
+      },
+      {
+        "text": "Register zeigt denselben Vorschlag für 'API'",
+        "status": "pass"
+      },
+      {
+        "text": "Job-3-Beschreibung erwähnt 'unverbindlichen Vorschlag'",
+        "status": "pass"
+      },
+      {
+        "text": "Job-3-Beschreibung erwähnt weiterhin 'keine Bedeutungen erfunden'",
+        "status": "pass"
+      },
+      {
+        "text": "Register-Beschreibung erklärt die Vorschlagsspalten",
+        "status": "pass"
+      },
+      {
+        "text": "Keine ungeschützten '<' in gerenderten Vorschlagszellen",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "bugfix_verification_test.js",
+    "label": "Bugfix-Verifikation",
+    "checks": [
+      {
+        "text": "Umlaut-Abkürzung 'ÖPNV' wird vollständig erkannt (nicht abgeschnitten)",
+        "status": "pass"
+      },
+      {
+        "text": "Abgeschnittenes 'PNV' wird NICHT separat als eigenes Kürzel gelistet",
+        "status": "pass"
+      },
+      {
+        "text": "Normale Abkürzungen ABC/XYZ weiterhin erkannt",
+        "status": "pass"
+      },
+      {
+        "text": "'in Refinement' liegt im Bucket 'backlog'",
+        "status": "pass"
+      },
+      {
+        "text": "'In Refinement' (andere Gross-/Kleinschreibung) liegt im SELBEN Bucket (Bugfix)",
+        "status": "pass"
+      },
+      {
+        "text": "Erledigtes Ticket (ONESCM-90001) NICHT unter offenen Punkten",
+        "status": "pass"
+      },
+      {
+        "text": "Cancelled-Ticket (ONESCM-90004) NICHT unter offenen Punkten (Bugfix)",
+        "status": "pass"
+      },
+      {
+        "text": "Tatsächlich offenes Ticket (ONESCM-90005) weiterhin unter offenen Punkten",
+        "status": "pass"
+      },
+      {
+        "text": "Export-Spinner vor Klick versteckt",
+        "status": "pass"
+      },
+      {
+        "text": "Export-Spinner sofort nach Klick sichtbar (vor JSZip-Verarbeitung)",
+        "status": "pass"
+      },
+      {
+        "text": "Export-Button während Verarbeitung deaktiviert",
+        "status": "pass"
+      },
+      {
+        "text": "Export-Spinner nach Abschluss wieder versteckt",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "delete_import_version_test.js",
+    "label": "Dateiverwaltung: Import löschen + Versions-Badge",
+    "checks": [
+      {
+        "text": "Versions-Badge in der Überschrift vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Versions-Badge zeigt eine 'v'-Versionsnummer (z. B. v1.1.0)",
+        "status": "pass"
+      },
+      {
+        "text": "Versions-Badge steht innerhalb der h1-Überschrift",
+        "status": "pass"
+      },
+      {
+        "text": "Tabellenkopf hat Spalte 'Aktion'",
+        "status": "pass"
+      },
+      {
+        "text": "3 Imports vorhanden (Demo + import2 + import3)",
+        "status": "pass"
+      },
+      {
+        "text": "Löschen-Button in der import2.xml-Zeile vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Bestätigungsdialog wurde angezeigt",
+        "status": "pass"
+      },
+      {
+        "text": "Bestätigungsdialog erwähnt Quelle und Kürzung/Einschränkung",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Löschen: 2 Imports übrig",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Löschen: import2.xml nicht mehr in der Tabelle",
+        "status": "pass"
+      },
+      {
+        "text": "Ticket, das NUR in import2.xml vorkam, wurde entfernt (Ticketanzahl sinkt um 1)",
+        "status": "pass"
+      },
+      {
+        "text": "DEL-ONLY-1 (nur in gelöschtem Import) ist aus dem Dashboard verschwunden",
+        "status": "pass"
+      },
+      {
+        "text": "DEL-SHARED-1 (auch in import3.xml) ist weiterhin vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "DEL-SHARED-1 behält den zusammengeführten Status 'Fertig' aus import3.xml",
+        "status": "pass"
+      },
+      {
+        "text": "Protokoll enthält Log-Eintrag zur Import-Löschung",
+        "status": "pass"
+      },
+      {
+        "text": "Import-IDs sind eindeutig (keine Wiederverwendung nach Löschung)",
+        "status": "pass"
+      },
+      {
+        "text": "Neuer Import bekommt eine höhere ID als alle vorherigen (nie wiederverwendet)",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Löschen des einzigen Imports: 0 Tickets, 0 Imports",
+        "status": "pass"
+      },
+      {
+        "text": "Format-Hinweis bei 0 Imports versteckt (kein irreführender leerer Hinweis)",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "docx_import_test.js",
+    "label": "Import: DOCX/DOC-Unterstützung",
+    "checks": [
+      {
+        "text": "Releaseinfo-Dropzone akzeptiert .docx/.doc",
+        "status": "pass"
+      },
+      {
+        "text": "'Andere Importe'-Dropzone akzeptiert .docx/.doc",
+        "status": "pass"
+      },
+      {
+        "text": "Import-Toast zeigt keinen Fehler",
+        "status": "pass"
+      },
+      {
+        "text": "Import-Toast meldet Erfolg",
+        "status": "pass"
+      },
+      {
+        "text": "Import-Zeile für die .docx-Datei vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Format-Spalte nennt Releaseinfo",
+        "status": "pass"
+      },
+      {
+        "text": "Aus der .docx wurden 111 eindeutige Tickets importiert (dedupliziert über Service-Abschnitte)",
+        "status": "pass"
+      },
+      {
+        "text": "Ticket ONESCM-45030 aus der .docx im Dashboard auffindbar",
+        "status": "pass"
+      },
+      {
+        "text": "Zusammenfassung aus der .docx korrekt übernommen",
+        "status": "pass"
+      },
+      {
+        "text": "Domain 'Documents & Communications' aus dem Tabellen-Header korrekt erkannt",
+        "status": "pass"
+      },
+      {
+        "text": ".txt-Referenzimport derselben Inhalte ergibt identisch 111 Tickets",
+        "status": "pass"
+      },
+      {
+        "text": "Legacy .doc-Datei löst Fehlermeldung statt Absturz aus",
+        "status": "pass"
+      },
+      {
+        "text": "Fehlermeldung erklärt fehlende .doc-Unterstützung verständlich",
+        "status": "pass"
+      },
+      {
+        "text": "Kaputte .docx-Datei löst Fehlermeldung statt Absturz aus",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "domain_normalize_test.js",
+    "label": "Domain-Normalisierung",
+    "checks": [
+      {
+        "text": "'Documents and Communication' NICHT als eigene Domain vorhanden (vorher)",
+        "status": "pass"
+      },
+      {
+        "text": "KEINE separate Domain 'Documents and Communication' mehr",
+        "status": "pass"
+      },
+      {
+        "text": "KEINE separate Domain 'Documents and Communications' mehr",
+        "status": "pass"
+      },
+      {
+        "text": "'Documents & Communications' um genau 6 gestiegen (46+6=52)",
+        "status": "pass"
+      },
+      {
+        "text": "KEINE separate Domain 'Customer and Partner Management' mehr",
+        "status": "pass"
+      },
+      {
+        "text": "KEINE fehlerhafte Domain 'Customer&Partner Management' (ohne Leerzeichen) mehr",
+        "status": "pass"
+      },
+      {
+        "text": "'Customer & Partner Management' (mit Leerzeichen) vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Summe Customer & Partner Management = alt(38) + releaseinfo(13)",
+        "status": "pass"
+      },
+      {
+        "text": "'Revenue Management' und 'Revenue and Cost Management' bleiben getrennt",
+        "status": "pass"
+      },
+      {
+        "text": "'Contract Management' und 'Contract Generation and Contract Management' bleiben getrennt",
+        "status": "pass"
+      },
+      {
+        "text": "Alias-Tabelle in Dateiverwaltung zeigt Einträge",
+        "status": "pass"
+      },
+      {
+        "text": "Alias-Tabelle enthält 'documents and communication'",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "domainoverview_test.js",
+    "label": "Verarbeitung: Domänen-Übersicht (Job 6)",
+    "checks": [
+      {
+        "text": "Domain-Gruppenkopf 'Alpha Domain' vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Domain-Gruppenkopf 'Beta Domain' vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Domain-Gruppenkopf 'Ohne Domain' vorhanden (am Ende)",
+        "status": "pass"
+      },
+      {
+        "text": "Domains alphabetisch sortiert (Alpha vor Beta)",
+        "status": "pass"
+      },
+      {
+        "text": "'Ohne Domain' steht nach allen benannten Domains",
+        "status": "pass"
+      },
+      {
+        "text": "Innerhalb Domain chronologisch sortiert (ältestes zuerst: DOV-2 vor DOV-1)",
+        "status": "pass"
+      },
+      {
+        "text": "Domain-Anzahl-Chip zeigt mind. 3 Gruppen (Alpha, Beta, Ohne Domain + Domains aus Demodaten)",
+        "status": "pass"
+      },
+      {
+        "text": "Datei-Auswahl-Radios in Job 6 vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Datei-Auswahl: Domänen-Übersicht auf gewählten Import eingeschränkt",
+        "status": "pass"
+      },
+      {
+        "text": "Zurück auf 'Alle Importe': wieder alle Tickets in der Domänen-Übersicht",
+        "status": "pass"
+      },
+      {
+        "text": "Domain-/Zusammenfassungs-Zellen enthalten kein rohes <script> oder <img onerror>",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "einstellungen_delete_test.js",
+    "label": "Einstellungen: Alle Daten löschen",
+    "checks": [
+      {
+        "text": "Sidebar hat 'Einstellungen'-Eintrag unter 'Hilfe'",
+        "status": "pass"
+      },
+      {
+        "text": "Einstellungen-Panel sichtbar nach Klick",
+        "status": "pass"
+      },
+      {
+        "text": "Ticket-Anzahl in Einstellungen stimmt mit Header ueberein",
+        "status": "pass"
+      },
+      {
+        "text": "Import-Anzahl in Einstellungen stimmt mit Header ueberein",
+        "status": "pass"
+      },
+      {
+        "text": "Vor Loeschen: mehr als 0 Tickets geladen",
+        "status": "pass"
+      },
+      {
+        "text": "confirm() wurde aufgerufen",
+        "status": "pass"
+      },
+      {
+        "text": "Bei Abbruch (confirm=false): Ticket-Anzahl unveraendert",
+        "status": "pass"
+      },
+      {
+        "text": "Bei Abbruch: Import-Anzahl unveraendert",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Loeschen: 0 Tickets (NICHT auf Ausgangsdaten zurueckgesetzt)",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Loeschen: 0 Imports",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Loeschen: 0 Aenderungen",
+        "status": "pass"
+      },
+      {
+        "text": "Einstellungen-Anzeige zeigt ebenfalls 0/0",
+        "status": "pass"
+      },
+      {
+        "text": "Dashboard-Tabelle zeigt Empty-State",
+        "status": "pass"
+      },
+      {
+        "text": "Dashboard-Tabelle hat keine Zeilen",
+        "status": "pass"
+      },
+      {
+        "text": "Dateiverwaltung: Imports-Tabelle leer",
+        "status": "pass"
+      },
+      {
+        "text": "Dateiverwaltung: Changes-Tabelle leer / Hinweis sichtbar",
+        "status": "pass"
+      },
+      {
+        "text": "Verarbeitung-Protokoll enthaelt den Loesch-Log-Eintrag",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5 Jira-Liste zeigt 0 nach Loeschen",
+        "status": "pass"
+      },
+      {
+        "text": "Format-Hinweis ('zuletzt importiert') ist bei 0 Imports versteckt (kein irrefuehrender leerer Hinweis)",
+        "status": "pass"
+      },
+      {
+        "text": "Erneuter Klick ohne Daten zeigt Hinweis statt confirm()-Dialog",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Loeschen ist ein neuer Import weiterhin moeglich (1 Ticket)",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "full_app_test.js",
+    "label": "Gesamt-App (End-to-End)",
+    "checks": [
+      {
+        "text": "Initial: 663 Tickets geladen",
+        "status": "pass"
+      },
+      {
+        "text": "Initial: 1 Import",
+        "status": "pass"
+      },
+      {
+        "text": "Initial: 0 Änderungen",
+        "status": "pass"
+      },
+      {
+        "text": "Dashboard-Panel initial sichtbar",
+        "status": "pass"
+      },
+      {
+        "text": "Import-Panel initial versteckt",
+        "status": "pass"
+      },
+      {
+        "text": "Nav -> import zeigt Panel und markiert Button aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Nav -> dateiverwaltung zeigt Panel und markiert Button aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Nav -> verarbeitung zeigt Panel und markiert Button aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Nav -> releaseletter zeigt Panel und markiert Button aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Nav -> benutzerhandbuch zeigt Panel und markiert Button aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Nav -> prozessbild zeigt Panel und markiert Button aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Nav -> clickanweisung zeigt Panel und markiert Button aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Nav -> bilder zeigt Panel und markiert Button aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Nav -> output-md zeigt Panel und markiert Button aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Nav -> output-pdf zeigt Panel und markiert Button aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Nav -> infobox zeigt Panel und markiert Button aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Nav -> glossar zeigt Panel und markiert Button aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Nav -> dashboard zeigt Panel und markiert Button aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Sidebar eingeklappt nach Toggle",
+        "status": "pass"
+      },
+      {
+        "text": "Sidebar wieder ausgeklappt",
+        "status": "pass"
+      },
+      {
+        "text": "Nach 2. Import: 664 Tickets (663 + 1 neu)",
+        "status": "pass"
+      },
+      {
+        "text": "Nach 2. Import: 2 Imports",
+        "status": "pass"
+      },
+      {
+        "text": "Nach 2. Import: 1 Änderung erkannt (ONESCM-8282)",
+        "status": "pass"
+      },
+      {
+        "text": "Nav-Badge zeigt 1 Änderung",
+        "status": "pass"
+      },
+      {
+        "text": "2 Zeilen in Imports-Tabelle",
+        "status": "pass"
+      },
+      {
+        "text": "Änderungstabelle enthält ONESCM-8282",
+        "status": "pass"
+      },
+      {
+        "text": "Änderungstabelle zeigt alten Status 'Geschlossen'",
+        "status": "pass"
+      },
+      {
+        "text": "Änderungstabelle zeigt neuen Status 'Fertig'",
+        "status": "pass"
+      },
+      {
+        "text": "Änderungstabelle zeigt Quellen (Jira_ONESCM... -> nachtrag.xml)",
+        "status": "pass"
+      },
+      {
+        "text": "Log enthält 2 Import-Einträge",
+        "status": "pass"
+      },
+      {
+        "text": "Log enthält 'geändert' Hinweis",
+        "status": "pass"
+      },
+      {
+        "text": "ONESCM-8282 im Dashboard als geändert markiert (is-changed)",
+        "status": "pass"
+      },
+      {
+        "text": "ONESCM-8282 zeigt jetzt Status 'Fertig' (neuester Stand)",
+        "status": "pass"
+      },
+      {
+        "text": "Releaseletter-Vorschau enthält Titel",
+        "status": "pass"
+      },
+      {
+        "text": "Releaseletter-Vorschau enthält beide Ticket-Keys",
+        "status": "pass"
+      },
+      {
+        "text": "Download-Button aktiviert",
+        "status": "pass"
+      },
+      {
+        "text": "Mermaid-Quelltext eingefügt",
+        "status": "pass"
+      },
+      {
+        "text": "Mermaid enthält beide Tickets",
+        "status": "pass"
+      },
+      {
+        "text": "Galerie enthält 1 generiertes Bild",
+        "status": "pass"
+      },
+      {
+        "text": "Output-MD zeigt 1 von 664 Tickets (gefiltert)",
+        "status": "pass"
+      },
+      {
+        "text": "MD-ZIP-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "MD-ZIP enthält genau 1 Datei (gefiltert)",
+        "status": "pass"
+      },
+      {
+        "text": "MD-ZIP enthält ONESCM-NEU-1.md",
+        "status": "pass"
+      },
+      {
+        "text": "PDF-ZIP-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "PDF-ZIP enthält genau 1 Datei (gefiltert)",
+        "status": "pass"
+      },
+      {
+        "text": "PDF in ZIP beginnt mit %PDF",
+        "status": "pass"
+      },
+      {
+        "text": "Releaseletter-Download ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Einzel-PDF-Download aus Modal ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Einzel-PDF beginnt mit %PDF",
+        "status": "pass"
+      },
+      {
+        "text": "Einzel-PDF-Text enthält Ticket-Key",
+        "status": "pass"
+      },
+      {
+        "text": "Infobox zeigt Erklärtext",
+        "status": "pass"
+      },
+      {
+        "text": "Glossar enthält mind. 8 Begriffe",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Reset: wieder 663 Tickets",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Reset: 1 Import",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Reset: 0 Änderungen",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "import_comment_test.js",
+    "label": "Import: Kommentarfeld",
+    "checks": [
+      {
+        "text": "Kommentarfeld im Import-Bereich vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Kommentarfeld nach erfolgreichem Datei-Import geleert",
+        "status": "pass"
+      },
+      {
+        "text": "Import-Zeile für hotfix_import.xml vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Header 'Kommentar' in Imports-Tabelle vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Kommentar wird in der Imports-Tabelle angezeigt",
+        "status": "pass"
+      },
+      {
+        "text": "Aufklapp-Pfeil für Datei-Auswahl in Job 4 vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Kommentar erscheint in der Datei-Auswahl-Liste (Job 4)",
+        "status": "pass"
+      },
+      {
+        "text": "Kommentarfeld nach erfolgreichem Zwischenablage-Import geleert",
+        "status": "pass"
+      },
+      {
+        "text": "Kommentar beim Zwischenablage-Import gespeichert",
+        "status": "pass"
+      },
+      {
+        "text": "Import ohne Kommentar zeigt Platzhalter '– kein Kommentar –'",
+        "status": "pass"
+      },
+      {
+        "text": "Bearbeiten/Ergänzen-Button vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Eingabefeld erscheint im Bearbeiten-Modus",
+        "status": "pass"
+      },
+      {
+        "text": "Nachträglich ergänzter Kommentar wird gespeichert und angezeigt",
+        "status": "pass"
+      },
+      {
+        "text": "Log-Eintrag über Kommentar-Änderung erstellt",
+        "status": "pass"
+      },
+      {
+        "text": "Abbrechen verwirft die Änderung (alter Kommentar bleibt)",
+        "status": "pass"
+      },
+      {
+        "text": "Kommentar-HTML wird escaped (kein <img> im DOM)",
+        "status": "pass"
+      },
+      {
+        "text": "Kein XSS ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Reset: Kommentarfeld leer",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Reset: nur noch 1 Import (Ausgangsdaten, ohne Kommentar)",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "import_modes_test.js",
+    "label": "Import-Modi (4 Formate)",
+    "checks": [
+      {
+        "text": "4 Import-Tabs vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Standard-Tab 'massenupload' aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Dropzone-Hinweis wechselt auf Einzelticket",
+        "status": "pass"
+      },
+      {
+        "text": "Einzelticket importiert: 664 Tickets gesamt",
+        "status": "pass"
+      },
+      {
+        "text": "Einzelticket zeigt korrekte Zusammenfassung",
+        "status": "pass"
+      },
+      {
+        "text": "Einzelticket-Bearbeiter pseudonymisiert",
+        "status": "pass"
+      },
+      {
+        "text": "Einzelticket zeigt Domain-Custom-Field",
+        "status": "pass"
+      },
+      {
+        "text": "Dropzone-Hinweis wechselt auf Releaseinfo",
+        "status": "pass"
+      },
+      {
+        "text": "Releaseinfo importiert: Tickets-Zahl deutlich gestiegen (>700)",
+        "status": "pass"
+      },
+      {
+        "text": "Releaseinfo-Ticket ONESCM-45030 gefunden",
+        "status": "pass"
+      },
+      {
+        "text": "Releaseinfo-Ticket zeigt Zusammenfassung",
+        "status": "pass"
+      },
+      {
+        "text": "Releaseinfo-Ticket zeigt normalisierte Domain",
+        "status": "pass"
+      },
+      {
+        "text": "Neue Domain 'Contract Generation and Contract Management' im Domain-Chart",
+        "status": "pass"
+      },
+      {
+        "text": "Dropzone-Hinweis wechselt auf 'Andere'",
+        "status": "pass"
+      },
+      {
+        "text": "'Andere Importe' erkennt XML automatisch (Anzahl weiter gestiegen)",
+        "status": "pass"
+      },
+      {
+        "text": "Unerkanntes Format zeigt Fehlermeldung (kein Absturz)",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "merge_and_paste_test.js",
+    "label": "Merge-Logik + Zwischenablage-Import",
+    "checks": [
+      {
+        "text": "ONESCM-8282 vor Import gefunden",
+        "status": "pass"
+      },
+      {
+        "text": "ONESCM-8282 hat vorher eine Domain",
+        "status": "pass"
+      },
+      {
+        "text": "Status wurde auf 'Fertig' aktualisiert (echte Aenderung)",
+        "status": "pass"
+      },
+      {
+        "text": "Zusammenfassung wurde aktualisiert (echte Aenderung)",
+        "status": "pass"
+      },
+      {
+        "text": "Domain bleibt erhalten (Teil-Import ohne Domain-Feld)",
+        "status": "pass"
+      },
+      {
+        "text": "KEIN spurious 'Domain geaendert'-Eintrag fuer ONESCM-8282 durch Teil-Import",
+        "status": "pass"
+      },
+      {
+        "text": "Echte Status-Aenderung fuer ONESCM-8282 weiterhin als Aenderung erkannt",
+        "status": "pass"
+      },
+      {
+        "text": "Spinner vor Verarbeitung versteckt",
+        "status": "pass"
+      },
+      {
+        "text": "Spinner (Sanduhr) sofort nach Klick sichtbar",
+        "status": "pass"
+      },
+      {
+        "text": "Verarbeiten-Button waehrend Verarbeitung deaktiviert",
+        "status": "pass"
+      },
+      {
+        "text": "Spinner nach Verarbeitung wieder versteckt",
+        "status": "pass"
+      },
+      {
+        "text": "Verarbeiten-Button nach Verarbeitung wieder aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Textfeld nach erfolgreicher Verarbeitung geleert",
+        "status": "pass"
+      },
+      {
+        "text": "Import-Tabelle zeigt Quelle 'Manuell (Zwischenablage)'",
+        "status": "pass"
+      },
+      {
+        "text": "Leeres Feld zeigt Fehlermeldung statt Absturz",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "process_steps_test.js",
+    "label": "Verarbeitung: Prozessschritte-Checkliste",
+    "checks": [
+      {
+        "text": "Job 1 hat 4 Prozessschritte",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: Schritte 1+2 (Datei/Verarbeitet) sind 'done' nach initialem Import",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: Protokoll-Schritt 'done' (Import selbst erzeugt Log-Eintrag)",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2 hat 4 Prozessschritte",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: 'mind. 2 Importe' ist 'pending' (nur 1 Import bisher)",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: Extraktion ist 'pending' vor dem ersten Lauf",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4 hat 6 Prozessschritte (wie spezifiziert)",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: Abgleich-Schritt (5) ist 'pending' vor erstem Abgleich",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: Bewertungs-Schritt (6) ist 'pending' vor erster Bewertung",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5 hat 4 Prozessschritte",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5: alle Schritte 'done' (Tickets bereits geladen)",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6 (Domänen-Übersicht) hat 4 Prozessschritte",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6: alle Schritte 'done' (Tickets bereits geladen)",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: nach 2. Import alle Schritte 'done' (Aenderung gefunden)",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: alle Schritte 'done' nach Extraktion",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: Abgleich-Schritt (5) 'done' nach Abgleichen",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: Bewertungs-Schritt (6) weiterhin 'pending' (noch nicht bewertet)",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: Bewertungs-Schritt (6) 'done' nach Bewertung",
+        "status": "pass"
+      },
+      {
+        "text": "Bewertungs-Zusammenfassung sichtbar",
+        "status": "pass"
+      },
+      {
+        "text": "Bewertungstabelle sichtbar und befüllt",
+        "status": "pass"
+      },
+      {
+        "text": "Bewertungs-Summen ergeben Gesamtzahl (keine Tickets verloren/erfunden)",
+        "status": "pass"
+      },
+      {
+        "text": "Bewertungstabelle zeigt echte Einordnung (kein erfundener Text)",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3 nach Reset: Extraktion wieder 'pending'",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4 nach Reset: Abgleich wieder 'pending'",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4 nach Reset: Bewertung wieder 'pending'",
+        "status": "pass"
+      },
+      {
+        "text": "Bewertungs-Zusammenfassung nach Reset wieder versteckt",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "prozessbild_module_test.js",
+    "label": "Prozessbild: SVG-Modul (10 Layouts)",
+    "checks": [
+      {
+        "text": "9 SVG-Layouts vorhanden (+ 1 Mermaid-klassisch = 10 Bildformate)",
+        "status": "pass"
+      },
+      {
+        "text": "10 Design-Vorlagen (Themes) vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Alle Layout x Theme x Ticketanzahl-Kombinationen ohne Absturz und wohlgeformt (siehe oben, keine FAILs)",
+        "status": "pass"
+      },
+      {
+        "text": "XSS-gefährliche Zeichen im Titel werden escaped (kein <script> im SVG)",
+        "status": "pass"
+      },
+      {
+        "text": "Kaufmaennisches Und im Titel korrekt als &amp; escaped",
+        "status": "pass"
+      },
+      {
+        "text": "Titel mit Sonderzeichen im Prozessnamen korrekt escaped",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'card-grid' funktioniert mit genau 1 Schritt",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'timeline-vertical' funktioniert mit genau 1 Schritt",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'horizontal-chain' funktioniert mit genau 1 Schritt",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'swimlane' funktioniert mit genau 1 Schritt",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'kanban' funktioniert mit genau 1 Schritt",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'wheel' funktioniert mit genau 1 Schritt",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'matrix-grid' funktioniert mit genau 1 Schritt",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'funnel' funktioniert mit genau 1 Schritt",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'checklist' funktioniert mit genau 1 Schritt",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'card-grid' funktioniert mit 0 Schritten (kein Absturz)",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'timeline-vertical' funktioniert mit 0 Schritten (kein Absturz)",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'horizontal-chain' funktioniert mit 0 Schritten (kein Absturz)",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'swimlane' funktioniert mit 0 Schritten (kein Absturz)",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'kanban' funktioniert mit 0 Schritten (kein Absturz)",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'wheel' funktioniert mit 0 Schritten (kein Absturz)",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'matrix-grid' funktioniert mit 0 Schritten (kein Absturz)",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'funnel' funktioniert mit 0 Schritten (kein Absturz)",
+        "status": "pass"
+      },
+      {
+        "text": "Layout 'checklist' funktioniert mit 0 Schritten (kein Absturz)",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "prozessbild_ui_test.js",
+    "label": "Prozessbild: UI-Integration",
+    "checks": [
+      {
+        "text": "Design-Vorlage-Auswahl hat 10 Optionen",
+        "status": "pass"
+      },
+      {
+        "text": "Bildformat-Auswahl hat 10 Optionen",
+        "status": "pass"
+      },
+      {
+        "text": "Standard-Bildformat ist 'Mermaid klassisch' (Rueckwaertskompatibilitaet)",
+        "status": "pass"
+      },
+      {
+        "text": "Design-Vorlage ist bei Mermaid-Auswahl deaktiviert",
+        "status": "pass"
+      },
+      {
+        "text": "Default-Generieren erzeugt weiterhin Mermaid-Diagramm",
+        "status": "pass"
+      },
+      {
+        "text": "Galerie-Eintrag als Mermaid gespeichert",
+        "status": "pass"
+      },
+      {
+        "text": "Design-Vorlage bei SVG-Layout wieder aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Beschreibungstext wechselt zum gewaehlten Layout",
+        "status": "pass"
+      },
+      {
+        "text": "SVG wird im Vorschaubereich eingefuegt",
+        "status": "pass"
+      },
+      {
+        "text": "SVG-Quelltext-Details vorhanden (analog Mermaid-Quelltext)",
+        "status": "pass"
+      },
+      {
+        "text": "Vorschau-SVG ist wohlgeformtes XML",
+        "status": "pass"
+      },
+      {
+        "text": "Galerie hat jetzt 2 Eintraege (1x Mermaid, 1x SVG)",
+        "status": "pass"
+      },
+      {
+        "text": "Neuester Galerie-Eintrag zeigt SVG direkt eingebettet",
+        "status": "pass"
+      },
+      {
+        "text": "Galerie-Kartentitel nennt das gewaehlte Bildformat",
+        "status": "pass"
+      },
+      {
+        "text": "Download ausgeloest",
+        "status": "pass"
+      },
+      {
+        "text": "Dateiname endet auf .svg",
+        "status": "pass"
+      },
+      {
+        "text": "Heruntergeladene Datei beginnt mit <svg",
+        "status": "pass"
+      },
+      {
+        "text": "Heruntergeladene SVG enthaelt Prozessnamen",
+        "status": "pass"
+      },
+      {
+        "text": "9 SVG-Bildformate zur Auswahl",
+        "status": "pass"
+      },
+      {
+        "text": "Alle 9 SVG-Layouts erzeugen ueber die echte UI ein sichtbares SVG",
+        "status": "pass"
+      },
+      {
+        "text": "Kein Ticket gefunden zeigt Fehlermeldung statt Absturz",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "step_file_selection_test.js",
+    "label": "Verarbeitung: Datei-Auswahl je Job",
+    "checks": [
+      {
+        "text": "Schritt 'Datei(en) ausgewählt/importiert' hat einen Pfeil (Toggle-Button)",
+        "status": "pass"
+      },
+      {
+        "text": "Unteraktivitäten-Panel initial eingeklappt (hidden)",
+        "status": "pass"
+      },
+      {
+        "text": "Pfeil zeigt geschlossenen Zustand (▸)",
+        "status": "pass"
+      },
+      {
+        "text": "Panel nach Klick aufgeklappt",
+        "status": "pass"
+      },
+      {
+        "text": "Pfeil zeigt geöffneten Zustand (▾)",
+        "status": "pass"
+      },
+      {
+        "text": "aria-expanded korrekt gesetzt",
+        "status": "pass"
+      },
+      {
+        "text": "Datei-Auswahl zeigt 'Alle Importe' + genau 1 Datei-Option, OBWOHL nur 1 Import vorhanden ist",
+        "status": "pass"
+      },
+      {
+        "text": "'Alle Importe' ist standardmäßig ausgewählt",
+        "status": "pass"
+      },
+      {
+        "text": "Die eine vorhandene Datei ist als echte Auswahlmöglichkeit vorhanden (nicht ausgeblendet)",
+        "status": "pass"
+      },
+      {
+        "text": "Panel bleibt nach einem neuen Import weiterhin aufgeklappt (State bleibt erhalten)",
+        "status": "pass"
+      },
+      {
+        "text": "Jetzt 2 Datei-Optionen (+ 'Alle Importe' = 3 Radios)",
+        "status": "pass"
+      },
+      {
+        "text": "Vor Auswahl: Job-4-Tabelle zeigt ALLE Tickets (zusammengeführt)",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Datei-Auswahl: Job-4-Tabelle zeigt NUR Tickets aus dieser einen Datei (1 statt 663)",
+        "status": "pass"
+      },
+      {
+        "text": "Header-Gesamtzahl (oben rechts) bleibt unveraendert (Auswahl betrifft nur die Job-Tabellen)",
+        "status": "pass"
+      },
+      {
+        "text": "Gefilterte Tabelle zeigt genau ONESCM-8282",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5 (Jira Liste) uebernimmt dieselbe Datei-Auswahl (ebenfalls 1 Ticket)",
+        "status": "pass"
+      },
+      {
+        "text": "Auswahl wird im Protokoll vermerkt",
+        "status": "pass"
+      },
+      {
+        "text": "Extraktion mit Datei-Scope laeuft fehlerfrei durch",
+        "status": "pass"
+      },
+      {
+        "text": "Zurueck auf 'Alle Importe': Job-4-Tabelle zeigt wieder alle Tickets",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Reset: 'Alle Importe' wieder ausgewählt",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Reset: Job-4-Tabelle zeigt wieder alle (663) Tickets",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "verarbeitung_subtabs_test.js",
+    "label": "Verarbeitung: Unter-Tabs (6 Jobs)",
+    "checks": [
+      {
+        "text": "6 Unter-Tabs in Verarbeitung vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Tab 1 'Jira Verarbeitung' initial aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Panel 'protokoll' initial sichtbar",
+        "status": "pass"
+      },
+      {
+        "text": "Panel 'vergleich' initial versteckt",
+        "status": "pass"
+      },
+      {
+        "text": "Protokoll zeigt mind. einen Log-Eintrag (Initial-Import)",
+        "status": "pass"
+      },
+      {
+        "text": "Tab 'vergleich' aktiv nach Klick",
+        "status": "pass"
+      },
+      {
+        "text": "Panel 'vergleich' sichtbar",
+        "status": "pass"
+      },
+      {
+        "text": "Panel 'protokoll' jetzt versteckt",
+        "status": "pass"
+      },
+      {
+        "text": "Vergleichstabelle in Verarbeitung anfangs leer (Hinweistext sichtbar)",
+        "status": "pass"
+      },
+      {
+        "text": "Vergleich in Verarbeitung zeigt Zeilen nach Aenderung",
+        "status": "pass"
+      },
+      {
+        "text": "Vergleich in Verarbeitung identisch zu Dateiverwaltung (gleiche Zeilenanzahl)",
+        "status": "pass"
+      },
+      {
+        "text": "Vergleich in Verarbeitung zeigt ONESCM-8282",
+        "status": "pass"
+      },
+      {
+        "text": "KEIN spurious Domain-Eintrag im Verarbeitung-Vergleich (Teil-Import-Fix greift auch hier)",
+        "status": "pass"
+      },
+      {
+        "text": "Abkürzungen vor Extraktion: Hinweistext sichtbar",
+        "status": "pass"
+      },
+      {
+        "text": "Register Abkürzungen vor Extraktion: Hinweistext sichtbar",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Extraktion: mind. eine Abkürzung gefunden",
+        "status": "pass"
+      },
+      {
+        "text": "Abkürzungs-Tabelle hat Zeilen (Verarbeitung-Tab)",
+        "status": "pass"
+      },
+      {
+        "text": "Abkürzungs-Tabelle hat Zeilen (Register Abkürzungen)",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Extraktion: mind. ein Glossar-Kandidat gefunden",
+        "status": "pass"
+      },
+      {
+        "text": "Glossar-Kandidaten auch im Glossar-Register sichtbar",
+        "status": "pass"
+      },
+      {
+        "text": "Kein Domain-Kandidat fehlt (z. B. Documents & Communications)",
+        "status": "pass"
+      },
+      {
+        "text": "Register-Ansicht 'Abkürzungen' zeigt Ergebnisse nach Extraktion",
+        "status": "pass"
+      },
+      {
+        "text": "Releaseversion-Tabelle listet alle geladenen Tickets",
+        "status": "pass"
+      },
+      {
+        "text": "Releaseversion-Tabelle zeigt Domain-Spalte befuellt",
+        "status": "pass"
+      },
+      {
+        "text": "Abgleich-Zusammenfassung sichtbar",
+        "status": "pass"
+      },
+      {
+        "text": "Abgleich zeigt '2' vorhandene Tickets",
+        "status": "pass"
+      },
+      {
+        "text": "Fehlende-Tickets-Tabelle sichtbar",
+        "status": "pass"
+      },
+      {
+        "text": "Fehlendes Ticket ONESCM-999999 wird gelistet",
+        "status": "pass"
+      },
+      {
+        "text": "Existierende Tickets NICHT in Fehlend-Liste",
+        "status": "pass"
+      },
+      {
+        "text": "Kein fehlendes Ticket: Fehlend-Tabelle wieder versteckt",
+        "status": "pass"
+      },
+      {
+        "text": "Tab 5 'Jira Liste' aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Jira-Liste-Anzahl entspricht Gesamtzahl importierter Tickets",
+        "status": "pass"
+      },
+      {
+        "text": "Jira-Liste-Tabelle hat genau so viele Zeilen",
+        "status": "pass"
+      },
+      {
+        "text": "Jira-Liste zeigt Status-Spalte befuellt",
+        "status": "pass"
+      },
+      {
+        "text": "Tab 6 'Domänen-Übersicht' aktiv",
+        "status": "pass"
+      },
+      {
+        "text": "Domänen-Übersicht-Anzahl entspricht Gesamtzahl importierter Tickets",
+        "status": "pass"
+      },
+      {
+        "text": "Domänen-Übersicht zeigt Domain-Gruppen-Zeilen",
+        "status": "pass"
+      },
+      {
+        "text": "Domänen-Übersicht zeigt Ticket-Zeilen",
+        "status": "pass"
+      },
+      {
+        "text": "Nach Reset: Abkürzungen wieder auf Hinweistext (leer)",
+        "status": "pass"
+      }
+    ]
+  },
+  {
+    "file": "verarbeitung_v2_features_test.js",
+    "label": "Verarbeitung: Burger-Menü, Exporte, Vergleich",
+    "checks": [
+      {
+        "text": "Burger-Menü initial versteckt",
+        "status": "pass"
+      },
+      {
+        "text": "Burger-Menü nach Klick sichtbar",
+        "status": "pass"
+      },
+      {
+        "text": "Burger-Button aria-expanded=true",
+        "status": "pass"
+      },
+      {
+        "text": "Burger-Menü listet 6 Jobs",
+        "status": "pass"
+      },
+      {
+        "text": "Klick auf Burger-Eintrag wechselt zum Job (Panel 3 sichtbar)",
+        "status": "pass"
+      },
+      {
+        "text": "Burger-Menü schließt sich nach Auswahl",
+        "status": "pass"
+      },
+      {
+        "text": "Tab 3 in der normalen Tab-Leiste ebenfalls aktiv markiert",
+        "status": "pass"
+      },
+      {
+        "text": "Burger-Menü erneut geöffnet",
+        "status": "pass"
+      },
+      {
+        "text": "Klick ausserhalb schliesst das Burger-Menü",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: XLSX-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: XLSX-Dateiname endet auf .xlsx",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: XLSX von SheetJS lesbar, mind. 1 Sheet",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: XLSX-Sheet hat Kopfzeile + mind. 1 Datenzeile",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: DOCX-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: DOCX-Dateiname endet auf .docx",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: DOCX enthält word/document.xml",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: document.xml ist wohlgeformtes XML",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: DOCX von mammoth (Word-kompatibel) lesbar, enthält Text",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: PDF-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: PDF-Dateiname endet auf .pdf",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: PDF beginnt mit %PDF-Signatur",
+        "status": "pass"
+      },
+      {
+        "text": "Job 1: PDF-Text enthält 'Job 1'",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: XLSX-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: XLSX-Dateiname endet auf .xlsx",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: XLSX von SheetJS lesbar, mind. 1 Sheet",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: XLSX-Sheet hat Kopfzeile + mind. 1 Datenzeile",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: DOCX-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: DOCX-Dateiname endet auf .docx",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: DOCX enthält word/document.xml",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: document.xml ist wohlgeformtes XML",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: DOCX von mammoth (Word-kompatibel) lesbar, enthält Text",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: PDF-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: PDF-Dateiname endet auf .pdf",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: PDF beginnt mit %PDF-Signatur",
+        "status": "pass"
+      },
+      {
+        "text": "Job 2: PDF-Text enthält 'Job 2'",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: XLSX-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: XLSX-Dateiname endet auf .xlsx",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: XLSX von SheetJS lesbar, mind. 1 Sheet",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: XLSX-Sheet hat Kopfzeile + mind. 1 Datenzeile",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: DOCX-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: DOCX-Dateiname endet auf .docx",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: DOCX enthält word/document.xml",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: document.xml ist wohlgeformtes XML",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: DOCX von mammoth (Word-kompatibel) lesbar, enthält Text",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: PDF-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: PDF-Dateiname endet auf .pdf",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: PDF beginnt mit %PDF-Signatur",
+        "status": "pass"
+      },
+      {
+        "text": "Job 3: PDF-Text enthält 'Job 3'",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: XLSX-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: XLSX-Dateiname endet auf .xlsx",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: XLSX von SheetJS lesbar, mind. 1 Sheet",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: XLSX-Sheet hat Kopfzeile + mind. 1 Datenzeile",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: DOCX-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: DOCX-Dateiname endet auf .docx",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: DOCX enthält word/document.xml",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: document.xml ist wohlgeformtes XML",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: DOCX von mammoth (Word-kompatibel) lesbar, enthält Text",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: PDF-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: PDF-Dateiname endet auf .pdf",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: PDF beginnt mit %PDF-Signatur",
+        "status": "pass"
+      },
+      {
+        "text": "Job 4: PDF-Text enthält 'Job 4'",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5: XLSX-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5: XLSX-Dateiname endet auf .xlsx",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5: XLSX von SheetJS lesbar, mind. 1 Sheet",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5: XLSX-Sheet hat Kopfzeile + mind. 1 Datenzeile",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5: DOCX-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5: DOCX-Dateiname endet auf .docx",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5: DOCX enthält word/document.xml",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5: document.xml ist wohlgeformtes XML",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5: DOCX von mammoth (Word-kompatibel) lesbar, enthält Text",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5: PDF-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5: PDF-Dateiname endet auf .pdf",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5: PDF beginnt mit %PDF-Signatur",
+        "status": "pass"
+      },
+      {
+        "text": "Job 5: PDF-Text enthält 'Job 5'",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6: XLSX-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6: XLSX-Dateiname endet auf .xlsx",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6: XLSX von SheetJS lesbar, mind. 1 Sheet",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6: XLSX-Sheet hat Kopfzeile + mind. 1 Datenzeile",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6: DOCX-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6: DOCX-Dateiname endet auf .docx",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6: DOCX enthält word/document.xml",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6: document.xml ist wohlgeformtes XML",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6: DOCX von mammoth (Word-kompatibel) lesbar, enthält Text",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6: PDF-Export ausgelöst",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6: PDF-Dateiname endet auf .pdf",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6: PDF beginnt mit %PDF-Signatur",
+        "status": "pass"
+      },
+      {
+        "text": "Job 6: PDF-Text enthält 'Job 6'",
+        "status": "pass"
+      },
+      {
+        "text": "Vergleich-Button in der Vergleichstabelle vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Vergleich-Modal öffnet sich",
+        "status": "pass"
+      },
+      {
+        "text": "Vergleich-Modal zeigt Ticket-Key ONESCM-8282",
+        "status": "pass"
+      },
+      {
+        "text": "Vergleich zeigt Original-Zusammenfassung leer / 'Nicht im Export enthalten' (Teil-Import ohne Zusammenfassung im Original... eigentlich vorhanden)",
+        "status": "pass"
+      },
+      {
+        "text": "Vergleich zeigt Domain nur im Zwischenschritt (Original hatte keine Domain im Teil-Import)",
+        "status": "pass"
+      },
+      {
+        "text": "Mindestens eine Zeile als abweichend markiert (diff-row)",
+        "status": "pass"
+      },
+      {
+        "text": "Escape schliesst Vergleich-Modal",
+        "status": "pass"
+      },
+      {
+        "text": "Vergleich-Button auch in Dateiverwaltung vorhanden",
+        "status": "pass"
+      },
+      {
+        "text": "Vergleich-Modal öffnet sich auch von Dateiverwaltung aus",
+        "status": "pass"
+      },
+      {
+        "text": "Schliessen-Button (X) schliesst Vergleich-Modal",
+        "status": "pass"
+      },
+      {
+        "text": "Export ohne Daten (Job 3 nach Reset ohne Extraktion) zeigt Fehlermeldung statt Absturz",
+        "status": "pass"
+      },
+      {
+        "text": "Kein Fehler-Export bei leeren Daten ausgelöst",
+        "status": "pass"
+      }
+    ]
+  }
+]</script>
 <script>
 (function () {
   "use strict";
@@ -1108,7 +3109,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "1.1.0";
+  var APP_VERSION = "1.2.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -1733,6 +3734,9 @@
     "jiraliste-count", "jiraliste-tbody",
     "domainoverview-domain-count", "domainoverview-ticket-count", "domainoverview-tbody", "domainoverview-empty",
     "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
+    "points-tbody", "points-new-type", "points-new-value", "points-add-btn",
+    "labels-list", "labels-new-input", "labels-add-btn",
+    "test-results-date", "test-results-suites", "test-results-total", "test-results-passed", "test-results-failed", "test-results-tbody",
     "evaluate-tickets-btn", "evaluate-summary", "evaluate-count-manual", "evaluate-count-internal", "evaluate-count-unknown",
     "evaluate-table-wrap", "evaluate-tbody",
     "prozessbild-theme", "prozessbild-layout", "prozessbild-layout-desc",
@@ -1775,7 +3779,21 @@
     // da nach dem Loeschen eines einzelnen Imports (Dateiverwaltung) die Liste
     // kuerzer wird, IDs aber nie wiederverwendet werden duerfen (sonst wuerden
     // ticketStore-Quellenangaben auf die falsche, neue Datei zeigen).
-    nextImportId: 1
+    nextImportId: 1,
+    // Punkte-System (Einstellungen): Punktzahl je Tickettyp (Jira-Feld "Typ" /
+    // issue_type). Konfiguration, kein Sitzungsdatensatz - bleibt daher auch
+    // bei "Sitzung zurücksetzen"/"Alle Daten löschen" erhalten.
+    priorityPoints: [
+      { type: "Epic", points: 5 },
+      { type: "Bug", points: 1 },
+      { type: "Feature", points: 3 },
+      { type: "Change Request", points: 3 },
+      { type: "Reporting", points: 2 }
+    ],
+    // Labels (Einstellungen): frei editierbare Stichwortliste, wird beim
+    // Verarbeiten per Text-Abgleich automatisch Tickets zugeordnet. Ebenfalls
+    // Konfiguration, kein Sitzungsdatensatz.
+    labels: ["Market", "HQ", "Dealer", "Vehicle", "Finance", "Claim", "Product", "Van", "PC", "Price", "Prolongation"]
   };
 
   function addLog(message) {
@@ -1970,6 +3988,135 @@
     showToast("Daten gelöscht", "Alle geladenen Daten wurden aus dieser Sitzung entfernt.");
   });
 
+  /* ============ Einstellungen: Punkte-System + Labels ============ */
+
+  function renderPointsTable() {
+    els.pointsTbody.innerHTML = app.priorityPoints.map(function (p, idx) {
+      return "<tr><td>" + escapeHtml(p.type) + '</td><td><input type="number" class="text-input points-value-input" min="0" step="1" data-idx="' + idx + '" value="' + p.points + '"></td>' +
+        '<td><button type="button" class="btn danger comment-edit-btn" data-action="delete-points" data-idx="' + idx + '">Löschen</button></td></tr>';
+    }).join("");
+  }
+  els.pointsTbody.addEventListener("change", function (e) {
+    var input = e.target.closest(".points-value-input");
+    if (!input) return;
+    var idx = parseInt(input.getAttribute("data-idx"), 10);
+    var entry = app.priorityPoints[idx];
+    if (!entry) return;
+    var val = parseInt(input.value, 10);
+    if (isNaN(val) || val < 0) { input.value = entry.points; return; }
+    entry.points = val;
+    addLog("Punkte-System: „" + entry.type + "“ auf " + val + " Punkt(e) gesetzt.");
+    refreshDashboard(false);
+  });
+  els.pointsTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest('button[data-action="delete-points"]');
+    if (!btn) return;
+    var idx = parseInt(btn.getAttribute("data-idx"), 10);
+    var entry = app.priorityPoints[idx];
+    if (!entry) return;
+    app.priorityPoints.splice(idx, 1);
+    addLog("Punkte-System: Tickettyp „" + entry.type + "“ entfernt.");
+    renderPointsTable();
+    refreshDashboard(false);
+  });
+  els.pointsAddBtn.addEventListener("click", function () {
+    var type = (els.pointsNewType.value || "").trim();
+    var points = parseInt(els.pointsNewValue.value, 10);
+    if (!type) { showToast("Kein Tickettyp", "Bitte einen Tickettyp eingeben (z. B. Story).", true); return; }
+    if (isNaN(points) || points < 0) { showToast("Ungültige Punktzahl", "Bitte eine Punktzahl ≥ 0 eingeben.", true); return; }
+    var existing = app.priorityPoints.filter(function (p) { return p.type.trim().toLowerCase() === type.toLowerCase(); })[0];
+    if (existing) { existing.points = points; addLog("Punkte-System: „" + type + "“ aktualisiert auf " + points + " Punkt(e)."); }
+    else { app.priorityPoints.push({ type: type, points: points }); addLog("Punkte-System: neuer Tickettyp „" + type + "“ mit " + points + " Punkt(e) angelegt."); }
+    els.pointsNewType.value = ""; els.pointsNewValue.value = "";
+    renderPointsTable();
+    refreshDashboard(false);
+  });
+
+  function renderLabelsList() {
+    els.labelsList.innerHTML = app.labels.map(function (lbl, idx) {
+      return '<span class="label-chip">' + escapeHtml(lbl) + '<button type="button" data-idx="' + idx + '" aria-label="Label entfernen">×</button></span>';
+    }).join("") || '<span class="empty-hint" style="padding:0;">Noch keine Labels angelegt.</span>';
+  }
+  els.labelsList.addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-idx]");
+    if (!btn) return;
+    var idx = parseInt(btn.getAttribute("data-idx"), 10);
+    var removed = app.labels[idx];
+    if (removed == null) return;
+    app.labels.splice(idx, 1);
+    addLog("Label „" + removed + "“ entfernt.");
+    renderLabelsList();
+    refreshDashboard(false);
+  });
+  els.labelsAddBtn.addEventListener("click", function () {
+    var val = (els.labelsNewInput.value || "").trim();
+    if (!val) { showToast("Kein Label", "Bitte einen Labeltext eingeben.", true); return; }
+    if (app.labels.some(function (l) { return l.toLowerCase() === val.toLowerCase(); })) {
+      showToast("Label existiert bereits", "„" + val + "“ ist schon in der Liste.", true);
+      return;
+    }
+    app.labels.push(val);
+    addLog("Neues Label „" + val + "“ angelegt.");
+    els.labelsNewInput.value = "";
+    renderLabelsList();
+    refreshDashboard(false);
+  });
+  els.labelsNewInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); els.labelsAddBtn.click(); } });
+
+  /* ============ Einstellungen: Testergebnisse (eingebetteter Bericht) ============ */
+
+  var TEST_RESULTS = JSON.parse(document.getElementById("test-results-data").textContent);
+  var TEST_RESULTS_DATE = "21.09.2026";
+  var testResultsExpanded = {};
+  function renderTestResults() {
+    var totalChecks = 0, totalPassed = 0, totalFailed = 0;
+    var rowsHtml = TEST_RESULTS.map(function (suite, sIdx) {
+      var passed = suite.checks.filter(function (c) { return c.status === "pass"; }).length;
+      var failed = suite.checks.length - passed;
+      totalChecks += suite.checks.length; totalPassed += passed; totalFailed += failed;
+      var expanded = !!testResultsExpanded[sIdx];
+      var header = '<tr class="test-group-row" data-suite-idx="' + sIdx + '"><td colspan="3">' +
+        '<button type="button" class="test-group-toggle" data-suite-idx="' + sIdx + '" aria-expanded="' + expanded + '">' + (expanded ? "▾" : "▸") + "</button>" +
+        escapeHtml(suite.label) + ' <span class="domain-count">(' + passed + "/" + suite.checks.length + " bestanden" + (failed ? ", " + failed + " fehlgeschlagen" : "") + ")</span></td></tr>";
+      var rows = suite.checks.map(function (c) {
+        return '<tr class="test-check-row"' + (expanded ? "" : " hidden") + '><td style="padding-left:30px;">' + escapeHtml(c.text) + "</td><td><span class=\"test-status test-status-" +
+          c.status + '">' + (c.status === "pass" ? "✓ bestanden" : "✗ fehlgeschlagen") + "</span></td><td class=\"mono\">" + escapeHtml(TEST_RESULTS_DATE) + "</td></tr>";
+      }).join("");
+      return header + rows;
+    }).join("");
+    els.testResultsTbody.innerHTML = rowsHtml;
+    els.testResultsSuites.textContent = TEST_RESULTS.length;
+    els.testResultsTotal.textContent = totalChecks;
+    els.testResultsPassed.textContent = totalPassed;
+    els.testResultsFailed.textContent = totalFailed;
+    els.testResultsDate.textContent = TEST_RESULTS_DATE;
+  }
+  els.testResultsTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest(".test-group-toggle");
+    if (!btn) return;
+    var idx = parseInt(btn.getAttribute("data-suite-idx"), 10);
+    testResultsExpanded[idx] = !testResultsExpanded[idx];
+    renderTestResults();
+  });
+
+  // Punkte-System: Punktzahl eines Tickets anhand des Jira-Felds "Typ"
+  // (issue_type) aus der in Einstellungen gepflegten Liste ableiten. Fehlt
+  // der Typ oder ist er dort nicht gepflegt, wird ehrlich "kein Wert"
+  // (null) zurückgegeben statt geraten.
+  function pointsForIssueType(issueType) {
+    if (!issueType) return null;
+    var norm = String(issueType).trim().toLowerCase();
+    var entry = app.priorityPoints.filter(function (p) { return p.type.trim().toLowerCase() === norm; })[0];
+    return entry ? entry.points : null;
+  }
+  // Labels: reiner Text-Abgleich (keine KI) der in Einstellungen gepflegten
+  // Stichwortliste gegen Zusammenfassung/Beschreibung/Domain des Tickets.
+  function computeAutoLabels(rawTicket) {
+    var haystack = [rawTicket.summary || "", rawTicket.description || "", (rawTicket.custom_fields && rawTicket.custom_fields.Domain) || ""]
+      .join(" \n ").toLowerCase();
+    return app.labels.filter(function (lbl) { return haystack.indexOf(lbl.toLowerCase()) !== -1; });
+  }
+
   function refreshDashboard(resetFilters) {
     var list = [];
     app.ticketStore.forEach(function (entry) { list.push(entry); });
@@ -1981,7 +4128,9 @@
         bucket: bucketFor(t.status), domain: (t.custom_fields && t.custom_fields.Domain) || "",
         created: t.created || "", updated: t.updated || "",
         createdSort: parseJiraDate(t.created), updatedSort: parseJiraDate(t.updated),
-        changed: changed
+        changed: changed,
+        points: pointsForIssueType(t.issue_type),
+        autoLabels: computeAutoLabels(t)
       };
     });
     if (resetFilters) {
@@ -2966,12 +5115,19 @@
     });
   }
 
+  // Gemeinsame Anzeige-Helfer fuer die neuen Spalten Beschreibung/Priorität
+  // (Punkte-System)/Labels in den Verarbeitung-Tabellen (Jobs 4-6).
+  function pointsDisplay(points) { return points == null ? "Unbekannt" : String(points); }
+  function labelsDisplayText(labels) { return labels && labels.length ? labels.join(", ") : "–"; }
+  function descriptionDisplayText(t) { return truncate((t.raw && t.raw.description) || "", 140) || "–"; }
+
   function renderReleaseversionTable() {
     var list = scopedTickets().slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
     els.releaseversionTotal.textContent = list.length;
     els.releaseversionTbody.innerHTML = list.map(function (t) {
       return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(t.domain || "–") +
-        "</td><td>" + escapeHtml(t.status || "–") + "</td></tr>";
+        "</td><td>" + escapeHtml(t.status || "–") + "</td><td>" + escapeHtml(descriptionDisplayText(t)) +
+        "</td><td class=\"mono\">" + escapeHtml(pointsDisplay(t.points)) + "</td><td>" + escapeHtml(labelsDisplayText(t.autoLabels)) + "</td></tr>";
     }).join("");
   }
 
@@ -2982,7 +5138,9 @@
     els.jiralisteTbody.innerHTML = list.map(function (t) {
       var datum = t.updated || t.created || "–";
       return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(t.status || "–") +
-        "</td><td class=\"mono\">" + escapeHtml(datum) + "</td></tr>";
+        "</td><td class=\"mono\">" + escapeHtml(datum) + "</td><td>" + escapeHtml(t.domain || "–") +
+        "</td><td>" + escapeHtml(descriptionDisplayText(t)) + "</td><td class=\"mono\">" + escapeHtml(pointsDisplay(t.points)) +
+        "</td><td>" + escapeHtml(labelsDisplayText(t.autoLabels)) + "</td></tr>";
     }).join("");
   }
 
@@ -3010,12 +5168,14 @@
     els.domainoverviewDomainCount.textContent = groups.length;
     els.domainoverviewTicketCount.textContent = totalTickets;
     var html = groups.map(function (g) {
-      var header = '<tr class="domain-group-row"><td colspan="4">' + escapeHtml(g.domain) +
+      var header = '<tr class="domain-group-row"><td colspan="7">' + escapeHtml(g.domain) +
         ' <span class="domain-count">(' + g.tickets.length + " Ticket" + (g.tickets.length === 1 ? "" : "s") + ")</span></td></tr>";
       var rows = g.tickets.map(function (t) {
         var datum = t.updated || t.created || "–";
         return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(t.status || "–") +
-          "</td><td class=\"mono\">" + escapeHtml(datum) + "</td><td>" + escapeHtml(t.summary || "–") + "</td></tr>";
+          "</td><td class=\"mono\">" + escapeHtml(datum) + "</td><td>" + escapeHtml(t.summary || "–") +
+          "</td><td>" + escapeHtml(descriptionDisplayText(t)) + "</td><td class=\"mono\">" + escapeHtml(pointsDisplay(t.points)) +
+          "</td><td>" + escapeHtml(labelsDisplayText(t.autoLabels)) + "</td></tr>";
       }).join("");
       return header + rows;
     }).join("");
@@ -3303,14 +5463,20 @@
     if (jobNum === "4") {
       return {
         filenameBase: "verarbeitung_4_releaseversion", title: "Job 4 – Releaseversion (alle geladenen Tickets)",
-        sections: [{ title: "Tickets", headers: ["Ticket", "Domain", "Status"], rows: jiraListeRows().map(function (t) { return [t.key, t.domain || "–", t.status || "–"]; }) }]
+        sections: [{
+          title: "Tickets", headers: ["Ticket", "Domäne", "Status", "Beschreibung", "Priorität (Punkte)", "Labels"],
+          rows: jiraListeRows().map(function (t) { return [t.key, t.domain || "–", t.status || "–", (t.raw && t.raw.description) || "–", pointsDisplay(t.points), labelsDisplayText(t.autoLabels)]; })
+        }]
       };
     }
     if (jobNum === "5") {
       var list5 = jiraListeRows();
       return {
         filenameBase: "verarbeitung_5_jira_liste", title: "Job 5 – Jira Liste (" + list5.length + " importierte Tickets)",
-        sections: [{ title: "Jira-Tickets", headers: ["Ticket", "Status", "Datum"], rows: list5.map(function (t) { return [t.key, t.status || "–", t.updated || t.created || "–"]; }) }]
+        sections: [{
+          title: "Jira-Tickets", headers: ["Ticket", "Status", "Datum", "Domäne", "Beschreibung", "Priorität (Punkte)", "Labels"],
+          rows: list5.map(function (t) { return [t.key, t.status || "–", t.updated || t.created || "–", t.domain || "–", (t.raw && t.raw.description) || "–", pointsDisplay(t.points), labelsDisplayText(t.autoLabels)]; })
+        }]
       };
     }
     if (jobNum === "6") {
@@ -3320,8 +5486,8 @@
         sections: groups6.map(function (g) {
           return {
             title: g.domain,
-            headers: ["Ticket", "Status", "Datum", "Zusammenfassung"],
-            rows: g.tickets.map(function (t) { return [t.key, t.status || "–", t.updated || t.created || "–", t.summary || "–"]; })
+            headers: ["Ticket", "Status", "Datum", "Zusammenfassung", "Beschreibung", "Priorität (Punkte)", "Labels"],
+            rows: g.tickets.map(function (t) { return [t.key, t.status || "–", t.updated || t.created || "–", t.summary || "–", (t.raw && t.raw.description) || "–", pointsDisplay(t.points), labelsDisplayText(t.autoLabels)]; })
           };
         })
       };
@@ -3964,6 +6130,9 @@
   els.appVersion.textContent = "v" + APP_VERSION;
   showView("dashboard");
   renderDomainAliases();
+  renderPointsTable();
+  renderLabelsList();
+  renderTestResults();
   resetSession();
 })();
 </script>
