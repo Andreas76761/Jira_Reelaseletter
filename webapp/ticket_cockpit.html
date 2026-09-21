@@ -263,12 +263,41 @@
   #changes-table, #changes-table-verarbeitung { table-layout: fixed; }
   #changes-table td, #changes-table th, #changes-table-verarbeitung td, #changes-table-verarbeitung th { white-space: normal; overflow-wrap: normal; word-break: normal; }
   #changes-table td:nth-child(6), #changes-table th:nth-child(6), #changes-table-verarbeitung td:nth-child(6), #changes-table-verarbeitung th:nth-child(6) { overflow-wrap: anywhere; }
-  #changes-table th:nth-child(1), #changes-table td:nth-child(1), #changes-table-verarbeitung th:nth-child(1), #changes-table-verarbeitung td:nth-child(1) { width: 12%; }
-  #changes-table th:nth-child(2), #changes-table td:nth-child(2), #changes-table-verarbeitung th:nth-child(2), #changes-table-verarbeitung td:nth-child(2) { width: 14%; }
-  #changes-table th:nth-child(3), #changes-table td:nth-child(3), #changes-table-verarbeitung th:nth-child(3), #changes-table-verarbeitung td:nth-child(3) { width: 16%; }
+  #changes-table th:nth-child(1), #changes-table td:nth-child(1), #changes-table-verarbeitung th:nth-child(1), #changes-table-verarbeitung td:nth-child(1) { width: 11%; }
+  #changes-table th:nth-child(2), #changes-table td:nth-child(2), #changes-table-verarbeitung th:nth-child(2), #changes-table-verarbeitung td:nth-child(2) { width: 13%; }
+  #changes-table th:nth-child(3), #changes-table td:nth-child(3), #changes-table-verarbeitung th:nth-child(3), #changes-table-verarbeitung td:nth-child(3) { width: 15%; }
   #changes-table th:nth-child(4), #changes-table td:nth-child(4), #changes-table-verarbeitung th:nth-child(4), #changes-table-verarbeitung td:nth-child(4) { width: 3%; }
-  #changes-table th:nth-child(5), #changes-table td:nth-child(5), #changes-table-verarbeitung th:nth-child(5), #changes-table-verarbeitung td:nth-child(5) { width: 16%; }
-  #changes-table th:nth-child(6), #changes-table td:nth-child(6), #changes-table-verarbeitung th:nth-child(6), #changes-table-verarbeitung td:nth-child(6) { width: 39%; }
+  #changes-table th:nth-child(5), #changes-table td:nth-child(5), #changes-table-verarbeitung th:nth-child(5), #changes-table-verarbeitung td:nth-child(5) { width: 15%; }
+  #changes-table th:nth-child(6), #changes-table td:nth-child(6), #changes-table-verarbeitung th:nth-child(6), #changes-table-verarbeitung td:nth-child(6) { width: 32%; }
+  #changes-table th:nth-child(7), #changes-table td:nth-child(7), #changes-table-verarbeitung th:nth-child(7), #changes-table-verarbeitung td:nth-child(7) { width: 11%; white-space: nowrap; }
+
+  /* ---- Burger-Menü (Verarbeitung) ---- */
+  .burger-wrap { position: relative; display: inline-block; }
+  .burger-menu {
+    position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; list-style: none; margin: 0; padding: 6px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow);
+    min-width: 260px;
+  }
+  .burger-menu[hidden] { display: none; }
+  .burger-menu li { display: block; }
+  .burger-menu button {
+    display: block; width: 100%; text-align: left; font-family: inherit; font-size: 13px; font-weight: 600;
+    padding: 8px 10px; border-radius: 7px; border: none; background: transparent; color: var(--text); cursor: pointer;
+  }
+  .burger-menu button:hover { background: var(--surface-2); }
+  .burger-menu button.active { background: var(--accent-soft); color: var(--accent-text); }
+
+  /* ---- Job-Export (XLSX/DOCX/PDF je Verarbeitung-Job) ---- */
+  .job-export-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .job-export-row .job-export-label { font-size: 12px; font-weight: 700; color: var(--text-muted); margin-right: 2px; }
+  .job-export-btn { font-size: 12.5px; padding: 6px 12px; }
+
+  /* ---- Vergleich-Modal (Original vs. Zwischenschritt) ---- */
+  .modal.compare-modal { max-width: 920px; }
+  .compare-table th:nth-child(1) { width: 140px; }
+  .compare-table th:nth-child(2), .compare-table th:nth-child(3) { width: auto; white-space: normal; }
+  .compare-table tr.diff-row td { background: var(--warn-soft); }
+  .compare-table td { overflow-wrap: anywhere; }
 
   .log-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
   .log-list li { padding: 10px 2px; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; gap: 12px; align-items: baseline; }
@@ -527,7 +556,7 @@
           <p class="section-label">Geänderte / doppelte Ticket-Einträge</p>
           <div class="panel table-wrap">
             <table class="simple-table" id="changes-table">
-              <thead><tr><th>Ticket</th><th>Feld</th><th>Alter Wert</th><th></th><th>Neuer Wert</th><th>Quelle (alt → neu)</th></tr></thead>
+              <thead><tr><th>Ticket</th><th>Feld</th><th>Alter Wert</th><th></th><th>Neuer Wert</th><th>Quelle (alt → neu)</th><th>Original vs. Zwischenschritt</th></tr></thead>
               <tbody id="changes-tbody"></tbody>
             </table>
             <div class="empty-hint" id="changes-empty">Noch keine Änderungen erkannt &ndash; lädt eine Datei ein Ticket erneut mit anderem Status/Datum, erscheint der Vergleich hier.</div>
@@ -550,20 +579,41 @@
 
       <!-- ================= Verarbeitung ================= -->
       <section class="view-panel" data-view-panel="verarbeitung" hidden>
-        <div class="view-head"><h2>Verarbeitung</h2><p class="desc">Sechs Arbeitsschritte rund um die geladenen Tickets.</p></div>
+        <div class="view-head"><h2>Verarbeitung</h2><p class="desc">Sechs Arbeitsschritte rund um die geladenen Tickets. Jeder Job lässt sich zusätzlich als XLSX, DOCX oder PDF exportieren.</p></div>
 
-        <div class="import-tabs" id="verarbeitung-tabs">
-          <button class="import-tab active" data-vsub="protokoll" type="button">1. Jira Verarbeitung</button>
-          <button class="import-tab" data-vsub="vergleich" type="button">2. Vergleich Jira Tickets</button>
-          <button class="import-tab" data-vsub="glossar-extrakt" type="button">3. Glossar &amp; Abkürzungen extrahieren</button>
-          <button class="import-tab" data-vsub="releaseversion" type="button">4. Releaseversion</button>
-          <button class="import-tab" data-vsub="folgt-5" type="button">5. Folgt</button>
-          <button class="import-tab" data-vsub="folgt-6" type="button">6. Folgt</button>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div class="import-tabs" id="verarbeitung-tabs">
+            <button class="import-tab active" data-vsub="protokoll" type="button">1. Jira Verarbeitung</button>
+            <button class="import-tab" data-vsub="vergleich" type="button">2. Vergleich Jira Tickets</button>
+            <button class="import-tab" data-vsub="glossar-extrakt" type="button">3. Glossar &amp; Abkürzungen extrahieren</button>
+            <button class="import-tab" data-vsub="releaseversion" type="button">4. Releaseversion</button>
+            <button class="import-tab" data-vsub="jira-liste" type="button">5. Jira Liste</button>
+            <button class="import-tab" data-vsub="folgt-6" type="button">6. Folgt</button>
+          </div>
+          <div class="burger-wrap" id="verarbeitung-burger-wrap">
+            <button class="icon-btn burger-btn" id="verarbeitung-burger-btn" type="button" aria-label="Job-Menü öffnen" aria-expanded="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <ul class="burger-menu" id="verarbeitung-burger-menu" hidden>
+              <li><button type="button" data-vsub="protokoll">1. Jira Verarbeitung</button></li>
+              <li><button type="button" data-vsub="vergleich">2. Vergleich Jira Tickets</button></li>
+              <li><button type="button" data-vsub="glossar-extrakt">3. Glossar &amp; Abkürzungen extrahieren</button></li>
+              <li><button type="button" data-vsub="releaseversion">4. Releaseversion</button></li>
+              <li><button type="button" data-vsub="jira-liste">5. Jira Liste</button></li>
+              <li><button type="button" data-vsub="folgt-6">6. Folgt</button></li>
+            </ul>
+          </div>
         </div>
 
         <!-- 1) Jira Verarbeitung (Protokoll) -->
         <div class="subtabs-panel" data-vsub-panel="protokoll">
           <p class="desc">Protokoll aller Verarbeitungsschritte dieser Sitzung.</p>
+          <div class="job-export-row">
+            <span class="job-export-label">Exportieren:</span>
+            <button class="btn ghost job-export-btn" data-job="1" data-format="xlsx" type="button">XLSX</button>
+            <button class="btn ghost job-export-btn" data-job="1" data-format="docx" type="button">DOCX</button>
+            <button class="btn ghost job-export-btn" data-job="1" data-format="pdf" type="button">PDF</button>
+          </div>
           <div class="panel" style="padding: 6px 16px;">
             <ul class="log-list" id="log-list"></ul>
             <div class="empty-hint" id="log-empty" hidden>Noch keine Aktionen protokolliert.</div>
@@ -572,10 +622,16 @@
 
         <!-- 2) Vergleich Jira Tickets -->
         <div class="subtabs-panel" data-vsub-panel="vergleich" hidden>
-          <p class="desc">Tickets, die unter derselben Jira-Nummer in mehreren Importen mit unterschiedlichem Datenstand vorkamen (z. B. neuer Status, neues Datum) &ndash; identischer Vergleich wie in der Dateiverwaltung.</p>
+          <p class="desc">Tickets, die unter derselben Jira-Nummer in mehreren Importen mit unterschiedlichem Datenstand vorkamen (z. B. neuer Status, neues Datum) &ndash; identischer Vergleich wie in der Dateiverwaltung. Über "Vergleich" lässt sich der Originaldatensatz aus dem Import dem verarbeiteten Zwischenschritt gegenüberstellen.</p>
+          <div class="job-export-row">
+            <span class="job-export-label">Exportieren:</span>
+            <button class="btn ghost job-export-btn" data-job="2" data-format="xlsx" type="button">XLSX</button>
+            <button class="btn ghost job-export-btn" data-job="2" data-format="docx" type="button">DOCX</button>
+            <button class="btn ghost job-export-btn" data-job="2" data-format="pdf" type="button">PDF</button>
+          </div>
           <div class="panel table-wrap">
             <table class="simple-table" id="changes-table-verarbeitung">
-              <thead><tr><th>Ticket</th><th>Feld</th><th>Alter Wert</th><th></th><th>Neuer Wert</th><th>Quelle (alt → neu)</th></tr></thead>
+              <thead><tr><th>Ticket</th><th>Feld</th><th>Alter Wert</th><th></th><th>Neuer Wert</th><th>Quelle (alt → neu)</th><th>Original vs. Zwischenschritt</th></tr></thead>
               <tbody id="changes-tbody-verarbeitung"></tbody>
             </table>
             <div class="empty-hint" id="changes-empty-verarbeitung">Noch keine Änderungen erkannt &ndash; lädt eine Datei ein Ticket erneut mit anderem Status/Datum, erscheint der Vergleich hier.</div>
@@ -585,7 +641,15 @@
         <!-- 3) Glossar und Abkürzungen extrahieren -->
         <div class="subtabs-panel" data-vsub-panel="glossar-extrakt" hidden>
           <p class="desc">Durchsucht alle geladenen Tickets nach Kürzeln (Großbuchstaben-Abkürzungen) und nach häufig verwendeten Status-/Typ-/Domain-Werten als Kandidaten für Glossar und Abkürzungsverzeichnis. Es werden keine Bedeutungen erfunden &ndash; nur tatsächlich vorkommende Begriffe mit Häufigkeit und Beispiel-Ticket. Ergebnisse erscheinen zusätzlich in den Registern <b>Glossar</b> und <b>Abkürzungen</b>.</p>
-          <button class="btn primary" id="extract-glossary-btn" type="button">Jetzt aus geladenen Tickets extrahieren</button>
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <button class="btn primary" id="extract-glossary-btn" type="button">Jetzt aus geladenen Tickets extrahieren</button>
+            <div class="job-export-row">
+              <span class="job-export-label">Exportieren:</span>
+              <button class="btn ghost job-export-btn" data-job="3" data-format="xlsx" type="button">XLSX</button>
+              <button class="btn ghost job-export-btn" data-job="3" data-format="docx" type="button">DOCX</button>
+              <button class="btn ghost job-export-btn" data-job="3" data-format="pdf" type="button">PDF</button>
+            </div>
+          </div>
           <div class="extract-grid">
             <section>
               <p class="section-label">Erkannte Abkürzungen (<span id="abbrev-count">0</span>)</p>
@@ -613,6 +677,12 @@
         <!-- 4) Releaseversion -->
         <div class="subtabs-panel" data-vsub-panel="releaseversion" hidden>
           <p class="desc">Alle geladenen Tickets mit Domain als Tabelle; darunter ein Abgleich mit einer eigenen Release-Ticketliste &ndash; welche Tickets der Liste sind bereits geladen, welche fehlen.</p>
+          <div class="job-export-row">
+            <span class="job-export-label">Exportieren:</span>
+            <button class="btn ghost job-export-btn" data-job="4" data-format="xlsx" type="button">XLSX</button>
+            <button class="btn ghost job-export-btn" data-job="4" data-format="docx" type="button">DOCX</button>
+            <button class="btn ghost job-export-btn" data-job="4" data-format="pdf" type="button">PDF</button>
+          </div>
           <section>
             <p class="section-label">Alle geladenen Tickets (<span id="releaseversion-total">0</span>)</p>
             <div class="panel table-wrap" style="max-height:340px; overflow:auto;">
@@ -639,10 +709,27 @@
           </section>
         </div>
 
-        <!-- 5) / 6) Platzhalter -->
-        <div class="subtabs-panel" data-vsub-panel="folgt-5" hidden>
-          <div class="callout">Dieser Bereich ist noch nicht implementiert &ndash; folgt in einer späteren Ausbaustufe.</div>
+        <!-- 5) Jira Liste -->
+        <div class="subtabs-panel" data-vsub-panel="jira-liste" hidden>
+          <p class="desc">Alle importierten Jira-Nummern mit Status und Datum, inklusive Gesamtanzahl der importierten Tickets.</p>
+          <div class="job-export-row">
+            <span class="job-export-label">Exportieren:</span>
+            <button class="btn ghost job-export-btn" data-job="5" data-format="xlsx" type="button">XLSX</button>
+            <button class="btn ghost job-export-btn" data-job="5" data-format="docx" type="button">DOCX</button>
+            <button class="btn ghost job-export-btn" data-job="5" data-format="pdf" type="button">PDF</button>
+          </div>
+          <div class="stat-line">
+            <div class="chip"><b class="mono" id="jiraliste-count">0</b> importierte Jira-Tickets</div>
+          </div>
+          <div class="panel table-wrap" style="max-height:440px; overflow:auto;">
+            <table class="simple-table" id="jiraliste-table">
+              <thead><tr><th>Ticket</th><th>Status</th><th>Datum</th></tr></thead>
+              <tbody id="jiraliste-tbody"></tbody>
+            </table>
+          </div>
         </div>
+
+        <!-- 6) Platzhalter -->
         <div class="subtabs-panel" data-vsub-panel="folgt-6" hidden>
           <div class="callout">Dieser Bereich ist noch nicht implementiert &ndash; folgt in einer späteren Ausbaustufe.</div>
         </div>
@@ -842,6 +929,27 @@
       <button class="btn primary" id="modal-download-btn" type="button">Als Markdown speichern</button>
       <button class="btn ghost" id="modal-download-pdf-btn" type="button">Als PDF speichern</button>
       <button class="btn ghost" id="modal-cancel-btn" type="button">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="compare-modal-overlay" hidden>
+  <div class="modal compare-modal" role="dialog" aria-modal="true" aria-labelledby="compare-modal-title">
+    <div class="modal-head">
+      <div>
+        <div class="key mono" id="compare-modal-key"></div>
+        <h2 id="compare-modal-title">Vergleich</h2>
+      </div>
+      <button class="modal-close" id="compare-modal-close" type="button" aria-label="Schließen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p class="desc" style="margin:0 0 10px;">Gegenüberstellung des Original-Datensatzes aus dem Import und des Zwischenschritts (Ergebnis nach Bereinigung/Zusammenführung, aktueller Stand). Abweichende Felder sind hervorgehoben.</p>
+    <div class="table-wrap">
+      <table class="field-table compare-table" id="compare-modal-fields"></table>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="compare-modal-cancel-btn" type="button">Schließen</button>
     </div>
   </div>
 </div>
@@ -1281,6 +1389,132 @@
     return doc;
   }
 
+  /* ============ Teil 1b: Generische Tabellen-Exporte (XLSX/DOCX/PDF) je
+     Verarbeitung-Job. XLSX und DOCX werden als minimales, eigenes Open-XML
+     (OOXML) ueber die bereits geladene JSZip-Bibliothek erzeugt - keine
+     zusaetzliche externe Abhaengigkeit noetig. ============ */
+
+  function xmlEsc(s) {
+    return String(s === null || s === undefined ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+  }
+
+  function xlsxColLetter(n) {
+    var s = "", num = n + 1;
+    while (num > 0) { var rem = (num - 1) % 26; s = String.fromCharCode(65 + rem) + s; num = Math.floor((num - 1) / 26); }
+    return s;
+  }
+  function xlsxSheetXml(headers, rows) {
+    function cell(v, col, row) {
+      return '<c r="' + xlsxColLetter(col) + row + '" t="inlineStr"><is><t xml:space="preserve">' + xmlEsc(v) + "</t></is></c>";
+    }
+    var out = ['<row r="1">' + headers.map(function (h, i) { return cell(h, i, 1); }).join("") + "</row>"];
+    rows.forEach(function (row, ri) {
+      var r = ri + 2;
+      out.push('<row r="' + r + '">' + row.map(function (v, ci) { return cell(v, ci, r); }).join("") + "</row>");
+    });
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>' + out.join("") + "</sheetData></worksheet>";
+  }
+  function buildXlsxBlob(sections) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek konnte nicht geladen werden.");
+    var zip = new JSZip();
+    zip.file("[Content_Types].xml",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      sections.map(function (_, i) { return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'; }).join("") +
+      "</Types>");
+    zip.file("_rels/.rels",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+      "</Relationships>");
+    zip.file("xl/workbook.xml",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      "<sheets>" + sections.map(function (s, i) { return '<sheet name="' + xmlEsc(s.title.slice(0, 31)) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join("") + "</sheets>" +
+      "</workbook>");
+    zip.file("xl/_rels/workbook.xml.rels",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      sections.map(function (_, i) { return '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>'; }).join("") +
+      "</Relationships>");
+    sections.forEach(function (s, i) { zip.file("xl/worksheets/sheet" + (i + 1) + ".xml", xlsxSheetXml(s.headers, s.rows)); });
+    return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  }
+
+  function docxTableXml(headers, rows) {
+    function tc(v, bold) {
+      return "<w:tc><w:p><w:r>" + (bold ? "<w:rPr><w:b/></w:rPr>" : "") + '<w:t xml:space="preserve">' + xmlEsc(v) + "</w:t></w:r></w:p></w:tc>";
+    }
+    var borders = ["top", "left", "bottom", "right", "insideH", "insideV"]
+      .map(function (b) { return "<w:" + b + ' w:val="single" w:sz="4" w:color="999999"/>'; }).join("");
+    var out = ['<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders>' + borders + "</w:tblBorders></w:tblPr>"];
+    out.push("<w:tr>" + headers.map(function (h) { return tc(h, true); }).join("") + "</w:tr>");
+    rows.forEach(function (row) { out.push("<w:tr>" + row.map(function (v) { return tc(v, false); }).join("") + "</w:tr>"); });
+    out.push("</w:tbl>");
+    return out.join("");
+  }
+  function buildDocxBlob(title, sections) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek konnte nicht geladen werden.");
+    var body = '<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>' + xmlEsc(title) + "</w:t></w:r></w:p>";
+    sections.forEach(function (s) {
+      body += '<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>' + xmlEsc(s.title) + "</w:t></w:r></w:p>";
+      body += s.rows.length ? docxTableXml(s.headers, s.rows) : '<w:p><w:r><w:t>(keine Daten)</w:t></w:r></w:p>';
+      body += "<w:p/>";
+    });
+    var documentXml =
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+      "<w:body>" + body + '<w:sectPr><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/></w:sectPr></w:body>' +
+      "</w:document>";
+    var zip = new JSZip();
+    zip.file("[Content_Types].xml",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+      "</Types>");
+    zip.file("_rels/.rels",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+      "</Relationships>");
+    zip.file("word/document.xml", documentXml);
+    return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  }
+
+  function buildSectionsPdfBlob(title, sections) {
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
+    var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    var margin = 12, pageW = 210, pageH = 280, y = margin;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+    doc.text(title, margin, y); y += 8;
+    sections.forEach(function (s) {
+      if (y > pageH - 20) { doc.addPage(); y = margin; }
+      doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+      doc.text(s.title, margin, y); y += 6;
+      if (!s.rows.length) { doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.text("(keine Daten)", margin, y); y += 8; return; }
+      var colW = (pageW - margin * 2) / s.headers.length;
+      doc.setFont("helvetica", "bold"); doc.setFontSize(8);
+      s.headers.forEach(function (h, i) { doc.text(truncate(String(h), 28), margin + i * colW, y); });
+      y += 5;
+      doc.setFont("helvetica", "normal");
+      s.rows.forEach(function (row) {
+        if (y > pageH - 15) { doc.addPage(); y = margin; }
+        row.forEach(function (v, i) { doc.text(truncate(String(v === null || v === undefined ? "" : v), 30), margin + i * colW, y); });
+        y += 5;
+      });
+      y += 6;
+    });
+    return doc.output("blob");
+  }
+
   /* ============ Teil 2: App-Status ============ */
 
   var BUCKET_OF_STATUS = {
@@ -1339,6 +1573,7 @@
     "imports-tbody", "changes-tbody", "changes-empty", "domain-aliases-tbody",
     "log-list", "log-empty",
     "verarbeitung-tabs", "changes-tbody-verarbeitung", "changes-empty-verarbeitung",
+    "verarbeitung-burger-wrap", "verarbeitung-burger-btn", "verarbeitung-burger-menu",
     "extract-glossary-btn", "abbrev-count", "abbrev-tbody", "abbrev-empty",
     "glossary-candidate-count", "glossary-candidate-tbody", "glossary-candidate-empty",
     "glossary-candidate-tbody-register", "glossary-candidate-empty-register",
@@ -1346,11 +1581,14 @@
     "releaseversion-total", "releaseversion-tbody",
     "release-keys-input", "release-match-btn", "release-match-summary",
     "release-missing-wrap", "release-missing-table", "release-missing-tbody",
+    "jiraliste-count", "jiraliste-tbody",
     "gallery", "gallery-empty",
     "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
     "modal-overlay", "modal-key", "modal-title", "modal-fields", "modal-desc-wrap", "modal-desc",
-    "modal-close", "modal-cancel-btn", "modal-download-btn", "modal-download-pdf-btn", "toast"
+    "modal-close", "modal-cancel-btn", "modal-download-btn", "modal-download-pdf-btn",
+    "compare-modal-overlay", "compare-modal-key", "compare-modal-fields", "compare-modal-close", "compare-modal-cancel-btn",
+    "toast"
   ].forEach(function (id) {
     els[id.replace(/-([a-z0-9])/g, function (_, c) { return c.toUpperCase(); })] = document.getElementById(id);
   });
@@ -1457,7 +1695,12 @@
             key: t.key,
             from: { source: prevSource.source, when: prevSource.when },
             to: { source: meta.source, when: meta.when },
-            diffs: diffs
+            diffs: diffs,
+            // Fuer den "Vergleich"-Dialog: der roh eingelesene Datensatz aus
+            // DIESEM Import (vor dem Merge) und das Ergebnis danach
+            // (Zwischenschritt/aktueller Stand nach Bereinigung+Merge).
+            original: t,
+            merged: merged
           });
           stats.geaendert++;
         } else {
@@ -1537,6 +1780,7 @@
     buildFormatCallout();
     render();
     renderReleaseversionTable();
+    renderJiraListe();
   }
 
   function buildFormatCallout() {
@@ -1727,7 +1971,11 @@
   els.modalClose.addEventListener("click", closeModal);
   els.modalCancelBtn.addEventListener("click", closeModal);
   els.modalOverlay.addEventListener("click", function (e) { if (e.target === els.modalOverlay) closeModal(); });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !els.modalOverlay.hidden) closeModal(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    if (!els.modalOverlay.hidden) closeModal();
+    if (!els.compareModalOverlay.hidden) closeCompareModal();
+  });
 
   /* ============ Teil 4: Export (downloads-Capability) ============ */
 
@@ -1995,7 +2243,7 @@
 
   function renderChangesTable() {
     var rowsHtml = [];
-    app.changes.forEach(function (c) {
+    app.changes.forEach(function (c, idx) {
       c.diffs.forEach(function (d, i) {
         rowsHtml.push(
           "<tr>" +
@@ -2005,6 +2253,7 @@
           '<td class="diff-arrow">→</td>' +
           '<td class="diff-new">' + escapeHtml(d.to || "–") + "</td>" +
           (i === 0 ? '<td class="mono" rowspan="' + c.diffs.length + '">' + escapeHtml(c.from.source) + " (" + escapeHtml(c.from.when) + ") → " + escapeHtml(c.to.source) + " (" + escapeHtml(c.to.when) + ")</td>" : "") +
+          (i === 0 ? '<td rowspan="' + c.diffs.length + '"><button class="btn ghost compare-btn" type="button" data-change-idx="' + idx + '">Vergleich</button></td>' : "") +
           "</tr>"
         );
       });
@@ -2018,6 +2267,52 @@
       if (empty) empty.hidden = !!app.changes.length;
     });
   }
+
+  /* ============ Teil 7b: "Vergleich"-Dialog (Original vs. Zwischenschritt) ============ */
+
+  function compareRowHtml(label, oldV, newV) {
+    var a = (oldV === undefined || oldV === null || oldV === "") ? "" : String(oldV);
+    var b = (newV === undefined || newV === null || newV === "") ? "" : String(newV);
+    var changed = a !== b;
+    return "<tr" + (changed ? ' class="diff-row"' : "") + "><th>" + escapeHtml(label) + "</th><td>" +
+      escapeHtml(a || NOT_IN_EXPORT) + "</td><td>" + escapeHtml(b || NOT_IN_EXPORT) + "</td></tr>";
+  }
+  function openCompareModal(change) {
+    var original = change.original || {};
+    var merged = change.merged || {};
+    els.compareModalKey.textContent = change.key;
+    var rowsHtml = [
+      "<tr><th></th><th>Original-Import (" + escapeHtml(change.to.source) + ", " + escapeHtml(change.to.when) + ")</th><th>Nach Verarbeitung (Zwischenschritt / aktueller Stand)</th></tr>"
+    ];
+    MODAL_FIELD_LIST.forEach(function (f) {
+      if (f.kind !== "field") return;
+      var a, b;
+      if (f.key === "custom:Domain") { a = original.custom_fields && original.custom_fields.Domain; b = merged.custom_fields && merged.custom_fields.Domain; }
+      else { a = original[f.key]; b = merged[f.key]; }
+      if (Array.isArray(a)) a = a.join(", ");
+      if (Array.isArray(b)) b = b.join(", ");
+      rowsHtml.push(compareRowHtml(f.label, a, b));
+    });
+    els.compareModalFields.innerHTML = rowsHtml.join("");
+    els.compareModalOverlay.hidden = false;
+  }
+  function closeCompareModal() { els.compareModalOverlay.hidden = true; }
+  els.compareModalClose.addEventListener("click", closeCompareModal);
+  els.compareModalCancelBtn.addEventListener("click", closeCompareModal);
+  els.compareModalOverlay.addEventListener("click", function (e) { if (e.target === els.compareModalOverlay) closeCompareModal(); });
+
+  function wireCompareButtons(tbody) {
+    if (!tbody) return;
+    tbody.addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest(".compare-btn") : null;
+      if (!btn) return;
+      var idx = parseInt(btn.getAttribute("data-change-idx"), 10);
+      var change = app.changes[idx];
+      if (change) openCompareModal(change);
+    });
+  }
+  wireCompareButtons(els.changesTbody);
+  wireCompareButtons(els.changesTbodyVerarbeitung);
 
   /* ============ Teil 8: Verarbeitung (Protokoll) ============ */
 
@@ -2038,9 +2333,33 @@
     Array.prototype.forEach.call(els.verarbeitungTabs.querySelectorAll(".import-tab"), function (btn) {
       btn.classList.toggle("active", btn.getAttribute("data-vsub") === name);
     });
+    Array.prototype.forEach.call(els.verarbeitungBurgerMenu.querySelectorAll("button[data-vsub]"), function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-vsub") === name);
+    });
   }
   Array.prototype.forEach.call(els.verarbeitungTabs.querySelectorAll(".import-tab"), function (btn) {
     btn.addEventListener("click", function () { showVerarbeitungSub(btn.getAttribute("data-vsub")); });
+  });
+
+  // Burger-Menü: kompakte Alternative zu den Tabs, listet dieselben 6 Jobs.
+  function closeBurgerMenu() {
+    els.verarbeitungBurgerMenu.hidden = true;
+    els.verarbeitungBurgerBtn.setAttribute("aria-expanded", "false");
+  }
+  els.verarbeitungBurgerBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    var willOpen = els.verarbeitungBurgerMenu.hidden;
+    els.verarbeitungBurgerMenu.hidden = !willOpen;
+    els.verarbeitungBurgerBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+  });
+  Array.prototype.forEach.call(els.verarbeitungBurgerMenu.querySelectorAll("button[data-vsub]"), function (btn) {
+    btn.addEventListener("click", function () {
+      showVerarbeitungSub(btn.getAttribute("data-vsub"));
+      closeBurgerMenu();
+    });
+  });
+  document.addEventListener("click", function (e) {
+    if (!els.verarbeitungBurgerMenu.hidden && !els.verarbeitungBurgerWrap.contains(e.target)) closeBurgerMenu();
   });
 
   // 3) Glossar & Abkürzungen extrahieren: nur tatsächlich vorkommende Werte
@@ -2149,6 +2468,17 @@
     }).join("");
   }
 
+  // 5) Jira Liste: alle importierten Jira-Nummern mit Status/Datum + Gesamtanzahl.
+  function renderJiraListe() {
+    var list = app.tickets.slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
+    els.jiralisteCount.textContent = list.length;
+    els.jiralisteTbody.innerHTML = list.map(function (t) {
+      var datum = t.updated || t.created || "–";
+      return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(t.status || "–") +
+        "</td><td class=\"mono\">" + escapeHtml(datum) + "</td></tr>";
+    }).join("");
+  }
+
   els.releaseMatchBtn.addEventListener("click", function () {
     var releaseKeys = (els.releaseKeysInput.value || "").split("\n").map(function (k) { return k.trim(); }).filter(Boolean);
     if (!releaseKeys.length) { showToast("Keine Ticketliste", "Bitte mindestens einen Ticket-Key eingeben.", true); return; }
@@ -2171,6 +2501,84 @@
       els.releaseMissingTbody.innerHTML = "";
     }
     addLog("Release-Abgleich: " + found.length + "/" + releaseKeys.length + " Tickets geladen, " + missing.length + " fehlen.");
+  });
+
+  /* ============ Teil 8c: Job-Export (XLSX/DOCX/PDF) je Verarbeitung-Job ============ */
+
+  function jiraListeRows() {
+    return app.tickets.slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
+  }
+  function jobSections(jobNum) {
+    if (jobNum === "1") {
+      return {
+        filenameBase: "verarbeitung_1_protokoll", title: "Job 1 – Jira Verarbeitung (Protokoll)",
+        sections: [{ title: "Protokoll", headers: ["Zeitpunkt", "Meldung"], rows: app.log.map(function (l) { return [l.when, l.message]; }) }]
+      };
+    }
+    if (jobNum === "2") {
+      var rows2 = [];
+      app.changes.forEach(function (c) {
+        c.diffs.forEach(function (d) {
+          rows2.push([c.key, d.label, d.from || "–", d.to || "–", c.from.source + " (" + c.from.when + ") -> " + c.to.source + " (" + c.to.when + ")"]);
+        });
+      });
+      return {
+        filenameBase: "verarbeitung_2_vergleich", title: "Job 2 – Vergleich Jira Tickets",
+        sections: [{ title: "Vergleich", headers: ["Ticket", "Feld", "Alter Wert", "Neuer Wert", "Quelle (alt -> neu)"], rows: rows2 }]
+      };
+    }
+    if (jobNum === "3") {
+      return {
+        filenameBase: "verarbeitung_3_glossar_abkuerzungen", title: "Job 3 – Glossar & Abkürzungen (extrahiert)",
+        sections: [
+          { title: "Abkuerzungen", headers: ["Kürzel", "Häufigkeit", "Beispiel-Tickets"], rows: app.extracted.abbreviations.map(function (r) { return [r.term, r.count, r.examples.join(", ")]; }) },
+          { title: "Glossar-Kandidaten", headers: ["Feld", "Wert", "Häufigkeit"], rows: app.extracted.glossaryCandidates.map(function (r) { return [r.field, r.value, r.count]; }) }
+        ]
+      };
+    }
+    if (jobNum === "4") {
+      return {
+        filenameBase: "verarbeitung_4_releaseversion", title: "Job 4 – Releaseversion (alle geladenen Tickets)",
+        sections: [{ title: "Tickets", headers: ["Ticket", "Domain", "Status"], rows: jiraListeRows().map(function (t) { return [t.key, t.domain || "–", t.status || "–"]; }) }]
+      };
+    }
+    if (jobNum === "5") {
+      var list5 = jiraListeRows();
+      return {
+        filenameBase: "verarbeitung_5_jira_liste", title: "Job 5 – Jira Liste (" + list5.length + " importierte Tickets)",
+        sections: [{ title: "Jira-Tickets", headers: ["Ticket", "Status", "Datum"], rows: list5.map(function (t) { return [t.key, t.status || "–", t.updated || t.created || "–"]; }) }]
+      };
+    }
+    return null;
+  }
+
+  async function exportJob(jobNum, format, btn) {
+    var data = jobSections(jobNum);
+    if (!data) { showToast("Noch nicht verfügbar", "Für diesen Job gibt es noch keinen Export.", true); return; }
+    var totalRows = data.sections.reduce(function (n, s) { return n + s.rows.length; }, 0);
+    if (!totalRows) { showToast("Keine Daten", "Für diesen Job liegen noch keine Daten zum Export vor.", true); return; }
+    var origLabel = btn.textContent;
+    btn.disabled = true; btn.textContent = "…";
+    await wait(15);
+    try {
+      var blob, filename;
+      if (format === "xlsx") { blob = await buildXlsxBlob(data.sections); filename = data.filenameBase + ".xlsx"; }
+      else if (format === "docx") { blob = await buildDocxBlob(data.title, data.sections); filename = data.filenameBase + ".docx"; }
+      else if (format === "pdf") { blob = buildSectionsPdfBlob(data.title, data.sections); filename = data.filenameBase + ".pdf"; }
+      else return;
+      var ok = await saveOrWarn(filename, blob);
+      if (ok) {
+        showToast("Export fertig", filename + " gespeichert (" + totalRows + " Zeile" + (totalRows === 1 ? "" : "n") + ").");
+        addLog("Job " + jobNum + " als " + format.toUpperCase() + " exportiert (" + totalRows + " Zeilen).");
+      }
+    } catch (err) {
+      showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      btn.disabled = false; btn.textContent = origLabel;
+    }
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".job-export-btn"), function (btn) {
+    btn.addEventListener("click", function () { exportJob(btn.getAttribute("data-job"), btn.getAttribute("data-format"), btn); });
   });
 
   /* ============ Teil 9: Phase-3-Generatoren ============ */
