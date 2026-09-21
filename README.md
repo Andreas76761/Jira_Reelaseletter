@@ -179,8 +179,7 @@ folgenden Bereichen:
   Vergleich. Im Dashboard markiert ein Punkt hinter dem Schlüssel
   geänderte Tickets.
 - **Verarbeitung** – sechs Jobs für wiederkehrende Arbeitsschritte rund
-  um die geladenen Tickets (6 ist als Platzhalter angelegt, folgt
-  später), erreichbar über die Tab-Leiste oder das kompakte
+  um die geladenen Tickets, erreichbar über die Tab-Leiste oder das kompakte
   Burger-Menü (☰) daneben. Jeder Job zeigt oben seine **Prozessschritte**
   als visuelle Checkliste (grauer Kreis = ausstehend, grüner Haken =
   erledigt, roter Kreis = Fehler bei der Ausführung) und lässt sich
@@ -220,6 +219,14 @@ folgenden Bereichen:
      das als "Unbekannt" ausgewiesen statt geraten).
   5. *Jira Liste* – alle importierten Jira-Nummern mit Status und Datum,
      inklusive prominent angezeigter Gesamtanzahl der importierten Tickets.
+  6. *Domänen-Übersicht* – alle geladenen Tickets werden thematisch nach
+     Domäne gruppiert (eine eigene "Thema"-Kennzeichnung gibt es im
+     Jira-Export nicht, die Domain ist die vorhandene thematische
+     Einordnung) und innerhalb jeder Domäne chronologisch zusammengeführt
+     (ältestes zuerst, nach letztem Aktualisierungs-, ersatzweise
+     Erstellungsdatum); Domänen selbst alphabetisch, Tickets ohne Domäne
+     bilden eine eigene Gruppe am Ende. Export als XLSX/DOCX/PDF liefert
+     dieselbe Gruppierung als einen eigenen Abschnitt pro Domäne.
 - **Releaseletter / Benutzerhandbuch / Clickanweisung** – Textentwürfe aus
   ausgewählten Tickets (aktuelle Dashboard-Filterung oder Ticket-Keys),
   Vorschau + Markdown-Download.

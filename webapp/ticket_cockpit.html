@@ -278,6 +278,8 @@
   .simple-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
   .simple-table tr:last-child td { border-bottom: none; }
   .table-wrap { overflow-x: auto; }
+  .domain-group-row td { background: var(--surface-2); font-weight: 700; color: var(--text); }
+  .domain-group-row .domain-count { font-weight: 400; color: var(--text-muted); }
   .diff-old { color: var(--blocked); text-decoration: line-through; }
   .diff-new { color: var(--done); font-weight: 600; }
   .diff-arrow { color: var(--text-faint); margin: 0 5px; }
@@ -658,7 +660,7 @@
             <button class="import-tab" data-vsub="glossar-extrakt" type="button">3. Glossar &amp; Abkürzungen extrahieren</button>
             <button class="import-tab" data-vsub="releaseversion" type="button">4. Releaseversion</button>
             <button class="import-tab" data-vsub="jira-liste" type="button">5. Jira Liste</button>
-            <button class="import-tab" data-vsub="folgt-6" type="button">6. Folgt</button>
+            <button class="import-tab" data-vsub="domaenen-uebersicht" type="button">6. Domänen-Übersicht</button>
           </div>
           <div class="burger-wrap" id="verarbeitung-burger-wrap">
             <button class="icon-btn burger-btn" id="verarbeitung-burger-btn" type="button" aria-label="Job-Menü öffnen" aria-expanded="false">
@@ -670,7 +672,7 @@
               <li><button type="button" data-vsub="glossar-extrakt">3. Glossar &amp; Abkürzungen extrahieren</button></li>
               <li><button type="button" data-vsub="releaseversion">4. Releaseversion</button></li>
               <li><button type="button" data-vsub="jira-liste">5. Jira Liste</button></li>
-              <li><button type="button" data-vsub="folgt-6">6. Folgt</button></li>
+              <li><button type="button" data-vsub="domaenen-uebersicht">6. Domänen-Übersicht</button></li>
             </ul>
           </div>
         </div>
@@ -827,11 +829,28 @@
           </div>
         </div>
 
-        <!-- 6) Platzhalter -->
-        <div class="subtabs-panel" data-vsub-panel="folgt-6" hidden>
+        <!-- 6) Domänen-Übersicht -->
+        <div class="subtabs-panel" data-vsub-panel="domaenen-uebersicht" hidden>
+          <p class="desc">Alle geladenen Tickets werden thematisch nach Domäne gruppiert (eine eigene "Thema"-Kennzeichnung gibt es im Jira-Export nicht &ndash; die Domain ist die vorhandene thematische Einordnung) und innerhalb jeder Domäne chronologisch zusammengeführt (ältestes zuerst, nach letztem Aktualisierungsdatum, ersatzweise Erstellungsdatum).</p>
           <p class="section-label">Prozessschritte</p>
           <div class="process-steps" id="steps-job-6"></div>
-          <div class="callout">Dieser Bereich ist noch nicht implementiert &ndash; folgt in einer späteren Ausbaustufe.</div>
+          <div class="job-export-row">
+            <span class="job-export-label">Exportieren:</span>
+            <button class="btn ghost job-export-btn" data-job="6" data-format="xlsx" type="button">XLSX</button>
+            <button class="btn ghost job-export-btn" data-job="6" data-format="docx" type="button">DOCX</button>
+            <button class="btn ghost job-export-btn" data-job="6" data-format="pdf" type="button">PDF</button>
+          </div>
+          <div class="stat-line">
+            <div class="chip"><b class="mono" id="domainoverview-domain-count">0</b> Domäne(n)</div>
+            <div class="chip"><b class="mono" id="domainoverview-ticket-count">0</b> Tickets</div>
+          </div>
+          <div class="panel table-wrap" style="max-height:520px; overflow:auto;">
+            <table class="simple-table" id="domainoverview-table">
+              <thead><tr><th>Ticket</th><th>Status</th><th>Datum</th><th>Zusammenfassung</th></tr></thead>
+              <tbody id="domainoverview-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="domainoverview-empty">Noch keine Tickets geladen.</div>
+          </div>
         </div>
       </section>
 
@@ -1706,6 +1725,7 @@
     "release-keys-input", "release-match-btn", "release-match-summary",
     "release-missing-wrap", "release-missing-table", "release-missing-tbody",
     "jiraliste-count", "jiraliste-tbody",
+    "domainoverview-domain-count", "domainoverview-ticket-count", "domainoverview-tbody", "domainoverview-empty",
     "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
     "evaluate-tickets-btn", "evaluate-summary", "evaluate-count-manual", "evaluate-count-internal", "evaluate-count-unknown",
     "evaluate-table-wrap", "evaluate-tbody",
@@ -1973,6 +1993,7 @@
     render();
     renderReleaseversionTable();
     renderJiraListe();
+    renderDomainOverview();
     renderAllJobSteps();
   }
 
@@ -2825,6 +2846,43 @@
     }).join("");
   }
 
+  // 6) Domänen-Übersicht: Tickets nach Domäne gruppiert (thematische Gruppierung -
+  // Domain ist die einzige im Jira-Export vorhandene thematische Einordnung) und
+  // innerhalb jeder Domänen-Gruppe chronologisch (ältestes zuerst) zusammengeführt.
+  // Wird sowohl fuer die Tabellenansicht als auch fuer den Export (jobSections)
+  // verwendet, damit beide garantiert denselben Stand zeigen.
+  function domainOverviewGroups() {
+    var tickets = scopedTickets();
+    var byDomain = {};
+    tickets.forEach(function (t) { var d = t.domain || ""; (byDomain[d] = byDomain[d] || []).push(t); });
+    var names = Object.keys(byDomain).filter(function (d) { return d; }).sort(function (a, b) { return a.localeCompare(b, "de"); });
+    if (byDomain[""]) names.push("");
+    return names.map(function (d) {
+      var group = byDomain[d].slice().sort(function (a, b) {
+        return (a.updatedSort || a.createdSort) - (b.updatedSort || b.createdSort);
+      });
+      return { domain: d || "Ohne Domain", tickets: group };
+    });
+  }
+  function renderDomainOverview() {
+    var groups = domainOverviewGroups();
+    var totalTickets = groups.reduce(function (n, g) { return n + g.tickets.length; }, 0);
+    els.domainoverviewDomainCount.textContent = groups.length;
+    els.domainoverviewTicketCount.textContent = totalTickets;
+    var html = groups.map(function (g) {
+      var header = '<tr class="domain-group-row"><td colspan="4">' + escapeHtml(g.domain) +
+        ' <span class="domain-count">(' + g.tickets.length + " Ticket" + (g.tickets.length === 1 ? "" : "s") + ")</span></td></tr>";
+      var rows = g.tickets.map(function (t) {
+        var datum = t.updated || t.created || "–";
+        return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(t.status || "–") +
+          "</td><td class=\"mono\">" + escapeHtml(datum) + "</td><td>" + escapeHtml(t.summary || "–") + "</td></tr>";
+      }).join("");
+      return header + rows;
+    }).join("");
+    els.domainoverviewTbody.innerHTML = html;
+    els.domainoverviewEmpty.hidden = totalTickets > 0;
+  }
+
   els.releaseMatchBtn.addEventListener("click", function () {
     var releaseKeys = (els.releaseKeysInput.value || "").split("\n").map(function (k) { return k.trim(); }).filter(Boolean);
     if (!releaseKeys.length) { showToast("Keine Ticketliste", "Bitte mindestens einen Ticket-Key eingeben.", true); return; }
@@ -2979,6 +3037,7 @@
   function onActiveImportChanged() {
     renderReleaseversionTable();
     renderJiraListe();
+    renderDomainOverview();
     renderAllJobSteps();
     var label = activeImportLabel();
     addLog("Aktive Datei für Verarbeitung (Job 3/4/5): " + (label ? label : "Alle Importe (zusammengeführt)") + ".");
@@ -3053,7 +3112,13 @@
       ];
     }
     if (jobNum === 6) {
-      return [{ state: "pending", label: "Noch nicht implementiert", note: "Folgt in einer späteren Ausbaustufe" }];
+      var domainGroups = domainOverviewGroups();
+      var domainCount = domainGroups.filter(function (g) { return g.tickets.length; }).length;
+      return [
+        loaded, processed,
+        { state: scopedCount > 0 ? "done" : "pending", label: "Tickets thematisch nach Domäne gruppiert", note: scopedCount > 0 ? domainCount + " Domäne(n)" : "–" },
+        { state: scopedCount > 0 ? "done" : "pending", label: "Innerhalb jeder Domäne chronologisch zusammengeführt", note: scopedCount > 0 ? "Tabelle + XLSX/DOCX/PDF bereit" : "–" }
+      ];
     }
     return [];
   }
@@ -3106,6 +3171,19 @@
       return {
         filenameBase: "verarbeitung_5_jira_liste", title: "Job 5 – Jira Liste (" + list5.length + " importierte Tickets)",
         sections: [{ title: "Jira-Tickets", headers: ["Ticket", "Status", "Datum"], rows: list5.map(function (t) { return [t.key, t.status || "–", t.updated || t.created || "–"]; }) }]
+      };
+    }
+    if (jobNum === "6") {
+      var groups6 = domainOverviewGroups();
+      return {
+        filenameBase: "verarbeitung_6_domaenen_uebersicht", title: "Job 6 – Domänen-Übersicht (thematisch gruppiert, chronologisch zusammengeführt)",
+        sections: groups6.map(function (g) {
+          return {
+            title: g.domain,
+            headers: ["Ticket", "Status", "Datum", "Zusammenfassung"],
+            rows: g.tickets.map(function (t) { return [t.key, t.status || "–", t.updated || t.created || "–", t.summary || "–"]; })
+          };
+        })
       };
     }
     return null;
