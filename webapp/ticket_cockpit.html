@@ -266,9 +266,15 @@
     white-space: pre-wrap; font-family: "IBM Plex Mono", monospace; max-height: 62vh; overflow: auto; line-height: 1.55;
   }
   .mermaid-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; overflow: auto; }
+  .mermaid-source-details { margin-top: 12px; }
+  .mermaid-source-details summary {
+    cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-muted); user-select: none; padding: 4px 0;
+  }
+  .mermaid-source-details summary:hover { color: var(--text); }
+  .mermaid-source-details[open] summary { margin-bottom: 6px; }
   pre.mermaid-source {
     background: var(--surface-2); border-radius: 8px; padding: 12px; font-family: "IBM Plex Mono", monospace; font-size: 11.5px;
-    white-space: pre-wrap; margin: 10px 0 0;
+    white-space: pre-wrap; margin: 0;
   }
   .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
   .gallery-card { padding: 14px; }
@@ -1617,10 +1623,16 @@
     pre.className = "mermaid";
     pre.textContent = source;
     container.appendChild(pre);
+    var details = document.createElement("details");
+    details.className = "mermaid-source-details";
+    var summary = document.createElement("summary");
+    summary.textContent = "Mermaid-Quelltext anzeigen";
     var srcPre = document.createElement("pre");
     srcPre.className = "mermaid-source";
     srcPre.textContent = source;
-    container.appendChild(srcPre);
+    details.appendChild(summary);
+    details.appendChild(srcPre);
+    container.appendChild(details);
   }
 
   function renderGallery() {
