@@ -172,7 +172,25 @@ folgenden Bereichen:
   als Änderung gewertet – nur tatsächlich abweichende Werte erscheinen im
   Vergleich. Im Dashboard markiert ein Punkt hinter dem Schlüssel
   geänderte Tickets.
-- **Verarbeitung** – chronologisches Protokoll aller Import-/Export-Aktionen.
+- **Verarbeitung** – sechs Unter-Tabs für wiederkehrende Arbeitsschritte
+  rund um die geladenen Tickets (5 und 6 sind als Platzhalter angelegt,
+  folgen später):
+  1. *Jira Verarbeitung* – chronologisches Protokoll aller Import-/Export-Aktionen.
+  2. *Vergleich Jira Tickets* – derselbe Änderungsvergleich wie in der
+     Dateiverwaltung (gleiche Jira-Nummer, unterschiedlicher Datenstand),
+     zusätzlich direkt hier verfügbar.
+  3. *Glossar & Abkürzungen extrahieren* – durchsucht alle geladenen
+     Tickets nach Großbuchstaben-Kürzeln (mit Häufigkeit und
+     Beispiel-Ticket) sowie nach häufigen Status-/Typ-/Domain-Werten als
+     Glossar-Kandidaten. Es werden keine Bedeutungen erfunden, nur
+     tatsächlich vorkommende Werte gelistet; Ergebnisse erscheinen
+     zusätzlich in den neuen Registern **Glossar** (Abschnitt "Aus
+     Ticket-Daten erkannte Begriffe") und **Abkürzungen**.
+  4. *Releaseversion* – tabellarische Übersicht aller geladenen Tickets
+     mit Domain sowie ein Abgleich gegen eine eigene Release-Ticketliste
+     (ein Key pro Zeile): zeigt, welche Tickets der Liste bereits geladen
+     sind und listet die fehlenden Tickets auf (Web-App-Pendant zu
+     `match-release` aus dem CLI-Tool).
 - **Releaseletter / Benutzerhandbuch / Clickanweisung** – Textentwürfe aus
   ausgewählten Tickets (aktuelle Dashboard-Filterung oder Ticket-Keys),
   Vorschau + Markdown-Download.

@@ -260,15 +260,15 @@
   .diff-old { color: var(--blocked); text-decoration: line-through; }
   .diff-new { color: var(--done); font-weight: 600; }
   .diff-arrow { color: var(--text-faint); margin: 0 5px; }
-  #changes-table { table-layout: fixed; }
-  #changes-table td, #changes-table th { white-space: normal; overflow-wrap: normal; word-break: normal; }
-  #changes-table td:nth-child(6), #changes-table th:nth-child(6) { overflow-wrap: anywhere; }
-  #changes-table th:nth-child(1), #changes-table td:nth-child(1) { width: 12%; }
-  #changes-table th:nth-child(2), #changes-table td:nth-child(2) { width: 14%; }
-  #changes-table th:nth-child(3), #changes-table td:nth-child(3) { width: 16%; }
-  #changes-table th:nth-child(4), #changes-table td:nth-child(4) { width: 3%; }
-  #changes-table th:nth-child(5), #changes-table td:nth-child(5) { width: 16%; }
-  #changes-table th:nth-child(6), #changes-table td:nth-child(6) { width: 39%; }
+  #changes-table, #changes-table-verarbeitung { table-layout: fixed; }
+  #changes-table td, #changes-table th, #changes-table-verarbeitung td, #changes-table-verarbeitung th { white-space: normal; overflow-wrap: normal; word-break: normal; }
+  #changes-table td:nth-child(6), #changes-table th:nth-child(6), #changes-table-verarbeitung td:nth-child(6), #changes-table-verarbeitung th:nth-child(6) { overflow-wrap: anywhere; }
+  #changes-table th:nth-child(1), #changes-table td:nth-child(1), #changes-table-verarbeitung th:nth-child(1), #changes-table-verarbeitung td:nth-child(1) { width: 12%; }
+  #changes-table th:nth-child(2), #changes-table td:nth-child(2), #changes-table-verarbeitung th:nth-child(2), #changes-table-verarbeitung td:nth-child(2) { width: 14%; }
+  #changes-table th:nth-child(3), #changes-table td:nth-child(3), #changes-table-verarbeitung th:nth-child(3), #changes-table-verarbeitung td:nth-child(3) { width: 16%; }
+  #changes-table th:nth-child(4), #changes-table td:nth-child(4), #changes-table-verarbeitung th:nth-child(4), #changes-table-verarbeitung td:nth-child(4) { width: 3%; }
+  #changes-table th:nth-child(5), #changes-table td:nth-child(5), #changes-table-verarbeitung th:nth-child(5), #changes-table-verarbeitung td:nth-child(5) { width: 16%; }
+  #changes-table th:nth-child(6), #changes-table td:nth-child(6), #changes-table-verarbeitung th:nth-child(6), #changes-table-verarbeitung td:nth-child(6) { width: 39%; }
 
   .log-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
   .log-list li { padding: 10px 2px; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; gap: 12px; align-items: baseline; }
@@ -285,6 +285,14 @@
     font-size: 12.5px; background: var(--surface); color: var(--text); resize: vertical;
   }
   .gen-form .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+  /* ---- Verarbeitung: Unter-Tabs ---- */
+  .subtabs-panel[hidden] { display: none; }
+  .extract-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 820px) { .extract-grid { grid-template-columns: 1fr; } }
+  .stat-line { display: flex; gap: 20px; flex-wrap: wrap; }
+  .stat-line .chip { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 12.5px; }
+  .stat-line .chip b { font-size: 14px; }
   .gen-preview {
     background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; font-size: 12.5px;
     white-space: pre-wrap; font-family: "IBM Plex Mono", monospace; max-height: 62vh; overflow: auto; line-height: 1.55;
@@ -396,6 +404,7 @@
       <li class="nav-sep">Hilfe</li>
       <li><button class="nav-item" data-view="infobox" type="button">Infobox</button></li>
       <li><button class="nav-item" data-view="glossar" type="button">Glossar</button></li>
+      <li><button class="nav-item" data-view="abkuerzungen" type="button">Abkürzungen</button></li>
     </ul>
   </nav>
 
@@ -541,10 +550,101 @@
 
       <!-- ================= Verarbeitung ================= -->
       <section class="view-panel" data-view-panel="verarbeitung" hidden>
-        <div class="view-head"><h2>Verarbeitung</h2><p class="desc">Protokoll aller Verarbeitungsschritte dieser Sitzung.</p></div>
-        <div class="panel" style="padding: 6px 16px;">
-          <ul class="log-list" id="log-list"></ul>
-          <div class="empty-hint" id="log-empty" hidden>Noch keine Aktionen protokolliert.</div>
+        <div class="view-head"><h2>Verarbeitung</h2><p class="desc">Sechs Arbeitsschritte rund um die geladenen Tickets.</p></div>
+
+        <div class="import-tabs" id="verarbeitung-tabs">
+          <button class="import-tab active" data-vsub="protokoll" type="button">1. Jira Verarbeitung</button>
+          <button class="import-tab" data-vsub="vergleich" type="button">2. Vergleich Jira Tickets</button>
+          <button class="import-tab" data-vsub="glossar-extrakt" type="button">3. Glossar &amp; Abkürzungen extrahieren</button>
+          <button class="import-tab" data-vsub="releaseversion" type="button">4. Releaseversion</button>
+          <button class="import-tab" data-vsub="folgt-5" type="button">5. Folgt</button>
+          <button class="import-tab" data-vsub="folgt-6" type="button">6. Folgt</button>
+        </div>
+
+        <!-- 1) Jira Verarbeitung (Protokoll) -->
+        <div class="subtabs-panel" data-vsub-panel="protokoll">
+          <p class="desc">Protokoll aller Verarbeitungsschritte dieser Sitzung.</p>
+          <div class="panel" style="padding: 6px 16px;">
+            <ul class="log-list" id="log-list"></ul>
+            <div class="empty-hint" id="log-empty" hidden>Noch keine Aktionen protokolliert.</div>
+          </div>
+        </div>
+
+        <!-- 2) Vergleich Jira Tickets -->
+        <div class="subtabs-panel" data-vsub-panel="vergleich" hidden>
+          <p class="desc">Tickets, die unter derselben Jira-Nummer in mehreren Importen mit unterschiedlichem Datenstand vorkamen (z. B. neuer Status, neues Datum) &ndash; identischer Vergleich wie in der Dateiverwaltung.</p>
+          <div class="panel table-wrap">
+            <table class="simple-table" id="changes-table-verarbeitung">
+              <thead><tr><th>Ticket</th><th>Feld</th><th>Alter Wert</th><th></th><th>Neuer Wert</th><th>Quelle (alt → neu)</th></tr></thead>
+              <tbody id="changes-tbody-verarbeitung"></tbody>
+            </table>
+            <div class="empty-hint" id="changes-empty-verarbeitung">Noch keine Änderungen erkannt &ndash; lädt eine Datei ein Ticket erneut mit anderem Status/Datum, erscheint der Vergleich hier.</div>
+          </div>
+        </div>
+
+        <!-- 3) Glossar und Abkürzungen extrahieren -->
+        <div class="subtabs-panel" data-vsub-panel="glossar-extrakt" hidden>
+          <p class="desc">Durchsucht alle geladenen Tickets nach Kürzeln (Großbuchstaben-Abkürzungen) und nach häufig verwendeten Status-/Typ-/Domain-Werten als Kandidaten für Glossar und Abkürzungsverzeichnis. Es werden keine Bedeutungen erfunden &ndash; nur tatsächlich vorkommende Begriffe mit Häufigkeit und Beispiel-Ticket. Ergebnisse erscheinen zusätzlich in den Registern <b>Glossar</b> und <b>Abkürzungen</b>.</p>
+          <button class="btn primary" id="extract-glossary-btn" type="button">Jetzt aus geladenen Tickets extrahieren</button>
+          <div class="extract-grid">
+            <section>
+              <p class="section-label">Erkannte Abkürzungen (<span id="abbrev-count">0</span>)</p>
+              <div class="panel table-wrap" style="max-height:360px; overflow:auto;">
+                <table class="simple-table" id="abbrev-table">
+                  <thead><tr><th>Kürzel</th><th>Häufigkeit</th><th>Beispiel-Tickets</th></tr></thead>
+                  <tbody id="abbrev-tbody"></tbody>
+                </table>
+                <div class="empty-hint" id="abbrev-empty">Noch nicht extrahiert.</div>
+              </div>
+            </section>
+            <section>
+              <p class="section-label">Erkannte Glossar-Kandidaten (<span id="glossary-candidate-count">0</span>)</p>
+              <div class="panel table-wrap" style="max-height:360px; overflow:auto;">
+                <table class="simple-table" id="glossary-candidate-table">
+                  <thead><tr><th>Feld</th><th>Wert</th><th>Häufigkeit</th></tr></thead>
+                  <tbody id="glossary-candidate-tbody"></tbody>
+                </table>
+                <div class="empty-hint" id="glossary-candidate-empty">Noch nicht extrahiert.</div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <!-- 4) Releaseversion -->
+        <div class="subtabs-panel" data-vsub-panel="releaseversion" hidden>
+          <p class="desc">Alle geladenen Tickets mit Domain als Tabelle; darunter ein Abgleich mit einer eigenen Release-Ticketliste &ndash; welche Tickets der Liste sind bereits geladen, welche fehlen.</p>
+          <section>
+            <p class="section-label">Alle geladenen Tickets (<span id="releaseversion-total">0</span>)</p>
+            <div class="panel table-wrap" style="max-height:340px; overflow:auto;">
+              <table class="simple-table" id="releaseversion-table">
+                <thead><tr><th>Ticket</th><th>Domain</th><th>Status</th></tr></thead>
+                <tbody id="releaseversion-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+          <section>
+            <p class="section-label">Abgleich mit Release-Ticketliste</p>
+            <div class="paste-panel">
+              <textarea id="release-keys-input" rows="6" placeholder="Ein Ticket-Key pro Zeile, z. B.&#10;ONESCM-101&#10;ONESCM-102"></textarea>
+              <div class="paste-actions"><button class="btn primary" id="release-match-btn" type="button">Abgleichen</button></div>
+            </div>
+            <div class="callout" id="release-match-summary" hidden></div>
+            <div class="panel table-wrap" id="release-missing-wrap" hidden>
+              <p class="section-label" style="padding:10px 14px 0;">Fehlende Tickets (in der Liste, aber nicht geladen)</p>
+              <table class="simple-table" id="release-missing-table">
+                <thead><tr><th>Ticket-Key</th></tr></thead>
+                <tbody id="release-missing-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <!-- 5) / 6) Platzhalter -->
+        <div class="subtabs-panel" data-vsub-panel="folgt-5" hidden>
+          <div class="callout">Dieser Bereich ist noch nicht implementiert &ndash; folgt in einer späteren Ausbaustufe.</div>
+        </div>
+        <div class="subtabs-panel" data-vsub-panel="folgt-6" hidden>
+          <div class="callout">Dieser Bereich ist noch nicht implementiert &ndash; folgt in einer späteren Ausbaustufe.</div>
         </div>
       </section>
 
@@ -687,6 +787,32 @@
               <tr><td>Rohgerüst</td><td>Automatisch generierter Entwurf (Releaseletter, Handbuch, ...), der redaktionell zu prüfen ist.</td></tr>
             </tbody>
           </table>
+        </div>
+
+        <section>
+          <p class="section-label">Aus Ticket-Daten erkannte Begriffe (Kandidaten)</p>
+          <div class="callout">
+            Zusätzlich zur obigen, redaktionell gepflegten Liste: Feldwerte, die über <b>Verarbeitung → 3. Glossar &amp; Abkürzungen extrahieren</b> aus den geladenen Tickets ermittelt wurden. Es werden keine Bedeutungen erfunden &ndash; nur tatsächlich vorkommende Werte mit Häufigkeit.
+          </div>
+          <div class="panel table-wrap">
+            <table class="simple-table" id="glossary-candidate-table-register">
+              <thead><tr><th>Feld</th><th>Wert</th><th>Häufigkeit</th></tr></thead>
+              <tbody id="glossary-candidate-tbody-register"></tbody>
+            </table>
+            <div class="empty-hint" id="glossary-candidate-empty-register">Noch nicht extrahiert.</div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= Abkürzungen ================= -->
+      <section class="view-panel" data-view-panel="abkuerzungen" hidden>
+        <div class="view-head"><h2>Abkürzungen</h2><p class="desc">Großbuchstaben-Kürzel, die in Zusammenfassung, Beschreibung oder Custom-Feldern der geladenen Tickets vorkommen. Wird über <b>Verarbeitung → 3. Glossar &amp; Abkürzungen extrahieren</b> befüllt.</p></div>
+        <div class="panel table-wrap">
+          <table class="simple-table" id="abbrev-table-register">
+            <thead><tr><th>Kürzel</th><th>Häufigkeit</th><th>Beispiel-Tickets</th></tr></thead>
+            <tbody id="abbrev-tbody-register"></tbody>
+          </table>
+          <div class="empty-hint" id="abbrev-empty-register">Noch nicht extrahiert. Unter Verarbeitung → 3. Glossar &amp; Abkürzungen extrahieren einmal ausführen.</div>
         </div>
       </section>
 
@@ -1205,6 +1331,14 @@
     "paste-textarea", "paste-from-clipboard-btn", "paste-process-btn", "paste-spinner", "paste-process-label",
     "imports-tbody", "changes-tbody", "changes-empty", "domain-aliases-tbody",
     "log-list", "log-empty",
+    "verarbeitung-tabs", "changes-tbody-verarbeitung", "changes-empty-verarbeitung",
+    "extract-glossary-btn", "abbrev-count", "abbrev-tbody", "abbrev-empty",
+    "glossary-candidate-count", "glossary-candidate-tbody", "glossary-candidate-empty",
+    "glossary-candidate-tbody-register", "glossary-candidate-empty-register",
+    "abbrev-tbody-register", "abbrev-empty-register",
+    "releaseversion-total", "releaseversion-tbody",
+    "release-keys-input", "release-match-btn", "release-match-summary",
+    "release-missing-wrap", "release-missing-table", "release-missing-tbody",
     "gallery", "gallery-empty",
     "output-md-count", "output-md-total", "output-md-export-btn",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn",
@@ -1224,6 +1358,7 @@
     tickets: [],
     view: { bucket: "all", domain: "", query: "", sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
+    extracted: { abbreviations: [], glossaryCandidates: [], ran: false },
     initialized: false
   };
 
@@ -1348,12 +1483,18 @@
   function resetSession() {
     app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
     app.generatedImages = []; app.initialized = false;
+    app.extracted = { abbreviations: [], glossaryCandidates: [], ran: false };
     var raw = JSON.parse(document.getElementById("initial-ticket-data").textContent);
     var metaEl = document.getElementById("initial-ticket-meta");
     var meta; try { meta = JSON.parse(metaEl.textContent); } catch (e) { meta = null; }
     if (!meta || !meta.source) meta = { source: "Beispieldaten", when: new Date().toLocaleDateString("de-DE"), format: "Jira HTML-Export (Issue-Tabelle)" };
     ingestTickets(raw, meta);
     renderGallery();
+    renderExtractedAbbreviations();
+    renderExtractedGlossaryCandidates();
+    els.releaseMatchSummary.hidden = true;
+    els.releaseMissingWrap.hidden = true;
+    els.releaseKeysInput.value = "";
   }
 
   function refreshDashboard(resetFilters) {
@@ -1388,6 +1529,7 @@
     buildDomainChart();
     buildFormatCallout();
     render();
+    renderReleaseversionTable();
   }
 
   function buildFormatCallout() {
@@ -1824,8 +1966,6 @@
   }
 
   function renderChangesTable() {
-    if (!app.changes.length) { els.changesTbody.innerHTML = ""; els.changesEmpty.hidden = false; return; }
-    els.changesEmpty.hidden = true;
     var rowsHtml = [];
     app.changes.forEach(function (c) {
       c.diffs.forEach(function (d, i) {
@@ -1841,7 +1981,14 @@
         );
       });
     });
-    els.changesTbody.innerHTML = rowsHtml.join("");
+    var html = rowsHtml.join("");
+    // Identischer Vergleich wird in Dateiverwaltung UND Verarbeitung ("2. Vergleich Jira Tickets") angezeigt.
+    [[els.changesTbody, els.changesEmpty], [els.changesTbodyVerarbeitung, els.changesEmptyVerarbeitung]].forEach(function (pair) {
+      var tbody = pair[0], empty = pair[1];
+      if (!tbody) return;
+      tbody.innerHTML = html;
+      if (empty) empty.hidden = !!app.changes.length;
+    });
   }
 
   /* ============ Teil 8: Verarbeitung (Protokoll) ============ */
@@ -1853,6 +2000,148 @@
       return "<li><time>" + escapeHtml(l.when) + "</time><span>" + escapeHtml(l.message) + "</span></li>";
     }).join("");
   }
+
+  /* ============ Teil 8b: Verarbeitung Unter-Tabs (2-4) ============ */
+
+  function showVerarbeitungSub(name) {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-vsub-panel]"), function (p) {
+      p.hidden = p.getAttribute("data-vsub-panel") !== name;
+    });
+    Array.prototype.forEach.call(els.verarbeitungTabs.querySelectorAll(".import-tab"), function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-vsub") === name);
+    });
+  }
+  Array.prototype.forEach.call(els.verarbeitungTabs.querySelectorAll(".import-tab"), function (btn) {
+    btn.addEventListener("click", function () { showVerarbeitungSub(btn.getAttribute("data-vsub")); });
+  });
+
+  // 3) Glossar & Abkürzungen extrahieren: nur tatsächlich vorkommende Werte
+  // werden gelistet (Häufigkeit + Beispiel-Ticket) - es wird keine Bedeutung
+  // erfunden, das bleibt redaktionelle Aufgabe im Glossar-Register.
+  var ABBREV_RE = /\b[A-ZÄÖÜ]{2,6}\b/g;
+  function extractAbbreviations(tickets) {
+    var counts = {};
+    tickets.forEach(function (t) {
+      var parts = [t.summary, t.description];
+      if (t.custom_fields) Object.keys(t.custom_fields).forEach(function (k) { parts.push(t.custom_fields[k]); });
+      var text = parts.filter(Boolean).join(" \n ");
+      var seenInTicket = {};
+      var m;
+      ABBREV_RE.lastIndex = 0;
+      while ((m = ABBREV_RE.exec(text))) {
+        var tok = m[0];
+        if (seenInTicket[tok]) continue;
+        seenInTicket[tok] = true;
+        if (!counts[tok]) counts[tok] = { term: tok, count: 0, examples: [] };
+        counts[tok].count++;
+        if (counts[tok].examples.length < 3) counts[tok].examples.push(t.key);
+      }
+    });
+    return Object.keys(counts).map(function (k) { return counts[k]; })
+      .sort(function (a, b) { return b.count - a.count || a.term.localeCompare(b.term); });
+  }
+
+  var GLOSSARY_CANDIDATE_FIELDS = [
+    { key: "status", label: "Status" },
+    { key: "issue_type", label: "Typ" },
+    { key: "priority", label: "Priorität" },
+    { key: "resolution", label: "Lösung" }
+  ];
+  function extractGlossaryCandidates(tickets) {
+    var counts = {};
+    function bump(field, value) {
+      var id = field + "|" + value;
+      counts[id] = counts[id] || { field: field, value: value, count: 0 };
+      counts[id].count++;
+    }
+    tickets.forEach(function (t) {
+      GLOSSARY_CANDIDATE_FIELDS.forEach(function (f) { if (t[f.key]) bump(f.label, t[f.key]); });
+      var domain = t.custom_fields && t.custom_fields.Domain;
+      if (domain) bump("Domain", domain);
+    });
+    return Object.keys(counts).map(function (k) { return counts[k]; })
+      .sort(function (a, b) { return b.count - a.count; });
+  }
+
+  function renderExtractedAbbreviations() {
+    var list = app.extracted.abbreviations;
+    var html = list.map(function (r) {
+      return "<tr><td class=\"mono\">" + escapeHtml(r.term) + "</td><td class=\"mono\">" + r.count +
+        "</td><td class=\"mono\">" + escapeHtml(r.examples.join(", ")) + "</td></tr>";
+    }).join("");
+    [els.abbrevCount].forEach(function (el) { el.textContent = list.length; });
+    [[els.abbrevTbody, els.abbrevEmpty], [els.abbrevTbodyRegister, els.abbrevEmptyRegister]].forEach(function (pair) {
+      pair[0].innerHTML = html;
+      pair[1].hidden = list.length > 0;
+      if (app.extracted.ran && !list.length) pair[1].textContent = "Keine Abkürzungen in den geladenen Tickets gefunden.";
+    });
+  }
+
+  function renderExtractedGlossaryCandidates() {
+    var list = app.extracted.glossaryCandidates;
+    var html = list.map(function (r) {
+      return "<tr><td>" + escapeHtml(r.field) + "</td><td>" + escapeHtml(r.value) + "</td><td class=\"mono\">" + r.count + "</td></tr>";
+    }).join("");
+    els.glossaryCandidateCount.textContent = list.length;
+    [[els.glossaryCandidateTbody, els.glossaryCandidateEmpty], [els.glossaryCandidateTbodyRegister, els.glossaryCandidateEmptyRegister]].forEach(function (pair) {
+      pair[0].innerHTML = html;
+      pair[1].hidden = list.length > 0;
+      if (app.extracted.ran && !list.length) pair[1].textContent = "Keine Glossar-Kandidaten gefunden.";
+    });
+  }
+
+  els.extractGlossaryBtn.addEventListener("click", function () {
+    var tickets = app.tickets.map(function (t) { return t.raw; });
+    app.extracted.abbreviations = extractAbbreviations(tickets);
+    app.extracted.glossaryCandidates = extractGlossaryCandidates(tickets);
+    app.extracted.ran = true;
+    renderExtractedAbbreviations();
+    renderExtractedGlossaryCandidates();
+    addLog(
+      "Glossar-/Abkürzungs-Extraktion: " + app.extracted.abbreviations.length + " Abkürzungen, " +
+      app.extracted.glossaryCandidates.length + " Glossar-Kandidaten über " + tickets.length + " Tickets."
+    );
+    showToast(
+      "Extraktion abgeschlossen",
+      app.extracted.abbreviations.length + " Abkürzungen und " + app.extracted.glossaryCandidates.length +
+      " Glossar-Kandidaten gefunden – auch in den Registern Glossar und Abkürzungen sichtbar."
+    );
+  });
+
+  // 4) Releaseversion: alle geladenen Tickets + Abgleich gegen eine
+  // Release-Ticketliste (spiegelt die CLI-Logik aus release_matcher.py).
+  function renderReleaseversionTable() {
+    var list = app.tickets.slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
+    els.releaseversionTotal.textContent = list.length;
+    els.releaseversionTbody.innerHTML = list.map(function (t) {
+      return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(t.domain || "–") +
+        "</td><td>" + escapeHtml(t.status || "–") + "</td></tr>";
+    }).join("");
+  }
+
+  els.releaseMatchBtn.addEventListener("click", function () {
+    var releaseKeys = (els.releaseKeysInput.value || "").split("\n").map(function (k) { return k.trim(); }).filter(Boolean);
+    if (!releaseKeys.length) { showToast("Keine Ticketliste", "Bitte mindestens einen Ticket-Key eingeben.", true); return; }
+    var availableNorm = {};
+    app.ticketStore.forEach(function (entry, key) { availableNorm[key.toUpperCase()] = key; });
+    var found = [], missing = [];
+    releaseKeys.forEach(function (k) {
+      var norm = k.toUpperCase();
+      if (availableNorm[norm]) found.push(availableNorm[norm]); else missing.push(k);
+    });
+    els.releaseMatchSummary.hidden = false;
+    els.releaseMatchSummary.innerHTML =
+      "<b>" + found.length + "</b> von <b>" + releaseKeys.length + "</b> Tickets der Liste sind bereits geladen. " +
+      "<b>" + missing.length + "</b> fehlen" + (missing.length ? " (siehe Tabelle unten)." : " – alle Tickets des Release sind vorhanden.");
+    if (missing.length) {
+      els.releaseMissingWrap.hidden = false;
+      els.releaseMissingTbody.innerHTML = missing.map(function (k) { return "<tr><td class=\"mono\">" + escapeHtml(k) + "</td></tr>"; }).join("");
+    } else {
+      els.releaseMissingWrap.hidden = true;
+      els.releaseMissingTbody.innerHTML = "";
+    }
+    addLog("Release-Abgleich: " + found.length + "/" + releaseKeys.length + " Tickets geladen, " + missing.length + " fehlen.");
+  });
 
   /* ============ Teil 9: Phase-3-Generatoren ============ */
 
