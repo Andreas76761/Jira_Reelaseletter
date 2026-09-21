@@ -154,8 +154,10 @@ wirkungslos bleiben kann:
   (nur tatsächlich vorkommende, automatisch zugeordnete Labels zur
   Auswahl, siehe Einstellungen → Labels), eine um Labels **erweiterte
   Volltextsuche** (durchsucht Schlüssel, Zusammenfassung und Labels),
-  sortierbare Tabelle, Ticket-Detailansicht (18 Standardfelder, fehlende
-  klar als "Nicht im Export enthalten" markiert statt erfunden).
+  sortierbare Tabelle inklusive Spalte **Typ** (Jira-Feld "Typ" – Epic,
+  Story, Feature, Bug, ...; fehlt der Typ im Export, wird das ehrlich als
+  "–" ausgewiesen statt geraten), Ticket-Detailansicht (18 Standardfelder,
+  fehlende klar als "Nicht im Export enthalten" markiert statt erfunden).
 - **Import** – vier Formate per Tab wählbar, jeweils mit Mehrfachauswahl
   und Drag&Drop; zusätzlich eine **Zwischenablage-Funktion**: Text direkt
   einfügen (Button „Aus Zwischenablage einfügen“ oder Strg+V in das
@@ -237,14 +239,14 @@ wirkungslos bleiben kann:
      Ergebnisse erscheinen zusätzlich in den neuen Registern **Glossar**
      (Abschnitt "Aus Ticket-Daten erkannte Begriffe") und **Abkürzungen**.
   4. *Releaseversion* – tabellarische Übersicht aller geladenen Tickets
-     mit Domäne, Beschreibung, Priorität (Punkte) und Labels, ein Abgleich
+     mit Typ, Domäne, Beschreibung, Priorität (Punkte) und Labels, ein Abgleich
      gegen eine eigene Release-Ticketliste (ein Key pro Zeile, zeigt
      fehlende Tickets, Web-App-Pendant zu `match-release` aus dem
      CLI-Tool) sowie eine Bewertung, welche Tickets anhand des Jira-Feldes
      "Typ" als Benutzerhandbuch-Kandidat gelten und welche nur intern/Bug
      sind (fehlt der Typ im Export, wird das als "Unbekannt" ausgewiesen
      statt geraten).
-  5. *Jira Liste* – alle importierten Jira-Nummern mit Status, Datum,
+  5. *Jira Liste* – alle importierten Jira-Nummern mit Typ, Status, Datum,
      Domäne, Beschreibung, Priorität (Punkte) und Labels, inklusive
      prominent angezeigter Gesamtanzahl der importierten Tickets.
   6. *Domänen-Übersicht* – alle geladenen Tickets werden thematisch nach
@@ -253,10 +255,13 @@ wirkungslos bleiben kann:
      Einordnung) und innerhalb jeder Domäne chronologisch zusammengeführt
      (ältestes zuerst, nach letztem Aktualisierungs-, ersatzweise
      Erstellungsdatum); Domänen selbst alphabetisch, Tickets ohne Domäne
-     bilden eine eigene Gruppe am Ende, zusätzlich mit Beschreibung,
+     bilden eine eigene Gruppe am Ende, zusätzlich mit Typ, Beschreibung,
      Priorität (Punkte) und Labels je Ticket. Export als XLSX/DOCX/PDF
      liefert dieselbe Gruppierung als einen eigenen Abschnitt pro Domäne.
 
+  Die Spalte **Typ** (Jobs 4-6 sowie das Dashboard) zeigt das rohe
+  Jira-Feld "Typ" (issue_type, z. B. Epic/Story/Feature/Bug) unverändert;
+  fehlt es im Export, erscheint ehrlich "–" statt eines geratenen Werts.
   Die Spalten **Priorität (Punkte)** und **Labels** in Jobs 4-6 werden
   automatisch beim Verarbeiten befüllt (siehe Einstellungen unten):
   Priorität aus dem konfigurierbaren Punkte-System je Tickettyp (Jira-Feld
@@ -300,7 +305,7 @@ wirkungslos bleiben kann:
   erzeugtes SVG gerendert (kein Server, keine externe Grafikbibliothek)
   und lassen sich als `.svg` herunterladen; das klassische
   Mermaid-Format bleibt Standardauswahl und unverändert. Zusätzlich lässt
-  sich die zugrundeliegende Schritt-Tabelle (Ticket/Titel/Status/Domäne/
+  sich die zugrundeliegende Schritt-Tabelle (Ticket/Typ/Titel/Status/Domäne/
   Priorität-Punkte/Labels/Beschreibung) unabhängig vom Bildformat als
   XLSX/DOCX/PDF exportieren.
 - **Bilder** – Tabelle **und** Kachel-Galerie aller in der Sitzung
