@@ -537,6 +537,7 @@
       <li><button class="nav-item" data-view="dashboard" type="button">Dashboard</button></li>
       <li><button class="nav-item" data-view="import" type="button">Import</button></li>
       <li><button class="nav-item" data-view="dateiverwaltung" type="button">Dateiverwaltung<span class="count-badge" id="nav-badge-changes" hidden>0</span></button></li>
+      <li><button class="nav-item" data-view="listenauswahl" type="button">Listenauswahl<span class="count-badge" id="nav-badge-lists" hidden>0</span></button></li>
       <li><button class="nav-item" data-view="verarbeitung" type="button">Verarbeitung</button></li>
       <li class="nav-sep">Dokumente</li>
       <li><button class="nav-item" data-view="releaseletter" type="button">Releaseletter</button></li>
@@ -578,6 +579,11 @@
 
         <div class="tiles" id="tiles"></div>
 
+        <section id="type-section">
+          <p class="section-label">Typ-Schnellfilter</p>
+          <div class="import-tabs" id="type-chips"></div>
+        </section>
+
         <section id="domain-section">
           <p class="section-label" id="domain-label">Domain</p>
           <div class="panel domain-chart" id="domain-chart"></div>
@@ -595,10 +601,19 @@
             <span class="spacer"></span>
             <span class="result-count" id="result-count"></span>
           </div>
+          <div class="controls" id="selection-controls">
+            <span class="result-count" id="selection-count">0 Tickets ausgewählt</span>
+            <button class="btn ghost btn-tiny" id="selection-select-all-btn" type="button">Alle sichtbaren auswählen</button>
+            <button class="btn ghost btn-tiny" id="selection-clear-btn" type="button">Auswahl aufheben</button>
+            <span class="spacer"></span>
+            <button class="btn ghost" id="selection-export-keys-btn" type="button" disabled>Auswahl: Nur Jira-Nummern</button>
+            <button class="btn ghost" id="selection-export-content-btn" type="button" disabled>Auswahl: Gesamtinhalt (XLSX)</button>
+          </div>
           <div class="panel table-shell">
             <table>
               <thead>
                 <tr>
+                  <th id="select-all-th"><input type="checkbox" id="select-all-checkbox" aria-label="Alle sichtbaren auswählen"></th>
                   <th data-key="key">Schlüssel <span class="arrow">&darr;</span></th>
                   <th data-key="summary">Zusammenfassung <span class="arrow">&darr;</span></th>
                   <th data-key="status">Status <span class="arrow">&darr;</span></th>
@@ -702,6 +717,31 @@
               <thead><tr><th>Erkannte Schreibweise</th><th>Wird zu</th></tr></thead>
               <tbody id="domain-aliases-tbody"></tbody>
             </table>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= Listenauswahl ================= -->
+      <section class="view-panel" data-view-panel="listenauswahl" hidden>
+        <div class="view-head"><h2>Listenauswahl</h2><p class="desc">Die im Dashboard per Checkbox ausgewählten Tickets als benannte Liste mit Datum speichern &ndash; sowohl die Ticket-Inhalte als auch die reine Liste der Jira-Nummern bleiben erhalten und lassen sich später erneut exportieren, auch nachdem sich die Dashboard-Auswahl geändert hat.</p></div>
+
+        <section>
+          <p class="section-label">Aktuelle Dashboard-Auswahl speichern</p>
+          <div class="callout" id="listenauswahl-current-count">Im Dashboard sind aktuell 0 Tickets ausgewählt.</div>
+          <div class="upload-row">
+            <input type="text" id="listenauswahl-name-input" class="text-input" placeholder="Name der Liste (z. B. &quot;Release 2026.4 – Benutzerhandbuch-Kandidaten&quot;)" maxlength="120" style="flex:1 1 320px;">
+            <button class="btn primary" id="listenauswahl-save-btn" type="button" disabled>Liste speichern</button>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">Gespeicherte Listen (<span id="listenauswahl-count">0</span>)</p>
+          <div class="panel table-wrap">
+            <table class="simple-table" id="listenauswahl-table">
+              <thead><tr><th>Name</th><th>Datum</th><th>Tickets</th><th>Aktion</th></tr></thead>
+              <tbody id="listenauswahl-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="listenauswahl-empty">Noch keine Liste gespeichert &ndash; im Dashboard Tickets per Checkbox auswählen und hier benannt speichern.</div>
           </div>
         </section>
       </section>
@@ -3296,7 +3336,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.3.1";
+  var APP_VERSION = "2.4.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -4031,8 +4071,12 @@
   [
     "sidebar", "sidebar-toggle", "sidebar-open-btn", "nav-list", "nav-badge-changes",
     "stat-tickets", "stat-imports", "stat-changes", "app-version",
-    "tiles", "domain-chart", "domain-section", "domain-label", "domain-select", "label-select", "search-input", "reset-filter-btn",
+    "tiles", "type-chips", "domain-chart", "domain-section", "domain-label", "domain-select", "label-select", "search-input", "reset-filter-btn",
     "table-body", "empty-state", "result-count",
+    "select-all-checkbox", "selection-count", "selection-select-all-btn", "selection-clear-btn",
+    "selection-export-keys-btn", "selection-export-content-btn",
+    "nav-badge-lists", "listenauswahl-current-count", "listenauswahl-name-input", "listenauswahl-save-btn",
+    "listenauswahl-count", "listenauswahl-tbody", "listenauswahl-empty",
     "dropzone", "dropzone-title", "dropzone-hint", "dropzone-icon", "dropzone-spinner", "file-input", "reset-session-btn", "format-callout", "import-tabs",
     "import-comment-input",
     "paste-textarea", "paste-from-clipboard-btn", "paste-process-btn", "paste-spinner", "paste-process-label",
@@ -4085,8 +4129,20 @@
     // gemeinsam mit generatedImages in der Bilder-Galerie angezeigt.
     uploadedImages: [],
     tickets: [],
-    view: { bucket: "all", domain: "", label: "", query: "", sortKey: "created", sortDir: "desc" },
+    view: { bucket: "all", domain: "", label: "", query: "", issueType: "", sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
+    // Dashboard-Checkbox-Auswahl (Listenauswahl/Selektions-Export) - Map
+    // Ticket-Key -> true, unabhaengig von der aktuellen Filterung; bleibt
+    // beim Aendern eines Filters erhalten, nur "Sitzung zurücksetzen"/
+    // "Alle Daten löschen" leeren sie (die Tickets koennten sonst nicht
+    // mehr existieren).
+    selectedKeys: {},
+    // Als Liste gespeicherte Selektionen (Listenauswahl): je Eintrag Name,
+    // Zeitpunkt, die reinen Jira-Nummern UND ein Inhalts-Snapshot der
+    // Tickets zum Speicherzeitpunkt - bleibt daher auch nutzbar, wenn sich
+    // die Dashboard-Auswahl oder die Tickets selbst spaeter aendern.
+    savedLists: [],
+    nextSavedListId: 1,
     extracted: { abbreviations: [], glossaryCandidates: [], ran: false },
     // Zusatzstatus je Job fuer die Prozessschritt-Anzeige, der sich nicht
     // direkt aus den obigen Datenstrukturen ableiten laesst (z. B. ob eine
@@ -4255,6 +4311,7 @@
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     };
     app.activeImportId = null;
+    app.selectedKeys = {}; app.savedLists = []; app.nextSavedListId = 1;
     editingCommentImportId = null;
     els.importCommentInput.value = "";
     var raw = JSON.parse(document.getElementById("initial-ticket-data").textContent);
@@ -4285,6 +4342,7 @@
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     };
     app.activeImportId = null;
+    app.selectedKeys = {}; app.savedLists = []; app.nextSavedListId = 1;
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
     if (!els.compareModalOverlay.hidden) closeCompareModal();
@@ -4463,25 +4521,35 @@
       };
     });
     if (resetFilters) {
-      app.view = { bucket: "all", domain: "", label: "", query: "", sortKey: "created", sortDir: "desc" };
+      app.view = { bucket: "all", domain: "", label: "", query: "", issueType: "", sortKey: "created", sortDir: "desc" };
       els.searchInput.value = "";
     }
+    // Auswahl (Listenauswahl-Export) auf tatsaechlich noch existierende
+    // Tickets begrenzen - nach einem Teil-Loeschen/Reset sollen keine
+    // "Geister"-Keys in Zaehler/Export landen.
+    var stillExists = {};
+    app.tickets.forEach(function (t) { stillExists[t.key] = true; });
+    Object.keys(app.selectedKeys).forEach(function (k) { if (!stillExists[k]) delete app.selectedKeys[k]; });
 
     var bucketCounts = {};
     var domainCounts = {};
     var labelCounts = {};
+    var issueTypeCounts = {};
     app.tickets.forEach(function (t) {
       bucketCounts[t.bucket] = (bucketCounts[t.bucket] || 0) + 1;
       if (t.domain) domainCounts[t.domain] = (domainCounts[t.domain] || 0) + 1;
+      if (t.issueType) issueTypeCounts[t.issueType] = (issueTypeCounts[t.issueType] || 0) + 1;
       (t.autoLabels || []).forEach(function (l) { labelCounts[l] = (labelCounts[l] || 0) + 1; });
     });
     app.domainCounts = domainCounts;
     app.domainList = Object.keys(domainCounts).sort(function (a, b) { return domainCounts[b] - domainCounts[a]; });
     app.labelCounts = labelCounts;
     app.labelList = Object.keys(labelCounts).sort(function (a, b) { return labelCounts[b] - labelCounts[a]; });
+    app.issueTypeCounts = issueTypeCounts;
     populateLabelSelect();
 
     buildTiles(bucketCounts);
+    buildTypeChips(issueTypeCounts);
     buildDomainChart();
     buildFormatCallout();
     render();
@@ -4490,6 +4558,7 @@
     renderDomainOverview();
     renderAllJobSteps();
     ragPopulateSelects();
+    renderSavedLists();
   }
 
   function buildFormatCallout() {
@@ -4517,6 +4586,8 @@
     els.settingsCurrentImports.textContent = app.imports.length;
     if (app.changes.length) { els.navBadgeChanges.hidden = false; els.navBadgeChanges.textContent = app.changes.length; }
     else { els.navBadgeChanges.hidden = true; }
+    if (app.savedLists.length) { els.navBadgeLists.hidden = false; els.navBadgeLists.textContent = app.savedLists.length; }
+    else { els.navBadgeLists.hidden = true; }
   }
 
   function buildTiles(bucketCounts) {
@@ -4536,6 +4607,48 @@
       render();
     });
     return btn;
+  }
+
+  // Schnellfilter nach Tickettyp (Jira-Feld "Typ"/issue_type), z. B. Epic/
+  // Story/Feature/Bug - rein aus den tatsaechlich geladenen Tickets
+  // abgeleitet (keine feste Liste), damit auch firmenspezifische Typen
+  // erscheinen und nie ein leerer Filter fuer einen nicht vorhandenen Typ
+  // angezeigt wird. Bekannte Standardtypen zuerst (feste Reihenfolge),
+  // alles Weitere danach nach Häufigkeit.
+  var TYPE_CHIP_PRIORITY = ["Epic", "Story", "Feature", "Task", "Bug"];
+  function buildTypeChips(issueTypeCounts) {
+    els.typeChips.innerHTML = "";
+    var types = Object.keys(issueTypeCounts);
+    document.getElementById("type-section").hidden = types.length === 0;
+    if (!types.length) return;
+    types.sort(function (a, b) {
+      var pa = TYPE_CHIP_PRIORITY.indexOf(a), pb = TYPE_CHIP_PRIORITY.indexOf(b);
+      if (pa !== -1 || pb !== -1) return (pa === -1 ? 999 : pa) - (pb === -1 ? 999 : pb);
+      return issueTypeCounts[b] - issueTypeCounts[a];
+    });
+    var allBtn = document.createElement("button");
+    allBtn.className = "import-tab" + (app.view.issueType ? "" : " active"); allBtn.type = "button";
+    allBtn.textContent = "Alle Typen";
+    allBtn.addEventListener("click", function () { app.view.issueType = ""; syncTypeChips(); render(); });
+    els.typeChips.appendChild(allBtn);
+    types.forEach(function (type) {
+      var btn = document.createElement("button");
+      btn.className = "import-tab" + (app.view.issueType === type ? " active" : ""); btn.type = "button";
+      btn.setAttribute("data-type", type);
+      btn.textContent = type + " (" + issueTypeCounts[type] + ")";
+      btn.addEventListener("click", function () {
+        app.view.issueType = app.view.issueType === type ? "" : type;
+        syncTypeChips();
+        render();
+      });
+      els.typeChips.appendChild(btn);
+    });
+  }
+  function syncTypeChips() {
+    Array.prototype.forEach.call(els.typeChips.children, function (btn) {
+      var type = btn.getAttribute("data-type");
+      btn.classList.toggle("active", type ? app.view.issueType === type : !app.view.issueType);
+    });
   }
 
   function buildDomainChart() {
@@ -4575,6 +4688,7 @@
     var out = app.tickets.filter(function (t) {
       if (v.bucket !== "all" && t.bucket !== v.bucket) return false;
       if (v.domain && t.domain !== v.domain) return false;
+      if (v.issueType && t.issueType !== v.issueType) return false;
       if (v.label && (!t.autoLabels || t.autoLabels.indexOf(v.label) === -1)) return false;
       if (v.query) {
         var hay = (t.key + " " + t.summary + " " + (t.autoLabels || []).join(" ")).toUpperCase();
@@ -4600,11 +4714,85 @@
   // angehängt, liest lastRenderedFiltered zum Klickzeitpunkt.
   var lastRenderedFiltered = [];
   els.tableBody.addEventListener("click", function (e) {
+    var checkbox = e.target.closest ? e.target.closest("input.row-select-checkbox") : null;
+    if (checkbox) {
+      var checkTr = checkbox.closest("tr[data-idx]");
+      var checkT = checkTr && lastRenderedFiltered[parseInt(checkTr.getAttribute("data-idx"), 10)];
+      if (checkT) setSelected(checkT.key, checkbox.checked);
+      return;
+    }
     var tr = e.target.closest ? e.target.closest("tr[data-idx]") : null;
     if (!tr) return;
     var t = lastRenderedFiltered[parseInt(tr.getAttribute("data-idx"), 10)];
     if (t) openModal(t);
   });
+
+  // Dashboard-Checkbox-Auswahl (fuer Listenauswahl/Selektions-Export) - bleibt
+  // ueber Filteraenderungen hinweg erhalten, siehe app.selectedKeys.
+  function setSelected(key, on) {
+    if (on) app.selectedKeys[key] = true; else delete app.selectedKeys[key];
+    updateSelectionUI();
+  }
+  function selectedCount() { return Object.keys(app.selectedKeys).length; }
+  function selectedTickets() {
+    return app.tickets.filter(function (t) { return app.selectedKeys[t.key]; });
+  }
+  function updateSelectionUI() {
+    var n = selectedCount();
+    els.selectionCount.textContent = n + (n === 1 ? " Ticket ausgewählt" : " Tickets ausgewählt");
+    els.selectionExportKeysBtn.disabled = n === 0;
+    els.selectionExportContentBtn.disabled = n === 0;
+    var visible = lastRenderedFiltered;
+    var visibleSelected = visible.length && visible.every(function (t) { return app.selectedKeys[t.key]; });
+    els.selectAllCheckbox.checked = visibleSelected;
+    els.selectAllCheckbox.indeterminate = !visibleSelected && visible.some(function (t) { return app.selectedKeys[t.key]; });
+    Array.prototype.forEach.call(els.tableBody.querySelectorAll("input.row-select-checkbox"), function (cb) {
+      cb.checked = !!app.selectedKeys[cb.getAttribute("data-key")];
+    });
+    els.listenauswahlCurrentCount.textContent = "Im Dashboard sind aktuell " + n + (n === 1 ? " Ticket" : " Tickets") + " ausgewählt.";
+    els.listenauswahlSaveBtn.disabled = n === 0;
+  }
+
+  // Auswahl-Export (Dashboard): entweder nur die reinen Jira-Nummern (.txt,
+  // z. B. um sie in Jira selbst als JQL-Filter "key in (...)" weiterzuverwenden)
+  // oder der Gesamtinhalt der ausgewählten Tickets (.xlsx, dieselben Spalten
+  // wie die Job-Exporte in Verarbeitung).
+  function exportSelectionKeysOnly() {
+    var tickets = selectedTickets();
+    if (!tickets.length) return;
+    var text = tickets.map(function (t) { return t.key; }).join("\n") + "\n";
+    var blob = new Blob([text], { type: "text/plain" });
+    saveOrWarn("Auswahl_" + tickets.length + "_Jira-Nummern.txt", blob).then(function (ok) {
+      if (!ok) return;
+      showToast("Gespeichert", tickets.length + " Jira-Nummer(n) als Textdatei heruntergeladen.");
+      addLog("Auswahl exportiert: " + tickets.length + " Jira-Nummer(n) (nur Nummern, .txt).");
+    });
+  }
+  function selectionXlsxSections(tickets) {
+    return [{
+      title: "Auswahl",
+      headers: ["Ticket", "Zusammenfassung", "Status", "Domäne", "Typ", "Priorität (Punkte)", "Labels", "Beschreibung"],
+      rows: tickets.map(function (t) {
+        return [
+          t.key, t.summary || "–", t.status || "–", t.domain || "–", t.issueType || "–",
+          pointsDisplay(t.points), labelsDisplayText(t.autoLabels), (t.raw && t.raw.description) || "–"
+        ];
+      })
+    }];
+  }
+  async function exportSelectionContent() {
+    var tickets = selectedTickets();
+    if (!tickets.length) return;
+    try {
+      var blob = await buildXlsxBlob(selectionXlsxSections(tickets));
+      var ok = await saveOrWarn("Auswahl_" + tickets.length + "_Tickets.xlsx", blob);
+      if (!ok) return;
+      showToast("Gespeichert", tickets.length + " Ticket(s) als XLSX heruntergeladen.");
+      addLog("Auswahl exportiert: " + tickets.length + " Ticket(s) (Gesamtinhalt, .xlsx).");
+    } catch (err) {
+      showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    }
+  }
 
   function render() {
     var filtered = currentFiltered();
@@ -4616,11 +4804,13 @@
     });
     els.resultCount.innerHTML = "<b>" + filtered.length + "</b> von " + app.tickets.length + " angezeigt";
 
-    if (!filtered.length) { els.tableBody.innerHTML = ""; els.emptyState.hidden = false; renderOutputCounts(); return; }
+    if (!filtered.length) { els.tableBody.innerHTML = ""; els.emptyState.hidden = false; renderOutputCounts(); updateSelectionUI(); return; }
     els.emptyState.hidden = true;
 
     els.tableBody.innerHTML = filtered.map(function (t, i) {
+      var checked = app.selectedKeys[t.key] ? " checked" : "";
       return '<tr data-idx="' + i + '"' + (t.changed ? ' class="is-changed"' : "") + ">" +
+        '<td><input type="checkbox" class="row-select-checkbox" data-key="' + escapeHtml(t.key) + '" aria-label="' + escapeHtml(t.key) + ' auswählen"' + checked + "></td>" +
         '<td class="key">' + escapeHtml(t.key) + "</td>" +
         '<td class="summary">' + (t.summary ? escapeHtml(t.summary) : "&ndash;") + "</td>" +
         "<td>" + pillHtml(t) + "</td>" +
@@ -4630,6 +4820,7 @@
         '<td class="date">' + escapeHtml(t.updated) + "</td></tr>";
     }).join("");
     renderOutputCounts();
+    updateSelectionUI();
   }
 
   function renderOutputCounts() {
@@ -5255,11 +5446,25 @@
   }, SEARCH_DEBOUNCE_MS);
   els.searchInput.addEventListener("input", debouncedSearchRender);
   els.resetFilterBtn.addEventListener("click", function () {
-    app.view.bucket = "all"; app.view.domain = ""; app.view.label = ""; app.view.query = "";
+    app.view.bucket = "all"; app.view.domain = ""; app.view.label = ""; app.view.query = ""; app.view.issueType = "";
     els.searchInput.value = ""; els.domainSelect.value = ""; els.labelSelect.value = "";
     Array.prototype.forEach.call(els.tiles.children, function (el, i) { el.setAttribute("aria-pressed", i === 0 ? "true" : "false"); });
-    syncDomainRows(); render();
+    syncDomainRows(); syncTypeChips(); render();
   });
+  els.selectAllCheckbox.addEventListener("change", function () {
+    var on = els.selectAllCheckbox.checked;
+    lastRenderedFiltered.forEach(function (t) { setSelected(t.key, on); });
+  });
+  els.selectionSelectAllBtn.addEventListener("click", function () {
+    lastRenderedFiltered.forEach(function (t) { app.selectedKeys[t.key] = true; });
+    updateSelectionUI();
+  });
+  els.selectionClearBtn.addEventListener("click", function () {
+    app.selectedKeys = {};
+    updateSelectionUI();
+  });
+  els.selectionExportKeysBtn.addEventListener("click", exportSelectionKeysOnly);
+  els.selectionExportContentBtn.addEventListener("click", exportSelectionContent);
   headerCells.forEach(function (th) {
     th.addEventListener("click", function () {
       var key = th.getAttribute("data-key");
@@ -5371,6 +5576,78 @@
       if (!ok) return;
       deleteImport(importId);
       showToast("Import gelöscht", "Import „" + target.source + "“ wurde aus dieser Sitzung entfernt.");
+    }
+  });
+
+  /* ============ Listenauswahl: gespeicherte Ticket-Selektionen ============
+     Jede gespeicherte Liste ist ein eigenstaendiger Snapshot (Name, Datum,
+     Jira-Nummern UND vollstaendiger Ticket-Inhalt zum Speicherzeitpunkt) -
+     unabhaengig von der aktuellen Dashboard-Auswahl oder spaeteren
+     Aenderungen an den Tickets selbst nutzbar. */
+  function renderSavedLists() {
+    els.listenauswahlCount.textContent = app.savedLists.length;
+    els.listenauswahlEmpty.hidden = app.savedLists.length > 0;
+    els.listenauswahlTbody.innerHTML = app.savedLists.map(function (list) {
+      return "<tr><td>" + escapeHtml(list.name) + '</td><td class="mono">' + escapeHtml(list.when) +
+        '</td><td class="mono">' + list.tickets.length + '</td><td style="display:flex; gap:6px; flex-wrap:wrap;">' +
+        '<button type="button" class="btn ghost btn-tiny" data-action="export-keys" data-list-id="' + list.id + '">Nummern (.txt)</button>' +
+        '<button type="button" class="btn ghost btn-tiny" data-action="export-content" data-list-id="' + list.id + '">Inhalt (.xlsx)</button>' +
+        '<button type="button" class="btn danger btn-tiny" data-action="delete-list" data-list-id="' + list.id + '">Löschen</button>' +
+        "</td></tr>";
+    }).join("");
+    renderStats();
+  }
+  els.listenauswahlSaveBtn.addEventListener("click", function () {
+    var tickets = selectedTickets();
+    if (!tickets.length) return;
+    var name = (els.listenauswahlNameInput.value || "").trim() || ("Liste vom " + nowLabel());
+    app.savedLists.unshift({
+      id: app.nextSavedListId++,
+      name: name,
+      when: nowLabel(),
+      keys: tickets.map(function (t) { return t.key; }),
+      tickets: tickets.map(function (t) {
+        return { key: t.key, summary: t.summary, status: t.status, domain: t.domain, issueType: t.issueType, points: t.points, autoLabels: t.autoLabels, description: (t.raw && t.raw.description) || "" };
+      })
+    });
+    els.listenauswahlNameInput.value = "";
+    renderSavedLists();
+    addLog("Liste „" + name + "“ gespeichert (" + tickets.length + " Tickets).");
+    showToast("Liste gespeichert", "„" + name + "“ mit " + tickets.length + " Tickets gespeichert.");
+  });
+  els.listenauswahlTbody.addEventListener("click", async function (e) {
+    var btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    var listId = parseInt(btn.getAttribute("data-list-id"), 10);
+    var list = app.savedLists.filter(function (l) { return l.id === listId; })[0];
+    if (!list) return;
+    var action = btn.getAttribute("data-action");
+    if (action === "export-keys") {
+      var text = list.keys.join("\n") + "\n";
+      var ok = await saveOrWarn("Liste_" + safeFilename(list.name) + "_Jira-Nummern.txt", new Blob([text], { type: "text/plain" }));
+      if (ok) { showToast("Gespeichert", list.keys.length + " Jira-Nummer(n) aus „" + list.name + "“ heruntergeladen."); addLog("Liste „" + list.name + "“ exportiert (nur Nummern, .txt)."); }
+    } else if (action === "export-content") {
+      try {
+        var sections = [{
+          title: "Liste",
+          headers: ["Ticket", "Zusammenfassung", "Status", "Domäne", "Typ", "Priorität (Punkte)", "Labels", "Beschreibung"],
+          rows: list.tickets.map(function (t) {
+            return [t.key, t.summary || "–", t.status || "–", t.domain || "–", t.issueType || "–", pointsDisplay(t.points), labelsDisplayText(t.autoLabels), t.description || "–"];
+          })
+        }];
+        var blob = await buildXlsxBlob(sections);
+        var ok2 = await saveOrWarn("Liste_" + safeFilename(list.name) + "_Tickets.xlsx", blob);
+        if (ok2) { showToast("Gespeichert", list.tickets.length + " Ticket(s) aus „" + list.name + "“ als XLSX heruntergeladen."); addLog("Liste „" + list.name + "“ exportiert (Gesamtinhalt, .xlsx)."); }
+      } catch (err) {
+        showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+      }
+    } else if (action === "delete-list") {
+      var ok3 = await confirmDialog("Liste „" + list.name + "“ (" + list.tickets.length + " Tickets) wirklich löschen?");
+      if (!ok3) return;
+      app.savedLists = app.savedLists.filter(function (l) { return l.id !== listId; });
+      renderSavedLists();
+      addLog("Liste „" + list.name + "“ gelöscht.");
+      showToast("Liste gelöscht", "„" + list.name + "“ wurde entfernt.");
     }
   });
 

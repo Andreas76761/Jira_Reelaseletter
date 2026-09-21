@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.3.1"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.4.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -171,19 +171,36 @@ Garantie auf lückenlose Erkennung bei untypischer Schreibweise oder
 anderen Länderformaten (Kennzeichen).
 
 - **Dashboard** – zusammengeführter, aktueller Stand aller importierten
-  Tickets: Status-Kacheln, Domain-Verteilung, ein **Labels-Filter**
-  (nur tatsächlich vorkommende, automatisch zugeordnete Labels zur
-  Auswahl, siehe Einstellungen → Labels), eine um Labels **erweiterte
+  Tickets: Status-Kacheln, ein **Typ-Schnellfilter** (Chips je Tickettyp,
+  z. B. Epic/Story/Feature/Bug – rein aus den tatsächlich geladenen
+  Tickets abgeleitet, keine feste Liste, erscheint daher nur wenn Typen
+  vorhanden sind), Domain-Verteilung, ein **Labels-Filter** (nur
+  tatsächlich vorkommende, automatisch zugeordnete Labels zur Auswahl,
+  siehe Einstellungen → Labels), eine um Labels **erweiterte
   Volltextsuche** (durchsucht Schlüssel, Zusammenfassung und Labels),
   sortierbare Tabelle inklusive Spalte **Typ** (Jira-Feld "Typ" – Epic,
   Story, Feature, Bug, ...; fehlt der Typ im Export, wird das ehrlich als
   "–" ausgewiesen statt geraten), Ticket-Detailansicht (18 Standardfelder,
   fehlende klar als "Nicht im Export enthalten" markiert statt erfunden).
-  Die Suche ist leicht entprellt (150ms), damit bei 600+ geladenen
-  Tickets nicht bei jedem einzelnen Tastendruck die komplette Tabelle neu
-  aufgebaut wird; Klicks auf eine Zeile öffnen die Detailansicht über
-  einen einzigen, an die Tabelle delegierten Klick-Handler statt vieler
-  einzelner Handler pro Zeile.
+  Jede Zeile hat zusätzlich eine **Checkbox** ("Alle sichtbaren
+  auswählen" im Tabellenkopf) – die Auswahl bleibt beim Ändern eines
+  Filters erhalten und lässt sich gezielt exportieren: entweder **nur die
+  Jira-Nummern** (.txt, eine je Zeile) oder der **Gesamtinhalt** (.xlsx,
+  dieselben Spalten wie die Job-Exporte in Verarbeitung). Die Suche ist
+  leicht entprellt (150ms), damit bei 600+ geladenen Tickets nicht bei
+  jedem einzelnen Tastendruck die komplette Tabelle neu aufgebaut wird;
+  Klicks auf eine Zeile (außerhalb der Checkbox) öffnen die
+  Detailansicht über einen einzigen, an die Tabelle delegierten
+  Klick-Handler statt vieler einzelner Handler pro Zeile.
+- **Listenauswahl** – die im Dashboard per Checkbox ausgewählten Tickets
+  lassen sich hier benannt als eigenständige Liste speichern (Name,
+  Zeitpunkt automatisch, Ticket-Inhalte UND die reine Liste der
+  Jira-Nummern als Snapshot). Gespeicherte Listen bleiben unverändert
+  erhalten, auch wenn sich die Dashboard-Auswahl oder die Tickets selbst
+  später ändern, und lassen sich jederzeit erneut exportieren (Nummern
+  oder Gesamtinhalt) oder löschen. Nützlich, um z. B. verschiedene
+  Ticket-Zusammenstellungen für unterschiedliche Zwecke (Release A vs.
+  Release B, Benutzerhandbuch-Kandidaten, ...) parallel vorzuhalten.
 - **Import** – vier Formate per Tab wählbar, jeweils mit Mehrfachauswahl
   und Drag&Drop; zusätzlich eine **Zwischenablage-Funktion**: Text direkt
   einfügen (Button „Aus Zwischenablage einfügen“ oder Strg+V in das
