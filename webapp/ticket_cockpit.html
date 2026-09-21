@@ -490,6 +490,19 @@
             <div class="empty-hint" id="changes-empty">Noch keine Änderungen erkannt &ndash; lädt eine Datei ein Ticket erneut mit anderem Status/Datum, erscheint der Vergleich hier.</div>
           </div>
         </section>
+
+        <section>
+          <p class="section-label">Domain-Normalisierung</p>
+          <div class="callout">
+            Unterschiedliche Schreibweisen derselben Domain (z. B. aus verschiedenen Import-Formaten) werden beim Import automatisch vereinheitlicht, bevor sie im Dashboard gruppiert werden. "&amp;" wird immer einheitlich mit Leerzeichen geschrieben; zusätzlich gelten diese festen Zuordnungen:
+          </div>
+          <div class="panel table-wrap">
+            <table class="simple-table" id="domain-aliases-table">
+              <thead><tr><th>Erkannte Schreibweise</th><th>Wird zu</th></tr></thead>
+              <tbody id="domain-aliases-tbody"></tbody>
+            </table>
+          </div>
+        </section>
       </section>
 
       <!-- ================= Verarbeitung ================= -->
@@ -1155,7 +1168,7 @@
     "tiles", "domain-chart", "domain-section", "domain-label", "domain-select", "search-input", "reset-filter-btn",
     "table-body", "empty-state", "result-count",
     "dropzone", "dropzone-title", "dropzone-hint", "file-input", "reset-session-btn", "format-callout", "import-tabs",
-    "imports-tbody", "changes-tbody", "changes-empty",
+    "imports-tbody", "changes-tbody", "changes-empty", "domain-aliases-tbody",
     "log-list", "log-empty",
     "gallery", "gallery-empty",
     "output-md-count", "output-md-total", "output-md-export-btn",
@@ -1202,9 +1215,29 @@
     return diffs;
   }
 
+  // Explizite Alias-Tabelle statt automatischer Fuzzy-Erkennung: nur Paare,
+  // die sicher dasselbe Fachgebiet bezeichnen (reine Schreibweise-
+  // Unterschiede), werden zusammengeführt. Zweideutige Fälle (z.B. "Contract
+  // Management" vs. "Contract Generation and Contract Management") werden
+  // bewusst NICHT automatisch gemergt, um keine unterschiedlichen Domains
+  // fälschlich zu vereinen - bei Bedarf hier ergänzen.
+  var DOMAIN_ALIASES = {
+    "documents and communication": "Documents & Communications",
+    "documents and communications": "Documents & Communications",
+    "customer and partner management": "Customer & Partner Management"
+  };
+  function normalizeDomain(raw) {
+    if (!raw) return raw;
+    var cleaned = raw.trim().replace(/\s*&\s*/g, " & ").replace(/\s+/g, " ");
+    return DOMAIN_ALIASES[cleaned.toLowerCase()] || cleaned;
+  }
+
   function ingestTickets(rawTickets, meta) {
     var anonymizer = new PersonAnonymizer();
     var cleaned = rawTickets.map(function (t) { return asExportDict(cleanTicket(t, anonymizer)); });
+    cleaned.forEach(function (t) {
+      if (t.custom_fields && t.custom_fields.Domain) t.custom_fields.Domain = normalizeDomain(t.custom_fields.Domain);
+    });
     var importId = app.imports.length + 1;
     var stats = { neu: 0, geaendert: 0, unveraendert: 0 };
 
@@ -1876,9 +1909,16 @@
   els.sidebarOpenBtn.addEventListener("click", function () { setSidebar(true); });
   setSidebar(window.innerWidth > 900);
 
+  function renderDomainAliases() {
+    els.domainAliasesTbody.innerHTML = Object.keys(DOMAIN_ALIASES).map(function (k) {
+      return "<tr><td>" + escapeHtml(k) + "</td><td>" + escapeHtml(DOMAIN_ALIASES[k]) + "</td></tr>";
+    }).join("") + '<tr><td colspan="2" style="color:var(--text-faint);font-style:italic;">Außerdem: "Name&amp;Name" → "Name &amp; Name" (Leerzeichen um &amp; vereinheitlicht)</td></tr>';
+  }
+
   /* ============ Start ============ */
 
   showView("dashboard");
+  renderDomainAliases();
   resetSession();
 })();
 </script>
