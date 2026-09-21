@@ -33,6 +33,19 @@ def test_parsers_extract_all_tickets(filename, expected_keys):
         assert t.summary
 
 
+def test_html_issue_table_format_is_recognized():
+    """Jira 'Issue-Navigator > Export > HTML (aktuelle Felder)' liefert
+    eine einzige Tabelle (id=issuetable) statt Detail-Abschnitten pro
+    Ticket - eigener Codepfad, siehe parser_html._parse_issue_table."""
+    tickets = parse_jira_export(str(FIXTURES / "sample_export_table.html"))
+    assert [t.key for t in tickets] == ["DEMO-401", "DEMO-402"]
+    assert tickets[0].status == "Fertig"
+    assert tickets[0].created.strip() == "01/Jan/24 12:07 PM"
+    assert tickets[0].custom_fields.get("Domain") == "Contract Management"
+    # leere Zelle -> Feld wird gar nicht erst gesetzt
+    assert "Domain" not in tickets[1].custom_fields
+
+
 def test_cleaner_anonymizes_and_drops_pii():
     tickets = parse_jira_export(str(FIXTURES / "sample_export.xml"))
     cleaner = Cleaner()

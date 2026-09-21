@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Jira Export</title></head>
+<body>
+<issuetable-web-component data-content="issues">
+<table id="issuetable" border="1" cellpadding="3" cellspacing="1" width="100%">
+<thead>
+<tr class="rowHeader">
+<th scope="col" class="colHeaderLink headerrow-issuekey" data-id="issuekey">Schlüssel</th>
+<th scope="col" class="colHeaderLink headerrow-status" data-id="status">Status</th>
+<th scope="col" class="colHeaderLink headerrow-created" data-id="created">Erstellt</th>
+<th scope="col" class="colHeaderLink headerrow-updated" data-id="updated">Aktualisiert</th>
+<th scope="col" class="colHeaderLink headerrow-customfield_10601" data-id="customfield_10601">Domain</th>
+</tr>
+</thead>
+<tbody>
+<tr id="issuerow1" rel="1" data-issuekey="DEMO-401" class="issuerow">
+<td class="issuekey"><a class="issue-link" data-issue-key="DEMO-401" href="https://jira.example.com/browse/DEMO-401">DEMO-401</a></td>
+<td class="status"><span class="jira-issue-status-lozenge" data-tooltip="&lt;span&gt;Fertig&lt;/span&gt;" title="Fertig">Fertig</span></td>
+<td class="created"> 01/Jan/24 12:07 PM </td>
+<td class="updated"> 18/Jun/26 12:11 PM </td>
+<td class="customfield_10601">Contract Management</td>
+</tr>
+<tr id="issuerow2" rel="2" data-issuekey="DEMO-402" class="issuerow">
+<td class="issuekey"><a class="issue-link" data-issue-key="DEMO-402" href="https://jira.example.com/browse/DEMO-402">DEMO-402</a></td>
+<td class="status"><span class="jira-issue-status-lozenge" data-tooltip="&lt;span&gt;Offen&lt;/span&gt;" title="Offen">Offen</span></td>
+<td class="created"> 02/Jan/24 8:41 AM </td>
+<td class="updated"> 18/Jun/26 12:11 PM </td>
+<td class="customfield_10601"></td>
+</tr>
+</tbody>
+</table>
+</issuetable-web-component>
+</body>
+</html>

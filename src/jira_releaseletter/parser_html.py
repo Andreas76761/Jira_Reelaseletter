@@ -1,15 +1,25 @@
-"""Parser für Jira-HTML-Exporte (Issue-Navigator 'Export > HTML' /
-'Printable').
+"""Parser für Jira-HTML-Exporte.
 
-Jira-HTML-Exporte haben kein festes Schema (abhängig von Jira-Version,
-Sprache, Add-ons). Als zuverlässiger Anker für Ticket-Grenzen dient der
-Link auf die Vorgangsseite (`href=".../browse/PROJ-123"`), den Jira in
-jedem Export konsistent setzt. Innerhalb eines Tickets werden th/td- bzw.
-Label/Wert-Zeilen generisch eingelesen und über field_aliases auf die
-kanonischen Feldnamen gemappt; unbekannte Labels landen in custom_fields.
+Jira kennt (mindestens) zwei grundlegend unterschiedliche HTML-Exporte,
+beide ohne festes Schema (abhängig von Jira-Version, Sprache, Add-ons,
+gewählten Spalten):
 
-Best-effort-Parser: Wenn ein konkreter Export abweicht, hier die
-Erkennung der Ticket-Grenzen bzw. der Feld-Zeilen anpassen.
+1. **Tabellen-Export** ("Issue-Navigator > Export > HTML (aktuelle
+   Felder)"): eine einzige `<table id="issuetable">` mit einer Zeile pro
+   Ticket (`<tr data-issuekey="...">`) und genau den Spalten, die in der
+   Jira-Ansicht ausgewählt waren (oft nur Key/Status/Datum, nicht
+   zwangsläufig Zusammenfassung/Beschreibung/Bearbeiter!). Wird über
+   `_parse_issue_table` erkannt und geparst - zuverlässig, da
+   spaltenbasiert.
+2. **Detail-Export** ("HTML (alle Felder)" / Druckansicht): pro Ticket
+   ein eigener Abschnitt mit Überschrift + Label/Wert-Tabellen. Als
+   Anker für Ticket-Grenzen dient der Link auf die Vorgangsseite
+   (`href=".../browse/PROJ-123"`), den Jira konsistent setzt. Wird von
+   `_parse_detail_export` als Fallback verwendet, wenn Format 1 nicht
+   erkannt wird.
+
+Best-effort-Parser: Wenn ein konkreter Export von beiden Mustern
+abweicht, hier die Erkennung anpassen.
 """
 
 from __future__ import annotations
@@ -18,7 +28,7 @@ import re
 
 from bs4 import BeautifulSoup, Tag
 
-from .field_aliases import normalize_label
+from .field_aliases import JIRA_DATA_ID_MAP, normalize_label
 from .model import Comment, Ticket
 
 _BROWSE_HREF_RE = re.compile(r"/browse/([A-Z][A-Z0-9]*-\d+)")
@@ -29,12 +39,73 @@ def parse_html(path: str) -> list[Ticket]:
     with open(path, encoding="utf-8", errors="replace") as fh:
         raw = fh.read()
 
+    soup = BeautifulSoup(raw, "lxml")
+    table_tickets = _parse_issue_table(soup, source_file=path)
+    if table_tickets is not None:
+        return table_tickets
+
+    return _parse_detail_export(raw, source_file=path)
+
+
+def _parse_issue_table(soup: BeautifulSoup, source_file: str) -> list[Ticket] | None:
+    table = soup.find(id="issuetable")
+    if table is None:
+        for candidate in soup.find_all("table"):
+            if candidate.find("tr", attrs={"data-issuekey": True}):
+                table = candidate
+                break
+    if table is None:
+        return None
+
+    column_labels: dict[str, str] = {}
+    thead = table.find("thead")
+    if thead is not None:
+        for th in thead.find_all("th"):
+            data_id = th.get("data-id")
+            if data_id:
+                column_labels[data_id] = th.get_text(" ", strip=True)
+
+    tbody = table.find("tbody") or table
+    rows = tbody.find_all("tr", attrs={"data-issuekey": True})
+    if not rows:
+        return None
+
+    tickets: list[Ticket] = []
+    for row in rows:
+        key = row.get("data-issuekey")
+        if not key:
+            continue
+        ticket = Ticket(key=key, source_file=source_file)
+        for td in row.find_all("td", recursive=False):
+            classes = [c for c in (td.get("class") or []) if c]
+            if not classes:
+                continue
+            data_id = next((c for c in classes if c in column_labels or c in JIRA_DATA_ID_MAP), classes[0])
+            value = td.get_text(" ", strip=True)
+            if not value:
+                continue
+            canonical = JIRA_DATA_ID_MAP.get(data_id) or normalize_label(
+                column_labels.get(data_id, data_id)
+            )
+            if canonical == "key" or canonical == "comments":
+                continue
+            if canonical in _MULTI_VALUE_FIELDS:
+                setattr(ticket, canonical, [v.strip() for v in re.split(r"[,;\n]", value) if v.strip()])
+            elif canonical:
+                setattr(ticket, canonical, value)
+            else:
+                ticket.custom_fields[column_labels.get(data_id, data_id)] = value
+        tickets.append(ticket)
+    return tickets
+
+
+def _parse_detail_export(raw: str, source_file: str) -> list[Ticket]:
     boundaries = _find_boundaries(raw)
     tickets: list[Ticket] = []
     for i, (key, start) in enumerate(boundaries):
         end = boundaries[i + 1][1] if i + 1 < len(boundaries) else len(raw)
         segment = raw[start:end]
-        tickets.append(_parse_segment(key, segment, source_file=path))
+        tickets.append(_parse_segment(key, segment, source_file=source_file))
     return tickets
 
 

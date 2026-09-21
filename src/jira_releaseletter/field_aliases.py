@@ -63,6 +63,29 @@ DISPLAY_LABELS_DE: dict[str, str] = {
     "description": "Beschreibung",
 }
 
+# Jira-interne Spalten-IDs (data-id/class in der Issue-Navigator-Tabelle,
+# z.B. beim HTML-Export "aktuelle Felder") -> kanonischer Feldname.
+JIRA_DATA_ID_MAP: dict[str, str] = {
+    "issuekey": "key",
+    "summary": "summary",
+    "issuetype": "issue_type",
+    "status": "status",
+    "priority": "priority",
+    "project": "project",
+    "resolution": "resolution",
+    "assignee": "assignee",
+    "reporter": "reporter",
+    "created": "created",
+    "updated": "updated",
+    "labels": "labels",
+    "components": "components",
+    "fixVersions": "fix_versions",
+    "fixfor": "fix_versions",
+    "description": "description",
+    "comment": "comments",
+    "watches": "watchers",
+}
+
 FIELD_DISPLAY_ORDER: list[str] = [
     "key",
     "summary",
