@@ -257,7 +257,13 @@ auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist:
   geraten angezeigt.
 - **Releaseletter / Benutzerhandbuch / Clickanweisung** – Textentwürfe aus
   ausgewählten Tickets (aktuelle Dashboard-Filterung oder Ticket-Keys),
-  Vorschau + Markdown-Download.
+  Vorschau + Download als Markdown, DOCX, PDF oder XLSX (Tickets-Tabelle
+  mit Domäne/Status/Priorität-Punkte/Labels/Beschreibung). Jede Zeile im
+  Entwurf zeigt zusätzlich, sofern vorhanden, Domäne, Priorität (Punkte)
+  und automatisch erkannte Labels des jeweiligen Tickets (dieselbe
+  Herleitung wie in Verarbeitung Job 4-6, siehe Einstellungen). DOCX/PDF
+  werden direkt im Browser erzeugt (minimales OOXML über das bereits
+  geladene JSZip bzw. jsPDF) – kein Server nötig.
 - **Prozessbild** – Prozessdiagramm aus ausgewählten Tickets mit **10
   Design-Vorlagen** (Farben: OnePaper Dunkel/Hell, Corporate Blau,
   Silber/Schwarz, Forest, Sunset, Pastell, Monochrom, Royal,
@@ -277,7 +283,10 @@ auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist:
   Die 9 neuen Formate werden als eigenständiges, direkt im Browser
   erzeugtes SVG gerendert (kein Server, keine externe Grafikbibliothek)
   und lassen sich als `.svg` herunterladen; das klassische
-  Mermaid-Format bleibt Standardauswahl und unverändert.
+  Mermaid-Format bleibt Standardauswahl und unverändert. Zusätzlich lässt
+  sich die zugrundeliegende Schritt-Tabelle (Ticket/Titel/Status/Domäne/
+  Priorität-Punkte/Labels/Beschreibung) unabhängig vom Bildformat als
+  XLSX/DOCX/PDF exportieren.
 - **Bilder** – Galerie der in der Sitzung erzeugten Prozessdiagramme
   (Mermaid und SVG gemischt, je nach gewähltem Bildformat).
 - **Output MD Tickets / Output PDF Tickets** – bereinigte Tickets als
@@ -312,9 +321,12 @@ auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist:
   - Punkte-System und Labels sind Konfiguration (kein Sitzungsdatensatz)
     und bleiben daher auch nach "Sitzung zurücksetzen"/"Alle Daten
     löschen" erhalten.
-- Word-Exporte (`.docx`) und Detail-HTML-Exports (ein Abschnitt pro
-  Ticket statt einer Tabelle) werden von der Web-App **nicht**
-  unterstützt – dafür das CLI-Tool verwenden.
+- Detail-HTML-Exports (ein Abschnitt pro Ticket statt einer Tabelle)
+  werden von der Web-App **nicht** unterstützt – dafür das CLI-Tool
+  verwenden. Word-Exporte (`.docx`) werden dagegen sowohl beim Import
+  (Releaseinfo) als auch bei allen Exporten (Verarbeitung-Jobs,
+  Releaseletter/Benutzerhandbuch/Clickanweisung/Prozessbild) direkt im
+  Browser unterstützt.
 
 **Mit aktuellen Daten neu bauen** (bettet `data/tickets.json` ein):
 

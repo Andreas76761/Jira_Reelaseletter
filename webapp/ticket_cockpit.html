@@ -884,7 +884,12 @@
             <label for="releaseletter-keys">Oder Ticket-Keys (einer pro Zeile)</label>
             <textarea id="releaseletter-keys" rows="6" placeholder="ONESCM-101&#10;ONESCM-102"></textarea>
             <button class="btn primary" id="releaseletter-generate-btn" type="button">Entwurf generieren</button>
-            <button class="btn ghost" id="releaseletter-download-btn" type="button" disabled>Als Markdown speichern</button>
+            <div class="job-export-row">
+              <button class="btn ghost" id="releaseletter-download-btn" type="button" disabled>Als Markdown</button>
+              <button class="btn ghost" id="releaseletter-download-docx-btn" type="button" disabled>Als DOCX</button>
+              <button class="btn ghost" id="releaseletter-download-pdf-btn" type="button" disabled>Als PDF</button>
+              <button class="btn ghost" id="releaseletter-download-xlsx-btn" type="button" disabled>Als XLSX (Tickets-Tabelle)</button>
+            </div>
           </div>
           <div class="gen-preview" id="releaseletter-preview">Noch kein Entwurf generiert.</div>
         </div>
@@ -901,7 +906,12 @@
             <label for="benutzerhandbuch-keys">Oder Ticket-Keys (einer pro Zeile)</label>
             <textarea id="benutzerhandbuch-keys" rows="6" placeholder="ONESCM-101&#10;ONESCM-102"></textarea>
             <button class="btn primary" id="benutzerhandbuch-generate-btn" type="button">Entwurf generieren</button>
-            <button class="btn ghost" id="benutzerhandbuch-download-btn" type="button" disabled>Als Markdown speichern</button>
+            <div class="job-export-row">
+              <button class="btn ghost" id="benutzerhandbuch-download-btn" type="button" disabled>Als Markdown</button>
+              <button class="btn ghost" id="benutzerhandbuch-download-docx-btn" type="button" disabled>Als DOCX</button>
+              <button class="btn ghost" id="benutzerhandbuch-download-pdf-btn" type="button" disabled>Als PDF</button>
+              <button class="btn ghost" id="benutzerhandbuch-download-xlsx-btn" type="button" disabled>Als XLSX (Tickets-Tabelle)</button>
+            </div>
           </div>
           <div class="gen-preview" id="benutzerhandbuch-preview">Noch kein Entwurf generiert.</div>
         </div>
@@ -923,7 +933,13 @@
             <label for="prozessbild-keys">Oder Ticket-Keys (einer pro Zeile)</label>
             <textarea id="prozessbild-keys" rows="6" placeholder="ONESCM-101&#10;ONESCM-102"></textarea>
             <button class="btn primary" id="prozessbild-generate-btn" type="button">Diagramm generieren</button>
-            <button class="btn ghost" id="prozessbild-download-btn" type="button" disabled>Herunterladen</button>
+            <button class="btn ghost" id="prozessbild-download-btn" type="button" disabled>Herunterladen (Bild)</button>
+            <div class="job-export-row">
+              <span class="job-export-label">Schritt-Tabelle exportieren:</span>
+              <button class="btn ghost" id="prozessbild-download-xlsx-btn" type="button" disabled>XLSX</button>
+              <button class="btn ghost" id="prozessbild-download-docx-btn" type="button" disabled>DOCX</button>
+              <button class="btn ghost" id="prozessbild-download-pdf-btn" type="button" disabled>PDF</button>
+            </div>
           </div>
           <div class="mermaid-box" id="prozessbild-render">
             <div class="empty-hint">Noch kein Diagramm generiert.</div>
@@ -942,7 +958,12 @@
             <label for="clickanweisung-keys">Oder Ticket-Keys (einer pro Zeile)</label>
             <textarea id="clickanweisung-keys" rows="6" placeholder="ONESCM-101&#10;ONESCM-102"></textarea>
             <button class="btn primary" id="clickanweisung-generate-btn" type="button">Entwurf generieren</button>
-            <button class="btn ghost" id="clickanweisung-download-btn" type="button" disabled>Als Markdown speichern</button>
+            <div class="job-export-row">
+              <button class="btn ghost" id="clickanweisung-download-btn" type="button" disabled>Als Markdown</button>
+              <button class="btn ghost" id="clickanweisung-download-docx-btn" type="button" disabled>Als DOCX</button>
+              <button class="btn ghost" id="clickanweisung-download-pdf-btn" type="button" disabled>Als PDF</button>
+              <button class="btn ghost" id="clickanweisung-download-xlsx-btn" type="button" disabled>Als XLSX (Tickets-Tabelle)</button>
+            </div>
           </div>
           <div class="gen-preview" id="clickanweisung-preview">Noch kein Entwurf generiert.</div>
         </div>
@@ -3109,7 +3130,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "1.2.0";
+  var APP_VERSION = "1.3.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -3660,6 +3681,84 @@
         y += 5;
       });
       y += 6;
+    });
+    return doc.output("blob");
+  }
+
+  // Sehr einfacher Markdown-Zeilen-Parser fuer die Text-Generatoren
+  // (Releaseletter/Benutzerhandbuch/Clickanweisung): erkennt nur die
+  // Konstrukte, die diese Generatoren selbst erzeugen (# / ## Ueberschrift,
+  // - Aufzaehlung, *kursiv* als eigene Zeile, sonst normaler Absatz) - kein
+  // vollstaendiger Markdown-Parser, bewusst auf den tatsaechlich erzeugten
+  // Umfang begrenzt.
+  function parseMarkdownBlocks(markdownText) {
+    return String(markdownText || "").split(/\r?\n/).map(function (line) {
+      if (!line.trim()) return { type: "blank", text: "" };
+      var h1 = /^#\s+(.*)$/.exec(line);
+      if (h1) return { type: "h1", text: h1[1] };
+      var h2 = /^##\s+(.*)$/.exec(line);
+      if (h2) return { type: "h2", text: h2[1] };
+      var bullet = /^[-*]\s+(.*)$/.exec(line);
+      if (bullet) return { type: "bullet", text: bullet[1] };
+      var italic = /^\*(.+)\*$/.exec(line.trim());
+      if (italic) return { type: "italic", text: italic[1] };
+      return { type: "p", text: line.trim() };
+    });
+  }
+  function buildMarkdownDocxBlob(title, markdownText) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek konnte nicht geladen werden.");
+    var blocks = parseMarkdownBlocks(markdownText);
+    var body = "";
+    blocks.forEach(function (b) {
+      if (b.type === "blank") { body += "<w:p/>"; return; }
+      if (b.type === "h1") { body += '<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t xml:space="preserve">' + xmlEsc(b.text) + "</w:t></w:r></w:p>"; return; }
+      if (b.type === "h2") { body += '<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t xml:space="preserve">' + xmlEsc(b.text) + "</w:t></w:r></w:p>"; return; }
+      if (b.type === "bullet") { body += '<w:p><w:pPr><w:ind w:left="360"/></w:pPr><w:r><w:t xml:space="preserve">• ' + xmlEsc(b.text) + "</w:t></w:r></w:p>"; return; }
+      if (b.type === "italic") { body += '<w:p><w:r><w:rPr><w:i/></w:rPr><w:t xml:space="preserve">' + xmlEsc(b.text) + "</w:t></w:r></w:p>"; return; }
+      body += '<w:p><w:r><w:t xml:space="preserve">' + xmlEsc(b.text) + "</w:t></w:r></w:p>";
+    });
+    var documentXml =
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+      "<w:body>" + body + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/></w:sectPr></w:body>' +
+      "</w:document>";
+    var zip = new JSZip();
+    zip.file("[Content_Types].xml",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+      "</Types>");
+    zip.file("_rels/.rels",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+      "</Relationships>");
+    zip.file("word/document.xml", documentXml);
+    return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  }
+  function buildMarkdownPdfBlob(title, markdownText) {
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
+    var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    var margin = 15, pageW = 210, pageH = 297, maxWidth = pageW - margin * 2, y = margin;
+    var blocks = parseMarkdownBlocks(markdownText);
+    blocks.forEach(function (b) {
+      if (b.type === "blank") { y += 3; return; }
+      var fontSize = 10, fontStyle = "normal", prefix = "", indent = 0;
+      if (b.type === "h1") { fontSize = 15; fontStyle = "bold"; }
+      else if (b.type === "h2") { fontSize = 12; fontStyle = "bold"; }
+      else if (b.type === "italic") { fontSize = 9; fontStyle = "italic"; }
+      else if (b.type === "bullet") { prefix = "• "; indent = 4; }
+      doc.setFont("helvetica", fontStyle); doc.setFontSize(fontSize);
+      var lines = doc.splitTextToSize(prefix + b.text, maxWidth - indent);
+      lines.forEach(function (line) {
+        if (y > pageH - margin) { doc.addPage(); y = margin; }
+        doc.text(line, margin + indent, y);
+        y += fontSize * 0.42 + 1.2;
+      });
+      y += 1.5;
     });
     return doc.output("blob");
   }
@@ -5539,10 +5638,25 @@
     return tickets;
   }
 
+  // Gemeinsame Metadatenzeile (Domäne/Priorität-Punkte/Labels) fuer die drei
+  // Text-Generatoren - dieselbe Herleitung wie in den Verarbeitung-Tabellen
+  // (Job 4-6), damit Punkte-System und Labels ueberall konsistent sind.
+  function ticketMetaSummary(t) {
+    var parts = [];
+    var domain = (t.custom_fields && t.custom_fields.Domain) || "";
+    if (domain) parts.push("Domäne: " + domain);
+    var points = pointsForIssueType(t.issue_type);
+    if (points != null) parts.push("Priorität: " + points + " Punkt" + (points === 1 ? "" : "e"));
+    var labels = computeAutoLabels(t);
+    if (labels.length) parts.push("Labels: " + labels.join(", "));
+    return parts.join(" · ");
+  }
+
   function renderReleaseLetter(name, tickets) {
     var lines = ["# Release Letter – " + name, "", "Stand: " + new Date().toLocaleDateString("de-DE"), "Umfang: " + tickets.length + " Tickets", "", "## Neue Funktionen & Änderungen", ""];
     tickets.forEach(function (t) {
-      lines.push("- **" + t.key + "** – " + (t.summary || "(keine Zusammenfassung)"));
+      var meta = ticketMetaSummary(t);
+      lines.push("- **" + t.key + "** – " + (t.summary || "(keine Zusammenfassung)") + (meta ? " (" + meta + ")" : ""));
       if (t.description) lines.push("  " + truncate(t.description, 220));
     });
     lines.push("", "## Bekannte Einschränkungen / offene Punkte", "");
@@ -5557,7 +5671,11 @@
   function renderUserManual(name, tickets) {
     var lines = ["# Benutzerhandbuch – " + name, "", "Stand: " + new Date().toLocaleDateString("de-DE"), ""];
     tickets.forEach(function (t, i) {
-      lines.push("## " + (i + 1) + ". " + (t.summary || t.key), "", "*Ticket: " + t.key + (t.components && t.components.length ? " · Komponente: " + t.components.join(", ") : "") + "*", "");
+      var meta = ["Ticket: " + t.key];
+      if (t.components && t.components.length) meta.push("Komponente: " + t.components.join(", "));
+      var extra = ticketMetaSummary(t);
+      if (extra) meta.push(extra);
+      lines.push("## " + (i + 1) + ". " + (t.summary || t.key), "", "*" + meta.join(" · ") + "*", "");
       lines.push(t.description || "_Keine Beschreibung im Ticket hinterlegt - Abschnitt manuell ergänzen._", "");
     });
     return lines.join("\n");
@@ -5565,7 +5683,10 @@
   function renderClickInstructions(name, tickets) {
     var lines = ["# Klickanweisung – " + name, "", "Stand: " + new Date().toLocaleDateString("de-DE"), ""];
     tickets.forEach(function (t, i) {
-      lines.push("## Schritt " + (i + 1) + ": " + (t.summary || t.key), "", "*Ticket: " + t.key + "*", "");
+      var meta = ["Ticket: " + t.key];
+      var extra = ticketMetaSummary(t);
+      if (extra) meta.push(extra);
+      lines.push("## Schritt " + (i + 1) + ": " + (t.summary || t.key), "", "*" + meta.join(" · ") + "*", "");
       if (t.description) t.description.split("\n").filter(function (l) { return l.trim(); }).forEach(function (line, j) { lines.push((j + 1) + ". " + line.trim()); });
       else lines.push("1. _Klickpfad manuell ergänzen - Ticket enthält keine Beschreibung._");
       lines.push("");
@@ -5647,7 +5768,9 @@
       return {
         number: i + 1, key: t.key, title: t.summary || t.key, description: t.description || "",
         bucket: bucketFor(t.status), status: t.status || "",
-        domain: (t.custom_fields && t.custom_fields.Domain) || ""
+        domain: (t.custom_fields && t.custom_fields.Domain) || "",
+        points: pointsForIssueType(t.issue_type),
+        labels: computeAutoLabels(t)
       };
     });
   }
@@ -5967,19 +6090,66 @@
     var nameInput = document.getElementById(kind + "-name");
     var preview = document.getElementById(kind + "-preview");
     var downloadBtn = document.getElementById(kind + "-download-btn");
+    var downloadDocxBtn = document.getElementById(kind + "-download-docx-btn");
+    var downloadPdfBtn = document.getElementById(kind + "-download-pdf-btn");
+    var downloadXlsxBtn = document.getElementById(kind + "-download-xlsx-btn");
     var generateBtn = document.getElementById(kind + "-generate-btn");
     var lastContent = "";
+    var lastTickets = [];
+    var lastTitle = "Release";
     generateBtn.addEventListener("click", function () {
       var tickets = resolveGeneratorTickets(kind);
       if (!tickets.length) { showToast("Keine Tickets", "Keine passenden Tickets gefunden.", true); return; }
-      lastContent = cfg.render(nameInput.value.trim() || "Release", tickets);
+      lastTitle = nameInput.value.trim() || "Release";
+      lastContent = cfg.render(lastTitle, tickets);
+      lastTickets = tickets;
       preview.textContent = lastContent;
       downloadBtn.disabled = false;
+      downloadDocxBtn.disabled = false;
+      downloadPdfBtn.disabled = false;
+      downloadXlsxBtn.disabled = false;
       addLog(kind + ": Entwurf für " + tickets.length + " Tickets erzeugt.");
     });
     downloadBtn.addEventListener("click", async function () {
-      var ok = await saveOrWarn(safeFilename(nameInput.value.trim() || "release") + "_" + kind + "." + cfg.ext, lastContent);
+      var ok = await saveOrWarn(safeFilename(lastTitle) + "_" + kind + "." + cfg.ext, lastContent);
       if (ok) showToast("Gespeichert", "Entwurf heruntergeladen.");
+    });
+    downloadDocxBtn.addEventListener("click", async function () {
+      try {
+        var blob = await buildMarkdownDocxBlob(lastTitle, lastContent);
+        var ok = await saveOrWarn(safeFilename(lastTitle) + "_" + kind + ".docx", blob);
+        if (ok) showToast("Gespeichert", "DOCX heruntergeladen.");
+      } catch (err) {
+        showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+      }
+    });
+    downloadPdfBtn.addEventListener("click", async function () {
+      try {
+        var blob = buildMarkdownPdfBlob(lastTitle, lastContent);
+        var ok = await saveOrWarn(safeFilename(lastTitle) + "_" + kind + ".pdf", blob);
+        if (ok) showToast("Gespeichert", "PDF heruntergeladen.");
+      } catch (err) {
+        showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+      }
+    });
+    downloadXlsxBtn.addEventListener("click", async function () {
+      try {
+        var sections = [{
+          title: "Tickets",
+          headers: ["Ticket", "Zusammenfassung", "Status", "Domäne", "Priorität (Punkte)", "Labels", "Beschreibung"],
+          rows: lastTickets.map(function (t) {
+            return [
+              t.key, t.summary || "–", t.status || "–", (t.custom_fields && t.custom_fields.Domain) || "–",
+              pointsDisplay(pointsForIssueType(t.issue_type)), labelsDisplayText(computeAutoLabels(t)), t.description || "–"
+            ];
+          })
+        }];
+        var blob = await buildXlsxBlob(sections);
+        var ok = await saveOrWarn(safeFilename(lastTitle) + "_" + kind + ".xlsx", blob);
+        if (ok) showToast("Gespeichert", "XLSX heruntergeladen.");
+      } catch (err) {
+        showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+      }
     });
   }
   ["releaseletter", "benutzerhandbuch", "clickanweisung"].forEach(wireTextGenerator);
@@ -6010,12 +6180,28 @@
     var nameInput = document.getElementById(kind + "-name");
     var renderBox = document.getElementById(kind + "-render");
     var downloadBtn = document.getElementById(kind + "-download-btn");
+    var downloadXlsxBtn = document.getElementById(kind + "-download-xlsx-btn");
+    var downloadDocxBtn = document.getElementById(kind + "-download-docx-btn");
+    var downloadPdfBtn = document.getElementById(kind + "-download-pdf-btn");
     var generateBtn = document.getElementById(kind + "-generate-btn");
+    var lastSteps = [];
+    var lastName = "Release";
     populateProzessbildSelects();
+    function stepTableSections() {
+      return [{
+        title: "Prozessschritte",
+        headers: ["#", "Ticket", "Titel", "Status", "Domäne", "Priorität (Punkte)", "Labels", "Beschreibung"],
+        rows: lastSteps.map(function (s) {
+          return [s.number, s.key, s.title, s.status || "–", s.domain || "–", pointsDisplay(s.points), labelsDisplayText(s.labels), s.description || "–"];
+        })
+      }];
+    }
     generateBtn.addEventListener("click", function () {
       var tickets = resolveGeneratorTickets(kind);
       if (!tickets.length) { showToast("Keine Tickets", "Keine passenden Tickets gefunden.", true); return; }
       var name = nameInput.value.trim() || "Release";
+      lastName = name;
+      lastSteps = buildProcessSteps(tickets);
       var layout = currentProzessbildLayout();
       var theme = currentProzessbildTheme();
       renderBox.innerHTML = "";
@@ -6027,8 +6213,7 @@
         lastResult = { kind: "mermaid", source: source, name: name };
         galleryEntry = { id: Date.now(), title: name + " (" + tickets.length + " Tickets)", when: nowLabel(), kind: "mermaid", source: source };
       } else {
-        var steps = buildProcessSteps(tickets);
-        var svg = layout.build(steps, theme, name);
+        var svg = layout.build(lastSteps, theme, name);
         renderBox.innerHTML = svg;
         var details = document.createElement("details");
         details.className = "mermaid-source-details";
@@ -6054,9 +6239,39 @@
         }
         if (ok) showToast("Gespeichert", "Prozessdiagramm heruntergeladen.");
       };
+      downloadXlsxBtn.disabled = false;
+      downloadDocxBtn.disabled = false;
+      downloadPdfBtn.disabled = false;
       app.generatedImages.unshift(galleryEntry);
       renderGallery();
       addLog("Prozessbild: " + layout.name + " (" + theme.name + ") für " + tickets.length + " Tickets erzeugt.");
+    });
+    downloadXlsxBtn.addEventListener("click", async function () {
+      try {
+        var blob = await buildXlsxBlob(stepTableSections());
+        var ok = await saveOrWarn(safeFilename(lastName) + "_prozessbild_schritte.xlsx", blob);
+        if (ok) showToast("Gespeichert", "XLSX heruntergeladen.");
+      } catch (err) {
+        showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+      }
+    });
+    downloadDocxBtn.addEventListener("click", async function () {
+      try {
+        var blob = await buildDocxBlob("Prozessbild – " + lastName + " (Schritt-Tabelle)", stepTableSections());
+        var ok = await saveOrWarn(safeFilename(lastName) + "_prozessbild_schritte.docx", blob);
+        if (ok) showToast("Gespeichert", "DOCX heruntergeladen.");
+      } catch (err) {
+        showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+      }
+    });
+    downloadPdfBtn.addEventListener("click", async function () {
+      try {
+        var blob = buildSectionsPdfBlob("Prozessbild – " + lastName + " (Schritt-Tabelle)", stepTableSections());
+        var ok = await saveOrWarn(safeFilename(lastName) + "_prozessbild_schritte.pdf", blob);
+        if (ok) showToast("Gespeichert", "PDF heruntergeladen.");
+      } catch (err) {
+        showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+      }
     });
   }
   wireProcessDiagram();
