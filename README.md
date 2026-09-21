@@ -178,7 +178,14 @@ folgenden Bereichen:
   Burger-Menü (☰) daneben. Jeder Job zeigt oben seine **Prozessschritte**
   als visuelle Checkliste (grauer Kreis = ausstehend, grüner Haken =
   erledigt, roter Kreis = Fehler bei der Ausführung) und lässt sich
-  komplett als **XLSX, DOCX oder PDF exportieren**:
+  komplett als **XLSX, DOCX oder PDF exportieren**. Der erste Schritt
+  ("Datei(en) ausgewählt/importiert") lässt sich über einen Pfeil zu einer
+  Unteraktivität **"Datei auswählen"** aufklappen: eine Liste aller
+  Importe zur Auswahl, immer als echte Auswahlmöglichkeit angezeigt (auch
+  wenn aktuell nur eine Datei vorhanden ist). Wird eine bestimmte Datei
+  gewählt, schränken die Jobs 3-5 ihre Tabellen/Exporte/Auswertungen auf
+  nur deren Tickets ein, statt auf den über alle Importe zusammengeführten
+  Stand – "Alle Importe" (Standard) zeigt wieder alles.
   1. *Jira Verarbeitung* – chronologisches Protokoll aller Import-/Export-Aktionen.
   2. *Vergleich Jira Tickets* – derselbe Änderungsvergleich wie in der
      Dateiverwaltung (gleiche Jira-Nummer, unterschiedlicher Datenstand),

@@ -334,8 +334,9 @@
     display: flex; flex-direction: column; gap: 0; background: var(--surface); border: 1px solid var(--border);
     border-radius: 10px; box-shadow: var(--shadow); overflow: hidden;
   }
-  .process-step { display: flex; align-items: flex-start; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--border); }
-  .process-step:last-child { border-bottom: none; }
+  .process-step-group { border-bottom: 1px solid var(--border); }
+  .process-step-group:last-child { border-bottom: none; }
+  .process-step { display: flex; align-items: flex-start; gap: 10px; padding: 9px 14px; }
   .step-icon {
     flex: none; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
     font-size: 11px; font-weight: 800; margin-top: 1px; border: 1.5px solid var(--border-strong); color: var(--text-faint);
@@ -343,11 +344,26 @@
   .step-icon.state-done { background: var(--done-soft); border-color: var(--done); color: var(--done); }
   .step-icon.state-error { background: var(--blocked-soft); border-color: var(--blocked); color: var(--blocked); }
   .step-icon.state-pending { background: var(--surface-2); }
-  .step-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .step-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
   .step-label { font-size: 13px; font-weight: 600; color: var(--text); }
   .step-note { font-size: 11.5px; color: var(--text-muted); }
   .process-step.state-error .step-label { color: var(--blocked); }
   .process-step.state-error .step-note { color: var(--blocked); }
+  .step-toggle {
+    flex: none; background: transparent; border: none; cursor: pointer; color: var(--text-faint);
+    font-size: 11px; padding: 3px 6px; margin: -3px -6px -3px 4px; border-radius: 5px; line-height: 1;
+  }
+  .step-toggle:hover { color: var(--text); background: var(--surface-2); }
+  .step-sub { padding: 0 14px 12px 44px; display: flex; flex-direction: column; gap: 4px; }
+  .step-sub[hidden] { display: none; }
+  .step-sub-label { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); margin: 2px 0 2px; }
+  .step-file-option {
+    display: flex; align-items: flex-start; gap: 8px; padding: 6px 9px; border-radius: 7px; font-size: 12.5px;
+    cursor: pointer; border: 1px solid var(--border); color: var(--text-muted);
+  }
+  .step-file-option:hover { background: var(--surface-2); }
+  .step-file-option input { flex: none; margin-top: 2px; }
+  .step-file-option b { color: var(--text); font-weight: 600; }
   .gen-preview {
     background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; font-size: 12.5px;
     white-space: pre-wrap; font-family: "IBM Plex Mono", monospace; max-height: 62vh; overflow: auto; line-height: 1.55;
@@ -1690,6 +1706,11 @@
       glossarExtrakt: { error: null },
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     },
+    // Ueber die Unteraktivitaet "Datei auswaehlen" (Prozessschritte) gesetzt:
+    // null = alle Importe zusammengefuehrt (Standard), sonst die importId
+    // des einen ausgewaehlten Imports, auf den die Job-Tabellen (3/4/5)
+    // eingeschraenkt werden.
+    activeImportId: null,
     initialized: false
   };
 
@@ -1824,6 +1845,7 @@
       glossarExtrakt: { error: null },
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     };
+    app.activeImportId = null;
     var raw = JSON.parse(document.getElementById("initial-ticket-data").textContent);
     var metaEl = document.getElementById("initial-ticket-meta");
     var meta; try { meta = JSON.parse(metaEl.textContent); } catch (e) { meta = null; }
@@ -1850,6 +1872,7 @@
       glossarExtrakt: { error: null },
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     };
+    app.activeImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
     if (!els.compareModalOverlay.hidden) closeCompareModal();
     refreshDashboard(true);
@@ -2578,7 +2601,7 @@
 
   els.extractGlossaryBtn.addEventListener("click", function () {
     try {
-      var tickets = app.tickets.map(function (t) { return t.raw; });
+      var tickets = scopedTickets().map(function (t) { return t.raw; });
       app.extracted.abbreviations = extractAbbreviations(tickets);
       app.extracted.glossaryCandidates = extractGlossaryCandidates(tickets);
       app.extracted.ran = true;
@@ -2603,8 +2626,21 @@
 
   // 4) Releaseversion: alle geladenen Tickets + Abgleich gegen eine
   // Release-Ticketliste (spiegelt die CLI-Logik aus release_matcher.py).
+  // Ueber die Unteraktivitaet "Datei auswaehlen" (Prozessschritte, Schritt 1)
+  // gesetzte Einschraenkung: bei aktiver Auswahl liefert dies nur Tickets,
+  // die (auch) aus diesem einen Import stammen, statt aller zusammengeführten
+  // Tickets. Betrifft die Job-Tabellen/Exporte 3, 4 und 5.
+  function scopedTickets() {
+    if (app.activeImportId == null) return app.tickets;
+    var id = app.activeImportId;
+    return app.tickets.filter(function (t) {
+      var entry = app.ticketStore.get(t.key);
+      return entry && entry.sources.some(function (s) { return s.importId === id; });
+    });
+  }
+
   function renderReleaseversionTable() {
-    var list = app.tickets.slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
+    var list = scopedTickets().slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
     els.releaseversionTotal.textContent = list.length;
     els.releaseversionTbody.innerHTML = list.map(function (t) {
       return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(t.domain || "–") +
@@ -2614,7 +2650,7 @@
 
   // 5) Jira Liste: alle importierten Jira-Nummern mit Status/Datum + Gesamtanzahl.
   function renderJiraListe() {
-    var list = app.tickets.slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
+    var list = scopedTickets().slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
     els.jiralisteCount.textContent = list.length;
     els.jiralisteTbody.innerHTML = list.map(function (t) {
       var datum = t.updated || t.created || "–";
@@ -2628,7 +2664,7 @@
     if (!releaseKeys.length) { showToast("Keine Ticketliste", "Bitte mindestens einen Ticket-Key eingeben.", true); return; }
     try {
       var availableNorm = {};
-      app.ticketStore.forEach(function (entry, key) { availableNorm[key.toUpperCase()] = key; });
+      scopedTickets().forEach(function (t) { availableNorm[t.key.toUpperCase()] = t.key; });
       var found = [], missing = [];
       releaseKeys.forEach(function (k) {
         var norm = k.toUpperCase();
@@ -2665,7 +2701,7 @@
   els.evaluateTicketsBtn.addEventListener("click", function () {
     try {
       var counts = { handbuch: 0, intern: 0, unbekannt: 0 };
-      var rows = app.tickets.slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; }).map(function (t) {
+      var rows = scopedTickets().slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; }).map(function (t) {
         var issueType = t.raw && t.raw.issue_type;
         var kind = classifyTicketForManual(issueType);
         counts[kind]++;
@@ -2699,20 +2735,100 @@
     if (state === "error") return '<span class="step-icon state-error">✕</span>';
     return '<span class="step-icon state-pending">○</span>';
   }
+  // Merkt sich ueber Re-Renders hinweg, welche Unteraktivitaeten-Panels
+  // gerade aufgeklappt sind (sonst wuerde jeder Datenwechsel - z. B. eine
+  // neue Datei-Auswahl - das gerade geoeffnete Panel wieder zuklappen).
+  var expandedStepIds = {};
   function renderProcessSteps(containerId, steps) {
     var el = document.getElementById(containerId);
     if (!el) return;
-    el.innerHTML = steps.map(function (s) {
-      return '<div class="process-step state-' + s.state + '">' + stepIconHtml(s.state) +
+    el.innerHTML = steps.map(function (s, i) {
+      var hasSub = !!s.subActivitiesHtml;
+      var stepId = containerId + "-sub-" + i;
+      var isOpen = hasSub && !!expandedStepIds[stepId];
+      return '<div class="process-step-group">' +
+        '<div class="process-step state-' + s.state + '">' + stepIconHtml(s.state) +
         '<div class="step-body"><span class="step-label">' + escapeHtml(s.label) + '</span>' +
-        (s.note ? '<span class="step-note">' + escapeHtml(s.note) + "</span>" : "") + "</div></div>";
+        (s.note ? '<span class="step-note">' + escapeHtml(s.note) + "</span>" : "") + "</div>" +
+        (hasSub
+          ? '<button class="step-toggle" type="button" data-step-id="' + stepId + '" aria-expanded="' + (isOpen ? "true" : "false") +
+            '" aria-controls="' + stepId + '" aria-label="Unteraktivitäten anzeigen">' + (isOpen ? "▾" : "▸") + "</button>"
+          : "") +
+        "</div>" +
+        (hasSub ? '<div class="step-sub" id="' + stepId + '"' + (isOpen ? "" : " hidden") + ">" + s.subActivitiesHtml + "</div>" : "") +
+        "</div>";
     }).join("");
+
+    Array.prototype.forEach.call(el.querySelectorAll(".step-toggle"), function (btn) {
+      btn.addEventListener("click", function () {
+        var stepId = btn.getAttribute("data-step-id");
+        var sub = document.getElementById(stepId);
+        var willOpen = sub.hidden;
+        sub.hidden = !willOpen;
+        btn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+        btn.textContent = willOpen ? "▾" : "▸";
+        if (willOpen) expandedStepIds[stepId] = true; else delete expandedStepIds[stepId];
+      });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('input[name^="active-import-choice-"]'), function (radio) {
+      radio.addEventListener("change", function () {
+        if (!radio.checked) return;
+        app.activeImportId = radio.value === "" ? null : parseInt(radio.value, 10);
+        onActiveImportChanged();
+      });
+    });
+  }
+
+  // Unteraktivitaet des Schritts "Datei(en) ausgewählt/importiert": Liste
+  // aller Importe zur Auswahl - bewusst IMMER als Liste mit Auswahlmöglichkeit
+  // gerendert, auch wenn aktuell nur ein Import vorhanden ist, damit die
+  // Bedienung gleich bleibt, sobald weitere Dateien hinzukommen.
+  // Der Radiogruppen-Name wird pro Job eindeutig gemacht (nicht global) -
+  // sonst hebt der Browser bei mehreren gleichzeitig im DOM vorhandenen,
+  // gleich benannten Radiogruppen (je Job eine) die "checked"-Markierung
+  // aller bis auf die zuletzt gerenderte wieder auf.
+  function fileChoiceListHtml(scopeSuffix) {
+    var groupName = "active-import-choice-" + scopeSuffix;
+    var rows = [
+      '<p class="step-sub-label">Datei auswählen</p>',
+      '<label class="step-file-option"><input type="radio" name="' + groupName + '" value=""' +
+        (app.activeImportId == null ? " checked" : "") + '><span><b>Alle Importe</b> (zusammengeführter Stand – Standard)</span></label>'
+    ];
+    app.imports.forEach(function (imp) {
+      rows.push(
+        '<label class="step-file-option"><input type="radio" name="' + groupName + '" value="' + imp.id + '"' +
+        (app.activeImportId === imp.id ? " checked" : "") + '><span><b>' + escapeHtml(imp.source) + '</b> · ' +
+        escapeHtml(imp.format) + ' · ' + imp.ticketCount + ' Tickets · ' + escapeHtml(imp.when) + "</span></label>"
+      );
+    });
+    return rows.join("");
+  }
+  function activeImportLabel() {
+    if (app.activeImportId == null) return null;
+    var imp = app.imports.filter(function (i) { return i.id === app.activeImportId; })[0];
+    return imp ? imp.source : null;
+  }
+  function onActiveImportChanged() {
+    renderReleaseversionTable();
+    renderJiraListe();
+    renderAllJobSteps();
+    var label = activeImportLabel();
+    addLog("Aktive Datei für Verarbeitung (Job 3/4/5): " + (label ? label : "Alle Importe (zusammengeführt)") + ".");
   }
 
   function computeJobSteps(jobNum) {
     var importCount = app.imports.length;
     var ticketCount = app.tickets.length;
-    var loaded = { state: importCount > 0 ? "done" : "pending", label: "Datei(en) aus Dateiverwaltung ausgewählt/importiert", note: importCount > 0 ? importCount + " Import(e) vorhanden" : "Noch keine Datei importiert" };
+    var scopedCount = scopedTickets().length;
+    var activeLabel = activeImportLabel();
+    var loaded = {
+      state: importCount > 0 ? "done" : "pending",
+      label: "Datei(en) aus Dateiverwaltung ausgewählt/importiert",
+      note: importCount > 0
+        ? importCount + " Import(e) vorhanden" + (activeLabel ? " – aktiv: " + activeLabel + " (" + scopedCount + " Tickets)" : " – aktiv: Alle Importe")
+        : "Noch keine Datei importiert",
+      subActivitiesHtml: fileChoiceListHtml(jobNum)
+    };
     var processed = { state: ticketCount > 0 ? "done" : "pending", label: "Inhalt eingelesen und verarbeitet (bereinigt)", note: ticketCount > 0 ? ticketCount + " Tickets bereinigt" : "Noch keine Tickets verarbeitet" };
 
     if (jobNum === 1) {
@@ -2749,8 +2865,8 @@
       var rv = app.jobState.releaseversion;
       var steps4 = [
         loaded, processed,
-        { state: ticketCount > 0 ? "done" : "pending", label: "Anzahl Jira-Tickets / Statistik ermittelt", note: ticketCount > 0 ? ticketCount + " Tickets" : "–" },
-        { state: ticketCount > 0 ? "done" : "pending", label: "Tickets in Liste extrahiert (mit Exportmöglichkeit)", note: ticketCount > 0 ? "Tabelle + XLSX/DOCX/PDF bereit" : "–" }
+        { state: scopedCount > 0 ? "done" : "pending", label: "Anzahl Jira-Tickets / Statistik ermittelt", note: scopedCount > 0 ? scopedCount + " Tickets" : "–" },
+        { state: scopedCount > 0 ? "done" : "pending", label: "Tickets in Liste extrahiert (mit Exportmöglichkeit)", note: scopedCount > 0 ? "Tabelle + XLSX/DOCX/PDF bereit" : "–" }
       ];
       steps4.push(rv.matchError
         ? { state: "error", label: "Abgleich mit benötigten Jira-Tickets", note: rv.matchError }
@@ -2763,9 +2879,9 @@
     if (jobNum === 5) {
       return [
         loaded,
-        { state: ticketCount > 0 ? "done" : "pending", label: "Gesamtanzahl importierter Tickets ermittelt", note: ticketCount > 0 ? ticketCount + " Tickets" : "–" },
-        { state: ticketCount > 0 ? "done" : "pending", label: "Liste mit Status/Datum aufgebaut", note: ticketCount > 0 ? "Tabelle befüllt" : "–" },
-        { state: ticketCount > 0 ? "done" : "pending", label: "Export bereit (XLSX/DOCX/PDF)", note: ticketCount > 0 ? "Bereit" : "Noch keine Daten" }
+        { state: scopedCount > 0 ? "done" : "pending", label: "Gesamtanzahl importierter Tickets ermittelt", note: scopedCount > 0 ? scopedCount + " Tickets" : "–" },
+        { state: scopedCount > 0 ? "done" : "pending", label: "Liste mit Status/Datum aufgebaut", note: scopedCount > 0 ? "Tabelle befüllt" : "–" },
+        { state: scopedCount > 0 ? "done" : "pending", label: "Export bereit (XLSX/DOCX/PDF)", note: scopedCount > 0 ? "Bereit" : "Noch keine Daten" }
       ];
     }
     if (jobNum === 6) {
@@ -2781,7 +2897,7 @@
   /* ============ Teil 8d: Job-Export (XLSX/DOCX/PDF) je Verarbeitung-Job ============ */
 
   function jiraListeRows() {
-    return app.tickets.slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
+    return scopedTickets().slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
   }
   function jobSections(jobNum) {
     if (jobNum === "1") {
