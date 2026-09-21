@@ -1,0 +1,24 @@
+{# Entwurf - vor Versand redaktionell prüfen. #}
+# Release Letter – {{ release_name }}
+
+Stand: {{ generated_at }}
+Umfang: {{ tickets | length }} Tickets
+
+## Neue Funktionen & Änderungen
+
+{% for t in tickets -%}
+- **{{ t.key }}** – {{ t.summary or "(keine Zusammenfassung)" }}
+{% if t.description %}  {{ t.description | truncate(220, True, "…") }}
+{% endif -%}
+{% endfor %}
+
+## Bekannte Einschränkungen / offene Punkte
+
+{% set open_tickets = tickets | selectattr("status", "defined") | rejectattr("status", "in", ["Done", "Closed", "Resolved", "Erledigt", "Geschlossen"]) | list %}
+{% if open_tickets %}
+{% for t in open_tickets -%}
+- {{ t.key }}: {{ t.summary }} (Status: {{ t.status }})
+{% endfor -%}
+{% else %}
+Keine offenen Punkte bekannt.
+{% endif %}

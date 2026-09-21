@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+build/
+
+# Interner Datenspeicher (bereinigte Ticket-Daten für Phase 2/3) - kann
+# groß werden und ist generiert, nicht Quellcode.
+data/
+
+# Echte Jira-Exporte und generierte Tickets/Dokumente bleiben lokal,
+# nur die Ordnerstruktur (.gitkeep) wird versioniert.
+Input/*
+!Input/.gitkeep
+Output/*/*
+!Output/*/.gitkeep

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="0.92">
+<channel>
+    <title>Jira Export Test</title>
+    <item>
+        <title>[DEMO-101] Login-Fehler bei Zwei-Faktor-Authentifizierung</title>
+        <link>https://jira.example.com/browse/DEMO-101</link>
+        <project id="10000" key="DEMO">Demo Project</project>
+        <key id="12345">DEMO-101</key>
+        <summary>Login-Fehler bei Zwei-Faktor-Authentifizierung</summary>
+        <type id="1">Bug</type>
+        <priority id="2">Hoch</priority>
+        <status id="1">In Bearbeitung</status>
+        <resolution id="-1">Ungelöst</resolution>
+        <assignee username="mmustermann">Max Mustermann</assignee>
+        <reporter username="eschmidt">Erika Schmidt</reporter>
+        <created>Mon, 5 Jan 2026 09:12:00 +0000</created>
+        <updated>Tue, 6 Jan 2026 14:30:00 +0000</updated>
+        <description>Beim Login mit aktivierter 2FA erscheint eine Fehlermeldung. Kontakt bei Rückfragen: max.mustermann@example.com. Betroffen: Max Mustermann.</description>
+        <labels>
+            <label>login</label>
+            <label>security</label>
+        </labels>
+        <component>Backend</component>
+        <component>Auth</component>
+        <fixVersion>2026.1</fixVersion>
+        <watches>
+            <watcher>Max Mustermann</watcher>
+            <watcher>Erika Schmidt</watcher>
+        </watches>
+        <comments>
+            <comment author="mmustermann" created="Mon, 5 Jan 2026 10:00:00 +0000">Kann ich reproduzieren, kümmere mich darum. - Max Mustermann (max.mustermann@example.com)</comment>
+            <comment author="eschmidt" created="Mon, 5 Jan 2026 11:15:00 +0000">Danke, bitte auch auf Staging prüfen.</comment>
+        </comments>
+        <customfields>
+            <customfield id="customfield_10001" key="com.example:story-points">
+                <customfieldname>Story Points</customfieldname>
+                <customfieldvalues>
+                    <customfieldvalue>3</customfieldvalue>
+                </customfieldvalues>
+            </customfield>
+        </customfields>
+    </item>
+    <item>
+        <title>[DEMO-102] Exportfunktion für Berichte hinzufügen</title>
+        <link>https://jira.example.com/browse/DEMO-102</link>
+        <project id="10000" key="DEMO">Demo Project</project>
+        <key id="12346">DEMO-102</key>
+        <summary>Exportfunktion für Berichte hinzufügen</summary>
+        <type id="2">Story</type>
+        <priority id="3">Mittel</priority>
+        <status id="6">Erledigt</status>
+        <resolution id="1">Fixed</resolution>
+        <assignee username="mmustermann">Max Mustermann</assignee>
+        <reporter username="jdoe">Jane Doe</reporter>
+        <created>Wed, 7 Jan 2026 08:00:00 +0000</created>
+        <updated>Fri, 9 Jan 2026 16:45:00 +0000</updated>
+        <description>Nutzer sollen Berichte als CSV exportieren können.</description>
+        <fixVersion>2026.1</fixVersion>
+        <watches>
+            <watcher>Jane Doe</watcher>
+        </watches>
+        <comments>
+            <comment author="jdoe" created="Thu, 8 Jan 2026 09:00:00 +0000">Umgesetzt, bitte testen. Kontakt: jane.doe@example.com</comment>
+        </comments>
+    </item>
+    <item>
+        <title>[DEMO-103] Ladezeiten der Startseite optimieren</title>
+        <link>https://jira.example.com/browse/DEMO-103</link>
+        <project id="10000" key="DEMO">Demo Project</project>
+        <key id="12347">DEMO-103</key>
+        <summary>Ladezeiten der Startseite optimieren</summary>
+        <type id="3">Task</type>
+        <priority id="4">Niedrig</priority>
+        <status id="1">Offen</status>
+        <assignee></assignee>
+        <reporter username="eschmidt">Erika Schmidt</reporter>
+        <created>Mon, 12 Jan 2026 10:00:00 +0000</created>
+        <updated>Mon, 12 Jan 2026 10:00:00 +0000</updated>
+        <description></description>
+    </item>
+</channel>
+</rss>

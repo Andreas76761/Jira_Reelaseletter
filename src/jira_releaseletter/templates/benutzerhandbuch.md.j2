@@ -1,0 +1,17 @@
+{# Entwurf - Rohgerüst aus den Ticket-Beschreibungen, redaktionell zu prüfen. #}
+# Benutzerhandbuch – {{ release_name }}
+
+Stand: {{ generated_at }}
+
+{% for t in tickets %}
+## {{ loop.index }}. {{ t.summary or t.key }}
+
+*Ticket: {{ t.key }}{% if t.components %} · Komponente: {{ t.components | join(", ") }}{% endif %}*
+
+{% if t.description %}
+{{ t.description }}
+{% else %}
+_Keine Beschreibung im Ticket hinterlegt - Abschnitt manuell ergänzen._
+{% endif %}
+
+{% endfor %}

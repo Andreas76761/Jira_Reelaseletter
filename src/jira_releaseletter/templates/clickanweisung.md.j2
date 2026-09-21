@@ -1,0 +1,20 @@
+{# Entwurf - Schritt-für-Schritt-Gerüst aus den Ticket-Beschreibungen,
+   redaktionell zu prüfen (Screenshots/genaue Klickpfade ergänzen). #}
+# Klickanweisung – {{ release_name }}
+
+Stand: {{ generated_at }}
+
+{% for t in tickets %}
+## Schritt {{ loop.index }}: {{ t.summary or t.key }}
+
+*Ticket: {{ t.key }}*
+
+{% if t.description %}
+{% for line in t.description.split("\n") if line.strip() %}
+{{ loop.index }}. {{ line.strip() }}
+{% endfor %}
+{% else %}
+1. _Klickpfad manuell ergänzen - Ticket enthält keine Beschreibung._
+{% endif %}
+
+{% endfor %}

@@ -1,0 +1,28 @@
+{# Entwurf - einfache sequentielle Übersicht als Mermaid-Diagramm.
+   Reihenfolge/Verzweigungen spiegeln NICHT automatisch den echten
+   Prozess wider, sondern nur die Reihenfolge der Tickets - vor
+   Verwendung anpassen. #}
+# Prozessdiagramm – {{ release_name }}
+
+Stand: {{ generated_at }}
+
+```mermaid
+flowchart TD
+    start([Start])
+{% for t in tickets %}
+    t{{ loop.index }}["{{ t.key }}: {{ (t.summary or "") | truncate(40, True, "…") | replace('"', "'") }}"]
+{% endfor %}
+    start --> t1
+{% for t in tickets %}
+{% if not loop.last %}
+    t{{ loop.index }} --> t{{ loop.index + 1 }}
+{% endif %}
+{% endfor %}
+    t{{ tickets | length }} --> ende([Ende])
+```
+
+## Tickets im Diagramm
+
+{% for t in tickets %}
+- **{{ t.key }}** – {{ t.summary }}{% if t.status %} (Status: {{ t.status }}){% endif +%}
+{% endfor %}
