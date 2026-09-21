@@ -150,7 +150,13 @@ folgenden Bereichen:
   Textfeld), Format wird automatisch erkannt, Button „Verarbeiten und
   speichern“ zeigt während der Verarbeitung eine Sanduhr/Spinner-Animation;
   das Ergebnis erscheint in der Dateiverwaltung mit der Quelle „Manuell
-  (Zwischenablage)“. Parsing/Bereinigung laufen vollständig im Browser, die
+  (Zwischenablage)“. Ein optionales **Kommentarfeld** oberhalb des
+  Datei-Uploads gilt für den jeweils nächsten Datei- oder
+  Zwischenablage-Import und wird nach erfolgreichem Import automatisch
+  geleert; der Kommentar erscheint danach überall dort, wo der Import zur
+  Auswahl steht (Dateiverwaltung, "Datei auswählen" in Verarbeitung) und
+  lässt sich in der Dateiverwaltung jederzeit nachträglich ergänzen oder
+  ändern. Parsing/Bereinigung laufen vollständig im Browser, die
   Datei/der Text verlässt den Rechner nicht:
   - *Jira Massenupload* – Jira-HTML-Export (Issue-Navigator-Tabelle)
     oder klassischer XML-Export (JavaScript-Portierung von

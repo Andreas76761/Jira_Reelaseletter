@@ -147,6 +147,21 @@
   .dropzone .txt span { font-size: 12px; color: var(--text-muted); }
   .upload-side { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
 
+  .text-input {
+    width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); font-size: 13px; font-family: inherit;
+  }
+  .text-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .import-comment-row { margin: 10px 0 4px; }
+  .import-comment-row label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; }
+  .comment-cell { max-width: 220px; }
+  .comment-cell .comment-text { white-space: pre-wrap; word-break: break-word; }
+  .comment-cell .comment-text.is-empty { color: var(--text-faint); font-style: italic; }
+  .comment-cell .comment-edit-row { display: flex; gap: 6px; align-items: flex-start; flex-wrap: wrap; }
+  .comment-cell .comment-edit-row .text-input { min-width: 160px; }
+  .comment-edit-btn { font-size: 11.5px; padding: 3px 8px; margin-top: 3px; }
+  .comment-hint { color: var(--text-muted); font-style: italic; }
+
   .paste-panel { display: flex; flex-direction: column; gap: 8px; }
   .paste-panel textarea {
     font-family: inherit; font-size: 12.5px; line-height: 1.5; padding: 10px 12px; border-radius: 8px;
@@ -555,6 +570,11 @@
           <button class="import-tab" data-mode="andere" type="button">Andere Importe</button>
         </div>
 
+        <div class="import-comment-row">
+          <label for="import-comment-input">Kommentar zu diesem Import (optional)</label>
+          <input type="text" id="import-comment-input" class="text-input" placeholder="z. B. Kontext, Quelle, Besonderheiten &ndash; gilt für den nächsten Datei- oder Zwischenablage-Import" autocomplete="off" maxlength="300">
+        </div>
+
         <div class="upload-row">
           <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Datei(en) auswählen">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
@@ -596,7 +616,7 @@
           <p class="section-label">Imports</p>
           <div class="panel table-wrap">
             <table class="simple-table" id="imports-table">
-              <thead><tr><th>#</th><th>Quelle</th><th>Format</th><th>Zeitpunkt</th><th>Tickets</th><th>Neu</th><th>Geändert</th><th>Unverändert</th><th>Pseudonymisiert</th></tr></thead>
+              <thead><tr><th>#</th><th>Quelle</th><th>Format</th><th>Zeitpunkt</th><th>Tickets</th><th>Neu</th><th>Geändert</th><th>Unverändert</th><th>Pseudonymisiert</th><th>Kommentar</th></tr></thead>
               <tbody id="imports-tbody"></tbody>
             </table>
           </div>
@@ -1672,6 +1692,7 @@
     "tiles", "domain-chart", "domain-section", "domain-label", "domain-select", "search-input", "reset-filter-btn",
     "table-body", "empty-state", "result-count",
     "dropzone", "dropzone-title", "dropzone-hint", "file-input", "reset-session-btn", "format-callout", "import-tabs",
+    "import-comment-input",
     "paste-textarea", "paste-from-clipboard-btn", "paste-process-btn", "paste-spinner", "paste-process-label",
     "imports-tbody", "changes-tbody", "changes-empty", "domain-aliases-tbody",
     "log-list", "log-empty",
@@ -1831,7 +1852,8 @@
 
     var importRecord = {
       id: importId, source: meta.source, when: meta.when, format: meta.format,
-      ticketCount: cleaned.length, personCount: anonymizer.count, stats: stats
+      ticketCount: cleaned.length, personCount: anonymizer.count, stats: stats,
+      comment: (meta.comment || "").trim()
     };
     app.imports.push(importRecord);
     addLog(
@@ -1858,6 +1880,8 @@
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     };
     app.activeImportId = null;
+    editingCommentImportId = null;
+    els.importCommentInput.value = "";
     var raw = JSON.parse(document.getElementById("initial-ticket-data").textContent);
     var metaEl = document.getElementById("initial-ticket-meta");
     var meta; try { meta = JSON.parse(metaEl.textContent); } catch (e) { meta = null; }
@@ -1885,6 +1909,7 @@
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     };
     app.activeImportId = null;
+    editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
     if (!els.compareModalOverlay.hidden) closeCompareModal();
     refreshDashboard(true);
@@ -2295,12 +2320,13 @@
     var files = Array.prototype.slice.call(fileList || []);
     if (!files.length) return;
     var parseFn = IMPORT_PARSERS[importMode] || parseAsAndere;
+    var comment = (els.importCommentInput.value || "").trim();
     for (var i = 0; i < files.length; i++) {
       var file = files[i];
       try {
         var text = await readFileAsText(file);
         var result = parseFn(text, file.name);
-        var record = ingestTickets(result.tickets, { source: file.name, when: nowLabel(), format: result.format });
+        var record = ingestTickets(result.tickets, { source: file.name, when: nowLabel(), format: result.format, comment: comment });
         var extra = "";
         if (importMode === "releaseinfo") {
           var domains = {};
@@ -2316,6 +2342,7 @@
         showToast("Import fehlgeschlagen (" + file.name + ")", (err && err.message) || "Unbekannter Fehler.", true);
       }
     }
+    if (comment) els.importCommentInput.value = "";
   }
 
   els.dropzone.addEventListener("click", function () { els.fileInput.click(); });
@@ -2365,13 +2392,15 @@
     await wait(30); // UI (Sanduhr) einmal rendern lassen, bevor das synchrone Parsing startet
 
     try {
+      var comment = (els.importCommentInput.value || "").trim();
       var result = parseAsAndere(text);
-      var record = ingestTickets(result.tickets, { source: PASTE_SOURCE_LABEL, when: nowLabel(), format: result.format });
+      var record = ingestTickets(result.tickets, { source: PASTE_SOURCE_LABEL, when: nowLabel(), format: result.format, comment: comment });
       showToast(
         "Verarbeitet und gespeichert",
         record.ticketCount + " Tickets (" + record.stats.neu + " neu, " + record.stats.geaendert + " geändert) – Quelle „" + PASTE_SOURCE_LABEL + "“ in der Dateiverwaltung sichtbar."
       );
       els.pasteTextarea.value = "";
+      if (comment) els.importCommentInput.value = "";
     } catch (err) {
       showToast("Verarbeitung fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
     } finally {
@@ -2404,14 +2433,57 @@
 
   /* ============ Teil 7: Dateiverwaltung (Imports + Änderungen) ============ */
 
+  // Kommentar je Import lässt sich in der Dateiverwaltung nachträglich
+  // ergänzen/ändern - editingCommentImportId haelt fest, welche Zeile
+  // gerade im Bearbeiten-Modus ist (ueberlebt Re-Renders bis Speichern/Abbrechen).
+  var editingCommentImportId = null;
+  function commentCellHtml(imp) {
+    if (editingCommentImportId === imp.id) {
+      return '<div class="comment-edit-row">' +
+        '<input type="text" class="text-input comment-edit-input" data-import-id="' + imp.id + '" value="' + escapeHtml(imp.comment || "") + '" maxlength="300">' +
+        '<button type="button" class="btn primary comment-edit-btn" data-action="save-comment" data-import-id="' + imp.id + '">Speichern</button>' +
+        '<button type="button" class="btn ghost comment-edit-btn" data-action="cancel-comment" data-import-id="' + imp.id + '">Abbrechen</button>' +
+        "</div>";
+    }
+    var hasComment = !!(imp.comment && imp.comment.trim());
+    return '<div class="comment-text' + (hasComment ? "" : " is-empty") + '">' + escapeHtml(hasComment ? imp.comment : "– kein Kommentar –") + "</div>" +
+      '<button type="button" class="btn ghost comment-edit-btn" data-action="edit-comment" data-import-id="' + imp.id + '">' + (hasComment ? "Bearbeiten" : "Ergänzen") + "</button>";
+  }
   function renderImportsTable() {
     els.importsTbody.innerHTML = app.imports.map(function (imp) {
       return "<tr><td class=\"mono\">" + imp.id + "</td><td>" + escapeHtml(imp.source) + "</td><td>" + escapeHtml(imp.format) +
         "</td><td class=\"mono\">" + escapeHtml(imp.when) + "</td><td class=\"mono\">" + imp.ticketCount + "</td><td class=\"mono\">" +
         imp.stats.neu + "</td><td class=\"mono\">" + imp.stats.geaendert + "</td><td class=\"mono\">" + imp.stats.unveraendert +
-        "</td><td class=\"mono\">" + imp.personCount + "</td></tr>";
+        "</td><td class=\"mono\">" + imp.personCount + "</td><td class=\"comment-cell\">" + commentCellHtml(imp) + "</td></tr>";
     }).join("");
   }
+  els.importsTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    var importId = parseInt(btn.getAttribute("data-import-id"), 10);
+    var action = btn.getAttribute("data-action");
+    if (action === "edit-comment") {
+      editingCommentImportId = importId;
+      renderImportsTable();
+      var input = els.importsTbody.querySelector('.comment-edit-input[data-import-id="' + importId + '"]');
+      if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+    } else if (action === "cancel-comment") {
+      editingCommentImportId = null;
+      renderImportsTable();
+    } else if (action === "save-comment") {
+      var input2 = els.importsTbody.querySelector('.comment-edit-input[data-import-id="' + importId + '"]');
+      var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
+      if (imp && input2) {
+        var newComment = input2.value.trim();
+        var changed = newComment !== (imp.comment || "");
+        imp.comment = newComment;
+        if (changed) addLog("Kommentar zu Import #" + importId + " (" + imp.source + ") " + (newComment ? "aktualisiert" : "entfernt") + ".");
+      }
+      editingCommentImportId = null;
+      renderImportsTable();
+      renderAllJobSteps();
+    }
+  });
 
   function renderChangesTable() {
     var rowsHtml = [];
@@ -2889,10 +2961,12 @@
         (app.activeImportId == null ? " checked" : "") + '><span><b>Alle Importe</b> (zusammengeführter Stand – Standard)</span></label>'
     ];
     app.imports.forEach(function (imp) {
+      var commentSuffix = (imp.comment && imp.comment.trim())
+        ? ' <span class="comment-hint">· Kommentar: „' + escapeHtml(imp.comment) + '“</span>' : "";
       rows.push(
         '<label class="step-file-option"><input type="radio" name="' + groupName + '" value="' + imp.id + '"' +
         (app.activeImportId === imp.id ? " checked" : "") + '><span><b>' + escapeHtml(imp.source) + '</b> · ' +
-        escapeHtml(imp.format) + ' · ' + imp.ticketCount + ' Tickets · ' + escapeHtml(imp.when) + "</span></label>"
+        escapeHtml(imp.format) + ' · ' + imp.ticketCount + ' Tickets · ' + escapeHtml(imp.when) + commentSuffix + "</span></label>"
       );
     });
     return rows.join("");
