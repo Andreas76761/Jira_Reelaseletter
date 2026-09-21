@@ -175,8 +175,14 @@
   .btn.primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
   .btn.ghost { background: transparent; color: var(--text-muted); border-color: transparent; }
   .btn.ghost:hover { color: var(--text); background: var(--surface-2); }
+  .btn.danger { background: var(--blocked); border-color: var(--blocked); color: #fff; }
+  .btn.danger:hover { filter: brightness(0.92); }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn svg { flex: none; }
+
+  .danger-zone { border-color: var(--blocked); padding: 16px 18px; }
+  .danger-zone h3 { margin: 0 0 6px; font-size: 14.5px; color: var(--blocked); }
+  .danger-zone p { margin: 0; font-size: 13px; color: var(--text-muted); line-height: 1.5; }
 
   .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; }
   .tile {
@@ -454,6 +460,8 @@
       <li><button class="nav-item" data-view="infobox" type="button">Infobox</button></li>
       <li><button class="nav-item" data-view="glossar" type="button">Glossar</button></li>
       <li><button class="nav-item" data-view="abkuerzungen" type="button">Abkürzungen</button></li>
+      <li class="nav-sep">Einstellungen</li>
+      <li><button class="nav-item" data-view="einstellungen" type="button">Einstellungen</button></li>
     </ul>
   </nav>
 
@@ -953,6 +961,24 @@
           </table>
           <div class="empty-hint" id="abbrev-empty-register">Noch nicht extrahiert. Unter Verarbeitung → 3. Glossar &amp; Abkürzungen extrahieren einmal ausführen.</div>
         </div>
+      </section>
+
+      <!-- ================= Einstellungen ================= -->
+      <section class="view-panel" data-view-panel="einstellungen" hidden>
+        <div class="view-head"><h2>Einstellungen</h2><p class="desc">Verwaltung der aktuellen Sitzung. Es gibt keinen Server &ndash; alle Daten liegen ausschließlich im Speicher dieses Browser-Tabs und sind mit dem Schließen der Seite ohnehin weg.</p></div>
+
+        <section>
+          <p class="section-label">Admin-Bereich</p>
+          <div class="panel danger-zone">
+            <h3>Alle geladenen Daten löschen</h3>
+            <p>Entfernt alle importierten Tickets, Imports, Änderungsvergleiche, das Protokoll, extrahierte Abkürzungen/Glossar-Begriffe und alle generierten Prozessbilder unwiderruflich aus dieser Sitzung &ndash; anders als "Sitzung zurücksetzen" im Import-Bereich wird <b>nicht</b> wieder auf die Ausgangsdaten zurückgesetzt, sondern alles komplett geleert.</p>
+            <div class="stat-line" style="margin: 10px 0 14px;">
+              <div class="chip"><b class="mono" id="settings-current-tickets">0</b> Tickets aktuell geladen</div>
+              <div class="chip"><b class="mono" id="settings-current-imports">0</b> Imports</div>
+            </div>
+            <button class="btn danger" id="delete-all-data-btn" type="button">Alle Daten löschen</button>
+          </div>
+        </section>
       </section>
 
     </div>
@@ -1632,6 +1658,7 @@
     "release-keys-input", "release-match-btn", "release-match-summary",
     "release-missing-wrap", "release-missing-table", "release-missing-tbody",
     "jiraliste-count", "jiraliste-tbody",
+    "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
     "evaluate-tickets-btn", "evaluate-summary", "evaluate-count-manual", "evaluate-count-internal", "evaluate-count-unknown",
     "evaluate-table-wrap", "evaluate-tbody",
     "gallery", "gallery-empty",
@@ -1812,6 +1839,46 @@
     els.evaluateTableWrap.hidden = true;
   }
 
+  // Admin-Funktion (Einstellungen): im Unterschied zu resetSession() werden
+  // NICHT wieder die eingebetteten Ausgangsdaten geladen, sondern die
+  // Sitzung wird vollständig geleert (0 Tickets, 0 Imports).
+  function deleteAllData() {
+    app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
+    app.generatedImages = []; app.initialized = false;
+    app.extracted = { abbreviations: [], glossaryCandidates: [], ran: false };
+    app.jobState = {
+      glossarExtrakt: { error: null },
+      releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
+    };
+    if (!els.modalOverlay.hidden) closeModal();
+    if (!els.compareModalOverlay.hidden) closeCompareModal();
+    refreshDashboard(true);
+    renderImportsTable();
+    renderChangesTable();
+    renderStats();
+    renderOutputCounts();
+    renderGallery();
+    renderExtractedAbbreviations();
+    renderExtractedGlossaryCandidates();
+    els.releaseMatchSummary.hidden = true;
+    els.releaseMissingWrap.hidden = true;
+    els.releaseKeysInput.value = "";
+    els.evaluateSummary.hidden = true;
+    els.evaluateTableWrap.hidden = true;
+    addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
+  }
+  els.deleteAllDataBtn.addEventListener("click", function () {
+    if (!app.tickets.length && !app.imports.length) { showToast("Nichts zu löschen", "Es sind aktuell keine Daten geladen.", true); return; }
+    var ok = window.confirm(
+      "Wirklich ALLE geladenen Daten löschen? " + app.tickets.length + " Tickets aus " + app.imports.length +
+      " Import(en) sowie Protokoll, Vergleiche und Extraktionen gehen dabei unwiderruflich verloren. " +
+      "Das lädt NICHT die Ausgangsdaten neu (anders als \"Sitzung zurücksetzen\")."
+    );
+    if (!ok) return;
+    deleteAllData();
+    showToast("Daten gelöscht", "Alle geladenen Daten wurden aus dieser Sitzung entfernt.");
+  });
+
   function refreshDashboard(resetFilters) {
     var list = [];
     app.ticketStore.forEach(function (entry) { list.push(entry); });
@@ -1850,9 +1917,11 @@
   }
 
   function buildFormatCallout() {
+    if (!app.imports.length) { els.formatCallout.hidden = true; els.formatCallout.innerHTML = ""; return; }
+    els.formatCallout.hidden = false;
     var hasSummary = app.tickets.some(function (t) { return t.summary; });
     var hasDesc = app.tickets.some(function (t) { return t.raw.description; });
-    var lastFormat = app.imports.length ? app.imports[app.imports.length - 1].format : "";
+    var lastFormat = app.imports[app.imports.length - 1].format;
     if (hasSummary || hasDesc) {
       els.formatCallout.className = "callout";
       els.formatCallout.innerHTML = "<b>Zuletzt importiert:</b> " + escapeHtml(lastFormat) +
@@ -1868,6 +1937,8 @@
     els.statTickets.textContent = app.tickets.length;
     els.statImports.textContent = app.imports.length;
     els.statChanges.textContent = app.changes.length;
+    els.settingsCurrentTickets.textContent = app.tickets.length;
+    els.settingsCurrentImports.textContent = app.imports.length;
     if (app.changes.length) { els.navBadgeChanges.hidden = false; els.navBadgeChanges.textContent = app.changes.length; }
     else { els.navBadgeChanges.hidden = true; }
   }

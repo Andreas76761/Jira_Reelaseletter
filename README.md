@@ -213,7 +213,13 @@ folgenden Bereichen:
   ZIP-Archiv aus Markdown- bzw. PDF-Dateien exportieren (respektiert die
   aktuelle Dashboard-Filterung); PDFs werden clientseitig mit jsPDF
   erzeugt.
-- **Infobox / Glossar** – Kurzerklärung der App bzw. Begriffsliste.
+- **Infobox / Glossar / Abkürzungen** – Kurzerklärung der App, Begriffsliste
+  bzw. extrahierte Abkürzungen (siehe Verarbeitung → 3.).
+- **Einstellungen** – Admin-Bereich mit Funktion "Alle Daten löschen": leert
+  die komplette Sitzung (Tickets, Imports, Protokoll, Vergleiche,
+  Extraktionen) unwiderruflich, mit Sicherheitsabfrage. Anders als "Sitzung
+  zurücksetzen" im Import-Bereich werden dabei **nicht** wieder die
+  eingebetteten Ausgangsdaten geladen, sondern alles auf 0 Tickets geleert.
 - Word-Exporte (`.docx`) und Detail-HTML-Exports (ein Abschnitt pro
   Ticket statt einer Tabelle) werden von der Web-App **nicht**
   unterstützt – dafür das CLI-Tool verwenden.
