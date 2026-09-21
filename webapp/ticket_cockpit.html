@@ -1053,7 +1053,7 @@
 
       <!-- ================= Clickanweisung ================= -->
       <section class="view-panel" data-view-panel="clickanweisung" hidden>
-        <div class="view-head"><h2>Clickanweisung</h2><p class="desc">Schritt-für-Schritt-Bedienungsanleitung für oneSCM, auf Deutsch oder Englisch aus den Beschreibungstexten derselben Tickets wie Releaseletter, Benutzerhandbuch und Prozessbild zusammengestellt und nach Domäne gegliedert &ndash; ohne Jira-Ticket-Referenzen im Fließtext (Screenshots/genaue Klickpfade manuell ergänzen). Die separate XLSX-Tabelle bleibt Ticket-bezogen und dient als Nachvollzieh-Grundlage.</p></div>
+        <div class="view-head"><h2>Clickanweisung</h2><p class="desc">Schritt-für-Schritt-Bedienungsanleitung für oneSCM, auf Deutsch oder Englisch aus den Beschreibungstexten derselben Tickets wie Releaseletter, Benutzerhandbuch und Prozessbild zusammengestellt und nach Domäne gegliedert &ndash; ohne Jira-Ticket-Referenzen im Fließtext (Screenshots/genaue Klickpfade manuell ergänzen). Jeder Schritt erhält automatisch ein Form-Icon (Aktion/Eingabe/Bestätigung) zur schnelleren visuellen Orientierung; der Layout-Export zeigt sie als Schritt-Karten. Die separate XLSX-Tabelle bleibt Ticket-bezogen und dient als Nachvollzieh-Grundlage.</p></div>
         <div class="gen-layout" data-kind="clickanweisung">
           <div class="gen-form">
             <label for="clickanweisung-name">Release-Name</label>
@@ -1070,7 +1070,7 @@
             </div>
             <label for="clickanweisung-theme">Design-Vorlage (für Layout-Export)</label>
             <select id="clickanweisung-theme"></select>
-            <p class="step-note">5 selbst erzeugte Layouts (Deckblatt + farbige Abschnitte je Domäne + nummerierte Schritte) &ndash; ohne Fotos/Stockbilder, da die App dafür keine Bildquelle hat.</p>
+            <p class="step-note">5 selbst erzeugte Layouts (Deckblatt + farbige Abschnitte je Domäne + Schritt-Karten mit Form-Icon) &ndash; ohne Fotos/Stockbilder, da die App dafür keine Bildquelle hat. Jeder Schritt bekommt automatisch ein Symbol (&#9679; Aktion / &#9632; Eingabe / &#9650; Bestätigung), erkannt aus dem Beschreibungstext.</p>
             <div class="job-export-row">
               <span class="job-export-label">Layout-Export:</span>
               <button class="btn ghost" id="clickanweisung-download-styled-docx-btn" type="button" disabled>Als DOCX (Design)</button>
@@ -1152,7 +1152,8 @@
         <div class="view-head"><h2>Infobox</h2></div>
         <div class="panel info-card">
           <h3>Was macht diese App?</h3>
-          <p>Das Ticket-Cockpit liest Jira-, Confluence-, Word- und PDF-Exporte ein, bereinigt sie (u. a. von personen- und fahrzeugbezogenen Daten) und macht daraus vier endnutzergerechte Medien für die Bedienung von oneSCM: Benutzerhandbuch, Releaseletter, Clickanweisung und Prozessbild &ndash; alle aus denselben geladenen Jira-Tickets, wahlweise auf Deutsch oder Englisch, vollständig im Browser, ohne Server.</p>
+          <p><b>Hauptziel:</b> die in importierten Jira-Tickets enthaltenen Texte (Zusammenfassung, Beschreibung) analysieren und nutzbar machen. Dazu lassen sich die geladenen Tickets nach Domäne, Status und Zeitraum filtern und die gefilterten Texte extrahieren (<b>Verarbeitung &rarr; 7. RAG</b>) &ndash; entweder als reine Rohdaten oder als daraus generierter, endnutzergerechter Fließtext.</p>
+          <p>Das Ticket-Cockpit liest Jira-, Confluence-, Word- und PDF-Exporte ein, bereinigt sie (u. a. von personen- und fahrzeugbezogenen Daten) und macht auf dieser Grundlage aus denselben Tickets vier endnutzergerechte Medien für die Bedienung von oneSCM: Benutzerhandbuch, Releaseletter, Clickanweisung und Prozessbild &ndash; wahlweise auf Deutsch oder Englisch, vollständig im Browser, ohne Server.</p>
           <h3>Bereinigung</h3>
           <ul>
             <li>Bearbeiter/Ersteller werden pro Sitzung konsistent pseudonymisiert ("Person 1", "Person 2", ...).</li>
@@ -6034,6 +6035,12 @@
       clickTitle: "Klickanweisung – oneSCM",
       clickIntro: "Schritt-für-Schritt-Anleitung für die Benutzung in oneSCM, zusammengestellt aus den Beschreibungstexten der zugrunde liegenden Tickets und nach Domäne gegliedert (ohne Jira-Ticket-Referenzen im Text). Automatisch erzeugtes Rohgerüst – vor Verwendung redaktionell prüfen und in eigene Worte fassen.",
       noStepsInDomain: "_Keine Beschreibungstexte in den Tickets dieser Domäne hinterlegt - Klickpfad manuell ergänzen._",
+      iconLegend: "Legende: ● Aktion (klicken/auswählen/öffnen) · ■ Eingabe (Daten erfassen) · ▲ Bestätigung/Prüfung (speichern/kontrollieren)",
+      iconLegendAction: "Aktion (klicken/auswählen/öffnen)",
+      iconLegendInput: "Eingabe (Daten erfassen)",
+      iconLegendConfirm: "Bestätigung/Prüfung (speichern/kontrollieren)",
+      shapeLabelAction: "Aktion", shapeLabelInput: "Eingabe", shapeLabelConfirm: "Bestätigung",
+      designTemplateLabel: "Designvorlage:",
       freeTextNote: "**Hinweis:** Freitext aus den Tickets (Zusammenfassung/Beschreibung) wird unverändert aus Jira übernommen und deshalb NICHT automatisch übersetzt (Risiko fachlicher Verfälschung) - er kann daher auch hier in einer anderen Sprache als die Vorlage erscheinen.",
       dateLocale: "de-DE"
     },
@@ -6047,6 +6054,12 @@
       clickTitle: "Operating Instructions – oneSCM",
       clickIntro: "Step-by-step instructions for using oneSCM, compiled from the description texts of the underlying tickets and grouped by domain (without Jira ticket references in the text). Automatically generated draft - please review editorially and rephrase in your own words before use.",
       noStepsInDomain: "_No description text found in the tickets of this domain - please add the click path manually._",
+      iconLegend: "Legend: ● Action (click/select/open) · ■ Input (enter data) · ▲ Confirm/Check (save/verify)",
+      iconLegendAction: "Action (click/select/open)",
+      iconLegendInput: "Input (enter data)",
+      iconLegendConfirm: "Confirm/Check (save/verify)",
+      shapeLabelAction: "Action", shapeLabelInput: "Input", shapeLabelConfirm: "Confirm",
+      designTemplateLabel: "Design template:",
       freeTextNote: "**Note:** Free text from the tickets (summary/description) is taken unchanged from Jira and is therefore NOT automatically translated (risk of altering technical meaning) - it may therefore appear in a different language than the template here as well.",
       dateLocale: "en-GB"
     }
@@ -6117,17 +6130,47 @@
     return names.map(function (d) { return { domain: d || "Ohne Domäne", tickets: byDomain[d] }; });
   }
 
+  // Ordnet einen Klickschritt-Text einer von 3 visuellen Grund-Formen zu
+  // (Kreis/Quadrat/Dreieck), rein ueber Stichwort-Heuristik auf dem
+  // (unveraenderten, ggf. englischen) Ticket-Freitext - unabhaengig vom
+  // gewaehlten Vorlagen-Sprachmodus. Bewusst nur 3 grobe Kategorien statt
+  // feingranularer Icons: robust genug fuer sowohl SVG/Vektor-Formen (PDF)
+  // als auch fuer die entsprechenden Unicode-Formzeichen (DOCX/Text) ohne
+  // Bild-/Font-Abhaengigkeiten. "confirm" wird vor "input" vor "action"
+  // geprueft, da Bestaetigungs-/Pruef-Stichwoerter das staerkste Signal sind.
+  // Stichwort-Stamm statt exakter Wortform (\bwort\b), da Ticket-Freitext
+  // die Verben konjugiert verwendet ("Öffne", "Speichere", "Rufe ... auf")
+  // statt des Infinitivs - ein reiner Ganzwort-Abgleich wuerde die meisten
+  // echten Formulierungen verfehlen.
+  var STEP_SHAPE_PATTERNS = [
+    { shape: "triangle", re: /bestätig|bestaetig|speicher|prüf|pruef|kontrollier|überprüf|ueberpruef|freigeb|absend|abschließ|abschliess|confirm|save|verif|check|submit|approv|final/i },
+    { shape: "square", re: /eingeb|eintrag|erfass|ausfüll|ausfuell|hinterleg|enter|type|input|fill/i },
+    { shape: "circle", re: /klick|wähl|waehl|öffn|oeffn|navigier|aufruf|rufe|select|choos|open|navigat/i }
+  ];
+  function detectStepShape(text) {
+    var s = String(text || "");
+    for (var i = 0; i < STEP_SHAPE_PATTERNS.length; i++) { if (STEP_SHAPE_PATTERNS[i].re.test(s)) return STEP_SHAPE_PATTERNS[i].shape; }
+    return "circle";
+  }
+  var STEP_SHAPE_GLYPH = { circle: "●", square: "■", triangle: "▲" };
+  var STEP_SHAPE_LABEL_KEY = { circle: "shapeLabelAction", square: "shapeLabelInput", triangle: "shapeLabelConfirm" };
+  function stepShapeLabel(shape, lang) { return GEN_I18N[genLang(lang)][STEP_SHAPE_LABEL_KEY[shape]]; }
+
   // Gemeinsame Extraktion der Klickschritte je Domäne - genutzt sowohl vom
   // Markdown-Rohgerüst (renderClickInstructions) als auch von den 5
   // Design-Vorlagen (buildClickanweisungStyledDocx/-PdfBlob), damit beide
-  // garantiert denselben Inhalt liefern.
+  // garantiert denselben Inhalt liefern. Jeder Schritt traegt zusaetzlich
+  // eine erkannte Form (shape) fuer das visuelle Icon-System.
   function clickInstructionGroups(tickets) {
     var groups = groupRawTicketsByDomain(tickets);
     return groups.map(function (g) {
       var steps = [];
       g.tickets.forEach(function (t) {
         if (!t.description) return;
-        t.description.split("\n").filter(function (l) { return l.trim(); }).forEach(function (line) { steps.push(line.trim()); });
+        t.description.split("\n").filter(function (l) { return l.trim(); }).forEach(function (line) {
+          var text = line.trim();
+          steps.push({ text: text, shape: detectStepShape(text) });
+        });
       });
       return { domain: g.domain, steps: steps };
     });
@@ -6144,13 +6187,14 @@
       "# " + i18n.clickTitle + " (" + name + ")", "",
       i18n.standLabel + " " + new Date().toLocaleDateString(i18n.dateLocale), "",
       i18n.clickIntro, "",
-      i18n.freeTextNote, ""
+      i18n.freeTextNote, "",
+      i18n.iconLegend, ""
     ];
     var groups = clickInstructionGroups(tickets);
     groups.forEach(function (g) {
       lines.push("## " + g.domain, "");
       if (!g.steps.length) lines.push(i18n.noStepsInDomain);
-      else g.steps.forEach(function (line, i) { lines.push((i + 1) + ". " + line); });
+      else g.steps.forEach(function (s, i) { lines.push((i + 1) + ". " + STEP_SHAPE_GLYPH[s.shape] + " " + s.text); });
       lines.push("");
     });
     return lines.join("\n");
@@ -6173,83 +6217,186 @@
     var n = parseInt(hex, 16);
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   }
-  function buildClickanweisungStyledPdfBlob(theme, name, groups) {
+  // Zeichnet ein Schritt-Badge (Kreis/Quadrat/Dreieck je erkannter Form) mit
+  // zentrierter Nummer - reine Vektorform ueber jsPDF-Primitiven, kein Font-
+  // Icon/Emoji noetig (helvetica unterstuetzt kein zuverlaessiges Symbol-Set).
+  function drawPdfStepBadge(doc, shape, cx, cy, r, fillHex, textHex, label) {
+    doc.setFillColor.apply(doc, hexToRgb(fillHex));
+    if (shape === "square") { doc.rect(cx - r * 0.9, cy - r * 0.9, r * 1.8, r * 1.8, "F"); }
+    else if (shape === "triangle") { doc.triangle(cx, cy - r * 1.15, cx - r * 1.05, cy + r * 0.75, cx + r * 1.05, cy + r * 0.75, "F"); }
+    else { doc.circle(cx, cy, r, "F"); }
+    if (!label) return;
+    doc.setTextColor.apply(doc, hexToRgb(textHex));
+    doc.setFont("helvetica", "bold"); doc.setFontSize(8.5);
+    doc.text(label, cx, cy + (shape === "triangle" ? 1.1 : 0.3), { align: "center" });
+  }
+  // Deckblatt-Icon: ein großer, mit Akzentfarbe gefuellter Kreis, aus dem die
+  // 3 Schritt-Formen (Kreis/Quadrat/Dreieck) "ausgestanzt" wirken (gefuellt
+  // in der Seiten-/Coverfarbe) - rein geometrisch aus denselben Bausteinen
+  // wie die Schritt-Badges, bewusst ohne Foto/Stockbild.
+  function drawPdfCoverIcon(doc, theme, cx, cy, R) {
+    doc.setFillColor.apply(doc, hexToRgb(theme.accent));
+    doc.circle(cx, cy, R, "F");
+    var r2 = R * 0.26;
+    [
+      { dx: 0, dy: -R * 0.4, shape: "circle" },
+      { dx: -R * 0.42, dy: R * 0.32, shape: "square" },
+      { dx: R * 0.42, dy: R * 0.32, shape: "triangle" }
+    ].forEach(function (o) { drawPdfStepBadge(doc, o.shape, cx + o.dx, cy + o.dy, r2, theme.coverBg, theme.coverBg, ""); });
+  }
+  function buildClickanweisungStyledPdfBlob(theme, name, groups, lang) {
     var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
     if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
+    var i18n = GEN_I18N[genLang(lang)];
+    var title = genLang(lang) === "en" ? "Operating Instructions" : "Klickanweisung";
     var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
     var pageW = 210, pageH = 297, margin = 18;
     function fill(hex) { doc.setFillColor.apply(doc, hexToRgb(hex)); }
     function textColor(hex) { doc.setTextColor.apply(doc, hexToRgb(hex)); }
-    // Deckblatt
+    // Deckblatt - grosses rundes Icon-Badge oben (statt Foto), Titel/Untertitel
+    // darunter, Legende als gezeichnete Formen statt Unicode-Symbolzeichen im
+    // Fließtext (die eingebauten jsPDF-Basisfonts/helvetica unterstuetzen nur
+    // WinAnsi/Latin-1 und wuerden ●/■/▲ als Text nicht sauber darstellen).
     fill(theme.coverBg); doc.rect(0, 0, pageW, pageH, "F");
+    drawPdfCoverIcon(doc, theme, pageW / 2, 58, 24);
     textColor(theme.coverText);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(30);
-    doc.text("Klickanweisung", margin, 118);
-    doc.setFontSize(16);
-    doc.text("oneSCM – " + name, margin, 130);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(26);
+    doc.text(title, pageW / 2, 100, { align: "center" });
+    doc.setFontSize(15);
+    doc.text("oneSCM – " + name, pageW / 2, 111, { align: "center" });
     doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-    doc.text("Bedienungsanleitung – Stand: " + new Date().toLocaleDateString("de-DE"), margin, 142);
+    doc.text(i18n.standLabel + " " + new Date().toLocaleDateString(i18n.dateLocale), pageW / 2, 122, { align: "center" });
+    [
+      { shape: "circle", text: i18n.iconLegendAction },
+      { shape: "square", text: i18n.iconLegendInput },
+      { shape: "triangle", text: i18n.iconLegendConfirm }
+    ].forEach(function (row, idx) {
+      var ly = 138 + idx * 8;
+      drawPdfStepBadge(doc, row.shape, margin + 3, ly, 2.6, theme.accent, theme.accent, "");
+      textColor(theme.coverText);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
+      doc.text(row.text, margin + 10, ly + 1);
+    });
     doc.setFontSize(9);
-    doc.text("Designvorlage: " + theme.name, margin, pageH - margin);
+    doc.text(i18n.designTemplateLabel + " " + theme.name, margin, pageH - margin);
+
+    // Klickschritte je Domäne als 2-spaltiges Karten-Raster (Icon oben,
+    // Kategorie-Überschrift, Text darunter) statt einer einspaltigen Liste -
+    // angelehnt an die vom Nutzer vorgegebene Referenz-Vorlage (Icon+Überschrift
+    // +Text-Karten im Raster), weiterhin rein vektoriell/ohne Fotos.
+    var cols = 2, gap = 8;
+    var colW = (pageW - margin * 2 - gap) / cols;
+    var colX = [margin, margin + colW + gap];
+    var cardPad = 5, iconR = 6, lineH = 4.6;
+
+    function drawDomainBanner() {
+      fill(theme.pageBg); doc.rect(0, 0, pageW, pageH, "F");
+    }
+    function cardHeightFor(s) {
+      var lines = doc.splitTextToSize(s.text, colW - cardPad * 2);
+      return { lines: lines, h: cardPad * 2 + iconR * 2 + 3 + 5 + lines.length * lineH + 2 };
+    }
+    function drawCard(s, i, x, y, h) {
+      doc.setDrawColor.apply(doc, hexToRgb(theme.accent));
+      doc.setLineWidth(0.35);
+      doc.roundedRect(x, y, colW, h, 2, 2, "S");
+      var iconCx = x + colW / 2, iconCy = y + cardPad + iconR;
+      drawPdfStepBadge(doc, s.shape, iconCx, iconCy, iconR, theme.badgeBg, theme.badgeText, String(i + 1));
+      textColor(theme.accent);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(9.5);
+      doc.text(stepShapeLabel(s.shape, lang), iconCx, iconCy + iconR + 5, { align: "center" });
+      textColor(theme.bodyText);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
+      doc.text(cardHeightFor(s).lines, x + cardPad, iconCy + iconR + 12, { align: "left" });
+    }
 
     groups.forEach(function (g) {
       doc.addPage();
-      fill(theme.pageBg); doc.rect(0, 0, pageW, pageH, "F");
+      drawDomainBanner();
       fill(theme.accent); doc.rect(0, 0, pageW, 22, "F");
       textColor(theme.accentText);
       doc.setFont("helvetica", "bold"); doc.setFontSize(15);
       doc.text(g.domain, margin, 14);
       var y = 34;
-      textColor(theme.bodyText);
       if (!g.steps.length) {
         doc.setFont("helvetica", "italic"); doc.setFontSize(10);
         textColor(theme.mutedText);
-        doc.text("Keine Beschreibungstexte in den Tickets dieser Domäne hinterlegt.", margin, y);
+        doc.text(i18n.noStepsInDomain.replace(/_/g, ""), margin, y);
         return;
       }
-      g.steps.forEach(function (stepText, i) {
-        var lines = doc.splitTextToSize(stepText, pageW - margin * 2 - 12);
-        if (y + lines.length * 5 > pageH - margin) {
-          doc.addPage();
-          fill(theme.pageBg); doc.rect(0, 0, pageW, pageH, "F");
-          y = margin;
-        }
-        fill(theme.badgeBg); doc.circle(margin + 3, y - 1.5, 3.2, "F");
-        textColor(theme.badgeText);
-        doc.setFont("helvetica", "bold"); doc.setFontSize(8);
-        doc.text(String(i + 1), margin + 3, y - 0.3, { align: "center" });
-        textColor(theme.bodyText);
-        doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-        doc.text(lines, margin + 10, y);
-        y += lines.length * 5 + 4;
-      });
+      for (var i = 0; i < g.steps.length; i += cols) {
+        var rowSteps = g.steps.slice(i, i + cols);
+        var heights = rowSteps.map(cardHeightFor);
+        var rowH = Math.max.apply(null, heights.map(function (o) { return o.h; }));
+        if (y + rowH > pageH - margin) { doc.addPage(); drawDomainBanner(); y = margin; }
+        rowSteps.forEach(function (s, j) { drawCard(s, i + j, colX[j], y, rowH); });
+        y += rowH + gap;
+      }
     });
     return doc.output("blob");
   }
-  function buildClickanweisungStyledDocx(theme, name, groups) {
+  function buildClickanweisungStyledDocx(theme, name, groups, lang) {
     if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek konnte nicht geladen werden.");
     function shd(hex) { return '<w:shd w:val="clear" w:color="auto" w:fill="' + hex + '"/>'; }
     function para(text, opts) {
       opts = opts || {};
       var pPr = "<w:pPr>" + (opts.shading ? shd(opts.shading) : "") + (opts.pageBreak ? "<w:pageBreakBefore/>" : "") +
+        (opts.align ? '<w:jc w:val="' + opts.align + '"/>' : "") +
         '<w:spacing w:before="120" w:after="120"/></w:pPr>';
       var rPr = "<w:rPr>" + (opts.color ? '<w:color w:val="' + opts.color + '"/>' : "") + (opts.bold ? "<w:b/>" : "") +
         (opts.italic ? "<w:i/>" : "") + (opts.size ? '<w:sz w:val="' + opts.size + '"/>' : "") + "</w:rPr>";
       return "<w:p>" + pPr + "<w:r>" + rPr + '<w:t xml:space="preserve">' + xmlEsc(text) + "</w:t></w:r></w:p>";
     }
+    // Eine Schritt-Tabelle je Domäne: pro Zeile eine schmale Badge-Zelle
+    // (Form-Symbol + Nummer, farbig hinterlegt) und eine breite Text-Zelle -
+    // ergibt eine kartenartige, professionelle Schritt-Liste statt reiner
+    // Fließtext-Aufzaehlung, konsistent mit der PDF-Design-Variante.
+    function tc(bodyParas, opts) {
+      opts = opts || {};
+      var border = opts.border ? '<w:tcBorders><w:top w:val="single" w:sz="4" w:color="' + theme.accent + '"/>' +
+        '<w:left w:val="single" w:sz="4" w:color="' + theme.accent + '"/><w:bottom w:val="single" w:sz="4" w:color="' + theme.accent + '"/>' +
+        '<w:right w:val="single" w:sz="4" w:color="' + theme.accent + '"/></w:tcBorders>' : "";
+      return "<w:tc><w:tcPr><w:tcW w:w=\"" + (opts.width || 4500) + "\" w:type=\"dxa\"/>" + border +
+        (opts.shading ? shd(opts.shading) : "") + '<w:vAlign w:val="center"/></w:tcPr>' + bodyParas + "</w:tc>";
+    }
+    var i18n = GEN_I18N[genLang(lang)];
+    // Klickschritte als 2-spaltiges Karten-Raster (Icon+Nummer-Badge oben,
+    // Kategorie-Überschrift, Text darunter) statt einer einspaltigen Liste -
+    // angelehnt an die vorgegebene Referenz-Vorlage (Icon+Überschrift+Text-
+    // Karten im Raster), konsistent mit dem PDF-Layout.
+    function stepCard(s, i) {
+      var badge = para(STEP_SHAPE_GLYPH[s.shape] + "  " + (i + 1), { shading: theme.badgeBg, color: theme.badgeText, bold: true, size: 28, align: "center" });
+      var heading = para(stepShapeLabel(s.shape, lang), { color: theme.accent, bold: true, size: 18, align: "center" });
+      var text = para(s.text, { color: theme.bodyText });
+      return tc(badge + heading + text, { width: 4500, border: true });
+    }
+    function stepsGridTable(steps) {
+      var rows = [];
+      for (var i = 0; i < steps.length; i += 2) {
+        var c1 = stepCard(steps[i], i);
+        var c2 = i + 1 < steps.length ? stepCard(steps[i + 1], i + 1) : tc("<w:p/>", { width: 4500 });
+        rows.push("<w:tr>" + c1 + c2 + "</w:tr>");
+      }
+      return '<w:tbl><w:tblPr><w:tblW w:w="9000" w:type="dxa"/><w:tblBorders>' +
+        '<w:top w:val="none"/><w:left w:val="none"/><w:bottom w:val="none"/><w:right w:val="none"/>' +
+        '<w:insideV w:val="none"/><w:insideH w:val="none"/></w:tblBorders>' +
+        '<w:tblCellMar><w:top w:w="120" w:type="dxa"/><w:bottom w:w="160" w:type="dxa"/>' +
+        '<w:left w:w="160" w:type="dxa"/><w:right w:w="160" w:type="dxa"/></w:tblCellMar></w:tblPr>' +
+        '<w:tblGrid><w:gridCol w:w="4500"/><w:gridCol w:w="4500"/></w:tblGrid>' + rows.join("") + "</w:tbl>";
+    }
+    var title = genLang(lang) === "en" ? "Operating Instructions" : "Klickanweisung";
     var body = "";
-    body += para("Klickanweisung", { shading: theme.coverBg, color: theme.coverText, bold: true, size: 56 });
+    body += para(title, { shading: theme.coverBg, color: theme.coverText, bold: true, size: 56 });
     body += para("oneSCM – " + name, { shading: theme.coverBg, color: theme.coverText, bold: true, size: 32 });
-    body += para("Bedienungsanleitung – Stand: " + new Date().toLocaleDateString("de-DE"), { shading: theme.coverBg, color: theme.coverText, size: 20 });
-    body += para("Designvorlage: " + theme.name, { shading: theme.coverBg, color: theme.coverText, size: 18 });
+    body += para(i18n.standLabel + " " + new Date().toLocaleDateString(i18n.dateLocale), { shading: theme.coverBg, color: theme.coverText, size: 20 });
+    body += para(i18n.iconLegend, { shading: theme.coverBg, color: theme.coverText, size: 16 });
+    body += para(i18n.designTemplateLabel + " " + theme.name, { shading: theme.coverBg, color: theme.coverText, size: 18 });
     groups.forEach(function (g) {
       body += para(g.domain, { shading: theme.accent, color: theme.accentText, bold: true, size: 30, pageBreak: true });
       if (!g.steps.length) {
-        body += para("Keine Beschreibungstexte in den Tickets dieser Domäne hinterlegt.", { color: theme.mutedText, italic: true });
+        body += para(i18n.noStepsInDomain.replace(/_/g, ""), { color: theme.mutedText, italic: true });
       } else {
-        g.steps.forEach(function (stepText, i) {
-          body += para((i + 1) + ". " + stepText, { color: theme.bodyText });
-        });
+        body += stepsGridTable(g.steps);
       }
     });
     var documentXml =
@@ -6770,8 +6917,8 @@
         try {
           var theme = currentClickanweisungTheme();
           var groups = clickInstructionGroups(lastTickets);
-          var blob = await buildClickanweisungStyledDocx(theme, lastTitle, groups);
-          var ok = await saveOrWarn(safeFilename(lastTitle) + "_clickanweisung_" + theme.id + ".docx", blob);
+          var blob = await buildClickanweisungStyledDocx(theme, lastTitle, groups, currentVariant);
+          var ok = await saveOrWarn(safeFilename(lastTitle) + "_clickanweisung_" + theme.id + "_" + currentVariant + ".docx", blob);
           if (ok) showToast("Gespeichert", "DOCX (Design: " + theme.name + ") heruntergeladen.");
         } catch (err) {
           showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
@@ -6781,8 +6928,8 @@
         try {
           var theme = currentClickanweisungTheme();
           var groups = clickInstructionGroups(lastTickets);
-          var blob = buildClickanweisungStyledPdfBlob(theme, lastTitle, groups);
-          var ok = await saveOrWarn(safeFilename(lastTitle) + "_clickanweisung_" + theme.id + ".pdf", blob);
+          var blob = buildClickanweisungStyledPdfBlob(theme, lastTitle, groups, currentVariant);
+          var ok = await saveOrWarn(safeFilename(lastTitle) + "_clickanweisung_" + theme.id + "_" + currentVariant + ".pdf", blob);
           if (ok) showToast("Gespeichert", "PDF (Design: " + theme.name + ") heruntergeladen.");
         } catch (err) {
           showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);

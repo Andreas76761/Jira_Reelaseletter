@@ -136,6 +136,14 @@ und überarbeiten.
 
 ## Web-App: Ticket-Cockpit
 
+**Hauptziel:** die in importierten Jira-Tickets enthaltenen Texte
+(Zusammenfassung, Beschreibung) analysieren und nutzbar machen. Dazu lassen
+sich die geladenen Tickets nach Domäne, Status und Zeitraum filtern und die
+gefilterten Texte extrahieren (Verarbeitung → 7. RAG) – als reine Rohdaten
+oder als daraus generierter, endnutzergerechter Fließtext. Auf dieser
+Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
+(Releaseletter, Benutzerhandbuch, Prozessbild, Clickanweisung).
+
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein

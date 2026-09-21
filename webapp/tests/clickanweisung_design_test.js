@@ -64,6 +64,12 @@ Speichere die Änderung.</description>
   await wait(100);
   check("Nach Generieren: Layout-Export-Buttons aktiviert", !doc.getElementById("clickanweisung-download-styled-docx-btn").disabled && !doc.getElementById("clickanweisung-download-styled-pdf-btn").disabled);
 
+  // ===================== Visuelles Icon-System (Schritt-Formen) =====================
+  const previewText = doc.getElementById("clickanweisung-preview").textContent;
+  check("Vorschau zeigt die Icon-Legende", previewText.includes("Legende:"));
+  check("Schritt 'Speichere die Änderung' bekommt Bestätigungs-Form (▲)", /3\.\s*▲\s*Speichere die Änderung/.test(previewText));
+  check("Mindestens eine Aktions-Form (●) in der Vorschau", previewText.includes("●"));
+
   // ===================== Alle 5 Designvorlagen: DOCX =====================
   const themeSelect = doc.getElementById("clickanweisung-theme");
   const themeIds = Array.from(themeSelect.options).map((o) => o.value);
@@ -80,6 +86,7 @@ Speichere die Änderung.</description>
     const docXml = await zipCheck.file("word/document.xml").async("string");
     check("DOCX (" + themeId + ") enthält die Domäne 'Contract Management'", docXml.includes("Contract Management"));
     check("DOCX (" + themeId + ") enthält den ersten Klickschritt-Text", docXml.includes("Vertragsmodul"));
+    check("DOCX (" + themeId + ") enthält Schritt-Badges als Tabelle mit Form-Symbol", docXml.includes("<w:tbl>") && docXml.includes("▲"));
     check("DOCX (" + themeId + ") enthält NICHT den Ticket-Key (Clickanweisung-Designprinzip bleibt gewahrt)", !docXml.includes("CA-1"));
   }
 
