@@ -14,8 +14,10 @@ from jira_releaseletter.export_pdf import write_pdf
 from jira_releaseletter.letter_builder import build_documents
 from jira_releaseletter.parsers import parse_jira_export
 from jira_releaseletter.release_matcher import match_release
+from jira_releaseletter.webapp_builder import build_webapp
 
 FIXTURES = Path(__file__).parent / "fixtures"
+REPO_ROOT = Path(__file__).parent.parent
 
 
 @pytest.mark.parametrize(
@@ -122,3 +124,25 @@ def test_build_documents_creates_all_four_drafts(tmp_path):
     assert "```mermaid" in mermaid
     assert "    t1[" in mermaid
     assert "    t1 --> t2" in mermaid
+
+
+def test_build_webapp_embeds_ticket_data_and_meta(tmp_path):
+    template = REPO_ROOT / "webapp" / "ticket_cockpit.html"
+    tickets = [{"key": "DEMO-1", "status": "Offen"}]
+    out = build_webapp(
+        tickets, template, tmp_path / "cockpit.html",
+        meta={"source": "mein_export.xml", "when": "01.01.2026", "format": "XML-Export"},
+    )
+    content = out.read_text(encoding="utf-8")
+    assert "__TICKET_DATA__" not in content
+    assert "__TICKET_META__" not in content
+    assert '"DEMO-1"' in content
+    assert "mein_export.xml" in content
+    assert "<title>ONESCM Ticket-Cockpit</title>" in content
+
+
+def test_build_webapp_without_meta_leaves_valid_placeholder(tmp_path):
+    template = REPO_ROOT / "webapp" / "ticket_cockpit.html"
+    out = build_webapp([{"key": "DEMO-1"}], template, tmp_path / "cockpit.html")
+    content = out.read_text(encoding="utf-8")
+    assert '<script id="initial-ticket-meta" type="application/json">{}</script>' in content

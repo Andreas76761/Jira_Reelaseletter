@@ -13,6 +13,10 @@ Werkzeug für drei aufeinander aufbauende Schritte:
    Release Letter, Benutzerhandbuch, Prozessdiagramm (Mermaid) und
    Klickanweisung erzeugen.
 
+Zusätzlich gibt es unter `webapp/` eine **Browser-Web-App** ("Ticket-Cockpit"),
+die Phase 1 (Upload, Bereinigung, Durchsuchen, Export) mit grafischer
+Oberfläche abbildet – siehe [Web-App](#web-app-ticket-cockpit) unten.
+
 ## Wichtiger Hinweis zum Speicherort
 
 Dieses Repository läuft hier in einer Cloud-/Remote-Umgebung, nicht auf
@@ -129,6 +133,36 @@ redaktionellen Kontext des Release nicht (z. B. was hervorzuheben ist,
 Screenshots für die Klickanweisung, die tatsächliche
 Prozess-Reihenfolge). Vor Veröffentlichung immer redaktionell prüfen
 und überarbeiten.
+
+## Web-App: Ticket-Cockpit
+
+`webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
+Server, kein Build-Schritt) für Phase 1 mit grafischer Oberfläche:
+
+- Jira-HTML-Export (Issue-Navigator-Tabelle, `id="issuetable"`) oder
+  klassischer XML-Export per Drag&Drop oder Dateiauswahl hochladen.
+- Parsing und Bereinigung laufen **vollständig im Browser** (JavaScript-
+  Portierung von `parser_html.py`/`parser_xml.py`/`cleaner.py`) – die
+  Datei verlässt den Rechner nicht.
+- Dashboard mit Status-Kacheln, Domain-Verteilung, Volltextsuche,
+  sortierbarer Tabelle und Ticket-Detailansicht.
+- Export als Markdown (einzelnes Ticket oder alle gefilterten Tickets als
+  ZIP-Archiv).
+- Word-Exporte (`.docx`) und Detail-HTML-Exports (ein Abschnitt pro
+  Ticket statt einer Tabelle) werden von der Web-App **nicht**
+  unterstützt – dafür das CLI-Tool verwenden.
+
+**Mit aktuellen Daten neu bauen** (bettet `data/tickets.json` ein):
+
+```bash
+jira-releaseletter build-webapp
+```
+
+Erzeugt `webapp/ticket_cockpit.build.html`. Lokal im Browser geöffnet
+funktionieren Ansicht/Suche/Filter; der Datei-Download (ZIP/Markdown)
+benötigt die Claude-Artifact-Laufzeit (`window.claude`-API) und
+funktioniert nur, wenn die Datei über Claude als Artifact veröffentlicht
+wurde – lokal geöffnet zeigt der Button eine entsprechende Meldung.
 
 ## Unterstützte Exportformate (Phase 1)
 

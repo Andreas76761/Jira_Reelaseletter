@@ -12,7 +12,9 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
+from datetime import date
 from pathlib import Path
 
 from .cleaner import Cleaner, as_clean_export_dict
@@ -22,6 +24,7 @@ from .io_utils import load_tickets_json, read_release_list, save_tickets_json
 from .letter_builder import build_documents
 from .parsers import parse_jira_export
 from .release_matcher import match_release
+from .webapp_builder import build_webapp
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_INPUT_DIR = REPO_ROOT / "Input"
@@ -29,6 +32,8 @@ DEFAULT_OUTPUT_DIR = REPO_ROOT / "Output"
 DEFAULT_TICKETS_OUTPUT = DEFAULT_OUTPUT_DIR / "01_Tickets_bereinigt"
 DEFAULT_RELEASE_OUTPUT = DEFAULT_OUTPUT_DIR / "02_Release_Zuordnung"
 DEFAULT_DATA_STORE = REPO_ROOT / "data" / "tickets.json"
+DEFAULT_WEBAPP_TEMPLATE = REPO_ROOT / "webapp" / "ticket_cockpit.html"
+DEFAULT_WEBAPP_OUTPUT = REPO_ROOT / "webapp" / "ticket_cockpit.build.html"
 
 
 def cmd_import(args: argparse.Namespace) -> int:
@@ -68,6 +73,18 @@ def cmd_import(args: argparse.Namespace) -> int:
             print(f"  {i}/{len(tickets)} Tickets verarbeitet")
 
     save_tickets_json(cleaned_dicts, str(args.data_store))
+    meta_path = Path(args.data_store).parent / "import_meta.json"
+    meta_path.write_text(
+        json.dumps(
+            {
+                "source": input_path.name,
+                "when": date.today().strftime("%d.%m.%Y"),
+                "format": input_path.suffix.lstrip(".").upper() + "-Export",
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
 
     print(
         f"Fertig: {len(tickets)} Tickets bereinigt, "
@@ -160,6 +177,26 @@ def cmd_build_letter(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_build_webapp(args: argparse.Namespace) -> int:
+    data_store = Path(args.data_store)
+    if not data_store.exists():
+        print(
+            f"Keine Ticket-Daten gefunden ({data_store}). Zuerst 'import' ausführen.",
+            file=sys.stderr,
+        )
+        return 1
+    tickets = load_tickets_json(str(data_store))
+    meta_path = data_store.parent / "import_meta.json"
+    meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else None
+    output_path = build_webapp(tickets, Path(args.template), Path(args.output), meta=meta)
+    print(f"Web-App gebaut: {output_path} ({len(tickets)} Tickets eingebettet)")
+    print(
+        "Hinweis: Lokal geöffnet funktionieren Ansicht/Suche/Filter; Downloads "
+        "(einzelnes Ticket/ZIP) benötigen die Claude-Artifact-Laufzeit."
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="jira-releaseletter",
@@ -199,6 +236,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Standard: alle vier Dokumente",
     )
     p_letter.set_defaults(func=cmd_build_letter)
+
+    p_webapp = sub.add_parser(
+        "build-webapp", help="Ticket-Cockpit-Web-App mit aktuellen Daten bauen"
+    )
+    p_webapp.add_argument("--data-store", default=str(DEFAULT_DATA_STORE))
+    p_webapp.add_argument("--template", default=str(DEFAULT_WEBAPP_TEMPLATE))
+    p_webapp.add_argument("--output", default=str(DEFAULT_WEBAPP_OUTPUT))
+    p_webapp.set_defaults(func=cmd_build_webapp)
 
     return parser
 

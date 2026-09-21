@@ -15,3 +15,6 @@ Input/*
 !Input/.gitkeep
 Output/*/*
 !Output/*/.gitkeep
+
+# Gebaute Web-App mit eingebetteten (echten) Ticketdaten - nicht versionieren.
+webapp/ticket_cockpit.build.html

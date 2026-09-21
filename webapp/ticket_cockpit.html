@@ -1,0 +1,966 @@
+<title>ONESCM Ticket-Cockpit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #eef1f6;
+    --surface: #ffffff;
+    --surface-2: #f5f7fb;
+    --border: #d9dfe7;
+    --border-strong: #c4ccd8;
+    --text: #1a2230;
+    --text-muted: #5c667a;
+    --text-faint: #8994a6;
+    --accent: #0e7490;
+    --accent-strong: #0b5a6f;
+    --accent-soft: #e1f1f4;
+    --accent-text: #0b5a6f;
+    --on-accent: #ffffff;
+    --done: #15803d;      --done-soft: #e3f5e9;
+    --cancelled: #6b7280; --cancelled-soft: #eceef1;
+    --backlog: #4338ca;   --backlog-soft: #eae8fb;
+    --progress: #b45309;  --progress-soft: #fbedd9;
+    --blocked: #b91c1c;   --blocked-soft: #fbe4e2;
+    --warn-soft: #fdf2e2; --warn-text: #92400e; --warn-border: #eecd9c;
+    --shadow: 0 1px 2px rgba(20, 28, 43, 0.06), 0 8px 24px -12px rgba(20, 28, 43, 0.18);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10151d; --surface: #171e29; --surface-2: #1c2431;
+      --border: #2b3543; --border-strong: #3d4a5c;
+      --text: #e8ecf3; --text-muted: #9aa6ba; --text-faint: #6c7891;
+      --accent: #3fc1dc; --accent-strong: #7fdcef; --accent-soft: #163038; --accent-text: #7fdcef;
+      --on-accent: #06222a;
+      --done: #4ade80;      --done-soft: #163326;
+      --cancelled: #9aa3b2; --cancelled-soft: #232a35;
+      --backlog: #a5b4fc;   --backlog-soft: #221f42;
+      --progress: #fbbf24;  --progress-soft: #3a2a10;
+      --blocked: #fca5a5;   --blocked-soft: #3a1c1c;
+      --warn-soft: #3a2a10; --warn-text: #fbbf24; --warn-border: #5c4318;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10151d; --surface: #171e29; --surface-2: #1c2431;
+    --border: #2b3543; --border-strong: #3d4a5c;
+    --text: #e8ecf3; --text-muted: #9aa6ba; --text-faint: #6c7891;
+    --accent: #3fc1dc; --accent-strong: #7fdcef; --accent-soft: #163038; --accent-text: #7fdcef;
+    --on-accent: #06222a;
+    --done: #4ade80;      --done-soft: #163326;
+    --cancelled: #9aa3b2; --cancelled-soft: #232a35;
+    --backlog: #a5b4fc;   --backlog-soft: #221f42;
+    --progress: #fbbf24;  --progress-soft: #3a2a10;
+    --blocked: #fca5a5;   --blocked-soft: #3a1c1c;
+    --warn-soft: #3a2a10; --warn-text: #fbbf24; --warn-border: #5c4318;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: "Manrope", system-ui, sans-serif;
+    padding-inline: 20px; padding-block: 20px 48px;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+  header.top {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+    background: var(--bg); padding-block: 4px 8px;
+    display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+    gap: 14px; border-bottom: 1px solid var(--border);
+  }
+  .eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--accent-text); margin: 0 0 4px; display: flex; align-items: center; gap: 8px;
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
+  h1 { font-size: clamp(22px, 4vw, 30px); font-weight: 800; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+  .source-meta { font-size: 12.5px; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; margin-top: 6px; }
+  .source-meta b { color: var(--text); font-weight: 600; }
+  .header-count { text-align: right; }
+  .header-count .num { font-size: 34px; font-weight: 800; line-height: 1; }
+  .header-count .lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); }
+
+  .callout {
+    background: var(--surface-2); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--text-muted); line-height: 1.5;
+  }
+  .callout b { color: var(--text); }
+  .callout.warn { background: var(--warn-soft); border-color: var(--warn-border); border-left-color: var(--warn-text); color: var(--warn-text); }
+  .callout.warn b { color: var(--warn-text); }
+
+  section { display: flex; flex-direction: column; gap: 10px; }
+  .section-label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-faint); }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+  /* ---- Upload ---- */
+  .upload-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
+  .dropzone {
+    flex: 1 1 320px; border: 1.5px dashed var(--border-strong); border-radius: 10px;
+    background: var(--surface); padding: 16px 18px; display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .dropzone:hover, .dropzone.dragover { border-color: var(--accent); background: var(--accent-soft); }
+  .dropzone svg { flex: none; color: var(--accent); }
+  .dropzone .txt strong { display: block; font-size: 13.5px; color: var(--text); }
+  .dropzone .txt span { font-size: 12px; color: var(--text-muted); }
+  .upload-side { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+
+  .btn {
+    font-family: inherit; font-size: 13px; font-weight: 600; border-radius: 8px; padding: 9px 14px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--border-strong); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn.primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+  .btn.ghost { background: transparent; color: var(--text-muted); border-color: transparent; }
+  .btn.ghost:hover { color: var(--text); background: var(--surface-2); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn svg { flex: none; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; }
+  .tile {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+    text-align: left; cursor: pointer; font-family: inherit; color: inherit; display: flex; flex-direction: column;
+    gap: 6px; box-shadow: var(--shadow); transition: border-color 0.12s ease, transform 0.12s ease;
+  }
+  .tile:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+  .tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tile .bar { height: 3px; border-radius: 2px; width: 26px; background: currentColor; }
+  .tile .num { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 600; }
+  .tile .lbl { font-size: 12px; color: var(--text-muted); }
+  .tile[aria-pressed="true"] { border-color: currentColor; box-shadow: 0 0 0 1px currentColor, var(--shadow); }
+  .tile.all { color: var(--accent); } .tile.done { color: var(--done); } .tile.backlog { color: var(--backlog); }
+  .tile.progress { color: var(--progress); } .tile.blocked { color: var(--blocked); } .tile.cancelled { color: var(--cancelled); }
+
+  .domain-chart { padding: 14px 16px; display: flex; flex-direction: column; gap: 7px; }
+  .domain-row {
+    display: grid; grid-template-columns: 160px 1fr 34px; align-items: center; gap: 10px; font-size: 12.5px;
+    background: none; border: none; font-family: inherit; color: inherit; cursor: pointer; padding: 3px 4px; border-radius: 5px;
+  }
+  .domain-row:hover { background: var(--surface-2); }
+  .domain-row[aria-pressed="true"] { background: var(--accent-soft); }
+  .domain-row .name { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+  .domain-row .track { height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+  .domain-row .fill { height: 100%; background: var(--accent); border-radius: 4px; }
+  .domain-row .count { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; color: var(--text-muted); text-align: right; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .search-box { position: relative; flex: 1 1 220px; }
+  .search-box input {
+    width: 100%; padding: 9px 12px 9px 32px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); font-size: 13.5px; font-family: "IBM Plex Mono", monospace;
+  }
+  .search-box input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .search-box svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); opacity: 0.55; }
+  select#domain-select {
+    padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 13px; font-family: inherit; max-width: 220px;
+  }
+  .result-count { font-size: 12.5px; color: var(--text-muted); white-space: nowrap; }
+  .result-count b { color: var(--text); font-family: "IBM Plex Mono", monospace; }
+  .spacer { flex: 1 1 auto; }
+
+  .table-shell { overflow: auto; max-height: 58vh; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    position: sticky; top: 0; background: var(--surface-2); text-align: left; padding: 9px 12px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint);
+    border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  thead th:hover { color: var(--text); }
+  thead th .arrow { opacity: 0; margin-left: 3px; }
+  thead th[data-active="true"] .arrow { opacity: 1; color: var(--accent); }
+  tbody td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; white-space: nowrap; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover td { background: var(--surface-2); }
+  tbody tr:last-child td { border-bottom: none; }
+  td.key { font-family: "IBM Plex Mono", monospace; font-weight: 600; }
+  td.summary { color: var(--text); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  td.domain { color: var(--text-muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+  td.date { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+
+  .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 7px; border-radius: 100px; font-size: 11.5px; font-weight: 600; }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .pill.done { color: var(--done); background: var(--done-soft); }
+  .pill.cancelled { color: var(--cancelled); background: var(--cancelled-soft); }
+  .pill.backlog { color: var(--backlog); background: var(--backlog-soft); }
+  .pill.progress { color: var(--progress); background: var(--progress-soft); }
+  .pill.blocked { color: var(--blocked); background: var(--blocked-soft); }
+
+  .empty-state { padding: 36px 20px; text-align: center; color: var(--text-muted); font-size: 13.5px; }
+
+  footer { font-size: 12px; color: var(--text-faint); line-height: 1.6; border-top: 1px solid var(--border); padding-top: 14px; }
+
+  /* ---- Modal ---- */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(10, 14, 22, 0.5); display: flex; align-items: center;
+    justify-content: center; padding: 20px; z-index: 50;
+  }
+  .modal-overlay[hidden] { display: none; }
+  .modal {
+    background: var(--surface); border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow);
+    width: 100%; max-width: 620px; max-height: 85vh; overflow: auto; padding: 22px 24px;
+  }
+  .modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 4px; }
+  .modal-head h2 { font-size: 19px; font-weight: 800; margin: 0; text-wrap: balance; }
+  .modal-head .key { font-family: "IBM Plex Mono", monospace; color: var(--accent-text); font-size: 13px; font-weight: 600; }
+  .modal-close {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); flex: none;
+  }
+  .modal-close:hover { color: var(--text); }
+  .field-table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13px; }
+  .field-table th { text-align: left; color: var(--text-faint); font-weight: 600; padding: 6px 10px 6px 0; width: 130px; vertical-align: top; white-space: nowrap; }
+  .field-table td { padding: 6px 0; border-top: 1px solid var(--border); }
+  .field-table tr:first-child td, .field-table tr:first-child th { border-top: none; }
+  .modal-desc { margin-top: 16px; }
+  .modal-desc h3 { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 6px; }
+  .modal-desc p { font-size: 13.5px; line-height: 1.6; white-space: pre-wrap; margin: 0; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+
+  /* ---- Toast ---- */
+  #toast {
+    position: fixed; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 60;
+    background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: 9px; box-shadow: var(--shadow); padding: 12px 16px; font-size: 13px; max-width: 320px;
+    display: flex; gap: 10px; align-items: flex-start; transform: translateY(8px); opacity: 0;
+    transition: transform 0.18s ease, opacity 0.18s ease; pointer-events: none;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.error { border-left-color: var(--blocked); }
+  #toast b { display: block; color: var(--text); }
+  #toast span { color: var(--text-muted); }
+
+  @media (max-width: 640px) {
+    .domain-row { grid-template-columns: 108px 1fr 30px; }
+    thead th, tbody td { padding: 7px 8px; }
+    .header-count { text-align: left; }
+    td.summary { max-width: 160px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <p class="eyebrow"><span class="dot"></span>Jira-Ticket-Bereinigung &middot; läuft lokal im Browser</p>
+      <h1>ONESCM Ticket-Cockpit</h1>
+      <div class="source-meta" id="source-meta"></div>
+    </div>
+    <div class="header-count">
+      <div class="num mono" id="header-total">0</div>
+      <div class="lbl">Tickets geladen</div>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-head">
+      <p class="section-label">Neue Exportdatei bereinigen</p>
+    </div>
+    <div class="upload-row">
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Jira-Exportdatei auswählen">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <span class="txt">
+          <strong>Jira-HTML- oder XML-Export hier ablegen</strong>
+          <span>oder klicken zum Auswählen &middot; Bearbeiter/Ersteller werden pseudonymisiert, Kommentare &amp; E-Mails entfernt, leere Felder verworfen &ndash; alles im Browser, nichts wird hochgeladen</span>
+        </span>
+      </div>
+      <div class="upload-side">
+        <button class="btn ghost" id="reset-sample-btn" type="button" hidden>Ausgangsdaten wiederherstellen</button>
+      </div>
+    </div>
+    <input type="file" id="file-input" accept=".html,.htm,.xml" hidden>
+    <div class="callout" id="format-callout"></div>
+  </section>
+
+  <section>
+    <p class="section-label">Status</p>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section id="domain-section">
+    <p class="section-label" id="domain-label">Domain</p>
+    <div class="panel domain-chart" id="domain-chart"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="section-label">Tickets</p>
+    </div>
+    <div class="controls">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="search-input" placeholder="Suchen (Key oder Zusammenfassung)" autocomplete="off">
+      </div>
+      <select id="domain-select"><option value="">Alle Domains</option></select>
+      <button class="btn ghost" id="reset-btn" type="button">Filter zurücksetzen</button>
+      <span class="spacer"></span>
+      <span class="result-count" id="result-count"></span>
+      <button class="btn primary" id="export-zip-btn" type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M4 21h16"/></svg>
+        Als Markdown-Archiv exportieren
+      </button>
+    </div>
+
+    <div class="panel table-shell">
+      <table>
+        <thead>
+          <tr>
+            <th data-key="key">Schlüssel <span class="arrow">&darr;</span></th>
+            <th data-key="summary">Zusammenfassung <span class="arrow">&darr;</span></th>
+            <th data-key="status">Status <span class="arrow">&darr;</span></th>
+            <th data-key="domain">Domain <span class="arrow">&darr;</span></th>
+            <th data-key="created">Erstellt <span class="arrow">&darr;</span></th>
+            <th data-key="updated">Aktualisiert <span class="arrow">&darr;</span></th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+      <div class="empty-state" id="empty-state" hidden>Keine Tickets für diese Filterkombination.</div>
+    </div>
+  </section>
+
+  <footer>
+    Jira-Releaseletter-Toolkit &middot; Phase 1 (Import &amp; Bereinigung) als Web-App. Parsing, Pseudonymisierung und
+    Export laufen vollständig im Browser &ndash; die Datei wird nicht an einen Server geschickt. Unterstützt: Jira-HTML-Export
+    (Issue-Navigator-Tabelle) und klassischer Jira-XML-Export. Word-Exporte (.docx) und Detail-HTML-Exports bitte über das
+    CLI-Tool (<span class="mono">jira-releaseletter import</span>) verarbeiten.
+  </footer>
+
+</div>
+
+<div class="modal-overlay" id="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-head">
+      <div>
+        <div class="key mono" id="modal-key"></div>
+        <h2 id="modal-title"></h2>
+      </div>
+      <button class="modal-close" id="modal-close" type="button" aria-label="Schließen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <table class="field-table" id="modal-fields"></table>
+    <div class="modal-desc" id="modal-desc-wrap" hidden>
+      <h3>Beschreibung</h3>
+      <p id="modal-desc"></p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn primary" id="modal-download-btn" type="button">Als Markdown speichern</button>
+      <button class="btn ghost" id="modal-cancel-btn" type="button">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script id="initial-ticket-data" type="application/json">__TICKET_DATA__</script>
+<script id="initial-ticket-meta" type="application/json">__TICKET_META__</script>
+<script>
+(function () {
+  "use strict";
+
+  /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
+
+  var JIRA_DATA_ID_MAP = {
+    issuekey: "key", summary: "summary", issuetype: "issue_type", status: "status",
+    priority: "priority", project: "project", resolution: "resolution",
+    assignee: "assignee", reporter: "reporter", created: "created", updated: "updated",
+    labels: "labels", components: "components", fixVersions: "fix_versions",
+    fixfor: "fix_versions", description: "description", comment: "comments", watches: "watchers"
+  };
+  var FIELD_LABEL_ALIASES = {
+    key: ["key", "schlüssel", "issue key", "ticket"],
+    summary: ["summary", "zusammenfassung", "titel"],
+    issue_type: ["type", "issue type", "typ", "vorgangstyp"],
+    status: ["status"], priority: ["priority", "priorität"], project: ["project", "projekt"],
+    resolution: ["resolution", "lösung"], assignee: ["assignee", "bearbeiter", "zugewiesen an"],
+    reporter: ["reporter", "ersteller", "melder"], created: ["created", "erstellt", "erstellungsdatum"],
+    updated: ["updated", "aktualisiert", "geändert"], labels: ["labels", "label", "schlagwörter"],
+    components: ["component", "components", "komponente", "komponenten"],
+    fix_versions: ["fix version", "fix versions", "fix version/s", "fixversion", "ziel-version", "fixversionen"],
+    description: ["description", "beschreibung"], comments: ["comments", "kommentare"],
+    watchers: ["watchers", "beobachter"]
+  };
+  var LABEL_TO_FIELD = {};
+  Object.keys(FIELD_LABEL_ALIASES).forEach(function (canonical) {
+    FIELD_LABEL_ALIASES[canonical].forEach(function (variant) { LABEL_TO_FIELD[variant] = canonical; });
+  });
+  function normalizeLabel(label) {
+    if (!label) return null;
+    return LABEL_TO_FIELD[label.trim().toLowerCase().replace(/:$/, "")] || null;
+  }
+  var MULTI_VALUE_FIELDS = { labels: 1, components: 1, fix_versions: 1, watchers: 1 };
+
+  function emptyTicket(key) {
+    return {
+      key: key, summary: "", issue_type: null, status: null, priority: null, project: null,
+      resolution: null, assignee: null, reporter: null, created: null, updated: null,
+      labels: [], components: [], fix_versions: [], description: "", comments: [],
+      watchers: [], custom_fields: {}
+    };
+  }
+
+  function applyField(ticket, canonical, value, rawLabelForCustom) {
+    if (canonical === "key" || canonical === "comments") return;
+    if (canonical && MULTI_VALUE_FIELDS[canonical]) {
+      ticket[canonical] = value.split(/[,;\n]/).map(function (v) { return v.trim(); }).filter(Boolean);
+    } else if (canonical) {
+      ticket[canonical] = value;
+    } else {
+      ticket.custom_fields[rawLabelForCustom] = value;
+    }
+  }
+
+  function parseIssueTableHtml(doc) {
+    var table = doc.getElementById("issuetable");
+    if (!table) {
+      var candidates = doc.querySelectorAll("table");
+      for (var i = 0; i < candidates.length; i++) {
+        if (candidates[i].querySelector("tr[data-issuekey]")) { table = candidates[i]; break; }
+      }
+    }
+    if (!table) return null;
+
+    var columnLabels = {};
+    var thead = table.querySelector("thead");
+    if (thead) {
+      thead.querySelectorAll("th").forEach(function (th) {
+        var dataId = th.getAttribute("data-id");
+        if (dataId) columnLabels[dataId] = th.textContent.trim();
+      });
+    }
+    var rows = table.querySelectorAll("tr[data-issuekey]");
+    if (!rows.length) return null;
+
+    var tickets = [];
+    rows.forEach(function (row) {
+      var key = row.getAttribute("data-issuekey");
+      if (!key) return;
+      var ticket = emptyTicket(key);
+      var cells = row.querySelectorAll(":scope > td");
+      cells.forEach(function (td) {
+        var classes = (td.getAttribute("class") || "").split(/\s+/).filter(Boolean);
+        if (!classes.length) return;
+        var dataId = classes.filter(function (c) { return (c in columnLabels) || (c in JIRA_DATA_ID_MAP); })[0] || classes[0];
+        var value = td.textContent.replace(/\s+/g, " ").trim();
+        if (!value) return;
+        var canonical = JIRA_DATA_ID_MAP[dataId] || normalizeLabel(columnLabels[dataId] || dataId);
+        applyField(ticket, canonical, value, columnLabels[dataId] || dataId);
+      });
+      tickets.push(ticket);
+    });
+    return tickets;
+  }
+
+  function textOf(item, tag) {
+    var el = item.querySelector(tag);
+    if (!el) return null;
+    var t = el.textContent.trim();
+    return t || null;
+  }
+  function parseJiraXml(doc) {
+    var items = doc.querySelectorAll("item");
+    if (!items.length) return null;
+    var tickets = [];
+    items.forEach(function (item) {
+      var keyEl = item.querySelector("key");
+      var key = keyEl ? keyEl.textContent.trim() : null;
+      if (!key) {
+        var title = textOf(item, "title") || "";
+        key = title.split("]")[0].replace("[", "").trim() || "UNKNOWN-0";
+      }
+      var ticket = emptyTicket(key);
+      ticket.summary = textOf(item, "summary") || textOf(item, "title") || "";
+      ticket.issue_type = textOf(item, "type");
+      ticket.status = textOf(item, "status");
+      ticket.priority = textOf(item, "priority");
+      ticket.project = textOf(item, "project");
+      ticket.resolution = textOf(item, "resolution");
+      var assigneeEl = item.querySelector("assignee");
+      var reporterEl = item.querySelector("reporter");
+      ticket.assignee = (assigneeEl && assigneeEl.textContent.trim()) ? assigneeEl.textContent.trim() : null;
+      ticket.reporter = (reporterEl && reporterEl.textContent.trim()) ? reporterEl.textContent.trim() : null;
+      ticket.created = textOf(item, "created");
+      ticket.updated = textOf(item, "updated");
+      ticket.description = textOf(item, "description") || "";
+      ticket.labels = Array.prototype.map.call(item.querySelectorAll("labels label"), function (l) { return l.textContent.trim(); }).filter(Boolean);
+      ticket.components = Array.prototype.map.call(item.querySelectorAll("component"), function (c) { return c.textContent.trim(); }).filter(Boolean);
+      ticket.fix_versions = Array.prototype.map.call(item.querySelectorAll("fixVersion"), function (v) { return v.textContent.trim(); }).filter(Boolean);
+      ticket.watchers = Array.prototype.map.call(item.querySelectorAll("watches watcher"), function (w) { return w.textContent.trim(); }).filter(Boolean);
+      ticket.comments = Array.prototype.map.call(item.querySelectorAll("comments comment"), function (c) {
+        return { author: c.getAttribute("author"), created: c.getAttribute("created"), body: c.textContent.trim() };
+      });
+      item.querySelectorAll("customfields customfield").forEach(function (cf) {
+        var nameEl = cf.querySelector("customfieldname");
+        if (!nameEl || !nameEl.textContent.trim()) return;
+        var values = Array.prototype.map.call(cf.querySelectorAll("customfieldvalues customfieldvalue"), function (v) { return v.textContent.trim(); }).filter(Boolean);
+        if (values.length) ticket.custom_fields[nameEl.textContent.trim()] = values.join("; ");
+      });
+      tickets.push(ticket);
+    });
+    return tickets;
+  }
+
+  function detectAndParse(fileText, filename) {
+    var lower = (filename || "").toLowerCase();
+    var parser = new DOMParser();
+    if (lower.slice(-4) === ".xml" || fileText.trim().indexOf("<?xml") === 0) {
+      var xdoc = parser.parseFromString(fileText, "application/xml");
+      if (xdoc.querySelector("parsererror")) throw new Error("XML konnte nicht geparst werden (ungültiges Format).");
+      var xt = parseJiraXml(xdoc);
+      if (xt) return { format: "Jira XML-Export", tickets: xt };
+      throw new Error("Keine <item>-Elemente im XML gefunden.");
+    }
+    var hdoc = parser.parseFromString(fileText, "text/html");
+    var ht = parseIssueTableHtml(hdoc);
+    if (ht) return { format: "Jira HTML-Export (Issue-Tabelle)", tickets: ht };
+    throw new Error(
+      "HTML-Format nicht erkannt (kein issuetable, keine data-issuekey-Zeilen gefunden). " +
+      "Detail-HTML-Exports mit Überschrift pro Ticket werden von dieser Web-App aktuell nicht unterstützt – " +
+      "dafür bitte das CLI-Tool (jira-releaseletter import) verwenden."
+    );
+  }
+
+  var EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
+  function PersonAnonymizer() { this.map = {}; this.count = 0; }
+  PersonAnonymizer.prototype.anonymize = function (name) {
+    if (!name || !("" + name).trim()) return name;
+    var key = ("" + name).trim();
+    if (!(key in this.map)) { this.count += 1; this.map[key] = "Person " + this.count; }
+    return this.map[key];
+  };
+  function redactText(text) {
+    if (!text) return "";
+    return ("" + text).replace(EMAIL_RE, "[E-Mail entfernt]");
+  }
+  function cleanTicket(ticket, anonymizer) {
+    var cf = {};
+    Object.keys(ticket.custom_fields || {}).forEach(function (k) { cf[k] = redactText(ticket.custom_fields[k]); });
+    var out = {};
+    Object.keys(ticket).forEach(function (k) { out[k] = ticket[k]; });
+    out.summary = redactText(ticket.summary);
+    out.description = redactText(ticket.description);
+    out.assignee = anonymizer.anonymize(ticket.assignee);
+    out.reporter = anonymizer.anonymize(ticket.reporter);
+    out.comments = [];
+    out.watchers = [];
+    out.custom_fields = cf;
+    return out;
+  }
+  function asExportDict(ticket) {
+    var out = {};
+    Object.keys(ticket).forEach(function (k) {
+      var v = ticket[k];
+      if (v === null || v === undefined) return;
+      if (typeof v === "string" && !v.trim()) return;
+      if (Array.isArray(v) && v.length === 0) return;
+      if (v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 0) return;
+      out[k] = v;
+    });
+    return out;
+  }
+
+  var FIELD_DISPLAY_ORDER = ["issue_type", "status", "priority", "project", "resolution", "assignee", "reporter", "created", "updated", "labels", "components", "fix_versions"];
+  var DISPLAY_LABELS_DE = {
+    issue_type: "Typ", status: "Status", priority: "Priorität", project: "Projekt", resolution: "Lösung",
+    assignee: "Bearbeiter", reporter: "Ersteller", created: "Erstellt", updated: "Aktualisiert",
+    labels: "Labels", components: "Komponenten", fix_versions: "Fix-Version(en)"
+  };
+
+  function renderMarkdown(t) {
+    var lines = ["# " + t.key + (t.summary ? " – " + t.summary : ""), ""];
+    lines.push("| Feld | Wert |"); lines.push("| --- | --- |");
+    FIELD_DISPLAY_ORDER.forEach(function (f) {
+      if (!(f in t)) return;
+      var v = t[f];
+      if (Array.isArray(v)) v = v.join(", ");
+      lines.push("| " + DISPLAY_LABELS_DE[f] + " | " + v + " |");
+    });
+    Object.keys(t.custom_fields || {}).forEach(function (k) { lines.push("| " + k + " | " + t.custom_fields[k] + " |"); });
+    lines.push("");
+    if (t.description) { lines.push("## Beschreibung"); lines.push(""); lines.push(t.description); lines.push(""); }
+    return lines.join("\n");
+  }
+
+  /* ============ Teil 2: App-Status + Rendering ============ */
+
+  var BUCKET_OF_STATUS = {
+    "Fertig": "done", "Geschlossen": "done", "Cancelled": "cancelled",
+    "Offen": "backlog", "Dev Backlog": "backlog", "PI Backlog": "backlog", "in Refinement": "backlog", "In Analysis": "backlog",
+    "BAT Testing": "progress", "QG-BU": "progress", "Blocked BAT Testing": "blocked"
+  };
+  var BUCKET_LABEL = { done: "Erledigt", backlog: "Offen / Backlog", progress: "In Bearbeitung", blocked: "Blockiert", cancelled: "Abgebrochen" };
+  var BUCKET_ORDER = ["done", "backlog", "progress", "blocked", "cancelled"];
+
+  function bucketFor(status) {
+    if (BUCKET_OF_STATUS[status]) return BUCKET_OF_STATUS[status];
+    var s = (status || "").toLowerCase();
+    if (/(closed|done|erledigt|geschlossen|resolved|fertig)/.test(s)) return "done";
+    if (/(cancel|abgebrochen|verworfen)/.test(s)) return "cancelled";
+    if (/(block)/.test(s)) return "blocked";
+    if (/(progress|review|test|analysis|bearbeitung|refine)/.test(s)) return "progress";
+    return "backlog";
+  }
+
+  function parseJiraDate(s) {
+    if (!s) return 0;
+    var m = /(\d{2})\/(\w{3})\/(\d{2})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?/.exec(s);
+    if (m) {
+      var months = { Jan: 0, Feb: 1, Mar: 2, "Mär": 2, Apr: 3, May: 4, Mai: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Okt: 9, Nov: 10, Dec: 11, Dez: 11 };
+      var day = parseInt(m[1], 10), month = (months[m[2]] != null) ? months[m[2]] : 0, year = 2000 + parseInt(m[3], 10);
+      var hour = parseInt(m[4], 10), min = parseInt(m[5], 10);
+      if (m[6] === "PM" && hour < 12) hour += 12;
+      if (m[6] === "AM" && hour === 12) hour = 0;
+      return new Date(year, month, day, hour, min).getTime();
+    }
+    var d = Date.parse(s);
+    return isNaN(d) ? 0 : d;
+  }
+
+  var els = {};
+  ["tiles", "domain-chart", "domain-section", "domain-label", "domain-select", "search-input", "reset-btn",
+    "table-body", "empty-state", "result-count", "header-total", "source-meta", "format-callout",
+    "reset-sample-btn", "export-zip-btn", "dropzone", "file-input",
+    "modal-overlay", "modal-key", "modal-title", "modal-fields", "modal-desc-wrap", "modal-desc",
+    "modal-close", "modal-cancel-btn", "modal-download-btn", "toast"].forEach(function (id) {
+    els[id.replace(/-([a-z])/g, function (_, c) { return c.toUpperCase(); })] = document.getElementById(id);
+  });
+  var headerCells = document.querySelectorAll("thead th[data-key]");
+
+  var app = {
+    tickets: [],
+    anonymizedCount: 0,
+    domainCounts: {},
+    domainList: [],
+    view: { bucket: "all", domain: "", query: "", sortKey: "created", sortDir: "desc" },
+    isSample: true
+  };
+
+  function loadDataset(rawTickets, meta) {
+    var anonymizer = new PersonAnonymizer();
+    var cleaned = rawTickets.map(function (t) { return asExportDict(cleanTicket(t, anonymizer)); });
+
+    app.tickets = cleaned.map(function (t) {
+      return {
+        raw: t, key: t.key, summary: t.summary || "", status: t.status || "–",
+        bucket: bucketFor(t.status), domain: (t.custom_fields && t.custom_fields.Domain) || "",
+        created: t.created || "", updated: t.updated || "",
+        createdSort: parseJiraDate(t.created), updatedSort: parseJiraDate(t.updated)
+      };
+    });
+    app.anonymizedCount = anonymizer.count;
+    app.isSample = !!meta.isSample;
+    app.view = { bucket: "all", domain: "", query: "", sortKey: "created", sortDir: "desc" };
+    els.searchInput.value = "";
+
+    var bucketCounts = {};
+    var domainCounts = {};
+    app.tickets.forEach(function (t) {
+      bucketCounts[t.bucket] = (bucketCounts[t.bucket] || 0) + 1;
+      if (t.domain) domainCounts[t.domain] = (domainCounts[t.domain] || 0) + 1;
+    });
+    app.domainCounts = domainCounts;
+    app.domainList = Object.keys(domainCounts).sort(function (a, b) { return domainCounts[b] - domainCounts[a]; });
+
+    buildTiles(bucketCounts);
+    buildDomainChart();
+    buildSourceMeta(meta);
+    buildFormatCallout(meta);
+    els.headerTotal.textContent = app.tickets.length;
+    els.resetSampleBtn.hidden = app.isSample;
+    render();
+  }
+
+  function buildSourceMeta(meta) {
+    els.sourceMeta.innerHTML =
+      "<span>Quelle: <b>" + escapeHtml(meta.source) + "</b></span>" +
+      "<span>&middot;</span><span>" + escapeHtml(meta.action) + ": <b>" + escapeHtml(meta.when) + "</b></span>" +
+      "<span>&middot;</span><span>Pseudonymisiert: <b>" + app.anonymizedCount + " Person(en)</b></span>";
+  }
+
+  function buildFormatCallout(meta) {
+    var hasSummary = app.tickets.some(function (t) { return t.summary; });
+    var hasDesc = app.tickets.some(function (t) { return t.raw.description; });
+    if (hasSummary || hasDesc) {
+      els.formatCallout.className = "callout";
+      els.formatCallout.innerHTML = "<b>Format erkannt:</b> " + escapeHtml(meta.format) +
+        ". Zusammenfassung/Beschreibung sind enthalten – diese Daten reichen auch für Release-Letter, Benutzerhandbuch &amp; Co. (Phase 3).";
+    } else {
+      els.formatCallout.className = "callout warn";
+      els.formatCallout.innerHTML = "<b>Hinweis:</b> Diese Datei (" + escapeHtml(meta.format) +
+        ") enthält nur Schlüssel/Status/Datum/Domain – keine Zusammenfassung, Beschreibung, Bearbeiter oder Kommentare. " +
+        "Für Release-Letter, Benutzerhandbuch etc. bitte mit zusätzlichen Feldern erneut aus Jira exportieren.";
+    }
+  }
+
+  function buildTiles(bucketCounts) {
+    els.tiles.innerHTML = "";
+    els.tiles.appendChild(makeTile("all", "Alle", app.tickets.length));
+    BUCKET_ORDER.forEach(function (b) { els.tiles.appendChild(makeTile(b, BUCKET_LABEL[b], bucketCounts[b] || 0)); });
+  }
+  function makeTile(bucket, label, count) {
+    var btn = document.createElement("button");
+    btn.className = "tile " + bucket; btn.type = "button";
+    btn.setAttribute("aria-pressed", bucket === "all" ? "true" : "false");
+    var pct = app.tickets.length ? Math.round((count / app.tickets.length) * 100) : 0;
+    btn.innerHTML = '<span class="bar"></span><span class="num mono">' + count + '</span><span class="lbl">' + label + " &middot; " + pct + "%</span>";
+    btn.addEventListener("click", function () {
+      app.view.bucket = bucket;
+      Array.prototype.forEach.call(els.tiles.children, function (el) { el.setAttribute("aria-pressed", el === btn ? "true" : "false"); });
+      render();
+    });
+    return btn;
+  }
+
+  function buildDomainChart() {
+    els.domainChart.innerHTML = "";
+    els.domainSelect.innerHTML = '<option value="">Alle Domains</option>';
+    els.domainSection.hidden = app.domainList.length === 0;
+    els.domainLabel.textContent = "Domain · Top " + app.domainList.length;
+    var max = app.domainList.length ? app.domainCounts[app.domainList[0]] : 1;
+    app.domainList.forEach(function (d) {
+      var opt = document.createElement("option");
+      opt.value = d; opt.textContent = d + " (" + app.domainCounts[d] + ")";
+      els.domainSelect.appendChild(opt);
+
+      var row = document.createElement("button");
+      row.className = "domain-row"; row.type = "button"; row.setAttribute("aria-pressed", "false");
+      var widthPct = Math.max(4, Math.round((app.domainCounts[d] / max) * 100));
+      row.innerHTML = '<span class="name">' + escapeHtml(d) + '</span><span class="track"><span class="fill" style="width:' + widthPct +
+        '%"></span></span><span class="count mono">' + app.domainCounts[d] + "</span>";
+      row.addEventListener("click", function () {
+        app.view.domain = app.view.domain === d ? "" : d;
+        els.domainSelect.value = app.view.domain;
+        syncDomainRows();
+        render();
+      });
+      els.domainChart.appendChild(row);
+    });
+  }
+  function syncDomainRows() {
+    Array.prototype.forEach.call(els.domainChart.querySelectorAll(".domain-row"), function (row, i) {
+      row.setAttribute("aria-pressed", app.domainList[i] === app.view.domain ? "true" : "false");
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
+  }
+
+  function currentFiltered() {
+    var v = app.view;
+    var out = app.tickets.filter(function (t) {
+      if (v.bucket !== "all" && t.bucket !== v.bucket) return false;
+      if (v.domain && t.domain !== v.domain) return false;
+      if (v.query) {
+        var hay = (t.key + " " + t.summary).toUpperCase();
+        if (hay.indexOf(v.query) === -1) return false;
+      }
+      return true;
+    });
+    out.sort(function (a, b) {
+      var dir = v.sortDir === "asc" ? 1 : -1, key = v.sortKey;
+      if (key === "created") return (a.createdSort - b.createdSort) * dir;
+      if (key === "updated") return (a.updatedSort - b.updatedSort) * dir;
+      var av = (a[key] || "").toString(), bv = (b[key] || "").toString();
+      return av.localeCompare(bv, "de") * dir;
+    });
+    return out;
+  }
+
+  function pillHtml(t) { return '<span class="pill ' + t.bucket + '">' + escapeHtml(t.status) + "</span>"; }
+
+  function render() {
+    var filtered = currentFiltered();
+    headerCells.forEach(function (th) {
+      var active = th.getAttribute("data-key") === app.view.sortKey;
+      th.setAttribute("data-active", active ? "true" : "false");
+      th.querySelector(".arrow").textContent = app.view.sortDir === "asc" ? "↑" : "↓";
+    });
+    els.resultCount.innerHTML = "<b>" + filtered.length + "</b> von " + app.tickets.length + " angezeigt";
+    els.exportZipBtn.disabled = filtered.length === 0;
+
+    if (!filtered.length) { els.tableBody.innerHTML = ""; els.emptyState.hidden = false; return; }
+    els.emptyState.hidden = true;
+
+    els.tableBody.innerHTML = filtered.map(function (t, i) {
+      return '<tr data-idx="' + i + '">' +
+        '<td class="key">' + escapeHtml(t.key) + "</td>" +
+        '<td class="summary">' + (t.summary ? escapeHtml(t.summary) : "&ndash;") + "</td>" +
+        "<td>" + pillHtml(t) + "</td>" +
+        '<td class="domain">' + (t.domain ? escapeHtml(t.domain) : "&ndash;") + "</td>" +
+        '<td class="date">' + escapeHtml(t.created) + "</td>" +
+        '<td class="date">' + escapeHtml(t.updated) + "</td></tr>";
+    }).join("");
+
+    Array.prototype.forEach.call(els.tableBody.querySelectorAll("tr"), function (tr) {
+      tr.addEventListener("click", function () { openModal(filtered[parseInt(tr.getAttribute("data-idx"), 10)]); });
+    });
+  }
+
+  /* ============ Teil 3: Detailansicht ============ */
+
+  var lastFocused = null;
+  function openModal(t) {
+    lastFocused = document.activeElement;
+    els.modalKey.textContent = t.key;
+    els.modalTitle.textContent = t.summary || "(keine Zusammenfassung)";
+    var rows = "";
+    FIELD_DISPLAY_ORDER.forEach(function (f) {
+      if (!(f in t.raw)) return;
+      var v = t.raw[f]; if (Array.isArray(v)) v = v.join(", ");
+      rows += "<tr><th>" + DISPLAY_LABELS_DE[f] + "</th><td>" + escapeHtml(v) + "</td></tr>";
+    });
+    Object.keys(t.raw.custom_fields || {}).forEach(function (k) {
+      rows += "<tr><th>" + escapeHtml(k) + "</th><td>" + escapeHtml(t.raw.custom_fields[k]) + "</td></tr>";
+    });
+    els.modalFields.innerHTML = rows;
+    if (t.raw.description) { els.modalDescWrap.hidden = false; els.modalDesc.textContent = t.raw.description; }
+    else { els.modalDescWrap.hidden = true; }
+    els.modalOverlay.hidden = false;
+    els.modalDownloadBtn.onclick = function () { downloadSingle(t.raw); };
+    els.modalClose.focus();
+  }
+  function closeModal() { els.modalOverlay.hidden = true; if (lastFocused) lastFocused.focus(); }
+  els.modalClose.addEventListener("click", closeModal);
+  els.modalCancelBtn.addEventListener("click", closeModal);
+  els.modalOverlay.addEventListener("click", function (e) { if (e.target === els.modalOverlay) closeModal(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !els.modalOverlay.hidden) closeModal(); });
+
+  /* ============ Teil 4: Export (downloads-Capability) ============ */
+
+  var downloadsApi = null;
+  if (window.claude && window.claude.use) {
+    window.claude.use("downloads").then(function (ns) { downloadsApi = ns; });
+  }
+
+  function showToast(title, msg, isError) {
+    els.toast.className = isError ? "error" : "";
+    els.toast.innerHTML = "<div><b>" + escapeHtml(title) + "</b><span>" + escapeHtml(msg) + "</span></div>";
+    requestAnimationFrame(function () { els.toast.classList.add("show"); });
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function () { els.toast.classList.remove("show"); }, 4200);
+  }
+
+  function safeFilename(key) { return key.replace(/[^A-Za-z0-9_-]+/g, "_"); }
+
+  async function downloadSingle(ticket) {
+    if (!downloadsApi) { showToast("Nicht verfügbar", "Download-Funktion in dieser Ansicht nicht verfügbar.", true); return; }
+    try {
+      await downloadsApi.save({ filename: safeFilename(ticket.key) + ".md", data: renderMarkdown(ticket) });
+      showToast("Gespeichert", ticket.key + ".md wurde heruntergeladen.");
+    } catch (err) {
+      if (err && err.code === "declined") return;
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler beim Speichern.", true);
+    }
+  }
+
+  els.exportZipBtn.addEventListener("click", async function () {
+    if (!downloadsApi) { showToast("Nicht verfügbar", "Download-Funktion in dieser Ansicht nicht verfügbar.", true); return; }
+    if (typeof JSZip === "undefined") { showToast("Fehlgeschlagen", "ZIP-Bibliothek konnte nicht geladen werden.", true); return; }
+    var filtered = currentFiltered();
+    if (!filtered.length) return;
+    els.exportZipBtn.disabled = true;
+    try {
+      var zip = new JSZip();
+      filtered.forEach(function (t) { zip.file(safeFilename(t.key) + ".md", renderMarkdown(t.raw)); });
+      var blob = await zip.generateAsync({ type: "blob" });
+      await downloadsApi.save({ filename: "tickets_bereinigt.zip", data: blob });
+      showToast("Export fertig", filtered.length + " Tickets als Markdown-Archiv gespeichert.");
+    } catch (err) {
+      if (err && err.code === "declined") { /* Nutzer hat abgelehnt */ }
+      else showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler beim Export.", true);
+    } finally {
+      els.exportZipBtn.disabled = false;
+    }
+  });
+
+  /* ============ Teil 5: Upload-Handling ============ */
+
+  function handleFile(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onerror = function () { showToast("Fehlgeschlagen", "Datei konnte nicht gelesen werden.", true); };
+    reader.onload = function () {
+      try {
+        var result = detectAndParse(String(reader.result), file.name);
+        loadDataset(result.tickets, {
+          source: file.name, action: "Importiert", when: new Date().toLocaleString("de-DE"),
+          format: result.format, isSample: false
+        });
+        showToast("Import erfolgreich", result.tickets.length + " Tickets bereinigt (" + app.anonymizedCount + " Person(en) pseudonymisiert).");
+      } catch (err) {
+        showToast("Import fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+      }
+    };
+    reader.readAsText(file, "utf-8");
+  }
+
+  els.dropzone.addEventListener("click", function () { els.fileInput.click(); });
+  els.dropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.fileInput.click(); } });
+  els.fileInput.addEventListener("change", function () { handleFile(els.fileInput.files[0]); els.fileInput.value = ""; });
+  ["dragenter", "dragover"].forEach(function (evt) {
+    els.dropzone.addEventListener(evt, function (e) { e.preventDefault(); els.dropzone.classList.add("dragover"); });
+  });
+  ["dragleave", "drop"].forEach(function (evt) {
+    els.dropzone.addEventListener(evt, function (e) { e.preventDefault(); els.dropzone.classList.remove("dragover"); });
+  });
+  els.dropzone.addEventListener("drop", function (e) {
+    var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  /* ============ Teil 6: Steuerelemente ============ */
+
+  els.domainSelect.addEventListener("change", function () { app.view.domain = els.domainSelect.value; syncDomainRows(); render(); });
+  els.searchInput.addEventListener("input", function () { app.view.query = els.searchInput.value.trim().toUpperCase(); render(); });
+  els.resetBtn.addEventListener("click", function () {
+    app.view.bucket = "all"; app.view.domain = ""; app.view.query = "";
+    els.searchInput.value = ""; els.domainSelect.value = "";
+    Array.prototype.forEach.call(els.tiles.children, function (el, i) { el.setAttribute("aria-pressed", i === 0 ? "true" : "false"); });
+    syncDomainRows(); render();
+  });
+  headerCells.forEach(function (th) {
+    th.addEventListener("click", function () {
+      var key = th.getAttribute("data-key");
+      if (app.view.sortKey === key) app.view.sortDir = app.view.sortDir === "asc" ? "desc" : "asc";
+      else { app.view.sortKey = key; app.view.sortDir = key === "key" ? "asc" : "desc"; }
+      render();
+    });
+  });
+  els.resetSampleBtn.addEventListener("click", function () {
+    loadInitial();
+    showToast("Zurückgesetzt", "Ausgangsdatensatz (" + app.tickets.length + " Tickets) wiederhergestellt.");
+  });
+
+  /* ============ Start ============ */
+
+  function loadInitial() {
+    var raw = JSON.parse(document.getElementById("initial-ticket-data").textContent);
+    var metaEl = document.getElementById("initial-ticket-meta");
+    var meta;
+    try { meta = JSON.parse(metaEl.textContent); } catch (e) { meta = null; }
+    if (!meta || !meta.source) {
+      meta = {
+        source: "Beispieldaten", when: new Date().toLocaleDateString("de-DE"),
+        format: "Jira HTML-Export (Issue-Tabelle)"
+      };
+    }
+    meta.action = "Importiert"; meta.isSample = true;
+    loadDataset(raw, meta);
+  }
+  loadInitial();
+})();
+</script>
