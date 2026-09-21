@@ -147,6 +147,22 @@
   .dropzone .txt span { font-size: 12px; color: var(--text-muted); }
   .upload-side { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
 
+  .paste-panel { display: flex; flex-direction: column; gap: 8px; }
+  .paste-panel textarea {
+    font-family: inherit; font-size: 12.5px; line-height: 1.5; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text); resize: vertical; min-height: 90px;
+  }
+  .paste-panel textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .paste-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn.processing { cursor: wait; opacity: 0.85; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn-spinner {
+    display: inline-block; width: 13px; height: 13px; border-radius: 50%;
+    border: 2px solid color-mix(in srgb, currentColor 30%, transparent); border-top-color: currentColor;
+    animation: spin 0.7s linear infinite; flex: none;
+  }
+
   .btn {
     font-family: inherit; font-size: 13px; font-weight: 600; border-radius: 8px; padding: 9px 14px;
     border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer;
@@ -464,6 +480,23 @@
         </div>
         <input type="file" id="file-input" accept=".html,.htm,.xml" multiple hidden>
         <div class="callout" id="format-callout"></div>
+
+        <section>
+          <p class="section-label">Aus Zwischenablage einfügen</p>
+          <div class="callout">
+            Alternativ zum Datei-Upload: Text direkt einfügen (z. B. Releaseinfo-Text oder HTML-/XML-Quelltext aus dem Browser kopiert). Das Format wird automatisch erkannt.
+          </div>
+          <div class="paste-panel">
+            <textarea id="paste-textarea" rows="7" placeholder="Text hier mit Strg+V einfügen …"></textarea>
+            <div class="paste-actions">
+              <button class="btn ghost" id="paste-from-clipboard-btn" type="button">Aus Zwischenablage einfügen</button>
+              <button class="btn primary" id="paste-process-btn" type="button">
+                <span class="btn-spinner" id="paste-spinner" hidden></span>
+                <span id="paste-process-label">Verarbeiten und speichern</span>
+              </button>
+            </div>
+          </div>
+        </section>
       </section>
 
       <!-- ================= Dateiverwaltung ================= -->
@@ -1168,6 +1201,7 @@
     "tiles", "domain-chart", "domain-section", "domain-label", "domain-select", "search-input", "reset-filter-btn",
     "table-body", "empty-state", "result-count",
     "dropzone", "dropzone-title", "dropzone-hint", "file-input", "reset-session-btn", "format-callout", "import-tabs",
+    "paste-textarea", "paste-from-clipboard-btn", "paste-process-btn", "paste-spinner", "paste-process-label",
     "imports-tbody", "changes-tbody", "changes-empty", "domain-aliases-tbody",
     "log-list", "log-empty",
     "gallery", "gallery-empty",
@@ -1215,6 +1249,30 @@
     return diffs;
   }
 
+  function isBlank(v) {
+    return v === undefined || v === null || (typeof v === "string" && !v.trim()) || (Array.isArray(v) && v.length === 0);
+  }
+  // Ein Teil-Import (z. B. Releaseinfo-Nachtrag) enthält oft nur einen Teil der
+  // Felder eines Tickets. Fehlt ein Feld im neuen Import, das beim bisherigen
+  // Stand vorhanden war, wird der alte Wert stillschweigend beibehalten statt
+  // als "geleert"/geändert gewertet - nur tatsächlich abweichende Werte zählen
+  // als Änderung.
+  function mergeTicketFields(oldT, newT) {
+    var merged = {};
+    Object.keys(newT).forEach(function (k) { merged[k] = newT[k]; });
+    Object.keys(oldT).forEach(function (k) {
+      if (k === "custom_fields") return;
+      if (isBlank(newT[k]) && !isBlank(oldT[k])) merged[k] = oldT[k];
+    });
+    var oldCf = oldT.custom_fields || {};
+    var newCf = newT.custom_fields || {};
+    var mergedCf = {};
+    Object.keys(newCf).forEach(function (k) { mergedCf[k] = newCf[k]; });
+    Object.keys(oldCf).forEach(function (k) { if (isBlank(newCf[k]) && !isBlank(oldCf[k])) mergedCf[k] = oldCf[k]; });
+    merged.custom_fields = mergedCf;
+    return merged;
+  }
+
   // Explizite Alias-Tabelle statt automatischer Fuzzy-Erkennung: nur Paare,
   // die sicher dasselbe Fachgebiet bezeichnen (reine Schreibweise-
   // Unterschiede), werden zusammengeführt. Zweideutige Fälle (z.B. "Contract
@@ -1247,7 +1305,8 @@
         app.ticketStore.set(t.key, { current: t, sources: [{ importId: importId, source: meta.source, when: meta.when }] });
         stats.neu++;
       } else {
-        var diffs = diffTicket(existing.current, t);
+        var merged = mergeTicketFields(existing.current, t);
+        var diffs = diffTicket(existing.current, merged);
         var prevSource = existing.sources[existing.sources.length - 1];
         existing.sources.push({ importId: importId, source: meta.source, when: meta.when });
         if (diffs.length) {
@@ -1261,7 +1320,7 @@
         } else {
           stats.unveraendert++;
         }
-        existing.current = t;
+        existing.current = merged;
       }
     });
 
@@ -1684,6 +1743,53 @@
   els.resetSessionBtn.addEventListener("click", function () {
     resetSession();
     showToast("Zurückgesetzt", "Sitzung auf Ausgangsdaten zurückgesetzt.");
+  });
+
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  els.pasteFromClipboardBtn.addEventListener("click", async function () {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      showToast("Zwischenablage nicht verfügbar", "Bitte den Text stattdessen mit Strg+V direkt in das Feld einfügen.", true);
+      return;
+    }
+    try {
+      var text = await navigator.clipboard.readText();
+      els.pasteTextarea.value = text;
+      els.pasteTextarea.focus();
+    } catch (e) {
+      showToast("Zugriff verweigert", "Der Browser hat den Lesezugriff auf die Zwischenablage verweigert. Bitte mit Strg+V einfügen.", true);
+    }
+  });
+
+  var PASTE_SOURCE_LABEL = "Manuell (Zwischenablage)";
+  els.pasteProcessBtn.addEventListener("click", async function () {
+    var text = (els.pasteTextarea.value || "").trim();
+    if (!text) { showToast("Kein Text vorhanden", "Bitte zuerst Text in das Feld einfügen.", true); return; }
+
+    els.pasteProcessBtn.disabled = true;
+    els.pasteProcessBtn.classList.add("processing");
+    els.pasteSpinner.hidden = false;
+    els.pasteProcessLabel.textContent = "Wird verarbeitet …";
+    els.pasteFromClipboardBtn.disabled = true;
+    await wait(30); // UI (Sanduhr) einmal rendern lassen, bevor das synchrone Parsing startet
+
+    try {
+      var result = parseAsAndere(text);
+      var record = ingestTickets(result.tickets, { source: PASTE_SOURCE_LABEL, when: nowLabel(), format: result.format });
+      showToast(
+        "Verarbeitet und gespeichert",
+        record.ticketCount + " Tickets (" + record.stats.neu + " neu, " + record.stats.geaendert + " geändert) – Quelle „" + PASTE_SOURCE_LABEL + "“ in der Dateiverwaltung sichtbar."
+      );
+      els.pasteTextarea.value = "";
+    } catch (err) {
+      showToast("Verarbeitung fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.pasteProcessBtn.disabled = false;
+      els.pasteProcessBtn.classList.remove("processing");
+      els.pasteSpinner.hidden = true;
+      els.pasteProcessLabel.textContent = "Verarbeiten und speichern";
+      els.pasteFromClipboardBtn.disabled = false;
+    }
   });
 
   /* ============ Teil 6: Dashboard-Steuerelemente ============ */

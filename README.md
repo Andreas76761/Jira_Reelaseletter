@@ -145,8 +145,13 @@ folgenden Bereichen:
   Tabelle, Ticket-Detailansicht (18 Standardfelder, fehlende klar als
   "Nicht im Export enthalten" markiert statt erfunden).
 - **Import** – vier Formate per Tab wählbar, jeweils mit Mehrfachauswahl
-  und Drag&Drop; Parsing/Bereinigung laufen vollständig im Browser, die
-  Datei verlässt den Rechner nicht:
+  und Drag&Drop; zusätzlich eine **Zwischenablage-Funktion**: Text direkt
+  einfügen (Button „Aus Zwischenablage einfügen“ oder Strg+V in das
+  Textfeld), Format wird automatisch erkannt, Button „Verarbeiten und
+  speichern“ zeigt während der Verarbeitung eine Sanduhr/Spinner-Animation;
+  das Ergebnis erscheint in der Dateiverwaltung mit der Quelle „Manuell
+  (Zwischenablage)“. Parsing/Bereinigung laufen vollständig im Browser, die
+  Datei/der Text verlässt den Rechner nicht:
   - *Jira Massenupload* – Jira-HTML-Export (Issue-Navigator-Tabelle)
     oder klassischer XML-Export (JavaScript-Portierung von
     `parser_html.py`/`parser_xml.py`/`cleaner.py`).
@@ -160,8 +165,12 @@ folgenden Bereichen:
 - **Dateiverwaltung** – Liste aller Imports dieser Sitzung sowie ein
   Vergleich von Tickets, die in mehreren Imports mit unterschiedlichem
   Status/Datum/Zusammenfassung vorkamen (Vorher/Nachher inkl. Quelle).
-  Tickets werden über ihren Schlüssel zusammengeführt (neuester Stand
-  gewinnt); im Dashboard markiert ein Punkt hinter dem Schlüssel
+  Tickets werden über ihren Schlüssel zusammengeführt; bei einem
+  Teil-Import (z. B. ein Releaseinfo-Nachtrag, der nur Schlüssel/Status/
+  Domain enthält) bleiben im vorherigen Import vorhandene, im neuen
+  Import aber fehlende Felder unverändert erhalten und werden **nicht**
+  als Änderung gewertet – nur tatsächlich abweichende Werte erscheinen im
+  Vergleich. Im Dashboard markiert ein Punkt hinter dem Schlüssel
   geänderte Tickets.
 - **Verarbeitung** – chronologisches Protokoll aller Import-/Export-Aktionen.
 - **Releaseletter / Benutzerhandbuch / Clickanweisung** – Textentwürfe aus
