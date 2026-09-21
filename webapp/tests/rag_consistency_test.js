@@ -10,7 +10,7 @@ const fragment = fs.readFileSync(BUILD_HTML, "utf-8");
 const full = `<!doctype html><html><head><meta charset="utf-8"></head><body>${fragment}</body></html>`;
 const errors = [];
 const vc = new VirtualConsole();
-vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract/i)) errors.push(e.message); });
+vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract|pdf\.js|pdf\.worker/i)) errors.push(e.message); });
 
 const savedFiles = [];
 let sampleCalls = 0;

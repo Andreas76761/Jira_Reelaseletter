@@ -13,7 +13,7 @@ const full = `<!doctype html><html><head><meta charset="utf-8"></head><body>${fr
 const errors = [];
 const vc = new VirtualConsole();
 vc.on("jsdomError", (e) => {
-  if (String(e.message).includes("jszip.min.js") || String(e.message).includes("jspdf.umd.min.js") || String(e.message).includes("tesseract.min.js")) return;
+  if (String(e.message).includes("jszip.min.js") || String(e.message).includes("jspdf.umd.min.js") || String(e.message).includes("tesseract.min.js") || String(e.message).includes("pdf.min.js") || String(e.message).includes("pdf.worker")) return;
   errors.push("jsdomError: " + e.message);
 });
 
@@ -165,7 +165,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
 
   const mdZipReq = savedFiles.find((f) => f.filename === "tickets_bereinigt.zip");
   const pdfZipReq = savedFiles.find((f) => f.filename === "tickets_bereinigt_pdf.zip");
-  const rlReq = savedFiles.find((f) => f.filename.endsWith("_releaseletter.md"));
+  const rlReq = savedFiles.find((f) => f.filename.includes("_releaseletter_") && f.filename.endsWith(".md"));
   const singlePdfReq = savedFiles.find((f) => f.filename.endsWith(".pdf") && f !== pdfZipReq);
 
   check("MD-ZIP-Export ausgelöst", !!mdZipReq);

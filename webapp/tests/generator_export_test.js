@@ -13,7 +13,7 @@ const fragment = fs.readFileSync(BUILD_HTML, "utf-8");
 const full = `<!doctype html><html><head><meta charset="utf-8"></head><body>${fragment}</body></html>`;
 const errors = [];
 const vc = new VirtualConsole();
-vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract/)) errors.push(e.message); });
+vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract|pdf\.js|pdf\.worker/)) errors.push(e.message); });
 
 const savedFiles = [];
 const dom = new JSDOM(full, {

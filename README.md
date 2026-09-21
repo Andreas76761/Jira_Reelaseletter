@@ -139,7 +139,7 @@ und überarbeiten.
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v1.9.1"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.0.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -147,7 +147,20 @@ Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
 `window.confirm()` – manche eingebetteten Browser-Umgebungen (z. B. ein
 sandboxed `<iframe>`, wie beim Ausführen als Claude-Artifact) unterdrücken
 native Dialoge stillschweigend, wodurch ein Klick auf "Löschen" sonst
-wirkungslos bleiben kann:
+wirkungslos bleiben kann.
+
+**Bereinigung personen-/fahrzeugbezogener Daten:** Zusätzlich zur
+Pseudonymisierung von Bearbeiter/Ersteller und der Entfernung von
+Kommentaren/Beobachtern/E-Mail-Adressen (siehe Phase 1 oben, in der
+Web-App als eigene JS-Portierung) erkennt und entfernt die Web-App aus
+Freitext (Zusammenfassung, Beschreibung, Custom-Fields) musterbasiert:
+Telefonnummern (mit Vorwahl), Adressen (Straße + Hausnummer, PLZ + Ort),
+Fahrgestellnummern/VIN (17-stellig, ISO 3779) und deutsche
+KFZ-Kennzeichen – relevant, da oneSCM ein Fuhrpark-/Vertragsmanagement-
+System ist und Ticket-Freitext entsprechende Daten enthalten kann. Wie
+bei der Namenserkennung gilt: musterbasiert und Best-Effort, keine
+Garantie auf lückenlose Erkennung bei untypischer Schreibweise oder
+anderen Länderformaten (Kennzeichen).
 
 - **Dashboard** – zusammengeführter, aktueller Stand aller importierten
   Tickets: Status-Kacheln, Domain-Verteilung, ein **Labels-Filter**
@@ -182,18 +195,23 @@ wirkungslos bleiben kann:
     `parser_html.py`/`parser_xml.py`/`cleaner.py`).
   - *Jira Einzelticket* – einzelne Ticket-Detailseite (HTML, ein Ticket
     pro Datei, Überschrift + Feldtabellen).
-  - *Releaseinfo* – Release-Notes-Text aus Confluence, als .txt
-    (Tab-getrennt) **oder als Word-Export (.docx)** – die Tabellen aus
-    dem .docx werden direkt im Browser über das bereits geladene JSZip
-    aus `word/document.xml` extrahiert (keine neue Bibliothek nötig) und
-    ergeben exakt dieselben Zeilen wie die .txt-Variante. Tickets werden
-    je Service-Abschnitt automatisch der dort genannten Domain zugeordnet
-    und über den Schlüssel dedupliziert (mehrere Service-Zugehörigkeiten
-    werden als Komponenten zusammengeführt). Das alte, binäre .doc-Format
-    (vor Word 2007) lässt sich zwar auswählen, wird aber ehrlich mit einer
-    Fehlermeldung abgelehnt statt fehlerhaft "geraten" – Word bietet dafür
-    "Speichern unter" → .docx an.
-  - *Andere Importe* – probiert alle Parser automatisch durch (inkl. .docx).
+  - *Releaseinfo / Confluence-Export* – Release-Notes-Text aus
+    Confluence, als .txt (Tab-getrennt), als Word-Export (**.docx**) oder
+    als **PDF-Export (.pdf)**. Die Tabellen aus dem .docx werden direkt
+    im Browser über das bereits geladene JSZip aus `word/document.xml`
+    extrahiert (keine neue Bibliothek nötig) und ergeben exakt dieselben
+    Zeilen wie die .txt-Variante. Für .pdf wird der Text über pdf.js
+    extrahiert und die Zeilen-/Spaltenstruktur aus den x/y-Positionen der
+    Textfragmente rekonstruiert (Best-Effort wie die anderen Parser –
+    Qualität hängt von der PDF-Struktur ab; reine Scan-/Bild-PDFs ohne
+    Text werden ehrlich mit Fehlermeldung abgelehnt, kein OCR-Fallback).
+    Tickets werden je Service-Abschnitt automatisch der dort genannten
+    Domain zugeordnet und über den Schlüssel dedupliziert (mehrere
+    Service-Zugehörigkeiten werden als Komponenten zusammengeführt). Das
+    alte, binäre .doc-Format (vor Word 2007) lässt sich zwar auswählen,
+    wird aber ehrlich mit einer Fehlermeldung abgelehnt statt fehlerhaft
+    "geraten" – Word bietet dafür "Speichern unter" → .docx an.
+  - *Andere Importe* – probiert alle Parser automatisch durch (inkl. .docx/.pdf).
 - **Dateiverwaltung** – Liste aller Imports dieser Sitzung sowie ein
   Vergleich von Tickets, die in mehreren Imports mit unterschiedlichem
   Status/Datum/Zusammenfassung vorkamen (Vorher/Nachher inkl. Quelle).
@@ -321,18 +339,21 @@ wirkungslos bleiben kann:
   besteht bewusst nur aus selbst erzeugten Farben/Formen/Typografie,
   **keine Fotos/Stockbilder** – dafür hat die App keine Bildquelle und
   würde sonst etwas vortäuschen, das nicht vorhanden ist.
-- **Ansicht "Original" / "Nur Deutsch"** – Releaseletter, Benutzerhandbuch
-  und Clickanweisung haben in der Vorschau einen Umschalter. "Original"
-  zeigt den vollständigen Entwurf wie gehabt (deutsche Vorlage +
-  Ticket-Freitext in der jeweiligen Originalsprache, meist Englisch, da
-  unverändert aus Jira übernommen). "Nur Deutsch" zeigt ausschließlich
-  selbst erzeugten deutschen Text (Vorlage, Feldbezeichnungen, Domäne/
-  Priorität/Labels) und blendet den Ticket-Freitext (Zusammenfassung/
-  Beschreibung) bewusst aus, statt ihn automatisch (und damit potenziell
-  falsch) zu übersetzen – es gibt keine Übersetzungs-Engine und keinen
-  Server/keine externe API. Downloads verwenden die gerade aktive
-  Ansicht (Dateiname erhält bei "Nur Deutsch" den Zusatz
-  `_nur-deutsch`).
+- **Sprachauswahl "Deutsch" / "English"** – Releaseletter, Benutzerhandbuch
+  und Clickanweisung haben in der Vorschau einen Umschalter, der die
+  komplett zweisprachig hinterlegte **Vorlage** (Überschriften,
+  Feldbezeichnungen wie "Status"/"Domäne"/"Priorität", Rohgerüst-Hinweise)
+  zwischen Deutsch und Englisch umschaltet. Der Ticket-Freitext
+  (Zusammenfassung/Beschreibung) wird in **beiden** Sprachmodi unverändert
+  in seiner Originalsprache angezeigt (meist Englisch, da unverändert aus
+  Jira übernommen) – die App übersetzt ihn bewusst nicht automatisch
+  (Risiko fachlicher Verfälschung; es gibt keine Übersetzungs-Engine und
+  keinen Server/keine externe API für diese drei Generatoren), ein
+  eingeblendeter Hinweis macht das transparent. Downloads verwenden die
+  gerade aktive Sprache (Dateiname erhält den Zusatz `_de`/`_en`).
+  Prozessbild-Diagramme (SVG/Mermaid) bleiben davon unberührt und zeigen
+  weiterhin deutsche Status-Bucket-Beschriftungen (Erledigt/Offen/…) sowie
+  den unveränderten Ticket-Freitext als Knotenbeschriftung.
 - **Prozessbild** – Prozessdiagramm aus ausgewählten Tickets mit **10
   Design-Vorlagen** (Farben: OnePaper Dunkel/Hell, Corporate Blau,
   Silber/Schwarz, Forest, Sunset, Pastell, Monochrom, Royal,

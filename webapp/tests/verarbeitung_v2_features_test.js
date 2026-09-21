@@ -15,7 +15,7 @@ const full = `<!doctype html><html><head><meta charset="utf-8"></head><body>${fr
 const errors = [];
 const vc = new VirtualConsole();
 vc.on("jsdomError", (e) => {
-  if (String(e.message).includes("jszip.min.js") || String(e.message).includes("jspdf.umd.min.js") || String(e.message).includes("tesseract.min.js")) return;
+  if (String(e.message).includes("jszip.min.js") || String(e.message).includes("jspdf.umd.min.js") || String(e.message).includes("tesseract.min.js") || String(e.message).includes("pdf.min.js") || String(e.message).includes("pdf.worker")) return;
   errors.push("jsdomError: " + e.message);
 });
 
