@@ -4,6 +4,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <style>
   :root {
     color-scheme: light dark;
@@ -423,8 +424,24 @@
   }
   .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
   .gallery-card { padding: 14px; }
-  .gallery-card h3 { font-size: 13px; margin: 0 0 4px; }
+  .gallery-card h3 { font-size: 13px; margin: 0 0 4px; word-break: break-word; }
   .gallery-card .meta { font-size: 11.5px; color: var(--text-faint); margin-bottom: 8px; }
+  .uploaded-thumb { display: block; max-width: 100%; max-height: 220px; object-fit: contain; border-radius: 8px; background: var(--surface-2); margin-bottom: 10px; }
+  .image-tag-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .image-tag-row label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-faint); display: flex; flex-direction: column; gap: 3px; }
+  .image-tag-row .text-input { font-size: 12.5px; padding: 6px 9px; text-transform: none; font-weight: 400; }
+  .image-action-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .image-action-row .btn { font-size: 11.5px; padding: 6px 10px; }
+  .image-meta-box, .image-ocr-box { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; font-size: 12px; margin-top: 6px; }
+  .image-ocr-box.error { color: var(--blocked); }
+  .ocr-text { white-space: pre-wrap; font-family: "IBM Plex Mono", monospace; font-size: 11.5px; margin: 4px 0 0; max-height: 160px; overflow: auto; }
+  .color-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--border); vertical-align: middle; }
+  .table-thumb-cell { width: 60px; }
+  .table-thumb { display: block; width: 48px; height: 48px; object-fit: cover; border-radius: 6px; background: var(--surface-2); }
+  .thumb-placeholder {
+    display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 6px;
+    background: var(--surface-2); color: var(--text-faint); font-size: 10px; text-align: center;
+  }
   .info-card { padding: 18px 20px; font-size: 13.5px; line-height: 1.65; color: var(--text-muted); }
   .info-card h3 { font-size: 14.5px; color: var(--text); margin: 20px 0 6px; }
   .info-card h3:first-child { margin-top: 0; }
@@ -441,6 +458,8 @@
     background: var(--surface); border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow);
     width: 100%; max-width: 620px; max-height: 85vh; overflow: auto; padding: 22px 24px;
   }
+  .confirm-modal { max-width: 440px; }
+  .confirm-modal-message { font-size: 13.5px; line-height: 1.6; color: var(--text-muted); margin: 10px 0 18px; white-space: pre-line; }
   .modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 4px; }
   .modal-head h2 { font-size: 19px; font-weight: 800; margin: 0; text-wrap: balance; }
   .modal-head .key { font-family: "IBM Plex Mono", monospace; color: var(--accent-text); font-size: 13px; font-weight: 600; }
@@ -554,9 +573,10 @@
           <div class="controls">
             <div class="search-box">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              <input type="text" id="search-input" placeholder="Suchen (Key oder Zusammenfassung)" autocomplete="off">
+              <input type="text" id="search-input" placeholder="Suchen (Key, Zusammenfassung oder Label)" autocomplete="off">
             </div>
             <select id="domain-select"><option value="">Alle Domains</option></select>
+            <select id="label-select"><option value="">Alle Labels</option></select>
             <button class="btn ghost" id="reset-filter-btn" type="button">Filter zurücksetzen</button>
             <span class="spacer"></span>
             <span class="result-count" id="result-count"></span>
@@ -949,7 +969,7 @@
 
       <!-- ================= Clickanweisung ================= -->
       <section class="view-panel" data-view-panel="clickanweisung" hidden>
-        <div class="view-head"><h2>Clickanweisung</h2><p class="desc">Schritt-für-Schritt-Rohgerüst aus den Ticket-Beschreibungen (Screenshots/genaue Klickpfade manuell ergänzen).</p></div>
+        <div class="view-head"><h2>Clickanweisung</h2><p class="desc">Schritt-für-Schritt-Bedienungsanleitung für oneSCM, aus den Beschreibungstexten der ausgewählten Tickets zusammengestellt und nach Domäne gegliedert &ndash; ohne Jira-Ticket-Referenzen im Fließtext (Screenshots/genaue Klickpfade manuell ergänzen). Die separate XLSX-Tabelle bleibt Ticket-bezogen und dient als Nachvollzieh-Grundlage.</p></div>
         <div class="gen-layout" data-kind="clickanweisung">
           <div class="gen-form">
             <label for="clickanweisung-name">Release-Name</label>
@@ -971,9 +991,36 @@
 
       <!-- ================= Bilder ================= -->
       <section class="view-panel" data-view-panel="bilder" hidden>
-        <div class="view-head"><h2>Bilder</h2><p class="desc">Galerie der in dieser Sitzung erzeugten Prozessdiagramme.</p></div>
+        <div class="view-head"><h2>Bilder</h2><p class="desc">Tabelle und Galerie aller in dieser Sitzung erzeugten Prozessdiagramme sowie hochgeladener Bilder, mit Datum. Beschreibungen lassen sich in der Tabelle direkt bearbeiten oder leeren, Bilder dort auch löschen. Hochgeladene Bilder lassen sich zusätzlich mit Domäne/Kapitel/Schritt (für Clickanweisung) verschlagworten, per OCR nach Text durchsuchen (Tesseract.js, läuft im Browser, benötigt beim ersten Lauf Internetzugriff zum Nachladen der Erkennungsdaten), mit rein technischen Metadaten (Maße, Dateigröße, Helligkeit/Farbe &ndash; keine KI-Bildinterpretation) anzeigen oder wieder herunterladen.</p></div>
+
+        <section>
+          <p class="section-label">Bild hochladen</p>
+          <div class="dropzone" id="image-dropzone" tabindex="0" role="button" aria-label="Bild(er) auswählen">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span class="txt">
+              <strong>Bild(er) hier ablegen</strong>
+              <span>oder klicken zum Auswählen (Mehrfachauswahl möglich) &middot; oder diesen Bereich anklicken und mit Strg+V einfügen</span>
+            </span>
+          </div>
+          <input type="file" id="image-file-input" accept="image/*" multiple hidden>
+          <div class="paste-actions" style="margin-top:8px;">
+            <button class="btn ghost" id="image-paste-clipboard-btn" type="button">Aus Zwischenablage einfügen</button>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">Alle Bilder (<span id="images-table-count">0</span>)</p>
+          <div class="panel table-wrap" style="max-height:360px; overflow:auto;">
+            <table class="simple-table" id="images-table">
+              <thead><tr><th>Vorschau</th><th>Titel</th><th>Typ</th><th>Datum</th><th>Beschreibung</th><th>Aktion</th></tr></thead>
+              <tbody id="images-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="images-table-empty">Noch keine Bilder vorhanden.</div>
+          </div>
+        </section>
+
         <div class="gallery" id="gallery"></div>
-        <div class="empty-hint" id="gallery-empty">Noch keine Bilder erzeugt &ndash; unter "Prozessbild" ein Diagramm generieren.</div>
+        <div class="empty-hint" id="gallery-empty">Noch keine Bilder vorhanden &ndash; ein Bild hochladen oder unter "Prozessbild" ein Diagramm generieren.</div>
       </section>
 
       <!-- ================= Output MD ================= -->
@@ -1146,6 +1193,20 @@
 
     </div>
   </main>
+</div>
+
+<div class="modal-overlay" id="confirm-modal-overlay" hidden>
+  <div class="modal confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+    <div class="modal-head"><div><h2 id="confirm-modal-title">Bestätigung erforderlich</h2></div></div>
+    <p class="confirm-modal-message" id="confirm-modal-message"></p>
+    <div class="modal-actions">
+      <button class="btn danger" id="confirm-modal-ok-btn" type="button">
+        <span class="btn-spinner" id="confirm-modal-spinner" hidden></span>
+        <span id="confirm-modal-ok-label">Löschen</span>
+      </button>
+      <button class="btn ghost" id="confirm-modal-cancel-btn" type="button">Abbrechen</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="modal-overlay" hidden>
@@ -3130,7 +3191,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "1.3.0";
+  var APP_VERSION = "1.4.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -3814,7 +3875,7 @@
   [
     "sidebar", "sidebar-toggle", "sidebar-open-btn", "nav-list", "nav-badge-changes",
     "stat-tickets", "stat-imports", "stat-changes", "app-version",
-    "tiles", "domain-chart", "domain-section", "domain-label", "domain-select", "search-input", "reset-filter-btn",
+    "tiles", "domain-chart", "domain-section", "domain-label", "domain-select", "label-select", "search-input", "reset-filter-btn",
     "table-body", "empty-state", "result-count",
     "dropzone", "dropzone-title", "dropzone-hint", "file-input", "reset-session-btn", "format-callout", "import-tabs",
     "import-comment-input",
@@ -3840,11 +3901,15 @@
     "evaluate-table-wrap", "evaluate-tbody",
     "prozessbild-theme", "prozessbild-layout", "prozessbild-layout-desc",
     "gallery", "gallery-empty",
+    "image-dropzone", "image-file-input", "image-paste-clipboard-btn",
+    "images-table-count", "images-tbody", "images-table-empty",
     "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
     "modal-overlay", "modal-key", "modal-title", "modal-fields", "modal-desc-wrap", "modal-desc",
     "modal-close", "modal-cancel-btn", "modal-download-btn", "modal-download-pdf-btn",
     "compare-modal-overlay", "compare-modal-key", "compare-modal-fields", "compare-modal-close", "compare-modal-cancel-btn",
+    "confirm-modal-overlay", "confirm-modal-title", "confirm-modal-message", "confirm-modal-ok-btn", "confirm-modal-ok-label",
+    "confirm-modal-spinner", "confirm-modal-cancel-btn",
     "toast"
   ].forEach(function (id) {
     els[id.replace(/-([a-z0-9])/g, function (_, c) { return c.toUpperCase(); })] = document.getElementById(id);
@@ -3857,8 +3922,11 @@
     changes: [],
     log: [],
     generatedImages: [],
+    // Vom Nutzer hochgeladene Bilder (Datei/Zwischenablage) - eigene Liste,
+    // gemeinsam mit generatedImages in der Bilder-Galerie angezeigt.
+    uploadedImages: [],
     tickets: [],
-    view: { bucket: "all", domain: "", query: "", sortKey: "created", sortDir: "desc" },
+    view: { bucket: "all", domain: "", label: "", query: "", sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
     extracted: { abbreviations: [], glossaryCandidates: [], ran: false },
     // Zusatzstatus je Job fuer die Prozessschritt-Anzeige, der sich nicht
@@ -4021,7 +4089,7 @@
 
   function resetSession() {
     app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
-    app.generatedImages = []; app.initialized = false; app.nextImportId = 1;
+    app.generatedImages = []; app.uploadedImages = []; app.initialized = false; app.nextImportId = 1;
     app.extracted = { abbreviations: [], glossaryCandidates: [], ran: false };
     app.jobState = {
       glossarExtrakt: { error: null },
@@ -4050,7 +4118,7 @@
   // Sitzung wird vollständig geleert (0 Tickets, 0 Imports).
   function deleteAllData() {
     app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
-    app.generatedImages = []; app.initialized = false; app.nextImportId = 1;
+    app.generatedImages = []; app.uploadedImages = []; app.initialized = false; app.nextImportId = 1;
     app.extracted = { abbreviations: [], glossaryCandidates: [], ran: false };
     app.jobState = {
       glossarExtrakt: { error: null },
@@ -4075,9 +4143,9 @@
     els.evaluateTableWrap.hidden = true;
     addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
   }
-  els.deleteAllDataBtn.addEventListener("click", function () {
+  els.deleteAllDataBtn.addEventListener("click", async function () {
     if (!app.tickets.length && !app.imports.length) { showToast("Nichts zu löschen", "Es sind aktuell keine Daten geladen.", true); return; }
-    var ok = window.confirm(
+    var ok = await confirmDialog(
       "Wirklich ALLE geladenen Daten löschen? " + app.tickets.length + " Tickets aus " + app.imports.length +
       " Import(en) sowie Protokoll, Vergleiche und Extraktionen gehen dabei unwiderruflich verloren. " +
       "Das lädt NICHT die Ausgangsdaten neu (anders als \"Sitzung zurücksetzen\")."
@@ -4233,18 +4301,23 @@
       };
     });
     if (resetFilters) {
-      app.view = { bucket: "all", domain: "", query: "", sortKey: "created", sortDir: "desc" };
+      app.view = { bucket: "all", domain: "", label: "", query: "", sortKey: "created", sortDir: "desc" };
       els.searchInput.value = "";
     }
 
     var bucketCounts = {};
     var domainCounts = {};
+    var labelCounts = {};
     app.tickets.forEach(function (t) {
       bucketCounts[t.bucket] = (bucketCounts[t.bucket] || 0) + 1;
       if (t.domain) domainCounts[t.domain] = (domainCounts[t.domain] || 0) + 1;
+      (t.autoLabels || []).forEach(function (l) { labelCounts[l] = (labelCounts[l] || 0) + 1; });
     });
     app.domainCounts = domainCounts;
     app.domainList = Object.keys(domainCounts).sort(function (a, b) { return domainCounts[b] - domainCounts[a]; });
+    app.labelCounts = labelCounts;
+    app.labelList = Object.keys(labelCounts).sort(function (a, b) { return labelCounts[b] - labelCounts[a]; });
+    populateLabelSelect();
 
     buildTiles(bucketCounts);
     buildDomainChart();
@@ -4339,8 +4412,9 @@
     var out = app.tickets.filter(function (t) {
       if (v.bucket !== "all" && t.bucket !== v.bucket) return false;
       if (v.domain && t.domain !== v.domain) return false;
+      if (v.label && (!t.autoLabels || t.autoLabels.indexOf(v.label) === -1)) return false;
       if (v.query) {
-        var hay = (t.key + " " + t.summary).toUpperCase();
+        var hay = (t.key + " " + t.summary + " " + (t.autoLabels || []).join(" ")).toUpperCase();
         if (hay.indexOf(v.query) === -1) return false;
       }
       return true;
@@ -4773,10 +4847,21 @@
   /* ============ Teil 6: Dashboard-Steuerelemente ============ */
 
   els.domainSelect.addEventListener("change", function () { app.view.domain = els.domainSelect.value; syncDomainRows(); render(); });
+  // Labels-Filter: Optionen kommen aus den tatsaechlich auf geladenen Tickets
+  // vorkommenden, automatisch zugeordneten Labels (nicht die volle, evtl.
+  // ungenutzte Labelliste aus Einstellungen) - analog zum Domain-Filter.
+  function populateLabelSelect() {
+    var current = app.view ? app.view.label : "";
+    els.labelSelect.innerHTML = '<option value="">Alle Labels</option>' +
+      (app.labelList || []).map(function (l) { return '<option value="' + escapeHtml(l) + '">' + escapeHtml(l) + " (" + app.labelCounts[l] + ")</option>"; }).join("");
+    els.labelSelect.value = (app.labelList || []).indexOf(current) !== -1 ? current : "";
+    if (app.view) app.view.label = els.labelSelect.value;
+  }
+  els.labelSelect.addEventListener("change", function () { app.view.label = els.labelSelect.value; render(); });
   els.searchInput.addEventListener("input", function () { app.view.query = els.searchInput.value.trim().toUpperCase(); render(); });
   els.resetFilterBtn.addEventListener("click", function () {
-    app.view.bucket = "all"; app.view.domain = ""; app.view.query = "";
-    els.searchInput.value = ""; els.domainSelect.value = "";
+    app.view.bucket = "all"; app.view.domain = ""; app.view.label = ""; app.view.query = "";
+    els.searchInput.value = ""; els.domainSelect.value = ""; els.labelSelect.value = "";
     Array.prototype.forEach.call(els.tiles.children, function (el, i) { el.setAttribute("aria-pressed", i === 0 ? "true" : "false"); });
     syncDomainRows(); render();
   });
@@ -4854,7 +4939,7 @@
     renderOutputCounts();
   }
 
-  els.importsTbody.addEventListener("click", function (e) {
+  els.importsTbody.addEventListener("click", async function (e) {
     var btn = e.target.closest("button[data-action]");
     if (!btn) return;
     var importId = parseInt(btn.getAttribute("data-import-id"), 10);
@@ -4882,7 +4967,7 @@
     } else if (action === "delete-import") {
       var target = app.imports.filter(function (i) { return i.id === importId; })[0];
       if (!target) return;
-      var ok = window.confirm(
+      var ok = await confirmDialog(
         "Import „" + target.source + "“ (" + target.ticketCount + " Tickets) wirklich löschen? " +
         "Tickets, die ausschließlich aus diesem Import stammen, werden vollständig entfernt. Tickets, die auch in " +
         "anderen Imports vorkamen, bleiben mit ihrem aktuellen, bereits zusammengeführten Stand erhalten - einzelne " +
@@ -4964,6 +5049,45 @@
       if (change) openCompareModal(change);
     });
   }
+
+  /* ============ Eigenes Bestätigungs-Dialogfeld (statt window.confirm) ============
+     window.confirm()/alert()/prompt() werden von manchen eingebetteten
+     Browser-Umgebungen (z.B. sandboxed <iframe>, wie beim Ausführen als
+     Claude-Artifact) unterdrückt: der Aufruf liefert dann sofort und ohne
+     jede sichtbare Dialogbox "false"/"undefined" zurück, wodurch nachfolgender
+     Code (if (!ok) return;) die Aktion still abbricht - fuer Nutzer sieht
+     das wie "Button tut nichts" aus. Ein selbst gebautes Modal umgeht das
+     zuverlässig, da es ganz normales DOM/CSS ist statt einer nativen
+     Browser-Dialogbox. */
+  var confirmModalResolve = null;
+  function closeConfirmModal(result) {
+    els.confirmModalOverlay.hidden = true;
+    els.confirmModalOkBtn.disabled = false;
+    els.confirmModalSpinner.hidden = true;
+    var resolve = confirmModalResolve;
+    confirmModalResolve = null;
+    if (resolve) resolve(result);
+  }
+  function confirmDialog(message, okLabel) {
+    els.confirmModalMessage.textContent = message;
+    els.confirmModalOkLabel.textContent = okLabel || "Löschen";
+    els.confirmModalSpinner.hidden = true;
+    els.confirmModalOkBtn.disabled = false;
+    els.confirmModalOverlay.hidden = false;
+    els.confirmModalCancelBtn.focus();
+    return new Promise(function (resolve) { confirmModalResolve = resolve; });
+  }
+  els.confirmModalOkBtn.addEventListener("click", async function () {
+    els.confirmModalOkBtn.disabled = true;
+    els.confirmModalSpinner.hidden = false;
+    await wait(200); // kurze, bewusst sichtbare Sanduhr - macht den Klick spuerbar, bevor das Modal schliesst
+    closeConfirmModal(true);
+  });
+  els.confirmModalCancelBtn.addEventListener("click", function () { closeConfirmModal(false); });
+  els.confirmModalOverlay.addEventListener("click", function (e) { if (e.target === els.confirmModalOverlay) closeConfirmModal(false); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !els.confirmModalOverlay.hidden) closeConfirmModal(false);
+  });
   wireCompareButtons(els.changesTbody);
   wireCompareButtons(els.changesTbodyVerarbeitung);
 
@@ -5680,15 +5804,46 @@
     });
     return lines.join("\n");
   }
+  // Gruppiert rohe Ticket-Dicts (wie von resolveGeneratorTickets geliefert)
+  // nach Domäne - eigene, einfachere Variante von domainOverviewGroups()
+  // (die auf den app.tickets-Wrapper-Objekten arbeitet, nicht auf rohen
+  // Ticket-Dicts). Domänen alphabetisch, Tickets ohne Domäne am Ende.
+  function groupRawTicketsByDomain(tickets) {
+    var byDomain = {};
+    tickets.forEach(function (t) {
+      var d = (t.custom_fields && t.custom_fields.Domain) || "";
+      (byDomain[d] = byDomain[d] || []).push(t);
+    });
+    var names = Object.keys(byDomain).filter(function (d) { return d; }).sort(function (a, b) { return a.localeCompare(b, "de"); });
+    if (byDomain[""]) names.push("");
+    return names.map(function (d) { return { domain: d || "Ohne Domäne", tickets: byDomain[d] }; });
+  }
+
+  // Klickanweisung ist bewusst KEIN Ticket-Protokoll: Ziel ist eine
+  // Bedienungsanleitung fuer oneSCM-Endanwender, aus den Beschreibungstexten
+  // der Tickets zusammengestellt und nach Domäne gegliedert - ohne
+  // Jira-Ticket-Referenzen (Schlüssel/Zusammenfassung) im Fließtext, da die
+  // Anleitung fachlich, nicht Ticket-bezogen gelesen werden soll.
   function renderClickInstructions(name, tickets) {
-    var lines = ["# Klickanweisung – " + name, "", "Stand: " + new Date().toLocaleDateString("de-DE"), ""];
-    tickets.forEach(function (t, i) {
-      var meta = ["Ticket: " + t.key];
-      var extra = ticketMetaSummary(t);
-      if (extra) meta.push(extra);
-      lines.push("## Schritt " + (i + 1) + ": " + (t.summary || t.key), "", "*" + meta.join(" · ") + "*", "");
-      if (t.description) t.description.split("\n").filter(function (l) { return l.trim(); }).forEach(function (line, j) { lines.push((j + 1) + ". " + line.trim()); });
-      else lines.push("1. _Klickpfad manuell ergänzen - Ticket enthält keine Beschreibung._");
+    var lines = [
+      "# Klickanweisung – oneSCM (" + name + ")", "",
+      "Stand: " + new Date().toLocaleDateString("de-DE"), "",
+      "Schritt-für-Schritt-Anleitung für die Benutzung in oneSCM, zusammengestellt aus den Beschreibungstexten der zugrunde liegenden Tickets und nach Domäne gegliedert (ohne Jira-Ticket-Referenzen im Text). Automatisch erzeugtes Rohgerüst – vor Verwendung redaktionell prüfen und in eigene Worte fassen.",
+      ""
+    ];
+    var groups = groupRawTicketsByDomain(tickets);
+    groups.forEach(function (g) {
+      lines.push("## " + g.domain, "");
+      var stepNum = 1, anyStep = false;
+      g.tickets.forEach(function (t) {
+        if (!t.description) return;
+        t.description.split("\n").filter(function (l) { return l.trim(); }).forEach(function (line) {
+          lines.push(stepNum + ". " + line.trim());
+          stepNum++;
+          anyStep = true;
+        });
+      });
+      if (!anyStep) lines.push("_Keine Beschreibungstexte in den Tickets dieser Domäne hinterlegt - Klickpfad manuell ergänzen._");
       lines.push("");
     });
     return lines.join("\n");
@@ -6211,7 +6366,7 @@
         var source = renderProcessDiagramSource(tickets);
         insertMermaid(renderBox, source);
         lastResult = { kind: "mermaid", source: source, name: name };
-        galleryEntry = { id: Date.now(), title: name + " (" + tickets.length + " Tickets)", when: nowLabel(), kind: "mermaid", source: source };
+        galleryEntry = { id: nextImageId++, title: name + " (" + tickets.length + " Tickets)", when: nowLabel(), kind: "mermaid", source: source, description: "" };
       } else {
         var svg = layout.build(lastSteps, theme, name);
         renderBox.innerHTML = svg;
@@ -6226,7 +6381,7 @@
         details.appendChild(srcPre);
         renderBox.appendChild(details);
         lastResult = { kind: "svg", svg: svg, name: name };
-        galleryEntry = { id: Date.now(), title: name + " (" + tickets.length + " Tickets) – " + layout.name, when: nowLabel(), kind: "svg", svg: svg };
+        galleryEntry = { id: nextImageId++, title: name + " (" + tickets.length + " Tickets) – " + layout.name, when: nowLabel(), kind: "svg", svg: svg, description: "" };
       }
       downloadBtn.disabled = false;
       downloadBtn.onclick = async function () {
@@ -6293,26 +6448,313 @@
     container.appendChild(details);
   }
 
-  function renderGallery() {
-    if (!app.generatedImages.length) { els.gallery.innerHTML = ""; els.galleryEmpty.hidden = false; return; }
-    els.galleryEmpty.hidden = true;
-    els.gallery.innerHTML = "";
-    app.generatedImages.forEach(function (img) {
-      var card = document.createElement("div");
-      card.className = "panel gallery-card";
-      var h3 = document.createElement("h3"); h3.textContent = img.title;
-      var meta = document.createElement("div"); meta.className = "meta"; meta.textContent = img.when;
-      card.appendChild(h3); card.appendChild(meta);
-      if (img.kind === "svg") {
-        var wrap = document.createElement("div");
-        wrap.innerHTML = img.svg;
-        card.appendChild(wrap.firstChild);
-      } else {
-        insertMermaid(card, img.source);
+  function buildGeneratedGalleryCard(img) {
+    var card = document.createElement("div");
+    card.className = "panel gallery-card";
+    var h3 = document.createElement("h3"); h3.textContent = img.title;
+    var meta = document.createElement("div"); meta.className = "meta"; meta.textContent = img.when;
+    card.appendChild(h3); card.appendChild(meta);
+    if (img.kind === "svg") {
+      var wrap = document.createElement("div");
+      wrap.innerHTML = img.svg;
+      card.appendChild(wrap.firstChild);
+    } else {
+      insertMermaid(card, img.source);
+    }
+    return card;
+  }
+
+  function formatBytes(n) {
+    if (!n && n !== 0) return "–";
+    if (n < 1024) return n + " B";
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+    return (n / 1024 / 1024).toFixed(2) + " MB";
+  }
+
+  function buildUploadedImageCard(img) {
+    var card = document.createElement("div");
+    card.className = "panel gallery-card uploaded-image-card";
+    var metaHtml = "";
+    if (img.metadataComputed) {
+      metaHtml = '<div class="image-meta-box"><b>Technische Metadaten</b><br>' +
+        (img.width ? img.width + "×" + img.height + " px · " : "") + escapeHtml(formatBytes(img.sizeBytes)) + " · " + escapeHtml(img.mimeType || "unbekannt");
+      if (img.brightnessPct != null) {
+        metaHtml += "<br>Durchschnittshelligkeit: " + img.brightnessPct + "% · Durchschnittsfarbe: " +
+          '<span class="color-swatch" style="background:' + img.avgColor + '"></span> ' + escapeHtml(img.avgColor);
+      } else if (img.metadataError) {
+        metaHtml += "<br>" + escapeHtml(img.metadataError);
       }
-      els.gallery.appendChild(card);
+      metaHtml += "</div>";
+    }
+    var ocrHtml = "";
+    if (img.ocrError) {
+      ocrHtml = '<div class="image-ocr-box error">OCR fehlgeschlagen: ' + escapeHtml(img.ocrError) + "</div>";
+    } else if (img.ocrText != null) {
+      ocrHtml = '<div class="image-ocr-box"><b>Erkannter Text (OCR' + (img.ocrRanAt ? ", " + escapeHtml(img.ocrRanAt) : "") + ')</b><pre class="ocr-text">' +
+        escapeHtml(img.ocrText || "(kein Text erkannt)") + "</pre></div>";
+    }
+    card.innerHTML =
+      "<h3>" + escapeHtml(img.filename) + "</h3>" +
+      '<div class="meta">' + escapeHtml(img.when) + "</div>" +
+      '<img class="uploaded-thumb" src="' + img.dataUrl + '" alt="' + escapeHtml(img.filename) + '">' +
+      '<div class="image-tag-row">' +
+      '<label>Domäne<input type="text" class="text-input image-tag-input" data-id="' + img.id + '" data-field="domain" value="' + escapeHtml(img.domain) + '" placeholder="z. B. Contract Management"></label>' +
+      '<label>Schritt (für Clickanweisung)<input type="text" class="text-input image-tag-input" data-id="' + img.id + '" data-field="processStep" value="' + escapeHtml(img.processStep) + '" placeholder="z. B. Schritt 3: Freigabe"></label>' +
+      '<label>Kapitel<input type="text" class="text-input image-tag-input" data-id="' + img.id + '" data-field="chapter" value="' + escapeHtml(img.chapter) + '" placeholder="z. B. 2.1 Einrichtung"></label>' +
+      "</div>" +
+      '<div class="image-action-row">' +
+      '<button type="button" class="btn ghost image-metadata-btn" data-id="' + img.id + '">Technische Metadaten</button>' +
+      '<button type="button" class="btn ghost image-ocr-btn" data-id="' + img.id + '">OCR: Text extrahieren</button>' +
+      '<button type="button" class="btn ghost image-download-btn" data-id="' + img.id + '">Herunterladen</button>' +
+      '<button type="button" class="btn danger image-delete-btn" data-kind="uploaded" data-id="' + img.id + '">Löschen</button>' +
+      "</div>" + metaHtml + ocrHtml;
+    return card;
+  }
+
+  function imageTypeLabel(kind, data) {
+    if (kind === "uploaded") return "Hochgeladen";
+    return data.kind === "svg" ? "Generiert (SVG)" : "Generiert (Mermaid)";
+  }
+  function imageThumbCellHtml(kind, data) {
+    if (kind === "uploaded") return '<img class="uploaded-thumb table-thumb" src="' + data.dataUrl + '" alt="">';
+    if (data.kind === "svg") return '<img class="uploaded-thumb table-thumb" src="data:image/svg+xml;utf8,' + encodeURIComponent(data.svg) + '" alt="">';
+    return '<span class="thumb-placeholder">Mermaid</span>';
+  }
+  function renderImagesTable() {
+    var combined = app.generatedImages.map(function (img) { return { sortKey: img.id, kind: "generated", data: img }; })
+      .concat(app.uploadedImages.map(function (img) { return { sortKey: img.id, kind: "uploaded", data: img }; }));
+    combined.sort(function (a, b) { return b.sortKey - a.sortKey; });
+    els.imagesTableCount.textContent = combined.length;
+    els.imagesTableEmpty.hidden = combined.length > 0;
+    els.imagesTbody.innerHTML = combined.map(function (entry) {
+      var img = entry.data;
+      var title = entry.kind === "uploaded" ? img.filename : img.title;
+      return "<tr>" +
+        '<td class="table-thumb-cell">' + imageThumbCellHtml(entry.kind, img) + "</td>" +
+        "<td>" + escapeHtml(title) + "</td>" +
+        "<td>" + escapeHtml(imageTypeLabel(entry.kind, img)) + "</td>" +
+        '<td class="mono">' + escapeHtml(img.when) + "</td>" +
+        '<td><input type="text" class="text-input image-description-input" data-kind="' + entry.kind + '" data-id="' + img.id + '" value="' + escapeHtml(img.description || "") + '" placeholder="Beschreibung ergänzen …"></td>' +
+        '<td><button type="button" class="btn danger comment-edit-btn image-delete-btn" data-kind="' + entry.kind + '" data-id="' + img.id + '">Löschen</button></td>' +
+        "</tr>";
+    }).join("");
+  }
+  els.imagesTbody.addEventListener("input", function (e) {
+    var input = e.target.closest(".image-description-input");
+    if (!input) return;
+    var img = findImageEntry(input.getAttribute("data-kind"), parseInt(input.getAttribute("data-id"), 10));
+    if (img) img.description = input.value;
+  });
+  els.imagesTbody.addEventListener("click", function (e) {
+    var delBtn = e.target.closest(".image-delete-btn");
+    if (delBtn) deleteImageEntry(delBtn.getAttribute("data-kind"), parseInt(delBtn.getAttribute("data-id"), 10));
+  });
+
+  function findImageEntry(kind, id) {
+    var list = kind === "uploaded" ? app.uploadedImages : app.generatedImages;
+    return list.filter(function (i) { return i.id === id; })[0];
+  }
+  async function deleteImageEntry(kind, id) {
+    var img = findImageEntry(kind, id);
+    if (!img) return;
+    var label = kind === "uploaded" ? img.filename : img.title;
+    var ok = await confirmDialog((kind === "uploaded" ? "Bild" : "Generiertes Bild") + ' „' + label + '“ wirklich löschen?');
+    if (!ok) return;
+    if (kind === "uploaded") { app.uploadedImages = app.uploadedImages.filter(function (i) { return i.id !== id; }); addLog('Hochgeladenes Bild „' + label + '“ gelöscht.'); }
+    else { app.generatedImages = app.generatedImages.filter(function (i) { return i.id !== id; }); addLog('Generiertes Bild „' + label + '“ gelöscht.'); }
+    renderGallery();
+    showToast("Gelöscht", (kind === "uploaded" ? "Bild" : "Generiertes Bild") + " „" + label + "“ wurde entfernt.");
+  }
+
+  function renderGallery() {
+    renderImagesTable();
+    var totalCount = app.generatedImages.length + app.uploadedImages.length;
+    if (!totalCount) { els.gallery.innerHTML = ""; els.galleryEmpty.hidden = false; return; }
+    els.galleryEmpty.hidden = true;
+    var combined = app.generatedImages.map(function (img) { return { sortKey: img.id, kind: "generated", data: img }; })
+      .concat(app.uploadedImages.map(function (img) { return { sortKey: img.id, kind: "uploaded", data: img }; }));
+    combined.sort(function (a, b) { return b.sortKey - a.sortKey; });
+    els.gallery.innerHTML = "";
+    combined.forEach(function (entry) {
+      els.gallery.appendChild(entry.kind === "generated" ? buildGeneratedGalleryCard(entry.data) : buildUploadedImageCard(entry.data));
     });
   }
+  els.gallery.addEventListener("input", function (e) {
+    var input = e.target.closest(".image-tag-input");
+    if (!input) return;
+    var id = parseInt(input.getAttribute("data-id"), 10);
+    var field = input.getAttribute("data-field");
+    var img = app.uploadedImages.filter(function (i) { return i.id === id; })[0];
+    if (img) img[field] = input.value;
+  });
+
+  // Technische Metadaten (bewusst KEINE KI-Bildanalyse): Maße + Dateigröße +
+  // Format kommen direkt vom Bild/der Datei, Helligkeit/Durchschnittsfarbe
+  // werden ueber ein herunterskaliertes Canvas selbst berechnet - alles
+  // deterministisch nachvollziehbar, nichts wird "interpretiert" oder geraten.
+  function computeImageMetadata(id) {
+    var img = app.uploadedImages.filter(function (i) { return i.id === id; })[0];
+    if (!img) return;
+    var el = new Image();
+    el.onload = function () {
+      img.width = el.naturalWidth || null;
+      img.height = el.naturalHeight || null;
+      try {
+        var sample = 48;
+        var canvas = document.createElement("canvas");
+        canvas.width = sample; canvas.height = sample;
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(el, 0, 0, sample, sample);
+        var data = ctx.getImageData(0, 0, sample, sample).data;
+        var r = 0, g = 0, b = 0, n = 0;
+        for (var i = 0; i < data.length; i += 4) { r += data[i]; g += data[i + 1]; b += data[i + 2]; n++; }
+        r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
+        img.avgColor = "rgb(" + r + "," + g + "," + b + ")";
+        img.brightnessPct = Math.round(((r * 0.299 + g * 0.587 + b * 0.114) / 255) * 100);
+        img.metadataError = null;
+      } catch (e) {
+        img.avgColor = null; img.brightnessPct = null;
+        img.metadataError = "Farb-/Helligkeitsanalyse für dieses Bildformat nicht möglich.";
+      }
+      img.metadataComputed = true;
+      renderGallery();
+    };
+    el.onerror = function () { showToast("Fehler", "Bild konnte für die Metadaten-Ermittlung nicht geladen werden.", true); };
+    el.src = img.dataUrl;
+  }
+
+  // OCR ueber Tesseract.js (per CDN geladen, laeuft vollstaendig im Browser
+  // via WebAssembly - kein eigener Server). Erkennt Englisch + Deutsch.
+  async function runImageOcr(id, btn) {
+    var img = app.uploadedImages.filter(function (i) { return i.id === id; })[0];
+    if (!img) return;
+    if (typeof Tesseract === "undefined") {
+      img.ocrError = "OCR-Bibliothek (Tesseract.js) konnte nicht geladen werden - Internetzugriff erforderlich.";
+      renderGallery();
+      return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = "Erkenne Text …"; }
+    try {
+      var result = await Tesseract.recognize(img.dataUrl, "eng+deu");
+      img.ocrText = ((result && result.data && result.data.text) || "").trim();
+      img.ocrError = null;
+      img.ocrRanAt = nowLabel();
+      addLog("OCR für Bild „" + img.filename + "“ ausgeführt (" + img.ocrText.length + " Zeichen erkannt).");
+    } catch (err) {
+      img.ocrError = (err && err.message) || "Unbekannter Fehler bei der Texterkennung.";
+    } finally {
+      renderGallery();
+    }
+  }
+
+  function dataUrlToBlob(dataUrl) {
+    var parts = dataUrl.split(",");
+    var mimeMatch = /data:([^;]+);base64/.exec(parts[0]);
+    var mime = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+    var binary = atob(parts[1]);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  }
+  async function downloadUploadedImage(id) {
+    var img = app.uploadedImages.filter(function (i) { return i.id === id; })[0];
+    if (!img) return;
+    try {
+      var blob = dataUrlToBlob(img.dataUrl);
+      var ok = await saveOrWarn(img.filename, blob);
+      if (ok) showToast("Gespeichert", img.filename + " heruntergeladen.");
+    } catch (err) {
+      showToast("Fehler", (err && err.message) || "Bild konnte nicht heruntergeladen werden.", true);
+    }
+  }
+  els.gallery.addEventListener("click", function (e) {
+    var metaBtn = e.target.closest(".image-metadata-btn");
+    if (metaBtn) { computeImageMetadata(parseInt(metaBtn.getAttribute("data-id"), 10)); return; }
+    var ocrBtn = e.target.closest(".image-ocr-btn");
+    if (ocrBtn) { runImageOcr(parseInt(ocrBtn.getAttribute("data-id"), 10), ocrBtn); return; }
+    var dlBtn = e.target.closest(".image-download-btn");
+    if (dlBtn) { downloadUploadedImage(parseInt(dlBtn.getAttribute("data-id"), 10)); return; }
+    var delBtn = e.target.closest(".image-delete-btn");
+    if (delBtn) { deleteImageEntry(delBtn.getAttribute("data-kind") || "uploaded", parseInt(delBtn.getAttribute("data-id"), 10)); return; }
+  });
+
+  /* ============ Bilder: Hochladen (Datei/Drag&Drop/Zwischenablage) ============ */
+
+  var nextImageId = 1;
+  function readImageFileAsDataUrl(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onerror = function () { reject(new Error("Bild konnte nicht gelesen werden.")); };
+      reader.onload = function () { resolve(String(reader.result)); };
+      reader.readAsDataURL(file);
+    });
+  }
+  async function handleImageFiles(fileList) {
+    var files = Array.prototype.filter.call(fileList || [], function (f) { return f.type && f.type.indexOf("image/") === 0; });
+    if (!files.length) { showToast("Kein Bild", "Bitte eine Bilddatei auswählen (PNG/JPG/GIF/SVG/…).", true); return; }
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      try {
+        var dataUrl = await readImageFileAsDataUrl(file);
+        app.uploadedImages.unshift({
+          id: nextImageId++, filename: file.name || "Bild", dataUrl: dataUrl, mimeType: file.type || "unbekannt",
+          sizeBytes: file.size || 0, when: nowLabel(), domain: "", processStep: "", chapter: "", description: "",
+          width: null, height: null, avgColor: null, brightnessPct: null, metadataComputed: false, metadataError: null,
+          ocrText: null, ocrError: null, ocrRanAt: null
+        });
+        addLog("Bild „" + (file.name || "Bild") + "“ hochgeladen (" + formatBytes(file.size || 0) + ").");
+      } catch (err) {
+        showToast("Fehler beim Hochladen", (err && err.message) || "Unbekannter Fehler.", true);
+      }
+    }
+    renderGallery();
+    showToast("Bild(er) hochgeladen", files.length + " Bild(er) zur Galerie hinzugefügt.");
+  }
+  els.imageDropzone.addEventListener("click", function () { els.imageFileInput.click(); });
+  els.imageDropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.imageFileInput.click(); } });
+  els.imageFileInput.addEventListener("change", function () { handleImageFiles(els.imageFileInput.files); els.imageFileInput.value = ""; });
+  ["dragenter", "dragover"].forEach(function (evt) {
+    els.imageDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.imageDropzone.classList.add("dragover"); });
+  });
+  ["dragleave", "drop"].forEach(function (evt) {
+    els.imageDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.imageDropzone.classList.remove("dragover"); });
+  });
+  els.imageDropzone.addEventListener("drop", function (e) {
+    var files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length) handleImageFiles(files);
+  });
+  els.imageDropzone.addEventListener("paste", function (e) {
+    var items = (e.clipboardData && e.clipboardData.items) || [];
+    var files = [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type && items[i].type.indexOf("image/") === 0) {
+        var f = items[i].getAsFile();
+        if (f) files.push(f);
+      }
+    }
+    if (files.length) { e.preventDefault(); handleImageFiles(files); }
+  });
+  els.imagePasteClipboardBtn.addEventListener("click", async function () {
+    if (!navigator.clipboard || !navigator.clipboard.read) {
+      showToast("Zwischenablage nicht verfügbar", "Bitte stattdessen den Bild-Bereich anklicken und mit Strg+V einfügen.", true);
+      return;
+    }
+    try {
+      var clipboardItems = await navigator.clipboard.read();
+      var files = [];
+      for (var i = 0; i < clipboardItems.length; i++) {
+        var item = clipboardItems[i];
+        var imgType = item.types.filter(function (t) { return t.indexOf("image/") === 0; })[0];
+        if (!imgType) continue;
+        var blob = await item.getType(imgType);
+        files.push(new File([blob], "Zwischenablage." + imgType.split("/")[1], { type: imgType }));
+      }
+      if (!files.length) { showToast("Kein Bild in Zwischenablage", "In der Zwischenablage wurde kein Bild gefunden.", true); return; }
+      handleImageFiles(files);
+    } catch (e) {
+      showToast("Zugriff verweigert", "Der Browser hat den Lesezugriff auf die Zwischenablage verweigert. Bitte stattdessen mit Strg+V einfügen.", true);
+    }
+  });
 
   /* ============ Teil 10: Navigation ============ */
 

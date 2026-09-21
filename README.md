@@ -141,12 +141,21 @@ Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
 Versions-Badge (`APP_VERSION` in der `<script>`, z. B. "v1.1.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
-auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist:
+auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
+Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
+über ein selbst gebautes Bestätigungs-Dialogfeld statt über
+`window.confirm()` – manche eingebetteten Browser-Umgebungen (z. B. ein
+sandboxed `<iframe>`, wie beim Ausführen als Claude-Artifact) unterdrücken
+native Dialoge stillschweigend, wodurch ein Klick auf "Löschen" sonst
+wirkungslos bleiben kann:
 
 - **Dashboard** – zusammengeführter, aktueller Stand aller importierten
-  Tickets: Status-Kacheln, Domain-Verteilung, Volltextsuche, sortierbare
-  Tabelle, Ticket-Detailansicht (18 Standardfelder, fehlende klar als
-  "Nicht im Export enthalten" markiert statt erfunden).
+  Tickets: Status-Kacheln, Domain-Verteilung, ein **Labels-Filter**
+  (nur tatsächlich vorkommende, automatisch zugeordnete Labels zur
+  Auswahl, siehe Einstellungen → Labels), eine um Labels **erweiterte
+  Volltextsuche** (durchsucht Schlüssel, Zusammenfassung und Labels),
+  sortierbare Tabelle, Ticket-Detailansicht (18 Standardfelder, fehlende
+  klar als "Nicht im Export enthalten" markiert statt erfunden).
 - **Import** – vier Formate per Tab wählbar, jeweils mit Mehrfachauswahl
   und Drag&Drop; zusätzlich eine **Zwischenablage-Funktion**: Text direkt
   einfügen (Button „Aus Zwischenablage einfügen“ oder Strg+V in das
@@ -255,15 +264,22 @@ auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist:
   gegen Zusammenfassung/Beschreibung/Domäne des Tickets – keine KI, und
   fehlt ein Tickettyp im Punkte-System, wird ehrlich "Unbekannt" statt
   geraten angezeigt.
-- **Releaseletter / Benutzerhandbuch / Clickanweisung** – Textentwürfe aus
-  ausgewählten Tickets (aktuelle Dashboard-Filterung oder Ticket-Keys),
-  Vorschau + Download als Markdown, DOCX, PDF oder XLSX (Tickets-Tabelle
-  mit Domäne/Status/Priorität-Punkte/Labels/Beschreibung). Jede Zeile im
+- **Releaseletter / Benutzerhandbuch** – Textentwürfe aus ausgewählten
+  Tickets (aktuelle Dashboard-Filterung oder Ticket-Keys), Vorschau +
+  Download als Markdown, DOCX, PDF oder XLSX (Tickets-Tabelle mit
+  Domäne/Status/Priorität-Punkte/Labels/Beschreibung). Jede Zeile im
   Entwurf zeigt zusätzlich, sofern vorhanden, Domäne, Priorität (Punkte)
   und automatisch erkannte Labels des jeweiligen Tickets (dieselbe
   Herleitung wie in Verarbeitung Job 4-6, siehe Einstellungen). DOCX/PDF
   werden direkt im Browser erzeugt (minimales OOXML über das bereits
   geladene JSZip bzw. jsPDF) – kein Server nötig.
+- **Clickanweisung** – bewusst **kein** Ticket-Protokoll: erzeugt eine
+  Bedienungsanleitung für die Benutzung in oneSCM, zusammengestellt aus
+  den Beschreibungstexten der ausgewählten Tickets und nach Domäne
+  gegliedert (Domäne als Überschrift), **ohne** Jira-Ticket-Referenzen
+  (Schlüssel/Zusammenfassung) im Fließtext. Download ebenfalls als
+  Markdown/DOCX/PDF; die separate XLSX-Tabelle bleibt bewusst
+  Ticket-bezogen (Nachvollzieh-Grundlage für die Redaktion).
 - **Prozessbild** – Prozessdiagramm aus ausgewählten Tickets mit **10
   Design-Vorlagen** (Farben: OnePaper Dunkel/Hell, Corporate Blau,
   Silber/Schwarz, Forest, Sunset, Pastell, Monochrom, Royal,
@@ -287,8 +303,24 @@ auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist:
   sich die zugrundeliegende Schritt-Tabelle (Ticket/Titel/Status/Domäne/
   Priorität-Punkte/Labels/Beschreibung) unabhängig vom Bildformat als
   XLSX/DOCX/PDF exportieren.
-- **Bilder** – Galerie der in der Sitzung erzeugten Prozessdiagramme
-  (Mermaid und SVG gemischt, je nach gewähltem Bildformat).
+- **Bilder** – Tabelle **und** Kachel-Galerie aller in der Sitzung
+  erzeugten Prozessdiagramme sowie eigener Bild-Uploads, jeweils mit
+  Datum. Beschreibungen lassen sich für beide Bildarten direkt in der
+  Tabelle bearbeiten oder leeren, Bilder dort auch löschen (auch
+  generierte Diagramme, nicht nur Uploads). Bilder hochladen per
+  Datei-Dialog/Drag&Drop oder aus der Zwischenablage (Strg+V bzw. Button
+  „Aus Zwischenablage einfügen“). Hochgeladene Bilder lassen sich
+  zusätzlich:
+  - mit **Domäne / Kapitel / Schritt (für Clickanweisung)** als Freitext
+    verschlagworten,
+  - per **OCR** (Tesseract.js, läuft komplett im Browser via WebAssembly,
+    Englisch + Deutsch; lädt beim ersten Lauf Erkennungsdaten per CDN
+    nach) nach Text durchsuchen,
+  - mit rein **technischen Metadaten** anzeigen: Maße, Dateigröße, Format
+    sowie eine selbst über ein herunterskaliertes Canvas berechnete
+    Durchschnittsfarbe/-helligkeit – bewusst **keine KI-Bildanalyse/
+    -interpretation**, nur deterministisch nachvollziehbare Werte,
+  - wieder **herunterladen**.
 - **Output MD Tickets / Output PDF Tickets** – bereinigte Tickets als
   ZIP-Archiv aus Markdown- bzw. PDF-Dateien exportieren (respektiert die
   aktuelle Dashboard-Filterung); PDFs werden clientseitig mit jsPDF
