@@ -3,6 +3,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     color-scheme: light dark;
@@ -60,34 +61,61 @@
   }
 
   * { box-sizing: border-box; }
-  body {
-    background: var(--bg); color: var(--text);
-    font-family: "Manrope", system-ui, sans-serif;
-    padding-inline: 20px; padding-block: 20px 48px;
-  }
+  body { background: var(--bg); color: var(--text); font-family: "Manrope", system-ui, sans-serif; margin: 0; }
   .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
-  .wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
 
-  header.top {
-    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
-    background: var(--bg); padding-block: 4px 8px;
-    display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
-    gap: 14px; border-bottom: 1px solid var(--border);
+  /* ---- App-Shell / Sidebar ---- */
+  .app-shell { display: flex; align-items: stretch; min-height: 100dvh; }
+  .sidebar {
+    width: 232px; flex: none; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 16px 10px calc(16px + env(safe-area-inset-bottom, 0px));
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+    gap: 4px; transition: width 0.16s ease, opacity 0.16s ease; overflow: hidden; position: sticky; top: 0; height: 100dvh;
   }
-  .eyebrow {
-    font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
-    color: var(--accent-text); margin: 0 0 4px; display: flex; align-items: center; gap: 8px;
+  .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; opacity: 0; pointer-events: none; }
+  .sidebar-head { display: flex; align-items: center; justify-content: space-between; padding: 2px 6px 14px; white-space: nowrap; }
+  .sidebar-title { font-size: 11px; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent-text); }
+  .icon-btn {
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2);
+    color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; flex: none;
   }
-  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
-  h1 { font-size: clamp(22px, 4vw, 30px); font-weight: 800; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
-  .source-meta { font-size: 12.5px; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; margin-top: 6px; }
-  .source-meta b { color: var(--text); font-weight: 600; }
-  .header-count { text-align: right; }
-  .header-count .num { font-size: 34px; font-weight: 800; line-height: 1; }
-  .header-count .lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .icon-btn:hover { color: var(--text); border-color: var(--border-strong); }
+  .sidebar-open-btn { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); left: 14px; z-index: 30; box-shadow: var(--shadow); display: none; background: var(--surface); }
+  .sidebar-open-btn.show { display: flex; }
+  .nav-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; white-space: nowrap; }
+  .nav-sep { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); padding: 14px 10px 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px;
+    border: none; background: none; color: var(--text-muted); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent-text); }
+  .nav-item .count-badge {
+    margin-left: auto; font-size: 10.5px; font-weight: 700; background: var(--surface-2); color: var(--text-faint);
+    border-radius: 100px; padding: 1px 6px; font-family: "IBM Plex Mono", monospace;
+  }
+  .nav-item.active .count-badge { background: var(--surface); color: var(--accent-text); }
+
+  .content { flex: 1 1 auto; min-width: 0; padding: 20px 20px 48px; }
+  .content-inner { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+  header.app-header {
+    display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px;
+    border-bottom: 1px solid var(--border); padding-bottom: 12px;
+  }
+  .app-header-left { display: flex; align-items: center; gap: 10px; }
+  h1.app-title { font-size: clamp(20px, 3.4vw, 26px); font-weight: 800; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+  .app-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+  .app-stats .stat { text-align: right; }
+  .app-stats .stat .num { font-size: 22px; font-weight: 800; line-height: 1; }
+  .app-stats .stat .lbl { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .view-panel[hidden] { display: none; }
+  .view-panel { display: flex; flex-direction: column; gap: 18px; }
+  .view-head h2 { font-size: 20px; font-weight: 800; margin: 0; }
+  .view-head p.desc { font-size: 13px; color: var(--text-muted); margin: 4px 0 0; max-width: 68ch; line-height: 1.5; }
 
   .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); }
-
   .callout {
     background: var(--surface-2); border: 1px solid var(--border); border-left: 3px solid var(--accent);
     border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--text-muted); line-height: 1.5;
@@ -98,13 +126,12 @@
 
   section { display: flex; flex-direction: column; gap: 10px; }
   .section-label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-faint); }
-  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 
   /* ---- Upload ---- */
   .upload-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
   .dropzone {
     flex: 1 1 320px; border: 1.5px dashed var(--border-strong); border-radius: 10px;
-    background: var(--surface); padding: 16px 18px; display: flex; align-items: center; gap: 14px;
+    background: var(--surface); padding: 18px; display: flex; align-items: center; gap: 14px;
     cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;
   }
   .dropzone:hover, .dropzone.dragover { border-color: var(--accent); background: var(--accent-soft); }
@@ -162,7 +189,7 @@
   }
   .search-box input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .search-box svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); opacity: 0.55; }
-  select#domain-select {
+  select {
     padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface);
     color: var(--text); font-size: 13px; font-family: inherit; max-width: 220px;
   }
@@ -188,6 +215,7 @@
   td.summary { color: var(--text); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   td.domain { color: var(--text-muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
   td.date { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+  tbody tr.is-changed td.key::after { content: "•"; color: var(--progress); margin-left: 5px; }
 
   .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 7px; border-radius: 100px; font-size: 11.5px; font-weight: 600; }
   .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
@@ -197,9 +225,51 @@
   .pill.progress { color: var(--progress); background: var(--progress-soft); }
   .pill.blocked { color: var(--blocked); background: var(--blocked-soft); }
 
-  .empty-state { padding: 36px 20px; text-align: center; color: var(--text-muted); font-size: 13.5px; }
+  .empty-state, .empty-hint { padding: 28px 20px; text-align: center; color: var(--text-muted); font-size: 13.5px; font-style: italic; }
 
-  footer { font-size: 12px; color: var(--text-faint); line-height: 1.6; border-top: 1px solid var(--border); padding-top: 14px; }
+  /* ---- generische Tabellen (Dateiverwaltung, Glossar, Vergleich) ---- */
+  .simple-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .simple-table th { text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .simple-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .simple-table tr:last-child td { border-bottom: none; }
+  .table-wrap { overflow-x: auto; }
+  .diff-old { color: var(--blocked); text-decoration: line-through; }
+  .diff-new { color: var(--done); font-weight: 600; }
+  .diff-arrow { color: var(--text-faint); margin: 0 5px; }
+
+  .log-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .log-list li { padding: 10px 2px; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; gap: 12px; align-items: baseline; }
+  .log-list li:last-child { border-bottom: none; }
+  .log-list time { color: var(--text-faint); font-family: "IBM Plex Mono", monospace; font-size: 11.5px; white-space: nowrap; }
+
+  /* ---- Generator-Formulare (Releaseletter etc.) ---- */
+  .gen-layout { display: grid; grid-template-columns: minmax(240px, 340px) 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 820px) { .gen-layout { grid-template-columns: 1fr; } }
+  .gen-form { display: flex; flex-direction: column; gap: 10px; }
+  .gen-form label { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+  .gen-form textarea, .gen-form input[type=text] {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px; background: var(--surface); color: var(--text); resize: vertical;
+  }
+  .gen-form .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+  .gen-preview {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; font-size: 12.5px;
+    white-space: pre-wrap; font-family: "IBM Plex Mono", monospace; max-height: 62vh; overflow: auto; line-height: 1.55;
+  }
+  .mermaid-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; overflow: auto; }
+  pre.mermaid-source {
+    background: var(--surface-2); border-radius: 8px; padding: 12px; font-family: "IBM Plex Mono", monospace; font-size: 11.5px;
+    white-space: pre-wrap; margin: 10px 0 0;
+  }
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .gallery-card { padding: 14px; }
+  .gallery-card h3 { font-size: 13px; margin: 0 0 4px; }
+  .gallery-card .meta { font-size: 11.5px; color: var(--text-faint); margin-bottom: 8px; }
+  .info-card { padding: 18px 20px; font-size: 13.5px; line-height: 1.65; color: var(--text-muted); }
+  .info-card h3 { font-size: 14.5px; color: var(--text); margin: 20px 0 6px; }
+  .info-card h3:first-child { margin-top: 0; }
+  .info-card ul { margin: 6px 0; padding-left: 20px; }
+  .info-card code { font-family: "IBM Plex Mono", monospace; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
 
   /* ---- Modal ---- */
   .modal-overlay {
@@ -229,7 +299,7 @@
   .modal-desc h3 { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 6px; }
   .modal-desc p { font-size: 13.5px; line-height: 1.6; white-space: pre-wrap; margin: 0; }
   .modal-desc p.placeholder { color: var(--text-faint); font-style: italic; }
-  .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
 
   /* ---- Toast ---- */
   #toast {
@@ -244,103 +314,307 @@
   #toast b { display: block; color: var(--text); }
   #toast span { color: var(--text-muted); }
 
+  @media (max-width: 900px) {
+    .sidebar { position: fixed; top: 0; left: 0; z-index: 25; background: var(--surface); box-shadow: var(--shadow); }
+    .sidebar:not(.collapsed) { width: 240px; }
+  }
   @media (max-width: 640px) {
+    .content { padding: 16px 16px 40px; }
     .domain-row { grid-template-columns: 108px 1fr 30px; }
     thead th, tbody td { padding: 7px 8px; }
-    .header-count { text-align: left; }
     td.summary { max-width: 160px; }
+    .app-stats { gap: 10px; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
-<div class="wrap">
+<div class="app-shell">
+  <button class="icon-btn sidebar-open-btn" id="sidebar-open-btn" type="button" aria-label="Navigation öffnen">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
 
-  <header class="top">
-    <div>
-      <p class="eyebrow"><span class="dot"></span>Jira-Ticket-Bereinigung &middot; läuft lokal im Browser</p>
-      <h1>ONESCM Ticket-Cockpit</h1>
-      <div class="source-meta" id="source-meta"></div>
-    </div>
-    <div class="header-count">
-      <div class="num mono" id="header-total">0</div>
-      <div class="lbl">Tickets geladen</div>
-    </div>
-  </header>
-
-  <section>
-    <div class="section-head">
-      <p class="section-label">Neue Exportdatei bereinigen</p>
-    </div>
-    <div class="upload-row">
-      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Jira-Exportdatei auswählen">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-        <span class="txt">
-          <strong>Jira-HTML- oder XML-Export hier ablegen</strong>
-          <span>oder klicken zum Auswählen &middot; Bearbeiter/Ersteller werden pseudonymisiert, Kommentare &amp; E-Mails entfernt, leere Felder verworfen &ndash; alles im Browser, nichts wird hochgeladen</span>
-        </span>
-      </div>
-      <div class="upload-side">
-        <button class="btn ghost" id="reset-sample-btn" type="button" hidden>Ausgangsdaten wiederherstellen</button>
-      </div>
-    </div>
-    <input type="file" id="file-input" accept=".html,.htm,.xml" hidden>
-    <div class="callout" id="format-callout"></div>
-  </section>
-
-  <section>
-    <p class="section-label">Status</p>
-    <div class="tiles" id="tiles"></div>
-  </section>
-
-  <section id="domain-section">
-    <p class="section-label" id="domain-label">Domain</p>
-    <div class="panel domain-chart" id="domain-chart"></div>
-  </section>
-
-  <section>
-    <div class="section-head">
-      <p class="section-label">Tickets</p>
-    </div>
-    <div class="controls">
-      <div class="search-box">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input type="text" id="search-input" placeholder="Suchen (Key oder Zusammenfassung)" autocomplete="off">
-      </div>
-      <select id="domain-select"><option value="">Alle Domains</option></select>
-      <button class="btn ghost" id="reset-btn" type="button">Filter zurücksetzen</button>
-      <span class="spacer"></span>
-      <span class="result-count" id="result-count"></span>
-      <button class="btn primary" id="export-zip-btn" type="button">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M4 21h16"/></svg>
-        Als Markdown-Archiv exportieren
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">Hauptmenü</span>
+      <button class="icon-btn" id="sidebar-toggle" type="button" aria-label="Navigation einklappen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
     </div>
+    <ul class="nav-list" id="nav-list">
+      <li><button class="nav-item" data-view="dashboard" type="button">Dashboard</button></li>
+      <li><button class="nav-item" data-view="import" type="button">Import</button></li>
+      <li><button class="nav-item" data-view="dateiverwaltung" type="button">Dateiverwaltung<span class="count-badge" id="nav-badge-changes" hidden>0</span></button></li>
+      <li><button class="nav-item" data-view="verarbeitung" type="button">Verarbeitung</button></li>
+      <li class="nav-sep">Dokumente</li>
+      <li><button class="nav-item" data-view="releaseletter" type="button">Releaseletter</button></li>
+      <li><button class="nav-item" data-view="benutzerhandbuch" type="button">Benutzerhandbuch</button></li>
+      <li><button class="nav-item" data-view="prozessbild" type="button">Prozessbild</button></li>
+      <li><button class="nav-item" data-view="clickanweisung" type="button">Clickanweisung</button></li>
+      <li><button class="nav-item" data-view="bilder" type="button">Bilder</button></li>
+      <li class="nav-sep">Output</li>
+      <li><button class="nav-item" data-view="output-md" type="button">Output MD Tickets</button></li>
+      <li><button class="nav-item" data-view="output-pdf" type="button">Output PDF Tickets</button></li>
+      <li class="nav-sep">Hilfe</li>
+      <li><button class="nav-item" data-view="infobox" type="button">Infobox</button></li>
+      <li><button class="nav-item" data-view="glossar" type="button">Glossar</button></li>
+    </ul>
+  </nav>
 
-    <div class="panel table-shell">
-      <table>
-        <thead>
-          <tr>
-            <th data-key="key">Schlüssel <span class="arrow">&darr;</span></th>
-            <th data-key="summary">Zusammenfassung <span class="arrow">&darr;</span></th>
-            <th data-key="status">Status <span class="arrow">&darr;</span></th>
-            <th data-key="domain">Domain <span class="arrow">&darr;</span></th>
-            <th data-key="created">Erstellt <span class="arrow">&darr;</span></th>
-            <th data-key="updated">Aktualisiert <span class="arrow">&darr;</span></th>
-          </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-      </table>
-      <div class="empty-state" id="empty-state" hidden>Keine Tickets für diese Filterkombination.</div>
+  <main class="content">
+    <div class="content-inner">
+
+      <header class="app-header">
+        <div class="app-header-left">
+          <div>
+            <h1 class="app-title">ONESCM Ticket-Cockpit</h1>
+          </div>
+        </div>
+        <div class="app-stats">
+          <div class="stat"><div class="num mono" id="stat-tickets">0</div><div class="lbl">Tickets</div></div>
+          <div class="stat"><div class="num mono" id="stat-imports">0</div><div class="lbl">Imports</div></div>
+          <div class="stat"><div class="num mono" id="stat-changes">0</div><div class="lbl">Änderungen</div></div>
+        </div>
+      </header>
+
+      <!-- ================= Dashboard ================= -->
+      <section class="view-panel" data-view-panel="dashboard">
+        <div class="view-head"><h2>Dashboard</h2><p class="desc">Zusammengeführter, aktueller Stand aller importierten Tickets.</p></div>
+
+        <div class="tiles" id="tiles"></div>
+
+        <section id="domain-section">
+          <p class="section-label" id="domain-label">Domain</p>
+          <div class="panel domain-chart" id="domain-chart"></div>
+        </section>
+
+        <section>
+          <div class="controls">
+            <div class="search-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" id="search-input" placeholder="Suchen (Key oder Zusammenfassung)" autocomplete="off">
+            </div>
+            <select id="domain-select"><option value="">Alle Domains</option></select>
+            <button class="btn ghost" id="reset-filter-btn" type="button">Filter zurücksetzen</button>
+            <span class="spacer"></span>
+            <span class="result-count" id="result-count"></span>
+          </div>
+          <div class="panel table-shell">
+            <table>
+              <thead>
+                <tr>
+                  <th data-key="key">Schlüssel <span class="arrow">&darr;</span></th>
+                  <th data-key="summary">Zusammenfassung <span class="arrow">&darr;</span></th>
+                  <th data-key="status">Status <span class="arrow">&darr;</span></th>
+                  <th data-key="domain">Domain <span class="arrow">&darr;</span></th>
+                  <th data-key="created">Erstellt <span class="arrow">&darr;</span></th>
+                  <th data-key="updated">Aktualisiert <span class="arrow">&darr;</span></th>
+                </tr>
+              </thead>
+              <tbody id="table-body"></tbody>
+            </table>
+            <div class="empty-state" id="empty-state" hidden>Keine Tickets für diese Filterkombination.</div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= Import ================= -->
+      <section class="view-panel" data-view-panel="import" hidden>
+        <div class="view-head"><h2>Import</h2><p class="desc">Eine oder mehrere Jira-Exportdateien (HTML-Tabelle oder XML) hochladen. Neue Dateien werden zu den bisherigen Tickets hinzugefügt/aktualisiert, nicht ersetzt.</p></div>
+        <div class="upload-row">
+          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Jira-Exportdatei(en) auswählen">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span class="txt">
+              <strong>Jira-HTML- oder XML-Export(e) hier ablegen</strong>
+              <span>oder klicken zum Auswählen (Mehrfachauswahl möglich) &middot; Bereinigung läuft komplett im Browser, nichts wird hochgeladen</span>
+            </span>
+          </div>
+          <div class="upload-side">
+            <button class="btn ghost" id="reset-session-btn" type="button">Sitzung zurücksetzen (nur Ausgangsdaten)</button>
+          </div>
+        </div>
+        <input type="file" id="file-input" accept=".html,.htm,.xml" multiple hidden>
+        <div class="callout" id="format-callout"></div>
+      </section>
+
+      <!-- ================= Dateiverwaltung ================= -->
+      <section class="view-panel" data-view-panel="dateiverwaltung" hidden>
+        <div class="view-head"><h2>Dateiverwaltung</h2><p class="desc">Alle in dieser Sitzung importierten Dateien sowie Tickets, die sich zwischen zwei Importen geändert haben (z. B. Status oder Datum).</p></div>
+
+        <section>
+          <p class="section-label">Imports</p>
+          <div class="panel table-wrap">
+            <table class="simple-table" id="imports-table">
+              <thead><tr><th>#</th><th>Quelle</th><th>Format</th><th>Zeitpunkt</th><th>Tickets</th><th>Neu</th><th>Geändert</th><th>Unverändert</th><th>Pseudonymisiert</th></tr></thead>
+              <tbody id="imports-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">Geänderte / doppelte Ticket-Einträge</p>
+          <div class="panel table-wrap">
+            <table class="simple-table" id="changes-table">
+              <thead><tr><th>Ticket</th><th>Feld</th><th>Alter Wert</th><th></th><th>Neuer Wert</th><th>Quelle (alt → neu)</th></tr></thead>
+              <tbody id="changes-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="changes-empty">Noch keine Änderungen erkannt &ndash; lädt eine Datei ein Ticket erneut mit anderem Status/Datum, erscheint der Vergleich hier.</div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= Verarbeitung ================= -->
+      <section class="view-panel" data-view-panel="verarbeitung" hidden>
+        <div class="view-head"><h2>Verarbeitung</h2><p class="desc">Protokoll aller Verarbeitungsschritte dieser Sitzung.</p></div>
+        <div class="panel" style="padding: 6px 16px;">
+          <ul class="log-list" id="log-list"></ul>
+          <div class="empty-hint" id="log-empty" hidden>Noch keine Aktionen protokolliert.</div>
+        </div>
+      </section>
+
+      <!-- ================= Releaseletter ================= -->
+      <section class="view-panel" data-view-panel="releaseletter" hidden>
+        <div class="view-head"><h2>Releaseletter</h2><p class="desc">Entwurf für einen Release-Letter aus ausgewählten Tickets. Automatisch erzeugtes Rohgerüst &ndash; vor Versand redaktionell prüfen.</p></div>
+        <div class="gen-layout" data-kind="releaseletter">
+          <div class="gen-form">
+            <label for="releaseletter-name">Release-Name</label>
+            <input type="text" id="releaseletter-name" value="Release" placeholder="z. B. 2026.3">
+            <div class="checkbox-row"><input type="checkbox" id="releaseletter-use-filtered" checked><label for="releaseletter-use-filtered" style="font-weight:500;">Aktuell im Dashboard gefilterte Tickets verwenden</label></div>
+            <label for="releaseletter-keys">Oder Ticket-Keys (einer pro Zeile)</label>
+            <textarea id="releaseletter-keys" rows="6" placeholder="ONESCM-101&#10;ONESCM-102"></textarea>
+            <button class="btn primary" id="releaseletter-generate-btn" type="button">Entwurf generieren</button>
+            <button class="btn ghost" id="releaseletter-download-btn" type="button" disabled>Als Markdown speichern</button>
+          </div>
+          <div class="gen-preview" id="releaseletter-preview">Noch kein Entwurf generiert.</div>
+        </div>
+      </section>
+
+      <!-- ================= Benutzerhandbuch ================= -->
+      <section class="view-panel" data-view-panel="benutzerhandbuch" hidden>
+        <div class="view-head"><h2>Benutzerhandbuch</h2><p class="desc">Rohgerüst eines Benutzerhandbuchs aus den Ticket-Beschreibungen.</p></div>
+        <div class="gen-layout" data-kind="benutzerhandbuch">
+          <div class="gen-form">
+            <label for="benutzerhandbuch-name">Release-Name</label>
+            <input type="text" id="benutzerhandbuch-name" value="Release" placeholder="z. B. 2026.3">
+            <div class="checkbox-row"><input type="checkbox" id="benutzerhandbuch-use-filtered" checked><label for="benutzerhandbuch-use-filtered" style="font-weight:500;">Aktuell im Dashboard gefilterte Tickets verwenden</label></div>
+            <label for="benutzerhandbuch-keys">Oder Ticket-Keys (einer pro Zeile)</label>
+            <textarea id="benutzerhandbuch-keys" rows="6" placeholder="ONESCM-101&#10;ONESCM-102"></textarea>
+            <button class="btn primary" id="benutzerhandbuch-generate-btn" type="button">Entwurf generieren</button>
+            <button class="btn ghost" id="benutzerhandbuch-download-btn" type="button" disabled>Als Markdown speichern</button>
+          </div>
+          <div class="gen-preview" id="benutzerhandbuch-preview">Noch kein Entwurf generiert.</div>
+        </div>
+      </section>
+
+      <!-- ================= Prozessbild ================= -->
+      <section class="view-panel" data-view-panel="prozessbild" hidden>
+        <div class="view-head"><h2>Prozessbild</h2><p class="desc">Einfaches sequentielles Prozessdiagramm (Mermaid) aus ausgewählten Tickets. Reihenfolge entspricht der Ticket-Liste, nicht automatisch dem echten Prozess.</p></div>
+        <div class="gen-layout" data-kind="prozessbild">
+          <div class="gen-form">
+            <label for="prozessbild-name">Release-Name</label>
+            <input type="text" id="prozessbild-name" value="Release" placeholder="z. B. 2026.3">
+            <div class="checkbox-row"><input type="checkbox" id="prozessbild-use-filtered" checked><label for="prozessbild-use-filtered" style="font-weight:500;">Aktuell im Dashboard gefilterte Tickets verwenden</label></div>
+            <label for="prozessbild-keys">Oder Ticket-Keys (einer pro Zeile)</label>
+            <textarea id="prozessbild-keys" rows="6" placeholder="ONESCM-101&#10;ONESCM-102"></textarea>
+            <button class="btn primary" id="prozessbild-generate-btn" type="button">Diagramm generieren</button>
+            <button class="btn ghost" id="prozessbild-download-btn" type="button" disabled>Als Markdown speichern</button>
+          </div>
+          <div class="mermaid-box" id="prozessbild-render">
+            <div class="empty-hint">Noch kein Diagramm generiert.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Clickanweisung ================= -->
+      <section class="view-panel" data-view-panel="clickanweisung" hidden>
+        <div class="view-head"><h2>Clickanweisung</h2><p class="desc">Schritt-für-Schritt-Rohgerüst aus den Ticket-Beschreibungen (Screenshots/genaue Klickpfade manuell ergänzen).</p></div>
+        <div class="gen-layout" data-kind="clickanweisung">
+          <div class="gen-form">
+            <label for="clickanweisung-name">Release-Name</label>
+            <input type="text" id="clickanweisung-name" value="Release" placeholder="z. B. 2026.3">
+            <div class="checkbox-row"><input type="checkbox" id="clickanweisung-use-filtered" checked><label for="clickanweisung-use-filtered" style="font-weight:500;">Aktuell im Dashboard gefilterte Tickets verwenden</label></div>
+            <label for="clickanweisung-keys">Oder Ticket-Keys (einer pro Zeile)</label>
+            <textarea id="clickanweisung-keys" rows="6" placeholder="ONESCM-101&#10;ONESCM-102"></textarea>
+            <button class="btn primary" id="clickanweisung-generate-btn" type="button">Entwurf generieren</button>
+            <button class="btn ghost" id="clickanweisung-download-btn" type="button" disabled>Als Markdown speichern</button>
+          </div>
+          <div class="gen-preview" id="clickanweisung-preview">Noch kein Entwurf generiert.</div>
+        </div>
+      </section>
+
+      <!-- ================= Bilder ================= -->
+      <section class="view-panel" data-view-panel="bilder" hidden>
+        <div class="view-head"><h2>Bilder</h2><p class="desc">Galerie der in dieser Sitzung erzeugten Prozessdiagramme.</p></div>
+        <div class="gallery" id="gallery"></div>
+        <div class="empty-hint" id="gallery-empty">Noch keine Bilder erzeugt &ndash; unter "Prozessbild" ein Diagramm generieren.</div>
+      </section>
+
+      <!-- ================= Output MD ================= -->
+      <section class="view-panel" data-view-panel="output-md" hidden>
+        <div class="view-head"><h2>Output MD Tickets</h2><p class="desc">Bereinigte Tickets als einzelne Markdown-Dateien exportieren (ZIP-Archiv). Berücksichtigt die aktuelle Filterung im Dashboard.</p></div>
+        <div class="panel" style="padding:18px;">
+          <p style="margin:0 0 12px; font-size:13px; color:var(--text-muted);">Ausgewählt: <b class="mono" id="output-md-count">0</b> von <b class="mono" id="output-md-total">0</b> Tickets (gemäß Dashboard-Filter)</p>
+          <button class="btn primary" id="output-md-export-btn" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M4 21h16"/></svg>
+            Als Markdown-Archiv (.zip) exportieren
+          </button>
+        </div>
+      </section>
+
+      <!-- ================= Output PDF ================= -->
+      <section class="view-panel" data-view-panel="output-pdf" hidden>
+        <div class="view-head"><h2>Output PDF Tickets</h2><p class="desc">Bereinigte Tickets als einzelne PDF-Dateien exportieren (ZIP-Archiv). Berücksichtigt die aktuelle Filterung im Dashboard.</p></div>
+        <div class="panel" style="padding:18px;">
+          <p style="margin:0 0 12px; font-size:13px; color:var(--text-muted);">Ausgewählt: <b class="mono" id="output-pdf-count">0</b> von <b class="mono" id="output-pdf-total">0</b> Tickets (gemäß Dashboard-Filter)</p>
+          <button class="btn primary" id="output-pdf-export-btn" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M4 21h16"/></svg>
+            Als PDF-Archiv (.zip) exportieren
+          </button>
+        </div>
+      </section>
+
+      <!-- ================= Infobox ================= -->
+      <section class="view-panel" data-view-panel="infobox" hidden>
+        <div class="view-head"><h2>Infobox</h2></div>
+        <div class="panel info-card">
+          <h3>Was macht diese App?</h3>
+          <p>Das Ticket-Cockpit liest Jira-Exportdateien (HTML-Tabellenexport oder klassischer XML-Export) ein, bereinigt sie und stellt sie durchsuchbar dar &ndash; vollständig im Browser, ohne Server.</p>
+          <h3>Bereinigung</h3>
+          <ul>
+            <li>Bearbeiter/Ersteller werden pro Sitzung konsistent pseudonymisiert ("Person 1", "Person 2", ...).</li>
+            <li>Kommentare und Beobachter werden grundsätzlich entfernt.</li>
+            <li>E-Mail-Adressen werden aus Freitext entfernt.</li>
+            <li>Leere Felder werden nicht angezeigt bzw. exportiert, in der Detailansicht aber ehrlich als "Nicht im Export enthalten" markiert.</li>
+          </ul>
+          <h3>Mehrfach-Import</h3>
+          <p>Mehrere Dateien können nacheinander hochgeladen werden. Tickets werden anhand ihres Schlüssels zusammengeführt; ändert sich Status, Datum oder Zusammenfassung zwischen zwei Importen, erscheint das Ticket unter <b>Dateiverwaltung</b> im Vergleich.</p>
+          <h3>Grenzen</h3>
+          <p>Unterstützt werden der Jira-HTML-Tabellenexport (Issue-Navigator) und der klassische XML-Export. Word-Exporte (.docx) und Detail-HTML-Exports (ein Abschnitt pro Ticket) werden von der Web-App nicht unterstützt &ndash; dafür das CLI-Tool <code>jira-releaseletter import</code> verwenden. Die Dokument-Generatoren (Releaseletter, Benutzerhandbuch, Prozessbild, Clickanweisung) liefern Rohgerüste, keine fertigen Dokumente.</p>
+        </div>
+      </section>
+
+      <!-- ================= Glossar ================= -->
+      <section class="view-panel" data-view-panel="glossar" hidden>
+        <div class="view-head"><h2>Glossar</h2></div>
+        <div class="panel table-wrap">
+          <table class="simple-table">
+            <thead><tr><th>Begriff</th><th>Bedeutung</th></tr></thead>
+            <tbody>
+              <tr><td>Schlüssel (Key)</td><td>Eindeutige Jira-Ticket-ID, z. B. ONESCM-8282.</td></tr>
+              <tr><td>Status-Bucket</td><td>Gruppierung der vielen Jira-Status-Werte in 5 Kategorien: Erledigt, Offen/Backlog, In Bearbeitung, Blockiert, Abgebrochen.</td></tr>
+              <tr><td>Domain</td><td>Fachlicher Bereich/Custom Field aus Jira, z. B. "Contract Management".</td></tr>
+              <tr><td>Pseudonymisierung</td><td>Ersetzung von Klarnamen durch "Person N", konsistent innerhalb einer Sitzung.</td></tr>
+              <tr><td>Import</td><td>Ein Hochladevorgang einer Exportdatei. Mehrere Imports werden zusammengeführt.</td></tr>
+              <tr><td>Änderung/Duplikat</td><td>Ein Ticket, das in mehreren Imports mit unterschiedlichen Werten (z. B. Status) vorkommt.</td></tr>
+              <tr><td>Issue-Tabellenexport</td><td>Jira-HTML-Export mit einer Tabelle (eine Zeile je Ticket) &ndash; enthält nur die in der Jira-Ansicht ausgewählten Spalten.</td></tr>
+              <tr><td>XML-Export</td><td>Klassischer Jira-Export, enthält in der Regel alle Standardfelder.</td></tr>
+              <tr><td>Rohgerüst</td><td>Automatisch generierter Entwurf (Releaseletter, Handbuch, ...), der redaktionell zu prüfen ist.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
     </div>
-  </section>
-
-  <footer>
-    Jira-Releaseletter-Toolkit &middot; Phase 1 (Import &amp; Bereinigung) als Web-App. Parsing, Pseudonymisierung und
-    Export laufen vollständig im Browser &ndash; die Datei wird nicht an einen Server geschickt. Unterstützt: Jira-HTML-Export
-    (Issue-Navigator-Tabelle) und klassischer Jira-XML-Export. Word-Exporte (.docx) und Detail-HTML-Exports bitte über das
-    CLI-Tool (<span class="mono">jira-releaseletter import</span>) verarbeiten.
-  </footer>
-
+  </main>
 </div>
 
 <div class="modal-overlay" id="modal-overlay" hidden>
@@ -361,6 +635,7 @@
     </div>
     <div class="modal-actions">
       <button class="btn primary" id="modal-download-btn" type="button">Als Markdown speichern</button>
+      <button class="btn ghost" id="modal-download-pdf-btn" type="button">Als PDF speichern</button>
       <button class="btn ghost" id="modal-cancel-btn" type="button">Schließen</button>
     </div>
   </div>
@@ -582,12 +857,6 @@
     labels: "Labels", components: "Komponenten", fix_versions: "Fix-Version(en)"
   };
 
-  /* Vollständiges Feldraster für die Detailansicht: zeigt IMMER alle
-     Standardfelder, auch wenn ein Ticket sie nicht hat - fehlende Felder
-     werden klar markiert statt einfach ausgeblendet, damit ersichtlich
-     ist, was im Quell-Export tatsächlich enthalten war (keine erfundenen
-     Inhalte). kind "removed" = wird von der Bereinigung immer entfernt
-     (Datenschutz), kind "meta" = Angabe zum Import, nicht zum Ticket selbst. */
   var MODAL_FIELD_LIST = [
     { key: "summary", label: "Zusammenfassung", kind: "field" },
     { key: "issue_type", label: "Typ", kind: "field" },
@@ -606,7 +875,8 @@
     { key: "comments", label: "Kommentare", kind: "removed" },
     { key: "watchers", label: "Beobachter", kind: "removed" },
     { key: "meta:source", label: "Quelldatei", kind: "meta" },
-    { key: "meta:when", label: "Importiert am", kind: "meta" }
+    { key: "meta:when", label: "Importiert am", kind: "meta" },
+    { key: "meta:seen", label: "Gesehen in", kind: "meta" }
   ];
   var NOT_IN_EXPORT = "Nicht im Export enthalten";
   var REMOVED_FOR_PRIVACY = "Aus Datenschutzgründen bei der Bereinigung entfernt";
@@ -626,7 +896,42 @@
     return lines.join("\n");
   }
 
-  /* ============ Teil 2: App-Status + Rendering ============ */
+  var PDF_MARGIN = 15, PDF_LABEL_WIDTH = 45, PDF_PAGE_W = 210, PDF_PAGE_H_LIMIT = 280;
+  function buildPdfDoc(t) {
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
+    var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    var y = PDF_MARGIN;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(16);
+    var titleLines = doc.splitTextToSize(t.key + (t.summary ? " - " + t.summary : ""), PDF_PAGE_W - PDF_MARGIN * 2);
+    doc.text(titleLines, PDF_MARGIN, y); y += titleLines.length * 7 + 4;
+    doc.setFontSize(11);
+    function row(label, value) {
+      doc.setFont("helvetica", "bold"); doc.text(label + ":", PDF_MARGIN, y);
+      doc.setFont("helvetica", "normal");
+      var lines = doc.splitTextToSize(String(value), PDF_PAGE_W - PDF_MARGIN * 2 - PDF_LABEL_WIDTH);
+      doc.text(lines, PDF_MARGIN + PDF_LABEL_WIDTH, y);
+      y += Math.max(6, lines.length * 6);
+      if (y > PDF_PAGE_H_LIMIT) { doc.addPage(); y = PDF_MARGIN; }
+    }
+    FIELD_DISPLAY_ORDER.forEach(function (f) {
+      if (!(f in t)) return;
+      var v = t[f]; if (Array.isArray(v)) v = v.join(", ");
+      row(DISPLAY_LABELS_DE[f], v);
+    });
+    Object.keys(t.custom_fields || {}).forEach(function (k) { row(k, t.custom_fields[k]); });
+    if (t.description) {
+      y += 4; doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text("Beschreibung", PDF_MARGIN, y); y += 7;
+      doc.setFont("helvetica", "normal"); doc.setFontSize(11);
+      doc.splitTextToSize(t.description, PDF_PAGE_W - PDF_MARGIN * 2).forEach(function (line) {
+        if (y > PDF_PAGE_H_LIMIT) { doc.addPage(); y = PDF_MARGIN; }
+        doc.text(line, PDF_MARGIN, y); y += 6;
+      });
+    }
+    return doc;
+  }
+
+  /* ============ Teil 2: App-Status ============ */
 
   var BUCKET_OF_STATUS = {
     "Fertig": "done", "Geschlossen": "done", "Cancelled": "cancelled",
@@ -661,42 +966,146 @@
     return isNaN(d) ? 0 : d;
   }
 
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
+  }
+  function safeFilename(key) { return key.replace(/[^A-Za-z0-9_-]+/g, "_"); }
+  function truncate(s, n) { s = s || ""; return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+  function nowLabel() { return new Date().toLocaleString("de-DE"); }
+
   var els = {};
-  ["tiles", "domain-chart", "domain-section", "domain-label", "domain-select", "search-input", "reset-btn",
-    "table-body", "empty-state", "result-count", "header-total", "source-meta", "format-callout",
-    "reset-sample-btn", "export-zip-btn", "dropzone", "file-input",
+  [
+    "sidebar", "sidebar-toggle", "sidebar-open-btn", "nav-list", "nav-badge-changes",
+    "stat-tickets", "stat-imports", "stat-changes",
+    "tiles", "domain-chart", "domain-section", "domain-label", "domain-select", "search-input", "reset-filter-btn",
+    "table-body", "empty-state", "result-count",
+    "dropzone", "file-input", "reset-session-btn", "format-callout",
+    "imports-tbody", "changes-tbody", "changes-empty",
+    "log-list", "log-empty",
+    "gallery", "gallery-empty",
+    "output-md-count", "output-md-total", "output-md-export-btn",
+    "output-pdf-count", "output-pdf-total", "output-pdf-export-btn",
     "modal-overlay", "modal-key", "modal-title", "modal-fields", "modal-desc-wrap", "modal-desc",
-    "modal-close", "modal-cancel-btn", "modal-download-btn", "toast"].forEach(function (id) {
-    els[id.replace(/-([a-z])/g, function (_, c) { return c.toUpperCase(); })] = document.getElementById(id);
+    "modal-close", "modal-cancel-btn", "modal-download-btn", "modal-download-pdf-btn", "toast"
+  ].forEach(function (id) {
+    els[id.replace(/-([a-z0-9])/g, function (_, c) { return c.toUpperCase(); })] = document.getElementById(id);
   });
   var headerCells = document.querySelectorAll("thead th[data-key]");
 
   var app = {
+    imports: [],
+    ticketStore: new Map(),
+    changes: [],
+    log: [],
+    generatedImages: [],
     tickets: [],
-    anonymizedCount: 0,
-    domainCounts: {},
-    domainList: [],
     view: { bucket: "all", domain: "", query: "", sortKey: "created", sortDir: "desc" },
-    isSample: true
+    domainCounts: {}, domainList: [],
+    initialized: false
   };
 
-  function loadDataset(rawTickets, meta) {
+  function addLog(message) {
+    app.log.unshift({ when: nowLabel(), message: message });
+    renderLog();
+  }
+
+  var TRACKED_DIFF_FIELDS = [
+    { key: "status", label: "Status" },
+    { key: "created", label: "Erstellt" },
+    { key: "updated", label: "Aktualisiert" },
+    { key: "summary", label: "Zusammenfassung" }
+  ];
+  function diffTicket(oldT, newT) {
+    var diffs = [];
+    TRACKED_DIFF_FIELDS.forEach(function (f) {
+      var a = oldT[f.key] || "", b = newT[f.key] || "";
+      if (a !== b) diffs.push({ field: f.key, label: f.label, from: a, to: b });
+    });
+    var oldDomain = (oldT.custom_fields && oldT.custom_fields.Domain) || "";
+    var newDomain = (newT.custom_fields && newT.custom_fields.Domain) || "";
+    if (oldDomain !== newDomain) diffs.push({ field: "domain", label: "Domain", from: oldDomain, to: newDomain });
+    return diffs;
+  }
+
+  function ingestTickets(rawTickets, meta) {
     var anonymizer = new PersonAnonymizer();
     var cleaned = rawTickets.map(function (t) { return asExportDict(cleanTicket(t, anonymizer)); });
+    var importId = app.imports.length + 1;
+    var stats = { neu: 0, geaendert: 0, unveraendert: 0 };
 
-    app.tickets = cleaned.map(function (t) {
+    cleaned.forEach(function (t) {
+      var existing = app.ticketStore.get(t.key);
+      if (!existing) {
+        app.ticketStore.set(t.key, { current: t, sources: [{ importId: importId, source: meta.source, when: meta.when }] });
+        stats.neu++;
+      } else {
+        var diffs = diffTicket(existing.current, t);
+        var prevSource = existing.sources[existing.sources.length - 1];
+        existing.sources.push({ importId: importId, source: meta.source, when: meta.when });
+        if (diffs.length) {
+          app.changes.unshift({
+            key: t.key,
+            from: { source: prevSource.source, when: prevSource.when },
+            to: { source: meta.source, when: meta.when },
+            diffs: diffs
+          });
+          stats.geaendert++;
+        } else {
+          stats.unveraendert++;
+        }
+        existing.current = t;
+      }
+    });
+
+    var importRecord = {
+      id: importId, source: meta.source, when: meta.when, format: meta.format,
+      ticketCount: cleaned.length, personCount: anonymizer.count, stats: stats
+    };
+    app.imports.push(importRecord);
+    addLog(
+      "Import „" + meta.source + "“ (" + meta.format + "): " + cleaned.length + " Tickets – " +
+      stats.neu + " neu, " + stats.geaendert + " geändert, " + stats.unveraendert + " unverändert, " +
+      anonymizer.count + " Person(en) pseudonymisiert."
+    );
+
+    refreshDashboard(!app.initialized);
+    app.initialized = true;
+    renderImportsTable();
+    renderChangesTable();
+    renderStats();
+    renderOutputCounts();
+    return importRecord;
+  }
+
+  function resetSession() {
+    app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
+    app.generatedImages = []; app.initialized = false;
+    var raw = JSON.parse(document.getElementById("initial-ticket-data").textContent);
+    var metaEl = document.getElementById("initial-ticket-meta");
+    var meta; try { meta = JSON.parse(metaEl.textContent); } catch (e) { meta = null; }
+    if (!meta || !meta.source) meta = { source: "Beispieldaten", when: new Date().toLocaleDateString("de-DE"), format: "Jira HTML-Export (Issue-Tabelle)" };
+    ingestTickets(raw, meta);
+    renderGallery();
+  }
+
+  function refreshDashboard(resetFilters) {
+    var list = [];
+    app.ticketStore.forEach(function (entry) { list.push(entry); });
+    app.tickets = list.map(function (entry) {
+      var t = entry.current;
+      var changed = entry.sources.length > 1 && app.changes.some(function (c) { return c.key === t.key; });
       return {
         raw: t, key: t.key, summary: t.summary || "", status: t.status || "–",
         bucket: bucketFor(t.status), domain: (t.custom_fields && t.custom_fields.Domain) || "",
         created: t.created || "", updated: t.updated || "",
-        createdSort: parseJiraDate(t.created), updatedSort: parseJiraDate(t.updated)
+        createdSort: parseJiraDate(t.created), updatedSort: parseJiraDate(t.updated),
+        changed: changed
       };
     });
-    app.anonymizedCount = anonymizer.count;
-    app.isSample = !!meta.isSample;
-    app.meta = meta;
-    app.view = { bucket: "all", domain: "", query: "", sortKey: "created", sortDir: "desc" };
-    els.searchInput.value = "";
+    if (resetFilters) {
+      app.view = { bucket: "all", domain: "", query: "", sortKey: "created", sortDir: "desc" };
+      els.searchInput.value = "";
+    }
 
     var bucketCounts = {};
     var domainCounts = {};
@@ -709,33 +1118,31 @@
 
     buildTiles(bucketCounts);
     buildDomainChart();
-    buildSourceMeta(meta);
-    buildFormatCallout(meta);
-    els.headerTotal.textContent = app.tickets.length;
-    els.resetSampleBtn.hidden = app.isSample;
+    buildFormatCallout();
     render();
   }
 
-  function buildSourceMeta(meta) {
-    els.sourceMeta.innerHTML =
-      "<span>Quelle: <b>" + escapeHtml(meta.source) + "</b></span>" +
-      "<span>&middot;</span><span>" + escapeHtml(meta.action) + ": <b>" + escapeHtml(meta.when) + "</b></span>" +
-      "<span>&middot;</span><span>Pseudonymisiert: <b>" + app.anonymizedCount + " Person(en)</b></span>";
-  }
-
-  function buildFormatCallout(meta) {
+  function buildFormatCallout() {
     var hasSummary = app.tickets.some(function (t) { return t.summary; });
     var hasDesc = app.tickets.some(function (t) { return t.raw.description; });
+    var lastFormat = app.imports.length ? app.imports[app.imports.length - 1].format : "";
     if (hasSummary || hasDesc) {
       els.formatCallout.className = "callout";
-      els.formatCallout.innerHTML = "<b>Format erkannt:</b> " + escapeHtml(meta.format) +
-        ". Zusammenfassung/Beschreibung sind enthalten – diese Daten reichen auch für Release-Letter, Benutzerhandbuch &amp; Co. (Phase 3).";
+      els.formatCallout.innerHTML = "<b>Zuletzt importiert:</b> " + escapeHtml(lastFormat) +
+        ". Zusammenfassung/Beschreibung sind enthalten – diese Daten reichen auch für Release-Letter, Benutzerhandbuch &amp; Co.";
     } else {
       els.formatCallout.className = "callout warn";
-      els.formatCallout.innerHTML = "<b>Hinweis:</b> Diese Datei (" + escapeHtml(meta.format) +
-        ") enthält nur Schlüssel/Status/Datum/Domain – keine Zusammenfassung, Beschreibung, Bearbeiter oder Kommentare. " +
-        "Für Release-Letter, Benutzerhandbuch etc. bitte mit zusätzlichen Feldern erneut aus Jira exportieren.";
+      els.formatCallout.innerHTML = "<b>Hinweis:</b> Der zuletzt importierte Export (" + escapeHtml(lastFormat) +
+        ") enthält nur Schlüssel/Status/Datum/Domain – keine Zusammenfassung, Beschreibung, Bearbeiter oder Kommentare.";
     }
+  }
+
+  function renderStats() {
+    els.statTickets.textContent = app.tickets.length;
+    els.statImports.textContent = app.imports.length;
+    els.statChanges.textContent = app.changes.length;
+    if (app.changes.length) { els.navBadgeChanges.hidden = false; els.navBadgeChanges.textContent = app.changes.length; }
+    else { els.navBadgeChanges.hidden = true; }
   }
 
   function buildTiles(bucketCounts) {
@@ -746,7 +1153,7 @@
   function makeTile(bucket, label, count) {
     var btn = document.createElement("button");
     btn.className = "tile " + bucket; btn.type = "button";
-    btn.setAttribute("aria-pressed", bucket === "all" ? "true" : "false");
+    btn.setAttribute("aria-pressed", app.view.bucket === bucket ? "true" : "false");
     var pct = app.tickets.length ? Math.round((count / app.tickets.length) * 100) : 0;
     btn.innerHTML = '<span class="bar"></span><span class="num mono">' + count + '</span><span class="lbl">' + label + " &middot; " + pct + "%</span>";
     btn.addEventListener("click", function () {
@@ -766,10 +1173,11 @@
     app.domainList.forEach(function (d) {
       var opt = document.createElement("option");
       opt.value = d; opt.textContent = d + " (" + app.domainCounts[d] + ")";
+      if (app.view.domain === d) opt.selected = true;
       els.domainSelect.appendChild(opt);
 
       var row = document.createElement("button");
-      row.className = "domain-row"; row.type = "button"; row.setAttribute("aria-pressed", "false");
+      row.className = "domain-row"; row.type = "button"; row.setAttribute("aria-pressed", app.view.domain === d ? "true" : "false");
       var widthPct = Math.max(4, Math.round((app.domainCounts[d] / max) * 100));
       row.innerHTML = '<span class="name">' + escapeHtml(d) + '</span><span class="track"><span class="fill" style="width:' + widthPct +
         '%"></span></span><span class="count mono">' + app.domainCounts[d] + "</span>";
@@ -786,10 +1194,6 @@
     Array.prototype.forEach.call(els.domainChart.querySelectorAll(".domain-row"), function (row, i) {
       row.setAttribute("aria-pressed", app.domainList[i] === app.view.domain ? "true" : "false");
     });
-  }
-
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
   }
 
   function currentFiltered() {
@@ -823,13 +1227,12 @@
       th.querySelector(".arrow").textContent = app.view.sortDir === "asc" ? "↑" : "↓";
     });
     els.resultCount.innerHTML = "<b>" + filtered.length + "</b> von " + app.tickets.length + " angezeigt";
-    els.exportZipBtn.disabled = filtered.length === 0;
 
-    if (!filtered.length) { els.tableBody.innerHTML = ""; els.emptyState.hidden = false; return; }
+    if (!filtered.length) { els.tableBody.innerHTML = ""; els.emptyState.hidden = false; renderOutputCounts(); return; }
     els.emptyState.hidden = true;
 
     els.tableBody.innerHTML = filtered.map(function (t, i) {
-      return '<tr data-idx="' + i + '">' +
+      return '<tr data-idx="' + i + '"' + (t.changed ? ' class="is-changed"' : "") + ">" +
         '<td class="key">' + escapeHtml(t.key) + "</td>" +
         '<td class="summary">' + (t.summary ? escapeHtml(t.summary) : "&ndash;") + "</td>" +
         "<td>" + pillHtml(t) + "</td>" +
@@ -841,31 +1244,47 @@
     Array.prototype.forEach.call(els.tableBody.querySelectorAll("tr"), function (tr) {
       tr.addEventListener("click", function () { openModal(filtered[parseInt(tr.getAttribute("data-idx"), 10)]); });
     });
+    renderOutputCounts();
+  }
+
+  function renderOutputCounts() {
+    var n = currentFiltered().length, total = app.tickets.length;
+    [els.outputMdCount, els.outputPdfCount].forEach(function (el) { if (el) el.textContent = n; });
+    [els.outputMdTotal, els.outputPdfTotal].forEach(function (el) { if (el) el.textContent = total; });
+    if (els.outputMdExportBtn) els.outputMdExportBtn.disabled = n === 0;
+    if (els.outputPdfExportBtn) els.outputPdfExportBtn.disabled = n === 0;
   }
 
   /* ============ Teil 3: Detailansicht ============ */
 
   var lastFocused = null;
-
   function fieldRowHtml(label, value, isPlaceholder, extraClass) {
     var cls = (isPlaceholder ? "placeholder" : "") + (extraClass ? " " + extraClass : "");
     return "<tr" + (extraClass ? ' class="' + extraClass + '"' : "") + "><th>" + escapeHtml(label) + '</th><td class="' +
       cls.trim() + '">' + escapeHtml(value) + "</td></tr>";
   }
 
+  var currentModalTicket = null;
   function openModal(t) {
     lastFocused = document.activeElement;
+    currentModalTicket = t;
     els.modalKey.textContent = t.key;
     els.modalTitle.textContent = t.summary || "(keine Zusammenfassung)";
     var raw = t.raw;
     var customFields = raw.custom_fields || {};
-    var shownCustomKeys = { Domain: true };
+    var entry = app.ticketStore.get(t.key);
+    var lastSource = entry ? entry.sources[entry.sources.length - 1] : null;
     var rows = "";
 
     MODAL_FIELD_LIST.forEach(function (f) {
       if (f.kind === "removed") { rows += fieldRowHtml(f.label, REMOVED_FOR_PRIVACY, true); return; }
       if (f.kind === "meta") {
-        var metaVal = f.key === "meta:source" ? (app.meta && app.meta.source) : (app.meta && app.meta.when);
+        if (f.key === "meta:seen") {
+          var n = entry ? entry.sources.length : 1;
+          rows += fieldRowHtml(f.label, n > 1 ? n + " Imports (zuletzt: " + lastSource.source + ")" : "1 Import", false, "meta-row");
+          return;
+        }
+        var metaVal = f.key === "meta:source" ? (lastSource && lastSource.source) : (lastSource && lastSource.when);
         rows += fieldRowHtml(f.label, metaVal || "unbekannt", !metaVal, "meta-row");
         return;
       }
@@ -873,18 +1292,10 @@
       if (f.key === "custom:Domain") value = customFields.Domain;
       else value = raw[f.key];
       if (Array.isArray(value)) value = value.length ? value.join(", ") : undefined;
-      if (value === undefined || value === null || value === "") {
-        rows += fieldRowHtml(f.label, NOT_IN_EXPORT, true);
-      } else {
-        rows += fieldRowHtml(f.label, value, false);
-      }
+      if (value === undefined || value === null || value === "") rows += fieldRowHtml(f.label, NOT_IN_EXPORT, true);
+      else rows += fieldRowHtml(f.label, value, false);
     });
-
-    // Weitere Custom Fields, die nicht in der Standardliste stehen (z.B. bei anderen Exporten).
-    Object.keys(customFields).forEach(function (k) {
-      if (shownCustomKeys[k]) return;
-      rows += fieldRowHtml(k, customFields[k], false);
-    });
+    Object.keys(customFields).forEach(function (k) { if (k !== "Domain") rows += fieldRowHtml(k, customFields[k], false); });
 
     els.modalFields.innerHTML = rows;
     els.modalDescWrap.hidden = false;
@@ -892,6 +1303,7 @@
     els.modalDesc.className = raw.description ? "" : "placeholder";
     els.modalOverlay.hidden = false;
     els.modalDownloadBtn.onclick = function () { downloadSingle(raw); };
+    els.modalDownloadPdfBtn.onclick = function () { downloadSinglePdf(raw); };
     els.modalClose.focus();
   }
   function closeModal() { els.modalOverlay.hidden = true; if (lastFocused) lastFocused.focus(); }
@@ -915,63 +1327,96 @@
     showToast._t = setTimeout(function () { els.toast.classList.remove("show"); }, 4200);
   }
 
-  function safeFilename(key) { return key.replace(/[^A-Za-z0-9_-]+/g, "_"); }
-
-  async function downloadSingle(ticket) {
-    if (!downloadsApi) { showToast("Nicht verfügbar", "Download-Funktion in dieser Ansicht nicht verfügbar.", true); return; }
+  async function saveOrWarn(filename, data) {
+    if (!downloadsApi) { showToast("Nicht verfügbar", "Download-Funktion in dieser Ansicht nicht verfügbar.", true); return false; }
     try {
-      await downloadsApi.save({ filename: safeFilename(ticket.key) + ".md", data: renderMarkdown(ticket) });
-      showToast("Gespeichert", ticket.key + ".md wurde heruntergeladen.");
+      await downloadsApi.save({ filename: filename, data: data });
+      return true;
     } catch (err) {
-      if (err && err.code === "declined") return;
+      if (err && err.code === "declined") return false;
       showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler beim Speichern.", true);
+      return false;
     }
   }
 
-  els.exportZipBtn.addEventListener("click", async function () {
-    if (!downloadsApi) { showToast("Nicht verfügbar", "Download-Funktion in dieser Ansicht nicht verfügbar.", true); return; }
+  async function downloadSingle(ticket) {
+    var ok = await saveOrWarn(safeFilename(ticket.key) + ".md", renderMarkdown(ticket));
+    if (ok) showToast("Gespeichert", ticket.key + ".md wurde heruntergeladen.");
+  }
+  async function downloadSinglePdf(ticket) {
+    if (typeof window.jspdf === "undefined") { showToast("Nicht verfügbar", "PDF-Bibliothek konnte nicht geladen werden.", true); return; }
+    try {
+      var doc = buildPdfDoc(ticket);
+      var ok = await saveOrWarn(safeFilename(ticket.key) + ".pdf", doc.output("blob"));
+      if (ok) showToast("Gespeichert", ticket.key + ".pdf wurde heruntergeladen.");
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "PDF konnte nicht erzeugt werden.", true);
+    }
+  }
+
+  async function exportZip(kind) {
+    var btn = kind === "md" ? els.outputMdExportBtn : els.outputPdfExportBtn;
     if (typeof JSZip === "undefined") { showToast("Fehlgeschlagen", "ZIP-Bibliothek konnte nicht geladen werden.", true); return; }
+    if (kind === "pdf" && typeof window.jspdf === "undefined") { showToast("Fehlgeschlagen", "PDF-Bibliothek konnte nicht geladen werden.", true); return; }
     var filtered = currentFiltered();
     if (!filtered.length) return;
-    els.exportZipBtn.disabled = true;
+    btn.disabled = true;
     try {
       var zip = new JSZip();
-      filtered.forEach(function (t) { zip.file(safeFilename(t.key) + ".md", renderMarkdown(t.raw)); });
-      var blob = await zip.generateAsync({ type: "blob" });
-      await downloadsApi.save({ filename: "tickets_bereinigt.zip", data: blob });
-      showToast("Export fertig", filtered.length + " Tickets als Markdown-Archiv gespeichert.");
-    } catch (err) {
-      if (err && err.code === "declined") { /* Nutzer hat abgelehnt */ }
-      else showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler beim Export.", true);
-    } finally {
-      els.exportZipBtn.disabled = false;
-    }
-  });
-
-  /* ============ Teil 5: Upload-Handling ============ */
-
-  function handleFile(file) {
-    if (!file) return;
-    var reader = new FileReader();
-    reader.onerror = function () { showToast("Fehlgeschlagen", "Datei konnte nicht gelesen werden.", true); };
-    reader.onload = function () {
-      try {
-        var result = detectAndParse(String(reader.result), file.name);
-        loadDataset(result.tickets, {
-          source: file.name, action: "Importiert", when: new Date().toLocaleString("de-DE"),
-          format: result.format, isSample: false
-        });
-        showToast("Import erfolgreich", result.tickets.length + " Tickets bereinigt (" + app.anonymizedCount + " Person(en) pseudonymisiert).");
-      } catch (err) {
-        showToast("Import fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+      if (kind === "md") {
+        filtered.forEach(function (t) { zip.file(safeFilename(t.key) + ".md", renderMarkdown(t.raw)); });
+      } else {
+        filtered.forEach(function (t) { zip.file(safeFilename(t.key) + ".pdf", buildPdfDoc(t.raw).output("blob")); });
       }
-    };
-    reader.readAsText(file, "utf-8");
+      var blob = await zip.generateAsync({ type: "blob" });
+      var filename = kind === "md" ? "tickets_bereinigt.zip" : "tickets_bereinigt_pdf.zip";
+      var ok = await saveOrWarn(filename, blob);
+      if (ok) {
+        showToast("Export fertig", filtered.length + " Tickets als " + (kind === "md" ? "Markdown" : "PDF") + "-Archiv gespeichert.");
+        addLog(filtered.length + " Tickets als " + (kind === "md" ? "Markdown" : "PDF") + "-Archiv exportiert.");
+      }
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler beim Export.", true);
+    } finally {
+      btn.disabled = currentFiltered().length === 0;
+    }
+  }
+  els.outputMdExportBtn.addEventListener("click", function () { exportZip("md"); });
+  els.outputPdfExportBtn.addEventListener("click", function () { exportZip("pdf"); });
+
+  /* ============ Teil 5: Upload-Handling (Mehrfachdateien) ============ */
+
+  function readFileAsText(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onerror = function () { reject(new Error("Datei konnte nicht gelesen werden.")); };
+      reader.onload = function () { resolve(String(reader.result)); };
+      reader.readAsText(file, "utf-8");
+    });
+  }
+
+  async function handleFiles(fileList) {
+    var files = Array.prototype.slice.call(fileList || []);
+    if (!files.length) return;
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      try {
+        var text = await readFileAsText(file);
+        var result = detectAndParse(text, file.name);
+        var record = ingestTickets(result.tickets, { source: file.name, when: nowLabel(), format: result.format });
+        showToast(
+          "Import erfolgreich",
+          file.name + ": " + record.ticketCount + " Tickets (" + record.stats.neu + " neu, " + record.stats.geaendert + " geändert)."
+        );
+      } catch (err) {
+        showToast("Import fehlgeschlagen (" + file.name + ")", (err && err.message) || "Unbekannter Fehler.", true);
+      }
+    }
   }
 
   els.dropzone.addEventListener("click", function () { els.fileInput.click(); });
   els.dropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.fileInput.click(); } });
-  els.fileInput.addEventListener("change", function () { handleFile(els.fileInput.files[0]); els.fileInput.value = ""; });
+  els.fileInput.addEventListener("change", function () { handleFiles(els.fileInput.files); els.fileInput.value = ""; });
   ["dragenter", "dragover"].forEach(function (evt) {
     els.dropzone.addEventListener(evt, function (e) { e.preventDefault(); els.dropzone.classList.add("dragover"); });
   });
@@ -979,15 +1424,19 @@
     els.dropzone.addEventListener(evt, function (e) { e.preventDefault(); els.dropzone.classList.remove("dragover"); });
   });
   els.dropzone.addEventListener("drop", function (e) {
-    var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if (file) handleFile(file);
+    var files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length) handleFiles(files);
+  });
+  els.resetSessionBtn.addEventListener("click", function () {
+    resetSession();
+    showToast("Zurückgesetzt", "Sitzung auf Ausgangsdaten zurückgesetzt.");
   });
 
-  /* ============ Teil 6: Steuerelemente ============ */
+  /* ============ Teil 6: Dashboard-Steuerelemente ============ */
 
   els.domainSelect.addEventListener("change", function () { app.view.domain = els.domainSelect.value; syncDomainRows(); render(); });
   els.searchInput.addEventListener("input", function () { app.view.query = els.searchInput.value.trim().toUpperCase(); render(); });
-  els.resetBtn.addEventListener("click", function () {
+  els.resetFilterBtn.addEventListener("click", function () {
     app.view.bucket = "all"; app.view.domain = ""; app.view.query = "";
     els.searchInput.value = ""; els.domainSelect.value = "";
     Array.prototype.forEach.call(els.tiles.children, function (el, i) { el.setAttribute("aria-pressed", i === 0 ? "true" : "false"); });
@@ -1001,27 +1450,208 @@
       render();
     });
   });
-  els.resetSampleBtn.addEventListener("click", function () {
-    loadInitial();
-    showToast("Zurückgesetzt", "Ausgangsdatensatz (" + app.tickets.length + " Tickets) wiederhergestellt.");
-  });
+
+  /* ============ Teil 7: Dateiverwaltung (Imports + Änderungen) ============ */
+
+  function renderImportsTable() {
+    els.importsTbody.innerHTML = app.imports.map(function (imp) {
+      return "<tr><td class=\"mono\">" + imp.id + "</td><td>" + escapeHtml(imp.source) + "</td><td>" + escapeHtml(imp.format) +
+        "</td><td class=\"mono\">" + escapeHtml(imp.when) + "</td><td class=\"mono\">" + imp.ticketCount + "</td><td class=\"mono\">" +
+        imp.stats.neu + "</td><td class=\"mono\">" + imp.stats.geaendert + "</td><td class=\"mono\">" + imp.stats.unveraendert +
+        "</td><td class=\"mono\">" + imp.personCount + "</td></tr>";
+    }).join("");
+  }
+
+  function renderChangesTable() {
+    if (!app.changes.length) { els.changesTbody.innerHTML = ""; els.changesEmpty.hidden = false; return; }
+    els.changesEmpty.hidden = true;
+    var rowsHtml = [];
+    app.changes.forEach(function (c) {
+      c.diffs.forEach(function (d, i) {
+        rowsHtml.push(
+          "<tr>" +
+          (i === 0 ? '<td class="mono" rowspan="' + c.diffs.length + '">' + escapeHtml(c.key) + "</td>" : "") +
+          "<td>" + escapeHtml(d.label) + "</td>" +
+          '<td class="diff-old">' + escapeHtml(d.from || "–") + "</td>" +
+          '<td class="diff-arrow">→</td>' +
+          '<td class="diff-new">' + escapeHtml(d.to || "–") + "</td>" +
+          (i === 0 ? '<td class="mono" rowspan="' + c.diffs.length + '">' + escapeHtml(c.from.source) + " (" + escapeHtml(c.from.when) + ") → " + escapeHtml(c.to.source) + " (" + escapeHtml(c.to.when) + ")</td>" : "") +
+          "</tr>"
+        );
+      });
+    });
+    els.changesTbody.innerHTML = rowsHtml.join("");
+  }
+
+  /* ============ Teil 8: Verarbeitung (Protokoll) ============ */
+
+  function renderLog() {
+    if (!app.log.length) { els.logList.innerHTML = ""; els.logEmpty.hidden = false; return; }
+    els.logEmpty.hidden = true;
+    els.logList.innerHTML = app.log.map(function (l) {
+      return "<li><time>" + escapeHtml(l.when) + "</time><span>" + escapeHtml(l.message) + "</span></li>";
+    }).join("");
+  }
+
+  /* ============ Teil 9: Phase-3-Generatoren ============ */
+
+  function resolveGeneratorTickets(kind) {
+    var useFiltered = document.getElementById(kind + "-use-filtered").checked;
+    if (useFiltered) return currentFiltered().map(function (t) { return t.raw; });
+    var keysText = document.getElementById(kind + "-keys").value;
+    var keys = keysText.split("\n").map(function (k) { return k.trim(); }).filter(Boolean);
+    var tickets = [];
+    keys.forEach(function (k) {
+      var entry = app.ticketStore.get(k.toUpperCase()) || app.ticketStore.get(k);
+      if (entry) tickets.push(entry.current);
+    });
+    return tickets;
+  }
+
+  function renderReleaseLetter(name, tickets) {
+    var lines = ["# Release Letter – " + name, "", "Stand: " + new Date().toLocaleDateString("de-DE"), "Umfang: " + tickets.length + " Tickets", "", "## Neue Funktionen & Änderungen", ""];
+    tickets.forEach(function (t) {
+      lines.push("- **" + t.key + "** – " + (t.summary || "(keine Zusammenfassung)"));
+      if (t.description) lines.push("  " + truncate(t.description, 220));
+    });
+    lines.push("", "## Bekannte Einschränkungen / offene Punkte", "");
+    var doneWords = ["done", "closed", "resolved", "erledigt", "geschlossen", "fertig"];
+    var open = tickets.filter(function (t) { return t.status && doneWords.indexOf(t.status.toLowerCase()) === -1; });
+    if (open.length) open.forEach(function (t) { lines.push("- " + t.key + ": " + (t.summary || "") + " (Status: " + t.status + ")"); });
+    else lines.push("Keine offenen Punkte bekannt.");
+    return lines.join("\n");
+  }
+  function renderUserManual(name, tickets) {
+    var lines = ["# Benutzerhandbuch – " + name, "", "Stand: " + new Date().toLocaleDateString("de-DE"), ""];
+    tickets.forEach(function (t, i) {
+      lines.push("## " + (i + 1) + ". " + (t.summary || t.key), "", "*Ticket: " + t.key + (t.components && t.components.length ? " · Komponente: " + t.components.join(", ") : "") + "*", "");
+      lines.push(t.description || "_Keine Beschreibung im Ticket hinterlegt - Abschnitt manuell ergänzen._", "");
+    });
+    return lines.join("\n");
+  }
+  function renderClickInstructions(name, tickets) {
+    var lines = ["# Klickanweisung – " + name, "", "Stand: " + new Date().toLocaleDateString("de-DE"), ""];
+    tickets.forEach(function (t, i) {
+      lines.push("## Schritt " + (i + 1) + ": " + (t.summary || t.key), "", "*Ticket: " + t.key + "*", "");
+      if (t.description) t.description.split("\n").filter(function (l) { return l.trim(); }).forEach(function (line, j) { lines.push((j + 1) + ". " + line.trim()); });
+      else lines.push("1. _Klickpfad manuell ergänzen - Ticket enthält keine Beschreibung._");
+      lines.push("");
+    });
+    return lines.join("\n");
+  }
+  function renderProcessDiagramSource(tickets) {
+    var lines = ["flowchart TD", "    start([Start])"];
+    tickets.forEach(function (t, i) { lines.push('    t' + (i + 1) + '["' + t.key + ": " + truncate(t.summary || "", 40).replace(/"/g, "'") + '"]'); });
+    lines.push("    start --> t1");
+    tickets.forEach(function (t, i) { if (i < tickets.length - 1) lines.push("    t" + (i + 1) + " --> t" + (i + 2)); });
+    if (tickets.length) lines.push("    t" + tickets.length + " --> ende([Ende])");
+    else lines.push("    start --> ende([Ende])");
+    return lines.join("\n");
+  }
+
+  var GENERATORS = {
+    releaseletter: { render: renderReleaseLetter, ext: "md" },
+    benutzerhandbuch: { render: renderUserManual, ext: "md" },
+    clickanweisung: { render: renderClickInstructions, ext: "md" }
+  };
+
+  function wireTextGenerator(kind) {
+    var cfg = GENERATORS[kind];
+    var nameInput = document.getElementById(kind + "-name");
+    var preview = document.getElementById(kind + "-preview");
+    var downloadBtn = document.getElementById(kind + "-download-btn");
+    var generateBtn = document.getElementById(kind + "-generate-btn");
+    var lastContent = "";
+    generateBtn.addEventListener("click", function () {
+      var tickets = resolveGeneratorTickets(kind);
+      if (!tickets.length) { showToast("Keine Tickets", "Keine passenden Tickets gefunden.", true); return; }
+      lastContent = cfg.render(nameInput.value.trim() || "Release", tickets);
+      preview.textContent = lastContent;
+      downloadBtn.disabled = false;
+      addLog(kind + ": Entwurf für " + tickets.length + " Tickets erzeugt.");
+    });
+    downloadBtn.addEventListener("click", async function () {
+      var ok = await saveOrWarn(safeFilename(nameInput.value.trim() || "release") + "_" + kind + "." + cfg.ext, lastContent);
+      if (ok) showToast("Gespeichert", "Entwurf heruntergeladen.");
+    });
+  }
+  ["releaseletter", "benutzerhandbuch", "clickanweisung"].forEach(wireTextGenerator);
+
+  function wireProcessDiagram() {
+    var kind = "prozessbild";
+    var nameInput = document.getElementById(kind + "-name");
+    var renderBox = document.getElementById(kind + "-render");
+    var downloadBtn = document.getElementById(kind + "-download-btn");
+    var generateBtn = document.getElementById(kind + "-generate-btn");
+    document.getElementById(kind + "-generate-btn").addEventListener("click", function () {
+      var tickets = resolveGeneratorTickets(kind);
+      if (!tickets.length) { showToast("Keine Tickets", "Keine passenden Tickets gefunden.", true); return; }
+      var name = nameInput.value.trim() || "Release";
+      var source = renderProcessDiagramSource(tickets);
+      insertMermaid(renderBox, source);
+      downloadBtn.disabled = false;
+      downloadBtn.onclick = async function () {
+        var md = "# Prozessdiagramm – " + name + "\n\nStand: " + new Date().toLocaleDateString("de-DE") + "\n\n```mermaid\n" + source + "\n```\n";
+        var ok = await saveOrWarn(safeFilename(name) + "_prozessdiagramm.md", md);
+        if (ok) showToast("Gespeichert", "Prozessdiagramm heruntergeladen.");
+      };
+      app.generatedImages.unshift({ id: Date.now(), title: name + " (" + tickets.length + " Tickets)", source: source, when: nowLabel() });
+      renderGallery();
+      addLog("Prozessbild: Diagramm für " + tickets.length + " Tickets erzeugt.");
+    });
+  }
+  wireProcessDiagram();
+
+  function insertMermaid(container, source) {
+    container.innerHTML = "";
+    var pre = document.createElement("pre");
+    pre.className = "mermaid";
+    pre.textContent = source;
+    container.appendChild(pre);
+    var srcPre = document.createElement("pre");
+    srcPre.className = "mermaid-source";
+    srcPre.textContent = source;
+    container.appendChild(srcPre);
+  }
+
+  function renderGallery() {
+    if (!app.generatedImages.length) { els.gallery.innerHTML = ""; els.galleryEmpty.hidden = false; return; }
+    els.galleryEmpty.hidden = true;
+    els.gallery.innerHTML = "";
+    app.generatedImages.forEach(function (img) {
+      var card = document.createElement("div");
+      card.className = "panel gallery-card";
+      var h3 = document.createElement("h3"); h3.textContent = img.title;
+      var meta = document.createElement("div"); meta.className = "meta"; meta.textContent = img.when;
+      card.appendChild(h3); card.appendChild(meta);
+      insertMermaid(card, img.source);
+      els.gallery.appendChild(card);
+    });
+  }
+
+  /* ============ Teil 10: Navigation ============ */
+
+  var viewPanels = document.querySelectorAll("[data-view-panel]");
+  var navItems = document.querySelectorAll(".nav-item[data-view]");
+  function showView(name) {
+    viewPanels.forEach(function (p) { p.hidden = p.getAttribute("data-view-panel") !== name; });
+    navItems.forEach(function (btn) { btn.classList.toggle("active", btn.getAttribute("data-view") === name); });
+    if (name === "output-md" || name === "output-pdf") renderOutputCounts();
+    if (window.innerWidth <= 900) setSidebar(false);
+  }
+  navItems.forEach(function (btn) { btn.addEventListener("click", function () { showView(btn.getAttribute("data-view")); }); });
+
+  function setSidebar(open) {
+    els.sidebar.classList.toggle("collapsed", !open);
+    els.sidebarOpenBtn.classList.toggle("show", !open);
+  }
+  els.sidebarToggle.addEventListener("click", function () { setSidebar(false); });
+  els.sidebarOpenBtn.addEventListener("click", function () { setSidebar(true); });
+  setSidebar(window.innerWidth > 900);
 
   /* ============ Start ============ */
 
-  function loadInitial() {
-    var raw = JSON.parse(document.getElementById("initial-ticket-data").textContent);
-    var metaEl = document.getElementById("initial-ticket-meta");
-    var meta;
-    try { meta = JSON.parse(metaEl.textContent); } catch (e) { meta = null; }
-    if (!meta || !meta.source) {
-      meta = {
-        source: "Beispieldaten", when: new Date().toLocaleDateString("de-DE"),
-        format: "Jira HTML-Export (Issue-Tabelle)"
-      };
-    }
-    meta.action = "Importiert"; meta.isSample = true;
-    loadDataset(raw, meta);
-  }
-  loadInitial();
+  showView("dashboard");
+  resetSession();
 })();
 </script>

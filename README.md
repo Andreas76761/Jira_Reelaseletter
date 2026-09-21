@@ -137,17 +137,37 @@ und überarbeiten.
 ## Web-App: Ticket-Cockpit
 
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
-Server, kein Build-Schritt) für Phase 1 mit grafischer Oberfläche:
+Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
+folgenden Bereichen:
 
-- Jira-HTML-Export (Issue-Navigator-Tabelle, `id="issuetable"`) oder
-  klassischer XML-Export per Drag&Drop oder Dateiauswahl hochladen.
-- Parsing und Bereinigung laufen **vollständig im Browser** (JavaScript-
-  Portierung von `parser_html.py`/`parser_xml.py`/`cleaner.py`) – die
-  Datei verlässt den Rechner nicht.
-- Dashboard mit Status-Kacheln, Domain-Verteilung, Volltextsuche,
-  sortierbarer Tabelle und Ticket-Detailansicht.
-- Export als Markdown (einzelnes Ticket oder alle gefilterten Tickets als
-  ZIP-Archiv).
+- **Dashboard** – zusammengeführter, aktueller Stand aller importierten
+  Tickets: Status-Kacheln, Domain-Verteilung, Volltextsuche, sortierbare
+  Tabelle, Ticket-Detailansicht (18 Standardfelder, fehlende klar als
+  "Nicht im Export enthalten" markiert statt erfunden).
+- **Import** – Jira-HTML-Export (Issue-Navigator-Tabelle) oder klassischer
+  XML-Export per Drag&Drop oder Dateiauswahl, **auch mehrere Dateien
+  gleichzeitig/nacheinander**. Parsing und Bereinigung laufen
+  vollständig im Browser (JavaScript-Portierung von
+  `parser_html.py`/`parser_xml.py`/`cleaner.py`) – die Datei verlässt
+  den Rechner nicht.
+- **Dateiverwaltung** – Liste aller Imports dieser Sitzung sowie ein
+  Vergleich von Tickets, die in mehreren Imports mit unterschiedlichem
+  Status/Datum/Zusammenfassung vorkamen (Vorher/Nachher inkl. Quelle).
+  Tickets werden über ihren Schlüssel zusammengeführt (neuester Stand
+  gewinnt); im Dashboard markiert ein Punkt hinter dem Schlüssel
+  geänderte Tickets.
+- **Verarbeitung** – chronologisches Protokoll aller Import-/Export-Aktionen.
+- **Releaseletter / Benutzerhandbuch / Clickanweisung** – Textentwürfe aus
+  ausgewählten Tickets (aktuelle Dashboard-Filterung oder Ticket-Keys),
+  Vorschau + Markdown-Download.
+- **Prozessbild** – einfaches sequentielles Mermaid-Diagramm aus
+  ausgewählten Tickets, live gerendert.
+- **Bilder** – Galerie der in der Sitzung erzeugten Prozessdiagramme.
+- **Output MD Tickets / Output PDF Tickets** – bereinigte Tickets als
+  ZIP-Archiv aus Markdown- bzw. PDF-Dateien exportieren (respektiert die
+  aktuelle Dashboard-Filterung); PDFs werden clientseitig mit jsPDF
+  erzeugt.
+- **Infobox / Glossar** – Kurzerklärung der App bzw. Begriffsliste.
 - Word-Exporte (`.docx`) und Detail-HTML-Exports (ein Abschnitt pro
   Ticket statt einer Tabelle) werden von der Web-App **nicht**
   unterstützt – dafür das CLI-Tool verwenden.
