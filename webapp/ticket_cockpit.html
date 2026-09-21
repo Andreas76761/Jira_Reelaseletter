@@ -694,7 +694,7 @@
 
         <!-- 3) Glossar und Abkürzungen extrahieren -->
         <div class="subtabs-panel" data-vsub-panel="glossar-extrakt" hidden>
-          <p class="desc">Durchsucht alle geladenen Tickets nach Kürzeln (Großbuchstaben-Abkürzungen) und nach häufig verwendeten Status-/Typ-/Domain-Werten als Kandidaten für Glossar und Abkürzungsverzeichnis. Es werden keine Bedeutungen erfunden &ndash; nur tatsächlich vorkommende Begriffe mit Häufigkeit und Beispiel-Ticket. Ergebnisse erscheinen zusätzlich in den Registern <b>Glossar</b> und <b>Abkürzungen</b>.</p>
+          <p class="desc">Durchsucht alle geladenen Tickets nach Kürzeln (Großbuchstaben-Abkürzungen) und nach häufig verwendeten Status-/Typ-/Domain-Werten als Kandidaten für Glossar und Abkürzungsverzeichnis. Es werden keine Bedeutungen erfunden &ndash; nur tatsächlich vorkommende Begriffe mit Häufigkeit und Beispiel-Ticket. Zusätzlich zeigt die Abkürzungs-Tabelle je Kürzel einen <b>unverbindlichen Vorschlag</b> für die deutsche und englische Bedeutung, sofern es sich um ein allgemein bekanntes Kürzel handelt &ndash; bei firmenspezifischen oder mehrdeutigen Kürzeln bleibt das Feld bewusst leer (&ndash;) statt geraten zu werden; jeder Vorschlag ist redaktionell zu prüfen. Ergebnisse erscheinen zusätzlich in den Registern <b>Glossar</b> und <b>Abkürzungen</b>.</p>
           <p class="section-label">Prozessschritte</p>
           <div class="process-steps" id="steps-job-3"></div>
           <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
@@ -711,7 +711,7 @@
               <p class="section-label">Erkannte Abkürzungen (<span id="abbrev-count">0</span>)</p>
               <div class="panel table-wrap" style="max-height:360px; overflow:auto;">
                 <table class="simple-table" id="abbrev-table">
-                  <thead><tr><th>Kürzel</th><th>Häufigkeit</th><th>Beispiel-Tickets</th></tr></thead>
+                  <thead><tr><th>Kürzel</th><th>Häufigkeit</th><th>Beispiel-Tickets</th><th>Vorschlag Deutsch</th><th>Vorschlag Englisch</th></tr></thead>
                   <tbody id="abbrev-tbody"></tbody>
                 </table>
                 <div class="empty-hint" id="abbrev-empty">Noch nicht extrahiert.</div>
@@ -980,10 +980,10 @@
 
       <!-- ================= Abkürzungen ================= -->
       <section class="view-panel" data-view-panel="abkuerzungen" hidden>
-        <div class="view-head"><h2>Abkürzungen</h2><p class="desc">Großbuchstaben-Kürzel, die in Zusammenfassung, Beschreibung oder Custom-Feldern der geladenen Tickets vorkommen. Wird über <b>Verarbeitung → 3. Glossar &amp; Abkürzungen extrahieren</b> befüllt.</p></div>
+        <div class="view-head"><h2>Abkürzungen</h2><p class="desc">Großbuchstaben-Kürzel, die in Zusammenfassung, Beschreibung oder Custom-Feldern der geladenen Tickets vorkommen. Wird über <b>Verarbeitung → 3. Glossar &amp; Abkürzungen extrahieren</b> befüllt. Die Spalten "Vorschlag Deutsch"/"Vorschlag Englisch" sind unverbindliche Vorschläge für bekannte Kürzel und ersetzen keine redaktionelle Prüfung; bei firmenspezifischen/uneindeutigen Kürzeln steht dort bewusst "&ndash;".</p></div>
         <div class="panel table-wrap">
           <table class="simple-table" id="abbrev-table-register">
-            <thead><tr><th>Kürzel</th><th>Häufigkeit</th><th>Beispiel-Tickets</th></tr></thead>
+            <thead><tr><th>Kürzel</th><th>Häufigkeit</th><th>Beispiel-Tickets</th><th>Vorschlag Deutsch</th><th>Vorschlag Englisch</th></tr></thead>
             <tbody id="abbrev-tbody-register"></tbody>
           </table>
           <div class="empty-hint" id="abbrev-empty-register">Noch nicht extrahiert. Unter Verarbeitung → 3. Glossar &amp; Abkürzungen extrahieren einmal ausführen.</div>
@@ -2540,6 +2540,82 @@
   // \b erkennt Ä/Ö/Ü nicht als Wortzeichen (JS-\w ist ASCII-only), daher
   // Wortgrenzen ueber Lookaround gegen den vollen Buchstabenbereich statt \b.
   var ABBREV_RE = /(?<![A-Za-zÀ-ÖØ-öø-ÿ])[A-ZÄÖÜ]{2,6}(?![A-Za-zÀ-ÖØ-öø-ÿ])/g;
+
+  // Kuratierte Vorschlagsliste nur für allgemein bekannte IT-/Business-Kürzel.
+  // Für firmenspezifische/mehrdeutige Kürzel (z.B. Projekt-Codenamen) gibt es
+  // bewusst keinen Eintrag - dort zeigt die App "-" statt eine Bedeutung zu raten.
+  var ABBREV_MEANING_SUGGESTIONS = {
+    API: { de: "Programmierschnittstelle (Anwendungsprogrammierschnittstelle)", en: "Application Programming Interface" },
+    UI: { de: "Benutzeroberfläche", en: "User Interface" },
+    UX: { de: "Nutzererfahrung", en: "User Experience" },
+    DB: { de: "Datenbank", en: "Database" },
+    QA: { de: "Qualitätssicherung", en: "Quality Assurance" },
+    QS: { de: "Qualitätssicherung", en: "Quality Assurance" },
+    PDF: { de: "Portables Dokumentenformat", en: "Portable Document Format" },
+    CSV: { de: "Kommagetrennte Werte (Textdateiformat)", en: "Comma-Separated Values" },
+    XML: { de: "Erweiterbare Auszeichnungssprache", en: "Extensible Markup Language" },
+    JSON: { de: "JavaScript-Objektnotation (Datenformat)", en: "JavaScript Object Notation" },
+    URL: { de: "Internetadresse (einheitlicher Ressourcenzeiger)", en: "Uniform Resource Locator" },
+    URI: { de: "Einheitlicher Ressourcenbezeichner", en: "Uniform Resource Identifier" },
+    ID: { de: "Kennung/Identifikationsnummer", en: "Identifier" },
+    IT: { de: "Informationstechnologie", en: "Information Technology" },
+    HR: { de: "Personalwesen", en: "Human Resources" },
+    SLA: { de: "Dienstgütevereinbarung", en: "Service Level Agreement" },
+    KPI: { de: "Leistungskennzahl", en: "Key Performance Indicator" },
+    FAQ: { de: "Häufig gestellte Fragen", en: "Frequently Asked Questions" },
+    CRM: { de: "Kundenbeziehungsmanagement", en: "Customer Relationship Management" },
+    ERP: { de: "Unternehmensressourcenplanung", en: "Enterprise Resource Planning" },
+    ETL: { de: "Extraktion, Transformation, Laden (Datenintegration)", en: "Extract, Transform, Load" },
+    SDK: { de: "Software-Entwicklungspaket", en: "Software Development Kit" },
+    CLI: { de: "Kommandozeilen-Schnittstelle", en: "Command Line Interface" },
+    GUI: { de: "Grafische Benutzeroberfläche", en: "Graphical User Interface" },
+    OS: { de: "Betriebssystem", en: "Operating System" },
+    VM: { de: "Virtuelle Maschine", en: "Virtual Machine" },
+    CPU: { de: "Hauptprozessor", en: "Central Processing Unit" },
+    RAM: { de: "Arbeitsspeicher", en: "Random Access Memory" },
+    SQL: { de: "Strukturierte Abfragesprache", en: "Structured Query Language" },
+    HTML: { de: "Hypertext-Auszeichnungssprache", en: "Hypertext Markup Language" },
+    CSS: { de: "Gestaltungssprache für Webseiten", en: "Cascading Style Sheets" },
+    REST: { de: "Repräsentativer Zustandstransfer (API-Architekturstil)", en: "Representational State Transfer" },
+    SOAP: { de: "Protokoll für Webdienste", en: "Simple Object Access Protocol" },
+    HTTP: { de: "Hypertext-Übertragungsprotokoll", en: "Hypertext Transfer Protocol" },
+    HTTPS: { de: "Verschlüsseltes Hypertext-Übertragungsprotokoll", en: "Hypertext Transfer Protocol Secure" },
+    FTP: { de: "Dateiübertragungsprotokoll", en: "File Transfer Protocol" },
+    SSH: { de: "Sicheres Fernzugriffsprotokoll", en: "Secure Shell" },
+    VPN: { de: "Virtuelles privates Netzwerk", en: "Virtual Private Network" },
+    DNS: { de: "Domain-Namensauflösung", en: "Domain Name System" },
+    IP: { de: "Internetprotokoll", en: "Internet Protocol" },
+    TCP: { de: "Übertragungssteuerungsprotokoll", en: "Transmission Control Protocol" },
+    SSO: { de: "Einmalanmeldung", en: "Single Sign-On" },
+    MFA: { de: "Mehrfaktor-Authentifizierung", en: "Multi-Factor Authentication" },
+    GDPR: { de: "Datenschutz-Grundverordnung", en: "General Data Protection Regulation" },
+    DSGVO: { de: "Datenschutz-Grundverordnung", en: "General Data Protection Regulation (GDPR)" },
+    ISO: { de: "Internationale Organisation für Normung", en: "International Organization for Standardization" },
+    PM: { de: "Projektleitung/Projektmanagement", en: "Project Manager / Project Management" },
+    PO: { de: "Produktverantwortlicher", en: "Product Owner" },
+    BA: { de: "Fachlicher Analyst", en: "Business Analyst" },
+    CI: { de: "Kontinuierliche Integration", en: "Continuous Integration" },
+    CD: { de: "Kontinuierliche Auslieferung", en: "Continuous Delivery/Deployment" },
+    TDD: { de: "Testgetriebene Entwicklung", en: "Test-Driven Development" },
+    MVP: { de: "Minimal funktionsfähiges Produkt", en: "Minimum Viable Product" },
+    POC: { de: "Machbarkeitsnachweis", en: "Proof of Concept" },
+    ROI: { de: "Kapitalrendite", en: "Return on Investment" },
+    B2B: { de: "Geschäft zwischen Unternehmen", en: "Business-to-Business" },
+    B2C: { de: "Geschäft mit Endkunden", en: "Business-to-Consumer" },
+    EOD: { de: "Geschäftsschluss/Tagesende", en: "End of Day" },
+    ASAP: { de: "So schnell wie möglich", en: "As Soon As Possible" },
+    FYI: { de: "Zur Information", en: "For Your Information" },
+    TBD: { de: "Noch festzulegen", en: "To Be Determined" },
+    WIP: { de: "In Bearbeitung", en: "Work In Progress" },
+    TODO: { de: "Noch zu erledigen", en: "To Do" },
+    AI: { de: "Künstliche Intelligenz", en: "Artificial Intelligence" },
+    KI: { de: "Künstliche Intelligenz", en: "Artificial Intelligence (AI)" }
+  };
+  function abbrevMeaningSuggestion(term) {
+    var hit = ABBREV_MEANING_SUGGESTIONS[String(term).toUpperCase()];
+    return hit ? { de: hit.de, en: hit.en } : { de: "–", en: "–" };
+  }
+
   function extractAbbreviations(tickets) {
     var counts = {};
     tickets.forEach(function (t) {
@@ -2558,8 +2634,13 @@
         if (counts[tok].examples.length < 3) counts[tok].examples.push(t.key);
       }
     });
-    return Object.keys(counts).map(function (k) { return counts[k]; })
-      .sort(function (a, b) { return b.count - a.count || a.term.localeCompare(b.term); });
+    return Object.keys(counts).map(function (k) {
+      var r = counts[k];
+      var suggestion = abbrevMeaningSuggestion(r.term);
+      r.suggestedDe = suggestion.de;
+      r.suggestedEn = suggestion.en;
+      return r;
+    }).sort(function (a, b) { return b.count - a.count || a.term.localeCompare(b.term); });
   }
 
   var GLOSSARY_CANDIDATE_FIELDS = [
@@ -2588,7 +2669,8 @@
     var list = app.extracted.abbreviations;
     var html = list.map(function (r) {
       return "<tr><td class=\"mono\">" + escapeHtml(r.term) + "</td><td class=\"mono\">" + r.count +
-        "</td><td class=\"mono\">" + escapeHtml(r.examples.join(", ")) + "</td></tr>";
+        "</td><td class=\"mono\">" + escapeHtml(r.examples.join(", ")) + "</td>" +
+        "<td>" + escapeHtml(r.suggestedDe || "–") + "</td><td>" + escapeHtml(r.suggestedEn || "–") + "</td></tr>";
     }).join("");
     [els.abbrevCount].forEach(function (el) { el.textContent = list.length; });
     [[els.abbrevTbody, els.abbrevEmpty], [els.abbrevTbodyRegister, els.abbrevEmptyRegister]].forEach(function (pair) {
@@ -2934,7 +3016,7 @@
       return {
         filenameBase: "verarbeitung_3_glossar_abkuerzungen", title: "Job 3 – Glossar & Abkürzungen (extrahiert)",
         sections: [
-          { title: "Abkuerzungen", headers: ["Kürzel", "Häufigkeit", "Beispiel-Tickets"], rows: app.extracted.abbreviations.map(function (r) { return [r.term, r.count, r.examples.join(", ")]; }) },
+          { title: "Abkuerzungen", headers: ["Kürzel", "Häufigkeit", "Beispiel-Tickets", "Vorschlag Deutsch", "Vorschlag Englisch"], rows: app.extracted.abbreviations.map(function (r) { return [r.term, r.count, r.examples.join(", "), r.suggestedDe || "–", r.suggestedEn || "–"]; }) },
           { title: "Glossar-Kandidaten", headers: ["Feld", "Wert", "Häufigkeit"], rows: app.extracted.glossaryCandidates.map(function (r) { return [r.field, r.value, r.count]; }) }
         ]
       };

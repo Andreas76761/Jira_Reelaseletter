@@ -198,9 +198,13 @@ folgenden Bereichen:
      Tickets nach Großbuchstaben-Kürzeln (mit Häufigkeit und
      Beispiel-Ticket) sowie nach häufigen Status-/Typ-/Domain-Werten als
      Glossar-Kandidaten. Es werden keine Bedeutungen erfunden, nur
-     tatsächlich vorkommende Werte gelistet; Ergebnisse erscheinen
-     zusätzlich in den neuen Registern **Glossar** (Abschnitt "Aus
-     Ticket-Daten erkannte Begriffe") und **Abkürzungen**.
+     tatsächlich vorkommende Werte gelistet; zusätzlich zeigt die
+     Abkürzungs-Tabelle je Kürzel einen unverbindlichen Vorschlag für die
+     deutsche und englische Bedeutung (kuratierte Liste bekannter
+     IT-/Business-Kürzel) – bei firmenspezifischen oder mehrdeutigen
+     Kürzeln bleibt das Feld bewusst leer ("–") statt geraten zu werden.
+     Ergebnisse erscheinen zusätzlich in den neuen Registern **Glossar**
+     (Abschnitt "Aus Ticket-Daten erkannte Begriffe") und **Abkürzungen**.
   4. *Releaseversion* – tabellarische Übersicht aller geladenen Tickets
      mit Domain, ein Abgleich gegen eine eigene Release-Ticketliste (ein
      Key pro Zeile, zeigt fehlende Tickets, Web-App-Pendant zu
