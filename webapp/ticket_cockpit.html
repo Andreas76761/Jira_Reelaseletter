@@ -2298,6 +2298,82 @@
       reader.readAsText(file, "utf-8");
     });
   }
+  function readFileAsArrayBuffer(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onerror = function () { reject(new Error("Datei konnte nicht gelesen werden.")); };
+      reader.onload = function () { resolve(reader.result); };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  // .docx ist ein ZIP mit word/document.xml darin (OOXML). Statt einer neuen
+  // Bibliothek wird das bereits geladene JSZip zum Entpacken genutzt und die
+  // Tabellen/Absaetze werden selbst in Zeilen umgewandelt - ein Zeile pro
+  // Tabellenzeile (Zellen Tab-getrennt), damit dieselbe Zeilen-Logik wie beim
+  // .txt-Releaseinfo-Import (releaseInfoSplitColumns) greift.
+  // Confluence/Jira-Makro-Tabellen verschachteln die eigentliche Datentabelle
+  // oft in einer aeusseren "Wrapper"-Tabelle (eine Zelle je Zeile fuer das
+  // Panel-Layout) - Zeilen, die selbst eine verschachtelte Tabelle enthalten,
+  // sind reine Wrapper und werden uebersprungen, sonst erscheint der gesamte
+  // Zeileninhalt doppelt (einmal als Wrapper-Text ohne Tabs, einmal korrekt).
+  function docxParagraphText(pEl) {
+    var runs = pEl.getElementsByTagName("w:t");
+    var parts = [];
+    for (var i = 0; i < runs.length; i++) parts.push(runs[i].textContent);
+    return parts.join("").trim();
+  }
+  function docxCellText(tcEl) {
+    var paras = tcEl.getElementsByTagName("w:p");
+    var parts = [];
+    for (var i = 0; i < paras.length; i++) {
+      var t = docxParagraphText(paras[i]);
+      if (t) parts.push(t);
+    }
+    return parts.join(" ");
+  }
+  function docxXmlToLines(xmlText) {
+    var doc = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (doc.querySelector("parsererror")) throw new Error("word/document.xml konnte nicht gelesen werden (beschädigte .docx-Datei?).");
+    var body = doc.getElementsByTagName("w:body")[0];
+    if (!body) throw new Error("Kein Dokumentinhalt (w:body) in der .docx-Datei gefunden.");
+    var lines = [];
+    Array.prototype.forEach.call(body.childNodes, function (node) {
+      if (node.nodeType !== 1) return;
+      var tag = node.tagName;
+      if (tag === "w:p") {
+        var t = docxParagraphText(node);
+        if (t) lines.push(t);
+      } else if (tag === "w:tbl") {
+        Array.prototype.forEach.call(node.getElementsByTagName("w:tr"), function (tr) {
+          if (tr.getElementsByTagName("w:tbl").length > 0) return; // Wrapper-Zeile ueberspringen
+          var cells = Array.prototype.map.call(tr.getElementsByTagName("w:tc"), docxCellText);
+          if (cells.some(function (c) { return c; })) lines.push(cells.join("\t"));
+        });
+      }
+    });
+    return lines.join("\n");
+  }
+  var DOC_LEGACY_SIGNATURE = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1];
+  async function extractTextFromDocx(file) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek (JSZip) nicht geladen - .docx kann nicht gelesen werden.");
+    var buf = await readFileAsArrayBuffer(file);
+    var head = new Uint8Array(buf.slice(0, 8));
+    var isLegacyDoc = DOC_LEGACY_SIGNATURE.every(function (b, i) { return head[i] === b; });
+    if (isLegacyDoc) {
+      throw new Error(
+        "Altes .doc-Format (vor Word 2007) wird nicht unterstützt. Bitte die Datei in Word über " +
+        "„Speichern unter“ als .docx speichern und erneut hochladen."
+      );
+    }
+    var zip;
+    try { zip = await JSZip.loadAsync(buf); }
+    catch (e) { throw new Error("Datei konnte nicht als .docx (ZIP) gelesen werden - ist es wirklich ein Word-Dokument? (" + (e && e.message) + ")"); }
+    var docXmlEntry = zip.file("word/document.xml");
+    if (!docXmlEntry) throw new Error("Kein word/document.xml in der .docx-Datei gefunden - ist es wirklich ein Word-Dokument?");
+    var xmlText = await docXmlEntry.async("string");
+    return docxXmlToLines(xmlText);
+  }
 
   var IMPORT_MODE_INFO = {
     massenupload: {
@@ -2312,13 +2388,13 @@
     },
     releaseinfo: {
       title: "Releaseinfo-Text(e) hier ablegen",
-      hint: "oder klicken zum Auswählen (mehrere Releaseinfos möglich) · Confluence-Release-Notes als .txt, Tickets werden je Domain gruppiert",
-      accept: ".txt"
+      hint: "oder klicken zum Auswählen (mehrere Releaseinfos möglich) · Confluence-Release-Notes als .txt oder als Word-Export (.docx), Tickets werden je Domain gruppiert",
+      accept: ".txt,.docx,.doc"
     },
     andere: {
       title: "Beliebige Exportdatei(en) hier ablegen",
-      hint: "oder klicken zum Auswählen · Format wird automatisch erkannt (Massenupload, Einzelticket, Releaseinfo)",
-      accept: ".html,.htm,.xml,.txt"
+      hint: "oder klicken zum Auswählen · Format wird automatisch erkannt (Massenupload, Einzelticket, Releaseinfo, auch .docx)",
+      accept: ".html,.htm,.xml,.txt,.docx,.doc"
     }
   };
   var importMode = "massenupload";
@@ -2345,7 +2421,9 @@
     for (var i = 0; i < files.length; i++) {
       var file = files[i];
       try {
-        var text = await readFileAsText(file);
+        var lowerName = file.name.toLowerCase();
+        var isWordFile = lowerName.slice(-5) === ".docx" || lowerName.slice(-4) === ".doc";
+        var text = isWordFile ? await extractTextFromDocx(file) : await readFileAsText(file);
         var result = parseFn(text, file.name);
         var record = ingestTickets(result.tickets, { source: file.name, when: nowLabel(), format: result.format, comment: comment });
         var extra = "";

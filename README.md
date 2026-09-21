@@ -163,11 +163,18 @@ folgenden Bereichen:
     `parser_html.py`/`parser_xml.py`/`cleaner.py`).
   - *Jira Einzelticket* – einzelne Ticket-Detailseite (HTML, ein Ticket
     pro Datei, Überschrift + Feldtabellen).
-  - *Releaseinfo* – Release-Notes-Text aus Confluence (.txt, Tab-getrennt),
-    Tickets werden je Service-Abschnitt automatisch der dort genannten
-    Domain zugeordnet und über den Schlüssel dedupliziert (mehrere
-    Service-Zugehörigkeiten werden als Komponenten zusammengeführt).
-  - *Andere Importe* – probiert alle drei Parser automatisch durch.
+  - *Releaseinfo* – Release-Notes-Text aus Confluence, als .txt
+    (Tab-getrennt) **oder als Word-Export (.docx)** – die Tabellen aus
+    dem .docx werden direkt im Browser über das bereits geladene JSZip
+    aus `word/document.xml` extrahiert (keine neue Bibliothek nötig) und
+    ergeben exakt dieselben Zeilen wie die .txt-Variante. Tickets werden
+    je Service-Abschnitt automatisch der dort genannten Domain zugeordnet
+    und über den Schlüssel dedupliziert (mehrere Service-Zugehörigkeiten
+    werden als Komponenten zusammengeführt). Das alte, binäre .doc-Format
+    (vor Word 2007) lässt sich zwar auswählen, wird aber ehrlich mit einer
+    Fehlermeldung abgelehnt statt fehlerhaft "geraten" – Word bietet dafür
+    "Speichern unter" → .docx an.
+  - *Andere Importe* – probiert alle Parser automatisch durch (inkl. .docx).
 - **Dateiverwaltung** – Liste aller Imports dieser Sitzung sowie ein
   Vergleich von Tickets, die in mehreren Imports mit unterschiedlichem
   Status/Datum/Zusammenfassung vorkamen (Vorher/Nachher inkl. Quelle).
