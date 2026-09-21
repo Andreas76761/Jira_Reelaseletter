@@ -731,8 +731,9 @@
         <div class="panel" style="padding:18px;">
           <p style="margin:0 0 12px; font-size:13px; color:var(--text-muted);">Ausgewählt: <b class="mono" id="output-md-count">0</b> von <b class="mono" id="output-md-total">0</b> Tickets (gemäß Dashboard-Filter)</p>
           <button class="btn primary" id="output-md-export-btn" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M4 21h16"/></svg>
-            Als Markdown-Archiv (.zip) exportieren
+            <span class="btn-spinner" id="output-md-export-spinner" hidden></span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" id="output-md-export-icon"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M4 21h16"/></svg>
+            <span id="output-md-export-label">Als Markdown-Archiv (.zip) exportieren</span>
           </button>
         </div>
       </section>
@@ -743,8 +744,9 @@
         <div class="panel" style="padding:18px;">
           <p style="margin:0 0 12px; font-size:13px; color:var(--text-muted);">Ausgewählt: <b class="mono" id="output-pdf-count">0</b> von <b class="mono" id="output-pdf-total">0</b> Tickets (gemäß Dashboard-Filter)</p>
           <button class="btn primary" id="output-pdf-export-btn" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M4 21h16"/></svg>
-            Als PDF-Archiv (.zip) exportieren
+            <span class="btn-spinner" id="output-pdf-export-spinner" hidden></span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" id="output-pdf-export-icon"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M4 21h16"/></svg>
+            <span id="output-pdf-export-label">Als PDF-Archiv (.zip) exportieren</span>
           </button>
         </div>
       </section>
@@ -1286,12 +1288,17 @@
     "Offen": "backlog", "Dev Backlog": "backlog", "PI Backlog": "backlog", "in Refinement": "backlog", "In Analysis": "backlog",
     "BAT Testing": "progress", "QG-BU": "progress", "Blocked BAT Testing": "blocked"
   };
+  // Case-insensitiver Lookup: dieselbe Statusbezeichnung darf je nach
+  // Export/Schreibweise (z. B. "in Refinement" vs. "In Refinement") nicht in
+  // unterschiedlichen Buckets landen.
+  var BUCKET_OF_STATUS_LOWER = {};
+  Object.keys(BUCKET_OF_STATUS).forEach(function (k) { BUCKET_OF_STATUS_LOWER[k.toLowerCase()] = BUCKET_OF_STATUS[k]; });
   var BUCKET_LABEL = { done: "Erledigt", backlog: "Offen / Backlog", progress: "In Bearbeitung", blocked: "Blockiert", cancelled: "Abgebrochen" };
   var BUCKET_ORDER = ["done", "backlog", "progress", "blocked", "cancelled"];
 
   function bucketFor(status) {
-    if (BUCKET_OF_STATUS[status]) return BUCKET_OF_STATUS[status];
     var s = (status || "").toLowerCase();
+    if (BUCKET_OF_STATUS_LOWER[s]) return BUCKET_OF_STATUS_LOWER[s];
     if (/(closed|done|erledigt|geschlossen|resolved|fertig)/.test(s)) return "done";
     if (/(cancel|abgebrochen|verworfen)/.test(s)) return "cancelled";
     if (/(block)/.test(s)) return "blocked";
@@ -1340,8 +1347,8 @@
     "release-keys-input", "release-match-btn", "release-match-summary",
     "release-missing-wrap", "release-missing-table", "release-missing-tbody",
     "gallery", "gallery-empty",
-    "output-md-count", "output-md-total", "output-md-export-btn",
-    "output-pdf-count", "output-pdf-total", "output-pdf-export-btn",
+    "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
+    "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
     "modal-overlay", "modal-key", "modal-title", "modal-fields", "modal-desc-wrap", "modal-desc",
     "modal-close", "modal-cancel-btn", "modal-download-btn", "modal-download-pdf-btn", "toast"
   ].forEach(function (id) {
@@ -1764,20 +1771,38 @@
     }
   }
 
+  // Baut MD/PDF nicht in einem einzigen synchronen Durchlauf (blockiert bei
+  // vielen hundert Tickets sonst spuerbar den Haupt-Thread, ohne dass die
+  // Sanduhr/der deaktivierte Button vorher ueberhaupt gerendert wird) -
+  // stattdessen alle EXPORT_CHUNK Tickets kurz an den Browser abgeben.
+  var EXPORT_CHUNK = 40;
+  async function buildZipEntriesChunked(zip, filtered, kind) {
+    for (var i = 0; i < filtered.length; i++) {
+      var t = filtered[i];
+      if (kind === "md") zip.file(safeFilename(t.key) + ".md", renderMarkdown(t.raw));
+      else zip.file(safeFilename(t.key) + ".pdf", buildPdfDoc(t.raw).output("blob"));
+      if (i > 0 && i % EXPORT_CHUNK === 0) await wait(0);
+    }
+  }
+
   async function exportZip(kind) {
     var btn = kind === "md" ? els.outputMdExportBtn : els.outputPdfExportBtn;
+    var spinner = kind === "md" ? els.outputMdExportSpinner : els.outputPdfExportSpinner;
+    var icon = kind === "md" ? els.outputMdExportIcon : els.outputPdfExportIcon;
+    var label = kind === "md" ? els.outputMdExportLabel : els.outputPdfExportLabel;
+    var labelText = label.textContent;
     if (typeof JSZip === "undefined") { showToast("Fehlgeschlagen", "ZIP-Bibliothek konnte nicht geladen werden.", true); return; }
     if (kind === "pdf" && typeof window.jspdf === "undefined") { showToast("Fehlgeschlagen", "PDF-Bibliothek konnte nicht geladen werden.", true); return; }
     var filtered = currentFiltered();
     if (!filtered.length) return;
     btn.disabled = true;
+    spinner.hidden = false;
+    icon.style.display = "none";
+    label.textContent = "Wird erzeugt (" + filtered.length + " Tickets) …";
+    await wait(20); // Sanduhr einmal rendern lassen, bevor der Aufbau beginnt
     try {
       var zip = new JSZip();
-      if (kind === "md") {
-        filtered.forEach(function (t) { zip.file(safeFilename(t.key) + ".md", renderMarkdown(t.raw)); });
-      } else {
-        filtered.forEach(function (t) { zip.file(safeFilename(t.key) + ".pdf", buildPdfDoc(t.raw).output("blob")); });
-      }
+      await buildZipEntriesChunked(zip, filtered, kind);
       var blob = await zip.generateAsync({ type: "blob" });
       var filename = kind === "md" ? "tickets_bereinigt.zip" : "tickets_bereinigt_pdf.zip";
       var ok = await saveOrWarn(filename, blob);
@@ -1789,6 +1814,9 @@
       showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler beim Export.", true);
     } finally {
       btn.disabled = currentFiltered().length === 0;
+      spinner.hidden = true;
+      icon.style.display = "";
+      label.textContent = labelText;
     }
   }
   els.outputMdExportBtn.addEventListener("click", function () { exportZip("md"); });
@@ -2018,7 +2046,9 @@
   // 3) Glossar & Abkürzungen extrahieren: nur tatsächlich vorkommende Werte
   // werden gelistet (Häufigkeit + Beispiel-Ticket) - es wird keine Bedeutung
   // erfunden, das bleibt redaktionelle Aufgabe im Glossar-Register.
-  var ABBREV_RE = /\b[A-ZÄÖÜ]{2,6}\b/g;
+  // \b erkennt Ä/Ö/Ü nicht als Wortzeichen (JS-\w ist ASCII-only), daher
+  // Wortgrenzen ueber Lookaround gegen den vollen Buchstabenbereich statt \b.
+  var ABBREV_RE = /(?<![A-Za-zÀ-ÖØ-öø-ÿ])[A-ZÄÖÜ]{2,6}(?![A-Za-zÀ-ÖØ-öø-ÿ])/g;
   function extractAbbreviations(tickets) {
     var counts = {};
     tickets.forEach(function (t) {
@@ -2165,8 +2195,10 @@
       if (t.description) lines.push("  " + truncate(t.description, 220));
     });
     lines.push("", "## Bekannte Einschränkungen / offene Punkte", "");
-    var doneWords = ["done", "closed", "resolved", "erledigt", "geschlossen", "fertig"];
-    var open = tickets.filter(function (t) { return t.status && doneWords.indexOf(t.status.toLowerCase()) === -1; });
+    // Dieselbe Status-Bucket-Logik wie im Dashboard verwenden, statt einer
+    // eigenen Wortliste - sonst tauchen z.B. abgebrochene ("Cancelled")
+    // Tickets faelschlich als offener Punkt auf.
+    var open = tickets.filter(function (t) { var b = bucketFor(t.status); return b !== "done" && b !== "cancelled"; });
     if (open.length) open.forEach(function (t) { lines.push("- " + t.key + ": " + (t.summary || "") + " (Status: " + t.status + ")"); });
     else lines.push("Keine offenen Punkte bekannt.");
     return lines.join("\n");
