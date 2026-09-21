@@ -907,6 +907,8 @@
         <!-- 7) RAG: Zusammenfassung & Fließtext -->
         <div class="subtabs-panel" data-vsub-panel="rag" hidden>
           <p class="desc">Rohdaten (Überschrift + Beschreibung) der aktuell in Verarbeitung ausgewählten Datei extrahieren &ndash; gefiltert nach Domäne, Status und Zeitraum &ndash; und daraus mit Claude einen endnutzergerechten Text generieren (Zusammenfassung oder Fließtext). Die Extraktion selbst zeigt nur unverändert vorhandene Ticket-Daten; die KI-Generierung ist ein separater, bewusst ausgelöster Schritt und wird als solcher gekennzeichnet &ndash; automatisch erzeugter Text, vor Verwendung redaktionell prüfen.</p>
+          <p class="section-label">Prozessschritte</p>
+          <div class="process-steps" id="steps-job-7"></div>
 
           <section>
             <p class="section-label">1. Rohdaten extrahieren</p>
@@ -927,6 +929,12 @@
                 <thead><tr><th>Ticket</th><th>Domäne</th><th>Status</th><th>Datum</th><th>Überschrift</th><th>Beschreibung</th></tr></thead>
                 <tbody id="rag-extract-tbody"></tbody>
               </table>
+            </div>
+            <div class="job-export-row" id="rag-export-row" style="margin-top:8px;" hidden>
+              <span class="job-export-label">Rohdaten-Tabelle exportieren:</span>
+              <button class="btn ghost job-export-btn" data-job="7" data-format="xlsx" type="button">XLSX</button>
+              <button class="btn ghost job-export-btn" data-job="7" data-format="docx" type="button">DOCX</button>
+              <button class="btn ghost job-export-btn" data-job="7" data-format="pdf" type="button">PDF</button>
             </div>
           </section>
 
@@ -3270,7 +3278,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "1.8.0";
+  var APP_VERSION = "1.8.1";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -3973,7 +3981,7 @@
     "jiraliste-count", "jiraliste-tbody",
     "domainoverview-domain-count", "domainoverview-ticket-count", "domainoverview-tbody", "domainoverview-empty",
     "rag-domain-select", "rag-status-select", "rag-date-from", "rag-date-to", "rag-extract-btn",
-    "rag-extract-summary", "rag-extract-count", "rag-extract-wrap", "rag-extract-tbody",
+    "rag-extract-summary", "rag-extract-count", "rag-extract-wrap", "rag-extract-tbody", "rag-export-row",
     "rag-generate-summary-btn", "rag-generate-fliesstext-btn", "rag-stop-btn", "rag-status-note", "rag-output", "rag-download-btn",
     "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
     "points-tbody", "points-new-type", "points-new-value", "points-add-btn",
@@ -5648,9 +5656,11 @@
     renderReleaseversionTable();
     renderJiraListe();
     renderDomainOverview();
+    ragPopulateSelects();
+    ragClearExtraction();
     renderAllJobSteps();
     var label = activeImportLabel();
-    addLog("Aktive Datei für Verarbeitung (Job 3/4/5): " + (label ? label : "Alle Importe (zusammengeführt)") + ".");
+    addLog("Aktive Datei für Verarbeitung (Job 3-7): " + (label ? label : "Alle Importe (zusammengeführt)") + ".");
   }
 
   function computeJobSteps(jobNum) {
@@ -5730,11 +5740,25 @@
         { state: scopedCount > 0 ? "done" : "pending", label: "Innerhalb jeder Domäne chronologisch zusammengeführt", note: scopedCount > 0 ? "Tabelle + XLSX/DOCX/PDF bereit" : "–" }
       ];
     }
+    if (jobNum === 7) {
+      var ragHasRows = ragExtractedRows.length > 0;
+      return [
+        loaded, processed,
+        {
+          state: ragHasRows ? "done" : "pending", label: "Rohdaten extrahiert (Domäne/Status/Zeitraum gefiltert)",
+          note: ragHasRows ? ragExtractedRows.length + " Tickets extrahiert – Tabelle + XLSX/DOCX/PDF bereit" : "Noch nicht extrahiert"
+        },
+        {
+          state: ragHasGenerated ? "done" : "pending", label: "Endnutzergerechten Text generiert (Claude)",
+          note: ragHasGenerated ? "Text erzeugt – Markdown-Download bereit" : (sampleApi ? "Noch nicht generiert" : "KI-Funktion in dieser Ansicht nicht verfügbar")
+        }
+      ];
+    }
     return [];
   }
 
   function renderAllJobSteps() {
-    for (var i = 1; i <= 6; i++) renderProcessSteps("steps-job-" + i, computeJobSteps(i));
+    for (var i = 1; i <= 7; i++) renderProcessSteps("steps-job-" + i, computeJobSteps(i));
   }
 
   /* ============ Teil 8d: Job-Export (XLSX/DOCX/PDF) je Verarbeitung-Job ============ */
@@ -5800,6 +5824,15 @@
             rows: g.tickets.map(function (t) { return [t.key, t.issueType || "–", t.status || "–", t.updated || t.created || "–", t.summary || "–", (t.raw && t.raw.description) || "–", pointsDisplay(t.points), labelsDisplayText(t.autoLabels)]; })
           };
         })
+      };
+    }
+    if (jobNum === "7") {
+      return {
+        filenameBase: "verarbeitung_7_rag_rohdaten", title: "Job 7 – RAG: Extrahierte Rohdaten (Domäne/Status/Zeitraum gefiltert)",
+        sections: [{
+          title: "Rohdaten", headers: ["Ticket", "Domäne", "Status", "Datum", "Überschrift", "Beschreibung"],
+          rows: ragExtractedRows.map(function (r) { return [r.key, r.domain, r.status, r.date, r.summary || "–", r.description || "–"]; })
+        }]
       };
     }
     return null;
@@ -7073,6 +7106,7 @@
   var ragExtractedRows = [];
   var ragAbortController = null;
   var ragLastKind = "summary";
+  var ragHasGenerated = false;
 
   function ragDistinctValues(list, field) {
     var seen = {}, out = [];
@@ -7096,13 +7130,23 @@
     }).join("");
   }
 
-  function ragResetOutput() {
+  // Leichter Reset nach Wechsel der "Datei auswählen"-Auswahl: die zuvor
+  // extrahierten Rohdaten passen nicht mehr zwangsläufig zum neuen Scope,
+  // ein bereits generierter KI-Text bleibt aber sichtbar (kein Datenverlust
+  // durch bloßen Datei-Wechsel).
+  function ragClearExtraction() {
     ragExtractedRows = [];
     els.ragExtractSummary.hidden = true;
     els.ragExtractWrap.hidden = true;
     els.ragExtractTbody.innerHTML = "";
+    els.ragExportRow.hidden = true;
     els.ragGenerateSummaryBtn.disabled = true;
     els.ragGenerateFliesstextBtn.disabled = true;
+  }
+
+  function ragResetOutput() {
+    ragClearExtraction();
+    ragHasGenerated = false;
     els.ragDownloadBtn.disabled = true;
     els.ragOutput.textContent = "Noch kein Text generiert.";
     els.ragStatusNote.textContent = "";
@@ -7139,10 +7183,12 @@
     var hasContent = rows.some(function (r) { return r.summary || r.description; });
     els.ragGenerateSummaryBtn.disabled = !hasContent;
     els.ragGenerateFliesstextBtn.disabled = !hasContent;
+    els.ragExportRow.hidden = rows.length === 0;
     els.ragDownloadBtn.disabled = true;
     els.ragOutput.textContent = "Noch kein Text generiert.";
     els.ragStatusNote.textContent = hasContent ? "" : "Keine Zusammenfassung/Beschreibung in den ausgewählten Tickets - Generierung nicht möglich.";
     addLog("RAG: " + rows.length + " Tickets extrahiert (Domäne/Status/Zeitraum gefiltert).");
+    renderAllJobSteps();
   }
   els.ragExtractBtn.addEventListener("click", ragExtract);
 
@@ -7199,6 +7245,8 @@
       els.ragStatusNote.textContent = "KI-generiert (" + (kind === "summary" ? "Zusammenfassung" : "Fließtext") + ") – bitte redaktionell prüfen." +
         (result.truncated ? " Hinweis: Antwort wurde gekürzt (Auswahl eingrenzen für vollständige Antwort)." : "");
       addLog("RAG: " + (kind === "summary" ? "Zusammenfassung" : "Fließtext") + " für " + ragExtractedRows.length + " Tickets generiert (Claude).");
+      ragHasGenerated = true;
+      renderAllJobSteps();
     } catch (err) {
       if (err && err.code === "cancelled") {
         els.ragStatusNote.textContent = "Abgebrochen.";

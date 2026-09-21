@@ -269,12 +269,15 @@ wirkungslos bleiben kann:
   gegen Zusammenfassung/Beschreibung/Domäne des Tickets – keine KI, und
   fehlt ein Tickettyp im Punkte-System, wird ehrlich "Unbekannt" statt
   geraten angezeigt.
-  7. *RAG: Zusammenfassung & Fließtext* – zweistufig. Schritt 1
+  7. *RAG: Zusammenfassung & Fließtext* – hat wie Jobs 1-6 eine eigene
+     "Datei auswählen"-Prozessschritt-Karte (unabhängig von der Auswahl in
+     anderen Jobs). Zweistufig. Schritt 1
      (**Retrieval**, rein deterministisch): Rohdaten (Überschrift +
      Beschreibung) der aktuell ausgewählten Datei nach Domäne, Status und
      Zeitraum filtern (Mehrfachauswahl) und als Tabelle anzeigen – zeigt
-     nur unverändert vorhandene Ticket-Daten, "–" bei fehlendem Text.
-     Schritt 2 (**Generation**, echte KI): mit den Buttons "Zusammenfassung
+     nur unverändert vorhandene Ticket-Daten, "–" bei fehlendem Text; die
+     Rohdaten-Tabelle lässt sich wie bei Jobs 1-6 als XLSX/DOCX/PDF
+     exportieren. Schritt 2 (**Generation**, echte KI): mit den Buttons "Zusammenfassung
      generieren" bzw. "Fließtext generieren" schickt die App die
      extrahierten Rohdaten über die `sample`-Laufzeit-Capability an Claude
      und lässt daraus einen endnutzergerechten Text schreiben (Live-Streaming
