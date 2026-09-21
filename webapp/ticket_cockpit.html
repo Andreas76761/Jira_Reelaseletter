@@ -145,7 +145,9 @@
     cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;
   }
   .dropzone:hover, .dropzone.dragover { border-color: var(--accent); background: var(--accent-soft); }
+  .dropzone.processing { cursor: wait; opacity: 0.85; }
   .dropzone svg { flex: none; color: var(--accent); }
+  .dropzone-spinner { width: 24px; height: 24px; border-width: 3px; color: var(--accent); }
   .dropzone .txt strong { display: block; font-size: 13.5px; color: var(--text); }
   .dropzone .txt span { font-size: 12px; color: var(--text-muted); }
   .upload-side { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
@@ -615,12 +617,14 @@
 
       <!-- ================= Import ================= -->
       <section class="view-panel" data-view-panel="import" hidden>
-        <div class="view-head"><h2>Import</h2><p class="desc">Ausgangsdaten für Releaseletter, Benutzerhandbuch, Prozessbild und Clickanweisung laden: Jira-Exporte, Confluence-/Releaseinfo-Seiten sowie DOCX- und PDF-Dateien. Format wählen und eine oder mehrere Dateien hochladen &ndash; neue Dateien werden zu den bisherigen Tickets hinzugefügt/aktualisiert, nicht ersetzt.</p></div>
+        <div class="view-head"><h2>Import</h2><p class="desc">Ausgangsdaten für Releaseletter, Benutzerhandbuch, Prozessbild und Clickanweisung laden: Jira-Exporte, Confluence-/Releaseinfo-Seiten, DOCX- und PDF-Dateien, auch gebündelt als ZIP-Archiv. Format wählen und eine oder mehrere Dateien hochladen &ndash; neue Dateien werden zu den bisherigen Tickets hinzugefügt/aktualisiert, nicht ersetzt.</p></div>
 
         <div class="import-tabs" id="import-tabs">
           <button class="import-tab active" data-mode="massenupload" type="button">Jira Massenupload</button>
           <button class="import-tab" data-mode="einzelticket" type="button">Jira Einzelticket</button>
           <button class="import-tab" data-mode="releaseinfo" type="button">Releaseinfo</button>
+          <button class="import-tab" data-mode="docx" type="button">Word (DOC/DOCX)</button>
+          <button class="import-tab" data-mode="zip" type="button">ZIP-Archiv</button>
           <button class="import-tab" data-mode="andere" type="button">Andere Importe</button>
         </div>
 
@@ -631,7 +635,8 @@
 
         <div class="upload-row">
           <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Datei(en) auswählen">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span class="btn-spinner dropzone-spinner" id="dropzone-spinner" hidden></span>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" id="dropzone-icon"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
             <span class="txt">
               <strong id="dropzone-title">Jira-HTML- oder XML-Export(e) hier ablegen</strong>
               <span id="dropzone-hint">oder klicken zum Auswählen (Mehrfachauswahl möglich) &middot; Bereinigung läuft komplett im Browser, nichts wird hochgeladen</span>
@@ -3291,7 +3296,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.2.0";
+  var APP_VERSION = "2.3.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -3597,6 +3602,7 @@
     massenupload: parseAsMassenupload,
     einzelticket: parseAsEinzelticket,
     releaseinfo: parseAsReleaseinfo,
+    docx: parseAsAndere,
     andere: parseAsAndere
   };
 
@@ -4027,7 +4033,7 @@
     "stat-tickets", "stat-imports", "stat-changes", "app-version",
     "tiles", "domain-chart", "domain-section", "domain-label", "domain-select", "label-select", "search-input", "reset-filter-btn",
     "table-body", "empty-state", "result-count",
-    "dropzone", "dropzone-title", "dropzone-hint", "file-input", "reset-session-btn", "format-callout", "import-tabs",
+    "dropzone", "dropzone-title", "dropzone-hint", "dropzone-icon", "dropzone-spinner", "file-input", "reset-session-btn", "format-callout", "import-tabs",
     "import-comment-input",
     "paste-textarea", "paste-from-clipboard-btn", "paste-process-btn", "paste-spinner", "paste-process-label",
     "imports-tbody", "changes-tbody", "changes-empty", "domain-aliases-tbody",
@@ -4855,9 +4861,12 @@
     return lines.join("\n");
   }
   var DOC_LEGACY_SIGNATURE = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1];
-  async function extractTextFromDocx(file) {
+  // Parsing von der Beschaffung des ArrayBuffers getrennt, damit dieselbe
+  // Logik sowohl fuer hochgeladene Dateien (ueber FileReader) als auch fuer
+  // Eintraege aus einem ZIP-Archiv (direkt ueber JSZips eigenes
+  // .async("arraybuffer"), ohne Umweg ueber Blob/FileReader) genutzt werden kann.
+  async function docxArrayBufferToLines(buf) {
     if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek (JSZip) nicht geladen - .docx kann nicht gelesen werden.");
-    var buf = await readFileAsArrayBuffer(file);
     var head = new Uint8Array(buf.slice(0, 8));
     var isLegacyDoc = DOC_LEGACY_SIGNATURE.every(function (b, i) { return head[i] === b; });
     if (isLegacyDoc) {
@@ -4874,6 +4883,9 @@
     var xmlText = await docXmlEntry.async("string");
     return docxXmlToLines(xmlText);
   }
+  async function extractTextFromDocx(file) {
+    return docxArrayBufferToLines(await readFileAsArrayBuffer(file));
+  }
 
   // PDF-Textextraktion (Confluence-Release-Notes/Releaseinfo auch als PDF-
   // Export hochladbar) ueber pdf.js. Rekonstruiert Zeilen/Spalten aus den
@@ -4883,9 +4895,8 @@
   // (damit releaseInfoSplitColumns() dieselbe Tab-/Mehrfach-Leerzeichen-
   // Logik wie bei .txt/.docx anwenden kann). Best-Effort wie die anderen
   // Parser - Qualitaet haengt von der PDF-Struktur ab.
-  async function extractTextFromPdf(file) {
+  async function pdfArrayBufferToLines(buf) {
     if (typeof pdfjsLib === "undefined") throw new Error("PDF-Bibliothek (pdf.js) konnte nicht geladen werden - .pdf kann nicht gelesen werden.");
-    var buf = await readFileAsArrayBuffer(file);
     var doc;
     try { doc = await pdfjsLib.getDocument({ data: buf }).promise; }
     catch (e) { throw new Error("Datei konnte nicht als PDF gelesen werden - ist es wirklich eine PDF-Datei? (" + (e && e.message) + ")"); }
@@ -4923,8 +4934,90 @@
     }
     return lines.join("\n");
   }
+  async function extractTextFromPdf(file) {
+    return pdfArrayBufferToLines(await readFileAsArrayBuffer(file));
+  }
   if (typeof pdfjsLib !== "undefined") {
     pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  }
+
+  // Text-Extraktion nach Dateiendung fuer direkt hochgeladene Dateien (File,
+  // ueber FileReader).
+  function isWordName(lowerName) { return lowerName.slice(-5) === ".docx" || lowerName.slice(-4) === ".doc"; }
+  function isPdfName(lowerName) { return lowerName.slice(-4) === ".pdf"; }
+  async function extractTextForBlob(blob, lowerName) {
+    if (isWordName(lowerName)) return extractTextFromDocx(blob);
+    if (isPdfName(lowerName)) return extractTextFromPdf(blob);
+    return readFileAsText(blob);
+  }
+  // Dieselbe Unterscheidung fuer Eintraege aus einem ZIP-Archiv - JSZip liefert
+  // Inhalte direkt als String/ArrayBuffer, der Umweg ueber Blob+FileReader ist
+  // unnoetig (und in manchen Umgebungen, z.B. Node/jsdom-Tests, unzuverlaessig,
+  // da ein von JSZip erzeugter Blob nicht zwingend aus derselben Realm stammt).
+  async function extractTextForZipEntry(zipEntry, lowerName) {
+    if (isWordName(lowerName)) return docxArrayBufferToLines(await zipEntry.async("arraybuffer"));
+    if (isPdfName(lowerName)) return pdfArrayBufferToLines(await zipEntry.async("arraybuffer"));
+    return zipEntry.async("string");
+  }
+
+  // Dateien innerhalb eines ZIP-Archivs, die als Ticket-Export in Frage
+  // kommen - macOS-Metadaten (__MACOSX/, versteckte .Dateien) werden
+  // uebersprungen, alles andere ohne passende Endung ebenfalls (kein
+  // Fehler dafuer, nur nicht mitgezaehlt).
+  var ZIP_ENTRY_RE = /\.(html?|xml|txt|docx?|pdf)$/i;
+  async function handleZipImport(file, comment) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek (JSZip) nicht geladen - Archiv kann nicht gelesen werden.");
+    var buf = await readFileAsArrayBuffer(file);
+    var zip;
+    try { zip = await JSZip.loadAsync(buf); }
+    catch (e) { throw new Error("Datei konnte nicht als ZIP-Archiv gelesen werden - ist es wirklich ein .zip? (" + (e && e.message) + ")"); }
+
+    var entryNames = Object.keys(zip.files).filter(function (n) {
+      var entry = zip.files[n];
+      if (entry.dir) return false;
+      if (n.indexOf("__MACOSX/") === 0 || n.indexOf("/__MACOSX/") !== -1) return false;
+      var base = n.split("/").pop();
+      return base && base.charAt(0) !== "." && ZIP_ENTRY_RE.test(base);
+    }).sort();
+    if (!entryNames.length) {
+      throw new Error("Keine unterstützten Dateien im ZIP-Archiv gefunden (erwartet: .html/.htm/.xml/.txt/.docx/.doc/.pdf).");
+    }
+
+    var allTickets = [], errors = [], okCount = 0;
+    for (var i = 0; i < entryNames.length; i++) {
+      var entryName = entryNames[i];
+      els.dropzoneHint.textContent = "ZIP „" + file.name + "“: Datei " + (i + 1) + " von " + entryNames.length + " (" + entryName + ") wird verarbeitet …";
+      try {
+        var text = await extractTextForZipEntry(zip.files[entryName], entryName.toLowerCase());
+        var result = parseAsAndere(text, entryName);
+        allTickets = allTickets.concat(result.tickets);
+        okCount++;
+      } catch (e) {
+        var msg = (e && e.message) || "Unbekannter Fehler.";
+        errors.push(entryName + ": " + msg);
+        addLog("Import-Fehler in " + file.name + " → " + entryName + ": " + msg);
+      }
+    }
+    if (!allTickets.length) {
+      throw new Error(
+        "Keine Tickets aus dem ZIP-Archiv übernommen - alle " + entryNames.length + " Datei(en) fehlgeschlagen: " +
+        errors.slice(0, 3).join(" / ") + (errors.length > 3 ? " …" : "")
+      );
+    }
+    var record = ingestTickets(allTickets, {
+      source: file.name, when: nowLabel(),
+      format: "ZIP-Archiv (" + okCount + "/" + entryNames.length + " Datei(en) gelesen)",
+      comment: comment
+    });
+    var errSuffix = errors.length
+      ? " – " + errors.length + " von " + entryNames.length + " Datei(en) im Archiv fehlgeschlagen (Details im Protokoll unter Verarbeitung)."
+      : "";
+    showToast(
+      errors.length ? "Import teilweise erfolgreich" : "Import erfolgreich",
+      file.name + ": " + record.ticketCount + " Tickets aus " + okCount + "/" + entryNames.length + " Datei(en) (" +
+      record.stats.neu + " neu, " + record.stats.geaendert + " geändert)." + errSuffix,
+      errors.length > 0
+    );
   }
 
   var IMPORT_MODE_INFO = {
@@ -4942,6 +5035,16 @@
       title: "Releaseinfo / Confluence-Export(e) hier ablegen",
       hint: "oder klicken zum Auswählen (mehrere Releaseinfos möglich) · Confluence-Release-Notes als .txt, Word-Export (.docx) oder PDF-Export (.pdf), Tickets werden je Domain gruppiert",
       accept: ".txt,.docx,.doc,.pdf"
+    },
+    docx: {
+      title: "Word-Dokument(e) (.doc/.docx) hier ablegen",
+      hint: "oder klicken zum Auswählen (Mehrfachauswahl möglich) · Format wird je Datei automatisch erkannt (Releaseinfo-Tabelle, Massenupload- oder Einzelticket-Text)",
+      accept: ".docx,.doc"
+    },
+    zip: {
+      title: "ZIP-Archiv mit Exportdateien hier ablegen",
+      hint: "oder klicken zum Auswählen · alle enthaltenen .html/.htm/.xml/.txt/.docx/.doc/.pdf-Dateien werden gelesen, Format je Datei automatisch erkannt, Fehler je Datei im Protokoll sichtbar",
+      accept: ".zip"
     },
     andere: {
       title: "Beliebige Exportdatei(en) hier ablegen",
@@ -4965,40 +5068,63 @@
     btn.addEventListener("click", function () { setImportMode(btn.getAttribute("data-mode")); });
   });
 
+  var importBusy = false;
   async function handleFiles(fileList) {
     var files = Array.prototype.slice.call(fileList || []);
-    if (!files.length) return;
+    if (!files.length || importBusy) return;
     var parseFn = IMPORT_PARSERS[importMode] || parseAsAndere;
     var comment = (els.importCommentInput.value || "").trim();
-    for (var i = 0; i < files.length; i++) {
-      var file = files[i];
-      try {
-        var lowerName = file.name.toLowerCase();
-        var isWordFile = lowerName.slice(-5) === ".docx" || lowerName.slice(-4) === ".doc";
-        var isPdfFile = lowerName.slice(-4) === ".pdf";
-        var text = isWordFile ? await extractTextFromDocx(file) : isPdfFile ? await extractTextFromPdf(file) : await readFileAsText(file);
-        var result = parseFn(text, file.name);
-        var record = ingestTickets(result.tickets, { source: file.name, when: nowLabel(), format: result.format, comment: comment });
-        var extra = "";
-        if (importMode === "releaseinfo") {
-          var domains = {};
-          result.tickets.forEach(function (t) { var d = (t.custom_fields && t.custom_fields.Domain) || "(ohne Domain)"; domains[d] = (domains[d] || 0) + 1; });
-          var domainNames = Object.keys(domains);
-          extra = " über " + domainNames.length + " Domain(s): " + domainNames.slice(0, 4).join(", ") + (domainNames.length > 4 ? ", …" : "");
+    var originalHint = IMPORT_MODE_INFO[importMode].hint;
+
+    importBusy = true;
+    els.dropzone.classList.add("processing");
+    els.dropzoneSpinner.hidden = false;
+    els.dropzoneIcon.style.display = "none";
+    els.fileInput.disabled = true;
+    await wait(30); // UI (Sanduhr) einmal rendern lassen, bevor die (ggf. langsame) Verarbeitung startet
+
+    try {
+      for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        if (files.length > 1) els.dropzoneHint.textContent = "Datei " + (i + 1) + " von " + files.length + " wird verarbeitet (" + file.name + ") …";
+        try {
+          if (importMode === "zip") {
+            await handleZipImport(file, comment);
+            continue;
+          }
+          var lowerName = file.name.toLowerCase();
+          var text = await extractTextForBlob(file, lowerName);
+          var result = parseFn(text, file.name);
+          var record = ingestTickets(result.tickets, { source: file.name, when: nowLabel(), format: result.format, comment: comment });
+          var extra = "";
+          if (importMode === "releaseinfo") {
+            var domains = {};
+            result.tickets.forEach(function (t) { var d = (t.custom_fields && t.custom_fields.Domain) || "(ohne Domain)"; domains[d] = (domains[d] || 0) + 1; });
+            var domainNames = Object.keys(domains);
+            extra = " über " + domainNames.length + " Domain(s): " + domainNames.slice(0, 4).join(", ") + (domainNames.length > 4 ? ", …" : "");
+          }
+          showToast(
+            "Import erfolgreich",
+            file.name + ": " + record.ticketCount + " Tickets (" + record.stats.neu + " neu, " + record.stats.geaendert + " geändert)" + extra + "."
+          );
+        } catch (err) {
+          showToast("Import fehlgeschlagen (" + file.name + ")", (err && err.message) || "Unbekannter Fehler.", true);
+          addLog("Import fehlgeschlagen (" + file.name + "): " + ((err && err.message) || "Unbekannter Fehler."));
         }
-        showToast(
-          "Import erfolgreich",
-          file.name + ": " + record.ticketCount + " Tickets (" + record.stats.neu + " neu, " + record.stats.geaendert + " geändert)" + extra + "."
-        );
-      } catch (err) {
-        showToast("Import fehlgeschlagen (" + file.name + ")", (err && err.message) || "Unbekannter Fehler.", true);
       }
+      if (comment) els.importCommentInput.value = "";
+    } finally {
+      importBusy = false;
+      els.dropzone.classList.remove("processing");
+      els.dropzoneSpinner.hidden = true;
+      els.dropzoneIcon.style.display = "";
+      els.dropzoneHint.textContent = originalHint;
+      els.fileInput.disabled = false;
     }
-    if (comment) els.importCommentInput.value = "";
   }
 
-  els.dropzone.addEventListener("click", function () { els.fileInput.click(); });
-  els.dropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.fileInput.click(); } });
+  els.dropzone.addEventListener("click", function () { if (!importBusy) els.fileInput.click(); });
+  els.dropzone.addEventListener("keydown", function (e) { if (!importBusy && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); els.fileInput.click(); } });
   els.fileInput.addEventListener("change", function () { handleFiles(els.fileInput.files); els.fileInput.value = ""; });
   ["dragenter", "dragover"].forEach(function (evt) {
     els.dropzone.addEventListener(evt, function (e) { e.preventDefault(); els.dropzone.classList.add("dragover"); });

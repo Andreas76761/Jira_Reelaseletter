@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.2.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.3.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -219,6 +219,22 @@ anderen Länderformaten (Kennzeichen).
     alte, binäre .doc-Format (vor Word 2007) lässt sich zwar auswählen,
     wird aber ehrlich mit einer Fehlermeldung abgelehnt statt fehlerhaft
     "geraten" – Word bietet dafür "Speichern unter" → .docx an.
+  - *Word (DOC/DOCX)* – eigener Tab nur für .docx/.doc, sonst identisch zu
+    "Andere Importe" (automatische Formaterkennung); reine Komfort-
+    Filterung der Dateiauswahl auf Word-Dokumente.
+  - *ZIP-Archiv* – ein .zip mit mehreren Exportdateien (beliebige Mischung
+    aus .html/.htm/.xml/.txt/.docx/.doc/.pdf) hochladen; jede enthaltene
+    Datei wird einzeln entpackt, automatisch erkannt und eingelesen, alle
+    daraus gewonnenen Tickets landen als **ein** Import-Eintrag (benannt
+    nach dem Archiv) in der Dateiverwaltung. Scheitert eine einzelne Datei
+    im Archiv, werden die übrigen trotzdem verarbeitet – der Fehler
+    erscheint mit Dateiname im Protokoll (Verarbeitung → 1. Jira
+    Verarbeitung) sowie in der Erfolgsmeldung ("X von Y Dateien
+    fehlgeschlagen"); nicht unterstützte Dateitypen im Archiv (z. B.
+    .pdf-Anhänge außerhalb der erwarteten Formate) werden ohne
+    Fehlermeldung übersprungen, da sie nicht zum Ticket-Export gehören.
+    Während des Einlesens (Datei- oder ZIP-Upload) zeigt die Dropzone eine
+    Sanduhr und ist bis zum Abschluss deaktiviert.
   - *Andere Importe* – probiert alle Parser automatisch durch (inkl. .docx/.pdf).
 - **Dateiverwaltung** – Liste aller Imports dieser Sitzung sowie ein
   Vergleich von Tickets, die in mehreren Imports mit unterschiedlichem
