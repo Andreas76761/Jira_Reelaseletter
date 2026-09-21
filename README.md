@@ -172,13 +172,21 @@ folgenden Bereichen:
   als Änderung gewertet – nur tatsächlich abweichende Werte erscheinen im
   Vergleich. Im Dashboard markiert ein Punkt hinter dem Schlüssel
   geänderte Tickets.
-- **Verarbeitung** – sechs Unter-Tabs für wiederkehrende Arbeitsschritte
-  rund um die geladenen Tickets (5 und 6 sind als Platzhalter angelegt,
-  folgen später):
+- **Verarbeitung** – sechs Jobs für wiederkehrende Arbeitsschritte rund
+  um die geladenen Tickets (6 ist als Platzhalter angelegt, folgt
+  später), erreichbar über die Tab-Leiste oder das kompakte
+  Burger-Menü (☰) daneben. Jeder Job zeigt oben seine **Prozessschritte**
+  als visuelle Checkliste (grauer Kreis = ausstehend, grüner Haken =
+  erledigt, roter Kreis = Fehler bei der Ausführung) und lässt sich
+  komplett als **XLSX, DOCX oder PDF exportieren**:
   1. *Jira Verarbeitung* – chronologisches Protokoll aller Import-/Export-Aktionen.
   2. *Vergleich Jira Tickets* – derselbe Änderungsvergleich wie in der
      Dateiverwaltung (gleiche Jira-Nummer, unterschiedlicher Datenstand),
-     zusätzlich direkt hier verfügbar.
+     zusätzlich direkt hier verfügbar. Über den Button "Vergleich" öffnet
+     sich pro geändertem Ticket ein Dialog, der den Original-Datensatz aus
+     dem jeweiligen Import dem Zwischenschritt (Ergebnis nach
+     Bereinigung/Merge, aktueller Stand) gegenüberstellt und Abweichungen
+     hervorhebt.
   3. *Glossar & Abkürzungen extrahieren* – durchsucht alle geladenen
      Tickets nach Großbuchstaben-Kürzeln (mit Häufigkeit und
      Beispiel-Ticket) sowie nach häufigen Status-/Typ-/Domain-Werten als
@@ -187,10 +195,14 @@ folgenden Bereichen:
      zusätzlich in den neuen Registern **Glossar** (Abschnitt "Aus
      Ticket-Daten erkannte Begriffe") und **Abkürzungen**.
   4. *Releaseversion* – tabellarische Übersicht aller geladenen Tickets
-     mit Domain sowie ein Abgleich gegen eine eigene Release-Ticketliste
-     (ein Key pro Zeile): zeigt, welche Tickets der Liste bereits geladen
-     sind und listet die fehlenden Tickets auf (Web-App-Pendant zu
-     `match-release` aus dem CLI-Tool).
+     mit Domain, ein Abgleich gegen eine eigene Release-Ticketliste (ein
+     Key pro Zeile, zeigt fehlende Tickets, Web-App-Pendant zu
+     `match-release` aus dem CLI-Tool) sowie eine Bewertung, welche
+     Tickets anhand des Jira-Feldes "Typ" als Benutzerhandbuch-Kandidat
+     gelten und welche nur intern/Bug sind (fehlt der Typ im Export, wird
+     das als "Unbekannt" ausgewiesen statt geraten).
+  5. *Jira Liste* – alle importierten Jira-Nummern mit Status und Datum,
+     inklusive prominent angezeigter Gesamtanzahl der importierten Tickets.
 - **Releaseletter / Benutzerhandbuch / Clickanweisung** – Textentwürfe aus
   ausgewählten Tickets (aktuelle Dashboard-Filterung oder Ticket-Keys),
   Vorschau + Markdown-Download.

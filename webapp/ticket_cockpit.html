@@ -322,6 +322,26 @@
   .stat-line { display: flex; gap: 20px; flex-wrap: wrap; }
   .stat-line .chip { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 12.5px; }
   .stat-line .chip b { font-size: 14px; }
+
+  /* ---- Prozessschritte je Job (Verarbeitung) ---- */
+  .process-steps {
+    display: flex; flex-direction: column; gap: 0; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; box-shadow: var(--shadow); overflow: hidden;
+  }
+  .process-step { display: flex; align-items: flex-start; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--border); }
+  .process-step:last-child { border-bottom: none; }
+  .step-icon {
+    flex: none; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800; margin-top: 1px; border: 1.5px solid var(--border-strong); color: var(--text-faint);
+  }
+  .step-icon.state-done { background: var(--done-soft); border-color: var(--done); color: var(--done); }
+  .step-icon.state-error { background: var(--blocked-soft); border-color: var(--blocked); color: var(--blocked); }
+  .step-icon.state-pending { background: var(--surface-2); }
+  .step-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .step-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .step-note { font-size: 11.5px; color: var(--text-muted); }
+  .process-step.state-error .step-label { color: var(--blocked); }
+  .process-step.state-error .step-note { color: var(--blocked); }
   .gen-preview {
     background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; font-size: 12.5px;
     white-space: pre-wrap; font-family: "IBM Plex Mono", monospace; max-height: 62vh; overflow: auto; line-height: 1.55;
@@ -608,6 +628,8 @@
         <!-- 1) Jira Verarbeitung (Protokoll) -->
         <div class="subtabs-panel" data-vsub-panel="protokoll">
           <p class="desc">Protokoll aller Verarbeitungsschritte dieser Sitzung.</p>
+          <p class="section-label">Prozessschritte</p>
+          <div class="process-steps" id="steps-job-1"></div>
           <div class="job-export-row">
             <span class="job-export-label">Exportieren:</span>
             <button class="btn ghost job-export-btn" data-job="1" data-format="xlsx" type="button">XLSX</button>
@@ -623,6 +645,8 @@
         <!-- 2) Vergleich Jira Tickets -->
         <div class="subtabs-panel" data-vsub-panel="vergleich" hidden>
           <p class="desc">Tickets, die unter derselben Jira-Nummer in mehreren Importen mit unterschiedlichem Datenstand vorkamen (z. B. neuer Status, neues Datum) &ndash; identischer Vergleich wie in der Dateiverwaltung. Über "Vergleich" lässt sich der Originaldatensatz aus dem Import dem verarbeiteten Zwischenschritt gegenüberstellen.</p>
+          <p class="section-label">Prozessschritte</p>
+          <div class="process-steps" id="steps-job-2"></div>
           <div class="job-export-row">
             <span class="job-export-label">Exportieren:</span>
             <button class="btn ghost job-export-btn" data-job="2" data-format="xlsx" type="button">XLSX</button>
@@ -641,6 +665,8 @@
         <!-- 3) Glossar und Abkürzungen extrahieren -->
         <div class="subtabs-panel" data-vsub-panel="glossar-extrakt" hidden>
           <p class="desc">Durchsucht alle geladenen Tickets nach Kürzeln (Großbuchstaben-Abkürzungen) und nach häufig verwendeten Status-/Typ-/Domain-Werten als Kandidaten für Glossar und Abkürzungsverzeichnis. Es werden keine Bedeutungen erfunden &ndash; nur tatsächlich vorkommende Begriffe mit Häufigkeit und Beispiel-Ticket. Ergebnisse erscheinen zusätzlich in den Registern <b>Glossar</b> und <b>Abkürzungen</b>.</p>
+          <p class="section-label">Prozessschritte</p>
+          <div class="process-steps" id="steps-job-3"></div>
           <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
             <button class="btn primary" id="extract-glossary-btn" type="button">Jetzt aus geladenen Tickets extrahieren</button>
             <div class="job-export-row">
@@ -676,7 +702,9 @@
 
         <!-- 4) Releaseversion -->
         <div class="subtabs-panel" data-vsub-panel="releaseversion" hidden>
-          <p class="desc">Alle geladenen Tickets mit Domain als Tabelle; darunter ein Abgleich mit einer eigenen Release-Ticketliste &ndash; welche Tickets der Liste sind bereits geladen, welche fehlen.</p>
+          <p class="desc">Alle geladenen Tickets mit Domain als Tabelle; darunter ein Abgleich mit einer eigenen Release-Ticketliste &ndash; welche Tickets der Liste sind bereits geladen, welche fehlen &ndash; sowie eine Bewertung, welche Tickets für das Benutzerhandbuch relevant sind.</p>
+          <p class="section-label">Prozessschritte</p>
+          <div class="process-steps" id="steps-job-4"></div>
           <div class="job-export-row">
             <span class="job-export-label">Exportieren:</span>
             <button class="btn ghost job-export-btn" data-job="4" data-format="xlsx" type="button">XLSX</button>
@@ -707,11 +735,31 @@
               </table>
             </div>
           </section>
+          <section>
+            <p class="section-label">Bewertung: Benutzerhandbuch-relevant vs. intern/Bug</p>
+            <div class="callout">
+              Ordnet jedes geladene Ticket anhand des Jira-Feldes "Typ" (issue_type) einer von drei Gruppen zu: Tickets vom Typ "Bug" gelten als intern (kein Benutzerhandbuch-Inhalt), alle anderen Typen als Kandidat für das Benutzerhandbuch. Fehlt der Typ im Export, wird das ehrlich als "Unbekannt" ausgewiesen statt geraten.
+            </div>
+            <button class="btn primary" id="evaluate-tickets-btn" type="button">Jetzt bewerten</button>
+            <div class="stat-line" id="evaluate-summary" hidden>
+              <div class="chip"><b class="mono" id="evaluate-count-manual">0</b> Benutzerhandbuch-Kandidaten</div>
+              <div class="chip"><b class="mono" id="evaluate-count-internal">0</b> intern / Bug</div>
+              <div class="chip"><b class="mono" id="evaluate-count-unknown">0</b> Typ unbekannt</div>
+            </div>
+            <div class="panel table-wrap" id="evaluate-table-wrap" style="max-height:340px; overflow:auto;" hidden>
+              <table class="simple-table" id="evaluate-table">
+                <thead><tr><th>Ticket</th><th>Typ</th><th>Einordnung</th></tr></thead>
+                <tbody id="evaluate-tbody"></tbody>
+              </table>
+            </div>
+          </section>
         </div>
 
         <!-- 5) Jira Liste -->
         <div class="subtabs-panel" data-vsub-panel="jira-liste" hidden>
           <p class="desc">Alle importierten Jira-Nummern mit Status und Datum, inklusive Gesamtanzahl der importierten Tickets.</p>
+          <p class="section-label">Prozessschritte</p>
+          <div class="process-steps" id="steps-job-5"></div>
           <div class="job-export-row">
             <span class="job-export-label">Exportieren:</span>
             <button class="btn ghost job-export-btn" data-job="5" data-format="xlsx" type="button">XLSX</button>
@@ -731,6 +779,8 @@
 
         <!-- 6) Platzhalter -->
         <div class="subtabs-panel" data-vsub-panel="folgt-6" hidden>
+          <p class="section-label">Prozessschritte</p>
+          <div class="process-steps" id="steps-job-6"></div>
           <div class="callout">Dieser Bereich ist noch nicht implementiert &ndash; folgt in einer späteren Ausbaustufe.</div>
         </div>
       </section>
@@ -1582,6 +1632,8 @@
     "release-keys-input", "release-match-btn", "release-match-summary",
     "release-missing-wrap", "release-missing-table", "release-missing-tbody",
     "jiraliste-count", "jiraliste-tbody",
+    "evaluate-tickets-btn", "evaluate-summary", "evaluate-count-manual", "evaluate-count-internal", "evaluate-count-unknown",
+    "evaluate-table-wrap", "evaluate-tbody",
     "gallery", "gallery-empty",
     "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
@@ -1604,6 +1656,13 @@
     view: { bucket: "all", domain: "", query: "", sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
     extracted: { abbreviations: [], glossaryCandidates: [], ran: false },
+    // Zusatzstatus je Job fuer die Prozessschritt-Anzeige, der sich nicht
+    // direkt aus den obigen Datenstrukturen ableiten laesst (z. B. ob eine
+    // Aktion bereits ausgefuehrt wurde oder dabei ein Fehler auftrat).
+    jobState: {
+      glossarExtrakt: { error: null },
+      releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
+    },
     initialized: false
   };
 
@@ -1734,6 +1793,10 @@
     app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
     app.generatedImages = []; app.initialized = false;
     app.extracted = { abbreviations: [], glossaryCandidates: [], ran: false };
+    app.jobState = {
+      glossarExtrakt: { error: null },
+      releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
+    };
     var raw = JSON.parse(document.getElementById("initial-ticket-data").textContent);
     var metaEl = document.getElementById("initial-ticket-meta");
     var meta; try { meta = JSON.parse(metaEl.textContent); } catch (e) { meta = null; }
@@ -1745,6 +1808,8 @@
     els.releaseMatchSummary.hidden = true;
     els.releaseMissingWrap.hidden = true;
     els.releaseKeysInput.value = "";
+    els.evaluateSummary.hidden = true;
+    els.evaluateTableWrap.hidden = true;
   }
 
   function refreshDashboard(resetFilters) {
@@ -1781,6 +1846,7 @@
     render();
     renderReleaseversionTable();
     renderJiraListe();
+    renderAllJobSteps();
   }
 
   function buildFormatCallout() {
@@ -2440,21 +2506,28 @@
   }
 
   els.extractGlossaryBtn.addEventListener("click", function () {
-    var tickets = app.tickets.map(function (t) { return t.raw; });
-    app.extracted.abbreviations = extractAbbreviations(tickets);
-    app.extracted.glossaryCandidates = extractGlossaryCandidates(tickets);
-    app.extracted.ran = true;
-    renderExtractedAbbreviations();
-    renderExtractedGlossaryCandidates();
-    addLog(
-      "Glossar-/Abkürzungs-Extraktion: " + app.extracted.abbreviations.length + " Abkürzungen, " +
-      app.extracted.glossaryCandidates.length + " Glossar-Kandidaten über " + tickets.length + " Tickets."
-    );
-    showToast(
-      "Extraktion abgeschlossen",
-      app.extracted.abbreviations.length + " Abkürzungen und " + app.extracted.glossaryCandidates.length +
-      " Glossar-Kandidaten gefunden – auch in den Registern Glossar und Abkürzungen sichtbar."
-    );
+    try {
+      var tickets = app.tickets.map(function (t) { return t.raw; });
+      app.extracted.abbreviations = extractAbbreviations(tickets);
+      app.extracted.glossaryCandidates = extractGlossaryCandidates(tickets);
+      app.extracted.ran = true;
+      app.jobState.glossarExtrakt.error = null;
+      renderExtractedAbbreviations();
+      renderExtractedGlossaryCandidates();
+      addLog(
+        "Glossar-/Abkürzungs-Extraktion: " + app.extracted.abbreviations.length + " Abkürzungen, " +
+        app.extracted.glossaryCandidates.length + " Glossar-Kandidaten über " + tickets.length + " Tickets."
+      );
+      showToast(
+        "Extraktion abgeschlossen",
+        app.extracted.abbreviations.length + " Abkürzungen und " + app.extracted.glossaryCandidates.length +
+        " Glossar-Kandidaten gefunden – auch in den Registern Glossar und Abkürzungen sichtbar."
+      );
+    } catch (err) {
+      app.jobState.glossarExtrakt.error = (err && err.message) || "Unbekannter Fehler bei der Extraktion.";
+      showToast("Extraktion fehlgeschlagen", app.jobState.glossarExtrakt.error, true);
+    }
+    renderAllJobSteps();
   });
 
   // 4) Releaseversion: alle geladenen Tickets + Abgleich gegen eine
@@ -2482,28 +2555,159 @@
   els.releaseMatchBtn.addEventListener("click", function () {
     var releaseKeys = (els.releaseKeysInput.value || "").split("\n").map(function (k) { return k.trim(); }).filter(Boolean);
     if (!releaseKeys.length) { showToast("Keine Ticketliste", "Bitte mindestens einen Ticket-Key eingeben.", true); return; }
-    var availableNorm = {};
-    app.ticketStore.forEach(function (entry, key) { availableNorm[key.toUpperCase()] = key; });
-    var found = [], missing = [];
-    releaseKeys.forEach(function (k) {
-      var norm = k.toUpperCase();
-      if (availableNorm[norm]) found.push(availableNorm[norm]); else missing.push(k);
-    });
-    els.releaseMatchSummary.hidden = false;
-    els.releaseMatchSummary.innerHTML =
-      "<b>" + found.length + "</b> von <b>" + releaseKeys.length + "</b> Tickets der Liste sind bereits geladen. " +
-      "<b>" + missing.length + "</b> fehlen" + (missing.length ? " (siehe Tabelle unten)." : " – alle Tickets des Release sind vorhanden.");
-    if (missing.length) {
-      els.releaseMissingWrap.hidden = false;
-      els.releaseMissingTbody.innerHTML = missing.map(function (k) { return "<tr><td class=\"mono\">" + escapeHtml(k) + "</td></tr>"; }).join("");
-    } else {
-      els.releaseMissingWrap.hidden = true;
-      els.releaseMissingTbody.innerHTML = "";
+    try {
+      var availableNorm = {};
+      app.ticketStore.forEach(function (entry, key) { availableNorm[key.toUpperCase()] = key; });
+      var found = [], missing = [];
+      releaseKeys.forEach(function (k) {
+        var norm = k.toUpperCase();
+        if (availableNorm[norm]) found.push(availableNorm[norm]); else missing.push(k);
+      });
+      els.releaseMatchSummary.hidden = false;
+      els.releaseMatchSummary.innerHTML =
+        "<b>" + found.length + "</b> von <b>" + releaseKeys.length + "</b> Tickets der Liste sind bereits geladen. " +
+        "<b>" + missing.length + "</b> fehlen" + (missing.length ? " (siehe Tabelle unten)." : " – alle Tickets des Release sind vorhanden.");
+      if (missing.length) {
+        els.releaseMissingWrap.hidden = false;
+        els.releaseMissingTbody.innerHTML = missing.map(function (k) { return "<tr><td class=\"mono\">" + escapeHtml(k) + "</td></tr>"; }).join("");
+      } else {
+        els.releaseMissingWrap.hidden = true;
+        els.releaseMissingTbody.innerHTML = "";
+      }
+      addLog("Release-Abgleich: " + found.length + "/" + releaseKeys.length + " Tickets geladen, " + missing.length + " fehlen.");
+      app.jobState.releaseversion.matched = true;
+      app.jobState.releaseversion.matchError = null;
+    } catch (err) {
+      app.jobState.releaseversion.matchError = (err && err.message) || "Unbekannter Fehler beim Abgleich.";
+      showToast("Abgleich fehlgeschlagen", app.jobState.releaseversion.matchError, true);
     }
-    addLog("Release-Abgleich: " + found.length + "/" + releaseKeys.length + " Tickets geladen, " + missing.length + " fehlen.");
+    renderAllJobSteps();
   });
 
-  /* ============ Teil 8c: Job-Export (XLSX/DOCX/PDF) je Verarbeitung-Job ============ */
+  // Bewertung: Benutzerhandbuch-Kandidat vs. intern/Bug, anhand des echten
+  // issue_type-Feldes - fehlt der Typ, wird das ehrlich als "Unbekannt"
+  // ausgewiesen statt eine Einordnung zu erfinden.
+  function classifyTicketForManual(issueType) {
+    if (!issueType || !String(issueType).trim()) return "unbekannt";
+    return /bug|fehler|defect/i.test(issueType) ? "intern" : "handbuch";
+  }
+  els.evaluateTicketsBtn.addEventListener("click", function () {
+    try {
+      var counts = { handbuch: 0, intern: 0, unbekannt: 0 };
+      var rows = app.tickets.slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; }).map(function (t) {
+        var issueType = t.raw && t.raw.issue_type;
+        var kind = classifyTicketForManual(issueType);
+        counts[kind]++;
+        var label = kind === "handbuch" ? "Benutzerhandbuch-Kandidat" : kind === "intern" ? "Intern / Bug" : "Unbekannt (kein Typ im Export)";
+        return { key: t.key, issueType: issueType || "–", label: label };
+      });
+      els.evaluateSummary.hidden = false;
+      els.evaluateCountManual.textContent = counts.handbuch;
+      els.evaluateCountInternal.textContent = counts.intern;
+      els.evaluateCountUnknown.textContent = counts.unbekannt;
+      els.evaluateTableWrap.hidden = false;
+      els.evaluateTbody.innerHTML = rows.map(function (r) {
+        return "<tr><td class=\"mono\">" + escapeHtml(r.key) + "</td><td>" + escapeHtml(r.issueType) + "</td><td>" + escapeHtml(r.label) + "</td></tr>";
+      }).join("");
+      app.jobState.releaseversion.evaluated = true;
+      app.jobState.releaseversion.evaluateError = null;
+      app.jobState.releaseversion.evaluation = counts;
+      addLog("Bewertung Benutzerhandbuch-Relevanz: " + counts.handbuch + " Kandidaten, " + counts.intern + " intern/Bug, " + counts.unbekannt + " unbekannt.");
+      showToast("Bewertung abgeschlossen", counts.handbuch + " Benutzerhandbuch-Kandidaten, " + counts.intern + " intern/Bug, " + counts.unbekannt + " ohne Typ-Angabe.");
+    } catch (err) {
+      app.jobState.releaseversion.evaluateError = (err && err.message) || "Unbekannter Fehler bei der Bewertung.";
+      showToast("Bewertung fehlgeschlagen", app.jobState.releaseversion.evaluateError, true);
+    }
+    renderAllJobSteps();
+  });
+
+  /* ============ Teil 8c: Prozessschritte je Job (visuelle Statusanzeige) ============ */
+
+  function stepIconHtml(state) {
+    if (state === "done") return '<span class="step-icon state-done">✓</span>';
+    if (state === "error") return '<span class="step-icon state-error">✕</span>';
+    return '<span class="step-icon state-pending">○</span>';
+  }
+  function renderProcessSteps(containerId, steps) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = steps.map(function (s) {
+      return '<div class="process-step state-' + s.state + '">' + stepIconHtml(s.state) +
+        '<div class="step-body"><span class="step-label">' + escapeHtml(s.label) + '</span>' +
+        (s.note ? '<span class="step-note">' + escapeHtml(s.note) + "</span>" : "") + "</div></div>";
+    }).join("");
+  }
+
+  function computeJobSteps(jobNum) {
+    var importCount = app.imports.length;
+    var ticketCount = app.tickets.length;
+    var loaded = { state: importCount > 0 ? "done" : "pending", label: "Datei(en) aus Dateiverwaltung ausgewählt/importiert", note: importCount > 0 ? importCount + " Import(e) vorhanden" : "Noch keine Datei importiert" };
+    var processed = { state: ticketCount > 0 ? "done" : "pending", label: "Inhalt eingelesen und verarbeitet (bereinigt)", note: ticketCount > 0 ? ticketCount + " Tickets bereinigt" : "Noch keine Tickets verarbeitet" };
+
+    if (jobNum === 1) {
+      return [
+        loaded, processed,
+        { state: app.log.length > 0 ? "done" : "pending", label: "Protokoll geführt", note: app.log.length + " Einträge" },
+        { state: app.log.length > 0 ? "done" : "pending", label: "Export bereit (XLSX/DOCX/PDF)", note: app.log.length > 0 ? "Bereit" : "Noch keine Daten" }
+      ];
+    }
+    if (jobNum === 2) {
+      var hasEnoughImports = importCount >= 2;
+      var hasChanges = app.changes.length > 0;
+      return [
+        { state: hasEnoughImports ? "done" : "pending", label: "Mindestens 2 Importe vorhanden (Voraussetzung)", note: importCount + " Import(e)" },
+        { state: hasEnoughImports ? "done" : "pending", label: "Tickets über Schlüssel abgeglichen", note: hasEnoughImports ? "Abgleich läuft automatisch bei jedem Import" : "Wartet auf zweiten Import" },
+        { state: hasEnoughImports ? "done" : "pending", label: "Änderungen erkannt", note: hasEnoughImports ? (hasChanges ? app.changes.length + " geänderte Ticket(s)" : "Keine Änderungen gefunden") : "Noch nicht möglich" },
+        { state: hasChanges ? "done" : "pending", label: "Original vs. Zwischenschritt abrufbar", note: hasChanges ? "Vergleich-Dialog verfügbar" : "Kein Änderungsfall vorhanden" }
+      ];
+    }
+    if (jobNum === 3) {
+      var st = app.jobState.glossarExtrakt;
+      var ran = app.extracted.ran;
+      if (st.error) {
+        return [loaded, processed, { state: "error", label: "Extraktion ausgeführt", note: st.error }];
+      }
+      return [
+        loaded, processed,
+        { state: ran ? "done" : "pending", label: "Extraktion ausgeführt", note: ran ? "Abgeschlossen" : "Noch nicht gestartet" },
+        { state: ran ? "done" : "pending", label: "Abkürzungen erkannt", note: ran ? app.extracted.abbreviations.length + " Kürzel" : "–" },
+        { state: ran ? "done" : "pending", label: "Glossar-Kandidaten erkannt + Register/Export bereit", note: ran ? app.extracted.glossaryCandidates.length + " Kandidaten" : "–" }
+      ];
+    }
+    if (jobNum === 4) {
+      var rv = app.jobState.releaseversion;
+      var steps4 = [
+        loaded, processed,
+        { state: ticketCount > 0 ? "done" : "pending", label: "Anzahl Jira-Tickets / Statistik ermittelt", note: ticketCount > 0 ? ticketCount + " Tickets" : "–" },
+        { state: ticketCount > 0 ? "done" : "pending", label: "Tickets in Liste extrahiert (mit Exportmöglichkeit)", note: ticketCount > 0 ? "Tabelle + XLSX/DOCX/PDF bereit" : "–" }
+      ];
+      steps4.push(rv.matchError
+        ? { state: "error", label: "Abgleich mit benötigten Jira-Tickets", note: rv.matchError }
+        : { state: rv.matched ? "done" : "pending", label: "Abgleich mit benötigten Jira-Tickets", note: rv.matched ? "Abgleich durchgeführt" : "Noch nicht abgeglichen" });
+      steps4.push(rv.evaluateError
+        ? { state: "error", label: "Bewertung: Benutzerhandbuch vs. intern/Bug", note: rv.evaluateError }
+        : { state: rv.evaluated ? "done" : "pending", label: "Bewertung: Benutzerhandbuch vs. intern/Bug", note: rv.evaluated ? rv.evaluation.handbuch + " Kandidaten, " + rv.evaluation.intern + " intern/Bug" : "Noch nicht bewertet" });
+      return steps4;
+    }
+    if (jobNum === 5) {
+      return [
+        loaded,
+        { state: ticketCount > 0 ? "done" : "pending", label: "Gesamtanzahl importierter Tickets ermittelt", note: ticketCount > 0 ? ticketCount + " Tickets" : "–" },
+        { state: ticketCount > 0 ? "done" : "pending", label: "Liste mit Status/Datum aufgebaut", note: ticketCount > 0 ? "Tabelle befüllt" : "–" },
+        { state: ticketCount > 0 ? "done" : "pending", label: "Export bereit (XLSX/DOCX/PDF)", note: ticketCount > 0 ? "Bereit" : "Noch keine Daten" }
+      ];
+    }
+    if (jobNum === 6) {
+      return [{ state: "pending", label: "Noch nicht implementiert", note: "Folgt in einer späteren Ausbaustufe" }];
+    }
+    return [];
+  }
+
+  function renderAllJobSteps() {
+    for (var i = 1; i <= 6; i++) renderProcessSteps("steps-job-" + i, computeJobSteps(i));
+  }
+
+  /* ============ Teil 8d: Job-Export (XLSX/DOCX/PDF) je Verarbeitung-Job ============ */
 
   function jiraListeRows() {
     return app.tickets.slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
