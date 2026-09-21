@@ -285,6 +285,18 @@ wirkungslos bleiben kann:
   (Schlüssel/Zusammenfassung) im Fließtext. Download ebenfalls als
   Markdown/DOCX/PDF; die separate XLSX-Tabelle bleibt bewusst
   Ticket-bezogen (Nachvollzieh-Grundlage für die Redaktion).
+- **Ansicht "Original" / "Nur Deutsch"** – Releaseletter, Benutzerhandbuch
+  und Clickanweisung haben in der Vorschau einen Umschalter. "Original"
+  zeigt den vollständigen Entwurf wie gehabt (deutsche Vorlage +
+  Ticket-Freitext in der jeweiligen Originalsprache, meist Englisch, da
+  unverändert aus Jira übernommen). "Nur Deutsch" zeigt ausschließlich
+  selbst erzeugten deutschen Text (Vorlage, Feldbezeichnungen, Domäne/
+  Priorität/Labels) und blendet den Ticket-Freitext (Zusammenfassung/
+  Beschreibung) bewusst aus, statt ihn automatisch (und damit potenziell
+  falsch) zu übersetzen – es gibt keine Übersetzungs-Engine und keinen
+  Server/keine externe API. Downloads verwenden die gerade aktive
+  Ansicht (Dateiname erhält bei "Nur Deutsch" den Zusatz
+  `_nur-deutsch`).
 - **Prozessbild** – Prozessdiagramm aus ausgewählten Tickets mit **10
   Design-Vorlagen** (Farben: OnePaper Dunkel/Hell, Corporate Blau,
   Silber/Schwarz, Forest, Sunset, Pastell, Monochrom, Royal,

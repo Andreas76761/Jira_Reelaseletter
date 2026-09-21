@@ -411,6 +411,14 @@
     background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; font-size: 12.5px;
     white-space: pre-wrap; font-family: "IBM Plex Mono", monospace; max-height: 62vh; overflow: auto; line-height: 1.55;
   }
+  .gen-preview-wrap { display: flex; flex-direction: column; gap: 8px; }
+  .preview-toggle { display: flex; gap: 6px; }
+  .preview-toggle-btn {
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); border-radius: 8px;
+    padding: 6px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  }
+  .preview-toggle-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .preview-toggle-btn:hover:not(.active) { background: var(--surface); color: var(--text); }
   .mermaid-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; overflow: auto; }
   .mermaid-source-details { margin-top: 12px; }
   .mermaid-source-details summary {
@@ -912,7 +920,13 @@
               <button class="btn ghost" id="releaseletter-download-xlsx-btn" type="button" disabled>Als XLSX (Tickets-Tabelle)</button>
             </div>
           </div>
-          <div class="gen-preview" id="releaseletter-preview">Noch kein Entwurf generiert.</div>
+          <div class="gen-preview-wrap">
+            <div class="preview-toggle" role="tablist" aria-label="Ansicht">
+              <button class="preview-toggle-btn active" type="button" data-variant="full" id="releaseletter-variant-full">Original</button>
+              <button class="preview-toggle-btn" type="button" data-variant="de" id="releaseletter-variant-de">Nur Deutsch</button>
+            </div>
+            <div class="gen-preview" id="releaseletter-preview">Noch kein Entwurf generiert.</div>
+          </div>
         </div>
       </section>
 
@@ -934,7 +948,13 @@
               <button class="btn ghost" id="benutzerhandbuch-download-xlsx-btn" type="button" disabled>Als XLSX (Tickets-Tabelle)</button>
             </div>
           </div>
-          <div class="gen-preview" id="benutzerhandbuch-preview">Noch kein Entwurf generiert.</div>
+          <div class="gen-preview-wrap">
+            <div class="preview-toggle" role="tablist" aria-label="Ansicht">
+              <button class="preview-toggle-btn active" type="button" data-variant="full" id="benutzerhandbuch-variant-full">Original</button>
+              <button class="preview-toggle-btn" type="button" data-variant="de" id="benutzerhandbuch-variant-de">Nur Deutsch</button>
+            </div>
+            <div class="gen-preview" id="benutzerhandbuch-preview">Noch kein Entwurf generiert.</div>
+          </div>
         </div>
       </section>
 
@@ -986,7 +1006,13 @@
               <button class="btn ghost" id="clickanweisung-download-xlsx-btn" type="button" disabled>Als XLSX (Tickets-Tabelle)</button>
             </div>
           </div>
-          <div class="gen-preview" id="clickanweisung-preview">Noch kein Entwurf generiert.</div>
+          <div class="gen-preview-wrap">
+            <div class="preview-toggle" role="tablist" aria-label="Ansicht">
+              <button class="preview-toggle-btn active" type="button" data-variant="full" id="clickanweisung-variant-full">Original</button>
+              <button class="preview-toggle-btn" type="button" data-variant="de" id="clickanweisung-variant-de">Nur Deutsch</button>
+            </div>
+            <div class="gen-preview" id="clickanweisung-preview">Noch kein Entwurf generiert.</div>
+          </div>
         </div>
       </section>
 
@@ -3192,7 +3218,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "1.5.0";
+  var APP_VERSION = "1.6.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5779,31 +5805,56 @@
     return parts.join(" · ");
   }
 
-  function renderReleaseLetter(name, tickets) {
-    var lines = ["# Release Letter – " + name, "", "Stand: " + new Date().toLocaleDateString("de-DE"), "Umfang: " + tickets.length + " Tickets", "", "## Neue Funktionen & Änderungen", ""];
+  // Hinweistext fuer die "Nur Deutsch"-Ansicht (Toggle Original/Deutsch in der
+  // Vorschau): die App uebersetzt Ticket-Freitext (Zusammenfassung/
+  // Beschreibung) bewusst NICHT automatisch - eine Wort-fuer-Wort- oder
+  // KI-Uebersetzung koennte den fachlichen Inhalt verfaelschen. Die
+  // "Deutsch"-Ansicht zeigt stattdessen ausschliesslich selbst erzeugten
+  // deutschen Text (Vorlage, Feldbezeichnungen, Domäne/Priorität/Labels) und
+  // blendet Ticket-Freitext ehrlich aus, statt ihn zu erfinden.
+  var DE_ONLY_NOTE = "**Hinweis:** Diese Ansicht zeigt ausschließlich automatisch erzeugten deutschen Text (Vorlage, Feldbezeichnungen, Domäne/Priorität/Labels). " +
+    "Freitext aus den Tickets (Zusammenfassung/Beschreibung) wird unverändert aus Jira übernommen, ist daher oft nicht auf Deutsch und wird in dieser Ansicht deshalb ausgeblendet statt automatisch (und damit potenziell falsch) übersetzt. Vollständigen Inhalt siehe Ansicht \"Original\".";
+  function renderReleaseLetter(name, tickets, variant) {
+    var deOnly = variant === "de";
+    var lines = ["# Release Letter – " + name, "", "Stand: " + new Date().toLocaleDateString("de-DE"), "Umfang: " + tickets.length + " Tickets", ""];
+    if (deOnly) lines.push(DE_ONLY_NOTE, "");
+    lines.push("## Neue Funktionen & Änderungen", "");
     tickets.forEach(function (t) {
       var meta = ticketMetaSummary(t);
-      lines.push("- **" + t.key + "** – " + (t.summary || "(keine Zusammenfassung)") + (meta ? " (" + meta + ")" : ""));
-      if (t.description) lines.push("  " + truncate(t.description, 220));
+      if (deOnly) {
+        lines.push("- **" + t.key + "**" + (meta ? " (" + meta + ")" : ""));
+      } else {
+        lines.push("- **" + t.key + "** – " + (t.summary || "(keine Zusammenfassung)") + (meta ? " (" + meta + ")" : ""));
+        if (t.description) lines.push("  " + truncate(t.description, 220));
+      }
     });
     lines.push("", "## Bekannte Einschränkungen / offene Punkte", "");
     // Dieselbe Status-Bucket-Logik wie im Dashboard verwenden, statt einer
     // eigenen Wortliste - sonst tauchen z.B. abgebrochene ("Cancelled")
     // Tickets faelschlich als offener Punkt auf.
     var open = tickets.filter(function (t) { var b = bucketFor(t.status); return b !== "done" && b !== "cancelled"; });
-    if (open.length) open.forEach(function (t) { lines.push("- " + t.key + ": " + (t.summary || "") + " (Status: " + t.status + ")"); });
+    if (open.length) open.forEach(function (t) {
+      lines.push(deOnly ? "- " + t.key + " (Status: " + t.status + ")" : "- " + t.key + ": " + (t.summary || "") + " (Status: " + t.status + ")");
+    });
     else lines.push("Keine offenen Punkte bekannt.");
     return lines.join("\n");
   }
-  function renderUserManual(name, tickets) {
+  function renderUserManual(name, tickets, variant) {
+    var deOnly = variant === "de";
     var lines = ["# Benutzerhandbuch – " + name, "", "Stand: " + new Date().toLocaleDateString("de-DE"), ""];
+    if (deOnly) lines.push(DE_ONLY_NOTE, "");
     tickets.forEach(function (t, i) {
       var meta = ["Ticket: " + t.key];
       if (t.components && t.components.length) meta.push("Komponente: " + t.components.join(", "));
       var extra = ticketMetaSummary(t);
       if (extra) meta.push(extra);
-      lines.push("## " + (i + 1) + ". " + (t.summary || t.key), "", "*" + meta.join(" · ") + "*", "");
-      lines.push(t.description || "_Keine Beschreibung im Ticket hinterlegt - Abschnitt manuell ergänzen._", "");
+      if (deOnly) {
+        lines.push("## " + (i + 1) + ". Ticket " + t.key, "", "*" + meta.join(" · ") + "*", "");
+        lines.push("_Freitext (Zusammenfassung/Beschreibung) aus dem Ticket wird in dieser Ansicht ausgeblendet, siehe Ansicht \"Original\"._", "");
+      } else {
+        lines.push("## " + (i + 1) + ". " + (t.summary || t.key), "", "*" + meta.join(" · ") + "*", "");
+        lines.push(t.description || "_Keine Beschreibung im Ticket hinterlegt - Abschnitt manuell ergänzen._", "");
+      }
     });
     return lines.join("\n");
   }
@@ -5827,16 +5878,22 @@
   // der Tickets zusammengestellt und nach Domäne gegliedert - ohne
   // Jira-Ticket-Referenzen (Schlüssel/Zusammenfassung) im Fließtext, da die
   // Anleitung fachlich, nicht Ticket-bezogen gelesen werden soll.
-  function renderClickInstructions(name, tickets) {
+  function renderClickInstructions(name, tickets, variant) {
+    var deOnly = variant === "de";
     var lines = [
       "# Klickanweisung – oneSCM (" + name + ")", "",
       "Stand: " + new Date().toLocaleDateString("de-DE"), "",
       "Schritt-für-Schritt-Anleitung für die Benutzung in oneSCM, zusammengestellt aus den Beschreibungstexten der zugrunde liegenden Tickets und nach Domäne gegliedert (ohne Jira-Ticket-Referenzen im Text). Automatisch erzeugtes Rohgerüst – vor Verwendung redaktionell prüfen und in eigene Worte fassen.",
       ""
     ];
+    if (deOnly) lines.push(DE_ONLY_NOTE, "");
     var groups = groupRawTicketsByDomain(tickets);
     groups.forEach(function (g) {
       lines.push("## " + g.domain, "");
+      if (deOnly) {
+        lines.push("_Die Klickschritte dieser Domäne stammen unverändert aus den Ticket-Beschreibungen (Originalsprache) und werden in dieser Ansicht ausgeblendet, siehe Ansicht \"Original\"._", "");
+        return;
+      }
       var stepNum = 1, anyStep = false;
       g.tickets.forEach(function (t) {
         if (!t.description) return;
@@ -6253,30 +6310,44 @@
     var downloadPdfBtn = document.getElementById(kind + "-download-pdf-btn");
     var downloadXlsxBtn = document.getElementById(kind + "-download-xlsx-btn");
     var generateBtn = document.getElementById(kind + "-generate-btn");
+    var variantFullBtn = document.getElementById(kind + "-variant-full");
+    var variantDeBtn = document.getElementById(kind + "-variant-de");
+    var contentByVariant = { full: "", de: "" };
+    var currentVariant = "full";
     var lastContent = "";
     var lastTickets = [];
     var lastTitle = "Release";
+    function applyVariant(v) {
+      currentVariant = v;
+      lastContent = contentByVariant[v];
+      preview.textContent = lastContent || "Noch kein Entwurf generiert.";
+      [variantFullBtn, variantDeBtn].forEach(function (btn) { btn.classList.toggle("active", btn.getAttribute("data-variant") === v); });
+    }
+    variantFullBtn.addEventListener("click", function () { applyVariant("full"); });
+    variantDeBtn.addEventListener("click", function () { applyVariant("de"); });
     generateBtn.addEventListener("click", function () {
       var tickets = resolveGeneratorTickets(kind);
       if (!tickets.length) { showToast("Keine Tickets", "Keine passenden Tickets gefunden.", true); return; }
       lastTitle = nameInput.value.trim() || "Release";
-      lastContent = cfg.render(lastTitle, tickets);
+      contentByVariant.full = cfg.render(lastTitle, tickets, "full");
+      contentByVariant.de = cfg.render(lastTitle, tickets, "de");
       lastTickets = tickets;
-      preview.textContent = lastContent;
+      applyVariant(currentVariant);
       downloadBtn.disabled = false;
       downloadDocxBtn.disabled = false;
       downloadPdfBtn.disabled = false;
       downloadXlsxBtn.disabled = false;
       addLog(kind + ": Entwurf für " + tickets.length + " Tickets erzeugt.");
     });
+    function variantSuffix() { return currentVariant === "de" ? "_nur-deutsch" : ""; }
     downloadBtn.addEventListener("click", async function () {
-      var ok = await saveOrWarn(safeFilename(lastTitle) + "_" + kind + "." + cfg.ext, lastContent);
+      var ok = await saveOrWarn(safeFilename(lastTitle) + "_" + kind + variantSuffix() + "." + cfg.ext, lastContent);
       if (ok) showToast("Gespeichert", "Entwurf heruntergeladen.");
     });
     downloadDocxBtn.addEventListener("click", async function () {
       try {
         var blob = await buildMarkdownDocxBlob(lastTitle, lastContent);
-        var ok = await saveOrWarn(safeFilename(lastTitle) + "_" + kind + ".docx", blob);
+        var ok = await saveOrWarn(safeFilename(lastTitle) + "_" + kind + variantSuffix() + ".docx", blob);
         if (ok) showToast("Gespeichert", "DOCX heruntergeladen.");
       } catch (err) {
         showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
@@ -6285,7 +6356,7 @@
     downloadPdfBtn.addEventListener("click", async function () {
       try {
         var blob = buildMarkdownPdfBlob(lastTitle, lastContent);
-        var ok = await saveOrWarn(safeFilename(lastTitle) + "_" + kind + ".pdf", blob);
+        var ok = await saveOrWarn(safeFilename(lastTitle) + "_" + kind + variantSuffix() + ".pdf", blob);
         if (ok) showToast("Gespeichert", "PDF heruntergeladen.");
       } catch (err) {
         showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
