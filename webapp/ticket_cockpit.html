@@ -236,6 +236,15 @@
   .diff-old { color: var(--blocked); text-decoration: line-through; }
   .diff-new { color: var(--done); font-weight: 600; }
   .diff-arrow { color: var(--text-faint); margin: 0 5px; }
+  #changes-table { table-layout: fixed; }
+  #changes-table td, #changes-table th { white-space: normal; overflow-wrap: normal; word-break: normal; }
+  #changes-table td:nth-child(6), #changes-table th:nth-child(6) { overflow-wrap: anywhere; }
+  #changes-table th:nth-child(1), #changes-table td:nth-child(1) { width: 12%; }
+  #changes-table th:nth-child(2), #changes-table td:nth-child(2) { width: 14%; }
+  #changes-table th:nth-child(3), #changes-table td:nth-child(3) { width: 16%; }
+  #changes-table th:nth-child(4), #changes-table td:nth-child(4) { width: 3%; }
+  #changes-table th:nth-child(5), #changes-table td:nth-child(5) { width: 16%; }
+  #changes-table th:nth-child(6), #changes-table td:nth-child(6) { width: 39%; }
 
   .log-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
   .log-list li { padding: 10px 2px; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; gap: 12px; align-items: baseline; }
