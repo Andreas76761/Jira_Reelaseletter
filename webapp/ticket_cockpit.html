@@ -1603,6 +1603,7 @@
       if (!tickets.length) { showToast("Keine Tickets", "Keine passenden Tickets gefunden.", true); return; }
       var name = nameInput.value.trim() || "Release";
       var source = renderProcessDiagramSource(tickets);
+      renderBox.innerHTML = "";
       insertMermaid(renderBox, source);
       downloadBtn.disabled = false;
       downloadBtn.onclick = async function () {
@@ -1618,7 +1619,6 @@
   wireProcessDiagram();
 
   function insertMermaid(container, source) {
-    container.innerHTML = "";
     var pre = document.createElement("pre");
     pre.className = "mermaid";
     pre.textContent = source;
