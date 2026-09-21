@@ -128,6 +128,13 @@
   .section-label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-faint); }
 
   /* ---- Upload ---- */
+  .import-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .import-tab {
+    padding: 7px 13px; border-radius: 100px; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-muted); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  }
+  .import-tab:hover { border-color: var(--border-strong); color: var(--text); }
+  .import-tab.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
   .upload-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
   .dropzone {
     flex: 1 1 320px; border: 1.5px dashed var(--border-strong); border-radius: 10px;
@@ -434,13 +441,21 @@
 
       <!-- ================= Import ================= -->
       <section class="view-panel" data-view-panel="import" hidden>
-        <div class="view-head"><h2>Import</h2><p class="desc">Eine oder mehrere Jira-Exportdateien (HTML-Tabelle oder XML) hochladen. Neue Dateien werden zu den bisherigen Tickets hinzugefügt/aktualisiert, nicht ersetzt.</p></div>
+        <div class="view-head"><h2>Import</h2><p class="desc">Format wählen und eine oder mehrere Dateien hochladen. Neue Dateien werden zu den bisherigen Tickets hinzugefügt/aktualisiert, nicht ersetzt.</p></div>
+
+        <div class="import-tabs" id="import-tabs">
+          <button class="import-tab active" data-mode="massenupload" type="button">Jira Massenupload</button>
+          <button class="import-tab" data-mode="einzelticket" type="button">Jira Einzelticket</button>
+          <button class="import-tab" data-mode="releaseinfo" type="button">Releaseinfo</button>
+          <button class="import-tab" data-mode="andere" type="button">Andere Importe</button>
+        </div>
+
         <div class="upload-row">
-          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Jira-Exportdatei(en) auswählen">
+          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Datei(en) auswählen">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
             <span class="txt">
-              <strong>Jira-HTML- oder XML-Export(e) hier ablegen</strong>
-              <span>oder klicken zum Auswählen (Mehrfachauswahl möglich) &middot; Bereinigung läuft komplett im Browser, nichts wird hochgeladen</span>
+              <strong id="dropzone-title">Jira-HTML- oder XML-Export(e) hier ablegen</strong>
+              <span id="dropzone-hint">oder klicken zum Auswählen (Mehrfachauswahl möglich) &middot; Bereinigung läuft komplett im Browser, nichts wird hochgeladen</span>
             </span>
           </div>
           <div class="upload-side">
@@ -806,7 +821,121 @@
     return tickets;
   }
 
-  function detectAndParse(fileText, filename) {
+  function parseSingleTicketDetailHtml(doc) {
+    var anchor = doc.querySelector('a[href*="/browse/"]');
+    var key = null;
+    if (anchor) {
+      var m = /\/browse\/([A-Z][A-Z0-9]*-\d+)/.exec(anchor.getAttribute("href") || "");
+      if (m) key = m[1];
+    }
+    if (!key) {
+      var titleText = (doc.querySelector("title") || {}).textContent || "";
+      var h1 = doc.querySelector("h1, h2");
+      var m2 = /([A-Z][A-Z0-9]*-\d+)/.exec(titleText + " " + (h1 ? h1.textContent : ""));
+      if (m2) key = m2[1];
+    }
+    if (!key) return null;
+
+    var ticket = emptyTicket(key);
+    if (anchor) {
+      var parent = anchor.closest("h1,h2,h3,h4") || anchor.parentElement;
+      if (parent) {
+        var text = parent.textContent.replace(key, "").trim().replace(/^[-:–—\s]+/, "");
+        if (text) ticket.summary = text;
+      }
+    }
+    var inComments = false;
+    doc.querySelectorAll("tr").forEach(function (row) {
+      var cells = Array.prototype.slice.call(row.querySelectorAll("th,td"));
+      if (!cells.length) return;
+      if (cells.length === 1) {
+        var label = cells[0].textContent.trim();
+        if (normalizeLabel(label) === "comments") inComments = true;
+        return;
+      }
+      if (inComments) return;
+      for (var j = 0; j + 1 < cells.length; j += 2) {
+        var lbl = cells[j].textContent.trim().replace(/:$/, "");
+        var val = cells[j + 1].textContent.replace(/\s+/g, " ").trim();
+        if (!lbl || !val) continue;
+        applyField(ticket, normalizeLabel(lbl), val, lbl);
+      }
+    });
+    return ticket;
+  }
+
+  var RELEASEINFO_SERVICE_HEADER_RE = /^(.+?)\s*\(\s*([A-Za-z]+-[\d.]+)\s*\)\s*-\s*Domain:\s*(.*)$/;
+  var RELEASEINFO_KEY_RE = /^[A-Z][A-Z0-9]*-\d+$/;
+  var RELEASEINFO_META_RE = /aktualisiert von (.+?) am ([^\t]+?)(?:\s{2,}|$)/;
+
+  function releaseInfoSplitColumns(line) {
+    if (line.indexOf("\t") !== -1) return line.split("\t");
+    return line.split(/ {2,}/);
+  }
+
+  function parseReleaseInfoText(text) {
+    var lines = text.split(/\r?\n/);
+    var currentDomain = "", currentService = "", currentColumns = null;
+    var merged = {}; var order = []; var meta = null;
+
+    lines.forEach(function (rawLine) {
+      var line = rawLine.trim();
+      if (!line) return;
+
+      var metaMatch = RELEASEINFO_META_RE.exec(line);
+      if (metaMatch && !meta) meta = { author: metaMatch[1].trim(), when: metaMatch[2].trim() };
+
+      var headerMatch = RELEASEINFO_SERVICE_HEADER_RE.exec(line);
+      if (headerMatch) {
+        currentService = headerMatch[1].trim() + " (" + headerMatch[2].trim() + ")";
+        currentDomain = headerMatch[3].trim();
+        currentColumns = null;
+        return;
+      }
+
+      var cols = releaseInfoSplitColumns(line);
+      if (cols[0] && cols[0].trim() === "Schlüssel") {
+        currentColumns = cols.map(function (c) { return c.trim(); });
+        return;
+      }
+
+      var firstCell = (cols[0] || "").trim();
+      if (RELEASEINFO_KEY_RE.test(firstCell) && currentColumns) {
+        var key = firstCell;
+        var ticket = emptyTicket(key);
+        for (var i = 1; i < currentColumns.length && i < cols.length; i++) {
+          var label = currentColumns[i];
+          var value = (cols[i] || "").trim();
+          if (!value) continue;
+          if (label === "Status") ticket.status = value;
+          else if (label === "Zusammenfassung") ticket.summary = value;
+          else ticket.custom_fields[label] = value;
+        }
+        if (currentDomain) ticket.custom_fields.Domain = currentDomain;
+
+        var existing = merged[key];
+        if (!existing) {
+          if (currentService) ticket.components = [currentService];
+          merged[key] = ticket;
+          order.push(key);
+        } else {
+          if (!existing.custom_fields.Domain && ticket.custom_fields.Domain) {
+            existing.custom_fields.Domain = ticket.custom_fields.Domain;
+          }
+          if (currentService && existing.components.indexOf(currentService) === -1) {
+            existing.components.push(currentService);
+          }
+          Object.keys(ticket.custom_fields).forEach(function (k) {
+            if (k !== "Domain" && !(k in existing.custom_fields)) existing.custom_fields[k] = ticket.custom_fields[k];
+          });
+        }
+      }
+    });
+
+    return { tickets: order.map(function (k) { return merged[k]; }), meta: meta };
+  }
+
+  function parseAsMassenupload(fileText, filename) {
     var lower = (filename || "").toLowerCase();
     var parser = new DOMParser();
     if (lower.slice(-4) === ".xml" || fileText.trim().indexOf("<?xml") === 0) {
@@ -821,10 +950,41 @@
     if (ht) return { format: "Jira HTML-Export (Issue-Tabelle)", tickets: ht };
     throw new Error(
       "HTML-Format nicht erkannt (kein issuetable, keine data-issuekey-Zeilen gefunden). " +
-      "Detail-HTML-Exports mit Überschrift pro Ticket werden von dieser Web-App aktuell nicht unterstützt – " +
-      "dafür bitte das CLI-Tool (jira-releaseletter import) verwenden."
+      "Für eine einzelne Ticket-Detailseite den Tab „Jira Einzelticket“ verwenden."
     );
   }
+
+  function parseAsEinzelticket(fileText) {
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(fileText, "text/html");
+    var ticket = parseSingleTicketDetailHtml(doc);
+    if (ticket) return { format: "Jira Einzelticket (Detail-HTML)", tickets: [ticket] };
+    throw new Error("Kein Jira-Ticket in dieser Datei erkannt (erwartet: einzelne Ticket-Detailseite mit /browse/-Link).");
+  }
+
+  function parseAsReleaseinfo(fileText) {
+    var result = parseReleaseInfoText(fileText);
+    if (!result.tickets.length) {
+      throw new Error("Keine Jira-Ticket-Zeilen im Releaseinfo-Text gefunden (erwartet: Tab-getrennte Zeilen mit Schlüssel/Status/Zusammenfassung).");
+    }
+    var stamp = result.meta ? " (Stand " + result.meta.when + ", " + result.meta.author + ")" : "";
+    return { format: "Releaseinfo (Confluence)" + stamp, tickets: result.tickets };
+  }
+
+  function parseAsAndere(fileText, filename) {
+    var errors = [];
+    try { return parseAsMassenupload(fileText, filename); } catch (e) { errors.push(e.message); }
+    try { return parseAsEinzelticket(fileText); } catch (e) { errors.push(e.message); }
+    try { return parseAsReleaseinfo(fileText); } catch (e) { errors.push(e.message); }
+    throw new Error("Format nicht erkannt. Probiert: Jira-Massenupload, Jira-Einzelticket, Releaseinfo. Details: " + errors.join(" / "));
+  }
+
+  var IMPORT_PARSERS = {
+    massenupload: parseAsMassenupload,
+    einzelticket: parseAsEinzelticket,
+    releaseinfo: parseAsReleaseinfo,
+    andere: parseAsAndere
+  };
 
   var EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
   function PersonAnonymizer() { this.map = {}; this.count = 0; }
@@ -994,7 +1154,7 @@
     "stat-tickets", "stat-imports", "stat-changes",
     "tiles", "domain-chart", "domain-section", "domain-label", "domain-select", "search-input", "reset-filter-btn",
     "table-body", "empty-state", "result-count",
-    "dropzone", "file-input", "reset-session-btn", "format-callout",
+    "dropzone", "dropzone-title", "dropzone-hint", "file-input", "reset-session-btn", "format-callout", "import-tabs",
     "imports-tbody", "changes-tbody", "changes-empty",
     "log-list", "log-empty",
     "gallery", "gallery-empty",
@@ -1410,18 +1570,64 @@
     });
   }
 
+  var IMPORT_MODE_INFO = {
+    massenupload: {
+      title: "Jira-HTML- oder XML-Export(e) hier ablegen",
+      hint: "oder klicken zum Auswählen (Mehrfachauswahl möglich) · Issue-Navigator-Tabellenexport oder klassischer XML-Export",
+      accept: ".html,.htm,.xml"
+    },
+    einzelticket: {
+      title: "Einzelne Jira-Ticket-Detailseite(n) hier ablegen",
+      hint: "oder klicken zum Auswählen (mehrere Einzeltickets möglich) · eine Ticket-Detailseite (HTML) pro Datei",
+      accept: ".html,.htm"
+    },
+    releaseinfo: {
+      title: "Releaseinfo-Text(e) hier ablegen",
+      hint: "oder klicken zum Auswählen (mehrere Releaseinfos möglich) · Confluence-Release-Notes als .txt, Tickets werden je Domain gruppiert",
+      accept: ".txt"
+    },
+    andere: {
+      title: "Beliebige Exportdatei(en) hier ablegen",
+      hint: "oder klicken zum Auswählen · Format wird automatisch erkannt (Massenupload, Einzelticket, Releaseinfo)",
+      accept: ".html,.htm,.xml,.txt"
+    }
+  };
+  var importMode = "massenupload";
+
+  function setImportMode(mode) {
+    importMode = mode;
+    var info = IMPORT_MODE_INFO[mode];
+    els.dropzoneTitle.textContent = info.title;
+    els.dropzoneHint.textContent = info.hint;
+    els.fileInput.setAttribute("accept", info.accept);
+    Array.prototype.forEach.call(els.importTabs.querySelectorAll(".import-tab"), function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-mode") === mode);
+    });
+  }
+  Array.prototype.forEach.call(els.importTabs.querySelectorAll(".import-tab"), function (btn) {
+    btn.addEventListener("click", function () { setImportMode(btn.getAttribute("data-mode")); });
+  });
+
   async function handleFiles(fileList) {
     var files = Array.prototype.slice.call(fileList || []);
     if (!files.length) return;
+    var parseFn = IMPORT_PARSERS[importMode] || parseAsAndere;
     for (var i = 0; i < files.length; i++) {
       var file = files[i];
       try {
         var text = await readFileAsText(file);
-        var result = detectAndParse(text, file.name);
+        var result = parseFn(text, file.name);
         var record = ingestTickets(result.tickets, { source: file.name, when: nowLabel(), format: result.format });
+        var extra = "";
+        if (importMode === "releaseinfo") {
+          var domains = {};
+          result.tickets.forEach(function (t) { var d = (t.custom_fields && t.custom_fields.Domain) || "(ohne Domain)"; domains[d] = (domains[d] || 0) + 1; });
+          var domainNames = Object.keys(domains);
+          extra = " über " + domainNames.length + " Domain(s): " + domainNames.slice(0, 4).join(", ") + (domainNames.length > 4 ? ", …" : "");
+        }
         showToast(
           "Import erfolgreich",
-          file.name + ": " + record.ticketCount + " Tickets (" + record.stats.neu + " neu, " + record.stats.geaendert + " geändert)."
+          file.name + ": " + record.ticketCount + " Tickets (" + record.stats.neu + " neu, " + record.stats.geaendert + " geändert)" + extra + "."
         );
       } catch (err) {
         showToast("Import fehlgeschlagen (" + file.name + ")", (err && err.message) || "Unbekannter Fehler.", true);

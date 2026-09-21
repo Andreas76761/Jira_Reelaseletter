@@ -144,12 +144,19 @@ folgenden Bereichen:
   Tickets: Status-Kacheln, Domain-Verteilung, Volltextsuche, sortierbare
   Tabelle, Ticket-Detailansicht (18 Standardfelder, fehlende klar als
   "Nicht im Export enthalten" markiert statt erfunden).
-- **Import** – Jira-HTML-Export (Issue-Navigator-Tabelle) oder klassischer
-  XML-Export per Drag&Drop oder Dateiauswahl, **auch mehrere Dateien
-  gleichzeitig/nacheinander**. Parsing und Bereinigung laufen
-  vollständig im Browser (JavaScript-Portierung von
-  `parser_html.py`/`parser_xml.py`/`cleaner.py`) – die Datei verlässt
-  den Rechner nicht.
+- **Import** – vier Formate per Tab wählbar, jeweils mit Mehrfachauswahl
+  und Drag&Drop; Parsing/Bereinigung laufen vollständig im Browser, die
+  Datei verlässt den Rechner nicht:
+  - *Jira Massenupload* – Jira-HTML-Export (Issue-Navigator-Tabelle)
+    oder klassischer XML-Export (JavaScript-Portierung von
+    `parser_html.py`/`parser_xml.py`/`cleaner.py`).
+  - *Jira Einzelticket* – einzelne Ticket-Detailseite (HTML, ein Ticket
+    pro Datei, Überschrift + Feldtabellen).
+  - *Releaseinfo* – Release-Notes-Text aus Confluence (.txt, Tab-getrennt),
+    Tickets werden je Service-Abschnitt automatisch der dort genannten
+    Domain zugeordnet und über den Schlüssel dedupliziert (mehrere
+    Service-Zugehörigkeiten werden als Komponenten zusammengeführt).
+  - *Andere Importe* – probiert alle drei Parser automatisch durch.
 - **Dateiverwaltung** – Liste aller Imports dieser Sitzung sowie ein
   Vergleich von Tickets, die in mehreren Imports mit unterschiedlichem
   Status/Datum/Zusammenfassung vorkamen (Vorher/Nachher inkl. Quelle).
