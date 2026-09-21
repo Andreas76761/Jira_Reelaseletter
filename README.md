@@ -206,7 +206,7 @@ wirkungslos bleiben kann:
   Import keine vollständige Rohkopie gespeichert wird, lassen sich
   einzelne Feldänderungen aus genau diesem Import nicht gezielt
   zurückrechnen. Import-Nummern werden nach dem Löschen nie wiederverwendet.
-- **Verarbeitung** – sechs Jobs für wiederkehrende Arbeitsschritte rund
+- **Verarbeitung** – sieben Jobs für wiederkehrende Arbeitsschritte rund
   um die geladenen Tickets, erreichbar über die Tab-Leiste oder das kompakte
   Burger-Menü (☰) daneben. Jeder Job zeigt oben seine **Prozessschritte**
   als visuelle Checkliste (grauer Kreis = ausstehend, grüner Haken =
@@ -269,6 +269,24 @@ wirkungslos bleiben kann:
   gegen Zusammenfassung/Beschreibung/Domäne des Tickets – keine KI, und
   fehlt ein Tickettyp im Punkte-System, wird ehrlich "Unbekannt" statt
   geraten angezeigt.
+  7. *RAG: Zusammenfassung & Fließtext* – zweistufig. Schritt 1
+     (**Retrieval**, rein deterministisch): Rohdaten (Überschrift +
+     Beschreibung) der aktuell ausgewählten Datei nach Domäne, Status und
+     Zeitraum filtern (Mehrfachauswahl) und als Tabelle anzeigen – zeigt
+     nur unverändert vorhandene Ticket-Daten, "–" bei fehlendem Text.
+     Schritt 2 (**Generation**, echte KI): mit den Buttons "Zusammenfassung
+     generieren" bzw. "Fließtext generieren" schickt die App die
+     extrahierten Rohdaten über die `sample`-Laufzeit-Capability an Claude
+     und lässt daraus einen endnutzergerechten Text schreiben (Live-Streaming
+     der Antwort, Stop-Button, danach als Markdown speicherbar). Diese
+     Funktion ist die einzige Stelle in der App, die echte KI-Textgenerierung
+     nutzt (sonst ausschließlich deterministische Logik) – sie ist nur
+     innerhalb der veröffentlichten Claude-Artifact-Version verfügbar (nicht
+     bei lokalem Öffnen der Datei), fragt beim ersten Aufruf um Zustimmung,
+     kostet die Nutzung des Viewer-Kontos und liefert bei Fehlern
+     (Ablehnung, Rate-Limit, keine Rohdaten, …) eine verständliche
+     Meldung statt eines Absturzes. Ergebnis ist klar als KI-generiert
+     gekennzeichnet und redaktionell zu prüfen.
 - **Releaseletter / Benutzerhandbuch** – Textentwürfe aus ausgewählten
   Tickets (aktuelle Dashboard-Filterung oder Ticket-Keys), Vorschau +
   Download als Markdown, DOCX, PDF oder XLSX (Tickets-Tabelle mit

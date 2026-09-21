@@ -213,6 +213,7 @@
   .btn.danger { background: var(--blocked); border-color: var(--blocked); color: #fff; }
   .btn.danger:hover { filter: brightness(0.92); }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn[hidden] { display: none; }
   .btn svg { flex: none; }
 
   .danger-zone { border-color: var(--blocked); padding: 16px 18px; }
@@ -699,7 +700,7 @@
 
       <!-- ================= Verarbeitung ================= -->
       <section class="view-panel" data-view-panel="verarbeitung" hidden>
-        <div class="view-head"><h2>Verarbeitung</h2><p class="desc">Sechs Arbeitsschritte rund um die geladenen Tickets. Jeder Job lässt sich zusätzlich als XLSX, DOCX oder PDF exportieren.</p></div>
+        <div class="view-head"><h2>Verarbeitung</h2><p class="desc">Sieben Arbeitsschritte rund um die geladenen Tickets. Jobs 1-6 lassen sich zusätzlich als XLSX, DOCX oder PDF exportieren; Job 7 (RAG) erzeugt stattdessen einen KI-generierten Text zum Speichern als Markdown.</p></div>
 
         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
           <div class="import-tabs" id="verarbeitung-tabs">
@@ -709,6 +710,7 @@
             <button class="import-tab" data-vsub="releaseversion" type="button">4. Releaseversion</button>
             <button class="import-tab" data-vsub="jira-liste" type="button">5. Jira Liste</button>
             <button class="import-tab" data-vsub="domaenen-uebersicht" type="button">6. Domänen-Übersicht</button>
+            <button class="import-tab" data-vsub="rag" type="button">7. RAG: Zusammenfassung &amp; Fließtext</button>
           </div>
           <div class="burger-wrap" id="verarbeitung-burger-wrap">
             <button class="icon-btn burger-btn" id="verarbeitung-burger-btn" type="button" aria-label="Job-Menü öffnen" aria-expanded="false">
@@ -721,6 +723,7 @@
               <li><button type="button" data-vsub="releaseversion">4. Releaseversion</button></li>
               <li><button type="button" data-vsub="jira-liste">5. Jira Liste</button></li>
               <li><button type="button" data-vsub="domaenen-uebersicht">6. Domänen-Übersicht</button></li>
+              <li><button type="button" data-vsub="rag">7. RAG: Zusammenfassung &amp; Fließtext</button></li>
             </ul>
           </div>
         </div>
@@ -899,6 +902,47 @@
             </table>
             <div class="empty-hint" id="domainoverview-empty">Noch keine Tickets geladen.</div>
           </div>
+        </div>
+
+        <!-- 7) RAG: Zusammenfassung & Fließtext -->
+        <div class="subtabs-panel" data-vsub-panel="rag" hidden>
+          <p class="desc">Rohdaten (Überschrift + Beschreibung) der aktuell in Verarbeitung ausgewählten Datei extrahieren &ndash; gefiltert nach Domäne, Status und Zeitraum &ndash; und daraus mit Claude einen endnutzergerechten Text generieren (Zusammenfassung oder Fließtext). Die Extraktion selbst zeigt nur unverändert vorhandene Ticket-Daten; die KI-Generierung ist ein separater, bewusst ausgelöster Schritt und wird als solcher gekennzeichnet &ndash; automatisch erzeugter Text, vor Verwendung redaktionell prüfen.</p>
+
+          <section>
+            <p class="section-label">1. Rohdaten extrahieren</p>
+            <label for="rag-domain-select">Domäne (Mehrfachauswahl, leer = alle)</label>
+            <select id="rag-domain-select" multiple size="5"></select>
+            <label for="rag-status-select">Status (Mehrfachauswahl, leer = alle)</label>
+            <select id="rag-status-select" multiple size="5"></select>
+            <div class="date-range-row" style="display:flex; gap:12px; margin-top:8px;">
+              <div style="flex:1;"><label for="rag-date-from">Zeitraum von (Datum)</label><input type="date" id="rag-date-from"></div>
+              <div style="flex:1;"><label for="rag-date-to">bis</label><input type="date" id="rag-date-to"></div>
+            </div>
+            <button class="btn primary" id="rag-extract-btn" type="button" style="margin-top:10px;">Rohdaten extrahieren</button>
+            <div class="stat-line" id="rag-extract-summary" style="margin-top:10px;" hidden>
+              <div class="chip"><b class="mono" id="rag-extract-count">0</b> Tickets extrahiert</div>
+            </div>
+            <div class="panel table-wrap" id="rag-extract-wrap" style="max-height:320px; overflow:auto; margin-top:8px;" hidden>
+              <table class="simple-table" id="rag-extract-table">
+                <thead><tr><th>Ticket</th><th>Domäne</th><th>Status</th><th>Datum</th><th>Überschrift</th><th>Beschreibung</th></tr></thead>
+                <tbody id="rag-extract-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section>
+            <p class="section-label">2. Endnutzergerechten Text generieren (Claude)</p>
+            <div class="job-export-row">
+              <button class="btn ghost" id="rag-generate-summary-btn" type="button" disabled>Zusammenfassung generieren</button>
+              <button class="btn ghost" id="rag-generate-fliesstext-btn" type="button" disabled>Fließtext generieren</button>
+              <button class="btn ghost" id="rag-stop-btn" type="button" hidden>Stop</button>
+            </div>
+            <p class="step-note" id="rag-status-note"></p>
+            <div class="gen-preview" id="rag-output" style="min-height:120px;">Noch kein Text generiert.</div>
+            <div class="job-export-row" style="margin-top:8px;">
+              <button class="btn ghost" id="rag-download-btn" type="button" disabled>Als Markdown speichern</button>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -3226,7 +3270,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "1.7.0";
+  var APP_VERSION = "1.8.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -3928,6 +3972,9 @@
     "release-missing-wrap", "release-missing-table", "release-missing-tbody",
     "jiraliste-count", "jiraliste-tbody",
     "domainoverview-domain-count", "domainoverview-ticket-count", "domainoverview-tbody", "domainoverview-empty",
+    "rag-domain-select", "rag-status-select", "rag-date-from", "rag-date-to", "rag-extract-btn",
+    "rag-extract-summary", "rag-extract-count", "rag-extract-wrap", "rag-extract-tbody",
+    "rag-generate-summary-btn", "rag-generate-fliesstext-btn", "rag-stop-btn", "rag-status-note", "rag-output", "rag-download-btn",
     "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
     "points-tbody", "points-new-type", "points-new-value", "points-add-btn",
     "labels-list", "labels-new-input", "labels-add-btn",
@@ -4146,6 +4193,7 @@
     els.releaseKeysInput.value = "";
     els.evaluateSummary.hidden = true;
     els.evaluateTableWrap.hidden = true;
+    ragResetOutput();
   }
 
   // Admin-Funktion (Einstellungen): im Unterschied zu resetSession() werden
@@ -4176,6 +4224,7 @@
     els.releaseKeysInput.value = "";
     els.evaluateSummary.hidden = true;
     els.evaluateTableWrap.hidden = true;
+    ragResetOutput();
     addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
   }
   els.deleteAllDataBtn.addEventListener("click", async function () {
@@ -4363,6 +4412,7 @@
     renderJiraListe();
     renderDomainOverview();
     renderAllJobSteps();
+    ragPopulateSelects();
   }
 
   function buildFormatCallout() {
@@ -7001,6 +7051,179 @@
     } catch (e) {
       showToast("Zugriff verweigert", "Der Browser hat den Lesezugriff auf die Zwischenablage verweigert. Bitte stattdessen mit Strg+V einfügen.", true);
     }
+  });
+
+  /* ============ Teil 9b: RAG - Rohdaten-Extraktion + KI-Text (sample-Capability) ============
+     "RAG" hier im Sinn von Retrieval (deterministische Filterung/Extraktion der
+     Ticket-Rohdaten - Überschrift+Beschreibung nach Domäne/Status/Zeitraum,
+     aus der aktuell in Verarbeitung ausgewählten Datei, scopedTickets()) +
+     Generation (Claude generiert daraus über die sample-Capability einen
+     endnutzergerechten Text). Die Extraktion selbst erfindet nichts (reine
+     Filterung vorhandener Daten); die Generierung ist ein bewusst vom Nutzer
+     ausgelöster, separat gekennzeichneter KI-Schritt. window.claude.use("sample")
+     ist nur innerhalb der veröffentlichten Claude-Artifact-Laufzeit verfügbar,
+     kostet die Nutzung des Viewers und fragt vor dem ersten Aufruf um
+     Zustimmung - siehe artifact-capabilities-Doku. Lokal geöffnet (Datei/
+     Playwright/Tests) resolved use() zu null, die Buttons zeigen dann einen
+     ehrlichen Hinweis statt eines stillen Fehlschlags. */
+  var sampleApi = null;
+  if (window.claude && window.claude.use) {
+    window.claude.use("sample").then(function (ns) { sampleApi = ns; });
+  }
+  var ragExtractedRows = [];
+  var ragAbortController = null;
+  var ragLastKind = "summary";
+
+  function ragDistinctValues(list, field) {
+    var seen = {}, out = [];
+    list.forEach(function (t) { var v = t[field]; if (v && !seen[v]) { seen[v] = true; out.push(v); } });
+    return out.sort(function (a, b) { return a.localeCompare(b, "de"); });
+  }
+  function selectedValues(selectEl) {
+    return Array.prototype.map.call(selectEl.selectedOptions, function (o) { return o.value; });
+  }
+  function ragPopulateSelects() {
+    var list = scopedTickets();
+    var domainSel = selectedValues(els.ragDomainSelect);
+    var statusSel = selectedValues(els.ragStatusSelect);
+    var domains = ragDistinctValues(list, "domain");
+    var statuses = ragDistinctValues(list, "status");
+    els.ragDomainSelect.innerHTML = domains.map(function (d) {
+      return '<option value="' + escapeHtml(d) + '"' + (domainSel.indexOf(d) !== -1 ? " selected" : "") + ">" + escapeHtml(d) + "</option>";
+    }).join("");
+    els.ragStatusSelect.innerHTML = statuses.map(function (s) {
+      return '<option value="' + escapeHtml(s) + '"' + (statusSel.indexOf(s) !== -1 ? " selected" : "") + ">" + escapeHtml(s) + "</option>";
+    }).join("");
+  }
+
+  function ragResetOutput() {
+    ragExtractedRows = [];
+    els.ragExtractSummary.hidden = true;
+    els.ragExtractWrap.hidden = true;
+    els.ragExtractTbody.innerHTML = "";
+    els.ragGenerateSummaryBtn.disabled = true;
+    els.ragGenerateFliesstextBtn.disabled = true;
+    els.ragDownloadBtn.disabled = true;
+    els.ragOutput.textContent = "Noch kein Text generiert.";
+    els.ragStatusNote.textContent = "";
+  }
+
+  function ragExtract() {
+    var list = scopedTickets();
+    var domains = selectedValues(els.ragDomainSelect);
+    var statuses = selectedValues(els.ragStatusSelect);
+    var fromTs = els.ragDateFrom.value ? new Date(els.ragDateFrom.value).getTime() : null;
+    var toTs = els.ragDateTo.value ? new Date(els.ragDateTo.value).getTime() + 24 * 60 * 60 * 1000 - 1 : null;
+    var rows = list.filter(function (t) {
+      if (domains.length && domains.indexOf(t.domain) === -1) return false;
+      if (statuses.length && statuses.indexOf(t.status) === -1) return false;
+      var ts = t.updatedSort || t.createdSort;
+      if (fromTs != null && (!ts || ts < fromTs)) return false;
+      if (toTs != null && (!ts || ts > toTs)) return false;
+      return true;
+    }).map(function (t) {
+      return {
+        key: t.key, domain: t.domain || "–", status: t.status || "–", date: t.updated || t.created || "–",
+        summary: t.summary || "", description: (t.raw && t.raw.description) || ""
+      };
+    });
+    ragExtractedRows = rows;
+    els.ragExtractCount.textContent = rows.length;
+    els.ragExtractSummary.hidden = false;
+    els.ragExtractWrap.hidden = rows.length === 0;
+    els.ragExtractTbody.innerHTML = rows.map(function (r) {
+      return "<tr><td class=\"mono\">" + escapeHtml(r.key) + "</td><td>" + escapeHtml(r.domain) + "</td><td>" + escapeHtml(r.status) +
+        "</td><td class=\"mono\">" + escapeHtml(r.date) + "</td><td>" + (r.summary ? escapeHtml(r.summary) : "&ndash;") +
+        "</td><td>" + (r.description ? escapeHtml(truncate(r.description, 160)) : "&ndash;") + "</td></tr>";
+    }).join("");
+    var hasContent = rows.some(function (r) { return r.summary || r.description; });
+    els.ragGenerateSummaryBtn.disabled = !hasContent;
+    els.ragGenerateFliesstextBtn.disabled = !hasContent;
+    els.ragDownloadBtn.disabled = true;
+    els.ragOutput.textContent = "Noch kein Text generiert.";
+    els.ragStatusNote.textContent = hasContent ? "" : "Keine Zusammenfassung/Beschreibung in den ausgewählten Tickets - Generierung nicht möglich.";
+    addLog("RAG: " + rows.length + " Tickets extrahiert (Domäne/Status/Zeitraum gefiltert).");
+  }
+  els.ragExtractBtn.addEventListener("click", ragExtract);
+
+  function ragBuildPrompt(kind, rows) {
+    var body = rows.map(function (r) {
+      var parts = ["Domäne: " + r.domain, "Status: " + r.status];
+      if (r.summary) parts.push("Überschrift: " + r.summary);
+      if (r.description) parts.push("Beschreibung: " + r.description);
+      return "- " + parts.join(" | ");
+    }).join("\n");
+    var instruction = kind === "summary"
+      ? "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Fasse die folgenden Jira-Ticket-Rohdaten in einer prägnanten, endnutzergerechten Zusammenfassung auf Deutsch zusammen (ca. 100-200 Wörter, sachlich, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen im Text). Nutze ausschließlich Informationen aus den Rohdaten unten, erfinde nichts hinzu:"
+      : "Du bist Technischer Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Formuliere aus den folgenden Jira-Ticket-Rohdaten einen zusammenhängenden, gut lesbaren Fließtext für ein Benutzerhandbuch auf Deutsch (mehrere Absätze erlaubt, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen im Text). Nutze ausschließlich Informationen aus den Rohdaten unten, erfinde nichts hinzu:";
+    return instruction + "\n\n" + body;
+  }
+
+  var RAG_ERROR_MESSAGES = {
+    not_granted: "Du hast die KI-Nutzung für diese App nicht erlaubt.",
+    sampling_disabled: "Claude ist für dieses Konto/diese Organisation nicht verfügbar.",
+    not_declared: "Diese Version der App deklariert die KI-Funktion nicht (bitte neu laden).",
+    rate_limited: "Zu viele Anfragen - bitte später erneut versuchen.",
+    prompt_too_large: "Zu viele Rohdaten für einen Durchlauf - Auswahl (Domäne/Status/Zeitraum) weiter eingrenzen.",
+    refused: "Claude hat diese Anfrage abgelehnt.",
+    empty_completion: "Claude hat keinen Text erzeugt - bitte Auswahl anpassen.",
+    session_expired: "Bitte erneut bei Claude anmelden."
+  };
+
+  async function ragGenerate(kind) {
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    if (!ragExtractedRows.length) { showToast("Keine Rohdaten", "Bitte zuerst Rohdaten extrahieren.", true); return; }
+    ragLastKind = kind;
+    var prompt = ragBuildPrompt(kind, ragExtractedRows);
+    els.ragGenerateSummaryBtn.disabled = true;
+    els.ragGenerateFliesstextBtn.disabled = true;
+    els.ragDownloadBtn.disabled = true;
+    els.ragStopBtn.hidden = false;
+    els.ragStatusNote.textContent = "Claude denkt nach …";
+    els.ragOutput.textContent = "";
+    var ctl = new AbortController();
+    ragAbortController = ctl;
+    var lastText = "";
+    try {
+      var result = await sampleApi(prompt, {
+        signal: ctl.signal,
+        modelTier: "default",
+        cache: false,
+        onText: function (u) { lastText = u.text; els.ragOutput.textContent = u.text; els.ragStatusNote.textContent = "Claude schreibt …"; }
+      });
+      els.ragOutput.textContent = result.text;
+      els.ragDownloadBtn.disabled = false;
+      els.ragStatusNote.textContent = "KI-generiert (" + (kind === "summary" ? "Zusammenfassung" : "Fließtext") + ") – bitte redaktionell prüfen." +
+        (result.truncated ? " Hinweis: Antwort wurde gekürzt (Auswahl eingrenzen für vollständige Antwort)." : "");
+      addLog("RAG: " + (kind === "summary" ? "Zusammenfassung" : "Fließtext") + " für " + ragExtractedRows.length + " Tickets generiert (Claude).");
+    } catch (err) {
+      if (err && err.code === "cancelled") {
+        els.ragStatusNote.textContent = "Abgebrochen.";
+        if (lastText) els.ragOutput.textContent = lastText;
+      } else {
+        var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
+        els.ragStatusNote.textContent = "Fehlgeschlagen: " + msg;
+        if (err && err.text) els.ragOutput.textContent = err.text;
+        showToast("Generierung fehlgeschlagen", msg, true);
+      }
+    } finally {
+      els.ragStopBtn.hidden = true;
+      els.ragGenerateSummaryBtn.disabled = false;
+      els.ragGenerateFliesstextBtn.disabled = false;
+      ragAbortController = null;
+    }
+  }
+  els.ragGenerateSummaryBtn.addEventListener("click", function () { ragGenerate("summary"); });
+  els.ragGenerateFliesstextBtn.addEventListener("click", function () { ragGenerate("fliesstext"); });
+  els.ragStopBtn.addEventListener("click", function () { if (ragAbortController) ragAbortController.abort(); });
+  els.ragDownloadBtn.addEventListener("click", async function () {
+    var title = "RAG-" + (ragLastKind === "summary" ? "Zusammenfassung" : "Fliesstext");
+    var md = "# " + title + "\n\n_Automatisch mit Claude generiert – bitte redaktionell prüfen._\n\n" + els.ragOutput.textContent;
+    var ok = await saveOrWarn(safeFilename(title) + ".md", md);
+    if (ok) showToast("Gespeichert", "Text heruntergeladen.");
   });
 
   /* ============ Teil 10: Navigation ============ */
