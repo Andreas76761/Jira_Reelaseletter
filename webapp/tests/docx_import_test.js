@@ -112,6 +112,36 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   const toast3 = doc.getElementById("toast");
   check("Kaputte .docx-Datei löst Fehlermeldung statt Absturz aus", toast3.className.includes("error"));
 
+  // ===================== ".doc"-Datei, die eigentlich HTML ist (manche Export-Tools
+  // nutzen die .doc-Endung fuer Word-lesbares HTML) - wird ueber Byte-Erkennung
+  // korrekt als HTML behandelt statt am ZIP/.docx-Parsing zu scheitern =====================
+  doc.querySelector('.import-tab[data-mode="docx"]').click();
+  const htmlAsDoc = `<html><body><table class="issuetable"><tbody>
+    <tr data-issuekey="DOCHTML-1"><td class="summary"><a>Ticket aus HTML-Export mit .doc-Endung</a></td><td class="status">Offen</td></tr>
+  </tbody></table></body></html>`;
+  const htmlAsDocFile = new win.File([htmlAsDoc], "Jira Export 2026-09-21.doc", { type: "application/msword" });
+  Object.defineProperty(input, "files", { value: [htmlAsDocFile], configurable: true });
+  fire(input, "change");
+  await wait(300);
+  const toastHtmlDoc = doc.getElementById("toast");
+  check("HTML-Inhalt mit .doc-Endung wird erfolgreich importiert (kein ZIP/.docx-Fehler)", toastHtmlDoc.textContent.includes("Import erfolgreich"));
+  doc.querySelector('.nav-item[data-view="dashboard"]').click();
+  check("Ticket aus HTML-als-.doc im Dashboard auffindbar", !!Array.from(doc.querySelectorAll("#table-body tr")).find((r) => r.textContent.includes("DOCHTML-1")));
+
+  // ===================== RTF-Datei mit .doc-Endung: klare, spezifische Fehlermeldung
+  // statt der kryptischen rohen JSZip-Meldung ("Can't find end of central directory") =====================
+  doc.querySelector('.nav-item[data-view="import"]').click();
+  doc.querySelector('.import-tab[data-mode="docx"]').click();
+  const rtfAsDoc = "{\\rtf1\\ansi\\deff0 Ein RTF-Dokument, keine .docx-Datei.}";
+  const rtfFile = new win.File([rtfAsDoc], "export.doc", { type: "application/msword" });
+  Object.defineProperty(input, "files", { value: [rtfFile], configurable: true });
+  fire(input, "change");
+  await wait(300);
+  const toastRtf = doc.getElementById("toast");
+  check("RTF-Datei mit .doc-Endung löst Fehlermeldung statt Absturz aus", toastRtf.className.includes("error"));
+  check("Fehlermeldung nennt RTF konkret (statt kryptischer JSZip-Rohmeldung)", toastRtf.textContent.includes("RTF"));
+  check("Fehlermeldung zeigt NICHT die rohe JSZip-Meldung an", !toastRtf.textContent.includes("central directory"));
+
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }
   const failed = checks.filter((c) => !c[1]);
   console.log("\n" + (checks.length - failed.length) + "/" + checks.length + " bestanden");

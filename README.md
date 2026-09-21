@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.3.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.3.1"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -218,7 +218,14 @@ anderen Länderformaten (Kennzeichen).
     Service-Zugehörigkeiten werden als Komponenten zusammengeführt). Das
     alte, binäre .doc-Format (vor Word 2007) lässt sich zwar auswählen,
     wird aber ehrlich mit einer Fehlermeldung abgelehnt statt fehlerhaft
-    "geraten" – Word bietet dafür "Speichern unter" → .docx an.
+    "geraten" – Word bietet dafür "Speichern unter" → .docx an. Eine
+    Datei mit .doc/.docx-Endung wird zuerst anhand der ersten Bytes
+    erkannt statt blind als .docx-ZIP behandelt: manche Export-Werkzeuge
+    (u. a. Jira-/Confluence-Plugins) liefern unter .doc tatsächlich
+    HTML aus (Word kann HTML rendern) – das wird automatisch als
+    HTML-Export gelesen. Ein RTF-Dokument mit .doc/.docx-Endung wird mit
+    einer eigenen, klaren Fehlermeldung abgelehnt statt der kryptischen
+    rohen ZIP-Bibliotheksmeldung ("Can't find end of central directory").
   - *Word (DOC/DOCX)* – eigener Tab nur für .docx/.doc, sonst identisch zu
     "Andere Importe" (automatische Formaterkennung); reine Komfort-
     Filterung der Dateiauswahl auf Word-Dokumente.

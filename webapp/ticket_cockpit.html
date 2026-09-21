@@ -3296,7 +3296,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.3.0";
+  var APP_VERSION = "2.3.1";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -4861,30 +4861,67 @@
     return lines.join("\n");
   }
   var DOC_LEGACY_SIGNATURE = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1];
+  var ZIP_SIGNATURE = [0x50, 0x4b, 0x03, 0x04];
+  // Manche Export-Werkzeuge (u.a. Jira/Confluence-Plugins) liefern "Word"-
+  // Dateien mit .doc-Endung, die technisch gar kein Word-Dokument sind -
+  // haeufig HTML (Word kann HTML rendern) oder RTF. Statt an der ersten
+  // fehlgeschlagenen Annahme (ZIP/.docx) mit einer kryptischen JSZip-
+  // Fehlermeldung abzubrechen, wird das tatsaechliche Format anhand der
+  // ersten Bytes erkannt und passend behandelt bzw. mit einer verstaendlichen
+  // Fehlermeldung abgelehnt.
+  function classifyWordBuffer(buf) {
+    var head = new Uint8Array(buf.slice(0, 8));
+    if (ZIP_SIGNATURE.every(function (b, i) { return head[i] === b; })) return "zip";
+    if (DOC_LEGACY_SIGNATURE.every(function (b, i) { return head[i] === b; })) return "ole";
+    var headText = "";
+    var headBytes = new Uint8Array(buf.slice(0, 2048));
+    for (var i = 0; i < headBytes.length; i++) headText += String.fromCharCode(headBytes[i]);
+    headText = headText.toLowerCase();
+    if (headText.indexOf("{\\rtf") === 0) return "rtf";
+    if (headText.indexOf("<html") !== -1 || headText.indexOf("<!doctype html") !== -1 || headText.indexOf("<?xml") !== -1) return "html";
+    return "unknown";
+  }
   // Parsing von der Beschaffung des ArrayBuffers getrennt, damit dieselbe
   // Logik sowohl fuer hochgeladene Dateien (ueber FileReader) als auch fuer
   // Eintraege aus einem ZIP-Archiv (direkt ueber JSZips eigenes
   // .async("arraybuffer"), ohne Umweg ueber Blob/FileReader) genutzt werden kann.
   async function docxArrayBufferToLines(buf) {
     if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek (JSZip) nicht geladen - .docx kann nicht gelesen werden.");
-    var head = new Uint8Array(buf.slice(0, 8));
-    var isLegacyDoc = DOC_LEGACY_SIGNATURE.every(function (b, i) { return head[i] === b; });
-    if (isLegacyDoc) {
-      throw new Error(
-        "Altes .doc-Format (vor Word 2007) wird nicht unterstützt. Bitte die Datei in Word über " +
-        "„Speichern unter“ als .docx speichern und erneut hochladen."
-      );
-    }
     var zip;
     try { zip = await JSZip.loadAsync(buf); }
-    catch (e) { throw new Error("Datei konnte nicht als .docx (ZIP) gelesen werden - ist es wirklich ein Word-Dokument? (" + (e && e.message) + ")"); }
+    catch (e) { throw new Error("Datei konnte nicht als .docx (ZIP) gelesen werden - ist es wirklich ein Word-Dokument?"); }
     var docXmlEntry = zip.file("word/document.xml");
     if (!docXmlEntry) throw new Error("Kein word/document.xml in der .docx-Datei gefunden - ist es wirklich ein Word-Dokument?");
     var xmlText = await docXmlEntry.async("string");
     return docxXmlToLines(xmlText);
   }
+  // Gemeinsamer Einstiegspunkt fuer alles mit .doc/.docx-Endung: erkennt
+  // anhand der Bytes, was tatsaechlich vorliegt, statt blind ein echtes
+  // .docx-ZIP anzunehmen.
+  async function extractWordLikeText(buf) {
+    var kind = classifyWordBuffer(buf);
+    if (kind === "zip") return docxArrayBufferToLines(buf);
+    if (kind === "html") return new TextDecoder("utf-8").decode(buf);
+    if (kind === "ole") {
+      throw new Error(
+        "Altes .doc-Format (vor Word 2007, binäres Format) wird nicht unterstützt. Bitte die Datei in Word über " +
+        "„Speichern unter“ als .docx speichern und erneut hochladen."
+      );
+    }
+    if (kind === "rtf") {
+      throw new Error(
+        "Datei ist ein RTF-Dokument (Rich Text Format) - auch mit der Endung .doc/.docx ist das kein echtes " +
+        "Word-XML-Dokument. Bitte die Datei in Word öffnen und über „Speichern unter“ als .docx speichern und " +
+        "erneut hochladen."
+      );
+    }
+    throw new Error(
+      "Dateiformat nicht erkannt (weder .docx, klassisches .doc, RTF noch ein HTML-Export). Bitte die Datei in " +
+      "Word öffnen und über „Speichern unter“ als .docx speichern und erneut hochladen."
+    );
+  }
   async function extractTextFromDocx(file) {
-    return docxArrayBufferToLines(await readFileAsArrayBuffer(file));
+    return extractWordLikeText(await readFileAsArrayBuffer(file));
   }
 
   // PDF-Textextraktion (Confluence-Release-Notes/Releaseinfo auch als PDF-
@@ -4955,7 +4992,7 @@
   // unnoetig (und in manchen Umgebungen, z.B. Node/jsdom-Tests, unzuverlaessig,
   // da ein von JSZip erzeugter Blob nicht zwingend aus derselben Realm stammt).
   async function extractTextForZipEntry(zipEntry, lowerName) {
-    if (isWordName(lowerName)) return docxArrayBufferToLines(await zipEntry.async("arraybuffer"));
+    if (isWordName(lowerName)) return extractWordLikeText(await zipEntry.async("arraybuffer"));
     if (isPdfName(lowerName)) return pdfArrayBufferToLines(await zipEntry.async("arraybuffer"));
     return zipEntry.async("string");
   }
