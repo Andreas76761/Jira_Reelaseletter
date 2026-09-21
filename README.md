@@ -158,6 +158,11 @@ wirkungslos bleiben kann:
   Story, Feature, Bug, ...; fehlt der Typ im Export, wird das ehrlich als
   "–" ausgewiesen statt geraten), Ticket-Detailansicht (18 Standardfelder,
   fehlende klar als "Nicht im Export enthalten" markiert statt erfunden).
+  Die Suche ist leicht entprellt (150ms), damit bei 600+ geladenen
+  Tickets nicht bei jedem einzelnen Tastendruck die komplette Tabelle neu
+  aufgebaut wird; Klicks auf eine Zeile öffnen die Detailansicht über
+  einen einzigen, an die Tabelle delegierten Klick-Handler statt vieler
+  einzelner Handler pro Zeile.
 - **Import** – vier Formate per Tab wählbar, jeweils mit Mehrfachauswahl
   und Drag&Drop; zusätzlich eine **Zwischenablage-Funktion**: Text direkt
   einfügen (Button „Aus Zwischenablage einfügen“ oder Strg+V in das
@@ -347,10 +352,12 @@ wirkungslos bleiben kann:
   Die 9 neuen Formate werden als eigenständiges, direkt im Browser
   erzeugtes SVG gerendert (kein Server, keine externe Grafikbibliothek)
   und lassen sich als `.svg` herunterladen; das klassische
-  Mermaid-Format bleibt Standardauswahl und unverändert. Zusätzlich lässt
-  sich die zugrundeliegende Schritt-Tabelle (Ticket/Typ/Titel/Status/Domäne/
-  Priorität-Punkte/Labels/Beschreibung) unabhängig vom Bildformat als
-  XLSX/DOCX/PDF exportieren.
+  Mermaid-Format bleibt Standardauswahl und unverändert. Jedes generierte
+  SVG bekommt `role="img"` und einen `<title>`/`aria-label` mit dem
+  Release-/Prozessnamen, damit es auch für Screenreader zugänglich ist.
+  Zusätzlich lässt sich die zugrundeliegende Schritt-Tabelle
+  (Ticket/Typ/Titel/Status/Domäne/ Priorität-Punkte/Labels/Beschreibung)
+  unabhängig vom Bildformat als XLSX/DOCX/PDF exportieren.
 - **Bilder** – Tabelle **und** Kachel-Galerie aller in der Sitzung
   erzeugten Prozessdiagramme sowie eigener Bild-Uploads, jeweils mit
   Datum. Beschreibungen lassen sich für beide Bildarten direkt in der

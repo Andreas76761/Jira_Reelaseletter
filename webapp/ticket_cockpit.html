@@ -3278,7 +3278,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "1.8.1";
+  var APP_VERSION = "1.9.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -3957,6 +3957,26 @@
   function safeFilename(key) { return key.replace(/[^A-Za-z0-9_-]+/g, "_"); }
   function truncate(s, n) { s = s || ""; return s.length > n ? s.slice(0, n - 1) + "…" : s; }
   function nowLabel() { return new Date().toLocaleString("de-DE"); }
+  // Generischer Helfer fuer "Mehrfachauswahl aus tatsaechlich vorkommenden
+  // Feldwerten befuellen" (aktuell: RAG-Domaene/-Status, siehe Teil 9b).
+  // Bewusst NICHT fuer den Dashboard-Domain-/Label-Filter genutzt: die
+  // brauchen zusaetzlich Haeufigkeiten (app.domainCounts/app.labelCounts)
+  // und Labels sind pro Ticket mehrwertig (autoLabels-Array, kein
+  // Skalarfeld) - andere Datenform, daher bewusst getrennt statt eine
+  // Abstraktion zu erzwingen, die nicht passt.
+  function distinctFieldValues(list, field) {
+    var seen = {}, out = [];
+    list.forEach(function (t) { var v = t[field]; if (v && !seen[v]) { seen[v] = true; out.push(v); } });
+    return out.sort(function (a, b) { return a.localeCompare(b, "de"); });
+  }
+  function debounce(fn, delay) {
+    var timer = null;
+    return function () {
+      var args = arguments, ctx = this;
+      clearTimeout(timer);
+      timer = setTimeout(function () { fn.apply(ctx, args); }, delay);
+    };
+  }
 
   var els = {};
   [
@@ -4525,8 +4545,21 @@
 
   function pillHtml(t) { return '<span class="pill ' + t.bucket + '">' + escapeHtml(t.status) + "</span>"; }
 
+  // Ans Tabellen-<tbody> delegierter Klick-Handler statt pro renderten Zeile
+  // einen eigenen addEventListener anzuhängen (der bei 663+ Tickets bei
+  // jeder Tastatureingabe im Suchfeld neu passieren würde) - einmalig
+  // angehängt, liest lastRenderedFiltered zum Klickzeitpunkt.
+  var lastRenderedFiltered = [];
+  els.tableBody.addEventListener("click", function (e) {
+    var tr = e.target.closest ? e.target.closest("tr[data-idx]") : null;
+    if (!tr) return;
+    var t = lastRenderedFiltered[parseInt(tr.getAttribute("data-idx"), 10)];
+    if (t) openModal(t);
+  });
+
   function render() {
     var filtered = currentFiltered();
+    lastRenderedFiltered = filtered;
     headerCells.forEach(function (th) {
       var active = th.getAttribute("data-key") === app.view.sortKey;
       th.setAttribute("data-active", active ? "true" : "false");
@@ -4547,10 +4580,6 @@
         '<td class="date">' + escapeHtml(t.created) + "</td>" +
         '<td class="date">' + escapeHtml(t.updated) + "</td></tr>";
     }).join("");
-
-    Array.prototype.forEach.call(els.tableBody.querySelectorAll("tr"), function (tr) {
-      tr.addEventListener("click", function () { openModal(filtered[parseInt(tr.getAttribute("data-idx"), 10)]); });
-    });
     renderOutputCounts();
   }
 
@@ -4945,6 +4974,10 @@
   // Labels-Filter: Optionen kommen aus den tatsaechlich auf geladenen Tickets
   // vorkommenden, automatisch zugeordneten Labels (nicht die volle, evtl.
   // ungenutzte Labelliste aus Einstellungen) - analog zum Domain-Filter.
+  // Nutzt bewusst NICHT distinctFieldValues() (siehe Teil 9b/RAG): hier
+  // werden zusaetzlich Haeufigkeiten gebraucht (app.labelCounts, bereits in
+  // refreshDashboard() mitgezaehlt) und Labels sind pro Ticket mehrwertig -
+  // andere Datenform als ein einzelnes Skalarfeld wie Domäne/Status.
   function populateLabelSelect() {
     var current = app.view ? app.view.label : "";
     els.labelSelect.innerHTML = '<option value="">Alle Labels</option>' +
@@ -4953,7 +4986,15 @@
     if (app.view) app.view.label = els.labelSelect.value;
   }
   els.labelSelect.addEventListener("change", function () { app.view.label = els.labelSelect.value; render(); });
-  els.searchInput.addEventListener("input", function () { app.view.query = els.searchInput.value.trim().toUpperCase(); render(); });
+  // 150ms Debounce: bei 663+ Tickets vermeidet das einen kompletten
+  // Tabellen-Rebuild bei jedem einzelnen Tastendruck, ohne die Suche
+  // spuerbar traege wirken zu lassen.
+  var SEARCH_DEBOUNCE_MS = 150;
+  var debouncedSearchRender = debounce(function () {
+    app.view.query = els.searchInput.value.trim().toUpperCase();
+    render();
+  }, SEARCH_DEBOUNCE_MS);
+  els.searchInput.addEventListener("input", debouncedSearchRender);
   els.resetFilterBtn.addEventListener("click", function () {
     app.view.bucket = "all"; app.view.domain = ""; app.view.label = ""; app.view.query = "";
     els.searchInput.value = ""; els.domainSelect.value = ""; els.labelSelect.value = "";
@@ -6189,9 +6230,14 @@
     return '<defs><marker id="' + id + '" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">' +
       '<path d="M0,0 L10,5 L0,10 z" fill="' + color + '"/></marker></defs>';
   }
-  function svgRoot(width, height, theme, inner) {
+  // titleText macht die generierten Prozessbilder für Screenreader zugänglich
+  // (role="img" + <title> als zugänglicher Name) - ohne das visuell etwas
+  // aendert. Optional, damit svgRoot() auch ohne Titel nutzbar bleibt.
+  function svgRoot(width, height, theme, inner, titleText) {
+    var accessibleName = titleText || "Prozessdiagramm";
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" width="' + width + '" height="' + height +
-      '" font-family="Arial, Helvetica, sans-serif">' +
+      '" font-family="Arial, Helvetica, sans-serif" role="img" aria-label="' + escapeHtml(accessibleName) + '">' +
+      "<title>" + escapeHtml(accessibleName) + "</title>" +
       '<rect x="0" y="0" width="' + width + '" height="' + height + '" fill="' + theme.bg + '"/>' + inner + "</svg>";
   }
 
@@ -6268,7 +6314,7 @@
       });
     }
 
-    return svgRoot(width, height, theme, parts.join(""));
+    return svgRoot(width, height, theme, parts.join(""), "Prozessdiagramm – " + title);
   }
 
   // 2) Vertikale Zeitleiste: Karten abwechselnd links/rechts einer Mittelachse.
@@ -6299,7 +6345,7 @@
       }
       parts.push('<text x="' + (x + cardW - 12) + '" y="' + (y + cardH - 10) + '" text-anchor="end" font-size="10" fill="' + theme.muted + '" font-family="monospace">' + escapeHtml(s.key) + "</text>");
     });
-    return svgRoot(width, height, theme, parts.join(""));
+    return svgRoot(width, height, theme, parts.join(""), "Prozessdiagramm – " + title);
   }
 
   // 3) Horizontale Prozesskette: eine durchgehende Zeile, große Pfeile.
@@ -6322,7 +6368,7 @@
         parts.push('<line x1="' + (x + cardW + 6) + '" y1="' + ay + '" x2="' + (x + cardW + gap - 6) + '" y2="' + ay + '" stroke="' + theme.accent + '" stroke-width="3" marker-end="url(#pbArrow2)"/>');
       }
     });
-    return svgRoot(width, height, theme, parts.join(""));
+    return svgRoot(width, height, theme, parts.join(""), "Prozessdiagramm – " + title);
   }
 
   // 4) Swimlane: gemeinsame Zeitachse, Schritte gruppiert nach Status-Bucket.
@@ -6355,7 +6401,7 @@
       parts.push('<text x="' + (x + chipW / 2) + '" y="' + (y + 38) + '" text-anchor="middle" font-size="9.5" fill="' + theme.muted + '" font-family="monospace">' + escapeHtml(s.key) + "</text>");
       prevX = x; prevY = y;
     });
-    return svgRoot(width, height, theme, parts.join(""));
+    return svgRoot(width, height, theme, parts.join(""), "Prozessdiagramm – " + title);
   }
 
   // 5) Kanban-Board: Spalten je Status-Bucket, Karten gestapelt.
@@ -6384,7 +6430,7 @@
         parts.push('<text x="' + (x + 12) + '" y="' + (y + cardH - 8) + '" font-size="9.5" fill="' + theme.muted + '" font-family="monospace">' + escapeHtml(s.key) + "</text>");
       });
     });
-    return svgRoot(width, height, theme, parts.join(""));
+    return svgRoot(width, height, theme, parts.join(""), "Prozessdiagramm – " + title);
   }
 
   // 6) Prozessrad: Schritte kreisfoermig um den Prozessnamen.
@@ -6412,7 +6458,7 @@
       var lines = svgLimitLines(svgWrapText(s.title, 150, 11.5), 2);
       parts.push('<text x="' + labelX + '" y="' + (y - 4) + '" text-anchor="' + anchor + '" font-size="11.5" font-weight="700" fill="' + theme.text + '">' + svgTspanBlock(lines, labelX, 0, 14) + "</text>");
     });
-    return svgRoot(width, height, theme, parts.join(""));
+    return svgRoot(width, height, theme, parts.join(""), "Prozessdiagramm – " + title);
   }
 
   // 7) Matrix-Poster: reines Raster ohne Pfeile, gruppiert nach Domain.
@@ -6443,7 +6489,7 @@
         parts.push('<text x="' + (x + 44) + '" y="' + (y + 20) + '" font-size="12" font-weight="700" fill="' + theme.text + '">' + svgTspanBlock(lines, x + 44, 0, 15) + "</text>");
       });
     });
-    return svgRoot(width, height, theme, parts.join(""));
+    return svgRoot(width, height, theme, parts.join(""), "Prozessdiagramm – " + title);
   }
 
   // 8) Trichter (Funnel): sich verengende Stufen mit seitlichen Anmerkungen.
@@ -6469,7 +6515,7 @@
         parts.push('<text x="' + (x2 + 36) + '" y="' + (y + stepH / 2 - (descLines.length - 1) * 7 + 4) + '" font-size="11" fill="' + theme.muted + '">' + svgTspanBlock(descLines, x2 + 36, 0, 14) + "</text>");
       }
     });
-    return svgRoot(width, height, theme, parts.join(""));
+    return svgRoot(width, height, theme, parts.join(""), "Prozessdiagramm – " + title);
   }
 
   // 9) Checkliste (druckfreundlich): minimalistische vertikale Liste.
@@ -6496,7 +6542,7 @@
       parts.push('<line x1="' + marginX + '" y1="' + (y + r.h - 2) + '" x2="' + (width - marginX) + '" y2="' + (y + r.h - 2) + '" stroke="' + theme.panelBorder + '" stroke-width="1" opacity="0.6"/>');
       y += r.h;
     });
-    return svgRoot(width, height, theme, parts.join(""));
+    return svgRoot(width, height, theme, parts.join(""), "Prozessdiagramm – " + title);
   }
 
   var PROZESSBILD_LAYOUTS = [
@@ -7108,11 +7154,6 @@
   var ragLastKind = "summary";
   var ragHasGenerated = false;
 
-  function ragDistinctValues(list, field) {
-    var seen = {}, out = [];
-    list.forEach(function (t) { var v = t[field]; if (v && !seen[v]) { seen[v] = true; out.push(v); } });
-    return out.sort(function (a, b) { return a.localeCompare(b, "de"); });
-  }
   function selectedValues(selectEl) {
     return Array.prototype.map.call(selectEl.selectedOptions, function (o) { return o.value; });
   }
@@ -7120,8 +7161,8 @@
     var list = scopedTickets();
     var domainSel = selectedValues(els.ragDomainSelect);
     var statusSel = selectedValues(els.ragStatusSelect);
-    var domains = ragDistinctValues(list, "domain");
-    var statuses = ragDistinctValues(list, "status");
+    var domains = distinctFieldValues(list, "domain");
+    var statuses = distinctFieldValues(list, "status");
     els.ragDomainSelect.innerHTML = domains.map(function (d) {
       return '<option value="' + escapeHtml(d) + '"' + (domainSel.indexOf(d) !== -1 ? " selected" : "") + ">" + escapeHtml(d) + "</option>";
     }).join("");
