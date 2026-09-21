@@ -18,3 +18,6 @@ Output/*/*
 
 # Gebaute Web-App mit eingebetteten (echten) Ticketdaten - nicht versionieren.
 webapp/ticket_cockpit.build.html
+
+# JS-Test-Abhängigkeiten (npm install in webapp/tests/) - nicht versionieren.
+webapp/tests/node_modules/

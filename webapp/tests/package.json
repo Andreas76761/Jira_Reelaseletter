@@ -1,0 +1,17 @@
+{
+  "name": "ticket-cockpit-webapp-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "jsdom/Playwright-basierte Tests fuer die Ticket-Cockpit-Webapp (webapp/ticket_cockpit.html). Setzt eine gebaute webapp/ticket_cockpit.build.html voraus (siehe README.md -> Tests).",
+  "scripts": {
+    "test": "node run-all.js"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.0",
+    "jszip": "^3.10.2",
+    "jspdf": "^4.2.1",
+    "mammoth": "^1.12.3",
+    "pdf-parse": "^2.4.5",
+    "xlsx": "^0.18.5"
+  }
+}

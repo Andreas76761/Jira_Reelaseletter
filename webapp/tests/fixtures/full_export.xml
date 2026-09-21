@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="0.92">
+<channel>
+    <title>ONESCM Jira Export (vollständig)</title>
+    <item>
+        <title>[ONESCM-9001] Vertragsgenerierung schlägt bei Sonderzeichen fehl</title>
+        <link>https://onescm-jira.dot.i.example.com/browse/ONESCM-9001</link>
+        <project id="10000" key="ONESCM">OneSCM</project>
+        <key id="90001">ONESCM-9001</key>
+        <summary>Vertragsgenerierung schlägt bei Sonderzeichen fehl</summary>
+        <type id="1">Bug</type>
+        <priority id="2">Hoch</priority>
+        <status id="1">In Bearbeitung</status>
+        <resolution id="-1">Ungelöst</resolution>
+        <assignee username="mmueller">Max Müller</assignee>
+        <reporter username="aschmidt">Anna Schmidt</reporter>
+        <created>Mon, 3 Feb 2026 09:12:00 +0000</created>
+        <updated>Wed, 5 Feb 2026 11:40:00 +0000</updated>
+        <description>Bei Firmennamen mit Umlauten (ä, ö, ü, ß) bricht die PDF-Generierung ab. Reproduziert von Max Müller (max.mueller@example.com). Siehe auch Ticket von Anna Schmidt.</description>
+        <labels>
+            <label>contract-generation</label>
+            <label>pdf</label>
+        </labels>
+        <component>Contract Generation</component>
+        <component>Documents</component>
+        <fixVersion>2026.3</fixVersion>
+        <watches>
+            <watcher>Max Müller</watcher>
+            <watcher>Peter Klein</watcher>
+        </watches>
+        <comments>
+            <comment author="mmueller" created="Mon, 3 Feb 2026 10:00:00 +0000">Kann ich bestätigen, betrifft mehrere Kunden. Kontakt: max.mueller@example.com</comment>
+            <comment author="aschmidt" created="Tue, 4 Feb 2026 08:30:00 +0000">Anna Schmidt hier - Workaround: Sonderzeichen vorher escapen.</comment>
+            <comment author="pklein" created="Wed, 5 Feb 2026 11:35:00 +0000">Fix ist in Review, siehe PR von Peter Klein.</comment>
+        </comments>
+        <customfields>
+            <customfield id="customfield_10001" key="com.example:story-points">
+                <customfieldname>Story Points</customfieldname>
+                <customfieldvalues><customfieldvalue>5</customfieldvalue></customfieldvalues>
+            </customfield>
+            <customfield id="customfield_10601" key="com.example:domain">
+                <customfieldname>Domain</customfieldname>
+                <customfieldvalues><customfieldvalue>Contract Generation</customfieldvalue></customfieldvalues>
+            </customfield>
+        </customfields>
+    </item>
+    <item>
+        <title>[ONESCM-9002] Self-Service-Portal: Login-Timeout zu kurz</title>
+        <link>https://onescm-jira.dot.i.example.com/browse/ONESCM-9002</link>
+        <project id="10000" key="ONESCM">OneSCM</project>
+        <key id="90002">ONESCM-9002</key>
+        <summary>Self-Service-Portal: Login-Timeout zu kurz</summary>
+        <type id="2">Story</type>
+        <priority id="3">Mittel</priority>
+        <status id="6">Fertig</status>
+        <resolution id="1">Fixed</resolution>
+        <assignee username="mmueller">Max Müller</assignee>
+        <reporter username="pklein">Peter Klein</reporter>
+        <created>Thu, 6 Feb 2026 13:00:00 +0000</created>
+        <updated>Mon, 10 Feb 2026 09:15:00 +0000</updated>
+        <description>Nutzer werden nach 2 Minuten Inaktivität ausgeloggt. Peter Klein (peter.klein@example.com) bittet um Erhöhung auf 15 Minuten.</description>
+        <component>Customer Account Center</component>
+        <fixVersion>2026.3</fixVersion>
+        <watches>
+            <watcher>Peter Klein</watcher>
+        </watches>
+        <comments>
+            <comment author="mmueller" created="Fri, 7 Feb 2026 10:00:00 +0000">Umgesetzt, Timeout jetzt konfigurierbar.</comment>
+        </comments>
+        <customfields>
+            <customfield id="customfield_10601" key="com.example:domain">
+                <customfieldname>Domain</customfieldname>
+                <customfieldvalues><customfieldvalue>Customer Account Center</customfieldvalue></customfieldvalues>
+            </customfield>
+        </customfields>
+    </item>
+    <item>
+        <title>[ONESCM-9003] Archivierung: Batch-Job läuft nicht mehr an</title>
+        <link>https://onescm-jira.dot.i.example.com/browse/ONESCM-9003</link>
+        <project id="10000" key="ONESCM">OneSCM</project>
+        <key id="90003">ONESCM-9003</key>
+        <summary>Archivierung: Batch-Job läuft nicht mehr an</summary>
+        <type id="1">Bug</type>
+        <priority id="1">Kritisch</priority>
+        <status id="10">Blocked BAT Testing</status>
+        <assignee username="aschmidt">Anna Schmidt</assignee>
+        <reporter username="mmueller">Max Müller</reporter>
+        <created>Fri, 7 Feb 2026 07:45:00 +0000</created>
+        <updated>Fri, 7 Feb 2026 16:20:00 +0000</updated>
+        <description></description>
+        <watches>
+            <watcher>Max Müller</watcher>
+            <watcher>Anna Schmidt</watcher>
+            <watcher>Peter Klein</watcher>
+        </watches>
+        <comments>
+            <comment author="aschmidt" created="Fri, 7 Feb 2026 16:00:00 +0000">Blockiert durch Infrastruktur-Ticket INFRA-42.</comment>
+        </comments>
+    </item>
+    <item>
+        <title>[ONESCM-9004] Reporting: Export nach Excel fehlerhaft formatiert</title>
+        <link>https://onescm-jira.dot.i.example.com/browse/ONESCM-9004</link>
+        <project id="10000" key="ONESCM">OneSCM</project>
+        <key id="90004">ONESCM-9004</key>
+        <summary>Reporting: Export nach Excel fehlerhaft formatiert</summary>
+        <type id="1">Bug</type>
+        <priority id="4">Niedrig</priority>
+        <status id="1">Offen</status>
+        <reporter username="pklein">Peter Klein</reporter>
+        <created>Mon, 10 Feb 2026 08:00:00 +0000</created>
+        <updated>Mon, 10 Feb 2026 08:00:00 +0000</updated>
+        <description>Datumsspalten werden als Text statt als Datum exportiert.</description>
+        <component>Cost Management</component>
+    </item>
+    <item>
+        <title>[ONESCM-9005] Kundenportal: Rechnungsübersicht performant machen</title>
+        <link>https://onescm-jira.dot.i.example.com/browse/ONESCM-9005</link>
+        <project id="10000" key="ONESCM">OneSCM</project>
+        <key id="90005">ONESCM-9005</key>
+        <summary>Kundenportal: Rechnungsübersicht performant machen</summary>
+        <type id="3">Task</type>
+        <priority id="3">Mittel</priority>
+        <status id="7">Cancelled</status>
+        <resolution id="2">Won't Fix</resolution>
+        <assignee username="pklein">Peter Klein</assignee>
+        <reporter username="aschmidt">Anna Schmidt</reporter>
+        <created>Tue, 11 Feb 2026 09:30:00 +0000</created>
+        <updated>Thu, 13 Feb 2026 12:00:00 +0000</updated>
+        <description>Zurückgestellt zugunsten von ONESCM-9004. Ansprechpartnerin: Anna Schmidt, anna.schmidt@example.com.</description>
+        <labels><label>performance</label></labels>
+        <fixVersion>2026.4</fixVersion>
+        <fixVersion>2026.5</fixVersion>
+    </item>
+</channel>
+</rss>

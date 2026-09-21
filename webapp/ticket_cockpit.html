@@ -214,6 +214,8 @@
   .btn.danger:hover { filter: brightness(0.92); }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn[hidden] { display: none; }
+  .btn-tiny { font-size: 11.5px; padding: 4px 9px; }
+  .select-actions { display: flex; gap: 8px; margin: 2px 0 4px; }
   .btn svg { flex: none; }
 
   .danger-zone { border-color: var(--blocked); padding: 16px 18px; }
@@ -913,8 +915,16 @@
           <section>
             <p class="section-label">1. Rohdaten extrahieren</p>
             <label for="rag-domain-select">Domäne (Mehrfachauswahl, leer = alle)</label>
+            <div class="select-actions">
+              <button class="btn ghost btn-tiny" type="button" data-select-all="rag-domain-select">Alle auswählen</button>
+              <button class="btn ghost btn-tiny" type="button" data-select-clear="rag-domain-select">Auswahl aufheben</button>
+            </div>
             <select id="rag-domain-select" multiple size="5"></select>
             <label for="rag-status-select">Status (Mehrfachauswahl, leer = alle)</label>
+            <div class="select-actions">
+              <button class="btn ghost btn-tiny" type="button" data-select-all="rag-status-select">Alle auswählen</button>
+              <button class="btn ghost btn-tiny" type="button" data-select-clear="rag-status-select">Auswahl aufheben</button>
+            </div>
             <select id="rag-status-select" multiple size="5"></select>
             <div class="date-range-row" style="display:flex; gap:12px; margin-top:8px;">
               <div style="flex:1;"><label for="rag-date-from">Zeitraum von (Datum)</label><input type="date" id="rag-date-from"></div>
@@ -3278,7 +3288,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "1.9.0";
+  var APP_VERSION = "1.9.1";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6892,8 +6902,15 @@
     return data.kind === "svg" ? "Generiert (SVG)" : "Generiert (Mermaid)";
   }
   function imageThumbCellHtml(kind, data) {
-    if (kind === "uploaded") return '<img class="uploaded-thumb table-thumb" src="' + data.dataUrl + '" alt="">';
-    if (data.kind === "svg") return '<img class="uploaded-thumb table-thumb" src="data:image/svg+xml;utf8,' + encodeURIComponent(data.svg) + '" alt="">';
+    // Alt-Text: Nutzerbeschreibung bevorzugt (aussagekräftiger), sonst
+    // Dateiname/Titel - nie leer, da hochgeladene/generierte Bilder
+    // bedeutungstragender Inhalt sind, keine Dekoration.
+    if (kind === "uploaded") {
+      var altUploaded = data.description || data.filename || "Hochgeladenes Bild";
+      return '<img class="uploaded-thumb table-thumb" src="' + data.dataUrl + '" alt="' + escapeHtml(altUploaded) + '">';
+    }
+    var altGenerated = data.description || data.title || "Generiertes Prozessbild";
+    if (data.kind === "svg") return '<img class="uploaded-thumb table-thumb" src="data:image/svg+xml;utf8,' + encodeURIComponent(data.svg) + '" alt="' + escapeHtml(altGenerated) + '">';
     return '<span class="thumb-placeholder">Mermaid</span>';
   }
   function renderImagesTable() {
@@ -7157,6 +7174,25 @@
   function selectedValues(selectEl) {
     return Array.prototype.map.call(selectEl.selectedOptions, function (o) { return o.value; });
   }
+  // Generische "Alle auswählen"/"Auswahl aufheben"-Buttons fuer <select
+  // multiple> - aktuell nur bei RAG (Domäne/Status), ueber data-select-all/
+  // data-select-clear aber bewusst wiederverwendbar fuer kuenftige
+  // Mehrfachauswahl-Felder ohne neuen JS-Code. Native Mehrfachauswahl ist
+  // per Klick/Touch umstaendlich (Strg/Cmd-Klick fuer Einzelauswahl) - diese
+  // Buttons decken die haeufigsten Faelle ("alles" oder "nichts") ab, ohne
+  // die Selects durch eine Checkbox-Liste zu ersetzen.
+  Array.prototype.forEach.call(document.querySelectorAll("[data-select-all]"), function (btn) {
+    btn.addEventListener("click", function () {
+      var sel = document.getElementById(btn.getAttribute("data-select-all"));
+      if (sel) Array.prototype.forEach.call(sel.options, function (o) { o.selected = true; });
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-select-clear]"), function (btn) {
+    btn.addEventListener("click", function () {
+      var sel = document.getElementById(btn.getAttribute("data-select-clear"));
+      if (sel) Array.prototype.forEach.call(sel.options, function (o) { o.selected = false; });
+    });
+  });
   function ragPopulateSelects() {
     var list = scopedTickets();
     var domainSel = selectedValues(els.ragDomainSelect);

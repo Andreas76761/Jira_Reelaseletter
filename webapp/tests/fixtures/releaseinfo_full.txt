@@ -1,0 +1,336 @@
+Erstellt von GitHub Direct Access, zuletzt aktualisiert von Melania Miclea am Sep 15, 2026  Lesedauer: 6 Minute(n)
+Document Management ( DM-68.0.1 ) - Domain: Documents and Communication
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-45030	Geschlossen	Change renaming logic for uploaded documents	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+ONESCM-47795	Fertig	CH-CZ Market - Query did not return a unique result: 4 results were returned error in editing a template	DEV, INT	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-48137	Geschlossen	[BE] Adapt timeToLive calculation for end of day expiry
+ONESCM-46355	Fertig	[BE] Adapt document upload for checking multiple signatures
+ONESCM-46148	Fertig	[BE] Change the logic of renaming T&C document
+3 Vorgänge  Aktualisieren
+Product Management ( PM-59.4.0 ) - Domain: Contract Calculation
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47347	Geschlossen	[BE] add new expiry criteria to existing Product Blueprint Full Service on PROD	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47868	Fertig	[BE] Special case min and max duration and millage fields
+1 Vorgang  Aktualisieren
+Revenue Management ( REV-57.0.1 ) - Domain: Revenue and Cost Management
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-45739	Geschlossen	Multi market enablement for individual payment method values + individual payment term values for CoFiCO & SWT markets	Approved
+ONESCM-44780	Blocked BAT Testing	Early settlement from Contract (Create transaction for remaining amount)	Approved
+ONESCM-43003	Geschlossen	Revenue - Additional Infos Current Account Balance	Approved
+3 Vorgänge  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47345	Geschlossen	Extension of the permitted character length in the "Tax Rate" input field	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+ONESCM-47796	Fertig	Revenue management - Payment plan cannot be generated when activating a contract on CZ market	DEV	Approved
+ONESCM-47704	Geschlossen	Import of i156 with Old Part Tax without currency conversion triggers error	DEV, INT, PRE-PROD	Approved
+ONESCM-47687	Geschlossen	"Financial Document downloading failed" when downloading all Financial Documents	DEV, INT, PRE-PROD	Approved
+ONESCM-47463	Fertig	No files displayed on Cofico job after exporting invoice	DEV	Approved
+4 Vorgänge  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47435	Fertig	[BE] Fix contingent damage code cleanup to scope deletion E2E test
+ONESCM-46056	Fertig	[BE] Change batch jobs in DCS to be market aware
+2 Vorgänge  Aktualisieren
+DE Market Cost Management ( DECM-45.0.0 ) - Domain: Revenue and Cost Management
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47345	Geschlossen	Extension of the permitted character length in the "Tax Rate" input field	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+ONESCM-47482	Fertig	Header line for MBLD E169 exports is wrong	INT	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+Reporting Service ( RS-11.0.0 ) - Domain:
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47271	Geschlossen	The specific markets should only start jobs for their market not for multiple markets	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47987	Fertig	Reporting - Update libs.versions.toml for Pre-Prod deployment
+ONESCM-46509	Fertig	[BE] Filtering logic for proposal data in Base DP tables
+ONESCM-46060	Fertig	[BE] Manage silent data loss in CSV creation and S3 upload pipeline in reporting-service
+3 Vorgänge  Aktualisieren
+Notification Service ( NT-68.0.0 ) - Domain: Documents and Communication
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Epic Link
+ONESCM-31685	Fertig	[BE] Handle sms error response
+1 Vorgang  Aktualisieren
+Configuration Service ( CFG-37.0.0 ) - Domain: Architecture
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47345	Geschlossen	Extension of the permitted character length in the "Tax Rate" input field	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+ONESCM-47314	Fertig	[BE] Check template for product publishing not working	DEV
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47360	Fertig	BE: Make sure in Config Service when a new market is created it is populated with default values
+ONESCM-46406	Fertig	[BE] [BRABUS] Suspend the contract if the Payment link is not consumed - Config serv
+2 Vorgänge  Aktualisieren
+Contract Service ( CT-65.0.5 ) - Domain: Contract Generation and Contract Management
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-45475	Geschlossen	Special Case Request with Dealer Assignment	Approved
+ONESCM-45334	Geschlossen	Internal & External Comment Field for Special Cases	Approved
+ONESCM-44834	Geschlossen	Inform customer about payment interval changed	Approved
+ONESCM-39788	Geschlossen	Consideration of Special Case in CG as Discount Type based on Configuration on Product Level	Approved
+4 Vorgänge  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47883	Geschlossen	[BE] ±1 Euro Tolerance on Product Price Match	Approved
+ONESCM-47345	Geschlossen	Extension of the permitted character length in the "Tax Rate" input field	Approved
+ONESCM-47312	Geschlossen	[BE] Early Termination — Mileage Validation for Past-Date Terminations	Approved
+ONESCM-47250	Geschlossen	[BE] Offer Validity - Expires at End of Day
+4 Vorgänge  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+ONESCM-47800	Fertig	ReportingContractDataBulkUpdate batch job fails with error 500	DEV	Approved
+ONESCM-47778	Fertig	[BE] SEPA document cannot be downloaded, an error is displayed	INT	Approved
+ONESCM-47754	Geschlossen	Early settlement - document name empty in communications history	PRE-PROD	Approved
+ONESCM-47600	Geschlossen	Payment Reference | Error messages when trying to add payment reference to contract	PRE-PROD	Approved
+ONESCM-47467	Fertig	[BE] Fix optimistic locking when signing on premise	DEV
+ONESCM-47399	Fertig	[BE] Contract generation - Price mismatch triggered for Contingent contract during Baumuster flow	DEV	Approved
+ONESCM-47393	BAT Confirmed	Contract generation - Authentication error triggered upon creating a contract	INT	Approved
+ONESCM-47361	Geschlossen	Contract Generation - "No industries selected" error for Governmental Commercial Customer	DEV, INT, PRE-PROD	Approved
+ONESCM-47138	Fertig	Wrong Price Comparison at Activation - Leasing	INT
+ONESCM-47011	Geschlossen	[BE] Short term prolongation - incorrect mileage calculation	INT, PRE-PROD	Approved
+10 Vorgänge  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-48396	Geschlossen	wrongly shown prolongation period in payment tab	Approved
+ONESCM-47973	Geschlossen	proposal wrongly rejected for JLLGMSE7/DE26VS - group ID: 11035/DE26VS
+ONESCM-47839	BAT Confirmed	Reporting - some data missed in refined_contract_price_details_components	Approved
+ONESCM-47785	Geschlossen	error "No industries selected from the list"
+ONESCM-47631	Geschlossen	Problem with renamed vehicle registraton document	Approved
+ONESCM-47409	Geschlossen	MO-Check VIES unplausible
+ONESCM-47395	Geschlossen	Reporting - Discounts are not populated in UDM for older contracts	Approved
+ONESCM-47308	Geschlossen	error for group ID 96937	Approved
+ONESCM-46865	Geschlossen	Reporting - wrong vin_id content for oneSCM contracts
+ONESCM-46574	Geschlossen	Contract Detail Page | Price Breakdown Structure shows wrong prices	Approved
+10 Vorgänge  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-48572	Fertig	[BE] Changes in arePricesTheSame logic
+ONESCM-48015	Fertig	[BE] Remove all the usages of customer's actual tax classification
+ONESCM-47881	Fertig	[BE] Modify vechicle cache timeout
+ONESCM-47859	Fertig	[BE] Send uuid instead of customer id if ciamd id is not present
+ONESCM-47857	Fertig	[BE] Save the new file name when replacing the TC document
+ONESCM-47780	Fertig	[BE] Revert ONESCM-47191 and create flyway script
+ONESCM-47765	Fertig	[BE] Integrate new version of customer with multiple contact person roles
+ONESCM-47551	Fertig	[BE] - Add the new 3 column for sc_price_details_components
+ONESCM-47317	Fertig	[BE] bankDetailsId - get value from Customer
+ONESCM-47191	Fertig	[BE]New parameter for getAvailableProducts
+Anzeige von 10 von 17 Vorgänge  Aktualisieren
+Edge Contract Service ( ECT-39.0.0 ) - Domain: Contract Generation
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-30095	Geschlossen	Special Case FLAG Configured per product and is per default only applicable for customer type: commercial fleet and commercial governmental	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47676	Geschlossen	Edge Service | Remove empty spaces in "license plate" information on all endpoints	Approved
+ONESCM-47111	Geschlossen	[BE] Edge Service | Date Format not ISO-compliant
+2 Vorgänge  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+ONESCM-47341	Fertig	Edge service - ISO Format date required also when creating a contract	DEV
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47595	Fertig	Include campaigns in price validation for leasing contracts
+ONESCM-47386	Fertig	Adapt e2e for contract activation flow
+ONESCM-46987	Fertig	Fix e2e tests on edge-service
+ONESCM-46982	Fertig	[BE] Edge API improvements P1 - Standardise oneSCM Edge API Error Responses on RFC 9457 ProblemDetail
+ONESCM-46065	Fertig	[BE] Edge API improvements P1 - Align oneSCM Edge API spec and status codes with actual server behavior
+5 Vorgänge  Aktualisieren
+oneSCM Frontend ( MFE-59.1.0 ) - Domain:
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-45739	Geschlossen	Multi market enablement for individual payment method values + individual payment term values for CoFiCO & SWT markets	Approved
+ONESCM-45334	Geschlossen	Internal & External Comment Field for Special Cases	Approved
+ONESCM-43003	Geschlossen	Revenue - Additional Infos Current Account Balance	Approved
+3 Vorgänge  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47345	Geschlossen	Extension of the permitted character length in the "Tax Rate" input field	Approved
+ONESCM-45191	Geschlossen	Customer matches modal - oneERP - not applicate option to be available	Approved
+ONESCM-45086	Geschlossen	[FE] Auto-dismiss frontend error messages after a period of inactivity	Approved
+ONESCM-44628	Geschlossen	Relax Validation Rules in field Company Name	Approved
+4 Vorgänge  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+ONESCM-47851	Fertig	[FE] Update Chassis Number modal not appearing in Overview and Confirmation	DEV
+ONESCM-47764	Fertig	Payment Reference is not displayed on the MPPI invoices	INT	Approved
+ONESCM-47707	Fertig	[FE] Relative Base Price Cluster can be submitted with an empty Pricing Factor	DEV
+ONESCM-47705	Fertig	Customer update message is displayed when no customer info is updated	INT	Approved
+ONESCM-47644	Fertig	[FE] Contract Generation - Industry in special case flow is displayed wrong	INT	Approved
+ONESCM-47580	Fertig	[FE] Re-trigger Signature - Not Working from Proposal Management	INT	Approved
+ONESCM-47558	Fertig	[FE] Contract Generation - The price for Tire product with Rim Included and Rim Not Included is not calculated correct	INT	Approved
+ONESCM-47403	Fertig	Filtering not applied by using enter key	DEV	Approved
+ONESCM-47398	Fertig	Contract Calculation - Fields missing for Exclude from price calculation section for Always Included optionals	INT	Approved
+ONESCM-47231	Geschlossen	Contract details - Collective financial documents toggle editable when payment method digital payments	DEV, INT, PRE-PROD	Approved
+Anzeige von 10 von 13 Vorgänge  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47325	Geschlossen	not possible to print price information
+ONESCM-47308	Geschlossen	error for group ID 96937	Approved
+2 Vorgänge  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung
+ONESCM-48239	Fertig	[FE] Add division in the system notification table
+ONESCM-47860	Fertig	[FE] Download the TC document from CG flow with original file name
+ONESCM-47782	Fertig	[FE] Add early settlement document name in NotificationDocumentName
+ONESCM-47768	Fertig	[FE] - Change toaster info messages
+ONESCM-47603	Fertig	[FE] Ignore Account Note for Contract Creation in COFICO Market
+ONESCM-47556	Fertig	[FE ] add new expiry criteria to existing Product Blueprint Full Service on PROD
+ONESCM-46093	Fertig	[FE][Service Team] Display legacy contracts read-only (Contract Header MVP)
+7 Vorgänge  Aktualisieren
+Security Service ( SS-43.0.0 ) - Domain: Architecture
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+ONESCM-47393	BAT Confirmed	Contract generation - Authentication error triggered upon creating a contract	INT	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-46942	Fertig	Alice internal exception: DPoP verification failed with error: Invalid DPoP proof: The JWT
+ONESCM-41240	Fertig	[BE] Add entitlements on Security Service
+2 Vorgänge  Aktualisieren
+Data Capture Service ( DCS-14.0.0 ) - Domain:
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-46038	Geschlossen	Reporting stability	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-46862	Geschlossen	Reporting - Exclude NOT YET ACTIVATED Nemesis contracts from DCS	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47800	Fertig	ReportingContractDataBulkUpdate batch job fails with error 500	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47395	Geschlossen	Reporting - Discounts are not populated in UDM for older contracts	Approved
+ONESCM-46865	Geschlossen	Reporting - wrong vin_id content for oneSCM contracts
+2 Vorgänge  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47963	Fertig	DCS - Update libs.versions.toml for Pre-PROD deployment
+ONESCM-47551	Fertig	[BE] - Add the new 3 column for sc_price_details_components
+2 Vorgänge  Aktualisieren
+Customer Service ( CS-72.1.0 ) - Domain: Customer and Partner Management
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-45061	Fertig	TraCS - overall Architecture + Localization for CH & CZ	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47585	Geschlossen	Handle Multiple VEGA IDs in external keys for outlet IDs	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+ONESCM-47674	Fertig	[MBCH] Tax Number and VAT-ID cannot be added in CH format	INT	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47562	Geschlossen	Multiple VEGA ID's in external keys for outlet ID GS00112709
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-48392	Fertig	[BE] Add certificate for SWT connection
+ONESCM-47878	Fertig	[BE] - Resolve comments for PR: Change batch jobs in DCS to be market aware
+ONESCM-47287	Fertig	[BE] Adapt Customer Account Center to support new Contact Person role
+ONESCM-46749	Fertig	[BE] Change jpa collections to set instead of list
+ONESCM-46458	Fertig	[BE] Add new step in PrivateCustomerCasHolderBatch to export list of customers to TraCS
+ONESCM-46203	Fertig	[BE] Map bank transfer to cofico request
+ONESCM-46113	Fertig	[BE] Adapt the mapping to CoFiCo for CZ & CH
+ONESCM-46110	Fertig	[BE] Add uid field on commercial customer
+ONESCM-46056	Fertig	[BE] Change batch jobs in DCS to be market aware
+ONESCM-36769	Fertig	[BE] Delete customer export table
+Anzeige von 10 von 11 Vorgänge  Aktualisieren
+
+Gefällt mirSei der Erste, dem dies gefällt.

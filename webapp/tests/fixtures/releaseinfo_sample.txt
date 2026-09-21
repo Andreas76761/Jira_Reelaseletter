@@ -1,0 +1,72 @@
+Erstellt von GitHub Direct Access, zuletzt aktualisiert von Melania Miclea am Sep 15, 2026  Lesedauer: 6 Minute(n)
+Document Management ( DM-68.0.1 ) - Domain: Documents and Communication
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-45030	Geschlossen	Change renaming logic for uploaded documents	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+ONESCM-47795	Fertig	CH-CZ Market - Query did not return a unique result: 4 results were returned error in editing a template	DEV, INT	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-48137	Geschlossen	[BE] Adapt timeToLive calculation for end of day expiry
+ONESCM-46355	Fertig	[BE] Adapt document upload for checking multiple signatures
+ONESCM-46148	Fertig	[BE] Change the logic of renaming T&C document
+3 Vorgänge  Aktualisieren
+Product Management ( PM-59.4.0 ) - Domain: Contract Calculation
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47347	Geschlossen	[BE] add new expiry criteria to existing Product Blueprint Full Service on PROD	Approved
+1 Vorgang  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47868	Fertig	[BE] Special case min and max duration and millage fields
+1 Vorgang  Aktualisieren
+Revenue Management ( REV-57.0.1 ) - Domain: Revenue and Cost Management
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-45739	Geschlossen	Multi market enablement for individual payment method values + individual payment term values for CoFiCO & SWT markets	Approved
+ONESCM-44780	Blocked BAT Testing	Early settlement from Contract (Create transaction for remaining amount)	Approved
+ONESCM-43003	Geschlossen	Revenue - Additional Infos Current Account Balance	Approved
+3 Vorgänge  Aktualisieren
+Reporting Service ( RS-11.0.0 ) - Domain:
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+Keine Vorgänge gefunden  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-47271	Geschlossen	The specific markets should only start jobs for their market not for multiple markets	Approved
+1 Vorgang  Aktualisieren
+oneSCM Frontend ( MFE-59.1.0 ) - Domain:
+
+Schlüssel	Status	Zusammenfassung	PO INT Test	BU Pre-PROD Test
+ONESCM-45739	Geschlossen	Multi market enablement for individual payment method values + individual payment term values for CoFiCO & SWT markets	Approved
+ONESCM-45334	Geschlossen	Internal & External Comment Field for Special Cases	Approved
+3 Vorgänge  Aktualisieren
+
+Schlüssel	Status	Zusammenfassung
+ONESCM-48239	Fertig	[FE] Add division in the system notification table
+7 Vorgänge  Aktualisieren
+Security Service ( SS-43.0.0 ) - Domain: Architecture
+
+Schlüssel	Status	Zusammenfassung	Environment	PO INT Test	BU Pre-PROD Test
+ONESCM-47393	BAT Confirmed	Contract generation - Authentication error triggered upon creating a contract	INT	Approved
+1 Vorgang  Aktualisieren
+
+Gefällt mirSei der Erste, dem dies gefällt.

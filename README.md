@@ -139,7 +139,7 @@ und überarbeiten.
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, z. B. "v1.1.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v1.9.1"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -447,6 +447,8 @@ Label-Varianten ergänzen.
 
 ## Tests
 
+### Python-CLI (`jira-releaseletter`)
+
 ```bash
 pip install -e ".[dev]" 2>/dev/null || pip install pytest
 PYTHONPATH=src python3 -m pytest tests/ -v
@@ -455,6 +457,30 @@ PYTHONPATH=src python3 -m pytest tests/ -v
 Die Tests laufen gegen synthetische Beispiel-Exporte in
 `tests/fixtures/` (XML/HTML/DOCX mit Testdaten inkl. Namen/E-Mails) und
 prüfen den kompletten Weg von Parsing bis Dokumenterzeugung.
+
+### Web-App (`webapp/ticket_cockpit.html`)
+
+Die Web-App hat eine eigene, separate Testsuite unter `webapp/tests/`
+(jsdom-basierte End-to-End-Tests, ~29 Dateien, über 1000 einzelne
+Prüfungen) – sie simulieren echte Nutzerinteraktionen (Klicks, Uploads,
+Formulareingaben) gegen die tatsächlich gebaute Web-App, nicht gegen
+isolierte Funktionsaufrufe:
+
+```bash
+jira-releaseletter build-webapp        # erzeugt webapp/ticket_cockpit.build.html
+cd webapp/tests
+npm install
+npm test                               # führt alle *_test.js nacheinander aus
+```
+
+Jede Testdatei ist ein eigenständiges Skript (kein Test-Framework wie
+Jest nötig) und lässt sich auch einzeln ausführen, z. B.
+`node webapp/tests/rag_test.js`. Die Tests decken u. a. Import/Merge/
+Duplikaterkennung, alle sieben Verarbeitung-Jobs (inkl. der KI-gestützten
+RAG-Funktion, dort mit einer gemockten `sample`-Capability), die vier
+Dokument-Generatoren samt XLSX/DOCX/PDF-Export, die 5
+Clickanweisung-Designvorlagen, den Original/Nur-Deutsch-Umschalter,
+Bilder-Upload/OCR/Metadaten sowie den Lösch-Bestätigungsdialog ab.
 
 ## Bei 1000 Tickets
 
