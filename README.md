@@ -285,6 +285,16 @@ wirkungslos bleiben kann:
   (Schlüssel/Zusammenfassung) im Fließtext. Download ebenfalls als
   Markdown/DOCX/PDF; die separate XLSX-Tabelle bleibt bewusst
   Ticket-bezogen (Nachvollzieh-Grundlage für die Redaktion).
+- **Clickanweisung – 5 Design-Vorlagen (Layout-Export)** – zusätzlich zum
+  einfachen Markdown/DOCX/PDF gibt es einen gestalteten Export mit
+  Deckblatt, farbigem Abschnitts-Banner je Domäne und nummerierten
+  Schritten, wählbar aus 5 Design-Vorlagen (Corporate Blau, Dunkel
+  Professionell, Minimal Hell, Grün Nachhaltig, Warm Orange) als DOCX
+  oder PDF. Inhaltlich identisch zum normalen Klickanweisung-Entwurf
+  (gleiche Domänen-Gruppierung, keine Ticket-Referenzen); die Gestaltung
+  besteht bewusst nur aus selbst erzeugten Farben/Formen/Typografie,
+  **keine Fotos/Stockbilder** – dafür hat die App keine Bildquelle und
+  würde sonst etwas vortäuschen, das nicht vorhanden ist.
 - **Ansicht "Original" / "Nur Deutsch"** – Releaseletter, Benutzerhandbuch
   und Clickanweisung haben in der Vorschau einen Umschalter. "Original"
   zeigt den vollständigen Entwurf wie gehabt (deutsche Vorlage +

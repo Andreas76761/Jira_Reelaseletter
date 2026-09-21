@@ -1005,6 +1005,14 @@
               <button class="btn ghost" id="clickanweisung-download-pdf-btn" type="button" disabled>Als PDF</button>
               <button class="btn ghost" id="clickanweisung-download-xlsx-btn" type="button" disabled>Als XLSX (Tickets-Tabelle)</button>
             </div>
+            <label for="clickanweisung-theme">Design-Vorlage (für Layout-Export)</label>
+            <select id="clickanweisung-theme"></select>
+            <p class="step-note">5 selbst erzeugte Layouts (Deckblatt + farbige Abschnitte je Domäne + nummerierte Schritte) &ndash; ohne Fotos/Stockbilder, da die App dafür keine Bildquelle hat.</p>
+            <div class="job-export-row">
+              <span class="job-export-label">Layout-Export:</span>
+              <button class="btn ghost" id="clickanweisung-download-styled-docx-btn" type="button" disabled>Als DOCX (Design)</button>
+              <button class="btn ghost" id="clickanweisung-download-styled-pdf-btn" type="button" disabled>Als PDF (Design)</button>
+            </div>
           </div>
           <div class="gen-preview-wrap">
             <div class="preview-toggle" role="tablist" aria-label="Ansicht">
@@ -3218,7 +3226,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "1.6.0";
+  var APP_VERSION = "1.7.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5873,6 +5881,22 @@
     return names.map(function (d) { return { domain: d || "Ohne Domäne", tickets: byDomain[d] }; });
   }
 
+  // Gemeinsame Extraktion der Klickschritte je Domäne - genutzt sowohl vom
+  // Markdown-Rohgerüst (renderClickInstructions) als auch von den 5
+  // Design-Vorlagen (buildClickanweisungStyledDocx/-PdfBlob), damit beide
+  // garantiert denselben Inhalt liefern.
+  function clickInstructionGroups(tickets) {
+    var groups = groupRawTicketsByDomain(tickets);
+    return groups.map(function (g) {
+      var steps = [];
+      g.tickets.forEach(function (t) {
+        if (!t.description) return;
+        t.description.split("\n").filter(function (l) { return l.trim(); }).forEach(function (line) { steps.push(line.trim()); });
+      });
+      return { domain: g.domain, steps: steps };
+    });
+  }
+
   // Klickanweisung ist bewusst KEIN Ticket-Protokoll: Ziel ist eine
   // Bedienungsanleitung fuer oneSCM-Endanwender, aus den Beschreibungstexten
   // der Tickets zusammengestellt und nach Domäne gegliedert - ohne
@@ -5887,26 +5911,136 @@
       ""
     ];
     if (deOnly) lines.push(DE_ONLY_NOTE, "");
-    var groups = groupRawTicketsByDomain(tickets);
+    var groups = clickInstructionGroups(tickets);
     groups.forEach(function (g) {
       lines.push("## " + g.domain, "");
       if (deOnly) {
         lines.push("_Die Klickschritte dieser Domäne stammen unverändert aus den Ticket-Beschreibungen (Originalsprache) und werden in dieser Ansicht ausgeblendet, siehe Ansicht \"Original\"._", "");
         return;
       }
-      var stepNum = 1, anyStep = false;
-      g.tickets.forEach(function (t) {
-        if (!t.description) return;
-        t.description.split("\n").filter(function (l) { return l.trim(); }).forEach(function (line) {
-          lines.push(stepNum + ". " + line.trim());
-          stepNum++;
-          anyStep = true;
-        });
-      });
-      if (!anyStep) lines.push("_Keine Beschreibungstexte in den Tickets dieser Domäne hinterlegt - Klickpfad manuell ergänzen._");
+      if (!g.steps.length) lines.push("_Keine Beschreibungstexte in den Tickets dieser Domäne hinterlegt - Klickpfad manuell ergänzen._");
+      else g.steps.forEach(function (line, i) { lines.push((i + 1) + ". " + line); });
       lines.push("");
     });
     return lines.join("\n");
+  }
+
+  /* ============ Klickanweisung: 5 Design-Vorlagen (Cover + farbige
+     Abschnitts-Banner + nummerierte Schritte) fuer DOCX/PDF-Export. Rein
+     selbst erzeugte Vektor-/Textgestaltung (Farben, Formen, Typografie) -
+     keine Fotos/Stockbilder, da die App keine Bildquelle dafuer hat und
+     nichts erfinden soll. Inhaltlich identisch zum Markdown-Rohgerüst
+     (clickInstructionGroups), nur visuell aufbereitet. ============ */
+  var CLICKANWEISUNG_THEMES = [
+    { id: "corporate-blau", name: "Corporate Blau", coverBg: "1E3A8A", coverText: "FFFFFF", accent: "2563EB", accentText: "FFFFFF", badgeBg: "2563EB", badgeText: "FFFFFF", pageBg: "FFFFFF", bodyText: "1F2937", mutedText: "6B7280" },
+    { id: "dunkel-professionell", name: "Dunkel Professionell", coverBg: "0F172A", coverText: "F1F5F9", accent: "0EA5E9", accentText: "0F172A", badgeBg: "0EA5E9", badgeText: "0F172A", pageBg: "F8FAFC", bodyText: "0F172A", mutedText: "64748B" },
+    { id: "minimal-hell", name: "Minimal Hell", coverBg: "FFFFFF", coverText: "111827", accent: "9333EA", accentText: "FFFFFF", badgeBg: "111827", badgeText: "FFFFFF", pageBg: "FFFFFF", bodyText: "111827", mutedText: "6B7280" },
+    { id: "gruen-nachhaltig", name: "Grün Nachhaltig", coverBg: "064E3B", coverText: "ECFDF5", accent: "10B981", accentText: "064E3B", badgeBg: "10B981", badgeText: "064E3B", pageBg: "F0FDF4", bodyText: "064E3B", mutedText: "047857" },
+    { id: "warm-orange", name: "Warm Orange", coverBg: "7C2D12", coverText: "FFF7ED", accent: "F97316", accentText: "FFFFFF", badgeBg: "F97316", badgeText: "FFFFFF", pageBg: "FFFBEB", bodyText: "7C2D12", mutedText: "9A3412" }
+  ];
+  function hexToRgb(hex) {
+    var n = parseInt(hex, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function buildClickanweisungStyledPdfBlob(theme, name, groups) {
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
+    var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    var pageW = 210, pageH = 297, margin = 18;
+    function fill(hex) { doc.setFillColor.apply(doc, hexToRgb(hex)); }
+    function textColor(hex) { doc.setTextColor.apply(doc, hexToRgb(hex)); }
+    // Deckblatt
+    fill(theme.coverBg); doc.rect(0, 0, pageW, pageH, "F");
+    textColor(theme.coverText);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(30);
+    doc.text("Klickanweisung", margin, 118);
+    doc.setFontSize(16);
+    doc.text("oneSCM – " + name, margin, 130);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
+    doc.text("Bedienungsanleitung – Stand: " + new Date().toLocaleDateString("de-DE"), margin, 142);
+    doc.setFontSize(9);
+    doc.text("Designvorlage: " + theme.name, margin, pageH - margin);
+
+    groups.forEach(function (g) {
+      doc.addPage();
+      fill(theme.pageBg); doc.rect(0, 0, pageW, pageH, "F");
+      fill(theme.accent); doc.rect(0, 0, pageW, 22, "F");
+      textColor(theme.accentText);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(15);
+      doc.text(g.domain, margin, 14);
+      var y = 34;
+      textColor(theme.bodyText);
+      if (!g.steps.length) {
+        doc.setFont("helvetica", "italic"); doc.setFontSize(10);
+        textColor(theme.mutedText);
+        doc.text("Keine Beschreibungstexte in den Tickets dieser Domäne hinterlegt.", margin, y);
+        return;
+      }
+      g.steps.forEach(function (stepText, i) {
+        var lines = doc.splitTextToSize(stepText, pageW - margin * 2 - 12);
+        if (y + lines.length * 5 > pageH - margin) {
+          doc.addPage();
+          fill(theme.pageBg); doc.rect(0, 0, pageW, pageH, "F");
+          y = margin;
+        }
+        fill(theme.badgeBg); doc.circle(margin + 3, y - 1.5, 3.2, "F");
+        textColor(theme.badgeText);
+        doc.setFont("helvetica", "bold"); doc.setFontSize(8);
+        doc.text(String(i + 1), margin + 3, y - 0.3, { align: "center" });
+        textColor(theme.bodyText);
+        doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+        doc.text(lines, margin + 10, y);
+        y += lines.length * 5 + 4;
+      });
+    });
+    return doc.output("blob");
+  }
+  function buildClickanweisungStyledDocx(theme, name, groups) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek konnte nicht geladen werden.");
+    function shd(hex) { return '<w:shd w:val="clear" w:color="auto" w:fill="' + hex + '"/>'; }
+    function para(text, opts) {
+      opts = opts || {};
+      var pPr = "<w:pPr>" + (opts.shading ? shd(opts.shading) : "") + (opts.pageBreak ? "<w:pageBreakBefore/>" : "") +
+        '<w:spacing w:before="120" w:after="120"/></w:pPr>';
+      var rPr = "<w:rPr>" + (opts.color ? '<w:color w:val="' + opts.color + '"/>' : "") + (opts.bold ? "<w:b/>" : "") +
+        (opts.italic ? "<w:i/>" : "") + (opts.size ? '<w:sz w:val="' + opts.size + '"/>' : "") + "</w:rPr>";
+      return "<w:p>" + pPr + "<w:r>" + rPr + '<w:t xml:space="preserve">' + xmlEsc(text) + "</w:t></w:r></w:p>";
+    }
+    var body = "";
+    body += para("Klickanweisung", { shading: theme.coverBg, color: theme.coverText, bold: true, size: 56 });
+    body += para("oneSCM – " + name, { shading: theme.coverBg, color: theme.coverText, bold: true, size: 32 });
+    body += para("Bedienungsanleitung – Stand: " + new Date().toLocaleDateString("de-DE"), { shading: theme.coverBg, color: theme.coverText, size: 20 });
+    body += para("Designvorlage: " + theme.name, { shading: theme.coverBg, color: theme.coverText, size: 18 });
+    groups.forEach(function (g) {
+      body += para(g.domain, { shading: theme.accent, color: theme.accentText, bold: true, size: 30, pageBreak: true });
+      if (!g.steps.length) {
+        body += para("Keine Beschreibungstexte in den Tickets dieser Domäne hinterlegt.", { color: theme.mutedText, italic: true });
+      } else {
+        g.steps.forEach(function (stepText, i) {
+          body += para((i + 1) + ". " + stepText, { color: theme.bodyText });
+        });
+      }
+    });
+    var documentXml =
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+      "<w:body>" + body + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/></w:sectPr></w:body>' +
+      "</w:document>";
+    var zip = new JSZip();
+    zip.file("[Content_Types].xml",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+      "</Types>");
+    zip.file("_rels/.rels",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+      "</Relationships>");
+    zip.file("word/document.xml", documentXml);
+    return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
   }
   function renderProcessDiagramSource(tickets) {
     var lines = ["flowchart TD", "    start([Start])"];
@@ -6381,6 +6515,44 @@
         showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
       }
     });
+    if (kind === "clickanweisung") {
+      var themeSelect = document.getElementById("clickanweisung-theme");
+      themeSelect.innerHTML = CLICKANWEISUNG_THEMES.map(function (t) { return '<option value="' + t.id + '">' + escapeHtml(t.name) + "</option>"; }).join("");
+      function currentClickanweisungTheme() {
+        var found = CLICKANWEISUNG_THEMES.filter(function (t) { return t.id === themeSelect.value; });
+        return found[0] || CLICKANWEISUNG_THEMES[0];
+      }
+      var downloadStyledDocxBtn = document.getElementById("clickanweisung-download-styled-docx-btn");
+      var downloadStyledPdfBtn = document.getElementById("clickanweisung-download-styled-pdf-btn");
+      generateBtn.addEventListener("click", function () {
+        // Wird nur ausgeloest, wenn resolveGeneratorTickets() oben bereits
+        // erfolgreich Tickets geliefert hat (sonst waere die Funktion schon
+        // vorher mit return abgebrochen) - lastTickets ist daher aktuell.
+        if (lastTickets.length) { downloadStyledDocxBtn.disabled = false; downloadStyledPdfBtn.disabled = false; }
+      });
+      downloadStyledDocxBtn.addEventListener("click", async function () {
+        try {
+          var theme = currentClickanweisungTheme();
+          var groups = clickInstructionGroups(lastTickets);
+          var blob = await buildClickanweisungStyledDocx(theme, lastTitle, groups);
+          var ok = await saveOrWarn(safeFilename(lastTitle) + "_clickanweisung_" + theme.id + ".docx", blob);
+          if (ok) showToast("Gespeichert", "DOCX (Design: " + theme.name + ") heruntergeladen.");
+        } catch (err) {
+          showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+        }
+      });
+      downloadStyledPdfBtn.addEventListener("click", async function () {
+        try {
+          var theme = currentClickanweisungTheme();
+          var groups = clickInstructionGroups(lastTickets);
+          var blob = buildClickanweisungStyledPdfBlob(theme, lastTitle, groups);
+          var ok = await saveOrWarn(safeFilename(lastTitle) + "_clickanweisung_" + theme.id + ".pdf", blob);
+          if (ok) showToast("Gespeichert", "PDF (Design: " + theme.name + ") heruntergeladen.");
+        } catch (err) {
+          showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+        }
+      });
+    }
   }
   ["releaseletter", "benutzerhandbuch", "clickanweisung"].forEach(wireTextGenerator);
 
