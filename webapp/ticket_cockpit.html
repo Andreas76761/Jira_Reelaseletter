@@ -319,7 +319,13 @@
     width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-family: "IBM Plex Mono", monospace;
     font-size: 12.5px; background: var(--surface); color: var(--text); resize: vertical;
   }
+  .gen-form select {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-family: inherit;
+    font-size: 12.5px; background: var(--surface); color: var(--text);
+  }
+  .gen-form select:disabled { opacity: 0.5; cursor: not-allowed; }
   .gen-form .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+  .mermaid-box svg, .gallery-card svg { display: block; max-width: 100%; height: auto; border-radius: 8px; }
 
   /* ---- Verarbeitung: Unter-Tabs ---- */
   .subtabs-panel[hidden] { display: none; }
@@ -845,16 +851,21 @@
 
       <!-- ================= Prozessbild ================= -->
       <section class="view-panel" data-view-panel="prozessbild" hidden>
-        <div class="view-head"><h2>Prozessbild</h2><p class="desc">Einfaches sequentielles Prozessdiagramm (Mermaid) aus ausgewählten Tickets. Reihenfolge entspricht der Ticket-Liste, nicht automatisch dem echten Prozess.</p></div>
+        <div class="view-head"><h2>Prozessbild</h2><p class="desc">Prozessdiagramm aus ausgewählten Tickets &ndash; 10 Design-Vorlagen (Farben) x 10 Bildformate/Visual-Arten frei kombinierbar. Reihenfolge entspricht der Ticket-Liste, nicht automatisch dem echten Prozess.</p></div>
         <div class="gen-layout" data-kind="prozessbild">
           <div class="gen-form">
-            <label for="prozessbild-name">Release-Name</label>
+            <label for="prozessbild-name">Prozess-/Release-Name</label>
             <input type="text" id="prozessbild-name" value="Release" placeholder="z. B. 2026.3">
+            <label for="prozessbild-theme">Design-Vorlage (Farben)</label>
+            <select id="prozessbild-theme"></select>
+            <label for="prozessbild-layout">Bildformat / Visual-Art</label>
+            <select id="prozessbild-layout"></select>
+            <p id="prozessbild-layout-desc" class="step-note" style="margin:-4px 0 0;"></p>
             <div class="checkbox-row"><input type="checkbox" id="prozessbild-use-filtered" checked><label for="prozessbild-use-filtered" style="font-weight:500;">Aktuell im Dashboard gefilterte Tickets verwenden</label></div>
             <label for="prozessbild-keys">Oder Ticket-Keys (einer pro Zeile)</label>
             <textarea id="prozessbild-keys" rows="6" placeholder="ONESCM-101&#10;ONESCM-102"></textarea>
             <button class="btn primary" id="prozessbild-generate-btn" type="button">Diagramm generieren</button>
-            <button class="btn ghost" id="prozessbild-download-btn" type="button" disabled>Als Markdown speichern</button>
+            <button class="btn ghost" id="prozessbild-download-btn" type="button" disabled>Herunterladen</button>
           </div>
           <div class="mermaid-box" id="prozessbild-render">
             <div class="empty-hint">Noch kein Diagramm generiert.</div>
@@ -1677,6 +1688,7 @@
     "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
     "evaluate-tickets-btn", "evaluate-summary", "evaluate-count-manual", "evaluate-count-internal", "evaluate-count-unknown",
     "evaluate-table-wrap", "evaluate-tbody",
+    "prozessbild-theme", "prozessbild-layout", "prozessbild-layout-desc",
     "gallery", "gallery-empty",
     "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
@@ -3030,6 +3042,380 @@
     return lines.join("\n");
   }
 
+
+  /* ============ Prozessbild: 10 Design-Vorlagen x 10 Bildformate (SVG) ============
+     Zwei unabhaengige Achsen: PROZESSBILD_THEMES (Farben/Design) und
+     PROZESSBILD_LAYOUTS (Bildformat/Visual-Art), frei kombinierbar. Alle SVG-
+     Layouts sind reines, selbst erzeugtes Vektor-SVG ueber JSZip-freie String-
+     Bausteine - keine externe Grafikbibliothek noetig, jederzeit als .svg
+     herunterladbar und in der Bilder-Galerie speicherbar. */
+
+  var PROZESSBILD_THEMES = [
+    { id: "onepaper-dark", name: "OnePaper Dunkel", bg: "#0b0f19", panel: "#141b2c", panelBorder: "#26314a", accent: "#3fc1dc", accent2: "#60a5fa", text: "#eef2fb", muted: "#93a0c0", numBg: "#0f1626" },
+    { id: "onepaper-light", name: "OnePaper Hell", bg: "#ffffff", panel: "#f5f7fb", panelBorder: "#dde3ee", accent: "#0e7490", accent2: "#2563eb", text: "#151a24", muted: "#5b6579", numBg: "#ffffff" },
+    { id: "corporate-blue", name: "Corporate Blau", bg: "#0f1b33", panel: "#16244a", panelBorder: "#293a63", accent: "#5b93ff", accent2: "#8fb8ff", text: "#eef2fb", muted: "#9fb0d1", numBg: "#101c38" },
+    { id: "silber-schwarz", name: "Silber/Schwarz", bg: "#101214", panel: "#1b1e22", panelBorder: "#2c3136", accent: "#00adef", accent2: "#9ea7ad", text: "#f4f5f6", muted: "#9098a0", numBg: "#131619" },
+    { id: "forest", name: "Forest Grün", bg: "#0d1912", panel: "#132a1d", panelBorder: "#20402c", accent: "#4ade80", accent2: "#86efac", text: "#eafbf1", muted: "#8fb69e", numBg: "#0f2016" },
+    { id: "sunset", name: "Sunset Orange", bg: "#1a1210", panel: "#241a16", panelBorder: "#3d2a20", accent: "#fb923c", accent2: "#f87171", text: "#fdf1ea", muted: "#c8a794", numBg: "#1f1613" },
+    { id: "pastel", name: "Pastell Hell", bg: "#faf7f5", panel: "#ffffff", panelBorder: "#ece3dd", accent: "#a855f7", accent2: "#ec4899", text: "#2c2430", muted: "#7b7286", numBg: "#faf5ff" },
+    { id: "mono", name: "Monochrom Grau", bg: "#f5f5f5", panel: "#ffffff", panelBorder: "#d9d9d9", accent: "#333333", accent2: "#666666", text: "#1a1a1a", muted: "#666666", numBg: "#ffffff" },
+    { id: "royal", name: "Royal Violett", bg: "#160f26", panel: "#20183c", panelBorder: "#372a5e", accent: "#a78bfa", accent2: "#f0abfc", text: "#f2edfc", muted: "#b6a8db", numBg: "#190f2c" },
+    { id: "print", name: "Druckfreundlich (S/W)", bg: "#ffffff", panel: "#ffffff", panelBorder: "#000000", accent: "#000000", accent2: "#333333", text: "#000000", muted: "#333333", numBg: "#ffffff" }
+  ];
+
+  function svgWrapText(text, maxWidth, fontSize) {
+    var charW = fontSize * 0.56;
+    var maxChars = Math.max(4, Math.floor(maxWidth / charW));
+    var words = String(text || "").trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return [];
+    var lines = [], cur = "";
+    words.forEach(function (w) {
+      var candidate = cur ? cur + " " + w : w;
+      if (candidate.length > maxChars && cur) { lines.push(cur); cur = w; }
+      else cur = candidate;
+    });
+    if (cur) lines.push(cur);
+    return lines;
+  }
+  function svgLimitLines(lines, maxLines) {
+    if (lines.length <= maxLines) return lines;
+    var out = lines.slice(0, maxLines);
+    var last = out[maxLines - 1];
+    // Letztes Wort abschneiden, aber nur wenn davor noch ein Leerzeichen steht -
+    // sonst (Zeile besteht nur aus einem Wort) wuerde die ganze Zeile leer
+    // werden ("…" statt z.B. "Bluepr…"); dann stattdessen zeichenweise kuerzen.
+    var trimmed = last.replace(/\s+\S*$/, "");
+    if (trimmed === last || !trimmed) trimmed = last.length > 3 ? last.slice(0, last.length - 3) : "";
+    out[maxLines - 1] = trimmed + "…";
+    return out;
+  }
+  function svgTspanBlock(lines, x, startDy, lineHeight) {
+    return lines.map(function (l, i) { return '<tspan x="' + x + '" dy="' + (i === 0 ? startDy : lineHeight) + '">' + escapeHtml(l) + "</tspan>"; }).join("");
+  }
+  function svgArrowMarkerDefs(id, color) {
+    return '<defs><marker id="' + id + '" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">' +
+      '<path d="M0,0 L10,5 L0,10 z" fill="' + color + '"/></marker></defs>';
+  }
+  function svgRoot(width, height, theme, inner) {
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" width="' + width + '" height="' + height +
+      '" font-family="Arial, Helvetica, sans-serif">' +
+      '<rect x="0" y="0" width="' + width + '" height="' + height + '" fill="' + theme.bg + '"/>' + inner + "</svg>";
+  }
+
+  function buildProcessSteps(tickets) {
+    return tickets.map(function (t, i) {
+      return {
+        number: i + 1, key: t.key, title: t.summary || t.key, description: t.description || "",
+        bucket: bucketFor(t.status), status: t.status || "",
+        domain: (t.custom_fields && t.custom_fields.Domain) || ""
+      };
+    });
+  }
+
+  // 1) Nummerierte Schritt-Karten im Raster (wie die "OnePaper"-Vorlage):
+  // Karten mit Pfeilen in Lesereihenfolge verbunden, Fuszeile gruppiert nach
+  // Status-Bucket (statt erfundener Prozessphasen, da die echten Phasen vom
+  // jeweiligen fachlichen Prozess abhaengen).
+  function buildCardGridSvg(steps, theme, title) {
+    var n = steps.length;
+    var cols = n <= 3 ? Math.max(1, n) : (n <= 8 ? 4 : 6);
+    var rows = Math.ceil(n / cols);
+    var cardW = 216, cardH = 150, gapX = 18, gapY = 26, marginX = 36, marginTop = 78;
+    var footerBuckets = BUCKET_ORDER.filter(function (b) { return steps.some(function (s) { return s.bucket === b; }); });
+    var footerH = footerBuckets.length ? 66 : 0;
+    var width = marginX * 2 + cols * cardW + (cols - 1) * gapX;
+    var height = marginTop + rows * cardH + (rows - 1) * gapY + footerH + 30;
+
+    var parts = [svgArrowMarkerDefs("pbArrow1", theme.accent)];
+    parts.push('<text x="' + marginX + '" y="36" font-size="22" font-weight="800" fill="' + theme.text + '">Prozess: ' + escapeHtml(title) + '</text>');
+    parts.push('<line x1="' + marginX + '" y1="50" x2="' + (width - marginX) + '" y2="50" stroke="' + theme.panelBorder + '" stroke-width="1.5"/>');
+
+    var centers = [];
+    steps.forEach(function (s, i) {
+      var col = i % cols, row = Math.floor(i / cols);
+      var x = marginX + col * (cardW + gapX), y = marginTop + row * (cardH + gapY);
+      centers.push({ x: x, y: y, row: row });
+      parts.push('<rect x="' + x + '" y="' + y + '" width="' + cardW + '" height="' + cardH + '" rx="12" fill="' + theme.panel + '" stroke="' + theme.panelBorder + '" stroke-width="1.5"/>');
+      parts.push('<circle cx="' + (x + 26) + '" cy="' + (y + 26) + '" r="16" fill="' + theme.numBg + '" stroke="' + theme.accent + '" stroke-width="2"/>');
+      parts.push('<text x="' + (x + 26) + '" y="' + (y + 31) + '" text-anchor="middle" font-size="14" font-weight="800" fill="' + theme.accent + '">' + s.number + "</text>");
+      var titleLines = svgLimitLines(svgWrapText(s.title, cardW - 20, 13), 3);
+      parts.push('<text x="' + (x + 12) + '" y="' + (y + 62) + '" font-size="13" font-weight="700" fill="' + theme.text + '">' + svgTspanBlock(titleLines, x + 12, 0, 16) + "</text>");
+      if (s.description) {
+        var descLines = svgLimitLines(svgWrapText(s.description, cardW - 20, 11), 3);
+        var descY = y + 62 + titleLines.length * 16 + 14;
+        parts.push('<text x="' + (x + 12) + '" y="' + descY + '" font-size="11" fill="' + theme.muted + '">' + svgTspanBlock(descLines, x + 12, 0, 14) + "</text>");
+      }
+    });
+
+    for (var i = 0; i < steps.length - 1; i++) {
+      var a = centers[i], b = centers[i + 1];
+      if (a.row === b.row) {
+        var y1 = a.y + cardH / 2;
+        parts.push('<line x1="' + (a.x + cardW) + '" y1="' + y1 + '" x2="' + (b.x - 6) + '" y2="' + y1 + '" stroke="' + theme.accent + '" stroke-width="2.5" marker-end="url(#pbArrow1)"/>');
+      } else {
+        var sx = a.x + cardW / 2, sy = a.y + cardH;
+        var ex = b.x + cardW / 2, ey = b.y - 6;
+        parts.push('<path d="M' + sx + ',' + sy + ' L' + sx + ',' + (sy + 10) + ' L' + ex + ',' + (sy + 10) + ' L' + ex + ',' + ey + '" fill="none" stroke="' + theme.accent2 + '" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#pbArrow1)"/>');
+      }
+    }
+
+    if (footerBuckets.length) {
+      var footY = marginTop + rows * cardH + (rows - 1) * gapY + 34;
+      var pillW = (width - marginX * 2) / footerBuckets.length;
+      parts.push('<line x1="' + marginX + '" y1="' + footY + '" x2="' + (width - marginX) + '" y2="' + footY + '" stroke="' + theme.panelBorder + '" stroke-width="1" stroke-dasharray="2,4"/>');
+      footerBuckets.forEach(function (b, i2) {
+        var cx = marginX + pillW * i2 + pillW / 2;
+        var count = steps.filter(function (s) { return s.bucket === b; }).length;
+        parts.push('<circle cx="' + cx + '" cy="' + footY + '" r="15" fill="' + theme.numBg + '" stroke="' + theme.accent2 + '" stroke-width="2"/>');
+        parts.push('<text x="' + cx + '" y="' + (footY + 5) + '" text-anchor="middle" font-size="12" font-weight="700" fill="' + theme.accent2 + '">' + count + "</text>");
+        parts.push('<text x="' + cx + '" y="' + (footY + 32) + '" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.5" fill="' + theme.muted + '">' + escapeHtml(BUCKET_LABEL[b].toUpperCase()) + "</text>");
+      });
+    }
+
+    return svgRoot(width, height, theme, parts.join(""));
+  }
+
+  // 2) Vertikale Zeitleiste: Karten abwechselnd links/rechts einer Mittelachse.
+  function buildTimelineSvg(steps, theme, title) {
+    var cardW = 320, cardH = 108, gapY = 26, marginTop = 76, centerGap = 34;
+    var width = 800;
+    var centerX = width / 2;
+    var height = marginTop + Math.max(1, steps.length) * (cardH + gapY) + 30;
+    var parts = [];
+    parts.push('<text x="40" y="36" font-size="22" font-weight="800" fill="' + theme.text + '">Prozess: ' + escapeHtml(title) + '</text>');
+    parts.push('<line x1="' + centerX + '" y1="' + (marginTop - 10) + '" x2="' + centerX + '" y2="' + (height - 20) + '" stroke="' + theme.panelBorder + '" stroke-width="2"/>');
+    steps.forEach(function (s, i) {
+      var y = marginTop + i * (cardH + gapY);
+      var left = i % 2 === 0;
+      var x = left ? centerX - centerGap - cardW : centerX + centerGap;
+      var dotY = y + cardH / 2;
+      parts.push('<circle cx="' + centerX + '" cy="' + dotY + '" r="12" fill="' + theme.numBg + '" stroke="' + theme.accent + '" stroke-width="2.5"/>');
+      parts.push('<text x="' + centerX + '" y="' + (dotY + 4) + '" text-anchor="middle" font-size="11" font-weight="800" fill="' + theme.accent + '">' + s.number + "</text>");
+      var connX1 = left ? x + cardW : centerX - 12;
+      var connX2 = left ? centerX - 12 : x;
+      parts.push('<line x1="' + connX1 + '" y1="' + dotY + '" x2="' + connX2 + '" y2="' + dotY + '" stroke="' + theme.accent2 + '" stroke-width="2"/>');
+      parts.push('<rect x="' + x + '" y="' + y + '" width="' + cardW + '" height="' + cardH + '" rx="10" fill="' + theme.panel + '" stroke="' + theme.panelBorder + '" stroke-width="1.5"/>');
+      var titleLines = svgLimitLines(svgWrapText(s.title, cardW - 24, 13), 2);
+      parts.push('<text x="' + (x + 14) + '" y="' + (y + 24) + '" font-size="13" font-weight="700" fill="' + theme.text + '">' + svgTspanBlock(titleLines, x + 14, 0, 16) + "</text>");
+      if (s.description) {
+        var descLines = svgLimitLines(svgWrapText(s.description, cardW - 24, 11), 2);
+        parts.push('<text x="' + (x + 14) + '" y="' + (y + 24 + titleLines.length * 16 + 14) + '" font-size="11" fill="' + theme.muted + '">' + svgTspanBlock(descLines, x + 14, 0, 14) + "</text>");
+      }
+      parts.push('<text x="' + (x + cardW - 12) + '" y="' + (y + cardH - 10) + '" text-anchor="end" font-size="10" fill="' + theme.muted + '" font-family="monospace">' + escapeHtml(s.key) + "</text>");
+    });
+    return svgRoot(width, height, theme, parts.join(""));
+  }
+
+  // 3) Horizontale Prozesskette: eine durchgehende Zeile, große Pfeile.
+  function buildChainSvg(steps, theme, title) {
+    var n = Math.max(1, steps.length);
+    var cardW = 190, cardH = 130, gap = 56, marginX = 40, marginTop = 78;
+    var width = marginX * 2 + n * cardW + (n - 1) * gap;
+    var height = marginTop + cardH + 40;
+    var parts = [svgArrowMarkerDefs("pbArrow2", theme.accent)];
+    parts.push('<text x="' + marginX + '" y="36" font-size="22" font-weight="800" fill="' + theme.text + '">Prozess: ' + escapeHtml(title) + '</text>');
+    steps.forEach(function (s, i) {
+      var x = marginX + i * (cardW + gap), y = marginTop;
+      parts.push('<rect x="' + x + '" y="' + y + '" width="' + cardW + '" height="' + cardH + '" rx="10" fill="' + theme.panel + '" stroke="' + theme.panelBorder + '" stroke-width="1.5"/>');
+      parts.push('<circle cx="' + (x + cardW / 2) + '" cy="' + (y - 18) + '" r="16" fill="' + theme.numBg + '" stroke="' + theme.accent + '" stroke-width="2.5"/>');
+      parts.push('<text x="' + (x + cardW / 2) + '" y="' + (y - 13) + '" text-anchor="middle" font-size="13" font-weight="800" fill="' + theme.accent + '">' + s.number + "</text>");
+      var titleLines = svgLimitLines(svgWrapText(s.title, cardW - 20, 12.5), 3);
+      parts.push('<text x="' + (x + cardW / 2) + '" y="' + (y + 26) + '" text-anchor="middle" font-size="12.5" font-weight="700" fill="' + theme.text + '">' + svgTspanBlock(titleLines, x + cardW / 2, 0, 16) + "</text>");
+      if (i < steps.length - 1) {
+        var ay = y + cardH / 2;
+        parts.push('<line x1="' + (x + cardW + 6) + '" y1="' + ay + '" x2="' + (x + cardW + gap - 6) + '" y2="' + ay + '" stroke="' + theme.accent + '" stroke-width="3" marker-end="url(#pbArrow2)"/>');
+      }
+    });
+    return svgRoot(width, height, theme, parts.join(""));
+  }
+
+  // 4) Swimlane: gemeinsame Zeitachse, Schritte gruppiert nach Status-Bucket.
+  function buildSwimlaneSvg(steps, theme, title) {
+    var lanes = BUCKET_ORDER.filter(function (b) { return steps.some(function (s) { return s.bucket === b; }); });
+    if (!lanes.length) lanes = ["backlog"];
+    var laneH = 86, laneLabelW = 150, chipW = 130, chipGap = 20, marginTop = 74;
+    var n = Math.max(1, steps.length);
+    var width = laneLabelW + n * (chipW + chipGap) + 40;
+    var height = marginTop + lanes.length * laneH + 20;
+    var parts = [];
+    parts.push('<text x="24" y="34" font-size="22" font-weight="800" fill="' + theme.text + '">Prozess: ' + escapeHtml(title) + '</text>');
+    lanes.forEach(function (lane, li) {
+      var y = marginTop + li * laneH;
+      if (li % 2 === 0) parts.push('<rect x="0" y="' + y + '" width="' + width + '" height="' + laneH + '" fill="' + theme.panel + '" opacity="0.5"/>');
+      parts.push('<text x="20" y="' + (y + laneH / 2 + 4) + '" font-size="12" font-weight="700" fill="' + theme.muted + '">' + escapeHtml(BUCKET_LABEL[lane]) + "</text>");
+      parts.push('<line x1="' + laneLabelW + '" y1="' + y + '" x2="' + laneLabelW + '" y2="' + (y + laneH) + '" stroke="' + theme.panelBorder + '"/>');
+    });
+    var prevX = null, prevY = null;
+    steps.forEach(function (s, i) {
+      var laneIndex = lanes.indexOf(s.bucket);
+      if (laneIndex === -1) laneIndex = 0;
+      var x = laneLabelW + 20 + i * (chipW + chipGap);
+      var y = marginTop + laneIndex * laneH + laneH / 2 - 24;
+      if (prevX !== null) {
+        parts.push('<line x1="' + (prevX + chipW) + '" y1="' + (prevY + 24) + '" x2="' + x + '" y2="' + (y + 24) + '" stroke="' + theme.accent2 + '" stroke-width="1.5" stroke-dasharray="3,3"/>');
+      }
+      parts.push('<rect x="' + x + '" y="' + y + '" width="' + chipW + '" height="48" rx="8" fill="' + theme.panel + '" stroke="' + theme.accent + '" stroke-width="1.5"/>');
+      parts.push('<text x="' + (x + chipW / 2) + '" y="' + (y + 19) + '" text-anchor="middle" font-size="11" font-weight="700" fill="' + theme.text + '">' + svgTspanBlock(svgLimitLines(svgWrapText(s.title, chipW - 14, 11), 1), x + chipW / 2, 0, 13) + "</text>");
+      parts.push('<text x="' + (x + chipW / 2) + '" y="' + (y + 38) + '" text-anchor="middle" font-size="9.5" fill="' + theme.muted + '" font-family="monospace">' + escapeHtml(s.key) + "</text>");
+      prevX = x; prevY = y;
+    });
+    return svgRoot(width, height, theme, parts.join(""));
+  }
+
+  // 5) Kanban-Board: Spalten je Status-Bucket, Karten gestapelt.
+  function buildKanbanSvg(steps, theme, title) {
+    var cols = BUCKET_ORDER.filter(function (b) { return steps.some(function (s) { return s.bucket === b; }); });
+    if (!cols.length) cols = ["backlog"];
+    var colW = 220, gap = 20, marginX = 30, marginTop = 90, cardH = 78, cardGap = 14;
+    var width = marginX * 2 + cols.length * colW + (cols.length - 1) * gap;
+    var counts = cols.map(function (c) { return steps.filter(function (s) { return s.bucket === c; }).length; });
+    var maxCount = Math.max.apply(null, counts.concat([1]));
+    var height = marginTop + maxCount * (cardH + cardGap) + 30;
+    var parts = [];
+    parts.push('<text x="' + marginX + '" y="34" font-size="22" font-weight="800" fill="' + theme.text + '">Prozess: ' + escapeHtml(title) + '</text>');
+    cols.forEach(function (bucket, ci) {
+      var x = marginX + ci * (colW + gap);
+      var colSteps = steps.filter(function (s) { return s.bucket === bucket; });
+      parts.push('<rect x="' + x + '" y="' + (marginTop - 34) + '" width="' + colW + '" height="' + (height - marginTop + 14) + '" rx="10" fill="' + theme.panel + '" opacity="0.4"/>');
+      parts.push('<text x="' + (x + 12) + '" y="' + (marginTop - 12) + '" font-size="12.5" font-weight="800" fill="' + theme.accent + '">' + escapeHtml(BUCKET_LABEL[bucket].toUpperCase()) + ' (' + colSteps.length + ')</text>');
+      colSteps.forEach(function (s, si) {
+        var y = marginTop + si * (cardH + cardGap);
+        parts.push('<rect x="' + (x + 10) + '" y="' + y + '" width="' + (colW - 20) + '" height="' + cardH + '" rx="8" fill="' + theme.bg + '" stroke="' + theme.panelBorder + '" stroke-width="1.5"/>');
+        parts.push('<circle cx="' + (x + 28) + '" cy="' + (y + 20) + '" r="11" fill="' + theme.numBg + '" stroke="' + theme.accent + '" stroke-width="1.5"/>');
+        parts.push('<text x="' + (x + 28) + '" y="' + (y + 24) + '" text-anchor="middle" font-size="10" font-weight="800" fill="' + theme.accent + '">' + s.number + "</text>");
+        var lines = svgLimitLines(svgWrapText(s.title, colW - 56, 11), 2);
+        parts.push('<text x="' + (x + 44) + '" y="' + (y + 17) + '" font-size="11" font-weight="700" fill="' + theme.text + '">' + svgTspanBlock(lines, x + 44, 0, 13) + "</text>");
+        parts.push('<text x="' + (x + 12) + '" y="' + (y + cardH - 8) + '" font-size="9.5" fill="' + theme.muted + '" font-family="monospace">' + escapeHtml(s.key) + "</text>");
+      });
+    });
+    return svgRoot(width, height, theme, parts.join(""));
+  }
+
+  // 6) Prozessrad: Schritte kreisfoermig um den Prozessnamen.
+  function buildWheelSvg(steps, theme, title) {
+    var n = Math.max(1, steps.length);
+    var R = Math.max(160, 40 + n * 22);
+    var cx = R + 200, cy = R + 90;
+    var width = cx + R + 200, height = cy + R + 90;
+    var parts = [];
+    parts.push('<text x="20" y="32" font-size="20" font-weight="800" fill="' + theme.text + '">Prozess: ' + escapeHtml(title) + '</text>');
+    parts.push('<circle cx="' + cx + '" cy="' + cy + '" r="76" fill="' + theme.panel + '" stroke="' + theme.accent + '" stroke-width="2.5"/>');
+    var centerLines = svgLimitLines(svgWrapText(title, 130, 13), 3);
+    parts.push('<text x="' + cx + '" y="' + (cy - (centerLines.length - 1) * 8) + '" text-anchor="middle" font-size="13" font-weight="800" fill="' + theme.text + '">' + svgTspanBlock(centerLines, cx, 0, 16) + "</text>");
+    steps.forEach(function (s, i) {
+      var angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+      var x = cx + R * Math.cos(angle), y = cy + R * Math.sin(angle);
+      var lineStartX = cx + 78 * Math.cos(angle), lineStartY = cy + 78 * Math.sin(angle);
+      var lineEndX = x - 30 * Math.cos(angle), lineEndY = y - 30 * Math.sin(angle);
+      parts.push('<line x1="' + lineStartX + '" y1="' + lineStartY + '" x2="' + lineEndX + '" y2="' + lineEndY + '" stroke="' + theme.accent2 + '" stroke-width="1.5" stroke-dasharray="4,3"/>');
+      parts.push('<circle cx="' + x + '" cy="' + y + '" r="30" fill="' + theme.numBg + '" stroke="' + theme.accent + '" stroke-width="2.5"/>');
+      parts.push('<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" font-size="14" font-weight="800" fill="' + theme.accent + '">' + s.number + "</text>");
+      var isRight = Math.cos(angle) >= 0;
+      var labelX = x + (isRight ? 38 : -38);
+      var anchor = isRight ? "start" : "end";
+      var lines = svgLimitLines(svgWrapText(s.title, 150, 11.5), 2);
+      parts.push('<text x="' + labelX + '" y="' + (y - 4) + '" text-anchor="' + anchor + '" font-size="11.5" font-weight="700" fill="' + theme.text + '">' + svgTspanBlock(lines, labelX, 0, 14) + "</text>");
+    });
+    return svgRoot(width, height, theme, parts.join(""));
+  }
+
+  // 7) Matrix-Poster: reines Raster ohne Pfeile, gruppiert nach Domain.
+  function buildMatrixSvg(steps, theme, title) {
+    var domains = [];
+    steps.forEach(function (s) { var d = s.domain || "Ohne Domain"; if (domains.indexOf(d) === -1) domains.push(d); });
+    if (domains.length > 5) domains = domains.slice(0, 5);
+    if (!domains.length) domains = ["Ohne Domain"];
+    var cols = domains.length;
+    var colW = 230, gap = 18, marginX = 30, marginTop = 90, cardH = 100, cardGap = 14;
+    var width = marginX * 2 + cols * colW + (cols - 1) * gap;
+    var maxRows = 1;
+    domains.forEach(function (d) { maxRows = Math.max(maxRows, steps.filter(function (s) { return (s.domain || "Ohne Domain") === d; }).length); });
+    var height = marginTop + maxRows * (cardH + cardGap) + 30;
+    var parts = [];
+    parts.push('<text x="' + marginX + '" y="34" font-size="22" font-weight="800" fill="' + theme.text + '">Prozess: ' + escapeHtml(title) + '</text>');
+    domains.forEach(function (d, ci) {
+      var x = marginX + ci * (colW + gap);
+      parts.push('<text x="' + x + '" y="' + (marginTop - 16) + '" font-size="12.5" font-weight="800" fill="' + theme.accent + '">' + escapeHtml(d.toUpperCase()) + '</text>');
+      parts.push('<line x1="' + x + '" y1="' + (marginTop - 8) + '" x2="' + (x + colW - 14) + '" y2="' + (marginTop - 8) + '" stroke="' + theme.panelBorder + '"/>');
+      var colSteps = steps.filter(function (s) { return (s.domain || "Ohne Domain") === d; });
+      colSteps.forEach(function (s, si) {
+        var y = marginTop + si * (cardH + cardGap);
+        parts.push('<rect x="' + x + '" y="' + y + '" width="' + (colW - 14) + '" height="' + cardH + '" rx="10" fill="' + theme.panel + '" stroke="' + theme.panelBorder + '" stroke-width="1.5"/>');
+        parts.push('<circle cx="' + (x + 24) + '" cy="' + (y + 24) + '" r="14" fill="' + theme.numBg + '" stroke="' + theme.accent + '" stroke-width="2"/>');
+        parts.push('<text x="' + (x + 24) + '" y="' + (y + 29) + '" text-anchor="middle" font-size="12" font-weight="800" fill="' + theme.accent + '">' + s.number + "</text>");
+        var lines = svgLimitLines(svgWrapText(s.title, colW - 60, 12), 3);
+        parts.push('<text x="' + (x + 44) + '" y="' + (y + 20) + '" font-size="12" font-weight="700" fill="' + theme.text + '">' + svgTspanBlock(lines, x + 44, 0, 15) + "</text>");
+      });
+    });
+    return svgRoot(width, height, theme, parts.join(""));
+  }
+
+  // 8) Trichter (Funnel): sich verengende Stufen mit seitlichen Anmerkungen.
+  function buildFunnelSvg(steps, theme, title) {
+    var n = Math.max(1, steps.length);
+    var topW = 480, minW = 140, stepH = 68, gapY = 10, marginTop = 76;
+    var cx = 260 + topW / 2;
+    var shrink = n > 1 ? (topW - minW) / (n - 1) : 0;
+    var width = cx + topW / 2 + 260;
+    var height = marginTop + n * (stepH + gapY) + 20;
+    var parts = [];
+    parts.push('<text x="30" y="34" font-size="22" font-weight="800" fill="' + theme.text + '">Prozess: ' + escapeHtml(title) + '</text>');
+    steps.forEach(function (s, i) {
+      var wTop = topW - shrink * i, wBot = topW - shrink * (i + 1);
+      var y = marginTop + i * (stepH + gapY);
+      var x1 = cx - wTop / 2, x2 = cx + wTop / 2, x3 = cx + wBot / 2, x4 = cx - wBot / 2;
+      parts.push('<polygon points="' + x1 + ',' + y + ' ' + x2 + ',' + y + ' ' + x3 + ',' + (y + stepH) + ' ' + x4 + ',' + (y + stepH) + '" fill="' + theme.panel + '" stroke="' + theme.accent + '" stroke-width="1.5"/>');
+      var lines = svgLimitLines(svgWrapText(s.number + ". " + s.title, wBot - 20, 12.5), 2);
+      parts.push('<text x="' + cx + '" y="' + (y + stepH / 2 - (lines.length - 1) * 7) + '" text-anchor="middle" font-size="12.5" font-weight="700" fill="' + theme.text + '">' + svgTspanBlock(lines, cx, 0, 15) + "</text>");
+      if (s.description) {
+        var descLines = svgLimitLines(svgWrapText(s.description, 200, 11), 2);
+        parts.push('<line x1="' + x2 + '" y1="' + (y + stepH / 2) + '" x2="' + (x2 + 30) + '" y2="' + (y + stepH / 2) + '" stroke="' + theme.muted + '" stroke-width="1"/>');
+        parts.push('<text x="' + (x2 + 36) + '" y="' + (y + stepH / 2 - (descLines.length - 1) * 7 + 4) + '" font-size="11" fill="' + theme.muted + '">' + svgTspanBlock(descLines, x2 + 36, 0, 14) + "</text>");
+      }
+    });
+    return svgRoot(width, height, theme, parts.join(""));
+  }
+
+  // 9) Checkliste (druckfreundlich): minimalistische vertikale Liste.
+  function buildChecklistSvg(steps, theme, title) {
+    var width = 720, marginX = 36, marginTop = 80, rowGap = 12;
+    var parts = [];
+    parts.push('<text x="' + marginX + '" y="38" font-size="22" font-weight="800" fill="' + theme.text + '">Prozess: ' + escapeHtml(title) + '</text>');
+    parts.push('<line x1="' + marginX + '" y1="52" x2="' + (width - marginX) + '" y2="52" stroke="' + theme.panelBorder + '" stroke-width="1.5"/>');
+    var rowData = steps.map(function (s) {
+      var titleLines = svgWrapText(s.number + ". " + s.title, width - marginX * 2 - 60, 13.5);
+      var descLines = s.description ? svgLimitLines(svgWrapText(s.description, width - marginX * 2 - 60, 11.5), 2) : [];
+      return { titleLines: titleLines, descLines: descLines, h: 24 + titleLines.length * 17 + descLines.length * 14 + rowGap };
+    });
+    var height = marginTop + rowData.reduce(function (a, r) { return a + r.h; }, 0) + 20;
+    var y = marginTop;
+    steps.forEach(function (s, i) {
+      var r = rowData[i];
+      parts.push('<rect x="' + marginX + '" y="' + (y + 4) + '" width="20" height="20" rx="4" fill="none" stroke="' + theme.accent + '" stroke-width="2"/>');
+      parts.push('<text x="' + (marginX + 44) + '" y="' + (y + 19) + '" font-size="13.5" font-weight="700" fill="' + theme.text + '">' + svgTspanBlock(r.titleLines, marginX + 44, 0, 17) + "</text>");
+      if (r.descLines.length) {
+        var descY = y + 19 + r.titleLines.length * 17;
+        parts.push('<text x="' + (marginX + 44) + '" y="' + descY + '" font-size="11.5" fill="' + theme.muted + '">' + svgTspanBlock(r.descLines, marginX + 44, 0, 14) + "</text>");
+      }
+      parts.push('<line x1="' + marginX + '" y1="' + (y + r.h - 2) + '" x2="' + (width - marginX) + '" y2="' + (y + r.h - 2) + '" stroke="' + theme.panelBorder + '" stroke-width="1" opacity="0.6"/>');
+      y += r.h;
+    });
+    return svgRoot(width, height, theme, parts.join(""));
+  }
+
+  var PROZESSBILD_LAYOUTS = [
+    { id: "mermaid-classic", name: "Mermaid-Flussdiagramm (klassisch)", desc: "Einfaches sequentielles Flussdiagramm, nativ als Diagramm gerendert. Design-Vorlage hat hier keinen Einfluss.", kind: "mermaid" },
+    { id: "card-grid", name: "Nummerierte Schritt-Karten (Raster)", desc: "Karten-Raster mit Pfeilen und Status-Fußzeile – wie die OnePaper-Vorlage.", kind: "svg", build: buildCardGridSvg },
+    { id: "timeline-vertical", name: "Vertikale Zeitleiste", desc: "Abwechselnd links/rechts angeordnete Karten entlang einer Zeitachse.", kind: "svg", build: buildTimelineSvg },
+    { id: "horizontal-chain", name: "Horizontale Prozesskette", desc: "Eine durchgehende Zeile mit großen Verbindungspfeilen.", kind: "svg", build: buildChainSvg },
+    { id: "swimlane", name: "Swimlane (nach Status)", desc: "Schritte in Bahnen je Status-Kategorie entlang einer gemeinsamen Zeitachse.", kind: "svg", build: buildSwimlaneSvg },
+    { id: "kanban", name: "Kanban-Board (nach Status)", desc: "Spalten je Status-Kategorie mit gestapelten Karten.", kind: "svg", build: buildKanbanSvg },
+    { id: "wheel", name: "Prozessrad (kreisförmig)", desc: "Schritte kreisförmig um den Prozessnamen angeordnet.", kind: "svg", build: buildWheelSvg },
+    { id: "matrix-grid", name: "Matrix-Poster (nach Domain)", desc: "Reines Karten-Raster ohne Pfeile, gruppiert nach Domain – für Übersichtsposter.", kind: "svg", build: buildMatrixSvg },
+    { id: "funnel", name: "Trichter (Funnel)", desc: "Sich verengende Stufen von oben nach unten, mit seitlichen Anmerkungen.", kind: "svg", build: buildFunnelSvg },
+    { id: "checklist", name: "Checkliste (druckfreundlich)", desc: "Minimalistische vertikale Liste mit Kontrollkästchen – gut zum Ausdrucken.", kind: "svg", build: buildChecklistSvg }
+  ];
+
   var GENERATORS = {
     releaseletter: { render: renderReleaseLetter, ext: "md" },
     benutzerhandbuch: { render: renderUserManual, ext: "md" },
@@ -3058,28 +3444,79 @@
   }
   ["releaseletter", "benutzerhandbuch", "clickanweisung"].forEach(wireTextGenerator);
 
+  function populateProzessbildSelects() {
+    els.prozessbildTheme.innerHTML = PROZESSBILD_THEMES.map(function (t) { return '<option value="' + t.id + '">' + escapeHtml(t.name) + "</option>"; }).join("");
+    els.prozessbildLayout.innerHTML = PROZESSBILD_LAYOUTS.map(function (l) { return '<option value="' + l.id + '">' + escapeHtml(l.name) + "</option>"; }).join("");
+    els.prozessbildLayout.value = "mermaid-classic";
+    updateProzessbildLayoutDesc();
+  }
+  function currentProzessbildLayout() {
+    var found = PROZESSBILD_LAYOUTS.filter(function (l) { return l.id === els.prozessbildLayout.value; });
+    return found[0] || PROZESSBILD_LAYOUTS[0];
+  }
+  function currentProzessbildTheme() {
+    var found = PROZESSBILD_THEMES.filter(function (t) { return t.id === els.prozessbildTheme.value; });
+    return found[0] || PROZESSBILD_THEMES[0];
+  }
+  function updateProzessbildLayoutDesc() {
+    var layout = currentProzessbildLayout();
+    els.prozessbildLayoutDesc.textContent = layout.desc;
+    els.prozessbildTheme.disabled = layout.kind === "mermaid";
+  }
+  els.prozessbildLayout.addEventListener("change", updateProzessbildLayoutDesc);
+
   function wireProcessDiagram() {
     var kind = "prozessbild";
     var nameInput = document.getElementById(kind + "-name");
     var renderBox = document.getElementById(kind + "-render");
     var downloadBtn = document.getElementById(kind + "-download-btn");
     var generateBtn = document.getElementById(kind + "-generate-btn");
-    document.getElementById(kind + "-generate-btn").addEventListener("click", function () {
+    populateProzessbildSelects();
+    generateBtn.addEventListener("click", function () {
       var tickets = resolveGeneratorTickets(kind);
       if (!tickets.length) { showToast("Keine Tickets", "Keine passenden Tickets gefunden.", true); return; }
       var name = nameInput.value.trim() || "Release";
-      var source = renderProcessDiagramSource(tickets);
+      var layout = currentProzessbildLayout();
+      var theme = currentProzessbildTheme();
       renderBox.innerHTML = "";
-      insertMermaid(renderBox, source);
+      var galleryEntry;
+      var lastResult;
+      if (layout.kind === "mermaid") {
+        var source = renderProcessDiagramSource(tickets);
+        insertMermaid(renderBox, source);
+        lastResult = { kind: "mermaid", source: source, name: name };
+        galleryEntry = { id: Date.now(), title: name + " (" + tickets.length + " Tickets)", when: nowLabel(), kind: "mermaid", source: source };
+      } else {
+        var steps = buildProcessSteps(tickets);
+        var svg = layout.build(steps, theme, name);
+        renderBox.innerHTML = svg;
+        var details = document.createElement("details");
+        details.className = "mermaid-source-details";
+        var summary = document.createElement("summary");
+        summary.textContent = "SVG-Quelltext anzeigen";
+        var srcPre = document.createElement("pre");
+        srcPre.className = "mermaid-source";
+        srcPre.textContent = svg;
+        details.appendChild(summary);
+        details.appendChild(srcPre);
+        renderBox.appendChild(details);
+        lastResult = { kind: "svg", svg: svg, name: name };
+        galleryEntry = { id: Date.now(), title: name + " (" + tickets.length + " Tickets) – " + layout.name, when: nowLabel(), kind: "svg", svg: svg };
+      }
       downloadBtn.disabled = false;
       downloadBtn.onclick = async function () {
-        var md = "# Prozessdiagramm – " + name + "\n\nStand: " + new Date().toLocaleDateString("de-DE") + "\n\n```mermaid\n" + source + "\n```\n";
-        var ok = await saveOrWarn(safeFilename(name) + "_prozessdiagramm.md", md);
+        var ok;
+        if (lastResult.kind === "mermaid") {
+          var md = "# Prozessdiagramm – " + lastResult.name + "\n\nStand: " + new Date().toLocaleDateString("de-DE") + "\n\n```mermaid\n" + lastResult.source + "\n```\n";
+          ok = await saveOrWarn(safeFilename(lastResult.name) + "_prozessdiagramm.md", md);
+        } else {
+          ok = await saveOrWarn(safeFilename(lastResult.name) + "_prozessdiagramm.svg", new Blob([lastResult.svg], { type: "image/svg+xml" }));
+        }
         if (ok) showToast("Gespeichert", "Prozessdiagramm heruntergeladen.");
       };
-      app.generatedImages.unshift({ id: Date.now(), title: name + " (" + tickets.length + " Tickets)", source: source, when: nowLabel() });
+      app.generatedImages.unshift(galleryEntry);
       renderGallery();
-      addLog("Prozessbild: Diagramm für " + tickets.length + " Tickets erzeugt.");
+      addLog("Prozessbild: " + layout.name + " (" + theme.name + ") für " + tickets.length + " Tickets erzeugt.");
     });
   }
   wireProcessDiagram();
@@ -3111,7 +3548,13 @@
       var h3 = document.createElement("h3"); h3.textContent = img.title;
       var meta = document.createElement("div"); meta.className = "meta"; meta.textContent = img.when;
       card.appendChild(h3); card.appendChild(meta);
-      insertMermaid(card, img.source);
+      if (img.kind === "svg") {
+        var wrap = document.createElement("div");
+        wrap.innerHTML = img.svg;
+        card.appendChild(wrap.firstChild);
+      } else {
+        insertMermaid(card, img.source);
+      }
       els.gallery.appendChild(card);
     });
   }

@@ -213,9 +213,28 @@ folgenden Bereichen:
 - **Releaseletter / Benutzerhandbuch / Clickanweisung** – Textentwürfe aus
   ausgewählten Tickets (aktuelle Dashboard-Filterung oder Ticket-Keys),
   Vorschau + Markdown-Download.
-- **Prozessbild** – einfaches sequentielles Mermaid-Diagramm aus
-  ausgewählten Tickets, live gerendert.
-- **Bilder** – Galerie der in der Sitzung erzeugten Prozessdiagramme.
+- **Prozessbild** – Prozessdiagramm aus ausgewählten Tickets mit **10
+  Design-Vorlagen** (Farben: OnePaper Dunkel/Hell, Corporate Blau,
+  Silber/Schwarz, Forest, Sunset, Pastell, Monochrom, Royal,
+  Druckfreundlich S/W) und **10 Bildformaten/Visual-Arten**, frei
+  kombinierbar:
+  1. Mermaid-Flussdiagramm (klassisch, wie bisher, native Diagramm-Anzeige)
+  2. Nummerierte Schritt-Karten im Raster (Pfeile + Status-Fußzeile)
+  3. Vertikale Zeitleiste (Karten abwechselnd links/rechts)
+  4. Horizontale Prozesskette (eine Zeile, große Pfeile)
+  5. Swimlane nach Status (gemeinsame Zeitachse, Bahnen je Status)
+  6. Kanban-Board nach Status (Spalten mit gestapelten Karten)
+  7. Prozessrad (Schritte kreisförmig um den Prozessnamen)
+  8. Matrix-Poster nach Domain (reines Raster ohne Pfeile)
+  9. Trichter/Funnel (sich verengende Stufen mit Anmerkungen)
+  10. Checkliste (minimalistisch, druckfreundlich)
+
+  Die 9 neuen Formate werden als eigenständiges, direkt im Browser
+  erzeugtes SVG gerendert (kein Server, keine externe Grafikbibliothek)
+  und lassen sich als `.svg` herunterladen; das klassische
+  Mermaid-Format bleibt Standardauswahl und unverändert.
+- **Bilder** – Galerie der in der Sitzung erzeugten Prozessdiagramme
+  (Mermaid und SVG gemischt, je nach gewähltem Bildformat).
 - **Output MD Tickets / Output PDF Tickets** – bereinigte Tickets als
   ZIP-Archiv aus Markdown- bzw. PDF-Dateien exportieren (respektiert die
   aktuelle Dashboard-Filterung); PDFs werden clientseitig mit jsPDF
