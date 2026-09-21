@@ -139,7 +139,7 @@ und überarbeiten.
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.0.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.1.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -351,6 +351,12 @@ anderen Länderformaten (Kennzeichen).
   keinen Server/keine externe API für diese drei Generatoren), ein
   eingeblendeter Hinweis macht das transparent. Downloads verwenden die
   gerade aktive Sprache (Dateiname erhält den Zusatz `_de`/`_en`).
+- **Endnutzer-Framing der Tab-Texte** – Die Beschreibungstexte von Import,
+  Verarbeitung, Releaseletter, Benutzerhandbuch, Prozessbild und
+  Clickanweisung machen explizit, dass diese vier Medien aus **denselben**
+  importierten Ticket-Beschreibungen erzeugt werden und für Endnutzer bei
+  der Bedienung von oneSCM gedacht sind (nicht nur als interne
+  Release-Doku). Die Navigation selbst blieb unverändert.
   Prozessbild-Diagramme (SVG/Mermaid) bleiben davon unberührt und zeigen
   weiterhin deutsche Status-Bucket-Beschriftungen (Erledigt/Offen/…) sowie
   den unveränderten Ticket-Freitext als Knotenbeschriftung.

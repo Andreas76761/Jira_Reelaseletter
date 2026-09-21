@@ -615,7 +615,7 @@
 
       <!-- ================= Import ================= -->
       <section class="view-panel" data-view-panel="import" hidden>
-        <div class="view-head"><h2>Import</h2><p class="desc">Format wählen und eine oder mehrere Dateien hochladen. Neue Dateien werden zu den bisherigen Tickets hinzugefügt/aktualisiert, nicht ersetzt.</p></div>
+        <div class="view-head"><h2>Import</h2><p class="desc">Ausgangsdaten für Releaseletter, Benutzerhandbuch, Prozessbild und Clickanweisung laden: Jira-Exporte, Confluence-/Releaseinfo-Seiten sowie DOCX- und PDF-Dateien. Format wählen und eine oder mehrere Dateien hochladen &ndash; neue Dateien werden zu den bisherigen Tickets hinzugefügt/aktualisiert, nicht ersetzt.</p></div>
 
         <div class="import-tabs" id="import-tabs">
           <button class="import-tab active" data-mode="massenupload" type="button">Jira Massenupload</button>
@@ -703,7 +703,7 @@
 
       <!-- ================= Verarbeitung ================= -->
       <section class="view-panel" data-view-panel="verarbeitung" hidden>
-        <div class="view-head"><h2>Verarbeitung</h2><p class="desc">Sieben Arbeitsschritte rund um die geladenen Tickets. Jobs 1-6 lassen sich zusätzlich als XLSX, DOCX oder PDF exportieren; Job 7 (RAG) erzeugt stattdessen einen KI-generierten Text zum Speichern als Markdown.</p></div>
+        <div class="view-head"><h2>Verarbeitung</h2><p class="desc">Sieben Arbeitsschritte, um aus den importierten Ticket-Beschreibungen die Rohdaten für Releaseletter, Benutzerhandbuch, Prozessbild und Clickanweisung aufzubereiten. Jobs 1-6 lassen sich zusätzlich als XLSX, DOCX oder PDF exportieren; Job 7 (RAG) erzeugt stattdessen einen KI-generierten Text zum Speichern als Markdown.</p></div>
 
         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
           <div class="import-tabs" id="verarbeitung-tabs">
@@ -967,7 +967,7 @@
 
       <!-- ================= Releaseletter ================= -->
       <section class="view-panel" data-view-panel="releaseletter" hidden>
-        <div class="view-head"><h2>Releaseletter</h2><p class="desc">Entwurf für einen Release-Letter aus ausgewählten Tickets. Automatisch erzeugtes Rohgerüst &ndash; vor Versand redaktionell prüfen.</p></div>
+        <div class="view-head"><h2>Releaseletter</h2><p class="desc">Entwurf für einen Release-Letter aus ausgewählten Tickets &ndash; auf Deutsch oder Englisch, für Endnutzer von oneSCM verständlich formuliert. Dieselben Tickets lassen sich zusätzlich als Benutzerhandbuch, Prozessbild und Clickanweisung aufbereiten. Automatisch erzeugtes Rohgerüst &ndash; vor Versand redaktionell prüfen.</p></div>
         <div class="gen-layout" data-kind="releaseletter">
           <div class="gen-form">
             <label for="releaseletter-name">Release-Name</label>
@@ -995,7 +995,7 @@
 
       <!-- ================= Benutzerhandbuch ================= -->
       <section class="view-panel" data-view-panel="benutzerhandbuch" hidden>
-        <div class="view-head"><h2>Benutzerhandbuch</h2><p class="desc">Rohgerüst eines Benutzerhandbuchs aus den Ticket-Beschreibungen.</p></div>
+        <div class="view-head"><h2>Benutzerhandbuch</h2><p class="desc">Rohgerüst eines Benutzerhandbuchs zur Bedienung von oneSCM &ndash; auf Deutsch oder Englisch aus denselben Ticket-Beschreibungen erzeugt wie Releaseletter, Prozessbild und Clickanweisung.</p></div>
         <div class="gen-layout" data-kind="benutzerhandbuch">
           <div class="gen-form">
             <label for="benutzerhandbuch-name">Release-Name</label>
@@ -1023,7 +1023,7 @@
 
       <!-- ================= Prozessbild ================= -->
       <section class="view-panel" data-view-panel="prozessbild" hidden>
-        <div class="view-head"><h2>Prozessbild</h2><p class="desc">Prozessdiagramm aus ausgewählten Tickets &ndash; 10 Design-Vorlagen (Farben) x 10 Bildformate/Visual-Arten frei kombinierbar. Reihenfolge entspricht der Ticket-Liste, nicht automatisch dem echten Prozess.</p></div>
+        <div class="view-head"><h2>Prozessbild</h2><p class="desc">Prozessdiagramm zur visuellen Einordnung für Endnutzer von oneSCM, aus denselben Ticket-Beschreibungen wie Releaseletter, Benutzerhandbuch und Clickanweisung &ndash; 10 Design-Vorlagen (Farben) x 10 Bildformate/Visual-Arten frei kombinierbar. Reihenfolge entspricht der Ticket-Liste, nicht automatisch dem echten Prozess. Beschriftungen (Status, Legende) bleiben aktuell auf Deutsch, unabhängig von der Sprachauswahl der Textdokumente.</p></div>
         <div class="gen-layout" data-kind="prozessbild">
           <div class="gen-form">
             <label for="prozessbild-name">Prozess-/Release-Name</label>
@@ -1053,7 +1053,7 @@
 
       <!-- ================= Clickanweisung ================= -->
       <section class="view-panel" data-view-panel="clickanweisung" hidden>
-        <div class="view-head"><h2>Clickanweisung</h2><p class="desc">Schritt-für-Schritt-Bedienungsanleitung für oneSCM, aus den Beschreibungstexten der ausgewählten Tickets zusammengestellt und nach Domäne gegliedert &ndash; ohne Jira-Ticket-Referenzen im Fließtext (Screenshots/genaue Klickpfade manuell ergänzen). Die separate XLSX-Tabelle bleibt Ticket-bezogen und dient als Nachvollzieh-Grundlage.</p></div>
+        <div class="view-head"><h2>Clickanweisung</h2><p class="desc">Schritt-für-Schritt-Bedienungsanleitung für oneSCM, auf Deutsch oder Englisch aus den Beschreibungstexten derselben Tickets wie Releaseletter, Benutzerhandbuch und Prozessbild zusammengestellt und nach Domäne gegliedert &ndash; ohne Jira-Ticket-Referenzen im Fließtext (Screenshots/genaue Klickpfade manuell ergänzen). Die separate XLSX-Tabelle bleibt Ticket-bezogen und dient als Nachvollzieh-Grundlage.</p></div>
         <div class="gen-layout" data-kind="clickanweisung">
           <div class="gen-form">
             <label for="clickanweisung-name">Release-Name</label>
@@ -3290,7 +3290,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.0.0";
+  var APP_VERSION = "2.1.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
