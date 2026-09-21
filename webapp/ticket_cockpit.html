@@ -105,6 +105,7 @@
   }
   .app-header-left { display: flex; align-items: center; gap: 10px; }
   h1.app-title { font-size: clamp(20px, 3.4vw, 26px); font-weight: 800; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+  .app-version { font-size: 12.5px; font-weight: 600; color: var(--text-muted); vertical-align: middle; margin-left: 6px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 100px; padding: 3px 10px; white-space: nowrap; }
   .app-stats { display: flex; gap: 16px; flex-wrap: wrap; }
   .app-stats .stat { text-align: right; }
   .app-stats .stat .num { font-size: 22px; font-weight: 800; line-height: 1; }
@@ -510,7 +511,7 @@
       <header class="app-header">
         <div class="app-header-left">
           <div>
-            <h1 class="app-title">ONESCM Ticket-Cockpit</h1>
+            <h1 class="app-title">ONESCM Ticket-Cockpit <span class="app-version" id="app-version"></span></h1>
           </div>
         </div>
         <div class="app-stats">
@@ -618,7 +619,7 @@
           <p class="section-label">Imports</p>
           <div class="panel table-wrap">
             <table class="simple-table" id="imports-table">
-              <thead><tr><th>#</th><th>Quelle</th><th>Format</th><th>Zeitpunkt</th><th>Tickets</th><th>Neu</th><th>Geändert</th><th>Unverändert</th><th>Pseudonymisiert</th><th>Kommentar</th></tr></thead>
+              <thead><tr><th>#</th><th>Quelle</th><th>Format</th><th>Zeitpunkt</th><th>Tickets</th><th>Neu</th><th>Geändert</th><th>Unverändert</th><th>Pseudonymisiert</th><th>Kommentar</th><th>Aktion</th></tr></thead>
               <tbody id="imports-tbody"></tbody>
             </table>
           </div>
@@ -1103,6 +1104,11 @@
 <script>
 (function () {
   "use strict";
+
+  // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
+  // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
+  // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
+  var APP_VERSION = "1.1.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -1707,7 +1713,7 @@
   var els = {};
   [
     "sidebar", "sidebar-toggle", "sidebar-open-btn", "nav-list", "nav-badge-changes",
-    "stat-tickets", "stat-imports", "stat-changes",
+    "stat-tickets", "stat-imports", "stat-changes", "app-version",
     "tiles", "domain-chart", "domain-section", "domain-label", "domain-select", "search-input", "reset-filter-btn",
     "table-body", "empty-state", "result-count",
     "dropzone", "dropzone-title", "dropzone-hint", "file-input", "reset-session-btn", "format-callout", "import-tabs",
@@ -1764,7 +1770,12 @@
     // des einen ausgewaehlten Imports, auf den die Job-Tabellen (3/4/5)
     // eingeschraenkt werden.
     activeImportId: null,
-    initialized: false
+    initialized: false,
+    // Fortlaufender Zaehler fuer Import-IDs - unabhaengig von app.imports.length,
+    // da nach dem Loeschen eines einzelnen Imports (Dateiverwaltung) die Liste
+    // kuerzer wird, IDs aber nie wiederverwendet werden duerfen (sonst wuerden
+    // ticketStore-Quellenangaben auf die falsche, neue Datei zeigen).
+    nextImportId: 1
   };
 
   function addLog(message) {
@@ -1837,7 +1848,7 @@
     cleaned.forEach(function (t) {
       if (t.custom_fields && t.custom_fields.Domain) t.custom_fields.Domain = normalizeDomain(t.custom_fields.Domain);
     });
-    var importId = app.imports.length + 1;
+    var importId = app.nextImportId++;
     var stats = { neu: 0, geaendert: 0, unveraendert: 0 };
 
     cleaned.forEach(function (t) {
@@ -1893,7 +1904,7 @@
 
   function resetSession() {
     app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
-    app.generatedImages = []; app.initialized = false;
+    app.generatedImages = []; app.initialized = false; app.nextImportId = 1;
     app.extracted = { abbreviations: [], glossaryCandidates: [], ran: false };
     app.jobState = {
       glossarExtrakt: { error: null },
@@ -1922,7 +1933,7 @@
   // Sitzung wird vollständig geleert (0 Tickets, 0 Imports).
   function deleteAllData() {
     app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
-    app.generatedImages = []; app.initialized = false;
+    app.generatedImages = []; app.initialized = false; app.nextImportId = 1;
     app.extracted = { abbreviations: [], glossaryCandidates: [], ran: false };
     app.jobState = {
       glossarExtrakt: { error: null },
@@ -2553,9 +2564,48 @@
       return "<tr><td class=\"mono\">" + imp.id + "</td><td>" + escapeHtml(imp.source) + "</td><td>" + escapeHtml(imp.format) +
         "</td><td class=\"mono\">" + escapeHtml(imp.when) + "</td><td class=\"mono\">" + imp.ticketCount + "</td><td class=\"mono\">" +
         imp.stats.neu + "</td><td class=\"mono\">" + imp.stats.geaendert + "</td><td class=\"mono\">" + imp.stats.unveraendert +
-        "</td><td class=\"mono\">" + imp.personCount + "</td><td class=\"comment-cell\">" + commentCellHtml(imp) + "</td></tr>";
+        "</td><td class=\"mono\">" + imp.personCount + "</td><td class=\"comment-cell\">" + commentCellHtml(imp) +
+        '</td><td><button type="button" class="btn danger comment-edit-btn" data-action="delete-import" data-import-id="' + imp.id + '">Löschen</button></td></tr>';
     }).join("");
   }
+
+  // Loescht einen einzelnen Import wieder aus der Sitzung. Tickets, die
+  // AUSSCHLIESSLICH aus diesem Import stammen, werden komplett entfernt;
+  // Tickets, die auch in anderen Imports vorkamen, bleiben mit ihrem
+  // aktuellen (bereits zusammengeführten) Stand erhalten - einzelne
+  // Feldwerte aus genau diesem Import lassen sich nicht gezielt
+  // zurückrechnen, da pro Import keine vollständige Roh-Kopie gespeichert
+  // wird (nur der fortlaufend gemergte Stand + eine Quellenliste je Ticket).
+  function deleteImport(importId) {
+    var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
+    if (!imp) return;
+
+    var removedTicketCount = 0, affectedTicketCount = 0, keysToDelete = [];
+    app.ticketStore.forEach(function (entry, key) {
+      if (!entry.sources.some(function (s) { return s.importId === importId; })) return;
+      entry.sources = entry.sources.filter(function (s) { return s.importId !== importId; });
+      if (entry.sources.length === 0) { keysToDelete.push(key); removedTicketCount++; }
+      else affectedTicketCount++;
+    });
+    keysToDelete.forEach(function (k) { app.ticketStore.delete(k); });
+
+    app.changes = app.changes.filter(function (c) { return !(c.to.source === imp.source && c.to.when === imp.when); });
+    app.imports = app.imports.filter(function (i) { return i.id !== importId; });
+    if (app.activeImportId === importId) app.activeImportId = null;
+    if (editingCommentImportId === importId) editingCommentImportId = null;
+
+    addLog(
+      "Import „" + imp.source + "“ (" + imp.format + ", " + imp.when + ") gelöscht: " + removedTicketCount + " Ticket(s) vollständig entfernt" +
+      (affectedTicketCount ? ", " + affectedTicketCount + " Ticket(s) aus weiteren Imports blieben (zusammengeführt) erhalten" : "") + "."
+    );
+
+    refreshDashboard(false);
+    renderImportsTable();
+    renderChangesTable();
+    renderStats();
+    renderOutputCounts();
+  }
+
   els.importsTbody.addEventListener("click", function (e) {
     var btn = e.target.closest("button[data-action]");
     if (!btn) return;
@@ -2581,6 +2631,18 @@
       editingCommentImportId = null;
       renderImportsTable();
       renderAllJobSteps();
+    } else if (action === "delete-import") {
+      var target = app.imports.filter(function (i) { return i.id === importId; })[0];
+      if (!target) return;
+      var ok = window.confirm(
+        "Import „" + target.source + "“ (" + target.ticketCount + " Tickets) wirklich löschen? " +
+        "Tickets, die ausschließlich aus diesem Import stammen, werden vollständig entfernt. Tickets, die auch in " +
+        "anderen Imports vorkamen, bleiben mit ihrem aktuellen, bereits zusammengeführten Stand erhalten - einzelne " +
+        "Feldänderungen aus genau diesem Import lassen sich dabei nicht gezielt rückgängig machen."
+      );
+      if (!ok) return;
+      deleteImport(importId);
+      showToast("Import gelöscht", "Import „" + target.source + "“ wurde aus dieser Sitzung entfernt.");
     }
   });
 
@@ -3899,6 +3961,7 @@
 
   /* ============ Start ============ */
 
+  els.appVersion.textContent = "v" + APP_VERSION;
   showView("dashboard");
   renderDomainAliases();
   resetSession();

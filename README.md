@@ -138,7 +138,10 @@ und überarbeiten.
 
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
-folgenden Bereichen:
+folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
+Versions-Badge (`APP_VERSION` in der `<script>`, z. B. "v1.1.0"), das bei
+jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
+auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist:
 
 - **Dashboard** – zusammengeführter, aktueller Stand aller importierten
   Tickets: Status-Kacheln, Domain-Verteilung, Volltextsuche, sortierbare
@@ -184,7 +187,14 @@ folgenden Bereichen:
   Import aber fehlende Felder unverändert erhalten und werden **nicht**
   als Änderung gewertet – nur tatsächlich abweichende Werte erscheinen im
   Vergleich. Im Dashboard markiert ein Punkt hinter dem Schlüssel
-  geänderte Tickets.
+  geänderte Tickets. Jeder Import lässt sich über den Button "Löschen"
+  einzeln wieder aus der Sitzung entfernen (mit Sicherheitsabfrage):
+  Tickets, die ausschließlich aus diesem Import stammen, werden komplett
+  entfernt; Tickets, die auch in anderen Imports vorkamen, bleiben mit
+  ihrem aktuellen, bereits zusammengeführten Stand erhalten – da pro
+  Import keine vollständige Rohkopie gespeichert wird, lassen sich
+  einzelne Feldänderungen aus genau diesem Import nicht gezielt
+  zurückrechnen. Import-Nummern werden nach dem Löschen nie wiederverwendet.
 - **Verarbeitung** – sechs Jobs für wiederkehrende Arbeitsschritte rund
   um die geladenen Tickets, erreichbar über die Tab-Leiste oder das kompakte
   Burger-Menü (☰) daneben. Jeder Job zeigt oben seine **Prozessschritte**
