@@ -223,9 +223,12 @@
   .field-table th { text-align: left; color: var(--text-faint); font-weight: 600; padding: 6px 10px 6px 0; width: 130px; vertical-align: top; white-space: nowrap; }
   .field-table td { padding: 6px 0; border-top: 1px solid var(--border); }
   .field-table tr:first-child td, .field-table tr:first-child th { border-top: none; }
+  .field-table td.placeholder { color: var(--text-faint); font-style: italic; }
+  .field-table tr.meta-row th, .field-table tr.meta-row td { color: var(--text-muted); font-size: 12px; }
   .modal-desc { margin-top: 16px; }
   .modal-desc h3 { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 6px; }
   .modal-desc p { font-size: 13.5px; line-height: 1.6; white-space: pre-wrap; margin: 0; }
+  .modal-desc p.placeholder { color: var(--text-faint); font-style: italic; }
   .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
 
   /* ---- Toast ---- */
@@ -579,6 +582,35 @@
     labels: "Labels", components: "Komponenten", fix_versions: "Fix-Version(en)"
   };
 
+  /* Vollständiges Feldraster für die Detailansicht: zeigt IMMER alle
+     Standardfelder, auch wenn ein Ticket sie nicht hat - fehlende Felder
+     werden klar markiert statt einfach ausgeblendet, damit ersichtlich
+     ist, was im Quell-Export tatsächlich enthalten war (keine erfundenen
+     Inhalte). kind "removed" = wird von der Bereinigung immer entfernt
+     (Datenschutz), kind "meta" = Angabe zum Import, nicht zum Ticket selbst. */
+  var MODAL_FIELD_LIST = [
+    { key: "summary", label: "Zusammenfassung", kind: "field" },
+    { key: "issue_type", label: "Typ", kind: "field" },
+    { key: "status", label: "Status", kind: "field" },
+    { key: "priority", label: "Priorität", kind: "field" },
+    { key: "project", label: "Projekt", kind: "field" },
+    { key: "resolution", label: "Lösung", kind: "field" },
+    { key: "assignee", label: "Bearbeiter", kind: "field" },
+    { key: "reporter", label: "Ersteller", kind: "field" },
+    { key: "created", label: "Erstellt", kind: "field" },
+    { key: "updated", label: "Aktualisiert", kind: "field" },
+    { key: "labels", label: "Labels", kind: "field" },
+    { key: "components", label: "Komponenten", kind: "field" },
+    { key: "fix_versions", label: "Fix-Version(en)", kind: "field" },
+    { key: "custom:Domain", label: "Domain", kind: "field" },
+    { key: "comments", label: "Kommentare", kind: "removed" },
+    { key: "watchers", label: "Beobachter", kind: "removed" },
+    { key: "meta:source", label: "Quelldatei", kind: "meta" },
+    { key: "meta:when", label: "Importiert am", kind: "meta" }
+  ];
+  var NOT_IN_EXPORT = "Nicht im Export enthalten";
+  var REMOVED_FOR_PRIVACY = "Aus Datenschutzgründen bei der Bereinigung entfernt";
+
   function renderMarkdown(t) {
     var lines = ["# " + t.key + (t.summary ? " – " + t.summary : ""), ""];
     lines.push("| Feld | Wert |"); lines.push("| --- | --- |");
@@ -662,6 +694,7 @@
     });
     app.anonymizedCount = anonymizer.count;
     app.isSample = !!meta.isSample;
+    app.meta = meta;
     app.view = { bucket: "all", domain: "", query: "", sortKey: "created", sortDir: "desc" };
     els.searchInput.value = "";
 
@@ -813,24 +846,52 @@
   /* ============ Teil 3: Detailansicht ============ */
 
   var lastFocused = null;
+
+  function fieldRowHtml(label, value, isPlaceholder, extraClass) {
+    var cls = (isPlaceholder ? "placeholder" : "") + (extraClass ? " " + extraClass : "");
+    return "<tr" + (extraClass ? ' class="' + extraClass + '"' : "") + "><th>" + escapeHtml(label) + '</th><td class="' +
+      cls.trim() + '">' + escapeHtml(value) + "</td></tr>";
+  }
+
   function openModal(t) {
     lastFocused = document.activeElement;
     els.modalKey.textContent = t.key;
     els.modalTitle.textContent = t.summary || "(keine Zusammenfassung)";
+    var raw = t.raw;
+    var customFields = raw.custom_fields || {};
+    var shownCustomKeys = { Domain: true };
     var rows = "";
-    FIELD_DISPLAY_ORDER.forEach(function (f) {
-      if (!(f in t.raw)) return;
-      var v = t.raw[f]; if (Array.isArray(v)) v = v.join(", ");
-      rows += "<tr><th>" + DISPLAY_LABELS_DE[f] + "</th><td>" + escapeHtml(v) + "</td></tr>";
+
+    MODAL_FIELD_LIST.forEach(function (f) {
+      if (f.kind === "removed") { rows += fieldRowHtml(f.label, REMOVED_FOR_PRIVACY, true); return; }
+      if (f.kind === "meta") {
+        var metaVal = f.key === "meta:source" ? (app.meta && app.meta.source) : (app.meta && app.meta.when);
+        rows += fieldRowHtml(f.label, metaVal || "unbekannt", !metaVal, "meta-row");
+        return;
+      }
+      var value;
+      if (f.key === "custom:Domain") value = customFields.Domain;
+      else value = raw[f.key];
+      if (Array.isArray(value)) value = value.length ? value.join(", ") : undefined;
+      if (value === undefined || value === null || value === "") {
+        rows += fieldRowHtml(f.label, NOT_IN_EXPORT, true);
+      } else {
+        rows += fieldRowHtml(f.label, value, false);
+      }
     });
-    Object.keys(t.raw.custom_fields || {}).forEach(function (k) {
-      rows += "<tr><th>" + escapeHtml(k) + "</th><td>" + escapeHtml(t.raw.custom_fields[k]) + "</td></tr>";
+
+    // Weitere Custom Fields, die nicht in der Standardliste stehen (z.B. bei anderen Exporten).
+    Object.keys(customFields).forEach(function (k) {
+      if (shownCustomKeys[k]) return;
+      rows += fieldRowHtml(k, customFields[k], false);
     });
+
     els.modalFields.innerHTML = rows;
-    if (t.raw.description) { els.modalDescWrap.hidden = false; els.modalDesc.textContent = t.raw.description; }
-    else { els.modalDescWrap.hidden = true; }
+    els.modalDescWrap.hidden = false;
+    els.modalDesc.textContent = raw.description || NOT_IN_EXPORT;
+    els.modalDesc.className = raw.description ? "" : "placeholder";
     els.modalOverlay.hidden = false;
-    els.modalDownloadBtn.onclick = function () { downloadSingle(t.raw); };
+    els.modalDownloadBtn.onclick = function () { downloadSingle(raw); };
     els.modalClose.focus();
   }
   function closeModal() { els.modalOverlay.hidden = true; if (lastFocused) lastFocused.focus(); }
