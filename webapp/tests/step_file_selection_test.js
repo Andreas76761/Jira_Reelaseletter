@@ -80,7 +80,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
 
   // Protokoll-Eintrag zur Auswahl
   doc.querySelector('.import-tab[data-vsub="protokoll"]').click();
-  check("Auswahl wird im Protokoll vermerkt", doc.getElementById("log-list").textContent.includes("Aktive Datei für Verarbeitung"));
+  check("Auswahl wird im Protokoll vermerkt", doc.getElementById("log-list").textContent.includes("Aktive Datei-/Listen-Auswahl für Verarbeitung"));
 
   // Job 3 Extraktion respektiert ebenfalls die Auswahl
   doc.querySelector('.import-tab[data-vsub="glossar-extrakt"]').click();

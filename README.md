@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.5.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.7.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -218,6 +218,14 @@ anderen Länderformaten (Kennzeichen).
   oder Gesamtinhalt) oder löschen. Nützlich, um z. B. verschiedene
   Ticket-Zusammenstellungen für unterschiedliche Zwecke (Release A vs.
   Release B, Benutzerhandbuch-Kandidaten, ...) parallel vorzuhalten.
+  Ein eigener **Typ-Schnellfilter** (dieselben Typ-Chips plus die 4
+  Presets Ohne Bugs/Nur Epics/Ohne Reporting/Ohne Testing wie im
+  Dashboard) grenzt hier direkt die **Vorschau** der bereits getroffenen
+  Dashboard-Auswahl ein – die Dashboard-Auswahl selbst bleibt davon
+  unberührt. Gespeichert wird immer genau die gefilterte Vorschau, sodass
+  sich z. B. aus einer größeren Auswahl gezielt "nur die Epics daraus"
+  oder "alles außer den Bugs daraus" als eigene Liste ablegen lässt, ohne
+  vorher im Dashboard neu selektieren zu müssen.
 - **Import** – vier Formate per Tab wählbar, jeweils mit Mehrfachauswahl
   und Drag&Drop; zusätzlich eine **Zwischenablage-Funktion**: Text direkt
   einfügen (Button „Aus Zwischenablage einfügen“ oder Strg+V in das
@@ -300,13 +308,22 @@ anderen Länderformaten (Kennzeichen).
   als visuelle Checkliste (grauer Kreis = ausstehend, grüner Haken =
   erledigt, roter Kreis = Fehler bei der Ausführung) und lässt sich
   komplett als **XLSX, DOCX oder PDF exportieren**. Der erste Schritt
-  ("Datei(en) ausgewählt/importiert") lässt sich über einen Pfeil zu einer
-  Unteraktivität **"Datei auswählen"** aufklappen: eine Liste aller
-  Importe zur Auswahl, immer als echte Auswahlmöglichkeit angezeigt (auch
-  wenn aktuell nur eine Datei vorhanden ist). Wird eine bestimmte Datei
-  gewählt, schränken die Jobs 3-5 ihre Tabellen/Exporte/Auswertungen auf
-  nur deren Tickets ein, statt auf den über alle Importe zusammengeführten
-  Stand – "Alle Importe" (Standard) zeigt wieder alles.
+  ("Datei(en) ausgewählt/importiert") trägt einen **🔄 Aktualisieren**-Button
+  und lässt sich über einen Pfeil zu einer Unteraktivität **"Datei(en)/Liste(n)
+  auswählen"** aufklappen: eine Mehrfachauswahl (Checkboxen statt
+  Einzelauswahl) aus allen Importen (📄-Icon) UND allen in der Listenauswahl
+  gespeicherten Listen (📋-Icon), immer als echte Auswahlmöglichkeit
+  angezeigt (auch wenn aktuell nur eine Datei vorhanden ist). Werden ein
+  oder mehrere Importe und/oder Listen gewählt, schränken die Jobs 3-7 ihre
+  Tabellen/Exporte/Auswertungen auf die Vereinigung von deren Tickets ein,
+  statt auf den über alle Importe zusammengeführten Stand – "Alle Importe"
+  (Standard, hakt bei Auswahl automatisch alle Einzelauswahlen wieder ab)
+  zeigt wieder alles. Der **🔄 Aktualisieren**-Button löscht (nach
+  Bestätigung) alle bisher berechneten Zwischenergebnisse dieser Sitzung
+  (Glossar-/Abkürzungs-Extraktion, Release-Abgleich, Benutzerhandbuch-
+  Bewertung, RAG-Rohdaten und -Text) – die Importe/Tickets selbst bleiben
+  dabei erhalten – sodass sich die Verarbeitung mit einer neuen Datei-/
+  Listen-Auswahl sauber neu starten lässt.
   1. *Jira Verarbeitung* – chronologisches Protokoll aller Import-/Export-Aktionen.
   2. *Vergleich Jira Tickets* – derselbe Änderungsvergleich wie in der
      Dateiverwaltung (gleiche Jira-Nummer, unterschiedlicher Datenstand),

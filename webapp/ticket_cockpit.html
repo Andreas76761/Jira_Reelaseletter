@@ -736,9 +736,28 @@
         <section>
           <p class="section-label">Aktuelle Dashboard-Auswahl speichern</p>
           <div class="callout" id="listenauswahl-current-count">Im Dashboard sind aktuell 0 Tickets ausgewählt.</div>
+
+          <p class="section-label">Typ-Schnellfilter (grenzt die Vorschau unten &ndash; und damit die zu speichernde Liste &ndash; ein)</p>
+          <div class="import-tabs" id="listenauswahl-type-chips"></div>
+          <div class="import-tabs" id="listenauswahl-type-presets">
+            <button class="import-tab" type="button" data-preset="no-bug">Ohne Bugs</button>
+            <button class="import-tab" type="button" data-preset="only-epic">Nur Epics</button>
+            <button class="import-tab" type="button" data-preset="no-reporting">Ohne Reporting</button>
+            <button class="import-tab" type="button" data-preset="no-testing">Ohne Testing</button>
+          </div>
+
+          <p class="section-label">Vorschau (<span id="listenauswahl-preview-count">0</span> von <span id="listenauswahl-preview-total">0</span> ausgewählten Tickets nach Filter)</p>
+          <div class="panel table-wrap" style="max-height:260px; overflow:auto;">
+            <table class="simple-table" id="listenauswahl-preview-table">
+              <thead><tr><th>Ticket</th><th>Beschreibung</th><th>Typ</th><th>Status</th></tr></thead>
+              <tbody id="listenauswahl-preview-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="listenauswahl-preview-empty">Keine Tickets ausgewählt oder alle durch den Filter ausgeblendet.</div>
+          </div>
+
           <div class="upload-row">
             <input type="text" id="listenauswahl-name-input" class="text-input" placeholder="Name der Liste (z. B. &quot;Release 2026.4 – Benutzerhandbuch-Kandidaten&quot;)" maxlength="120" style="flex:1 1 320px;">
-            <button class="btn primary" id="listenauswahl-save-btn" type="button" disabled>Liste speichern</button>
+            <button class="btn primary" id="listenauswahl-save-btn" type="button" disabled>Gefilterte Vorschau als Liste speichern</button>
           </div>
         </section>
 
@@ -3344,7 +3363,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.5.0";
+  var APP_VERSION = "2.7.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -4108,6 +4127,8 @@
     "select-all-checkbox", "selection-count", "selection-select-all-btn", "selection-clear-btn",
     "selection-export-keys-btn", "selection-export-content-btn",
     "nav-badge-lists", "listenauswahl-current-count", "listenauswahl-name-input", "listenauswahl-save-btn",
+    "listenauswahl-type-chips", "listenauswahl-type-presets",
+    "listenauswahl-preview-count", "listenauswahl-preview-total", "listenauswahl-preview-tbody", "listenauswahl-preview-empty",
     "listenauswahl-count", "listenauswahl-tbody", "listenauswahl-empty",
     "dropzone", "dropzone-title", "dropzone-hint", "dropzone-icon", "dropzone-spinner", "file-input", "reset-session-btn", "format-callout", "import-tabs",
     "import-comment-input",
@@ -4175,6 +4196,10 @@
     // die Dashboard-Auswahl oder die Tickets selbst spaeter aendern.
     savedLists: [],
     nextSavedListId: 1,
+    // Typ-Schnellfilter fuer die Listenauswahl-Vorschau (eigene Achse, filtert
+    // NUR die Vorschau der bereits per Dashboard-Checkbox getroffenen Auswahl -
+    // keine neue Master-Tabelle, siehe renderListenauswahlPreview()).
+    listPreviewFilter: { issueType: "", excludeTypes: {} },
     extracted: { abbreviations: [], glossaryCandidates: [], ran: false },
     // Zusatzstatus je Job fuer die Prozessschritt-Anzeige, der sich nicht
     // direkt aus den obigen Datenstrukturen ableiten laesst (z. B. ob eine
@@ -4183,11 +4208,12 @@
       glossarExtrakt: { error: null },
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     },
-    // Ueber die Unteraktivitaet "Datei auswaehlen" (Prozessschritte) gesetzt:
-    // null = alle Importe zusammengefuehrt (Standard), sonst die importId
-    // des einen ausgewaehlten Imports, auf den die Job-Tabellen (3/4/5)
-    // eingeschraenkt werden.
-    activeImportId: null,
+    // Ueber die Unteraktivitaet "Datei(en)/Liste(n) auswaehlen" (Prozessschritte,
+    // Schritt 1) gesetzt: beide Maps leer = alle Importe zusammengefuehrt
+    // (Standard), sonst Mehrfachauswahl aus Imports UND/ODER gespeicherten
+    // Listen (Listenauswahl), auf die die Job-Tabellen eingeschraenkt werden.
+    activeImportIds: {},
+    activeListIds: {},
     initialized: false,
     // Fortlaufender Zaehler fuer Import-IDs - unabhaengig von app.imports.length,
     // da nach dem Loeschen eines einzelnen Imports (Dateiverwaltung) die Liste
@@ -4342,8 +4368,9 @@
       glossarExtrakt: { error: null },
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     };
-    app.activeImportId = null;
+    app.activeImportIds = {}; app.activeListIds = {};
     app.selectedKeys = {}; app.savedLists = []; app.nextSavedListId = 1;
+    app.listPreviewFilter = { issueType: "", excludeTypes: {} };
     editingCommentImportId = null;
     els.importCommentInput.value = "";
     var raw = JSON.parse(document.getElementById("initial-ticket-data").textContent);
@@ -4373,8 +4400,9 @@
       glossarExtrakt: { error: null },
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     };
-    app.activeImportId = null;
+    app.activeImportIds = {}; app.activeListIds = {};
     app.selectedKeys = {}; app.savedLists = []; app.nextSavedListId = 1;
+    app.listPreviewFilter = { issueType: "", excludeTypes: {} };
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
     if (!els.compareModalOverlay.hidden) closeCompareModal();
@@ -4591,6 +4619,8 @@
     renderAllJobSteps();
     ragPopulateSelects();
     renderSavedLists();
+    buildListenauswahlTypeChips();
+    renderListenauswahlPreview();
   }
 
   function buildFormatCallout() {
@@ -4651,9 +4681,13 @@
   function buildTypeChips(issueTypeCounts) {
     els.typeChips.innerHTML = "";
     var types = Object.keys(issueTypeCounts);
-    document.getElementById("type-section").hidden = types.length === 0;
+    // Bewusst NICHT ausblenden, wenn (noch) kein Ticket einen Typ hat - die 4
+    // festen Presets (Ohne Bugs/Nur Epics/Ohne Reporting/Ohne Testing) sind
+    // unabhaengig von den geladenen Daten immer sinnvoll nutzbar, sobald
+    // passende Tickets importiert werden; ein staendig verschwindender/
+    // wiederkehrender Block waere verwirrender als eine "Alle Typen"-Chip,
+    // die bei 0 Typen einfach nichts herausfiltert.
     syncTypePresets();
-    if (!types.length) return;
     types.sort(function (a, b) {
       var pa = TYPE_CHIP_PRIORITY.indexOf(a), pb = TYPE_CHIP_PRIORITY.indexOf(b);
       if (pa !== -1 || pb !== -1) return (pa === -1 ? 999 : pa) - (pb === -1 ? 999 : pb);
@@ -4813,7 +4847,8 @@
       cb.checked = !!app.selectedKeys[cb.getAttribute("data-key")];
     });
     els.listenauswahlCurrentCount.textContent = "Im Dashboard sind aktuell " + n + (n === 1 ? " Ticket" : " Tickets") + " ausgewählt.";
-    els.listenauswahlSaveBtn.disabled = n === 0;
+    buildListenauswahlTypeChips();
+    renderListenauswahlPreview();
   }
 
   // Auswahl-Export (Dashboard): entweder nur die reinen Jira-Nummern (.txt,
@@ -5588,7 +5623,7 @@
 
     app.changes = app.changes.filter(function (c) { return !(c.to.source === imp.source && c.to.when === imp.when); });
     app.imports = app.imports.filter(function (i) { return i.id !== importId; });
-    if (app.activeImportId === importId) app.activeImportId = null;
+    delete app.activeImportIds[importId];
     if (editingCommentImportId === importId) editingCommentImportId = null;
 
     addLog(
@@ -5643,11 +5678,100 @@
     }
   });
 
+  /* ============ Listenauswahl: Typ-Schnellfilter fuer die Vorschau ============
+     Filtert NUR die Vorschau der bereits im Dashboard per Checkbox
+     getroffenen Auswahl (selectedTickets()) - keine eigene Master-Tabelle.
+     Eigene Filter-Achse (app.listPreviewFilter), unabhaengig vom
+     Dashboard-Typfilter (app.view), damit beide Ansichten sich nicht
+     gegenseitig verstellen. */
+  function listPreviewIssueTypeCounts() {
+    var counts = {};
+    selectedTickets().forEach(function (t) {
+      if (t.issueType) counts[t.issueType] = (counts[t.issueType] || 0) + 1;
+    });
+    return counts;
+  }
+  function matchesListPreviewFilter(t) {
+    var f = app.listPreviewFilter;
+    if (f.issueType && t.issueType !== f.issueType) return false;
+    if (f.excludeTypes[t.issueType]) return false;
+    return true;
+  }
+  function buildListenauswahlTypeChips() {
+    var counts = listPreviewIssueTypeCounts();
+    els.listenauswahlTypeChips.innerHTML = "";
+    var types = Object.keys(counts);
+    types.sort(function (a, b) {
+      var pa = TYPE_CHIP_PRIORITY.indexOf(a), pb = TYPE_CHIP_PRIORITY.indexOf(b);
+      if (pa !== -1 || pb !== -1) return (pa === -1 ? 999 : pa) - (pb === -1 ? 999 : pb);
+      return counts[b] - counts[a];
+    });
+    var allBtn = document.createElement("button");
+    allBtn.className = "import-tab" + (app.listPreviewFilter.issueType ? "" : " active"); allBtn.type = "button";
+    allBtn.textContent = "Alle Typen";
+    allBtn.addEventListener("click", function () { app.listPreviewFilter.issueType = ""; syncListenauswahlTypeChips(); syncListenauswahlTypePresets(); renderListenauswahlPreview(); });
+    els.listenauswahlTypeChips.appendChild(allBtn);
+    types.forEach(function (type) {
+      var btn = document.createElement("button");
+      btn.className = "import-tab" + (app.listPreviewFilter.issueType === type ? " active" : ""); btn.type = "button";
+      btn.setAttribute("data-type", type);
+      btn.textContent = type + " (" + counts[type] + ")";
+      btn.addEventListener("click", function () {
+        app.listPreviewFilter.issueType = app.listPreviewFilter.issueType === type ? "" : type;
+        syncListenauswahlTypeChips();
+        syncListenauswahlTypePresets();
+        renderListenauswahlPreview();
+      });
+      els.listenauswahlTypeChips.appendChild(btn);
+    });
+  }
+  function syncListenauswahlTypeChips() {
+    Array.prototype.forEach.call(els.listenauswahlTypeChips.children, function (btn) {
+      var type = btn.getAttribute("data-type");
+      btn.classList.toggle("active", type ? app.listPreviewFilter.issueType === type : !app.listPreviewFilter.issueType);
+    });
+  }
+  els.listenauswahlTypePresets.addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-preset]");
+    if (!btn) return;
+    var preset = btn.getAttribute("data-preset");
+    if (preset === "only-epic") {
+      app.listPreviewFilter.issueType = app.listPreviewFilter.issueType === "Epic" ? "" : "Epic";
+    } else {
+      var type = TYPE_PRESET_EXCLUDE[preset];
+      if (app.listPreviewFilter.excludeTypes[type]) delete app.listPreviewFilter.excludeTypes[type]; else app.listPreviewFilter.excludeTypes[type] = true;
+    }
+    syncListenauswahlTypeChips();
+    syncListenauswahlTypePresets();
+    renderListenauswahlPreview();
+  });
+  function syncListenauswahlTypePresets() {
+    Array.prototype.forEach.call(els.listenauswahlTypePresets.children, function (btn) {
+      var preset = btn.getAttribute("data-preset");
+      var active = preset === "only-epic" ? app.listPreviewFilter.issueType === "Epic" : !!app.listPreviewFilter.excludeTypes[TYPE_PRESET_EXCLUDE[preset]];
+      btn.classList.toggle("active", active);
+    });
+  }
+  function renderListenauswahlPreview() {
+    var all = selectedTickets();
+    var filtered = all.filter(matchesListPreviewFilter);
+    els.listenauswahlPreviewCount.textContent = filtered.length;
+    els.listenauswahlPreviewTotal.textContent = all.length;
+    els.listenauswahlPreviewEmpty.hidden = filtered.length > 0;
+    els.listenauswahlPreviewTbody.innerHTML = filtered.map(function (t) {
+      return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(descriptionDisplayText(t)) +
+        "</td><td>" + escapeHtml(t.issueType || "–") + "</td><td>" + escapeHtml(t.status || "–") + "</td></tr>";
+    }).join("");
+    els.listenauswahlSaveBtn.disabled = filtered.length === 0;
+  }
+
   /* ============ Listenauswahl: gespeicherte Ticket-Selektionen ============
      Jede gespeicherte Liste ist ein eigenstaendiger Snapshot (Name, Datum,
      Jira-Nummern UND vollstaendiger Ticket-Inhalt zum Speicherzeitpunkt) -
      unabhaengig von der aktuellen Dashboard-Auswahl oder spaeteren
-     Aenderungen an den Tickets selbst nutzbar. */
+     Aenderungen an den Tickets selbst nutzbar. Gespeichert wird die
+     GEFILTERTE Vorschau (matchesListPreviewFilter), nicht die rohe
+     Dashboard-Auswahl. */
   function renderSavedLists() {
     els.listenauswahlCount.textContent = app.savedLists.length;
     els.listenauswahlEmpty.hidden = app.savedLists.length > 0;
@@ -5662,7 +5786,7 @@
     renderStats();
   }
   els.listenauswahlSaveBtn.addEventListener("click", function () {
-    var tickets = selectedTickets();
+    var tickets = selectedTickets().filter(matchesListPreviewFilter);
     if (!tickets.length) return;
     var name = (els.listenauswahlNameInput.value || "").trim() || ("Liste vom " + nowLabel());
     app.savedLists.unshift({
@@ -5676,6 +5800,7 @@
     });
     els.listenauswahlNameInput.value = "";
     renderSavedLists();
+    renderAllJobSteps();
     addLog("Liste „" + name + "“ gespeichert (" + tickets.length + " Tickets).");
     showToast("Liste gespeichert", "„" + name + "“ mit " + tickets.length + " Tickets gespeichert.");
   });
@@ -5709,7 +5834,9 @@
       var ok3 = await confirmDialog("Liste „" + list.name + "“ (" + list.tickets.length + " Tickets) wirklich löschen?");
       if (!ok3) return;
       app.savedLists = app.savedLists.filter(function (l) { return l.id !== listId; });
+      delete app.activeListIds[listId];
       renderSavedLists();
+      renderAllJobSteps();
       addLog("Liste „" + list.name + "“ gelöscht.");
       showToast("Liste gelöscht", "„" + list.name + "“ wurde entfernt.");
     }
@@ -6061,17 +6188,25 @@
 
   // 4) Releaseversion: alle geladenen Tickets + Abgleich gegen eine
   // Release-Ticketliste (spiegelt die CLI-Logik aus release_matcher.py).
-  // Ueber die Unteraktivitaet "Datei auswaehlen" (Prozessschritte, Schritt 1)
-  // gesetzte Einschraenkung: bei aktiver Auswahl liefert dies nur Tickets,
-  // die (auch) aus diesem einen Import stammen, statt aller zusammengeführten
-  // Tickets. Betrifft die Job-Tabellen/Exporte 3, 4 und 5.
+  // Ueber die Unteraktivitaet "Datei(en)/Liste(n) auswaehlen" (Prozessschritte,
+  // Schritt 1) gesetzte Einschraenkung: bei aktiver Auswahl (Mehrfachauswahl
+  // aus Imports UND/ODER gespeicherten Listen) liefert dies nur die Vereinigung
+  // dieser Tickets statt aller zusammengeführten Tickets. Betrifft alle
+  // Job-Tabellen/Exporte, die scopedTickets() nutzen (3, 4, 5, 6, 7).
+  function hasActiveScope() {
+    return Object.keys(app.activeImportIds).length > 0 || Object.keys(app.activeListIds).length > 0;
+  }
   function scopedTickets() {
-    if (app.activeImportId == null) return app.tickets;
-    var id = app.activeImportId;
-    return app.tickets.filter(function (t) {
+    if (!hasActiveScope()) return app.tickets;
+    var keys = {};
+    app.tickets.forEach(function (t) {
       var entry = app.ticketStore.get(t.key);
-      return entry && entry.sources.some(function (s) { return s.importId === id; });
+      if (entry && entry.sources.some(function (s) { return app.activeImportIds[s.importId]; })) keys[t.key] = true;
     });
+    app.savedLists.forEach(function (list) {
+      if (app.activeListIds[list.id]) list.keys.forEach(function (k) { keys[k] = true; });
+    });
+    return app.tickets.filter(function (t) { return keys[t.key]; });
   }
 
   // Gemeinsame Anzeige-Helfer fuer die neuen Spalten Beschreibung/Priorität
@@ -6233,6 +6368,9 @@
         '<div class="process-step state-' + s.state + '">' + stepIconHtml(s.state) +
         '<div class="step-body"><span class="step-label">' + escapeHtml(s.label) + '</span>' +
         (s.note ? '<span class="step-note">' + escapeHtml(s.note) + "</span>" : "") + "</div>" +
+        (s.refreshable
+          ? '<button class="btn ghost btn-tiny step-refresh-btn" type="button" title="Zwischenergebnisse löschen, Datei-/Listen-Auswahl ändern und die Verarbeitung neu starten">🔄 Aktualisieren</button>'
+          : "") +
         (hasSub
           ? '<button class="step-toggle" type="button" data-step-id="' + stepId + '" aria-expanded="' + (isOpen ? "true" : "false") +
             '" aria-controls="' + stepId + '" aria-label="Unteraktivitäten anzeigen">' + (isOpen ? "▾" : "▸") + "</button>"
@@ -6253,45 +6391,72 @@
         if (willOpen) expandedStepIds[stepId] = true; else delete expandedStepIds[stepId];
       });
     });
-    Array.prototype.forEach.call(el.querySelectorAll('input[name^="active-import-choice-"]'), function (radio) {
-      radio.addEventListener("change", function () {
-        if (!radio.checked) return;
-        app.activeImportId = radio.value === "" ? null : parseInt(radio.value, 10);
+    Array.prototype.forEach.call(el.querySelectorAll(".step-refresh-btn"), function (btn) {
+      btn.addEventListener("click", handleStepRefresh);
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('input[name^="active-import-choice-"]'), function (checkbox) {
+      checkbox.addEventListener("change", function () {
+        var val = checkbox.value;
+        if (val === "") {
+          app.activeImportIds = {};
+          app.activeListIds = {};
+        } else if (val.indexOf("import:") === 0) {
+          var importId = parseInt(val.slice("import:".length), 10);
+          if (checkbox.checked) app.activeImportIds[importId] = true; else delete app.activeImportIds[importId];
+        } else if (val.indexOf("list:") === 0) {
+          var listId = parseInt(val.slice("list:".length), 10);
+          if (checkbox.checked) app.activeListIds[listId] = true; else delete app.activeListIds[listId];
+        }
         onActiveImportChanged();
       });
     });
   }
 
   // Unteraktivitaet des Schritts "Datei(en) ausgewählt/importiert": Liste
-  // aller Importe zur Auswahl - bewusst IMMER als Liste mit Auswahlmöglichkeit
-  // gerendert, auch wenn aktuell nur ein Import vorhanden ist, damit die
-  // Bedienung gleich bleibt, sobald weitere Dateien hinzukommen.
-  // Der Radiogruppen-Name wird pro Job eindeutig gemacht (nicht global) -
-  // sonst hebt der Browser bei mehreren gleichzeitig im DOM vorhandenen,
-  // gleich benannten Radiogruppen (je Job eine) die "checked"-Markierung
-  // aller bis auf die zuletzt gerenderte wieder auf.
+  // aller Importe UND gespeicherten Listen (Listenauswahl) zur Auswahl -
+  // bewusst IMMER als Liste mit Auswahlmöglichkeit gerendert, auch wenn
+  // aktuell nur ein Import vorhanden ist, damit die Bedienung gleich bleibt,
+  // sobald weitere Dateien/Listen hinzukommen. Mehrfachauswahl (Checkboxen)
+  // statt Einzelauswahl, damit sich z. B. 2 von 3 importierten Dateien
+  // gemeinsam als Verarbeitungsquelle waehlen lassen.
+  // Der Gruppen-Name wird pro Job eindeutig gemacht (nicht global) - sonst
+  // wuerden mehrere gleichzeitig im DOM vorhandene, gleich benannte Gruppen
+  // (je Job eine) sich beim Checked-Zustand gegenseitig stoeren.
   function fileChoiceListHtml(scopeSuffix) {
     var groupName = "active-import-choice-" + scopeSuffix;
+    var allChecked = !hasActiveScope();
     var rows = [
-      '<p class="step-sub-label">Datei auswählen</p>',
-      '<label class="step-file-option"><input type="radio" name="' + groupName + '" value=""' +
-        (app.activeImportId == null ? " checked" : "") + '><span><b>Alle Importe</b> (zusammengeführter Stand – Standard)</span></label>'
+      '<p class="step-sub-label">Datei(en)/Liste(n) auswählen (Mehrfachauswahl möglich)</p>',
+      '<label class="step-file-option"><input type="checkbox" name="' + groupName + '" value=""' +
+        (allChecked ? " checked" : "") + '><span><b>Alle Importe</b> (zusammengeführter Stand – Standard)</span></label>'
     ];
     app.imports.forEach(function (imp) {
       var commentSuffix = (imp.comment && imp.comment.trim())
         ? ' <span class="comment-hint">· Kommentar: „' + escapeHtml(imp.comment) + '“</span>' : "";
       rows.push(
-        '<label class="step-file-option"><input type="radio" name="' + groupName + '" value="' + imp.id + '"' +
-        (app.activeImportId === imp.id ? " checked" : "") + '><span><b>' + escapeHtml(imp.source) + '</b> · ' +
+        '<label class="step-file-option"><input type="checkbox" name="' + groupName + '" value="import:' + imp.id + '"' +
+        (app.activeImportIds[imp.id] ? " checked" : "") + '><span>📄 <b>' + escapeHtml(imp.source) + '</b> · ' +
         escapeHtml(imp.format) + ' · ' + imp.ticketCount + ' Tickets · ' + escapeHtml(imp.when) + commentSuffix + "</span></label>"
       );
     });
+    if (app.savedLists.length) {
+      rows.push('<p class="step-sub-label" style="margin-top:8px;">Gespeicherte Listen (Listenauswahl)</p>');
+      app.savedLists.forEach(function (list) {
+        rows.push(
+          '<label class="step-file-option"><input type="checkbox" name="' + groupName + '" value="list:' + list.id + '"' +
+          (app.activeListIds[list.id] ? " checked" : "") + '><span>📋 <b>' + escapeHtml(list.name) + '</b> · ' +
+          list.tickets.length + ' Tickets · ' + escapeHtml(list.when) + "</span></label>"
+        );
+      });
+    }
     return rows.join("");
   }
-  function activeImportLabel() {
-    if (app.activeImportId == null) return null;
-    var imp = app.imports.filter(function (i) { return i.id === app.activeImportId; })[0];
-    return imp ? imp.source : null;
+  function activeScopeLabel() {
+    if (!hasActiveScope()) return null;
+    var parts = [];
+    app.imports.forEach(function (imp) { if (app.activeImportIds[imp.id]) parts.push("📄 " + imp.source); });
+    app.savedLists.forEach(function (list) { if (app.activeListIds[list.id]) parts.push("📋 „" + list.name + "“"); });
+    return parts.join(", ");
   }
   function onActiveImportChanged() {
     renderReleaseversionTable();
@@ -6300,18 +6465,53 @@
     ragPopulateSelects();
     ragClearExtraction();
     renderAllJobSteps();
-    var label = activeImportLabel();
-    addLog("Aktive Datei für Verarbeitung (Job 3-7): " + (label ? label : "Alle Importe (zusammengeführt)") + ".");
+    var label = activeScopeLabel();
+    addLog("Aktive Datei-/Listen-Auswahl für Verarbeitung: " + (label ? label : "Alle Importe (zusammengeführt)") + ".");
+  }
+
+  // "Aktualisieren"-Button in Schritt 1 (Prozessschritte, alle Jobs): löscht
+  // alle bisher berechneten Zwischenergebnisse (Job 3 Extraktion, Job 4
+  // Abgleich/Bewertung, Job 7 RAG-Extraktion/-Text) OHNE die Importe/Tickets
+  // selbst zu loeschen, damit sich die Verarbeitung mit einer geänderten
+  // Datei-/Listen-Auswahl (s.o.) sauber neu starten laesst.
+  function resetIntermediateJobResults() {
+    app.extracted = { abbreviations: [], glossaryCandidates: [], ran: false };
+    app.jobState.glossarExtrakt.error = null;
+    renderExtractedAbbreviations();
+    renderExtractedGlossaryCandidates();
+
+    app.jobState.releaseversion = { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null };
+    els.releaseMatchSummary.hidden = true;
+    els.releaseMissingWrap.hidden = true;
+    els.releaseMissingTbody.innerHTML = "";
+    els.evaluateSummary.hidden = true;
+    els.evaluateTableWrap.hidden = true;
+    els.evaluateTbody.innerHTML = "";
+
+    ragResetOutput();
+  }
+  async function handleStepRefresh() {
+    var ok = await confirmDialog(
+      "Alle Zwischenergebnisse (Glossar-/Abkürzungs-Extraktion, Release-Abgleich, Benutzerhandbuch-Bewertung, RAG-Rohdaten und -Text) werden gelöscht und die Verarbeitung wird mit der aktuellen Datei-/Listen-Auswahl neu gestartet. Fortfahren?",
+      "Aktualisieren"
+    );
+    if (!ok) return;
+    resetIntermediateJobResults();
+    renderAllJobSteps();
+    var label = activeScopeLabel();
+    addLog("Verarbeitung aktualisiert: Zwischenergebnisse gelöscht, neu gestartet mit " + (label ? label : "Alle Importe (zusammengeführt)") + ".");
+    showToast("Aktualisiert", "Zwischenergebnisse gelöscht – Verarbeitung kann neu gestartet werden.");
   }
 
   function computeJobSteps(jobNum) {
     var importCount = app.imports.length;
     var ticketCount = app.tickets.length;
     var scopedCount = scopedTickets().length;
-    var activeLabel = activeImportLabel();
+    var activeLabel = activeScopeLabel();
     var loaded = {
       state: importCount > 0 ? "done" : "pending",
       label: "Datei(en) aus Dateiverwaltung ausgewählt/importiert",
+      refreshable: true,
       note: importCount > 0
         ? importCount + " Import(e) vorhanden" + (activeLabel ? " – aktiv: " + activeLabel + " (" + scopedCount + " Tickets)" : " – aktiv: Alle Importe")
         : "Noch keine Datei importiert",
