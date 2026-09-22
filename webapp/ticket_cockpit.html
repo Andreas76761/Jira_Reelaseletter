@@ -596,6 +596,21 @@
           <div class="panel domain-chart" id="domain-chart"></div>
         </section>
 
+        <section id="assignment-section">
+          <p class="section-label">Jira Zuordnung (<span id="assignment-group-count">0</span> Gruppen, <span id="assignment-ticket-count">0</span> Tickets)</p>
+          <div class="import-tabs" id="assignment-mode-tabs">
+            <button class="import-tab active" type="button" data-assignment-mode="label">Nach Label-Kategorie</button>
+            <button class="import-tab" type="button" data-assignment-mode="outline">Nach Gliederung (Benutzerhandbuch)</button>
+          </div>
+          <div class="panel table-wrap" id="assignment-wrap" style="max-height:420px; overflow:auto; margin-top:8px;">
+            <table class="simple-table" id="assignment-table">
+              <thead><tr><th>Ticket</th><th>Beschreibung</th><th>Typ</th><th>Status</th><th>Domäne</th><th>Labels</th></tr></thead>
+              <tbody id="assignment-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="assignment-empty" hidden>Keine Tickets geladen.</div>
+          </div>
+        </section>
+
         <section>
           <div class="controls">
             <div class="search-box">
@@ -999,6 +1014,18 @@
               <button class="btn ghost btn-tiny" type="button" data-select-clear="rag-status-select">Auswahl aufheben</button>
             </div>
             <select id="rag-status-select" multiple size="5"></select>
+            <label for="rag-label-category-select">Label-Themengebiet (Mehrfachauswahl, leer = alle) &ndash; verhindert Mischmasch über alle Tickets</label>
+            <div class="select-actions">
+              <button class="btn ghost btn-tiny" type="button" data-select-all="rag-label-category-select">Alle auswählen</button>
+              <button class="btn ghost btn-tiny" type="button" data-select-clear="rag-label-category-select">Auswahl aufheben</button>
+            </div>
+            <select id="rag-label-category-select" multiple size="5"></select>
+            <label for="rag-outline-select">Gliederungskapitel (Benutzerhandbuch, Mehrfachauswahl, leer = alle)</label>
+            <div class="select-actions">
+              <button class="btn ghost btn-tiny" type="button" data-select-all="rag-outline-select">Alle auswählen</button>
+              <button class="btn ghost btn-tiny" type="button" data-select-clear="rag-outline-select">Auswahl aufheben</button>
+            </div>
+            <select id="rag-outline-select" multiple size="5"></select>
             <div class="date-range-row" style="display:flex; gap:12px; margin-top:8px;">
               <div style="flex:1;"><label for="rag-date-from">Zeitraum von (Datum)</label><input type="date" id="rag-date-from"></div>
               <div style="flex:1;"><label for="rag-date-to">bis</label><input type="date" id="rag-date-to"></div>
@@ -1329,16 +1356,46 @@
         </section>
 
         <section>
-          <p class="section-label">Labels</p>
+          <p class="section-label">Labels (nach Themengebiet)</p>
           <div class="callout">
-            Diese Labels werden beim Verarbeiten automatisch jedem Ticket zugeordnet, dessen Zusammenfassung,
-            Beschreibung oder Domäne das Label als Stichwort enthält (Groß-/Kleinschreibung wird ignoriert) &ndash;
-            reiner Text-Abgleich, keine KI. Sichtbar in den Tabellen unter Verarbeitung (Spalte "Labels").
+            Diese Begriffe (Deutsch/Englisch je Themengebiet) werden beim Verarbeiten automatisch jedem Ticket
+            zugeordnet, dessen Zusammenfassung, Beschreibung oder Domäne den deutschen ODER englischen Begriff als
+            Stichwort enthält (Groß-/Kleinschreibung wird ignoriert) &ndash; reiner Text-Abgleich, keine KI. Sichtbar
+            in den Tabellen unter Verarbeitung (Spalte "Labels") sowie im Dashboard unter "Jira Zuordnung → Nach
+            Label-Kategorie" und bei Verarbeitung → 7. RAG als Filter.
           </div>
-          <div class="chip-list" id="labels-list"></div>
+          <div class="panel table-wrap" id="labels-wrap" style="max-height:420px; overflow:auto;">
+            <table class="simple-table" id="labels-table">
+              <thead><tr><th>Themengebiet</th><th>Deutsch</th><th>Englisch</th><th>Aktion</th></tr></thead>
+              <tbody id="labels-tbody"></tbody>
+            </table>
+          </div>
+          <datalist id="label-category-datalist"></datalist>
           <div class="paste-actions" style="margin-top:10px; align-items:center;">
-            <input type="text" class="text-input" id="labels-new-input" placeholder="Neues Label, z. B. Market" style="max-width:220px;">
+            <input type="text" class="text-input" id="labels-new-category" list="label-category-datalist" placeholder="Themengebiet, z. B. Zahlung &amp; Rechnung" style="max-width:220px;">
+            <input type="text" class="text-input" id="labels-new-de" placeholder="Deutsch" style="max-width:180px;">
+            <input type="text" class="text-input" id="labels-new-en" placeholder="Englisch" style="max-width:180px;">
             <button class="btn primary" id="labels-add-btn" type="button">Hinzufügen</button>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">Benutzerhandbuch-Gliederung</p>
+          <div class="callout">
+            Kapitel/Unterkapitel des Benutzerhandbuchs &ndash; wird beim Verarbeiten automatisch (Text-Abgleich wie bei
+            Labels, keine KI) Tickets zugeordnet, deren Zusammenfassung/Beschreibung/Domäne den Kapitel- oder
+            Unterkapiteltitel als Stichwort enthält. Sichtbar im Dashboard unter "Jira Zuordnung → Nach Gliederung"
+            sowie bei Verarbeitung → 7. RAG als Filter.
+          </div>
+          <div class="panel table-wrap" id="outline-wrap" style="max-height:420px; overflow:auto;">
+            <table class="simple-table" id="outline-table">
+              <thead><tr><th>Kapitel / Unterkapitel</th><th>Aktion</th></tr></thead>
+              <tbody id="outline-tbody"></tbody>
+            </table>
+          </div>
+          <div class="paste-actions" style="margin-top:10px; align-items:center;">
+            <input type="text" class="text-input" id="outline-new-chapter-input" placeholder="Neues Kapitel, z. B. Kapitel 17: Ausblick" style="max-width:320px;">
+            <button class="btn primary" id="outline-add-chapter-btn" type="button">Kapitel hinzufügen</button>
           </div>
         </section>
 
@@ -3365,7 +3422,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.8.0";
+  var APP_VERSION = "2.9.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -4111,6 +4168,21 @@
     list.forEach(function (t) { var v = t[field]; if (v && !seen[v]) { seen[v] = true; out.push(v); } });
     return out.sort(function (a, b) { return a.localeCompare(b, "de"); });
   }
+  // Wie distinctFieldValues(), aber fuer mehrwertige Felder (Array je
+  // Ticket) - z. B. autoLabelCategories. Alphabetisch sortiert.
+  function distinctArrayFieldValues(list, field) {
+    var seen = {}, out = [];
+    list.forEach(function (t) { (t[field] || []).forEach(function (v) { if (v && !seen[v]) { seen[v] = true; out.push(v); } }); });
+    return out.sort(function (a, b) { return a.localeCompare(b, "de"); });
+  }
+  // Gliederungskapitel, die unter den uebergebenen Tickets mindestens
+  // einmal getroffen wurden - in Buch-Reihenfolge (app.outline), nicht
+  // alphabetisch, damit die Auswahl der Gliederung selbst entspricht.
+  function distinctOutlineChaptersPresent(list) {
+    var present = {};
+    list.forEach(function (t) { (t.outlineChapters || []).forEach(function (c) { present[c] = true; }); });
+    return app.outline.map(function (c) { return c.title; }).filter(function (title) { return present[title]; });
+  }
   function debounce(fn, delay) {
     var timer = null;
     return function () {
@@ -4125,6 +4197,7 @@
     "sidebar", "sidebar-toggle", "sidebar-open-btn", "nav-list", "nav-badge-changes",
     "stat-tickets", "stat-imports", "stat-changes", "app-version",
     "tiles", "type-chips", "type-quick-presets", "domain-chart", "domain-section", "domain-label", "domain-select", "label-select", "search-input", "reset-filter-btn",
+    "assignment-mode-tabs", "assignment-tbody", "assignment-empty", "assignment-group-count", "assignment-ticket-count",
     "table-body", "empty-state", "result-count",
     "select-all-checkbox", "selection-count", "selection-select-all-btn", "selection-clear-btn",
     "selection-export-keys-btn", "selection-export-content-btn",
@@ -4148,13 +4221,14 @@
     "release-missing-wrap", "release-missing-table", "release-missing-tbody",
     "jiraliste-count", "jiraliste-tbody",
     "domainoverview-domain-count", "domainoverview-ticket-count", "domainoverview-tbody", "domainoverview-empty",
-    "rag-domain-select", "rag-status-select", "rag-date-from", "rag-date-to", "rag-extract-btn",
+    "rag-domain-select", "rag-status-select", "rag-label-category-select", "rag-outline-select", "rag-date-from", "rag-date-to", "rag-extract-btn",
     "rag-extract-summary", "rag-extract-count", "rag-extract-wrap", "rag-extract-tbody", "rag-export-row",
     "rag-generate-summary-btn", "rag-generate-fliesstext-btn", "rag-stop-btn", "rag-status-note", "rag-output", "rag-download-btn",
     "rag-translate-btn",
     "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
     "points-tbody", "points-new-type", "points-new-value", "points-add-btn",
-    "labels-list", "labels-new-input", "labels-add-btn",
+    "labels-tbody", "labels-new-category", "labels-new-de", "labels-new-en", "labels-add-btn", "label-category-datalist",
+    "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn",
     "test-results-date", "test-results-suites", "test-results-total", "test-results-passed", "test-results-failed", "test-results-tbody",
     "evaluate-tickets-btn", "evaluate-summary", "evaluate-count-manual", "evaluate-count-internal", "evaluate-count-unknown",
     "evaluate-table-wrap", "evaluate-tbody",
@@ -4233,10 +4307,17 @@
       { type: "Change Request", points: 3 },
       { type: "Reporting", points: 2 }
     ],
-    // Labels (Einstellungen): frei editierbare Stichwortliste, wird beim
-    // Verarbeiten per Text-Abgleich automatisch Tickets zugeordnet. Ebenfalls
-    // Konfiguration, kein Sitzungsdatensatz.
-    labels: ["Market", "HQ", "Dealer", "Vehicle", "Finance", "Claim", "Product", "Van", "PC", "Price", "Prolongation"]
+    // Labels (Einstellungen): frei editierbare Begriffsliste je Themengebiet
+    // (Kategorie/Deutsch/Englisch), wird beim Verarbeiten per Text-Abgleich
+    // automatisch Tickets zugeordnet. Ebenfalls Konfiguration, kein
+    // Sitzungsdatensatz - siehe labelSeedData() (Funktionsdeklaration, daher
+    // trotz spaeterer Position im Code hier bereits nutzbar/gehoisted).
+    labels: labelSeedData(),
+    // Benutzerhandbuch-Gliederung (Einstellungen): Kapitel/Unterkapitel,
+    // wird beim Verarbeiten per Text-Abgleich (wie Labels) automatisch
+    // Tickets zugeordnet - siehe outlineSeedData()/computeAutoOutline().
+    // Ebenfalls Konfiguration, kein Sitzungsdatensatz.
+    outline: outlineSeedData()
   };
 
   function addLog(message) {
@@ -4437,6 +4518,288 @@
     showToast("Daten gelöscht", "Alle geladenen Daten wurden aus dieser Sitzung entfernt.");
   });
 
+  /* ============ Einstellungen: Punkte-System + Labels + Gliederung ============ */
+
+  // Standard-Begriffsliste (Einstellungen -> Labels): je Themengebiet ein
+  // deutscher und englischer Begriff, editierbar/erweiterbar/löschbar in
+  // Einstellungen. Reiner Ausgangsbestand - kein hartkodiertes Verhalten,
+  // computeAutoLabels()/computeAutoLabelCategories() lesen zur Laufzeit
+  // immer app.labels (inkl. späterer Änderungen durch den Nutzer).
+  function labelSeedData() {
+    var rows = [
+      ["System, Rollen & Zugang", "oneSCM", "oneSCM"],
+      ["System, Rollen & Zugang", "oneSCM-Ökosystem", "oneSCM ecosystem"],
+      ["System, Rollen & Zugang", "Dealer-Rolle", "Dealer role"],
+      ["System, Rollen & Zugang", "Markt-Rolle", "Market role"],
+      ["System, Rollen & Zugang", "MO-Rolle", "MO role"],
+      ["System, Rollen & Zugang", "Market Operation", "Market Operation"],
+      ["System, Rollen & Zugang", "HQ-Rolle", "HQ role"],
+      ["System, Rollen & Zugang", "Headquarters", "Headquarters"],
+      ["System, Rollen & Zugang", "Kundenrolle", "Customer role"],
+      ["System, Rollen & Zugang", "Prozessrolle", "Process role"],
+      ["System, Rollen & Zugang", "Systemrolle", "System role"],
+      ["System, Rollen & Zugang", "Zugriffsrolle", "Access role"],
+      ["System, Rollen & Zugang", "Berechtigung", "Authorization / permission"],
+      ["System, Rollen & Zugang", "Berechtigungsantrag", "Authorization request"],
+      ["System, Rollen & Zugang", "ALICE-Berechtigungssystem", "ALICE authorization system"],
+      ["System, Rollen & Zugang", "Autohaus-Administrator", "Dealership administrator"],
+      ["System, Rollen & Zugang", "Login", "Login"],
+      ["System, Rollen & Zugang", "Single Sign-on / SSO", "Single sign-on / SSO"],
+      ["System, Rollen & Zugang", "RetailPortal", "RetailPortal"],
+      ["System, Rollen & Zugang", "Web-Anwendung", "Web application"],
+      ["Navigation & Oberfläche", "Startseite", "Home page"],
+      ["Navigation & Oberfläche", "Menü", "Menu"],
+      ["Navigation & Oberfläche", "Hauptnavigation", "Main navigation"],
+      ["Navigation & Oberfläche", "Schnellzugriff", "Quick access"],
+      ["Navigation & Oberfläche", "Formular", "Form"],
+      ["Navigation & Oberfläche", "Assistent", "Wizard"],
+      ["Navigation & Oberfläche", "Next-Button", "Next button"],
+      ["Navigation & Oberfläche", "Drei-Punkte-Menü", "Three-dot menu"],
+      ["Navigation & Oberfläche", "Pflichtfeld", "Mandatory field"],
+      ["Navigation & Oberfläche", "Status", "Status"],
+      ["Navigation & Oberfläche", "Statuswert", "Status value"],
+      ["Navigation & Oberfläche", "Suche", "Search"],
+      ["Navigation & Oberfläche", "Filter", "Filter"],
+      ["Navigation & Oberfläche", "Kundensuche", "Customer search"],
+      ["Navigation & Oberfläche", "Produktübersicht", "Product overview"],
+      ["Navigation & Oberfläche", "Produktauswahl", "Product selection"],
+      ["Navigation & Oberfläche", "Produktvergleich", "Product comparison"],
+      ["Navigation & Oberfläche", "Produktverwaltung", "Product management"],
+      ["Kunden & Vertragsrollen", "Vertragsinhaber", "Contract holder"],
+      ["Kunden & Vertragsrollen", "Vertragszahler", "Contract payer"],
+      ["Kunden & Vertragsrollen", "Vertragsnutzer", "Contract user"],
+      ["Kunden & Vertragsrollen", "Vertragskontakt", "Contract contact"],
+      ["Kunden & Vertragsrollen", "Privatkunde", "Private customer"],
+      ["Kunden & Vertragsrollen", "Geschäftskunde", "Business customer"],
+      ["Kunden & Vertragsrollen", "Großkunde", "Major customer"],
+      ["Kunden & Vertragsrollen", "KAM-betreuter Großkunde", "KAM-managed key account"],
+      ["Kunden & Vertragsrollen", "Öffentliche Körperschaft", "Public body"],
+      ["Kunden & Vertragsrollen", "Umsatzsteuerbefreiter Kunde", "VAT-exempt customer"],
+      ["Kunden & Vertragsrollen", "Kundengruppe", "Customer group"],
+      ["Kunden & Vertragsrollen", "Untergruppe", "Subgroup"],
+      ["Kunden & Vertragsrollen", "Kundendaten", "Customer data"],
+      ["Kunden & Vertragsrollen", "Kundendatensatz", "Customer record"],
+      ["Kunden & Vertragsrollen", "Kundenverwaltung", "Customer management"],
+      ["Kunden & Vertragsrollen", "Dublette", "Duplicate"],
+      ["Kunden & Vertragsrollen", "USt-ID", "VAT ID"],
+      ["Kunden & Vertragsrollen", "Umsatzsteuer", "Value-added tax / VAT"],
+      ["Fahrzeuge & Fahrzeugdaten", "Fahrzeug", "Vehicle"],
+      ["Fahrzeuge & Fahrzeugdaten", "Fahrzeugdaten", "Vehicle data"],
+      ["Fahrzeuge & Fahrzeugdaten", "Fahrzeugverwaltung", "Vehicle management"],
+      ["Fahrzeuge & Fahrzeugdaten", "Fahrzeuggruppe", "Vehicle group"],
+      ["Fahrzeuge & Fahrzeugdaten", "Baumuster", "Model series"],
+      ["Fahrzeuge & Fahrzeugdaten", "FIN", "VIN"],
+      ["Fahrzeuge & Fahrzeugdaten", "VIN", "VIN"],
+      ["Fahrzeuge & Fahrzeugdaten", "Test-FIN", "Test VIN"],
+      ["Fahrzeuge & Fahrzeugdaten", "Kennzeichen", "License plate"],
+      ["Fahrzeuge & Fahrzeugdaten", "Erstzulassung", "First registration"],
+      ["Fahrzeuge & Fahrzeugdaten", "Zulassungsbescheinigung", "Registration certificate"],
+      ["Fahrzeuge & Fahrzeugdaten", "ZB1", "Registration certificate part I"],
+      ["Fahrzeuge & Fahrzeugdaten", "ZB2", "Registration certificate part II"],
+      ["Fahrzeuge & Fahrzeugdaten", "Kilometerstand", "Mileage"],
+      ["Fahrzeuge & Fahrzeugdaten", "Aktueller Kilometerstand", "Current mileage"],
+      ["Fahrzeuge & Fahrzeugdaten", "Leasingfahrzeug", "Leasing vehicle"],
+      ["Fahrzeuge & Fahrzeugdaten", "MBLD-Strecke", "MBLD process"],
+      ["Vertragsanlage & Antrag", "Servicevertrag", "Service contract"],
+      ["Vertragsanlage & Antrag", "Vertragserstellung", "Contract creation"],
+      ["Vertragsanlage & Antrag", "Vertragsangebot", "Contract offer"],
+      ["Vertragsanlage & Antrag", "Antragserstellung", "Application creation"],
+      ["Vertragsanlage & Antrag", "Antragsformular", "Application form"],
+      ["Vertragsanlage & Antrag", "Antragsverwaltung", "Application management"],
+      ["Vertragsanlage & Antrag", "Vertragsverwaltung", "Contract management"],
+      ["Vertragsanlage & Antrag", "Vertragslebenszyklus", "Contract lifecycle"],
+      ["Vertragsanlage & Antrag", "Vertrag aktivieren", "Activate contract"],
+      ["Vertragsanlage & Antrag", "Aktivierung", "Activation"],
+      ["Vertragsanlage & Antrag", "Angebotsphase", "Offer phase"],
+      ["Vertragsanlage & Antrag", "Bestellphase", "Order phase"],
+      ["Vertragsanlage & Antrag", "Produktion", "Production"],
+      ["Vertragsanlage & Antrag", "OTR-Deal-ID", "OTR deal ID"],
+      ["Vertragsanlage & Antrag", "VerSo-Order-ID", "VerSo order ID"],
+      ["Vertragsanlage & Antrag", "Vertragskalkulation", "Contract calculation"],
+      ["Vertragsanlage & Antrag", "Produktdefinition", "Product definition"],
+      ["Vertragsanlage & Antrag", "Produktpflege", "Product maintenance"],
+      ["Vertragsanlage & Antrag", "Preisindikation", "Price indication"],
+      ["Produkte, Pakete & Reifen", "ServiceCare-Paket", "ServiceCare package"],
+      ["Produkte, Pakete & Reifen", "Komplettservice-Paket", "Full-service package"],
+      ["Produkte, Pakete & Reifen", "Garantie- und Wartungs-Paket", "Warranty and maintenance package"],
+      ["Produkte, Pakete & Reifen", "Wartungs-Paket", "Maintenance package"],
+      ["Produkte, Pakete & Reifen", "Reines Wartungs-Paket", "Maintenance-only package"],
+      ["Produkte, Pakete & Reifen", "Mobilo Van", "Mobilo Van"],
+      ["Produkte, Pakete & Reifen", "Tire Product", "Tire product"],
+      ["Produkte, Pakete & Reifen", "Reifenbaustein", "Tire module"],
+      ["Produkte, Pakete & Reifen", "Reifenersatz", "Tire replacement"],
+      ["Produkte, Pakete & Reifen", "Limited", "Limited"],
+      ["Produkte, Pakete & Reifen", "Unlimited", "Unlimited"],
+      ["Produkte, Pakete & Reifen", "Complex", "Complex"],
+      ["Produkte, Pakete & Reifen", "Vertragstyp", "Contract type"],
+      ["Produkte, Pakete & Reifen", "Produkttyp", "Product type"],
+      ["Produkte, Pakete & Reifen", "Stand-Alone-Servicevertrag", "Stand-alone service contract"],
+      ["Produkte, Pakete & Reifen", "ServiceLeasing", "Service leasing"],
+      ["Zahlung & Rechnung", "Zahlungsart", "Payment method"],
+      ["Zahlung & Rechnung", "Zahlungsmethode", "Payment method"],
+      ["Zahlung & Rechnung", "Zahlungsintervall", "Payment interval"],
+      ["Zahlung & Rechnung", "Monatliche Zahlung", "Monthly payment"],
+      ["Zahlung & Rechnung", "Einmalzahlung", "One-time payment"],
+      ["Zahlung & Rechnung", "Vierteljährliche Zahlung", "Quarterly payment"],
+      ["Zahlung & Rechnung", "Halbjährliche Zahlung", "Semi-annual payment"],
+      ["Zahlung & Rechnung", "Jährliche Zahlung", "Annual payment"],
+      ["Zahlung & Rechnung", "SEPA-Lastschrift", "SEPA direct debit"],
+      ["Zahlung & Rechnung", "SEPA-Mandat", "SEPA mandate"],
+      ["Zahlung & Rechnung", "IBAN", "IBAN"],
+      ["Zahlung & Rechnung", "IBAN-Prüfung", "IBAN validation"],
+      ["Zahlung & Rechnung", "Kreditkarte", "Credit card"],
+      ["Zahlung & Rechnung", "MPay", "MPay"],
+      ["Zahlung & Rechnung", "Bank Transfer", "Bank transfer"],
+      ["Zahlung & Rechnung", "Payment Hub", "Payment Hub"],
+      ["Zahlung & Rechnung", "Sammelrechnung", "Collective invoice"],
+      ["Zahlung & Rechnung", "Einzelrechnung", "Individual invoice"],
+      ["Zahlung & Rechnung", "Rechnungsstellung", "Invoicing"],
+      ["Zahlung & Rechnung", "Servicerate", "Service installment"],
+      ["Zahlung & Rechnung", "Fälligkeit", "Due date"],
+      ["Zahlung & Rechnung", "Zahlungsverzug", "Payment default"],
+      ["Zahlung & Rechnung", "Basiszins", "Base interest rate"],
+      ["Zahlung & Rechnung", "Zahlungsabwicklung", "Payment processing"],
+      ["Zahlung & Rechnung", "FI-Dokument", "FI document"],
+      ["Dokumente & Unterschrift", "Kundenunterschrift", "Customer signature"],
+      ["Dokumente & Unterschrift", "Digitale Unterschrift", "Digital signature"],
+      ["Dokumente & Unterschrift", "QR-Code-Unterschrift", "QR code signature"],
+      ["Dokumente & Unterschrift", "SMS-Code", "SMS code"],
+      ["Dokumente & Unterschrift", "E-Mail-Link", "Email link"],
+      ["Dokumente & Unterschrift", "Dokumentendruck", "Document printout"],
+      ["Dokumente & Unterschrift", "Fallback", "Fallback"],
+      ["Dokumente & Unterschrift", "Document-Tab", "Document tab"],
+      ["Dokumente & Unterschrift", "Payment-Tab", "Payment tab"],
+      ["Dokumente & Unterschrift", "Kommunikation", "Communication"],
+      ["Status, Prüfung & Aktivierung", "Freigabeprozess", "Approval process"],
+      ["Status, Prüfung & Aktivierung", "MO-Check", "MO check"],
+      ["Status, Prüfung & Aktivierung", "Warten auf Bestätigung", "Waiting for confirmation"],
+      ["Status, Prüfung & Aktivierung", "Bestätigt", "Confirmed"],
+      ["Status, Prüfung & Aktivierung", "Warten auf Aktivierung", "Waiting for activation"],
+      ["Status, Prüfung & Aktivierung", "Aktiv", "Active"],
+      ["Status, Prüfung & Aktivierung", "Abgelehnt", "Rejected"],
+      ["Status, Prüfung & Aktivierung", "Storniert", "Cancelled"],
+      ["Status, Prüfung & Aktivierung", "Suspended", "Suspended"],
+      ["Status, Prüfung & Aktivierung", "Resume Activation", "Resume activation"],
+      ["Status, Prüfung & Aktivierung", "Genehmigt", "Approved"],
+      ["Status, Prüfung & Aktivierung", "In Prüfung", "Under review"],
+      ["Status, Prüfung & Aktivierung", "Überarbeitung", "Revision"],
+      ["Status, Prüfung & Aktivierung", "Inaktiv", "Inactive"],
+      ["Status, Prüfung & Aktivierung", "4-Augen-Prüfung", "Four-eyes review"],
+      ["Status, Prüfung & Aktivierung", "Zweitprüfung", "Second review"],
+      ["Test, Fehler & Validierung", "Validierung", "Validation"],
+      ["Test, Fehler & Validierung", "Validierungsregel", "Validation rule"],
+      ["Test, Fehler & Validierung", "Fehlermeldung", "Error message"],
+      ["Test, Fehler & Validierung", "Testumgebung", "Test environment"],
+      ["Test, Fehler & Validierung", "Preprod", "Preprod"],
+      ["Test, Fehler & Validierung", "Testdaten", "Test data"],
+      ["Test, Fehler & Validierung", "Test-IBAN", "Test IBAN"],
+      ["Test, Fehler & Validierung", "E-Mail-Format", "Email format"],
+      ["Test, Fehler & Validierung", "System-Health-Check", "System health check"],
+      ["Test, Fehler & Validierung", "Batch-Job", "Batch job"],
+      ["Test, Fehler & Validierung", "Konsistenzprüfung", "Consistency check"],
+      ["Test, Fehler & Validierung", "Nemesis", "Nemesis"],
+      ["Backend & Schnittstellen", "Backend-System", "Backend system"],
+      ["Backend & Schnittstellen", "Schnittstelle", "Interface"],
+      ["Backend & Schnittstellen", "Systemlandschaft", "System landscape"],
+      ["Backend & Schnittstellen", "VEGA", "VEGA"],
+      ["Backend & Schnittstellen", "oneERP", "oneERP"],
+      ["Backend & Schnittstellen", "Claim", "Claim"],
+      ["Backend & Schnittstellen", "Kostenmanagement", "Cost management"],
+      ["Backend & Schnittstellen", "Umsatzmanagement", "Revenue management"],
+      ["Backend & Schnittstellen", "Partnerverwaltung", "Partner management"],
+      ["Vertragsänderung & Kündigung", "Zahlerwechsel", "Payer change"],
+      ["Vertragsänderung & Kündigung", "Transferdetails", "Transfer details"],
+      ["Vertragsänderung & Kündigung", "Novationsdokument", "Novation document"],
+      ["Vertragsänderung & Kündigung", "Vertragskündigung", "Contract termination"],
+      ["Vertragsänderung & Kündigung", "Vorzeitiges Ausscheiden", "Early exit"],
+      ["Vertragsänderung & Kündigung", "Außerordentliche Kündigung", "Extraordinary termination"],
+      ["Vertragsänderung & Kündigung", "Vertragsverlängerung", "Contract extension"],
+      ["Vertragsänderung & Kündigung", "Folgevertrag", "Follow-up contract"],
+      ["Vertragsänderung & Kündigung", "Meldedatum", "Notification date"],
+      ["Vertragsänderung & Kündigung", "Eigentümerwechsel", "Change of ownership"],
+      ["Vertragsänderung & Kündigung", "Totalschaden", "Total loss"],
+      ["Vertragsänderung & Kündigung", "Diebstahl", "Theft"],
+      ["Vertragsänderung & Kündigung", "Restwert", "Residual value"],
+      ["Vertragsänderung & Kündigung", "Nachfrist", "Grace period"],
+      ["Kampagnen & Sonderkonditionen", "Preisaktion", "Price campaign"],
+      ["Kampagnen & Sonderkonditionen", "Kampagne", "Campaign"],
+      ["Kampagnen & Sonderkonditionen", "Kampagnensteuerung", "Campaign management"],
+      ["Kampagnen & Sonderkonditionen", "Gültigkeitszeitraum", "Validity period"],
+      ["Kampagnen & Sonderkonditionen", "Bestelldatum", "Order date"],
+      ["Kampagnen & Sonderkonditionen", "Sonderkondition", "Special condition"],
+      ["Kampagnen & Sonderkonditionen", "Sonderkonditionsanfrage", "Special condition request"],
+      ["Kampagnen & Sonderkonditionen", "CaM-Team", "CaM team"],
+      ["Kampagnen & Sonderkonditionen", "Individuelle Kondition", "Individual condition"],
+      ["Kampagnen & Sonderkonditionen", "Laufleistungswunsch", "Mileage request"],
+      ["Kampagnen & Sonderkonditionen", "Händlerrabatt", "Dealer discount"],
+      ["Kampagnen & Sonderkonditionen", "Mass Creation", "Mass creation"],
+      ["Kampagnen & Sonderkonditionen", "Group ID", "Group ID"],
+      ["Kampagnen & Sonderkonditionen", "Flotte", "Fleet"],
+      ["Kampagnen & Sonderkonditionen", "Flottenkunde", "Fleet customer"],
+      ["Governance & Blueprint", "Blueprint", "Blueprint"],
+      ["Governance & Blueprint", "oneSCM-Blueprint", "oneSCM blueprint"],
+      ["Governance & Blueprint", "Länderabweichung", "Country deviation"],
+      ["Governance & Blueprint", "Markteinstellung", "Market setting"],
+      ["Governance & Blueprint", "Market Settings", "Market settings"],
+      ["Governance & Blueprint", "Inflationsanpassung", "Inflation adjustment"],
+      ["Governance & Blueprint", "Standardkonfiguration", "Standard configuration"],
+      ["Governance & Blueprint", "Governance", "Governance"],
+      ["Governance & Blueprint", "Qualitätssicherung", "Quality assurance"],
+      ["Governance & Blueprint", "Datenschutz", "Data protection"],
+      ["Governance & Blueprint", "Zuständigkeit", "Responsibility"],
+      ["Governance & Blueprint", "Marktorganisation", "Market organization"]
+    ];
+    return rows.map(function (r) { return { category: r[0], de: r[1], en: r[2] }; });
+  }
+
+  // Standard-Gliederung (Einstellungen -> Benutzerhandbuch-Gliederung):
+  // Kapitel + Unterkapitel, editierbar/erweiterbar/löschbar. IDs fortlaufend
+  // über Kapitel UND Unterkapitel hinweg vergeben (fuer eindeutige
+  // delete-Referenzen, s. nextOutlineId()).
+  function outlineSeedData() {
+    var raw = [
+      ["Willkommen zu Ihrer oneSCM-Schulung", []],
+      ["Inhaltsverzeichnis", []],
+      ["Kapitel 1: Einführung und Überblick", ["1.1 Ziele und Nutzen", "1.2 Projekthintergrund", "1.3 Beteiligte Rollen", "1.4 Rollen im oneSCM-Ökosystem"]],
+      ["Kapitel 2: Zugang, Rollen und Berechtigungen", ["2.1 Login und SSO", "2.2 Rollenkonzept", "2.3 Berechtigungsantrag"]],
+      ["Kapitel 3: Grundlagen und Navigation", ["3.1 Startseite und Menü", "3.2 Suche und Filter", "3.3 Oberflächenelemente"]],
+      ["Kapitel 4: Servicevertrag anlegen", ["4.1 Vertragsarten", "4.2 Pflichtfelder", "4.3 Validierungsregeln"]],
+      ["Kapitel 5: Zahlung, Rechnung und Unterschrift", ["5.1 Zahlungsarten", "5.2 Rechnungsstellung", "5.3 Digitale Unterschrift"]],
+      ["Kapitel 6: Antrag verfolgen und aktivieren", ["6.1 Statusübersicht", "6.2 Freigabeprozess", "6.3 Aktivierung"]],
+      ["Kapitel 7: Verträge im Alltag verwalten", ["7.1 Änderungen", "7.2 Kündigung", "7.3 Verlängerung"]],
+      ["Kapitel 8: Geschäftskunden, Kampagnen, Sonderfälle", ["8.1 Geschäftskunden", "8.2 Kampagnen", "8.3 Sonderkonditionen"]],
+      ["Kapitel 9: Troubleshooting und Support", ["9.1 Bekannte Fehler", "9.2 Eskalationswege", "9.3 Häufig gestellte Fragen"]],
+      ["Kapitel 13: Markt-Rolle", ["13.1 Aufgaben und Abgrenzung der Marktrolle", "13.2 Marktspezifische Einstellungen", "13.3 Länderabweichungen vom Blueprint"]],
+      ["Kapitel 14: MO Checks (Market Operation)", ["14.1 Aufgaben der MO-Rolle", "14.2 Der MO-Check im Aktivierungsprozess", "14.3 Qualitätssicherung und Systemprüfungen"]],
+      ["Kapitel 10: Prozesse und Schaubilder", ["10.1 Prozesslandkarte", "10.2 Schnittstellen", "10.3 Ablaufdiagramme"]],
+      ["Kapitel 11: Governance, Qualität, Datenschutz", ["11.1 Datenschutz", "11.2 Qualitätssicherung", "11.3 Freigabeworkflow"]],
+      ["Kapitel 15: HQ-Rolle und Blueprint", ["15.1 Aufgaben der HQ-Rolle", "15.2 Blueprint-Pflege und Rollout in neue Länder", "15.3 Governance auf HQ-Ebene"]],
+      ["Kapitel 16: Glossar, Checklisten, Anhang", ["16.1 Glossar", "16.2 Checkliste", "16.3 Anhang"]],
+      ["Glossar", []],
+      ["Checkliste für den Alltag", []],
+      ["Bildverzeichnis", []],
+      ["Bildnachweis", []],
+      ["Lösungen zum Wissenscheck", []],
+      ["Anhang", []]
+    ];
+    var nextId = 1;
+    return raw.map(function (c) {
+      return {
+        id: nextId++,
+        title: c[0],
+        subs: c[1].map(function (s) { return { id: nextId++, title: s }; })
+      };
+    });
+  }
+  function nextOutlineId() {
+    var maxId = 0;
+    app.outline.forEach(function (c) {
+      if (c.id > maxId) maxId = c.id;
+      c.subs.forEach(function (s) { if (s.id > maxId) maxId = s.id; });
+    });
+    return maxId + 1;
+  }
+
   /* ============ Einstellungen: Punkte-System + Labels ============ */
 
   function renderPointsTable() {
@@ -4481,36 +4844,108 @@
     refreshDashboard(false);
   });
 
+  // Labels-Tabelle (Kategorie/Deutsch/Englisch) - jede Zeile einzeln
+  // löschbar über ihren Index (wie zuvor bei der flachen Liste); das
+  // Kategorie-Datalist wird bei jedem Render frisch aus app.labels
+  // abgeleitet, damit neu angelegte Kategorien sofort als Vorschlag
+  // erscheinen.
   function renderLabelsList() {
-    els.labelsList.innerHTML = app.labels.map(function (lbl, idx) {
-      return '<span class="label-chip">' + escapeHtml(lbl) + '<button type="button" data-idx="' + idx + '" aria-label="Label entfernen">×</button></span>';
-    }).join("") || '<span class="empty-hint" style="padding:0;">Noch keine Labels angelegt.</span>';
+    els.labelsTbody.innerHTML = app.labels.map(function (lbl, idx) {
+      return "<tr><td>" + escapeHtml(lbl.category) + "</td><td>" + escapeHtml(lbl.de) + "</td><td>" + escapeHtml(lbl.en) + '</td><td>' +
+        '<button type="button" class="btn danger btn-tiny" data-action="delete-label" data-idx="' + idx + '">Löschen</button></td></tr>';
+    }).join("") || '<tr><td colspan="4" class="empty-hint">Noch keine Labels angelegt.</td></tr>';
+    els.labelCategoryDatalist.innerHTML = dedupeStrings(app.labels.map(function (l) { return l.category; }))
+      .sort(function (a, b) { return a.localeCompare(b, "de"); })
+      .map(function (c) { return '<option value="' + escapeHtml(c) + '">'; }).join("");
   }
-  els.labelsList.addEventListener("click", function (e) {
-    var btn = e.target.closest("button[data-idx]");
+  els.labelsTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest('button[data-action="delete-label"]');
     if (!btn) return;
     var idx = parseInt(btn.getAttribute("data-idx"), 10);
     var removed = app.labels[idx];
     if (removed == null) return;
     app.labels.splice(idx, 1);
-    addLog("Label „" + removed + "“ entfernt.");
+    addLog("Label „" + removed.de + "“ (" + removed.category + ") entfernt.");
     renderLabelsList();
     refreshDashboard(false);
   });
   els.labelsAddBtn.addEventListener("click", function () {
-    var val = (els.labelsNewInput.value || "").trim();
-    if (!val) { showToast("Kein Label", "Bitte einen Labeltext eingeben.", true); return; }
-    if (app.labels.some(function (l) { return l.toLowerCase() === val.toLowerCase(); })) {
-      showToast("Label existiert bereits", "„" + val + "“ ist schon in der Liste.", true);
+    var category = (els.labelsNewCategory.value || "").trim();
+    var de = (els.labelsNewDe.value || "").trim();
+    var en = (els.labelsNewEn.value || "").trim();
+    if (!category) { showToast("Kein Themengebiet", "Bitte ein Themengebiet eingeben (z. B. Zahlung & Rechnung).", true); return; }
+    if (!de && !en) { showToast("Kein Begriff", "Bitte mindestens einen deutschen oder englischen Begriff eingeben.", true); return; }
+    if (app.labels.some(function (l) { return l.category.toLowerCase() === category.toLowerCase() && l.de.toLowerCase() === de.toLowerCase() && l.en.toLowerCase() === en.toLowerCase(); })) {
+      showToast("Label existiert bereits", "Dieser Eintrag ist schon in der Liste.", true);
       return;
     }
-    app.labels.push(val);
-    addLog("Neues Label „" + val + "“ angelegt.");
-    els.labelsNewInput.value = "";
+    app.labels.push({ category: category, de: de, en: en });
+    addLog("Neues Label „" + (de || en) + "“ (" + category + ") angelegt.");
+    els.labelsNewCategory.value = ""; els.labelsNewDe.value = ""; els.labelsNewEn.value = "";
     renderLabelsList();
     refreshDashboard(false);
   });
-  els.labelsNewInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); els.labelsAddBtn.click(); } });
+  [els.labelsNewCategory, els.labelsNewDe, els.labelsNewEn].forEach(function (input) {
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); els.labelsAddBtn.click(); } });
+  });
+
+  // Gliederungs-Tabelle (Benutzerhandbuch): Kapitel mit eingerückten
+  // Unterkapiteln + je Kapitel ein Mini-Formular zum Hinzufügen eines
+  // weiteren Unterkapitels.
+  function renderOutlineList() {
+    els.outlineTbody.innerHTML = app.outline.map(function (c) {
+      var chapterRow = '<tr class="outline-chapter-row"><td><b>' + escapeHtml(c.title) + '</b></td><td>' +
+        '<button type="button" class="btn danger btn-tiny" data-action="delete-chapter" data-chapter-id="' + c.id + '">Kapitel löschen</button></td></tr>';
+      var subRows = c.subs.map(function (s) {
+        return '<tr class="outline-sub-row"><td style="padding-left:28px;">' + escapeHtml(s.title) + '</td><td>' +
+          '<button type="button" class="btn danger btn-tiny" data-action="delete-sub" data-chapter-id="' + c.id + '" data-sub-id="' + s.id + '">Löschen</button></td></tr>';
+      }).join("");
+      var addSubRow = '<tr class="outline-add-sub-row"><td colspan="2" style="padding-left:28px;">' +
+        '<input type="text" class="text-input outline-new-sub-input" data-chapter-id="' + c.id + '" placeholder="Neues Unterkapitel, z. B. 4.4 Sonderfälle" style="max-width:280px;">' +
+        '<button type="button" class="btn ghost btn-tiny" data-action="add-sub" data-chapter-id="' + c.id + '">Hinzufügen</button></td></tr>';
+      return chapterRow + subRows + addSubRow;
+    }).join("");
+  }
+  els.outlineTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    var action = btn.getAttribute("data-action");
+    var chapterId = parseInt(btn.getAttribute("data-chapter-id"), 10);
+    var chapter = app.outline.filter(function (c) { return c.id === chapterId; })[0];
+    if (!chapter) return;
+    if (action === "delete-chapter") {
+      app.outline = app.outline.filter(function (c) { return c.id !== chapterId; });
+      addLog("Gliederung: Kapitel „" + chapter.title + "“ (inkl. " + chapter.subs.length + " Unterkapitel) entfernt.");
+      renderOutlineList();
+      refreshDashboard(false);
+    } else if (action === "delete-sub") {
+      var subId = parseInt(btn.getAttribute("data-sub-id"), 10);
+      var sub = chapter.subs.filter(function (s) { return s.id === subId; })[0];
+      if (!sub) return;
+      chapter.subs = chapter.subs.filter(function (s) { return s.id !== subId; });
+      addLog("Gliederung: Unterkapitel „" + sub.title + "“ entfernt.");
+      renderOutlineList();
+      refreshDashboard(false);
+    } else if (action === "add-sub") {
+      var input = els.outlineTbody.querySelector('.outline-new-sub-input[data-chapter-id="' + chapterId + '"]');
+      var val = (input && input.value || "").trim();
+      if (!val) { showToast("Kein Titel", "Bitte einen Unterkapitel-Titel eingeben.", true); return; }
+      chapter.subs.push({ id: nextOutlineId(), title: val });
+      addLog("Gliederung: neues Unterkapitel „" + val + "“ zu „" + chapter.title + "“ hinzugefügt.");
+      renderOutlineList();
+      refreshDashboard(false);
+    }
+  });
+  els.outlineAddChapterBtn.addEventListener("click", function () {
+    var val = (els.outlineNewChapterInput.value || "").trim();
+    if (!val) { showToast("Kein Titel", "Bitte einen Kapiteltitel eingeben.", true); return; }
+    app.outline.push({ id: nextOutlineId(), title: val, subs: [] });
+    addLog("Gliederung: neues Kapitel „" + val + "“ angelegt.");
+    els.outlineNewChapterInput.value = "";
+    renderOutlineList();
+    refreshDashboard(false);
+  });
+  els.outlineNewChapterInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); els.outlineAddChapterBtn.click(); } });
 
   /* ============ Einstellungen: Testergebnisse (eingebetteter Bericht) ============ */
 
@@ -4559,11 +4994,54 @@
     return entry ? entry.points : null;
   }
   // Labels: reiner Text-Abgleich (keine KI) der in Einstellungen gepflegten
-  // Stichwortliste gegen Zusammenfassung/Beschreibung/Domain des Tickets.
-  function computeAutoLabels(rawTicket) {
+  // Begriffsliste (je Themengebiet, Deutsch UND Englisch) gegen
+  // Zusammenfassung/Beschreibung/Domain des Tickets. matchedLabelEntries()
+  // liefert die vollen Label-Objekte (fuer Kategorie-Auswertung), die
+  // beiden duennen Wrapper darunter bleiben fuer bestehende Aufrufer mit
+  // reinen String-Arrays kompatibel.
+  function matchedLabelEntries(rawTicket) {
     var haystack = [rawTicket.summary || "", rawTicket.description || "", (rawTicket.custom_fields && rawTicket.custom_fields.Domain) || ""]
       .join(" \n ").toLowerCase();
-    return app.labels.filter(function (lbl) { return haystack.indexOf(lbl.toLowerCase()) !== -1; });
+    return app.labels.filter(function (lbl) {
+      return (lbl.de && haystack.indexOf(lbl.de.toLowerCase()) !== -1) || (lbl.en && haystack.indexOf(lbl.en.toLowerCase()) !== -1);
+    });
+  }
+  function dedupeStrings(arr) {
+    var seen = {}, out = [];
+    arr.forEach(function (v) { if (v && !seen[v]) { seen[v] = true; out.push(v); } });
+    return out;
+  }
+  function computeAutoLabels(rawTicket) {
+    return matchedLabelEntries(rawTicket).map(function (lbl) { return lbl.de; });
+  }
+  function computeAutoLabelCategories(rawTicket) {
+    return dedupeStrings(matchedLabelEntries(rawTicket).map(function (lbl) { return lbl.category; }));
+  }
+
+  // Benutzerhandbuch-Gliederung: dieselbe Text-Abgleich-Mechanik wie bei
+  // Labels ("ähnlich wie bei Label"), angewandt auf Kapitel-/
+  // Unterkapitel-Titel statt auf eine Stichwortliste. outlineMatchPhrase()
+  // entfernt die Nummerierung ("Kapitel 4: "/"4.1 ") vor dem Abgleich, da
+  // diese Praefixe selbst nie im Ticket-Text vorkommen wuerden.
+  function outlineMatchPhrase(title) {
+    return title.replace(/^Kapitel\s+\d+\s*:\s*/i, "").replace(/^\d+(\.\d+)*\s+/, "").trim();
+  }
+  function computeAutoOutline(rawTicket) {
+    var haystack = [rawTicket.summary || "", rawTicket.description || "", (rawTicket.custom_fields && rawTicket.custom_fields.Domain) || ""]
+      .join(" \n ").toLowerCase();
+    var matched = [];
+    app.outline.forEach(function (chapter) {
+      var chapterPhrase = outlineMatchPhrase(chapter.title).toLowerCase();
+      var hit = chapterPhrase.length >= 3 && haystack.indexOf(chapterPhrase) !== -1;
+      if (!hit) {
+        hit = chapter.subs.some(function (s) {
+          var subPhrase = outlineMatchPhrase(s.title).toLowerCase();
+          return subPhrase.length >= 3 && haystack.indexOf(subPhrase) !== -1;
+        });
+      }
+      if (hit) matched.push(chapter.title);
+    });
+    return matched;
   }
 
   function refreshDashboard(resetFilters) {
@@ -4580,7 +5058,9 @@
         createdSort: parseJiraDate(t.created), updatedSort: parseJiraDate(t.updated),
         changed: changed,
         points: pointsForIssueType(t.issue_type),
-        autoLabels: computeAutoLabels(t)
+        autoLabels: computeAutoLabels(t),
+        autoLabelCategories: computeAutoLabelCategories(t),
+        outlineChapters: computeAutoOutline(t)
       };
     });
     if (resetFilters) {
@@ -4624,6 +5104,7 @@
     renderSavedLists();
     buildListenauswahlTypeChips();
     renderListenauswahlPreview();
+    renderAssignmentPanel();
   }
 
   function buildFormatCallout() {
@@ -4781,6 +5262,69 @@
       row.setAttribute("aria-pressed", app.domainList[i] === app.view.domain ? "true" : "false");
     });
   }
+
+  // "Jira Zuordnung" (Dashboard): gruppiert ALLE geladenen Tickets (bewusst
+  // unabhängig von der Dashboard-eigenen Such-/Typ-Filterung - dient als
+  // Übersicht/Navigationshilfe) entweder nach Label-Themengebiet oder nach
+  // Gliederungskapitel (Benutzerhandbuch), je nach Zuordnungsmodus. Ein
+  // Ticket kann mehrere Kategorien/Kapitel treffen und erscheint dann in
+  // mehreren Gruppen (wie schon die Labels-Spalte mehrwertig ist);
+  // Tickets ohne Treffer landen ehrlich in "Ohne Zuordnung" statt
+  // irgendwo hineingeraten zu werden.
+  var assignmentMode = "label";
+  function assignmentGroupsByLabelCategory() {
+    var byCategory = {};
+    app.tickets.forEach(function (t) {
+      var cats = (t.autoLabelCategories && t.autoLabelCategories.length) ? t.autoLabelCategories : ["Ohne Zuordnung"];
+      cats.forEach(function (c) { (byCategory[c] = byCategory[c] || []).push(t); });
+    });
+    var names = Object.keys(byCategory).filter(function (c) { return c !== "Ohne Zuordnung"; }).sort(function (a, b) { return a.localeCompare(b, "de"); });
+    if (byCategory["Ohne Zuordnung"]) names.push("Ohne Zuordnung");
+    return names.map(function (name) {
+      var group = byCategory[name].slice().sort(function (a, b) { return (a.updatedSort || a.createdSort) - (b.updatedSort || b.createdSort); });
+      return { name: name, tickets: group };
+    });
+  }
+  function assignmentGroupsByOutline() {
+    var byChapter = {};
+    app.tickets.forEach(function (t) {
+      var chapters = (t.outlineChapters && t.outlineChapters.length) ? t.outlineChapters : ["Ohne Zuordnung"];
+      chapters.forEach(function (c) { (byChapter[c] = byChapter[c] || []).push(t); });
+    });
+    // Reihenfolge wie in der Gliederung selbst (Buch-Reihenfolge), nicht alphabetisch.
+    var names = app.outline.map(function (c) { return c.title; }).filter(function (title) { return byChapter[title]; });
+    if (byChapter["Ohne Zuordnung"]) names.push("Ohne Zuordnung");
+    return names.map(function (name) {
+      var group = byChapter[name].slice().sort(function (a, b) { return (a.updatedSort || a.createdSort) - (b.updatedSort || b.createdSort); });
+      return { name: name, tickets: group };
+    });
+  }
+  function renderAssignmentPanel() {
+    var groups = assignmentMode === "outline" ? assignmentGroupsByOutline() : assignmentGroupsByLabelCategory();
+    var totalTickets = groups.reduce(function (n, g) { return n + g.tickets.length; }, 0);
+    els.assignmentGroupCount.textContent = groups.length;
+    els.assignmentTicketCount.textContent = totalTickets;
+    els.assignmentTbody.innerHTML = groups.map(function (g) {
+      var header = '<tr class="domain-group-row"><td colspan="6">' + escapeHtml(g.name) +
+        ' <span class="domain-count">(' + g.tickets.length + " Ticket" + (g.tickets.length === 1 ? "" : "s") + ")</span></td></tr>";
+      var rows = g.tickets.map(function (t) {
+        return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(descriptionDisplayText(t)) + "</td><td>" + escapeHtml(t.issueType || "–") +
+          "</td><td>" + escapeHtml(t.status || "–") + "</td><td>" + escapeHtml(t.domain || "–") +
+          "</td><td>" + escapeHtml(labelsDisplayText(t.autoLabels)) + "</td></tr>";
+      }).join("");
+      return header + rows;
+    }).join("");
+    els.assignmentEmpty.hidden = totalTickets > 0;
+  }
+  els.assignmentModeTabs.addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-assignment-mode]");
+    if (!btn) return;
+    assignmentMode = btn.getAttribute("data-assignment-mode");
+    Array.prototype.forEach.call(els.assignmentModeTabs.children, function (b) {
+      b.classList.toggle("active", b === btn);
+    });
+    renderAssignmentPanel();
+  });
 
   function currentFiltered() {
     var v = app.view;
@@ -8161,13 +8705,23 @@
     var list = scopedTickets();
     var domainSel = selectedValues(els.ragDomainSelect);
     var statusSel = selectedValues(els.ragStatusSelect);
+    var categorySel = selectedValues(els.ragLabelCategorySelect);
+    var chapterSel = selectedValues(els.ragOutlineSelect);
     var domains = distinctFieldValues(list, "domain");
     var statuses = distinctFieldValues(list, "status");
+    var categories = distinctArrayFieldValues(list, "autoLabelCategories");
+    var chapters = distinctOutlineChaptersPresent(list);
     els.ragDomainSelect.innerHTML = domains.map(function (d) {
       return '<option value="' + escapeHtml(d) + '"' + (domainSel.indexOf(d) !== -1 ? " selected" : "") + ">" + escapeHtml(d) + "</option>";
     }).join("");
     els.ragStatusSelect.innerHTML = statuses.map(function (s) {
       return '<option value="' + escapeHtml(s) + '"' + (statusSel.indexOf(s) !== -1 ? " selected" : "") + ">" + escapeHtml(s) + "</option>";
+    }).join("");
+    els.ragLabelCategorySelect.innerHTML = categories.map(function (c) {
+      return '<option value="' + escapeHtml(c) + '"' + (categorySel.indexOf(c) !== -1 ? " selected" : "") + ">" + escapeHtml(c) + "</option>";
+    }).join("");
+    els.ragOutlineSelect.innerHTML = chapters.map(function (c) {
+      return '<option value="' + escapeHtml(c) + '"' + (chapterSel.indexOf(c) !== -1 ? " selected" : "") + ">" + escapeHtml(c) + "</option>";
     }).join("");
   }
 
@@ -8206,11 +8760,15 @@
     var list = scopedTickets();
     var domains = selectedValues(els.ragDomainSelect);
     var statuses = selectedValues(els.ragStatusSelect);
+    var categories = selectedValues(els.ragLabelCategorySelect);
+    var chapters = selectedValues(els.ragOutlineSelect);
     var fromTs = els.ragDateFrom.value ? new Date(els.ragDateFrom.value).getTime() : null;
     var toTs = els.ragDateTo.value ? new Date(els.ragDateTo.value).getTime() + 24 * 60 * 60 * 1000 - 1 : null;
     var rows = list.filter(function (t) {
       if (domains.length && domains.indexOf(t.domain) === -1) return false;
       if (statuses.length && statuses.indexOf(t.status) === -1) return false;
+      if (categories.length && !categories.some(function (c) { return (t.autoLabelCategories || []).indexOf(c) !== -1; })) return false;
+      if (chapters.length && !chapters.some(function (c) { return (t.outlineChapters || []).indexOf(c) !== -1; })) return false;
       var ts = t.updatedSort || t.createdSort;
       if (fromTs != null && (!ts || ts < fromTs)) return false;
       if (toTs != null && (!ts || ts > toTs)) return false;
@@ -8505,6 +9063,7 @@
   renderDomainAliases();
   renderPointsTable();
   renderLabelsList();
+  renderOutlineList();
   renderTestResults();
   resetSession();
 })();

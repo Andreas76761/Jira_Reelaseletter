@@ -42,9 +42,10 @@ const redSquareDataUrl = fs.readFileSync(path.join(FIXTURES, "red_square_dataurl
   function check(l, ok) { checks.push([l, ok]); console.log((ok ? "OK  " : "FAIL") + " - " + l); }
 
   // ===================== Vorbereitung: Ticket mit Label + hochgeladenes Bild + generiertes Bild =====================
+  // (Labeltext aus dem echten Themengebiet-Katalog, s. labelSeedData())
   const xml = `<?xml version="1.0"?><rss><channel>
-    <item><key>LBL-1</key><summary>Dealer Portal Feature</summary>
-      <description>Betrifft den Market-Bereich.</description><status>Offen</status><type>Epic</type></item>
+    <item><key>LBL-1</key><summary>Fahrzeugverwaltung Feature</summary>
+      <description>Betrifft die Fahrzeugverwaltung.</description><status>Offen</status><type>Epic</type></item>
     <item><key>LBL-2</key><summary>Ohne besonderes Label</summary>
       <description>Allgemeiner Text ohne Stichwort.</description><status>Offen</status></item>
   </channel></rss>`;
@@ -59,21 +60,21 @@ const redSquareDataUrl = fs.readFileSync(path.join(FIXTURES, "red_square_dataurl
   const labelSelect = doc.getElementById("label-select");
   check("Label-Filter-Dropdown im Dashboard vorhanden", !!labelSelect);
   const labelOptions = Array.from(labelSelect.options).map((o) => o.value).filter(Boolean);
-  check("Label-Filter listet tatsächlich vorkommende Labels (Dealer/Market)", labelOptions.includes("Dealer") || labelOptions.includes("Market"));
-  check("Label-Filter listet KEIN Label, das auf keinem Ticket vorkommt", !labelOptions.includes("Prolongation"));
+  check("Label-Filter listet tatsächlich vorkommende Labels (Fahrzeugverwaltung)", labelOptions.includes("Fahrzeugverwaltung"));
+  check("Label-Filter listet KEIN Label, das auf keinem Ticket vorkommt", !labelOptions.includes("IBAN"));
 
   const totalBefore = doc.querySelectorAll("#table-body tr").length;
-  labelSelect.value = "Dealer";
+  labelSelect.value = "Fahrzeugverwaltung";
   fire(labelSelect, "change");
   const filteredRows = () => Array.from(doc.querySelectorAll("#table-body tr"));
-  check("Filtern nach Label 'Dealer' reduziert die Trefferliste", filteredRows().length < totalBefore);
-  check("Gefilterte Liste enthält LBL-1 (hat Label Dealer)", filteredRows().some((r) => r.textContent.includes("LBL-1")));
+  check("Filtern nach Label 'Fahrzeugverwaltung' reduziert die Trefferliste", filteredRows().length < totalBefore);
+  check("Gefilterte Liste enthält LBL-1 (hat Label Fahrzeugverwaltung)", filteredRows().some((r) => r.textContent.includes("LBL-1")));
   check("Gefilterte Liste enthält NICHT LBL-2 (kein Label-Treffer)", !filteredRows().some((r) => r.textContent.includes("LBL-2")));
 
   // Erweitertes Suchfeld: Suche nach Labeltext findet Ticket auch ohne Label-Filter
   labelSelect.value = "";
   fire(labelSelect, "change");
-  doc.getElementById("search-input").value = "DEALER";
+  doc.getElementById("search-input").value = "FAHRZEUGVERWALTUNG";
   fire(doc.getElementById("search-input"), "input");
   await wait(200); // Suchfeld ist debounced (150ms) - siehe ticket_cockpit.html
   check("Suchfeld findet Ticket über automatisch erkanntes Label (erweiterte Suche)", filteredRows().some((r) => r.textContent.includes("LBL-1")));
@@ -82,7 +83,7 @@ const redSquareDataUrl = fs.readFileSync(path.join(FIXTURES, "red_square_dataurl
   await wait(200);
 
   // Filter zurücksetzen leert auch den Label-Filter
-  labelSelect.value = "Dealer";
+  labelSelect.value = "Fahrzeugverwaltung";
   fire(labelSelect, "change");
   fire(doc.getElementById("reset-filter-btn"), "click");
   check("'Filter zurücksetzen' leert auch den Label-Filter", labelSelect.value === "" && filteredRows().length === totalBefore);

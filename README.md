@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.8.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.9.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -209,6 +209,15 @@ anderen Länderformaten (Kennzeichen).
   alt-/title-Attribut des Icons gelesen. Beides betraf zuvor Fälle, in
   denen die Typ-Spalte trotz vorhandenem Typ im Original-Export leer
   blieb.
+  Neuer Bereich **"Jira Zuordnung"**: gruppiert ALLE geladenen Tickets
+  (unabhängig von der obigen Such-/Typ-Filterung) wahlweise **"Nach
+  Label-Kategorie"** (nach Themengebiet, siehe Einstellungen → Labels) oder
+  **"Nach Gliederung"** (nach Kapitel des Benutzerhandbuchs, siehe
+  Einstellungen → Benutzerhandbuch-Gliederung) – Tickets ohne Treffer
+  landen ehrlich in einer Gruppe "Ohne Zuordnung" statt irgendwo
+  hineingeraten zu werden; ein Ticket kann mehrere Gruppen treffen und
+  erscheint dann mehrfach (wie schon die Labels-Spalte selbst mehrwertig
+  ist).
 - **Listenauswahl** – die im Dashboard per Checkbox ausgewählten Tickets
   lassen sich hier benannt als eigenständige Liste speichern (Name,
   Zeitpunkt automatisch, Ticket-Inhalte UND die reine Liste der
@@ -379,8 +388,12 @@ anderen Länderformaten (Kennzeichen).
      "Datei auswählen"-Prozessschritt-Karte (unabhängig von der Auswahl in
      anderen Jobs). Zweistufig. Schritt 1
      (**Retrieval**, rein deterministisch): Rohdaten (Überschrift +
-     Beschreibung) der aktuell ausgewählten Datei nach Domäne, Status und
-     Zeitraum filtern (Mehrfachauswahl) und als Tabelle anzeigen – zeigt
+     Beschreibung) der aktuell ausgewählten Datei nach Domäne, Status,
+     **Label-Themengebiet** und **Gliederungskapitel** (Benutzerhandbuch)
+     filtern (alle Mehrfachauswahl, kombinierbar) und als Tabelle anzeigen –
+     Label-Themengebiet/Gliederungskapitel sorgen dafür, dass sich die
+     Generierung gezielt auf ein Thema bzw. ein Kapitel eingrenzen lässt,
+     statt Text aus allen Tickets zu vermischen; zeigt
      nur unverändert vorhandene Ticket-Daten, "–" bei fehlendem Text; die
      Rohdaten-Tabelle lässt sich wie bei Jobs 1-6 als XLSX/DOCX/PDF
      exportieren. Schritt 2 (**Generation**, echte KI): mit den Buttons "Zusammenfassung
@@ -516,20 +529,30 @@ anderen Länderformaten (Kennzeichen).
     Ticket anhand des Jira-Feldes "Typ" zugeordnet und ist sofort in den
     Tabellen unter Verarbeitung sichtbar; unbekannte Tickettypen bleiben
     ehrlich "Unbekannt" statt einen Wert zu raten.
-  - *Labels* – frei editierbare Stichwortliste (Standard: Market, HQ,
-    Dealer, Vehicle, Finance, Claim, Product, Van, PC, Price,
-    Prolongation), hinzufügen/entfernen über Chips. Wird beim Verarbeiten
-    per reinem Text-Abgleich (keine KI) gegen Zusammenfassung/Beschreibung/
-    Domäne jedes Tickets automatisch zugeordnet.
+  - *Labels (nach Themengebiet)* – editierbare Tabelle Themengebiet /
+    Deutsch / Englisch, standardmäßig mit über 200 oneSCM-Fachbegriffen aus
+    21 Themengebieten vorbefüllt (System/Rollen & Zugang, Navigation &
+    Oberfläche, Kunden & Vertragsrollen, Fahrzeuge & Fahrzeugdaten,
+    Vertragsanlage & Antrag, Zahlung & Rechnung, Governance & Blueprint,
+    u. v. m.), Zeilen hinzufügen/löschen. Wird beim Verarbeiten per reinem
+    Text-Abgleich (keine KI) gegen Zusammenfassung/Beschreibung/Domäne
+    jedes Tickets automatisch zugeordnet – ein Treffer auf den deutschen
+    ODER englischen Begriff genügt.
+  - *Benutzerhandbuch-Gliederung* – editierbare Kapitel-/Unterkapitel-Liste
+    des Benutzerhandbuchs, standardmäßig mit der oneSCM-Schulungsgliederung
+    vorbefüllt (Kapitel hinzufügen/löschen, je Kapitel Unterkapitel
+    hinzufügen/löschen). Wird beim Verarbeiten nach demselben Prinzip wie
+    Labels (reiner Text-Abgleich auf den Kapitel-/Unterkapiteltitel, keine
+    KI) automatisch Tickets zugeordnet.
   - *Testergebnisse* – eingebetteter Bericht der automatisierten Tests
     (Browsertests der Web-App + pytest für das CLI-Tool) aus dem letzten
     Verifikationslauf während der Entwicklung dieser Version, gruppiert
     nach Testgruppe mit Datum und Status je Check (auf-/zuklappbar). Läuft
     nicht live im Browser, sondern ist ein zum Build-Zeitpunkt
     eingebetteter Stand.
-  - Punkte-System und Labels sind Konfiguration (kein Sitzungsdatensatz)
-    und bleiben daher auch nach "Sitzung zurücksetzen"/"Alle Daten
-    löschen" erhalten.
+  - Punkte-System, Labels und Benutzerhandbuch-Gliederung sind Konfiguration
+    (kein Sitzungsdatensatz) und bleiben daher auch nach "Sitzung
+    zurücksetzen"/"Alle Daten löschen" erhalten.
 - Detail-HTML-Exports (ein Abschnitt pro Ticket statt einer Tabelle)
   werden von der Web-App **nicht** unterstützt – dafür das CLI-Tool
   verwenden. Word-Exporte (`.docx`) werden dagegen sowohl beim Import

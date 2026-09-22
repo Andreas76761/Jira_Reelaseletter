@@ -24,15 +24,16 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   function check(l, ok) { checks.push([l, ok]); console.log((ok ? "OK  " : "FAIL") + " - " + l); }
 
   // Eigene Tickets mit bekannten Typen/Text fuer Punkte- und Label-Zuordnung importieren
+  // (Labeltexte aus dem echten Themengebiet-Katalog, s. labelSeedData())
   const xml = `<?xml version="1.0"?><rss><channel>
-    <item><key>PL-1</key><summary>Neues Feature fuer Dealer Portal</summary>
-      <description>Betrifft den Market-Bereich und das Vehicle-Modul.</description>
+    <item><key>PL-1</key><summary>Neues Feature für die Fahrzeugverwaltung</summary>
+      <description>Betrifft die Vertragsverwaltung und das Baumuster.</description>
       <status>Offen</status><type>Epic</type></item>
-    <item><key>PL-2</key><summary>Fehler in der Preisberechnung</summary>
-      <description>Price-Feld zeigt falschen Wert.</description>
+    <item><key>PL-2</key><summary>Fehler bei der Rechnungsstellung</summary>
+      <description>Die IBAN-Prüfung schlägt fehl.</description>
       <status>Offen</status><type>Bug</type></item>
-    <item><key>PL-3</key><summary>Unbekannter Typ ohne Punkte-Eintrag</summary>
-      <description>Kein Label-Treffer hier.</description>
+    <item><key>PL-3</key><summary>XYZ-9987 interner Vermerk</summary>
+      <description>Nur ein Platzhaltertext ohne Bezug.</description>
       <status>Offen</status><type>Sonderfall-XYZ</type></item>
   </channel></rss>`;
   doc.querySelector('.nav-item[data-view="import"]').click();
@@ -50,11 +51,12 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   const bugRow = pointsRows().find((r) => r.textContent.includes("Bug"));
   check("Bug = 1 Punkt (Standardwert)", !!bugRow && bugRow.querySelector(".points-value-input").value === "1");
 
-  // ===================== Einstellungen: Labels Standardwerte =====================
-  const labelsText = doc.getElementById("labels-list").textContent;
-  ["Market", "HQ", "Dealer", "Vehicle", "Finance", "Claim", "Product", "Van", "PC", "Price", "Prolongation"].forEach((lbl) => {
-    check("Standard-Label '" + lbl + "' vorhanden", labelsText.includes(lbl));
-  });
+  // ===================== Einstellungen: Labels Standardwerte (Themengebiet/Deutsch/Englisch) =====================
+  const labelRows = () => Array.from(doc.querySelectorAll("#labels-tbody tr"));
+  check("Mehr als 200 Standard-Labels (Themengebiet-Katalog) vorhanden", labelRows().length > 200);
+  check("Kategorie 'Zahlung & Rechnung' mit Begriff 'IBAN' vorhanden", labelRows().some((r) => r.textContent.includes("Zahlung & Rechnung") && r.textContent.includes("IBAN")));
+  check("Kategorie 'Fahrzeuge & Fahrzeugdaten' mit Begriff 'Fahrzeugverwaltung' vorhanden", labelRows().some((r) => r.textContent.includes("Fahrzeuge & Fahrzeugdaten") && r.textContent.includes("Fahrzeugverwaltung")));
+  check("Englischer Begriff 'Vehicle management' in derselben Zeile wie 'Fahrzeugverwaltung'", labelRows().some((r) => r.textContent.includes("Fahrzeugverwaltung") && r.textContent.includes("Vehicle management")));
 
   // ===================== Verarbeitung Job 4: neue Spalten + automatische Zuordnung =====================
   doc.querySelector('.nav-item[data-view="verarbeitung"]').click();
@@ -72,13 +74,13 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   const pl1Row = rowFor("PL-1", "releaseversion-tbody");
   check("PL-1 zeigt Typ 'Epic' in eigener Spalte", !!pl1Row && pl1Row.children[2].textContent.trim() === "Epic");
   check("PL-1 (Epic) zeigt 5 Punkte", !!pl1Row && pl1Row.children[5].textContent.trim() === "5");
-  check("PL-1 zeigt automatisch erkannte Labels 'Dealer', 'Market', 'Vehicle'", !!pl1Row &&
-    ["Dealer", "Market", "Vehicle"].every((l) => pl1Row.children[6].textContent.includes(l)));
-  check("PL-1 zeigt Beschreibung (jetzt rechts von Ticket)", !!pl1Row && pl1Row.children[1].textContent.includes("Market-Bereich"));
+  check("PL-1 zeigt automatisch erkannte Labels 'Fahrzeugverwaltung', 'Vertragsverwaltung', 'Baumuster'", !!pl1Row &&
+    ["Fahrzeugverwaltung", "Vertragsverwaltung", "Baumuster"].every((l) => pl1Row.children[6].textContent.includes(l)));
+  check("PL-1 zeigt Beschreibung (jetzt rechts von Ticket)", !!pl1Row && pl1Row.children[1].textContent.includes("Vertragsverwaltung"));
 
   const pl2Row = rowFor("PL-2", "releaseversion-tbody");
   check("PL-2 (Bug) zeigt 1 Punkt", !!pl2Row && pl2Row.children[5].textContent.trim() === "1");
-  check("PL-2 zeigt automatisch erkanntes Label 'Price'", !!pl2Row && pl2Row.children[6].textContent.includes("Price"));
+  check("PL-2 zeigt automatisch erkanntes Label 'IBAN-Prüfung'", !!pl2Row && pl2Row.children[6].textContent.includes("IBAN-Prüfung"));
 
   const pl3Row = rowFor("PL-3", "releaseversion-tbody");
   check("PL-3 zeigt Typ 'Sonderfall-XYZ'", !!pl3Row && pl3Row.children[2].textContent.trim() === "Sonderfall-XYZ");
@@ -130,12 +132,14 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("Tickettyp nach Löschen wieder entfernt (5 Zeilen)", pointsRows().length === 5);
 
   // ===================== Einstellungen: neues Label hinzufügen und entfernen =====================
-  doc.getElementById("labels-new-input").value = "TestLabel123";
+  doc.getElementById("labels-new-category").value = "Testkategorie";
+  doc.getElementById("labels-new-de").value = "TestLabel123";
+  doc.getElementById("labels-new-en").value = "TestLabel123EN";
   fire(doc.getElementById("labels-add-btn"), "click");
-  check("Neues Label 'TestLabel123' in der Liste", doc.getElementById("labels-list").textContent.includes("TestLabel123"));
-  const chipToRemove = Array.from(doc.querySelectorAll(".label-chip")).find((c) => c.textContent.includes("TestLabel123"));
-  fire(chipToRemove.querySelector("button"), "click");
-  check("Label nach Entfernen wieder verschwunden", !doc.getElementById("labels-list").textContent.includes("TestLabel123"));
+  check("Neues Label 'TestLabel123' in der Tabelle", doc.getElementById("labels-tbody").textContent.includes("TestLabel123"));
+  const rowToRemove = labelRows().find((r) => r.textContent.includes("TestLabel123"));
+  fire(rowToRemove.querySelector('button[data-action="delete-label"]'), "click");
+  check("Label nach Entfernen wieder verschwunden", !doc.getElementById("labels-tbody").textContent.includes("TestLabel123"));
 
   // ===================== Punkte-System/Labels bleiben nach 'Sitzung zurücksetzen' erhalten (Konfiguration, kein Sitzungsdatensatz) =====================
   doc.querySelector('.nav-item[data-view="import"]').click();
@@ -162,7 +166,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   // ===================== XSS-Schutz in allen neuen Bereichen =====================
   check("Keine ungeschützten Script-Tags in Punkte-Tabelle/Labels/Testergebnissen",
     !doc.getElementById("points-tbody").innerHTML.includes("<script") &&
-    !doc.getElementById("labels-list").innerHTML.includes("<script") &&
+    !doc.getElementById("labels-tbody").innerHTML.includes("<script") &&
     !doc.getElementById("test-results-tbody").innerHTML.match(/<script(?!\u0000)/));
 
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }

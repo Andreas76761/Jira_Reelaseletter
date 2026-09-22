@@ -79,7 +79,9 @@ RTYP-1\tOffen\tEpic\tGrosses Vorhaben\tAusführliche Beschreibung des Vorhabens`
   fire(doc.getElementById("search-input"), "input");
   await wait(250);
 
-  const headers = Array.from(doc.querySelectorAll("thead th")).map((th) => th.textContent.trim());
+  // Gezielt die Tabelle mit #table-body (nicht "thead th" global) - seit der
+  // "Jira Zuordnung"-Tabelle im Dashboard gibt es mehrere <thead> dort.
+  const headers = Array.from(doc.getElementById("table-body").closest("table").querySelectorAll("thead th")).map((th) => th.textContent.trim());
   check("Dashboard-Tabellenkopf: 'Beschreibung' direkt nach 'Schlüssel'", headers[1].startsWith("Schlüssel") && headers[2].startsWith("Beschreibung"));
 
   const q1Row = Array.from(doc.querySelectorAll("#table-body tr")).find((r) => r.textContent.includes("Q-1"));
