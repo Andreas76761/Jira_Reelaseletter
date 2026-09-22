@@ -55,7 +55,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
     // Service-Abschnitten (Komponenten) - dieselbe Dedupe-Logik wie beim
     // .txt-Import verdichtet das auf 111 eindeutige Tickets (siehe unten:
     // identischer Wert beim direkten .txt-Import derselben Inhalte).
-    const ticketCountCell = importRow.querySelectorAll("td")[4];
+    const ticketCountCell = importRow.querySelectorAll("td")[5];
     check("Aus der .docx wurden 111 eindeutige Tickets importiert (dedupliziert über Service-Abschnitte)", ticketCountCell.textContent.trim() === "111");
   }
 
@@ -88,7 +88,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
 
   doc.querySelector('.nav-item[data-view="dateiverwaltung"]').click();
   const txtImportRow = Array.from(doc.querySelectorAll("#imports-tbody tr")).find((r) => r.textContent.includes("release_notes.txt"));
-  check(".txt-Referenzimport derselben Inhalte ergibt identisch 111 Tickets", !!txtImportRow && txtImportRow.querySelectorAll("td")[4].textContent.trim() === "111");
+  check(".txt-Referenzimport derselben Inhalte ergibt identisch 111 Tickets", !!txtImportRow && txtImportRow.querySelectorAll("td")[5].textContent.trim() === "111");
 
   // ===================== Legacy .doc (altes Binärformat) wird ehrlich abgelehnt =====================
   doc.querySelector('.nav-item[data-view="import"]').click();

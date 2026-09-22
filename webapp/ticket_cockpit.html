@@ -166,6 +166,8 @@
   .comment-cell .comment-edit-row .text-input { min-width: 160px; }
   .comment-edit-btn { font-size: 11.5px; padding: 3px 8px; margin-top: 3px; }
   .comment-hint { color: var(--text-muted); font-style: italic; }
+  .inactive-import-row { opacity: 0.55; }
+  .inactive-import-row td { font-style: italic; }
   .chip-list { display: flex; flex-wrap: wrap; gap: 8px; }
   .label-chip {
     display: inline-flex; align-items: center; gap: 6px; padding: 5px 6px 5px 12px; border-radius: 100px;
@@ -690,7 +692,7 @@
         <section>
           <p class="section-label">Aus Zwischenablage einfügen</p>
           <div class="callout">
-            Alternativ zum Datei-Upload: Text direkt einfügen (z. B. Releaseinfo-Text oder HTML-/XML-Quelltext aus dem Browser kopiert). Das Format wird automatisch erkannt.
+            Alternativ zum Datei-Upload: Text direkt einfügen (z. B. Releaseinfo-Text, HTML-/XML-Quelltext, eine aus Excel/Jira kopierte Tabelle oder eine reine Liste von Ticket-Nummern, ein Schlüssel pro Zeile). Das Format wird automatisch erkannt – eine reine Ticket-Nummern-Liste wird direkt als neue Liste unter „Listenauswahl“ gespeichert.
           </div>
           <div class="paste-panel">
             <textarea id="paste-textarea" rows="7" placeholder="Text hier mit Strg+V einfügen …"></textarea>
@@ -711,9 +713,14 @@
 
         <section>
           <p class="section-label">Imports</p>
+          <p class="desc">Einzelne Dateien lassen sich hier deaktivieren, ohne sie zu löschen – Verarbeitung und Dashboard laufen danach nur noch auf den aktiven Dateien (ein Ticket bleibt sichtbar, solange mindestens eine seiner Quell-Dateien aktiv ist). Änderungen an „Aktiv“ wirken erst nach Klick auf „Aktualisieren“.</p>
+          <div class="job-export-row" style="margin-bottom:8px;">
+            <button class="btn primary" id="imports-refresh-btn" type="button">🔄 Aktualisieren (Aktiv/Inaktiv übernehmen)</button>
+            <span id="imports-refresh-pending-hint" class="step-note" hidden>Es gibt nicht übernommene Änderungen an Aktiv/Inaktiv.</span>
+          </div>
           <div class="panel table-wrap">
             <table class="simple-table" id="imports-table">
-              <thead><tr><th>#</th><th>Quelle</th><th>Format</th><th>Zeitpunkt</th><th>Tickets</th><th>Neu</th><th>Geändert</th><th>Unverändert</th><th>Pseudonymisiert</th><th>Kommentar</th><th>Aktion</th></tr></thead>
+              <thead><tr><th>Aktiv</th><th>#</th><th>Quelle</th><th>Format</th><th>Zeitpunkt</th><th>Tickets</th><th>Neu</th><th>Geändert</th><th>Unverändert</th><th>Pseudonymisiert</th><th>Kommentar</th><th>Aktion</th></tr></thead>
               <tbody id="imports-tbody"></tbody>
             </table>
           </div>
@@ -3435,7 +3442,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.12.0";
+  var APP_VERSION = "2.13.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -3664,8 +3671,12 @@
       }
 
       var cols = releaseInfoSplitColumns(line);
-      if (cols[0] && cols[0].trim() === "Schlüssel") {
-        currentColumns = cols.map(function (c) { return c.trim(); });
+      // Kopfzeile ueber dieselbe Alias-Tabelle wie beim Massenupload-Parser
+      // erkennen (normalizeLabel/FIELD_LABEL_ALIASES) statt fest auf das
+      // deutsche Wort "Schlüssel" zu pruefen - erkennt so auch englische
+      // oder anders beschriftete Tabellen (z.B. "Key"/"Summary"/"Status").
+      if (normalizeLabel(cols[0]) === "key") {
+        currentColumns = cols.map(function (c) { return { raw: c.trim(), canonical: normalizeLabel(c) }; });
         return;
       }
 
@@ -3674,14 +3685,10 @@
         var key = firstCell;
         var ticket = emptyTicket(key);
         for (var i = 1; i < currentColumns.length && i < cols.length; i++) {
-          var label = currentColumns[i];
+          var col = currentColumns[i];
           var value = (cols[i] || "").trim();
           if (!value) continue;
-          if (label === "Status") ticket.status = value;
-          else if (label === "Zusammenfassung") ticket.summary = value;
-          else if (normalizeLabel(label) === "issue_type") ticket.issue_type = value;
-          else if (normalizeLabel(label) === "description") ticket.description = value;
-          else ticket.custom_fields[label] = value;
+          applyField(ticket, col.canonical, value, col.raw);
         }
         if (currentDomain) ticket.custom_fields.Domain = currentDomain;
 
@@ -3743,12 +3750,92 @@
     return { format: "Releaseinfo (Confluence)" + stamp, tickets: result.tickets };
   }
 
+  // Erkennt eine reine Liste von Ticket-Schluesseln (ein Schluessel pro
+  // Zeile, keine weiteren Spalten) - z.B. aus Jira kopierte Nummern ohne
+  // Tabellenkontext ("ONESCM-123" je Zeile). Im Unterschied zu den anderen
+  // Parsern gibt es hier keine echten Ticket-Inhalte zum Importieren -
+  // stattdessen werden leere Platzhalter-Tickets angelegt (ingestTickets()
+  // laesst bereits bekannte, reichhaltigere Ticketdaten unangetastet, s.
+  // mergeTicketFields - ein bereits importiertes Ticket wird also NICHT
+  // durch die leere Zeile ueberschrieben) und die Liste laesst sich direkt
+  // als benannte Liste unter Listenauswahl speichern (s. keysOnly-Flag,
+  // genutzt in Teil 5b/6 Zwischenablage- und Datei-Import).
+  function parseAsKeyList(text) {
+    var lines = text.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+    if (!lines.length) throw new Error("Keine Zeilen gefunden.");
+    var allKeys = lines.every(function (l) { return RELEASEINFO_KEY_RE.test(l); });
+    if (!allKeys) {
+      throw new Error("Nicht jede Zeile ist ein reiner Ticket-Schlüssel wie ONESCM-123 (erwartet: genau ein Schlüssel pro Zeile, ohne weitere Spalten).");
+    }
+    var seen = {}; var keys = [];
+    lines.forEach(function (k) { if (!seen[k]) { seen[k] = true; keys.push(k); } });
+    return { format: "Ticket-Liste (nur Schlüssel)", tickets: keys.map(emptyTicket), keysOnly: true, keys: keys };
+  }
+
+  // Sehr kleiner, RFC4180-tauglicher CSV-Zeilen-Parser (quotierte Felder,
+  // verdoppelte Anfuehrungszeichen als Escape) - bewusst ohne externe
+  // Bibliothek, analog zur bereits bestehenden Philosophie bei XLSX/DOCX
+  // (JSZip statt neuer Abhaengigkeiten, s. Teil 1b).
+  function parseCsvLine(line, delimiter) {
+    var cells = []; var cur = ""; var inQuotes = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (line[i + 1] === '"') { cur += '"'; i++; } else inQuotes = false;
+        } else cur += ch;
+      } else if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === delimiter) {
+        cells.push(cur); cur = "";
+      } else {
+        cur += ch;
+      }
+    }
+    cells.push(cur);
+    return cells;
+  }
+  function detectCsvDelimiter(firstLine) {
+    var commaCount = (firstLine.match(/,/g) || []).length;
+    var semiCount = (firstLine.match(/;/g) || []).length;
+    return semiCount > commaCount ? ";" : ",";
+  }
+  // Wandelt CSV-Text in Tab-getrennten Text um, damit dieselbe Zeilen-/
+  // Spalten-Logik wie beim .txt-Releaseinfo-Import (parseReleaseInfoText)
+  // greift, statt eine zweite, parallele Tabellen-Auswertung zu pflegen.
+  function csvTextToTabbedText(text) {
+    var lines = text.split(/\r?\n/);
+    var nonEmpty = lines.filter(function (l) { return l.trim(); });
+    if (!nonEmpty.length) return "";
+    var delimiter = detectCsvDelimiter(nonEmpty[0]);
+    return lines.map(function (line) {
+      if (!line.trim()) return "";
+      return parseCsvLine(line, delimiter).map(function (c) { return c.trim(); }).join("\t");
+    }).join("\n");
+  }
+  function looksLikeCsv(text, filename) {
+    var lower = (filename || "").toLowerCase();
+    if (lower.slice(-4) === ".csv") return true;
+    var firstLine = (text.split(/\r?\n/)[0] || "");
+    return (firstLine.indexOf(",") !== -1 || firstLine.indexOf(";") !== -1) && firstLine.indexOf("\t") === -1;
+  }
+  function parseAsCsv(fileText, filename) {
+    if (!looksLikeCsv(fileText, filename)) throw new Error("Kein CSV-Format erkannt (kein Komma/Semikolon als Trennzeichen, Endung nicht .csv).");
+    var result = parseReleaseInfoText(csvTextToTabbedText(fileText));
+    if (!result.tickets.length) {
+      throw new Error("Keine Ticket-Zeilen im CSV/Tabellen-Text gefunden (erwartet: Kopfzeile mit „Schlüssel“/„Key“ und mind. eine Datenzeile).");
+    }
+    return { format: "CSV/Tabellen-Import", tickets: result.tickets };
+  }
+
   function parseAsAndere(fileText, filename) {
     var errors = [];
+    try { return parseAsKeyList(fileText); } catch (e) { errors.push(e.message); }
     try { return parseAsMassenupload(fileText, filename); } catch (e) { errors.push(e.message); }
     try { return parseAsEinzelticket(fileText); } catch (e) { errors.push(e.message); }
     try { return parseAsReleaseinfo(fileText); } catch (e) { errors.push(e.message); }
-    throw new Error("Format nicht erkannt. Probiert: Jira-Massenupload, Jira-Einzelticket, Releaseinfo. Details: " + errors.join(" / "));
+    try { return parseAsCsv(fileText, filename); } catch (e) { errors.push(e.message); }
+    throw new Error("Format nicht erkannt. Probiert: Ticket-Liste, Jira-Massenupload, Jira-Einzelticket, Releaseinfo, CSV/Tabelle. Details: " + errors.join(" / "));
   }
 
   var IMPORT_PARSERS = {
@@ -4221,7 +4308,7 @@
     "dropzone", "dropzone-title", "dropzone-hint", "dropzone-icon", "dropzone-spinner", "file-input", "reset-session-btn", "format-callout", "import-tabs",
     "import-comment-input",
     "paste-textarea", "paste-from-clipboard-btn", "paste-process-btn", "paste-spinner", "paste-process-label",
-    "imports-tbody", "changes-tbody", "changes-empty", "domain-aliases-tbody",
+    "imports-tbody", "imports-refresh-btn", "imports-refresh-pending-hint", "changes-tbody", "changes-empty", "domain-aliases-tbody",
     "log-list", "log-empty",
     "verarbeitung-tabs", "changes-tbody-verarbeitung", "changes-empty-verarbeitung",
     "verarbeitung-burger-wrap", "verarbeitung-burger-btn", "verarbeitung-burger-menu",
@@ -4305,6 +4392,17 @@
     // Listen (Listenauswahl), auf die die Job-Tabellen eingeschraenkt werden.
     activeImportIds: {},
     activeListIds: {},
+    // Dateiverwaltung: persistenter Aktiv/Inaktiv-Status je Import (NICHT zu
+    // verwechseln mit activeImportIds/activeListIds oben, der nur die
+    // temporaere "Datei auswaehlen"-Einschraenkung EINES Verarbeitung-Jobs
+    // ist). inactiveImportIds ist der "gestagte" Checkbox-Zustand in der
+    // Dateiverwaltung-Tabelle; appliedInactiveImportIds ist der zuletzt per
+    // "Aktualisieren"-Button UEBERNOMMENE Stand, den refreshDashboard()
+    // tatsaechlich zum Filtern von app.tickets verwendet - Umschalten einer
+    // Checkbox wirkt sich also erst nach einem Klick auf "Aktualisieren"
+    // aus (s. Teil 5a). Leer = alle Importe aktiv (Standard).
+    inactiveImportIds: {},
+    appliedInactiveImportIds: {},
     initialized: false,
     // Fortlaufender Zaehler fuer Import-IDs - unabhaengig von app.imports.length,
     // da nach dem Loeschen eines einzelnen Imports (Dateiverwaltung) die Liste
@@ -4467,6 +4565,7 @@
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     };
     app.activeImportIds = {}; app.activeListIds = {};
+    app.inactiveImportIds = {}; app.appliedInactiveImportIds = {};
     app.selectedKeys = {}; app.savedLists = []; app.nextSavedListId = 1;
     app.listPreviewFilter = { issueType: "", excludeTypes: {} };
     editingCommentImportId = null;
@@ -4499,6 +4598,7 @@
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     };
     app.activeImportIds = {}; app.activeListIds = {};
+    app.inactiveImportIds = {}; app.appliedInactiveImportIds = {};
     app.selectedKeys = {}; app.savedLists = []; app.nextSavedListId = 1;
     app.listPreviewFilter = { issueType: "", excludeTypes: {} };
     editingCommentImportId = null;
@@ -5101,8 +5201,21 @@
   }
 
   function refreshDashboard(resetFilters) {
+    // Tickets ausschliesslich inaktiv gesetzter Importe (Dateiverwaltung,
+    // app.appliedInactiveImportIds) werden hier - und damit ueberall, was
+    // auf app.tickets aufbaut (Dashboard, Verarbeitung Jobs 1-7 inkl.
+    // scopedTickets(), RAG, Listenauswahl-Vorschau, Exporte) - ausgeblendet.
+    // Ein Ticket bleibt sichtbar, solange MINDESTENS eine seiner Quellen
+    // weiterhin aktiv ist (dieselbe "irgendeine Quelle reicht"-Logik wie
+    // beim Loeschen eines Imports, s. deleteImport()). Die Tickets selbst
+    // bleiben in app.ticketStore vollstaendig erhalten - im Unterschied zu
+    // deleteImport() ist dies rein eine Filterung der ANZEIGE, reversibel
+    // durch erneutes Aktivieren + "Aktualisieren".
     var list = [];
-    app.ticketStore.forEach(function (entry) { list.push(entry); });
+    app.ticketStore.forEach(function (entry) {
+      var isActive = entry.sources.some(function (s) { return !app.appliedInactiveImportIds[s.importId]; });
+      if (isActive) list.push(entry);
+    });
     app.tickets = list.map(function (entry) {
       var t = entry.current;
       var changed = entry.sources.length > 1 && app.changes.some(function (c) { return c.key === t.key; });
@@ -5818,6 +5931,88 @@
     return extractWordLikeText(await readFileAsArrayBuffer(file));
   }
 
+  // .xlsx ist wie .docx ein ZIP mit OOXML-Inhalt darin - dieselbe bereits
+  // geladene JSZip-Bibliothek liest das erste Arbeitsblatt aus (Zellen aus
+  // xl/worksheets/sheet1.xml, Textwerte ueber xl/sharedStrings.xml
+  // aufgeloest) und wandelt es in Tab-getrennte Zeilen um, damit dieselbe
+  // Zeilen-/Spalten-Logik wie beim .txt-Releaseinfo-Import
+  // (parseReleaseInfoText) greift - keine zusaetzliche Bibliothek noetig.
+  // Bewusst nur das erste Sheet (Zellbezuege/Formeln/mehrere Sheets werden
+  // nicht ausgewertet) - fuer eine einfache Ticket-Tabelle ausreichend.
+  function xlsxColToIndex(cellRef) {
+    var m = /^([A-Z]+)/.exec(cellRef || "");
+    if (!m) return 0;
+    var letters = m[1], n = 0;
+    for (var i = 0; i < letters.length; i++) n = n * 26 + (letters.charCodeAt(i) - 64);
+    return n - 1;
+  }
+  function xlsxSharedStringsFromDoc(doc) {
+    var items = doc.getElementsByTagName("si");
+    var out = [];
+    for (var i = 0; i < items.length; i++) {
+      var tEls = items[i].getElementsByTagName("t");
+      var parts = [];
+      for (var j = 0; j < tEls.length; j++) parts.push(tEls[j].textContent);
+      out.push(parts.join(""));
+    }
+    return out;
+  }
+  function xlsxSheetXmlToRows(xmlText, sharedStrings) {
+    var doc = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (doc.querySelector("parsererror")) throw new Error("Arbeitsblatt konnte nicht gelesen werden (beschädigte .xlsx-Datei?).");
+    var rowEls = doc.getElementsByTagName("row");
+    var rows = [];
+    for (var r = 0; r < rowEls.length; r++) {
+      var cellEls = rowEls[r].getElementsByTagName("c");
+      var rowArr = [];
+      for (var c = 0; c < cellEls.length; c++) {
+        var cellEl = cellEls[c];
+        var idx = xlsxColToIndex(cellEl.getAttribute("r"));
+        var type = cellEl.getAttribute("t");
+        var value = "";
+        if (type === "s") {
+          var vEl = cellEl.getElementsByTagName("v")[0];
+          if (vEl) value = sharedStrings[parseInt(vEl.textContent, 10)] || "";
+        } else if (type === "inlineStr") {
+          var isEl = cellEl.getElementsByTagName("is")[0];
+          if (isEl) {
+            var tEls = isEl.getElementsByTagName("t");
+            var parts = [];
+            for (var k = 0; k < tEls.length; k++) parts.push(tEls[k].textContent);
+            value = parts.join("");
+          }
+        } else {
+          var vEl2 = cellEl.getElementsByTagName("v")[0];
+          if (vEl2) value = vEl2.textContent;
+        }
+        while (rowArr.length < idx) rowArr.push("");
+        rowArr[idx] = value;
+      }
+      rows.push(rowArr);
+    }
+    return rows;
+  }
+  async function xlsxArrayBufferToLines(buf) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek (JSZip) nicht geladen - .xlsx kann nicht gelesen werden.");
+    var zip;
+    try { zip = await JSZip.loadAsync(buf); }
+    catch (e) { throw new Error("Datei konnte nicht als .xlsx (ZIP) gelesen werden - ist es wirklich eine Excel-Datei?"); }
+    var sheetEntry = zip.file("xl/worksheets/sheet1.xml");
+    if (!sheetEntry) throw new Error("Kein xl/worksheets/sheet1.xml in der .xlsx-Datei gefunden - ist es wirklich eine Excel-Datei?");
+    var sharedStrings = [];
+    var sharedEntry = zip.file("xl/sharedStrings.xml");
+    if (sharedEntry) {
+      var sharedDoc = new DOMParser().parseFromString(await sharedEntry.async("string"), "application/xml");
+      sharedStrings = xlsxSharedStringsFromDoc(sharedDoc);
+    }
+    var rows = xlsxSheetXmlToRows(await sheetEntry.async("string"), sharedStrings);
+    return rows.map(function (row) { return row.join("\t"); }).join("\n");
+  }
+  function isXlsxName(lowerName) { return lowerName.slice(-5) === ".xlsx"; }
+  async function extractTextFromXlsx(file) {
+    return xlsxArrayBufferToLines(await readFileAsArrayBuffer(file));
+  }
+
   // PDF-Textextraktion (Confluence-Release-Notes/Releaseinfo auch als PDF-
   // Export hochladbar) ueber pdf.js. Rekonstruiert Zeilen/Spalten aus den
   // x/y-Positionen der Textfragmente, da PDF selbst keine Tabellenstruktur
@@ -5879,6 +6074,7 @@
   async function extractTextForBlob(blob, lowerName) {
     if (isWordName(lowerName)) return extractTextFromDocx(blob);
     if (isPdfName(lowerName)) return extractTextFromPdf(blob);
+    if (isXlsxName(lowerName)) return extractTextFromXlsx(blob);
     return readFileAsText(blob);
   }
   // Dieselbe Unterscheidung fuer Eintraege aus einem ZIP-Archiv - JSZip liefert
@@ -5888,6 +6084,7 @@
   async function extractTextForZipEntry(zipEntry, lowerName) {
     if (isWordName(lowerName)) return extractWordLikeText(await zipEntry.async("arraybuffer"));
     if (isPdfName(lowerName)) return pdfArrayBufferToLines(await zipEntry.async("arraybuffer"));
+    if (isXlsxName(lowerName)) return xlsxArrayBufferToLines(await zipEntry.async("arraybuffer"));
     return zipEntry.async("string");
   }
 
@@ -5895,7 +6092,7 @@
   // kommen - macOS-Metadaten (__MACOSX/, versteckte .Dateien) werden
   // uebersprungen, alles andere ohne passende Endung ebenfalls (kein
   // Fehler dafuer, nur nicht mitgezaehlt).
-  var ZIP_ENTRY_RE = /\.(html?|xml|txt|docx?|pdf)$/i;
+  var ZIP_ENTRY_RE = /\.(html?|xml|txt|docx?|pdf|csv|xlsx)$/i;
   async function handleZipImport(file, comment) {
     if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek (JSZip) nicht geladen - Archiv kann nicht gelesen werden.");
     var buf = await readFileAsArrayBuffer(file);
@@ -5964,8 +6161,8 @@
     },
     releaseinfo: {
       title: "Releaseinfo / Confluence-Export(e) hier ablegen",
-      hint: "oder klicken zum Auswählen (mehrere Releaseinfos möglich) · Confluence-Release-Notes als .txt, Word-Export (.docx) oder PDF-Export (.pdf), Tickets werden je Domain gruppiert",
-      accept: ".txt,.docx,.doc,.pdf"
+      hint: "oder klicken zum Auswählen (mehrere Releaseinfos möglich) · Confluence-Release-Notes als .txt, Word-Export (.docx), PDF-Export (.pdf) oder Excel-Tabelle (.xlsx), Tickets werden je Domain gruppiert",
+      accept: ".txt,.docx,.doc,.pdf,.xlsx"
     },
     docx: {
       title: "Word-Dokument(e) (.doc/.docx) hier ablegen",
@@ -5974,13 +6171,13 @@
     },
     zip: {
       title: "ZIP-Archiv mit Exportdateien hier ablegen",
-      hint: "oder klicken zum Auswählen · alle enthaltenen .html/.htm/.xml/.txt/.docx/.doc/.pdf-Dateien werden gelesen, Format je Datei automatisch erkannt, Fehler je Datei im Protokoll sichtbar",
+      hint: "oder klicken zum Auswählen · alle enthaltenen .html/.htm/.xml/.txt/.docx/.doc/.pdf/.csv/.xlsx-Dateien werden gelesen, Format je Datei automatisch erkannt, Fehler je Datei im Protokoll sichtbar",
       accept: ".zip"
     },
     andere: {
       title: "Beliebige Exportdatei(en) hier ablegen",
-      hint: "oder klicken zum Auswählen · Format wird automatisch erkannt (Massenupload, Einzelticket, Releaseinfo/Confluence, auch .docx/.pdf)",
-      accept: ".html,.htm,.xml,.txt,.docx,.doc,.pdf"
+      hint: "oder klicken zum Auswählen · Format wird automatisch erkannt (Massenupload, Einzelticket, Releaseinfo/Confluence, Ticket-Liste, CSV/Excel-Tabelle, auch .docx/.pdf)",
+      accept: ".html,.htm,.xml,.txt,.docx,.doc,.pdf,.csv,.xlsx"
     }
   };
   var importMode = "massenupload";
@@ -6033,6 +6230,11 @@
             result.tickets.forEach(function (t) { var d = (t.custom_fields && t.custom_fields.Domain) || "(ohne Domain)"; domains[d] = (domains[d] || 0) + 1; });
             var domainNames = Object.keys(domains);
             extra = " über " + domainNames.length + " Domain(s): " + domainNames.slice(0, 4).join(", ") + (domainNames.length > 4 ? ", …" : "");
+          }
+          if (result.keysOnly) {
+            var fileListName = comment || ("Ticketliste aus " + file.name);
+            saveKeysAsNamedList(result.keys, fileListName);
+            extra += " Als Liste „" + fileListName + "“ unter Listenauswahl gespeichert.";
           }
           showToast(
             "Import erfolgreich",
@@ -6104,9 +6306,15 @@
       var comment = (els.importCommentInput.value || "").trim();
       var result = parseAsAndere(text);
       var record = ingestTickets(result.tickets, { source: PASTE_SOURCE_LABEL, when: nowLabel(), format: result.format, comment: comment });
+      var listMsg = "";
+      if (result.keysOnly) {
+        var listName = comment || ("Ticketliste vom " + nowLabel());
+        saveKeysAsNamedList(result.keys, listName);
+        listMsg = " Als Liste „" + listName + "“ unter Listenauswahl gespeichert.";
+      }
       showToast(
         "Verarbeitet und gespeichert",
-        record.ticketCount + " Tickets (" + record.stats.neu + " neu, " + record.stats.geaendert + " geändert) – Quelle „" + PASTE_SOURCE_LABEL + "“ in der Dateiverwaltung sichtbar."
+        record.ticketCount + " Tickets (" + record.stats.neu + " neu, " + record.stats.geaendert + " geändert) – Quelle „" + PASTE_SOURCE_LABEL + "“ in der Dateiverwaltung sichtbar." + listMsg
       );
       els.pasteTextarea.value = "";
       if (comment) els.importCommentInput.value = "";
@@ -6195,15 +6403,53 @@
     return '<div class="comment-text' + (hasComment ? "" : " is-empty") + '">' + escapeHtml(hasComment ? imp.comment : "– kein Kommentar –") + "</div>" +
       '<button type="button" class="btn ghost comment-edit-btn" data-action="edit-comment" data-import-id="' + imp.id + '">' + (hasComment ? "Bearbeiten" : "Ergänzen") + "</button>";
   }
+  // Vergleicht den "gestagten" Checkbox-Zustand (app.inactiveImportIds) mit
+  // dem zuletzt per "Aktualisieren" UEBERNOMMENEN Stand (s. refreshDashboard) -
+  // steuert den Hinweis "nicht uebernommene Aenderungen" in der Tabelle.
+  function hasPendingActiveChanges() {
+    var ids = {};
+    Object.keys(app.inactiveImportIds).forEach(function (k) { ids[k] = true; });
+    Object.keys(app.appliedInactiveImportIds).forEach(function (k) { ids[k] = true; });
+    return Object.keys(ids).some(function (k) { return !!app.inactiveImportIds[k] !== !!app.appliedInactiveImportIds[k]; });
+  }
   function renderImportsTable() {
     els.importsTbody.innerHTML = app.imports.map(function (imp) {
-      return "<tr><td class=\"mono\">" + imp.id + "</td><td>" + escapeHtml(imp.source) + "</td><td>" + escapeHtml(imp.format) +
+      var isActive = !app.inactiveImportIds[imp.id];
+      return "<tr" + (isActive ? "" : " class=\"inactive-import-row\"") + "><td><input type=\"checkbox\" class=\"import-active-checkbox\" data-import-id=\"" +
+        imp.id + "\"" + (isActive ? " checked" : "") +
+        " title=\"Datei aktiv/inaktiv - wirkt nach Klick auf „Aktualisieren“ auf Verarbeitung und Dashboard\"></td><td class=\"mono\">" + imp.id +
+        "</td><td>" + escapeHtml(imp.source) + "</td><td>" + escapeHtml(imp.format) +
         "</td><td class=\"mono\">" + escapeHtml(imp.when) + "</td><td class=\"mono\">" + imp.ticketCount + "</td><td class=\"mono\">" +
         imp.stats.neu + "</td><td class=\"mono\">" + imp.stats.geaendert + "</td><td class=\"mono\">" + imp.stats.unveraendert +
         "</td><td class=\"mono\">" + imp.personCount + "</td><td class=\"comment-cell\">" + commentCellHtml(imp) +
         '</td><td><button type="button" class="btn danger comment-edit-btn" data-action="delete-import" data-import-id="' + imp.id + '">Löschen</button></td></tr>';
     }).join("");
+    els.importsRefreshPendingHint.hidden = !hasPendingActiveChanges();
   }
+  els.importsTbody.addEventListener("change", function (e) {
+    var cb = e.target.closest(".import-active-checkbox");
+    if (!cb) return;
+    var importId = parseInt(cb.getAttribute("data-import-id"), 10);
+    if (cb.checked) delete app.inactiveImportIds[importId]; else app.inactiveImportIds[importId] = true;
+    renderImportsTable();
+  });
+  // Uebernimmt den gestagten Aktiv/Inaktiv-Zustand erst auf expliziten Klick
+  // (nicht bei jedem Checkbox-Klick, da refreshDashboard() bei vielen
+  // Tickets/Imports spuerbar Rechenzeit kostet) - baut app.tickets neu auf
+  // (und damit Dashboard, alle Verarbeitung-Jobs, RAG, Listenauswahl-
+  // Vorschau, Exporte einheitlich ueber denselben Filter in refreshDashboard()).
+  els.importsRefreshBtn.addEventListener("click", function () {
+    app.appliedInactiveImportIds = {};
+    Object.keys(app.inactiveImportIds).forEach(function (k) { app.appliedInactiveImportIds[k] = true; });
+    refreshDashboard(false);
+    renderImportsTable();
+    var inactiveCount = Object.keys(app.appliedInactiveImportIds).length;
+    addLog("Aktiv/Inaktiv-Auswahl übernommen: " + inactiveCount + " Import(e) inaktiv, " + app.tickets.length + " Tickets aktiv sichtbar.");
+    showToast(
+      "Aktualisiert",
+      app.tickets.length + " Tickets aus aktiven Dateien sichtbar" + (inactiveCount ? " (" + inactiveCount + " Import(e) deaktiviert)." : ".")
+    );
+  });
 
   // Loescht einen einzelnen Import wieder aus der Sitzung. Tickets, die
   // AUSSCHLIESSLICH aus diesem Import stammen, werden komplett entfernt;
@@ -6228,6 +6474,8 @@
     app.changes = app.changes.filter(function (c) { return !(c.to.source === imp.source && c.to.when === imp.when); });
     app.imports = app.imports.filter(function (i) { return i.id !== importId; });
     delete app.activeImportIds[importId];
+    delete app.inactiveImportIds[importId];
+    delete app.appliedInactiveImportIds[importId];
     if (editingCommentImportId === importId) editingCommentImportId = null;
 
     addLog(
@@ -6376,6 +6624,30 @@
      Aenderungen an den Tickets selbst nutzbar. Gespeichert wird die
      GEFILTERTE Vorschau (matchesListPreviewFilter), nicht die rohe
      Dashboard-Auswahl. */
+  // Legt eine benannte Liste direkt aus einer Menge von Ticket-Schluesseln
+  // an (statt wie beim Listenauswahl-Save-Button aus der Dashboard-
+  // Checkbox-Auswahl) - genutzt, wenn eine reine Ticket-Nummern-Liste per
+  // Datei-/Zwischenablage-Import erkannt wird (s. parseAsKeyList,
+  // keysOnly-Flag). Nutzt dieselbe Snapshot-Struktur wie der normale
+  // Listenauswahl-Save (Name, Datum, Schluessel UND Ticket-Inhalt zum
+  // Speicherzeitpunkt) - fuer Schluessel, die bereits importiert sind,
+  // mit vollem Inhalt; unbekannte Schluessel ehrlich mit leeren Feldern
+  // (ingestTickets() hat sie zuvor als Platzhalter angelegt, s. Aufrufer).
+  function saveKeysAsNamedList(keys, name) {
+    var byKey = {};
+    app.tickets.forEach(function (t) { byKey[t.key] = t; });
+    var tickets = keys.map(function (k) {
+      var t = byKey[k];
+      return t
+        ? { key: t.key, summary: t.summary, status: t.status, domain: t.domain, issueType: t.issueType, points: t.points, autoLabels: t.autoLabels, description: (t.raw && t.raw.description) || "" }
+        : { key: k, summary: "", status: "", domain: "", issueType: "", points: null, autoLabels: [], description: "" };
+    });
+    app.savedLists.unshift({ id: app.nextSavedListId++, name: name, when: nowLabel(), keys: keys, tickets: tickets });
+    renderSavedLists();
+    renderAllJobSteps();
+    addLog("Liste „" + name + "“ aus importierter Ticket-Nummern-Liste gespeichert (" + keys.length + " Tickets).");
+  }
+
   function renderSavedLists() {
     els.listenauswahlCount.textContent = app.savedLists.length;
     els.listenauswahlEmpty.hidden = app.savedLists.length > 0;

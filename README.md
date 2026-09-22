@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.12.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.13.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -241,7 +241,20 @@ anderen Länderformaten (Kennzeichen).
   Textfeld), Format wird automatisch erkannt, Button „Verarbeiten und
   speichern“ zeigt während der Verarbeitung eine Sanduhr/Spinner-Animation;
   das Ergebnis erscheint in der Dateiverwaltung mit der Quelle „Manuell
-  (Zwischenablage)“. Ein optionales **Kommentarfeld** oberhalb des
+  (Zwischenablage)“. Die automatische Formaterkennung ("Andere Importe" und
+  die Zwischenablage) erkennt zusätzlich: eine **reine Ticket-Nummern-Liste**
+  (ein Schlüssel wie `ONESCM-123` pro Zeile, ohne weitere Spalten) – daraus
+  werden Platzhalter-Tickets angelegt (bereits bekannte, reichhaltigere
+  Ticketdaten bleiben dabei unverändert, s. Teil-Import unten) und die Liste
+  wird direkt als **neue, benannte Liste unter „Listenauswahl“** gespeichert;
+  sowie **CSV-Dateien/-Text** (Komma oder Semikolon getrennt, automatische
+  Trennzeichen-Erkennung, RFC4180-taugliche Anführungszeichen-Behandlung) und
+  **Excel-Tabellen (.xlsx)** – Letztere werden wie .docx direkt im Browser
+  über das bereits geladene JSZip aus dem ersten Arbeitsblatt gelesen (keine
+  neue Bibliothek nötig). Tabellen-Kopfzeilen werden über dieselbe
+  Alias-Tabelle wie beim Massenupload-Parser erkannt, erkennen also sowohl
+  deutsche ("Schlüssel"/"Zusammenfassung") als auch englische
+  ("Key"/"Summary") Spaltennamen. Ein optionales **Kommentarfeld** oberhalb des
   Datei-Uploads gilt für den jeweils nächsten Datei- oder
   Zwischenablage-Import und wird nach erfolgreichem Import automatisch
   geleert; der Kommentar erscheint danach überall dort, wo der Import zur
@@ -293,7 +306,8 @@ anderen Länderformaten (Kennzeichen).
     Fehlermeldung übersprungen, da sie nicht zum Ticket-Export gehören.
     Während des Einlesens (Datei- oder ZIP-Upload) zeigt die Dropzone eine
     Sanduhr und ist bis zum Abschluss deaktiviert.
-  - *Andere Importe* – probiert alle Parser automatisch durch (inkl. .docx/.pdf).
+  - *Andere Importe* – probiert alle Parser automatisch durch (inkl. .docx/.pdf,
+    .csv, .xlsx sowie reine Ticket-Nummern-Listen).
 - **Dateiverwaltung** – Liste aller Imports dieser Sitzung sowie ein
   Vergleich von Tickets, die in mehreren Imports mit unterschiedlichem
   Status/Datum/Zusammenfassung vorkamen (Vorher/Nachher inkl. Quelle).
@@ -311,6 +325,18 @@ anderen Länderformaten (Kennzeichen).
   Import keine vollständige Rohkopie gespeichert wird, lassen sich
   einzelne Feldänderungen aus genau diesem Import nicht gezielt
   zurückrechnen. Import-Nummern werden nach dem Löschen nie wiederverwendet.
+  Zusätzlich lässt sich jeder Import über eine **"Aktiv"-Checkbox**
+  vorübergehend deaktivieren, statt ihn zu löschen – im Unterschied zu
+  "Löschen" bleiben die Ticketdaten dabei vollständig erhalten und lassen
+  sich jederzeit verlustfrei wieder aktivieren. Ein Ticket bleibt sichtbar,
+  solange mindestens eine seiner Quell-Dateien aktiv ist. Die Checkbox
+  wirkt bewusst nicht sofort (bei vielen Tickets/Imports spürbar
+  Rechenzeit), sondern erst nach Klick auf den Button **"🔄 Aktualisieren
+  (Aktiv/Inaktiv übernehmen)"** oberhalb der Import-Tabelle – ein Hinweis
+  zeigt an, wenn noch nicht übernommene Änderungen vorliegen. Nach dem
+  Übernehmen laufen **sowohl das Dashboard als auch alle Verarbeitung-Jobs**
+  (3–7, inkl. RAG) einheitlich nur noch auf den aktiven Dateien, da die
+  Filterung an einer einzigen Stelle (dem Aufbau der Ticketliste) erfolgt.
 - **Verarbeitung** – sieben Jobs für wiederkehrende Arbeitsschritte rund
   um die geladenen Tickets, erreichbar über die Tab-Leiste oder das kompakte
   Burger-Menü (☰) daneben. Jeder Job zeigt oben seine **Prozessschritte**

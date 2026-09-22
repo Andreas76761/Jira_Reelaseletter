@@ -112,7 +112,7 @@ async function confirmViaModal(doc) {
   fire(input, "change");
   await wait(300);
   doc.querySelector('.nav-item[data-view="dateiverwaltung"]').click();
-  const importIds = rows().map((r) => r.querySelectorAll("td")[0].textContent.trim());
+  const importIds = rows().map((r) => r.querySelectorAll("td")[1].textContent.trim());
   check("Import-IDs sind eindeutig (keine Wiederverwendung nach Löschung)", new Set(importIds).size === importIds.length);
   check("Neuer Import bekommt eine höhere ID als alle vorherigen (nie wiederverwendet)", Math.max(...importIds.map(Number)) === Number(importIds[importIds.length - 1]));
 
