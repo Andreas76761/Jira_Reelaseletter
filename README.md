@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.10.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.11.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -548,7 +548,23 @@ anderen Länderformaten (Kennzeichen).
     Feld-Vergleich auf das Jira-Feld "Domain", kein Text-Stichwortabgleich,
     keine KI). Unterkapitel dienen nur der Gliederungs-Struktur/Anzeige und
     tragen keine eigene Domänen-Zuordnung. Ohne zugeordnete Domäne bleibt
-    ein Kapitel ehrlich leer, statt eine Zuordnung zu raten.
+    ein Kapitel ehrlich leer, statt eine Zuordnung zu raten. Der
+    Ausgangsbestand enthält bereits einen **Domänen-Vorschlag** für die
+    Kapitel, bei denen Kapitel- und Domänenname klar zusammenpassen
+    (z. B. Kapitel 4 „Servicevertrag anlegen" → *Contract Generation*,
+    *Contract Calculation*, *Vehicle Management*; Kapitel 5 „Zahlung,
+    Rechnung und Unterschrift" → *Revenue Management*, *Cost Management*;
+    Kapitel 7 „Verträge im Alltag verwalten" → *Contract Management*;
+    Kapitel 8 „Geschäftskunden, Kampagnen, Sonderfälle" → *Customer&Partner
+    Management*, *Customer Account Center*; Kapitel 10 „Prozesse und
+    Schaubilder" → *Architecture*; Kapitel 11 „Governance, Qualität,
+    Datenschutz" → *Documents & Communications*, *Archiving*; Kapitel 6
+    „Antrag verfolgen und aktivieren" → *Reporting*) – **dieser Vorschlag
+    ist vom Modell anhand der Namen hergeleitet, keine bekannte "wahre"
+    Zuordnung, und sollte geprüft/korrigiert werden.** Bewusst ohne
+    Vorschlag blieben Kapitel 1-3, 9, 13-16 (keine eindeutig passende
+    Domäne) sowie die Domäne *DevOps* (mit 60 Tickets die zweitgrößte im
+    Demo-Datensatz – passt thematisch zu keinem Kapitel).
   - *Testergebnisse* – eingebetteter Bericht der automatisierten Tests
     (Browsertests der Web-App + pytest für das CLI-Tool) aus dem letzten
     Verifikationslauf während der Entwicklung dieser Version, gruppiert

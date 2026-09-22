@@ -55,56 +55,68 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   fire(doc.querySelector('button[data-action="delete-chapter"][data-chapter-id="' + chapterId + '"]'), "click");
   check("Kapitel nach Löschen wieder entfernt", !outlineText().includes("Kapitel 17: Ausblick"));
 
-  // ===================== Einstellungen: Gliederung - Domänen zuordnen (Domain-basiert statt Text-Abgleich) =====================
+  // ===================== Einstellungen: Gliederung - Standard-Domänen-Vorschlag =====================
+  // (rational hergeleitet aus den 13 im Demo-Datensatz vorkommenden Domänen + Kapitelthemen, s. outlineSeedData())
   function chapterIdFor(title) {
     const row = Array.from(doc.querySelectorAll("#outline-tbody .outline-chapter-row")).find((r) => r.textContent.includes(title));
     return row && row.querySelector('button[data-action="delete-chapter"]').getAttribute("data-chapter-id");
   }
-  const kap4Id = chapterIdFor("Kapitel 4: Servicevertrag anlegen");
-  doc.querySelector('.outline-new-domain-input[data-chapter-id="' + kap4Id + '"]').value = "Vehicle Management";
-  fire(doc.querySelector('button[data-action="add-domain"][data-chapter-id="' + kap4Id + '"]'), "click");
-  check("Domäne 'Vehicle Management' zu Kapitel 4 zugeordnet", outlineText().includes("Vehicle Management"));
-  check("Kapitel-4-Zeile zeigt Domänen-Zähler '(1 Domäne)'", (() => {
+  check("Kapitel 4 hat 3 vorgeschlagene Domänen (Contract Generation/Calculation, Vehicle Management)", (() => {
     const row = Array.from(doc.querySelectorAll("#outline-tbody .outline-chapter-row")).find((r) => r.textContent.includes("Kapitel 4: Servicevertrag anlegen"));
+    return !!row && row.textContent.includes("(3 Domänen)");
+  })());
+  check("Kapitel 4 zeigt 'Contract Generation' als zugeordnete Domäne", outlineText().includes("Contract Generation"));
+  check("Kapitel 5 hat 2 vorgeschlagene Domänen (Revenue Management, Cost Management)", (() => {
+    const row = Array.from(doc.querySelectorAll("#outline-tbody .outline-chapter-row")).find((r) => r.textContent.includes("Kapitel 5: Zahlung, Rechnung und Unterschrift"));
+    return !!row && row.textContent.includes("(2 Domänen)");
+  })());
+  check("Kapitel 9 (Troubleshooting) bewusst OHNE Domänen-Vorschlag (kein erzwungener Fit)", (() => {
+    const row = Array.from(doc.querySelectorAll("#outline-tbody .outline-chapter-row")).find((r) => r.textContent.includes("Kapitel 9: Troubleshooting und Support"));
+    return !!row && row.textContent.includes("(0 Domänen)");
+  })());
+
+  // ===================== Einstellungen: Gliederung - Domänen manuell zuordnen/entfernen (an einem bisher unbesetzten Kapitel) =====================
+  const kap9Id = chapterIdFor("Kapitel 9: Troubleshooting und Support");
+  doc.querySelector('.outline-new-domain-input[data-chapter-id="' + kap9Id + '"]').value = "ZUW-Kapitel9-Domain";
+  fire(doc.querySelector('button[data-action="add-domain"][data-chapter-id="' + kap9Id + '"]'), "click");
+  check("Domäne 'ZUW-Kapitel9-Domain' zu Kapitel 9 zugeordnet", outlineText().includes("ZUW-Kapitel9-Domain"));
+  check("Kapitel-9-Zeile zeigt Domänen-Zähler '(1 Domäne)'", (() => {
+    const row = Array.from(doc.querySelectorAll("#outline-tbody .outline-chapter-row")).find((r) => r.textContent.includes("Kapitel 9: Troubleshooting und Support"));
     return !!row && row.textContent.includes("(1 Domäne)");
   })());
 
   // Doppelte Zuordnung wird abgelehnt (kein Duplikat in der Liste).
-  doc.querySelector('.outline-new-domain-input[data-chapter-id="' + kap4Id + '"]').value = "Vehicle Management";
-  fire(doc.querySelector('button[data-action="add-domain"][data-chapter-id="' + kap4Id + '"]'), "click");
-  check("Doppelte Domänen-Zuordnung wird abgelehnt (weiterhin nur 1x 'Vehicle Management')",
-    Array.from(doc.querySelectorAll(".outline-domain-row")).filter((r) => r.textContent.includes("Vehicle Management")).length === 1);
-  check("Weiterhin nur 1 Domäne bei Kapitel 4", (() => {
-    const row = Array.from(doc.querySelectorAll("#outline-tbody .outline-chapter-row")).find((r) => r.textContent.includes("Kapitel 4: Servicevertrag anlegen"));
+  doc.querySelector('.outline-new-domain-input[data-chapter-id="' + kap9Id + '"]').value = "ZUW-Kapitel9-Domain";
+  fire(doc.querySelector('button[data-action="add-domain"][data-chapter-id="' + kap9Id + '"]'), "click");
+  check("Doppelte Domänen-Zuordnung wird abgelehnt (weiterhin nur 1x 'ZUW-Kapitel9-Domain')",
+    Array.from(doc.querySelectorAll(".outline-domain-row")).filter((r) => r.textContent.includes("ZUW-Kapitel9-Domain")).length === 1);
+  check("Weiterhin nur 1 Domäne bei Kapitel 9", (() => {
+    const row = Array.from(doc.querySelectorAll("#outline-tbody .outline-chapter-row")).find((r) => r.textContent.includes("Kapitel 9: Troubleshooting und Support"));
     return !!row && row.textContent.includes("(1 Domäne)");
   })());
 
-  const kap5Id = chapterIdFor("Kapitel 5: Zahlung, Rechnung und Unterschrift");
-  doc.querySelector('.outline-new-domain-input[data-chapter-id="' + kap5Id + '"]').value = "ZUW-Kapitel5-Domain";
-  fire(doc.querySelector('button[data-action="add-domain"][data-chapter-id="' + kap5Id + '"]'), "click");
-  check("Domäne 'ZUW-Kapitel5-Domain' zu Kapitel 5 zugeordnet", outlineText().includes("ZUW-Kapitel5-Domain"));
-
   // Domäne wieder entfernen und erneut zuordnen (fuer den Rest des Tests gebraucht).
-  const kap5DomainRow = Array.from(doc.querySelectorAll(".outline-domain-row")).find((r) => r.textContent.includes("ZUW-Kapitel5-Domain"));
-  fire(kap5DomainRow.querySelector('button[data-action="delete-domain"]'), "click");
-  check("Domäne 'ZUW-Kapitel5-Domain' nach Löschen wieder entfernt", !outlineText().includes("ZUW-Kapitel5-Domain"));
-  doc.querySelector('.outline-new-domain-input[data-chapter-id="' + kap5Id + '"]').value = "ZUW-Kapitel5-Domain";
-  fire(doc.querySelector('button[data-action="add-domain"][data-chapter-id="' + kap5Id + '"]'), "click");
-  check("Domäne 'ZUW-Kapitel5-Domain' erneut zugeordnet", outlineText().includes("ZUW-Kapitel5-Domain"));
+  const kap9DomainRow = Array.from(doc.querySelectorAll(".outline-domain-row")).find((r) => r.textContent.includes("ZUW-Kapitel9-Domain"));
+  fire(kap9DomainRow.querySelector('button[data-action="delete-domain"]'), "click");
+  check("Domäne 'ZUW-Kapitel9-Domain' nach Löschen wieder entfernt", !outlineText().includes("ZUW-Kapitel9-Domain"));
+  doc.querySelector('.outline-new-domain-input[data-chapter-id="' + kap9Id + '"]').value = "ZUW-Kapitel9-Domain";
+  fire(doc.querySelector('button[data-action="add-domain"][data-chapter-id="' + kap9Id + '"]'), "click");
+  check("Domäne 'ZUW-Kapitel9-Domain' erneut zugeordnet", outlineText().includes("ZUW-Kapitel9-Domain"));
 
-  // ===================== Tickets importieren: je 1 Treffer pro Gliederungskapitel (Domäne) und Label-Kategorie, 1 ohne Treffer =====================
+  // ===================== Tickets importieren: 1 Treffer über die Standard-Domäne (Kapitel 4, ohne manuelle Zuordnung),
+  // 1 Treffer über die eben manuell zugeordnete Domäne (Kapitel 9), 1 ohne Treffer =====================
   const xml = `<?xml version="1.0"?><rss><channel>
     <item><key>ZUW-1</key><summary>Neuer Servicevertrag anlegen</summary>
       <description>Es geht um die Vertragsarten und die Fahrzeugverwaltung.</description>
       <status>Offen</status><type>Epic</type>
       <customfields><customfield><customfieldname>Domain</customfieldname>
-      <customfieldvalues><customfieldvalue>Vehicle Management</customfieldvalue></customfieldvalues>
+      <customfieldvalues><customfieldvalue>Contract Generation</customfieldvalue></customfieldvalues>
       </customfield></customfields></item>
     <item><key>ZUW-2</key><summary>Frage zur Unterschrift</summary>
       <description>Es geht um die Digitale Unterschrift und die IBAN-Prüfung.</description>
       <status>Offen</status><type>Bug</type>
       <customfields><customfield><customfieldname>Domain</customfieldname>
-      <customfieldvalues><customfieldvalue>ZUW-Kapitel5-Domain</customfieldvalue></customfieldvalues>
+      <customfieldvalues><customfieldvalue>ZUW-Kapitel9-Domain</customfieldvalue></customfieldvalues>
       </customfield></customfields></item>
     <item><key>ZUW-3</key><summary>Allgemeine Anfrage</summary>
       <description>Kein spezifischer Bezug zu irgendeinem Thema.</description>
@@ -144,10 +156,17 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   await wait(50);
   check("'Nach Gliederung'-Tab aktiv markiert", doc.querySelector('#assignment-mode-tabs button[data-assignment-mode="outline"]').className.includes("active"));
   check("Zuordnung (Gliederung) zeigt 'Kapitel 4: Servicevertrag anlegen'", assignmentText().includes("Kapitel 4: Servicevertrag anlegen"));
-  check("Zuordnung (Gliederung) zeigt 'Kapitel 5: Zahlung, Rechnung und Unterschrift'", assignmentText().includes("Kapitel 5: Zahlung, Rechnung und Unterschrift"));
-  check("ZUW-2 erscheint unter Kapitel 5", (() => {
+  check("Zuordnung (Gliederung) zeigt 'Kapitel 9: Troubleshooting und Support'", assignmentText().includes("Kapitel 9: Troubleshooting und Support"));
+  check("ZUW-1 erscheint unter Kapitel 4 (über die Standard-Domäne 'Contract Generation', ohne manuelle Zuordnung)", (() => {
     const rows = Array.from(doc.querySelectorAll("#assignment-tbody tr"));
-    const catIdx = rows.findIndex((r) => r.textContent.includes("Kapitel 5: Zahlung, Rechnung und Unterschrift"));
+    const catIdx = rows.findIndex((r) => r.textContent.includes("Kapitel 4: Servicevertrag anlegen"));
+    const nextGroupIdx = rows.findIndex((r, i) => i > catIdx && r.classList.contains("domain-group-row"));
+    const zuw1Idx = rows.findIndex((r) => r.textContent.includes("ZUW-1"));
+    return catIdx !== -1 && zuw1Idx > catIdx && (nextGroupIdx === -1 || zuw1Idx < nextGroupIdx);
+  })());
+  check("ZUW-2 erscheint unter Kapitel 9 (über die manuell zugeordnete Domäne)", (() => {
+    const rows = Array.from(doc.querySelectorAll("#assignment-tbody tr"));
+    const catIdx = rows.findIndex((r) => r.textContent.includes("Kapitel 9: Troubleshooting und Support"));
     const nextGroupIdx = rows.findIndex((r, i) => i > catIdx && r.classList.contains("domain-group-row"));
     const zuw2Idx = rows.findIndex((r) => r.textContent.includes("ZUW-2"));
     return catIdx !== -1 && zuw2Idx > catIdx && (nextGroupIdx === -1 || zuw2Idx < nextGroupIdx);
@@ -178,7 +197,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("RAG Label-Kategorie-Filter listet 'Zahlung & Rechnung'", categoryOptions.includes("Zahlung & Rechnung"));
   const chapterOptions = Array.from(doc.getElementById("rag-outline-select").options).map((o) => o.value);
   check("RAG Gliederungs-Filter listet 'Kapitel 4: Servicevertrag anlegen'", chapterOptions.includes("Kapitel 4: Servicevertrag anlegen"));
-  check("RAG Gliederungs-Filter listet 'Kapitel 5: Zahlung, Rechnung und Unterschrift'", chapterOptions.includes("Kapitel 5: Zahlung, Rechnung und Unterschrift"));
+  check("RAG Gliederungs-Filter listet 'Kapitel 9: Troubleshooting und Support'", chapterOptions.includes("Kapitel 9: Troubleshooting und Support"));
 
   // Nur Label-Kategorie "Fahrzeuge & Fahrzeugdaten" auswaehlen -> nur ZUW-1, kein Mischmasch.
   const categorySelect = doc.getElementById("rag-label-category-select");
@@ -190,12 +209,12 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("Extraktion enthält NICHT ZUW-2 (kein Mischmasch über alle Tickets)", !doc.getElementById("rag-extract-tbody").textContent.includes("ZUW-2"));
   Array.from(categorySelect.options).forEach((o) => { o.selected = false; });
 
-  // Nur Gliederungskapitel 5 auswaehlen -> nur ZUW-2.
+  // Nur Gliederungskapitel 9 auswaehlen -> nur ZUW-2.
   const chapterSelect = doc.getElementById("rag-outline-select");
-  Array.from(chapterSelect.options).forEach((o) => { o.selected = o.value === "Kapitel 5: Zahlung, Rechnung und Unterschrift"; });
+  Array.from(chapterSelect.options).forEach((o) => { o.selected = o.value === "Kapitel 9: Troubleshooting und Support"; });
   fire(doc.getElementById("rag-extract-btn"), "click");
   await wait(50);
-  check("Extraktion nach Gliederungskapitel 5: genau 1 Ticket", doc.getElementById("rag-extract-count").textContent === "1");
+  check("Extraktion nach Gliederungskapitel 9: genau 1 Ticket", doc.getElementById("rag-extract-count").textContent === "1");
   check("Extraktion enthält ZUW-2", doc.getElementById("rag-extract-tbody").textContent.includes("ZUW-2"));
   check("Extraktion enthält NICHT ZUW-1 (kein Mischmasch über alle Tickets)", !doc.getElementById("rag-extract-tbody").textContent.includes("ZUW-1"));
   Array.from(chapterSelect.options).forEach((o) => { o.selected = false; });
