@@ -55,17 +55,63 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   fire(doc.querySelector('button[data-action="delete-chapter"][data-chapter-id="' + chapterId + '"]'), "click");
   check("Kapitel nach Löschen wieder entfernt", !outlineText().includes("Kapitel 17: Ausblick"));
 
-  // ===================== Tickets importieren: je 1 Treffer pro Gliederungskapitel/Label-Kategorie, 1 ohne Treffer =====================
+  // ===================== Einstellungen: Gliederung - Domänen zuordnen (Domain-basiert statt Text-Abgleich) =====================
+  function chapterIdFor(title) {
+    const row = Array.from(doc.querySelectorAll("#outline-tbody .outline-chapter-row")).find((r) => r.textContent.includes(title));
+    return row && row.querySelector('button[data-action="delete-chapter"]').getAttribute("data-chapter-id");
+  }
+  const kap4Id = chapterIdFor("Kapitel 4: Servicevertrag anlegen");
+  doc.querySelector('.outline-new-domain-input[data-chapter-id="' + kap4Id + '"]').value = "Vehicle Management";
+  fire(doc.querySelector('button[data-action="add-domain"][data-chapter-id="' + kap4Id + '"]'), "click");
+  check("Domäne 'Vehicle Management' zu Kapitel 4 zugeordnet", outlineText().includes("Vehicle Management"));
+  check("Kapitel-4-Zeile zeigt Domänen-Zähler '(1 Domäne)'", (() => {
+    const row = Array.from(doc.querySelectorAll("#outline-tbody .outline-chapter-row")).find((r) => r.textContent.includes("Kapitel 4: Servicevertrag anlegen"));
+    return !!row && row.textContent.includes("(1 Domäne)");
+  })());
+
+  // Doppelte Zuordnung wird abgelehnt (kein Duplikat in der Liste).
+  doc.querySelector('.outline-new-domain-input[data-chapter-id="' + kap4Id + '"]').value = "Vehicle Management";
+  fire(doc.querySelector('button[data-action="add-domain"][data-chapter-id="' + kap4Id + '"]'), "click");
+  check("Doppelte Domänen-Zuordnung wird abgelehnt (weiterhin nur 1x 'Vehicle Management')",
+    Array.from(doc.querySelectorAll(".outline-domain-row")).filter((r) => r.textContent.includes("Vehicle Management")).length === 1);
+  check("Weiterhin nur 1 Domäne bei Kapitel 4", (() => {
+    const row = Array.from(doc.querySelectorAll("#outline-tbody .outline-chapter-row")).find((r) => r.textContent.includes("Kapitel 4: Servicevertrag anlegen"));
+    return !!row && row.textContent.includes("(1 Domäne)");
+  })());
+
+  const kap5Id = chapterIdFor("Kapitel 5: Zahlung, Rechnung und Unterschrift");
+  doc.querySelector('.outline-new-domain-input[data-chapter-id="' + kap5Id + '"]').value = "ZUW-Kapitel5-Domain";
+  fire(doc.querySelector('button[data-action="add-domain"][data-chapter-id="' + kap5Id + '"]'), "click");
+  check("Domäne 'ZUW-Kapitel5-Domain' zu Kapitel 5 zugeordnet", outlineText().includes("ZUW-Kapitel5-Domain"));
+
+  // Domäne wieder entfernen und erneut zuordnen (fuer den Rest des Tests gebraucht).
+  const kap5DomainRow = Array.from(doc.querySelectorAll(".outline-domain-row")).find((r) => r.textContent.includes("ZUW-Kapitel5-Domain"));
+  fire(kap5DomainRow.querySelector('button[data-action="delete-domain"]'), "click");
+  check("Domäne 'ZUW-Kapitel5-Domain' nach Löschen wieder entfernt", !outlineText().includes("ZUW-Kapitel5-Domain"));
+  doc.querySelector('.outline-new-domain-input[data-chapter-id="' + kap5Id + '"]').value = "ZUW-Kapitel5-Domain";
+  fire(doc.querySelector('button[data-action="add-domain"][data-chapter-id="' + kap5Id + '"]'), "click");
+  check("Domäne 'ZUW-Kapitel5-Domain' erneut zugeordnet", outlineText().includes("ZUW-Kapitel5-Domain"));
+
+  // ===================== Tickets importieren: je 1 Treffer pro Gliederungskapitel (Domäne) und Label-Kategorie, 1 ohne Treffer =====================
   const xml = `<?xml version="1.0"?><rss><channel>
     <item><key>ZUW-1</key><summary>Neuer Servicevertrag anlegen</summary>
       <description>Es geht um die Vertragsarten und die Fahrzeugverwaltung.</description>
-      <status>Offen</status><type>Epic</type></item>
+      <status>Offen</status><type>Epic</type>
+      <customfields><customfield><customfieldname>Domain</customfieldname>
+      <customfieldvalues><customfieldvalue>Vehicle Management</customfieldvalue></customfieldvalues>
+      </customfield></customfields></item>
     <item><key>ZUW-2</key><summary>Frage zur Unterschrift</summary>
       <description>Es geht um die Digitale Unterschrift und die IBAN-Prüfung.</description>
-      <status>Offen</status><type>Bug</type></item>
+      <status>Offen</status><type>Bug</type>
+      <customfields><customfield><customfieldname>Domain</customfieldname>
+      <customfieldvalues><customfieldvalue>ZUW-Kapitel5-Domain</customfieldvalue></customfieldvalues>
+      </customfield></customfields></item>
     <item><key>ZUW-3</key><summary>Allgemeine Anfrage</summary>
       <description>Kein spezifischer Bezug zu irgendeinem Thema.</description>
-      <status>Offen</status><type>Task</type></item>
+      <status>Offen</status><type>Task</type>
+      <customfields><customfield><customfieldname>Domain</customfieldname>
+      <customfieldvalues><customfieldvalue>Sonderfall-Ohne-Domain</customfieldvalue></customfieldvalues>
+      </customfield></customfields></item>
   </channel></rss>`;
   doc.querySelector('.nav-item[data-view="import"]').click();
   const input = doc.getElementById("file-input");

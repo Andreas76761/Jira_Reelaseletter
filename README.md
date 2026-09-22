@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.9.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.10.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -541,9 +541,14 @@ anderen Länderformaten (Kennzeichen).
   - *Benutzerhandbuch-Gliederung* – editierbare Kapitel-/Unterkapitel-Liste
     des Benutzerhandbuchs, standardmäßig mit der oneSCM-Schulungsgliederung
     vorbefüllt (Kapitel hinzufügen/löschen, je Kapitel Unterkapitel
-    hinzufügen/löschen). Wird beim Verarbeiten nach demselben Prinzip wie
-    Labels (reiner Text-Abgleich auf den Kapitel-/Unterkapiteltitel, keine
-    KI) automatisch Tickets zugeordnet.
+    hinzufügen/löschen). Jedem Kapitel lassen sich außerdem eine oder
+    mehrere **Jira-Domänen** zuordnen (mit Datalist-Vorschlägen aus den
+    tatsächlich geladenen Tickets) – die App ordnet beim Verarbeiten
+    automatisch alle Tickets mit passender Domäne diesem Kapitel zu (reiner
+    Feld-Vergleich auf das Jira-Feld "Domain", kein Text-Stichwortabgleich,
+    keine KI). Unterkapitel dienen nur der Gliederungs-Struktur/Anzeige und
+    tragen keine eigene Domänen-Zuordnung. Ohne zugeordnete Domäne bleibt
+    ein Kapitel ehrlich leer, statt eine Zuordnung zu raten.
   - *Testergebnisse* – eingebetteter Bericht der automatisierten Tests
     (Browsertests der Web-App + pytest für das CLI-Tool) aus dem letzten
     Verifikationslauf während der Entwicklung dieser Version, gruppiert

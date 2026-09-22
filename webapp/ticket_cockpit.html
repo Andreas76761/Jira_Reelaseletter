@@ -1382,17 +1382,20 @@
         <section>
           <p class="section-label">Benutzerhandbuch-Gliederung</p>
           <div class="callout">
-            Kapitel/Unterkapitel des Benutzerhandbuchs &ndash; wird beim Verarbeiten automatisch (Text-Abgleich wie bei
-            Labels, keine KI) Tickets zugeordnet, deren Zusammenfassung/Beschreibung/Domäne den Kapitel- oder
-            Unterkapiteltitel als Stichwort enthält. Sichtbar im Dashboard unter "Jira Zuordnung → Nach Gliederung"
-            sowie bei Verarbeitung → 7. RAG als Filter.
+            Kapitel/Unterkapitel des Benutzerhandbuchs. Jedem Kapitel lassen sich eine oder mehrere <b>Jira-Domänen</b>
+            zuordnen (Feld unterhalb der Unterkapitel je Kapitel) &ndash; die App ordnet beim Verarbeiten automatisch
+            alle Tickets mit passender Domäne diesem Kapitel zu (reiner Feld-Vergleich, kein Text-Stichwortabgleich,
+            keine KI). Unterkapitel dienen nur der Gliederungs-Struktur/Anzeige und tragen keine eigene
+            Domänen-Zuordnung. Sichtbar im Dashboard unter "Jira Zuordnung → Nach Gliederung" sowie bei Verarbeitung →
+            7. RAG als Filter.
           </div>
           <div class="panel table-wrap" id="outline-wrap" style="max-height:420px; overflow:auto;">
             <table class="simple-table" id="outline-table">
-              <thead><tr><th>Kapitel / Unterkapitel</th><th>Aktion</th></tr></thead>
+              <thead><tr><th>Kapitel / Unterkapitel / Domäne</th><th>Aktion</th></tr></thead>
               <tbody id="outline-tbody"></tbody>
             </table>
           </div>
+          <datalist id="outline-domain-datalist"></datalist>
           <div class="paste-actions" style="margin-top:10px; align-items:center;">
             <input type="text" class="text-input" id="outline-new-chapter-input" placeholder="Neues Kapitel, z. B. Kapitel 17: Ausblick" style="max-width:320px;">
             <button class="btn primary" id="outline-add-chapter-btn" type="button">Kapitel hinzufügen</button>
@@ -3422,7 +3425,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.9.0";
+  var APP_VERSION = "2.10.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -4228,7 +4231,7 @@
     "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
     "points-tbody", "points-new-type", "points-new-value", "points-add-btn",
     "labels-tbody", "labels-new-category", "labels-new-de", "labels-new-en", "labels-add-btn", "label-category-datalist",
-    "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn",
+    "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn", "outline-domain-datalist",
     "test-results-date", "test-results-suites", "test-results-total", "test-results-passed", "test-results-failed", "test-results-tbody",
     "evaluate-tickets-btn", "evaluate-summary", "evaluate-count-manual", "evaluate-count-internal", "evaluate-count-unknown",
     "evaluate-table-wrap", "evaluate-tbody",
@@ -4787,7 +4790,12 @@
       return {
         id: nextId++,
         title: c[0],
-        subs: c[1].map(function (s) { return { id: nextId++, title: s }; })
+        subs: c[1].map(function (s) { return { id: nextId++, title: s }; }),
+        // Jira-Domänen, die diesem Kapitel zugeordnet sind (s.
+        // computeAutoOutline()) - bewusst leer im Ausgangsbestand: keine
+        // Domäne↔Kapitel-Zuordnung erfunden, der Nutzer pflegt sie selbst
+        // in Einstellungen -> Benutzerhandbuch-Gliederung.
+        domains: []
       };
     });
   }
@@ -4889,12 +4897,25 @@
     input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); els.labelsAddBtn.click(); } });
   });
 
+  // Domänen-Vorschlagsliste (Datalist) fuer die Gliederungs-Zuordnung:
+  // tatsaechlich vorkommende Domänen der aktuell geladenen Tickets, damit
+  // der Nutzer beim Zuordnen nicht raten/Tippfehler riskieren muss (Freitext
+  // bleibt trotzdem erlaubt, falls eine Domäne noch nicht geladen ist).
+  function populateOutlineDomainDatalist() {
+    els.outlineDomainDatalist.innerHTML = (app.domainList || []).map(function (d) {
+      return '<option value="' + escapeHtml(d) + '">';
+    }).join("");
+  }
+
   // Gliederungs-Tabelle (Benutzerhandbuch): Kapitel mit eingerückten
-  // Unterkapiteln + je Kapitel ein Mini-Formular zum Hinzufügen eines
-  // weiteren Unterkapitels.
+  // Unterkapiteln (reine Gliederungs-Struktur/Anzeige) + je Kapitel eine
+  // Liste zugeordneter Jira-Domänen (bestimmt die automatische
+  // Ticket-Zuordnung, s. computeAutoOutline()) + je ein Mini-Formular zum
+  // Hinzufügen eines weiteren Unterkapitels bzw. einer weiteren Domäne.
   function renderOutlineList() {
     els.outlineTbody.innerHTML = app.outline.map(function (c) {
-      var chapterRow = '<tr class="outline-chapter-row"><td><b>' + escapeHtml(c.title) + '</b></td><td>' +
+      var chapterRow = '<tr class="outline-chapter-row"><td><b>' + escapeHtml(c.title) + '</b> <span class="domain-count">(' +
+        c.domains.length + (c.domains.length === 1 ? " Domäne" : " Domänen") + ')</span></td><td>' +
         '<button type="button" class="btn danger btn-tiny" data-action="delete-chapter" data-chapter-id="' + c.id + '">Kapitel löschen</button></td></tr>';
       var subRows = c.subs.map(function (s) {
         return '<tr class="outline-sub-row"><td style="padding-left:28px;">' + escapeHtml(s.title) + '</td><td>' +
@@ -4903,7 +4924,14 @@
       var addSubRow = '<tr class="outline-add-sub-row"><td colspan="2" style="padding-left:28px;">' +
         '<input type="text" class="text-input outline-new-sub-input" data-chapter-id="' + c.id + '" placeholder="Neues Unterkapitel, z. B. 4.4 Sonderfälle" style="max-width:280px;">' +
         '<button type="button" class="btn ghost btn-tiny" data-action="add-sub" data-chapter-id="' + c.id + '">Hinzufügen</button></td></tr>';
-      return chapterRow + subRows + addSubRow;
+      var domainRows = c.domains.map(function (d) {
+        return '<tr class="outline-domain-row"><td style="padding-left:28px;">📁 ' + escapeHtml(d) + '</td><td>' +
+          '<button type="button" class="btn danger btn-tiny" data-action="delete-domain" data-chapter-id="' + c.id + '" data-domain="' + escapeHtml(d) + '">Löschen</button></td></tr>';
+      }).join("");
+      var addDomainRow = '<tr class="outline-add-domain-row"><td colspan="2" style="padding-left:28px;">' +
+        '<input type="text" class="text-input outline-new-domain-input" list="outline-domain-datalist" data-chapter-id="' + c.id + '" placeholder="Domäne zuordnen, z. B. Contract Management" style="max-width:280px;">' +
+        '<button type="button" class="btn ghost btn-tiny" data-action="add-domain" data-chapter-id="' + c.id + '">Domäne hinzufügen</button></td></tr>';
+      return chapterRow + subRows + addSubRow + domainRows + addDomainRow;
     }).join("");
   }
   els.outlineTbody.addEventListener("click", function (e) {
@@ -4934,12 +4962,27 @@
       addLog("Gliederung: neues Unterkapitel „" + val + "“ zu „" + chapter.title + "“ hinzugefügt.");
       renderOutlineList();
       refreshDashboard(false);
+    } else if (action === "delete-domain") {
+      var domainToRemove = btn.getAttribute("data-domain");
+      chapter.domains = chapter.domains.filter(function (d) { return d !== domainToRemove; });
+      addLog("Gliederung: Domäne „" + domainToRemove + "“ von „" + chapter.title + "“ entfernt.");
+      renderOutlineList();
+      refreshDashboard(false);
+    } else if (action === "add-domain") {
+      var domainInput = els.outlineTbody.querySelector('.outline-new-domain-input[data-chapter-id="' + chapterId + '"]');
+      var domainVal = (domainInput && domainInput.value || "").trim();
+      if (!domainVal) { showToast("Keine Domäne", "Bitte eine Domäne eingeben (z. B. Contract Management).", true); return; }
+      if (chapter.domains.indexOf(domainVal) !== -1) { showToast("Bereits zugeordnet", "„" + domainVal + "“ ist „" + chapter.title + "“ schon zugeordnet.", true); return; }
+      chapter.domains.push(domainVal);
+      addLog("Gliederung: Domäne „" + domainVal + "“ zu „" + chapter.title + "“ zugeordnet.");
+      renderOutlineList();
+      refreshDashboard(false);
     }
   });
   els.outlineAddChapterBtn.addEventListener("click", function () {
     var val = (els.outlineNewChapterInput.value || "").trim();
     if (!val) { showToast("Kein Titel", "Bitte einen Kapiteltitel eingeben.", true); return; }
-    app.outline.push({ id: nextOutlineId(), title: val, subs: [] });
+    app.outline.push({ id: nextOutlineId(), title: val, subs: [], domains: [] });
     addLog("Gliederung: neues Kapitel „" + val + "“ angelegt.");
     els.outlineNewChapterInput.value = "";
     renderOutlineList();
@@ -5018,28 +5061,18 @@
     return dedupeStrings(matchedLabelEntries(rawTicket).map(function (lbl) { return lbl.category; }));
   }
 
-  // Benutzerhandbuch-Gliederung: dieselbe Text-Abgleich-Mechanik wie bei
-  // Labels ("ähnlich wie bei Label"), angewandt auf Kapitel-/
-  // Unterkapitel-Titel statt auf eine Stichwortliste. outlineMatchPhrase()
-  // entfernt die Nummerierung ("Kapitel 4: "/"4.1 ") vor dem Abgleich, da
-  // diese Praefixe selbst nie im Ticket-Text vorkommen wuerden.
-  function outlineMatchPhrase(title) {
-    return title.replace(/^Kapitel\s+\d+\s*:\s*/i, "").replace(/^\d+(\.\d+)*\s+/, "").trim();
-  }
+  // Benutzerhandbuch-Gliederung: Zuordnung anhand der Jira-Domäne des
+  // Tickets (t.custom_fields.Domain) statt Text-Stichwortabgleich - jedes
+  // Kapitel traegt dazu eine frei gepflegte Liste zugeordneter Domänen
+  // (Einstellungen -> Benutzerhandbuch-Gliederung). Unterkapitel dienen
+  // nur der Gliederungs-Struktur/Anzeige und tragen selbst keine eigene
+  // Domänen-Zuordnung. Kein Text-Abgleich, keine KI - reiner Feld-Vergleich.
   function computeAutoOutline(rawTicket) {
-    var haystack = [rawTicket.summary || "", rawTicket.description || "", (rawTicket.custom_fields && rawTicket.custom_fields.Domain) || ""]
-      .join(" \n ").toLowerCase();
+    var domain = (rawTicket.custom_fields && rawTicket.custom_fields.Domain) || "";
+    if (!domain) return [];
     var matched = [];
     app.outline.forEach(function (chapter) {
-      var chapterPhrase = outlineMatchPhrase(chapter.title).toLowerCase();
-      var hit = chapterPhrase.length >= 3 && haystack.indexOf(chapterPhrase) !== -1;
-      if (!hit) {
-        hit = chapter.subs.some(function (s) {
-          var subPhrase = outlineMatchPhrase(s.title).toLowerCase();
-          return subPhrase.length >= 3 && haystack.indexOf(subPhrase) !== -1;
-        });
-      }
-      if (hit) matched.push(chapter.title);
+      if ((chapter.domains || []).indexOf(domain) !== -1) matched.push(chapter.title);
     });
     return matched;
   }
@@ -5105,6 +5138,7 @@
     buildListenauswahlTypeChips();
     renderListenauswahlPreview();
     renderAssignmentPanel();
+    populateOutlineDomainDatalist();
   }
 
   function buildFormatCallout() {
