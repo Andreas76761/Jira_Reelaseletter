@@ -283,6 +283,7 @@
   tbody tr:hover td { background: var(--surface-2); }
   tbody tr:last-child td { border-bottom: none; }
   td.key { font-family: "IBM Plex Mono", monospace; font-weight: 600; }
+  td.description { color: var(--text-muted); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   td.summary { color: var(--text); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   td.domain { color: var(--text-muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
   td.date { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; color: var(--text-muted); }
@@ -582,6 +583,12 @@
         <section id="type-section">
           <p class="section-label">Typ-Schnellfilter</p>
           <div class="import-tabs" id="type-chips"></div>
+          <div class="import-tabs" id="type-quick-presets">
+            <button class="import-tab" type="button" data-preset="no-bug">Ohne Bugs</button>
+            <button class="import-tab" type="button" data-preset="only-epic">Nur Epics</button>
+            <button class="import-tab" type="button" data-preset="no-reporting">Ohne Reporting</button>
+            <button class="import-tab" type="button" data-preset="no-testing">Ohne Testing</button>
+          </div>
         </section>
 
         <section id="domain-section">
@@ -615,6 +622,7 @@
                 <tr>
                   <th id="select-all-th"><input type="checkbox" id="select-all-checkbox" aria-label="Alle sichtbaren auswählen"></th>
                   <th data-key="key">Schlüssel <span class="arrow">&darr;</span></th>
+                  <th data-key="description">Beschreibung <span class="arrow">&darr;</span></th>
                   <th data-key="summary">Zusammenfassung <span class="arrow">&darr;</span></th>
                   <th data-key="status">Status <span class="arrow">&darr;</span></th>
                   <th data-key="domain">Domain <span class="arrow">&darr;</span></th>
@@ -866,7 +874,7 @@
             <p class="section-label">Alle geladenen Tickets (<span id="releaseversion-total">0</span>)</p>
             <div class="panel table-wrap" style="max-height:340px; overflow:auto;">
               <table class="simple-table" id="releaseversion-table">
-                <thead><tr><th>Ticket</th><th>Typ</th><th>Domäne</th><th>Status</th><th>Beschreibung</th><th>Priorität (Punkte)</th><th>Labels</th></tr></thead>
+                <thead><tr><th>Ticket</th><th>Beschreibung</th><th>Typ</th><th>Domäne</th><th>Status</th><th>Priorität (Punkte)</th><th>Labels</th></tr></thead>
                 <tbody id="releaseversion-tbody"></tbody>
               </table>
             </div>
@@ -922,7 +930,7 @@
           </div>
           <div class="panel table-wrap" style="max-height:440px; overflow:auto;">
             <table class="simple-table" id="jiraliste-table">
-              <thead><tr><th>Ticket</th><th>Typ</th><th>Status</th><th>Datum</th><th>Domäne</th><th>Beschreibung</th><th>Priorität (Punkte)</th><th>Labels</th></tr></thead>
+              <thead><tr><th>Ticket</th><th>Beschreibung</th><th>Typ</th><th>Status</th><th>Datum</th><th>Domäne</th><th>Priorität (Punkte)</th><th>Labels</th></tr></thead>
               <tbody id="jiraliste-tbody"></tbody>
             </table>
           </div>
@@ -945,7 +953,7 @@
           </div>
           <div class="panel table-wrap" style="max-height:520px; overflow:auto;">
             <table class="simple-table" id="domainoverview-table">
-              <thead><tr><th>Ticket</th><th>Typ</th><th>Status</th><th>Datum</th><th>Zusammenfassung</th><th>Beschreibung</th><th>Priorität (Punkte)</th><th>Labels</th></tr></thead>
+              <thead><tr><th>Ticket</th><th>Beschreibung</th><th>Typ</th><th>Status</th><th>Datum</th><th>Zusammenfassung</th><th>Priorität (Punkte)</th><th>Labels</th></tr></thead>
               <tbody id="domainoverview-tbody"></tbody>
             </table>
             <div class="empty-hint" id="domainoverview-empty">Noch keine Tickets geladen.</div>
@@ -3336,7 +3344,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.4.0";
+  var APP_VERSION = "2.5.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -3422,6 +3430,14 @@
         if (!classes.length) return;
         var dataId = classes.filter(function (c) { return (c in columnLabels) || (c in JIRA_DATA_ID_MAP); })[0] || classes[0];
         var value = td.textContent.replace(/\s+/g, " ").trim();
+        // Manche Jira-HTML-Exporte zeigen z.B. den Typ nur als Icon ohne
+        // sichtbaren Text (Name steht dann nur im alt-/title-Attribut) -
+        // ohne diesen Fallback bliebe die Typ-Spalte in solchen Exporten
+        // faelschlich leer, obwohl Jira den Typ durchaus liefert.
+        if (!value) {
+          var icon = td.querySelector("img[alt], img[title]");
+          if (icon) value = (icon.getAttribute("alt") || icon.getAttribute("title") || "").trim();
+        }
         if (!value) return;
         var canonical = JIRA_DATA_ID_MAP[dataId] || normalizeLabel(columnLabels[dataId] || dataId);
         applyField(ticket, canonical, value, columnLabels[dataId] || dataId);
@@ -3516,6 +3532,10 @@
       for (var j = 0; j + 1 < cells.length; j += 2) {
         var lbl = cells[j].textContent.trim().replace(/:$/, "");
         var val = cells[j + 1].textContent.replace(/\s+/g, " ").trim();
+        if (!val) {
+          var valIcon = cells[j + 1].querySelector("img[alt], img[title]");
+          if (valIcon) val = (valIcon.getAttribute("alt") || valIcon.getAttribute("title") || "").trim();
+        }
         if (!lbl || !val) continue;
         applyField(ticket, normalizeLabel(lbl), val, lbl);
       }
@@ -3568,6 +3588,8 @@
           if (!value) continue;
           if (label === "Status") ticket.status = value;
           else if (label === "Zusammenfassung") ticket.summary = value;
+          else if (normalizeLabel(label) === "issue_type") ticket.issue_type = value;
+          else if (normalizeLabel(label) === "description") ticket.description = value;
           else ticket.custom_fields[label] = value;
         }
         if (currentDomain) ticket.custom_fields.Domain = currentDomain;
@@ -4039,6 +4061,16 @@
     var d = Date.parse(s);
     return isNaN(d) ? 0 : d;
   }
+  // Zeigt Erstellt-/Aktualisiert-Datumswerte ohne Uhrzeit an (nur das Datum
+  // ist fuer die Tabellenuebersicht relevant) - sortiert wird weiterhin nach
+  // dem vollen Zeitstempel (createdSort/updatedSort), nur die Anzeige wird
+  // gekuerzt. Erkennt das Jira-Format "DD/Mon/YY HH:MM AM/PM"; alles andere
+  // (unbekanntes Format) bleibt unveraendert statt falsch zu kuerzen.
+  function dateOnly(s) {
+    if (!s) return s;
+    var m = /^(\d{2}\/\w{3}\/\d{2})\b/.exec(s);
+    return m ? m[1] : s;
+  }
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
@@ -4071,7 +4103,7 @@
   [
     "sidebar", "sidebar-toggle", "sidebar-open-btn", "nav-list", "nav-badge-changes",
     "stat-tickets", "stat-imports", "stat-changes", "app-version",
-    "tiles", "type-chips", "domain-chart", "domain-section", "domain-label", "domain-select", "label-select", "search-input", "reset-filter-btn",
+    "tiles", "type-chips", "type-quick-presets", "domain-chart", "domain-section", "domain-label", "domain-select", "label-select", "search-input", "reset-filter-btn",
     "table-body", "empty-state", "result-count",
     "select-all-checkbox", "selection-count", "selection-select-all-btn", "selection-clear-btn",
     "selection-export-keys-btn", "selection-export-content-btn",
@@ -4129,7 +4161,7 @@
     // gemeinsam mit generatedImages in der Bilder-Galerie angezeigt.
     uploadedImages: [],
     tickets: [],
-    view: { bucket: "all", domain: "", label: "", query: "", issueType: "", sortKey: "created", sortDir: "desc" },
+    view: { bucket: "all", domain: "", label: "", query: "", issueType: "", excludeTypes: {}, sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
     // Dashboard-Checkbox-Auswahl (Listenauswahl/Selektions-Export) - Map
     // Ticket-Key -> true, unabhaengig von der aktuellen Filterung; bleibt
@@ -4512,7 +4544,7 @@
       return {
         raw: t, key: t.key, summary: t.summary || "", status: t.status || "–",
         bucket: bucketFor(t.status), domain: (t.custom_fields && t.custom_fields.Domain) || "",
-        issueType: t.issue_type || "",
+        issueType: t.issue_type || "", description: t.description || "",
         created: t.created || "", updated: t.updated || "",
         createdSort: parseJiraDate(t.created), updatedSort: parseJiraDate(t.updated),
         changed: changed,
@@ -4521,7 +4553,7 @@
       };
     });
     if (resetFilters) {
-      app.view = { bucket: "all", domain: "", label: "", query: "", issueType: "", sortKey: "created", sortDir: "desc" };
+      app.view = { bucket: "all", domain: "", label: "", query: "", issueType: "", excludeTypes: {}, sortKey: "created", sortDir: "desc" };
       els.searchInput.value = "";
     }
     // Auswahl (Listenauswahl-Export) auf tatsaechlich noch existierende
@@ -4620,6 +4652,7 @@
     els.typeChips.innerHTML = "";
     var types = Object.keys(issueTypeCounts);
     document.getElementById("type-section").hidden = types.length === 0;
+    syncTypePresets();
     if (!types.length) return;
     types.sort(function (a, b) {
       var pa = TYPE_CHIP_PRIORITY.indexOf(a), pb = TYPE_CHIP_PRIORITY.indexOf(b);
@@ -4629,7 +4662,7 @@
     var allBtn = document.createElement("button");
     allBtn.className = "import-tab" + (app.view.issueType ? "" : " active"); allBtn.type = "button";
     allBtn.textContent = "Alle Typen";
-    allBtn.addEventListener("click", function () { app.view.issueType = ""; syncTypeChips(); render(); });
+    allBtn.addEventListener("click", function () { app.view.issueType = ""; syncTypeChips(); syncTypePresets(); render(); });
     els.typeChips.appendChild(allBtn);
     types.forEach(function (type) {
       var btn = document.createElement("button");
@@ -4639,6 +4672,7 @@
       btn.addEventListener("click", function () {
         app.view.issueType = app.view.issueType === type ? "" : type;
         syncTypeChips();
+        syncTypePresets();
         render();
       });
       els.typeChips.appendChild(btn);
@@ -4648,6 +4682,34 @@
     Array.prototype.forEach.call(els.typeChips.children, function (btn) {
       var type = btn.getAttribute("data-type");
       btn.classList.toggle("active", type ? app.view.issueType === type : !app.view.issueType);
+    });
+  }
+
+  // 4 feste Schnellfilter-Presets zusaetzlich zu den dynamischen Typ-Chips:
+  // "Nur Epics" nutzt denselben Einzel-Typ-Filter (app.view.issueType) wie
+  // ein Klick auf die "Epic"-Chip - beide Wege sind daher synchron. Die
+  // "Ohne ..."-Presets sind dagegen frei miteinander UND mit einem
+  // Einzel-Typ-Filter kombinierbar (app.view.excludeTypes, eigene Achse).
+  var TYPE_PRESET_EXCLUDE = { "no-bug": "Bug", "no-reporting": "Reporting", "no-testing": "Testing" };
+  els.typeQuickPresets.addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-preset]");
+    if (!btn) return;
+    var preset = btn.getAttribute("data-preset");
+    if (preset === "only-epic") {
+      app.view.issueType = app.view.issueType === "Epic" ? "" : "Epic";
+    } else {
+      var type = TYPE_PRESET_EXCLUDE[preset];
+      if (app.view.excludeTypes[type]) delete app.view.excludeTypes[type]; else app.view.excludeTypes[type] = true;
+    }
+    syncTypeChips();
+    syncTypePresets();
+    render();
+  });
+  function syncTypePresets() {
+    Array.prototype.forEach.call(els.typeQuickPresets.children, function (btn) {
+      var preset = btn.getAttribute("data-preset");
+      var active = preset === "only-epic" ? app.view.issueType === "Epic" : !!app.view.excludeTypes[TYPE_PRESET_EXCLUDE[preset]];
+      btn.classList.toggle("active", active);
     });
   }
 
@@ -4689,6 +4751,7 @@
       if (v.bucket !== "all" && t.bucket !== v.bucket) return false;
       if (v.domain && t.domain !== v.domain) return false;
       if (v.issueType && t.issueType !== v.issueType) return false;
+      if (v.excludeTypes[t.issueType]) return false;
       if (v.label && (!t.autoLabels || t.autoLabels.indexOf(v.label) === -1)) return false;
       if (v.query) {
         var hay = (t.key + " " + t.summary + " " + (t.autoLabels || []).join(" ")).toUpperCase();
@@ -4812,12 +4875,13 @@
       return '<tr data-idx="' + i + '"' + (t.changed ? ' class="is-changed"' : "") + ">" +
         '<td><input type="checkbox" class="row-select-checkbox" data-key="' + escapeHtml(t.key) + '" aria-label="' + escapeHtml(t.key) + ' auswählen"' + checked + "></td>" +
         '<td class="key">' + escapeHtml(t.key) + "</td>" +
+        '<td class="description" title="' + escapeHtml(t.description) + '">' + (t.description ? escapeHtml(truncate(t.description, 90)) : "&ndash;") + "</td>" +
         '<td class="summary">' + (t.summary ? escapeHtml(t.summary) : "&ndash;") + "</td>" +
         "<td>" + pillHtml(t) + "</td>" +
         '<td class="domain">' + (t.domain ? escapeHtml(t.domain) : "&ndash;") + "</td>" +
         "<td>" + (t.issueType ? escapeHtml(t.issueType) : "&ndash;") + "</td>" +
-        '<td class="date">' + escapeHtml(t.created) + "</td>" +
-        '<td class="date">' + escapeHtml(t.updated) + "</td></tr>";
+        '<td class="date">' + escapeHtml(dateOnly(t.created)) + "</td>" +
+        '<td class="date">' + escapeHtml(dateOnly(t.updated)) + "</td></tr>";
     }).join("");
     renderOutputCounts();
     updateSelectionUI();
@@ -5446,10 +5510,10 @@
   }, SEARCH_DEBOUNCE_MS);
   els.searchInput.addEventListener("input", debouncedSearchRender);
   els.resetFilterBtn.addEventListener("click", function () {
-    app.view.bucket = "all"; app.view.domain = ""; app.view.label = ""; app.view.query = ""; app.view.issueType = "";
+    app.view.bucket = "all"; app.view.domain = ""; app.view.label = ""; app.view.query = ""; app.view.issueType = ""; app.view.excludeTypes = {};
     els.searchInput.value = ""; els.domainSelect.value = ""; els.labelSelect.value = "";
     Array.prototype.forEach.call(els.tiles.children, function (el, i) { el.setAttribute("aria-pressed", i === 0 ? "true" : "false"); });
-    syncDomainRows(); syncTypeChips(); render();
+    syncDomainRows(); syncTypeChips(); syncTypePresets(); render();
   });
   els.selectAllCheckbox.addEventListener("change", function () {
     var on = els.selectAllCheckbox.checked;
@@ -6020,8 +6084,8 @@
     var list = scopedTickets().slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
     els.releaseversionTotal.textContent = list.length;
     els.releaseversionTbody.innerHTML = list.map(function (t) {
-      return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(t.issueType || "–") + "</td><td>" + escapeHtml(t.domain || "–") +
-        "</td><td>" + escapeHtml(t.status || "–") + "</td><td>" + escapeHtml(descriptionDisplayText(t)) +
+      return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(descriptionDisplayText(t)) + "</td><td>" + escapeHtml(t.issueType || "–") +
+        "</td><td>" + escapeHtml(t.domain || "–") + "</td><td>" + escapeHtml(t.status || "–") +
         "</td><td class=\"mono\">" + escapeHtml(pointsDisplay(t.points)) + "</td><td>" + escapeHtml(labelsDisplayText(t.autoLabels)) + "</td></tr>";
     }).join("");
   }
@@ -6031,10 +6095,10 @@
     var list = scopedTickets().slice().sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
     els.jiralisteCount.textContent = list.length;
     els.jiralisteTbody.innerHTML = list.map(function (t) {
-      var datum = t.updated || t.created || "–";
-      return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(t.issueType || "–") + "</td><td>" + escapeHtml(t.status || "–") +
-        "</td><td class=\"mono\">" + escapeHtml(datum) + "</td><td>" + escapeHtml(t.domain || "–") +
-        "</td><td>" + escapeHtml(descriptionDisplayText(t)) + "</td><td class=\"mono\">" + escapeHtml(pointsDisplay(t.points)) +
+      var datum = dateOnly(t.updated || t.created || "–");
+      return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(descriptionDisplayText(t)) + "</td><td>" + escapeHtml(t.issueType || "–") +
+        "</td><td>" + escapeHtml(t.status || "–") + "</td><td class=\"mono\">" + escapeHtml(datum) +
+        "</td><td>" + escapeHtml(t.domain || "–") + "</td><td class=\"mono\">" + escapeHtml(pointsDisplay(t.points)) +
         "</td><td>" + escapeHtml(labelsDisplayText(t.autoLabels)) + "</td></tr>";
     }).join("");
   }
@@ -6066,10 +6130,10 @@
       var header = '<tr class="domain-group-row"><td colspan="8">' + escapeHtml(g.domain) +
         ' <span class="domain-count">(' + g.tickets.length + " Ticket" + (g.tickets.length === 1 ? "" : "s") + ")</span></td></tr>";
       var rows = g.tickets.map(function (t) {
-        var datum = t.updated || t.created || "–";
-        return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(t.issueType || "–") + "</td><td>" + escapeHtml(t.status || "–") +
-          "</td><td class=\"mono\">" + escapeHtml(datum) + "</td><td>" + escapeHtml(t.summary || "–") +
-          "</td><td>" + escapeHtml(descriptionDisplayText(t)) + "</td><td class=\"mono\">" + escapeHtml(pointsDisplay(t.points)) +
+        var datum = dateOnly(t.updated || t.created || "–");
+        return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(descriptionDisplayText(t)) + "</td><td>" + escapeHtml(t.issueType || "–") +
+          "</td><td>" + escapeHtml(t.status || "–") + "</td><td class=\"mono\">" + escapeHtml(datum) +
+          "</td><td>" + escapeHtml(t.summary || "–") + "</td><td class=\"mono\">" + escapeHtml(pointsDisplay(t.points)) +
           "</td><td>" + escapeHtml(labelsDisplayText(t.autoLabels)) + "</td></tr>";
       }).join("");
       return header + rows;
@@ -6375,8 +6439,8 @@
       return {
         filenameBase: "verarbeitung_4_releaseversion", title: "Job 4 – Releaseversion (alle geladenen Tickets)",
         sections: [{
-          title: "Tickets", headers: ["Ticket", "Typ", "Domäne", "Status", "Beschreibung", "Priorität (Punkte)", "Labels"],
-          rows: jiraListeRows().map(function (t) { return [t.key, t.issueType || "–", t.domain || "–", t.status || "–", (t.raw && t.raw.description) || "–", pointsDisplay(t.points), labelsDisplayText(t.autoLabels)]; })
+          title: "Tickets", headers: ["Ticket", "Beschreibung", "Typ", "Domäne", "Status", "Priorität (Punkte)", "Labels"],
+          rows: jiraListeRows().map(function (t) { return [t.key, (t.raw && t.raw.description) || "–", t.issueType || "–", t.domain || "–", t.status || "–", pointsDisplay(t.points), labelsDisplayText(t.autoLabels)]; })
         }]
       };
     }
@@ -6385,8 +6449,8 @@
       return {
         filenameBase: "verarbeitung_5_jira_liste", title: "Job 5 – Jira Liste (" + list5.length + " importierte Tickets)",
         sections: [{
-          title: "Jira-Tickets", headers: ["Ticket", "Typ", "Status", "Datum", "Domäne", "Beschreibung", "Priorität (Punkte)", "Labels"],
-          rows: list5.map(function (t) { return [t.key, t.issueType || "–", t.status || "–", t.updated || t.created || "–", t.domain || "–", (t.raw && t.raw.description) || "–", pointsDisplay(t.points), labelsDisplayText(t.autoLabels)]; })
+          title: "Jira-Tickets", headers: ["Ticket", "Beschreibung", "Typ", "Status", "Datum", "Domäne", "Priorität (Punkte)", "Labels"],
+          rows: list5.map(function (t) { return [t.key, (t.raw && t.raw.description) || "–", t.issueType || "–", t.status || "–", dateOnly(t.updated || t.created || "–"), t.domain || "–", pointsDisplay(t.points), labelsDisplayText(t.autoLabels)]; })
         }]
       };
     }
@@ -6397,8 +6461,8 @@
         sections: groups6.map(function (g) {
           return {
             title: g.domain,
-            headers: ["Ticket", "Typ", "Status", "Datum", "Zusammenfassung", "Beschreibung", "Priorität (Punkte)", "Labels"],
-            rows: g.tickets.map(function (t) { return [t.key, t.issueType || "–", t.status || "–", t.updated || t.created || "–", t.summary || "–", (t.raw && t.raw.description) || "–", pointsDisplay(t.points), labelsDisplayText(t.autoLabels)]; })
+            headers: ["Ticket", "Beschreibung", "Typ", "Status", "Datum", "Zusammenfassung", "Priorität (Punkte)", "Labels"],
+            rows: g.tickets.map(function (t) { return [t.key, (t.raw && t.raw.description) || "–", t.issueType || "–", t.status || "–", dateOnly(t.updated || t.created || "–"), t.summary || "–", pointsDisplay(t.points), labelsDisplayText(t.autoLabels)]; })
           };
         })
       };

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.4.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.5.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -174,24 +174,41 @@ anderen Länderformaten (Kennzeichen).
   Tickets: Status-Kacheln, ein **Typ-Schnellfilter** (Chips je Tickettyp,
   z. B. Epic/Story/Feature/Bug – rein aus den tatsächlich geladenen
   Tickets abgeleitet, keine feste Liste, erscheint daher nur wenn Typen
-  vorhanden sind), Domain-Verteilung, ein **Labels-Filter** (nur
+  vorhanden sind) sowie 4 feste Preset-Buttons **"Ohne Bugs"**, **"Nur
+  Epics"**, **"Ohne Reporting"**, **"Ohne Testing"** (die drei
+  "Ohne ..."-Presets sind frei untereinander UND mit einem Typ-Chip
+  kombinierbar, "Nur Epics" teilt sich denselben Einzel-Typ-Filter wie
+  die "Epic"-Chip), Domain-Verteilung, ein **Labels-Filter** (nur
   tatsächlich vorkommende, automatisch zugeordnete Labels zur Auswahl,
   siehe Einstellungen → Labels), eine um Labels **erweiterte
   Volltextsuche** (durchsucht Schlüssel, Zusammenfassung und Labels),
-  sortierbare Tabelle inklusive Spalte **Typ** (Jira-Feld "Typ" – Epic,
-  Story, Feature, Bug, ...; fehlt der Typ im Export, wird das ehrlich als
-  "–" ausgewiesen statt geraten), Ticket-Detailansicht (18 Standardfelder,
-  fehlende klar als "Nicht im Export enthalten" markiert statt erfunden).
-  Jede Zeile hat zusätzlich eine **Checkbox** ("Alle sichtbaren
-  auswählen" im Tabellenkopf) – die Auswahl bleibt beim Ändern eines
-  Filters erhalten und lässt sich gezielt exportieren: entweder **nur die
-  Jira-Nummern** (.txt, eine je Zeile) oder der **Gesamtinhalt** (.xlsx,
-  dieselben Spalten wie die Job-Exporte in Verarbeitung). Die Suche ist
-  leicht entprellt (150ms), damit bei 600+ geladenen Tickets nicht bei
-  jedem einzelnen Tastendruck die komplette Tabelle neu aufgebaut wird;
-  Klicks auf eine Zeile (außerhalb der Checkbox) öffnen die
-  Detailansicht über einen einzigen, an die Tabelle delegierten
+  sortierbare Tabelle mit **Beschreibung direkt rechts vom Schlüssel**
+  (optisch gekürzt mit "…", voller Text als Hover-Tooltip) sowie Spalte
+  **Typ** (Jira-Feld "Typ" – Epic, Story, Feature, Bug, ...; fehlt der Typ
+  im Export wirklich, wird das ehrlich als "–" ausgewiesen statt geraten –
+  die Erkennung selbst wurde robuster gemacht, siehe unten), Erstellt-/
+  Aktualisiert-Spalten **ohne Uhrzeit** (nur das Datum, z. B. "20/Dez/24"
+  statt "20/Dez/24 4:41 PM" – sortiert wird weiterhin nach dem vollen
+  Zeitstempel, nur die Anzeige ist gekürzt), Ticket-Detailansicht (18
+  Standardfelder, fehlende klar als "Nicht im Export enthalten" markiert
+  statt erfunden). Jede Zeile hat zusätzlich eine **Checkbox** ("Alle
+  sichtbaren auswählen" im Tabellenkopf) – die Auswahl bleibt beim Ändern
+  eines Filters erhalten und lässt sich gezielt exportieren: entweder
+  **nur die Jira-Nummern** (.txt, eine je Zeile) oder der **Gesamtinhalt**
+  (.xlsx, dieselben Spalten wie die Job-Exporte in Verarbeitung). Die
+  Suche ist leicht entprellt (150ms), damit bei 600+ geladenen Tickets
+  nicht bei jedem einzelnen Tastendruck die komplette Tabelle neu
+  aufgebaut wird; Klicks auf eine Zeile (außerhalb der Checkbox) öffnen
+  die Detailansicht über einen einzigen, an die Tabelle delegierten
   Klick-Handler statt vieler einzelner Handler pro Zeile.
+  Robustere **Typ-Erkennung** beim Import: In Releaseinfo-Tabellen
+  (.txt/.docx/.pdf) wird eine Spalte "Typ"/"Type"/"Vorgangstyp" jetzt als
+  Jira-Feld "Typ" erkannt statt nur als Zusatzfeld abgelegt zu werden
+  (ebenso "Beschreibung"/"Description"); in Jira-HTML-Exporten, die den
+  Typ nur als Icon ohne sichtbaren Text zeigen, wird ersatzweise das
+  alt-/title-Attribut des Icons gelesen. Beides betraf zuvor Fälle, in
+  denen die Typ-Spalte trotz vorhandenem Typ im Original-Export leer
+  blieb.
 - **Listenauswahl** – die im Dashboard per Checkbox ausgewählten Tickets
   lassen sich hier benannt als eigenständige Liste speichern (Name,
   Zeitpunkt automatisch, Ticket-Inhalte UND die reine Liste der
@@ -310,15 +327,16 @@ anderen Länderformaten (Kennzeichen).
      Ergebnisse erscheinen zusätzlich in den neuen Registern **Glossar**
      (Abschnitt "Aus Ticket-Daten erkannte Begriffe") und **Abkürzungen**.
   4. *Releaseversion* – tabellarische Übersicht aller geladenen Tickets
-     mit Typ, Domäne, Beschreibung, Priorität (Punkte) und Labels, ein Abgleich
+     mit Beschreibung (direkt neben dem Ticket-Schlüssel), Typ, Domäne,
+     Priorität (Punkte) und Labels, ein Abgleich
      gegen eine eigene Release-Ticketliste (ein Key pro Zeile, zeigt
      fehlende Tickets, Web-App-Pendant zu `match-release` aus dem
      CLI-Tool) sowie eine Bewertung, welche Tickets anhand des Jira-Feldes
      "Typ" als Benutzerhandbuch-Kandidat gelten und welche nur intern/Bug
      sind (fehlt der Typ im Export, wird das als "Unbekannt" ausgewiesen
      statt geraten).
-  5. *Jira Liste* – alle importierten Jira-Nummern mit Typ, Status, Datum,
-     Domäne, Beschreibung, Priorität (Punkte) und Labels, inklusive
+  5. *Jira Liste* – alle importierten Jira-Nummern mit Beschreibung (direkt
+     daneben), Typ, Status, Datum, Domäne, Priorität (Punkte) und Labels, inklusive
      prominent angezeigter Gesamtanzahl der importierten Tickets.
   6. *Domänen-Übersicht* – alle geladenen Tickets werden thematisch nach
      Domäne gruppiert (eine eigene "Thema"-Kennzeichnung gibt es im

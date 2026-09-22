@@ -70,18 +70,18 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
     return Array.from(doc.querySelectorAll("#" + tbodyId + " tr")).find((tr) => tr.textContent.includes(key));
   }
   const pl1Row = rowFor("PL-1", "releaseversion-tbody");
-  check("PL-1 zeigt Typ 'Epic' in eigener Spalte", !!pl1Row && pl1Row.children[1].textContent.trim() === "Epic");
+  check("PL-1 zeigt Typ 'Epic' in eigener Spalte", !!pl1Row && pl1Row.children[2].textContent.trim() === "Epic");
   check("PL-1 (Epic) zeigt 5 Punkte", !!pl1Row && pl1Row.children[5].textContent.trim() === "5");
   check("PL-1 zeigt automatisch erkannte Labels 'Dealer', 'Market', 'Vehicle'", !!pl1Row &&
     ["Dealer", "Market", "Vehicle"].every((l) => pl1Row.children[6].textContent.includes(l)));
-  check("PL-1 zeigt Beschreibung", !!pl1Row && pl1Row.children[4].textContent.includes("Market-Bereich"));
+  check("PL-1 zeigt Beschreibung (jetzt rechts von Ticket)", !!pl1Row && pl1Row.children[1].textContent.includes("Market-Bereich"));
 
   const pl2Row = rowFor("PL-2", "releaseversion-tbody");
   check("PL-2 (Bug) zeigt 1 Punkt", !!pl2Row && pl2Row.children[5].textContent.trim() === "1");
   check("PL-2 zeigt automatisch erkanntes Label 'Price'", !!pl2Row && pl2Row.children[6].textContent.includes("Price"));
 
   const pl3Row = rowFor("PL-3", "releaseversion-tbody");
-  check("PL-3 zeigt Typ 'Sonderfall-XYZ'", !!pl3Row && pl3Row.children[1].textContent.trim() === "Sonderfall-XYZ");
+  check("PL-3 zeigt Typ 'Sonderfall-XYZ'", !!pl3Row && pl3Row.children[2].textContent.trim() === "Sonderfall-XYZ");
   check("PL-3 (unbekannter Typ) zeigt ehrlich 'Unbekannt' statt geraten", !!pl3Row && pl3Row.children[5].textContent.trim() === "Unbekannt");
   check("PL-3 ohne Label-Treffer zeigt '–'", !!pl3Row && pl3Row.children[6].textContent.trim() === "–");
 
@@ -89,15 +89,17 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   doc.querySelector('.import-tab[data-vsub="jira-liste"]').click();
   const headers5 = Array.from(doc.querySelectorAll("#jiraliste-table thead th")).map((th) => th.textContent);
   check("Job-5-Header enthält Typ/Domäne/Beschreibung/Priorität/Labels", ["Typ", "Domäne", "Beschreibung", "Priorität (Punkte)", "Labels"].every((h) => headers5.includes(h)));
+  check("Job-5-Header: Beschreibung direkt nach Ticket", headers5[1] === "Beschreibung");
   const pl1Row5 = rowFor("PL-1", "jiraliste-tbody");
-  check("Job 5: PL-1 zeigt Typ 'Epic'", !!pl1Row5 && pl1Row5.children[1].textContent.trim() === "Epic");
+  check("Job 5: PL-1 zeigt Typ 'Epic'", !!pl1Row5 && pl1Row5.children[2].textContent.trim() === "Epic");
   check("Job 5: PL-1 zeigt 5 Punkte", !!pl1Row5 && pl1Row5.children[6].textContent.trim() === "5");
 
   doc.querySelector('.import-tab[data-vsub="domaenen-uebersicht"]').click();
   const headers6 = Array.from(doc.querySelectorAll("#domainoverview-table thead th")).map((th) => th.textContent);
   check("Job-6-Header enthält Typ/Beschreibung/Priorität/Labels", ["Typ", "Beschreibung", "Priorität (Punkte)", "Labels"].every((h) => headers6.includes(h)));
+  check("Job-6-Header: Beschreibung direkt nach Ticket", headers6[1] === "Beschreibung");
   const pl2Row6 = rowFor("PL-2", "domainoverview-tbody");
-  check("Job 6: PL-2 zeigt Typ 'Bug'", !!pl2Row6 && pl2Row6.children[1].textContent.trim() === "Bug");
+  check("Job 6: PL-2 zeigt Typ 'Bug'", !!pl2Row6 && pl2Row6.children[2].textContent.trim() === "Bug");
   check("Job 6: PL-2 zeigt 1 Punkt", !!pl2Row6 && pl2Row6.children[6].textContent.trim() === "1");
 
   // ===================== Einstellungen: Punkte bearbeiten wirkt sofort auf die Tabellen =====================
