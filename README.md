@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.13.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.13.1"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -242,18 +242,24 @@ anderen Länderformaten (Kennzeichen).
   speichern“ zeigt während der Verarbeitung eine Sanduhr/Spinner-Animation;
   das Ergebnis erscheint in der Dateiverwaltung mit der Quelle „Manuell
   (Zwischenablage)“. Die automatische Formaterkennung ("Andere Importe" und
-  die Zwischenablage) erkennt zusätzlich: eine **reine Ticket-Nummern-Liste**
-  (ein Schlüssel wie `ONESCM-123` pro Zeile, ohne weitere Spalten) – daraus
-  werden Platzhalter-Tickets angelegt (bereits bekannte, reichhaltigere
-  Ticketdaten bleiben dabei unverändert, s. Teil-Import unten) und die Liste
-  wird direkt als **neue, benannte Liste unter „Listenauswahl“** gespeichert;
-  sowie **CSV-Dateien/-Text** (Komma oder Semikolon getrennt, automatische
-  Trennzeichen-Erkennung, RFC4180-taugliche Anführungszeichen-Behandlung) und
-  **Excel-Tabellen (.xlsx)** – Letztere werden wie .docx direkt im Browser
-  über das bereits geladene JSZip aus dem ersten Arbeitsblatt gelesen (keine
-  neue Bibliothek nötig). Tabellen-Kopfzeilen werden über dieselbe
-  Alias-Tabelle wie beim Massenupload-Parser erkannt, erkennen also sowohl
-  deutsche ("Schlüssel"/"Zusammenfassung") als auch englische
+  die Zwischenablage, auch innerhalb von ZIP-Archiven) erkennt zusätzlich:
+  eine **Ticket-Nummern-Liste** (ein Schlüssel wie `ONESCM-123` pro Zeile) –
+  toleriert dabei typische Kopier/Einfüge-Varianten (Groß-/Kleinschreibung,
+  Aufzählungszeichen "-"/"*"/"•" oder Nummerierung "1."/"2)" vor dem
+  Schlüssel, Kommas/Semikolons danach, eine einzelne Überschriftszeile wie
+  "Meine Tickets:") – daraus werden Platzhalter-Tickets angelegt (bereits
+  bekannte, reichhaltigere Ticketdaten bleiben dabei unverändert, s.
+  Teil-Import unten) und die Liste wird direkt als **neue, benannte Liste
+  unter „Listenauswahl“** gespeichert (auch bei einer Ticket-Liste als
+  einzelne Datei innerhalb eines ZIP-Archivs); sowie **CSV-Dateien/-Text**
+  (Komma oder Semikolon getrennt, automatische Trennzeichen-Erkennung,
+  RFC4180-taugliche Anführungszeichen-Behandlung inkl. echter
+  Zeilenumbrüche innerhalb eines quotierten Feldes) und **Excel-Tabellen
+  (.xlsx)** – Letztere werden wie .docx direkt im Browser über das bereits
+  geladene JSZip gelesen (keine neue Bibliothek nötig), **alle** enthaltenen
+  Arbeitsblätter werden ausgewertet. Tabellen-Kopfzeilen werden über
+  dieselbe Alias-Tabelle wie beim Massenupload-Parser erkannt, erkennen
+  also sowohl deutsche ("Schlüssel"/"Zusammenfassung") als auch englische
   ("Key"/"Summary") Spaltennamen. Ein optionales **Kommentarfeld** oberhalb des
   Datei-Uploads gilt für den jeweils nächsten Datei- oder
   Zwischenablage-Import und wird nach erfolgreichem Import automatisch

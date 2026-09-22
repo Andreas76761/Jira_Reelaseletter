@@ -3442,7 +3442,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.13.0";
+  var APP_VERSION = "2.13.1";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -3750,50 +3750,83 @@
     return { format: "Releaseinfo (Confluence)" + stamp, tickets: result.tickets };
   }
 
-  // Erkennt eine reine Liste von Ticket-Schluesseln (ein Schluessel pro
-  // Zeile, keine weiteren Spalten) - z.B. aus Jira kopierte Nummern ohne
-  // Tabellenkontext ("ONESCM-123" je Zeile). Im Unterschied zu den anderen
-  // Parsern gibt es hier keine echten Ticket-Inhalte zum Importieren -
-  // stattdessen werden leere Platzhalter-Tickets angelegt (ingestTickets()
-  // laesst bereits bekannte, reichhaltigere Ticketdaten unangetastet, s.
-  // mergeTicketFields - ein bereits importiertes Ticket wird also NICHT
-  // durch die leere Zeile ueberschrieben) und die Liste laesst sich direkt
-  // als benannte Liste unter Listenauswahl speichern (s. keysOnly-Flag,
-  // genutzt in Teil 5b/6 Zwischenablage- und Datei-Import).
+  // Erkennt eine Liste von Ticket-Schluesseln - z.B. aus Jira kopierte
+  // Nummern ohne Tabellenkontext. Bewusst TOLERANT gegenueber typischen
+  // Kopier/Einfuege-Variationen (reale Zwischenablage-Inhalte sind selten
+  // "ein reiner Schluessel pro Zeile" im striktesten Sinn):
+  // - Gross-/Kleinschreibung wird ignoriert (Schluessel werden auf
+  //   Grossschreibung normalisiert, wie es Jira selbst auch tut).
+  // - Aufzaehlungszeichen (-, *, •) oder Nummerierung ("1.", "2)") vor dem
+  //   Schluessel sowie Kommas/Semikolons danach werden toleriert.
+  // - Zeilen, die auch nach dem Entfernen dieser Dekorationen KEINEN
+  //   Schluessel ergeben (z. B. eine Ueberschriftszeile "Meine Tickets:"),
+  //   werden übersprungen statt die gesamte Erkennung scheitern zu lassen -
+  //   nur wenn KEIN einziger Schluessel im gesamten Text gefunden wird,
+  //   gilt das Format als nicht erkannt (verhindert, dass beliebiger Text
+  //   faelschlich als Liste durchgeht).
+  // Im Unterschied zu den anderen Parsern gibt es hier keine echten
+  // Ticket-Inhalte zum Importieren - stattdessen werden leere Platzhalter-
+  // Tickets angelegt (ingestTickets() laesst bereits bekannte,
+  // reichhaltigere Ticketdaten unangetastet, s. mergeTicketFields - ein
+  // bereits importiertes Ticket wird also NICHT durch die leere Zeile
+  // ueberschrieben) und die Liste laesst sich direkt als benannte Liste
+  // unter Listenauswahl speichern (s. keysOnly-Flag, genutzt in Teil 5b/6
+  // Zwischenablage-, Datei- und ZIP-Import).
+  var KEY_LIST_LINE_RE = /^[\s\-*•]*(?:\d+[.)]\s*)?([A-Za-z][A-Za-z0-9]*-\d+)[\s,;]*$/i;
   function parseAsKeyList(text) {
     var lines = text.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
     if (!lines.length) throw new Error("Keine Zeilen gefunden.");
-    var allKeys = lines.every(function (l) { return RELEASEINFO_KEY_RE.test(l); });
-    if (!allKeys) {
-      throw new Error("Nicht jede Zeile ist ein reiner Ticket-Schlüssel wie ONESCM-123 (erwartet: genau ein Schlüssel pro Zeile, ohne weitere Spalten).");
-    }
     var seen = {}; var keys = [];
-    lines.forEach(function (k) { if (!seen[k]) { seen[k] = true; keys.push(k); } });
+    lines.forEach(function (l) {
+      var m = KEY_LIST_LINE_RE.exec(l);
+      if (!m) return;
+      var k = m[1].toUpperCase();
+      if (!seen[k]) { seen[k] = true; keys.push(k); }
+    });
+    if (!keys.length) {
+      throw new Error(
+        "Nicht jede Zeile ist ein reiner Ticket-Schlüssel wie ONESCM-123 (erwartet: ein Schlüssel pro Zeile, " +
+        "ggf. mit Aufzählungszeichen/Nummerierung davor, ohne weitere Spalten)."
+      );
+    }
     return { format: "Ticket-Liste (nur Schlüssel)", tickets: keys.map(emptyTicket), keysOnly: true, keys: keys };
   }
 
-  // Sehr kleiner, RFC4180-tauglicher CSV-Zeilen-Parser (quotierte Felder,
-  // verdoppelte Anfuehrungszeichen als Escape) - bewusst ohne externe
-  // Bibliothek, analog zur bereits bestehenden Philosophie bei XLSX/DOCX
-  // (JSZip statt neuer Abhaengigkeiten, s. Teil 1b).
-  function parseCsvLine(line, delimiter) {
-    var cells = []; var cur = ""; var inQuotes = false;
-    for (var i = 0; i < line.length; i++) {
-      var ch = line[i];
+  // Sehr kleiner, RFC4180-tauglicher CSV-Parser (quotierte Felder,
+  // verdoppelte Anfuehrungszeichen als Escape, EINSCHLIESSLICH echter
+  // Zeilenumbrueche innerhalb eines quotierten Feldes) - bewusst ohne
+  // externe Bibliothek, analog zur bereits bestehenden Philosophie bei
+  // XLSX/DOCX (JSZip statt neuer Abhaengigkeiten, s. Teil 1b).
+  // WICHTIG: tokenisiert den GESAMTEN Text auf einmal statt zeilenweise -
+  // ein zeilenweiser Ansatz wuerde ein mehrzeiliges quotiertes Feld (z. B.
+  // eine mehrzeilige Beschreibung aus Excel) faelschlich mitten im Feld in
+  // zwei Zeilen/Zellen aufteilen, da das Anfuehrungszeichen-Escaping erst
+  // NACH dem Aufteilen ausgewertet wuerde.
+  function parseCsvRows(text, delimiter) {
+    var rows = []; var row = []; var cur = ""; var inQuotes = false;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text[i];
       if (inQuotes) {
         if (ch === '"') {
-          if (line[i + 1] === '"') { cur += '"'; i++; } else inQuotes = false;
-        } else cur += ch;
+          if (text[i + 1] === '"') { cur += '"'; i++; } else inQuotes = false;
+        } else {
+          cur += ch;
+        }
       } else if (ch === '"') {
         inQuotes = true;
       } else if (ch === delimiter) {
-        cells.push(cur); cur = "";
+        row.push(cur); cur = "";
+      } else if (ch === "\r") {
+        // ignorieren - \n (unten) beendet die Zeile, \r\n wird so einfach behandelt
+      } else if (ch === "\n") {
+        row.push(cur); cur = "";
+        rows.push(row); row = [];
       } else {
         cur += ch;
       }
     }
-    cells.push(cur);
-    return cells;
+    if (cur !== "" || row.length) { row.push(cur); rows.push(row); }
+    return rows;
   }
   function detectCsvDelimiter(firstLine) {
     var commaCount = (firstLine.match(/,/g) || []).length;
@@ -3803,14 +3836,16 @@
   // Wandelt CSV-Text in Tab-getrennten Text um, damit dieselbe Zeilen-/
   // Spalten-Logik wie beim .txt-Releaseinfo-Import (parseReleaseInfoText)
   // greift, statt eine zweite, parallele Tabellen-Auswertung zu pflegen.
+  // Ein echter Zeilenumbruch INNERHALB eines Feldes (s. o.) wird dabei zu
+  // einem Leerzeichen geglättet, da parseReleaseInfoText pro Textzeile
+  // genau eine Tabellenzeile erwartet (sonst wuerde das mehrzeilige Feld
+  // die nachfolgende CSV-Zeile faelschlich mit hineinziehen).
   function csvTextToTabbedText(text) {
-    var lines = text.split(/\r?\n/);
-    var nonEmpty = lines.filter(function (l) { return l.trim(); });
-    if (!nonEmpty.length) return "";
-    var delimiter = detectCsvDelimiter(nonEmpty[0]);
-    return lines.map(function (line) {
-      if (!line.trim()) return "";
-      return parseCsvLine(line, delimiter).map(function (c) { return c.trim(); }).join("\t");
+    var firstLine = (text.split(/\r?\n/)[0] || "");
+    var delimiter = detectCsvDelimiter(firstLine);
+    var rows = parseCsvRows(text, delimiter);
+    return rows.map(function (cells) {
+      return cells.map(function (c) { return c.replace(/\r?\n/g, " ").trim(); }).join("\t");
     }).join("\n");
   }
   function looksLikeCsv(text, filename) {
@@ -5932,13 +5967,17 @@
   }
 
   // .xlsx ist wie .docx ein ZIP mit OOXML-Inhalt darin - dieselbe bereits
-  // geladene JSZip-Bibliothek liest das erste Arbeitsblatt aus (Zellen aus
-  // xl/worksheets/sheet1.xml, Textwerte ueber xl/sharedStrings.xml
-  // aufgeloest) und wandelt es in Tab-getrennte Zeilen um, damit dieselbe
+  // geladene JSZip-Bibliothek liest ALLE Arbeitsblaetter aus (Zellen aus
+  // xl/worksheets/sheetN.xml, Textwerte ueber xl/sharedStrings.xml
+  // aufgeloest) und wandelt sie in Tab-getrennte Zeilen um, damit dieselbe
   // Zeilen-/Spalten-Logik wie beim .txt-Releaseinfo-Import
   // (parseReleaseInfoText) greift - keine zusaetzliche Bibliothek noetig.
-  // Bewusst nur das erste Sheet (Zellbezuege/Formeln/mehrere Sheets werden
-  // nicht ausgewertet) - fuer eine einfache Ticket-Tabelle ausreichend.
+  // Mehrere Sheets werden mit einer Leerzeile getrennt aneinandergehaengt -
+  // jedes Sheet bringt typischerweise seine eigene Kopfzeile mit, die
+  // parseReleaseInfoText ohnehin pro Vorkommen neu auswertet (dieselbe
+  // Logik wie bei mehreren Service-Abschnitten in einem Releaseinfo-Export).
+  // Zellbezuege/Formeln werden nicht ausgewertet - fuer einfache
+  // Ticket-Tabellen ausreichend.
   function xlsxColToIndex(cellRef) {
     var m = /^([A-Z]+)/.exec(cellRef || "");
     if (!m) return 0;
@@ -5992,21 +6031,32 @@
     }
     return rows;
   }
+  function xlsxSheetEntryNames(zip) {
+    return Object.keys(zip.files)
+      .filter(function (n) { return /^xl\/worksheets\/sheet\d+\.xml$/.test(n); })
+      .sort(function (a, b) {
+        return parseInt(a.match(/sheet(\d+)\.xml$/)[1], 10) - parseInt(b.match(/sheet(\d+)\.xml$/)[1], 10);
+      });
+  }
   async function xlsxArrayBufferToLines(buf) {
     if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek (JSZip) nicht geladen - .xlsx kann nicht gelesen werden.");
     var zip;
     try { zip = await JSZip.loadAsync(buf); }
     catch (e) { throw new Error("Datei konnte nicht als .xlsx (ZIP) gelesen werden - ist es wirklich eine Excel-Datei?"); }
-    var sheetEntry = zip.file("xl/worksheets/sheet1.xml");
-    if (!sheetEntry) throw new Error("Kein xl/worksheets/sheet1.xml in der .xlsx-Datei gefunden - ist es wirklich eine Excel-Datei?");
+    var sheetNames = xlsxSheetEntryNames(zip);
+    if (!sheetNames.length) throw new Error("Kein Arbeitsblatt (xl/worksheets/sheetN.xml) in der .xlsx-Datei gefunden - ist es wirklich eine Excel-Datei?");
     var sharedStrings = [];
     var sharedEntry = zip.file("xl/sharedStrings.xml");
     if (sharedEntry) {
       var sharedDoc = new DOMParser().parseFromString(await sharedEntry.async("string"), "application/xml");
       sharedStrings = xlsxSharedStringsFromDoc(sharedDoc);
     }
-    var rows = xlsxSheetXmlToRows(await sheetEntry.async("string"), sharedStrings);
-    return rows.map(function (row) { return row.join("\t"); }).join("\n");
+    var sheetTexts = [];
+    for (var i = 0; i < sheetNames.length; i++) {
+      var rows = xlsxSheetXmlToRows(await zip.file(sheetNames[i]).async("string"), sharedStrings);
+      if (rows.length) sheetTexts.push(rows.map(function (row) { return row.join("\t"); }).join("\n"));
+    }
+    return sheetTexts.join("\n\n");
   }
   function isXlsxName(lowerName) { return lowerName.slice(-5) === ".xlsx"; }
   async function extractTextFromXlsx(file) {
@@ -6112,6 +6162,11 @@
     }
 
     var allTickets = [], errors = [], okCount = 0;
+    // Reine Ticket-Nummern-Listen-Dateien innerhalb des ZIPs (s. parseAsKeyList)
+    // ueber alle Entries hinweg zu EINER Liste zusammenfassen (dedupliziert) -
+    // dieselbe "als Liste speichern"-Automatik wie bei Datei-/Zwischenablage-
+    // Import einer einzelnen Ticket-Liste, s. keyListKeys unten.
+    var keyListKeys = [], keyListSeen = {};
     for (var i = 0; i < entryNames.length; i++) {
       var entryName = entryNames[i];
       els.dropzoneHint.textContent = "ZIP „" + file.name + "“: Datei " + (i + 1) + " von " + entryNames.length + " (" + entryName + ") wird verarbeitet …";
@@ -6119,6 +6174,9 @@
         var text = await extractTextForZipEntry(zip.files[entryName], entryName.toLowerCase());
         var result = parseAsAndere(text, entryName);
         allTickets = allTickets.concat(result.tickets);
+        if (result.keysOnly) {
+          result.keys.forEach(function (k) { if (!keyListSeen[k]) { keyListSeen[k] = true; keyListKeys.push(k); } });
+        }
         okCount++;
       } catch (e) {
         var msg = (e && e.message) || "Unbekannter Fehler.";
@@ -6140,10 +6198,16 @@
     var errSuffix = errors.length
       ? " – " + errors.length + " von " + entryNames.length + " Datei(en) im Archiv fehlgeschlagen (Details im Protokoll unter Verarbeitung)."
       : "";
+    var listMsg = "";
+    if (keyListKeys.length) {
+      var zipListName = comment || ("Ticketliste aus " + file.name);
+      saveKeysAsNamedList(keyListKeys, zipListName);
+      listMsg = " Davon " + keyListKeys.length + " als Liste „" + zipListName + "“ unter Listenauswahl gespeichert.";
+    }
     showToast(
       errors.length ? "Import teilweise erfolgreich" : "Import erfolgreich",
       file.name + ": " + record.ticketCount + " Tickets aus " + okCount + "/" + entryNames.length + " Datei(en) (" +
-      record.stats.neu + " neu, " + record.stats.geaendert + " geändert)." + errSuffix,
+      record.stats.neu + " neu, " + record.stats.geaendert + " geändert)." + errSuffix + listMsg,
       errors.length > 0
     );
   }
