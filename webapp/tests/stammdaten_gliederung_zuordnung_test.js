@@ -70,6 +70,13 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
     const row = Array.from(doc.querySelectorAll("#outline-tbody .outline-chapter-row")).find((r) => r.textContent.includes("Kapitel 5: Zahlung, Rechnung und Unterschrift"));
     return !!row && row.textContent.includes("(2 Domänen)");
   })());
+  // Regression: 'Customer&Partner Management' (roh, ohne Leerzeichen um '&') wird von
+  // normalizeDomain() beim Import zu 'Customer & Partner Management' (mit Leerzeichen)
+  // normalisiert - der Domänen-Vorschlag muss die NORMALISIERTE Schreibweise verwenden,
+  // sonst matcht die Zuordnung trotz korrekt aussehender Gliederungs-Tabelle real keine
+  // Tickets (genau dieser Fehler ist hier vorher passiert).
+  check("Kapitel 8 nutzt die normalisierte Schreibweise 'Customer & Partner Management' (mit Leerzeichen um '&')",
+    outlineText().includes("Customer & Partner Management") && !outlineText().includes("Customer&Partner Management"));
   check("Kapitel 9 (Troubleshooting) bewusst OHNE Domänen-Vorschlag (kein erzwungener Fit)", (() => {
     const row = Array.from(doc.querySelectorAll("#outline-tbody .outline-chapter-row")).find((r) => r.textContent.includes("Kapitel 9: Troubleshooting und Support"));
     return !!row && row.textContent.includes("(0 Domänen)");
@@ -157,6 +164,16 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("'Nach Gliederung'-Tab aktiv markiert", doc.querySelector('#assignment-mode-tabs button[data-assignment-mode="outline"]').className.includes("active"));
   check("Zuordnung (Gliederung) zeigt 'Kapitel 4: Servicevertrag anlegen'", assignmentText().includes("Kapitel 4: Servicevertrag anlegen"));
   check("Zuordnung (Gliederung) zeigt 'Kapitel 9: Troubleshooting und Support'", assignmentText().includes("Kapitel 9: Troubleshooting und Support"));
+  // Regression (s. Kommentar oben zu normalizeDomain()): Kapitel 8 muss die echten,
+  // bereits im eingebetteten Demo-Datensatz vorhandenen 'Customer & Partner Management'-
+  // Tickets treffen (~38 Stück), nicht nur die 1 exakt gleich geschriebene 'Customer
+  // Account Center'-Domäne - sonst waere die Zuordnung an der Normalisierung vorbeigelaufen.
+  check("Kapitel 8 trifft deutlich mehr als nur 1 Ticket (echte Demo-Daten via normalisierte Domäne)", (() => {
+    const header = Array.from(doc.querySelectorAll("#assignment-tbody tr.domain-group-row")).find((r) => r.textContent.includes("Kapitel 8: Geschäftskunden, Kampagnen, Sonderfälle"));
+    if (!header) return false;
+    const m = header.textContent.match(/\((\d+)\s*Ticket/);
+    return !!m && parseInt(m[1], 10) >= 30;
+  })());
   check("ZUW-1 erscheint unter Kapitel 4 (über die Standard-Domäne 'Contract Generation', ohne manuelle Zuordnung)", (() => {
     const rows = Array.from(doc.querySelectorAll("#assignment-tbody tr"));
     const catIdx = rows.findIndex((r) => r.textContent.includes("Kapitel 4: Servicevertrag anlegen"));

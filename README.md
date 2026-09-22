@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.11.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.11.1"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -555,7 +555,7 @@ anderen Länderformaten (Kennzeichen).
     *Contract Calculation*, *Vehicle Management*; Kapitel 5 „Zahlung,
     Rechnung und Unterschrift" → *Revenue Management*, *Cost Management*;
     Kapitel 7 „Verträge im Alltag verwalten" → *Contract Management*;
-    Kapitel 8 „Geschäftskunden, Kampagnen, Sonderfälle" → *Customer&Partner
+    Kapitel 8 „Geschäftskunden, Kampagnen, Sonderfälle" → *Customer & Partner
     Management*, *Customer Account Center*; Kapitel 10 „Prozesse und
     Schaubilder" → *Architecture*; Kapitel 11 „Governance, Qualität,
     Datenschutz" → *Documents & Communications*, *Archiving*; Kapitel 6
