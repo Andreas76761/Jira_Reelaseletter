@@ -1051,15 +1051,25 @@
 
           <section>
             <p class="section-label">2. Endnutzergerechten Text generieren (Claude)</p>
+            <p class="desc">Ab mehreren Batches wird jeder Teilschritt intern als eigene Markdown-Datei gespeichert (Bezeichnung "Batch 1 von N", "Batch 2 von N" usw.) und am Ende zu einem Gesamttext zusammengeführt. Ein laufender Batch-Durchlauf kann jederzeit gestoppt und später fortgesetzt werden, ohne bereits fertige Batches erneut abzufragen.</p>
             <div class="job-export-row">
               <button class="btn ghost" id="rag-generate-summary-btn" type="button" disabled>Zusammenfassung generieren</button>
               <button class="btn ghost" id="rag-generate-fliesstext-btn" type="button" disabled>Fließtext generieren</button>
               <button class="btn ghost" id="rag-stop-btn" type="button" hidden>Stop</button>
+              <button class="btn ghost" id="rag-resume-btn" type="button" hidden>Fortsetzen</button>
             </div>
             <p class="step-note" id="rag-status-note"></p>
+            <div class="panel table-wrap" id="rag-batch-list-wrap" style="max-height:220px; overflow:auto; margin-top:8px;" hidden>
+              <table class="simple-table" id="rag-batch-table">
+                <thead><tr><th>Batch (aus Auswahl)</th><th>Tickets</th><th>Zeichen</th><th>Tokens (geschätzt)</th><th>Status</th></tr></thead>
+                <tbody id="rag-batch-tbody"></tbody>
+              </table>
+            </div>
             <div class="gen-preview" id="rag-output" style="min-height:120px;">Noch kein Text generiert.</div>
+            <p class="step-note" id="rag-token-usage"></p>
             <div class="job-export-row" style="margin-top:8px;">
               <button class="btn ghost" id="rag-download-btn" type="button" disabled>Als Markdown speichern</button>
+              <button class="btn ghost" id="rag-batch-zip-btn" type="button" hidden>Batch-Teilschritte als ZIP speichern</button>
               <button class="btn ghost" id="rag-translate-btn" type="button" disabled>Übersetzen (Englisch)</button>
             </div>
           </section>
@@ -3425,7 +3435,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.11.1";
+  var APP_VERSION = "2.12.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -4226,7 +4236,8 @@
     "domainoverview-domain-count", "domainoverview-ticket-count", "domainoverview-tbody", "domainoverview-empty",
     "rag-domain-select", "rag-status-select", "rag-label-category-select", "rag-outline-select", "rag-date-from", "rag-date-to", "rag-extract-btn",
     "rag-extract-summary", "rag-extract-count", "rag-extract-wrap", "rag-extract-tbody", "rag-export-row",
-    "rag-generate-summary-btn", "rag-generate-fliesstext-btn", "rag-stop-btn", "rag-status-note", "rag-output", "rag-download-btn",
+    "rag-generate-summary-btn", "rag-generate-fliesstext-btn", "rag-stop-btn", "rag-resume-btn", "rag-status-note",
+    "rag-batch-list-wrap", "rag-batch-tbody", "rag-output", "rag-token-usage", "rag-download-btn", "rag-batch-zip-btn",
     "rag-translate-btn",
     "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
     "points-tbody", "points-new-type", "points-new-value", "points-add-btn",
@@ -8713,17 +8724,32 @@
   var ragHasGenerated = false;
   // Maximal verarbeitbare Tickets pro Generierung: darueber wird abgelehnt
   // (Auswahl weiter eingrenzen). Bis zu diesem Limit wird bei Bedarf in
-  // mehreren Batches verarbeitet (s. chunkRagRows/ragGenerate), statt wie
+  // mehreren Batches verarbeitet (s. chunkRagRows/ragRunBatches), statt wie
   // zuvor immer alle Rohdaten in einem einzigen Claude-Aufruf zu senden, was
   // bei vielen Tickets mit "prompt_too_large" fehlschlug.
   var RAG_MAX_TICKETS = 800;
   var RAG_BATCH_CHAR_BUDGET = 9000;
+  // Grobe, zeichenbasierte Tokenschaetzung (Daumenregel ~4 Zeichen/Token).
+  // Die sample()-Schnittstelle liefert KEINE echte Token-/Nutzungszahl
+  // (SampleResult enthaelt nur text/truncated/modelTierApplied) - daher
+  // bewusst als Schaetzung ausgewiesen statt eine exakte Zahl vorzutaeuschen.
+  function estimateTokens(chars) { return Math.round(chars / 4); }
   // Zustand fuer die "Übersetzen"-Umschaltung: Original (Deutsch) bleibt
   // zwischengespeichert, damit ein Zurückschalten keine erneute Claude-
   // Anfrage benoetigt.
   var ragOriginalOutputText = "";
   var ragOriginalStatusNote = "";
   var ragOutputLang = "de";
+  // Batch-Lauf-Zustand (RAG als Herzstück der Verarbeitung): jeder fertige
+  // Teilschritt (Batch) wird als eigene interne MD-"Datei" in mdFiles
+  // gehalten (Bezeichnung "Batch N von M", s. ragBuildBatchMdFile), bevor am
+  // Ende ALLER Batches eine Zusammenfassung dieser Teilschritt-Dateien zu
+  // einem Gesamttext erzeugt wird (Map-Reduce, s. ragRunBatches). index ist
+  // der naechste noch zu verarbeitende Batch - ein Stop (ragAbortController)
+  // unterbricht den Lauf, ohne bereits fertige Batches zu verwerfen; ein
+  // Klick auf "Fortsetzen" (ragResumeRun) setzt exakt bei index fort statt
+  // von vorn zu beginnen. null = kein Lauf gestartet.
+  var ragBatchRun = null;
 
   function selectedValues(selectEl) {
     return Array.prototype.map.call(selectEl.selectedOptions, function (o) { return o.value; });
@@ -8796,9 +8822,15 @@
   function ragResetOutput() {
     ragClearExtraction();
     ragHasGenerated = false;
+    ragBatchRun = null;
     els.ragDownloadBtn.disabled = true;
     els.ragOutput.textContent = "Noch kein Text generiert.";
     els.ragStatusNote.textContent = "";
+    els.ragTokenUsage.textContent = "";
+    els.ragBatchListWrap.hidden = true;
+    els.ragBatchTbody.innerHTML = "";
+    els.ragBatchZipBtn.hidden = true;
+    els.ragResumeBtn.hidden = true;
     ragResetTranslation();
   }
 
@@ -8914,13 +8946,170 @@
     session_expired: "Bitte erneut bei Claude anmelden."
   };
 
-  // Verarbeitet bis zu RAG_MAX_TICKETS Tickets: passt alles in ein
-  // Zeichen-Budget, laeuft wie zuvor ein einzelner Claude-Aufruf; sonst
-  // wird in mehreren Batches je ein Teiltext erzeugt und anschliessend in
-  // einem letzten Aufruf zu einem finalen Text zusammengefuehrt (Map-Reduce),
-  // statt wie zuvor immer alle Rohdaten in einem Aufruf zu senden, was bei
-  // vielen Tickets mit "prompt_too_large" fehlschlug.
-  async function ragGenerate(kind) {
+  // Baut die interne MD-"Datei" fuer EINEN fertigen Batch-Teilschritt -
+  // Bezeichnung "Batch N von M" (aus der aktuellen Auswahl/Extraktion). Wird
+  // in ragBatchRun.mdFiles gesammelt und kann jederzeit (auch waehrend eines
+  // laufenden Durchlaufs) als ZIP heruntergeladen werden.
+  function ragBuildBatchMdFile(kind, batchIndex, batchTotal, rows, text) {
+    var label = "Batch " + (batchIndex + 1) + " von " + batchTotal;
+    var kindLabel = kind === "summary" ? "Zusammenfassung" : "Fließtext";
+    var filename = "RAG-Batch-" + String(batchIndex + 1).padStart(2, "0") + "-von-" + batchTotal + ".md";
+    var md = "# " + label + " (aus Auswahl) – " + kindLabel + ", Teilschritt\n\n" +
+      "_Automatisch mit Claude generiert – Teilergebnis aus " + rows.length + " Tickets dieser Auswahl. " +
+      "Wird am Ende aller Batches mit den übrigen Teilschritt-Dateien zu einem Gesamttext zusammengeführt. Bitte redaktionell prüfen._\n\n" + text;
+    return { index: batchIndex, label: label, filename: filename, ticketCount: rows.length, chars: text.length, text: text, md: md };
+  }
+
+  // Fasst alle Teilschritt-MD-Dateien (ragBatchRun.mdFiles) zu einer
+  // Gesamt-Zusammenfassungs-Datei zusammen (der bereits von Claude
+  // zusammengefuehrte finalText, s. ragRunBatches) - fuer den ZIP-Export.
+  function ragBuildFinalSummaryMd(kind, finalText, run) {
+    var title = "RAG-" + (kind === "summary" ? "Zusammenfassung" : "Fliesstext") + "-Gesamt";
+    return "# " + title + "\n\n_Automatisch mit Claude generiert – Zusammenführung aus " + run.batches.length +
+      " Teilschritt-Dateien (siehe RAG-Batch-*.md in diesem Archiv). Bitte redaktionell prüfen._\n\n" + finalText;
+  }
+
+  // Aktualisiert die Batch-Protokoll-Tabelle + Sichtbarkeit des ZIP-Buttons
+  // waehrend/nach einem Batch-Durchlauf. Bei nur einem Batch (kein echter
+  // Batch-Lauf) bleibt die Tabelle ausgeblendet.
+  function renderRagBatchList(run) {
+    if (!run || !run.batches || run.batches.length <= 1) {
+      els.ragBatchListWrap.hidden = true;
+      els.ragBatchZipBtn.hidden = true;
+      return;
+    }
+    els.ragBatchListWrap.hidden = false;
+    els.ragBatchZipBtn.hidden = run.mdFiles.length === 0;
+    els.ragBatchTbody.innerHTML = run.batches.map(function (batchRows, i) {
+      var done = i < run.mdFiles.length;
+      var file = done ? run.mdFiles[i] : null;
+      var statusText = done ? "✓ fertig" : (i === run.index && run.status === "running" ? "wird verarbeitet …" : "ausstehend");
+      var chars = done ? file.chars : batchRows.reduce(function (s, r) { return s + (r.summary || "").length + (r.description || "").length; }, 0);
+      return "<tr><td>Batch " + (i + 1) + " von " + run.batches.length + "</td><td>" + batchRows.length +
+        "</td><td class=\"mono\">" + chars.toLocaleString("de-DE") + "</td><td class=\"mono\">" + (done ? "~" + estimateTokens(chars).toLocaleString("de-DE") : "–") +
+        "</td><td>" + statusText + "</td></tr>";
+    }).join("");
+  }
+
+  // Kernstueck der Batch-Verarbeitung (RAG als Herzstück): verarbeitet den
+  // in ragBatchRun hinterlegten Lauf ab ragBatchRun.index weiter, statt immer
+  // bei Batch 1 neu zu beginnen - ein Stop (Abbruch der laufenden Anfrage)
+  // laesst bereits fertige Batches unangetastet, ein erneuter Aufruf (ueber
+  // ragResumeRun) setzt exakt dort fort. Passt alles in ein Zeichen-Budget,
+  // laeuft ein einzelner Claude-Aufruf; sonst wird je Batch ein Teilschritt
+  // erzeugt, intern als MD-Datei gespeichert (ragBuildBatchMdFile) und am
+  // Ende aller Batches zu einem finalen Text zusammengefuehrt (Map-Reduce).
+  async function ragRunBatches() {
+    var run = ragBatchRun;
+    if (!run) return;
+    var kind = run.kind;
+    ragLastKind = kind;
+    els.ragGenerateSummaryBtn.disabled = true;
+    els.ragGenerateFliesstextBtn.disabled = true;
+    els.ragDownloadBtn.disabled = true;
+    els.ragTranslateBtn.disabled = true;
+    els.ragStopBtn.hidden = false;
+    els.ragResumeBtn.hidden = true;
+    var ctl = new AbortController();
+    ragAbortController = ctl;
+    var lastText = "";
+    try {
+      var finalText, truncatedAny = false;
+      if (run.batches.length <= 1) {
+        if (run.index === 0) {
+          els.ragStatusNote.textContent = "Claude denkt nach …";
+          els.ragOutput.textContent = "";
+          var prompt = ragBuildPrompt(kind, ragExtractedRows);
+          run.charsIn += prompt.length;
+          var result = await sampleApi(prompt, {
+            signal: ctl.signal, modelTier: "default", cache: false,
+            onText: function (u) { lastText = u.text; els.ragOutput.textContent = u.text; els.ragStatusNote.textContent = "Claude schreibt …"; }
+          });
+          run.charsOut += result.text.length;
+          finalText = result.text;
+          truncatedAny = !!result.truncated;
+          run.index = 1;
+        }
+      } else {
+        for (; run.index < run.batches.length; run.index++) {
+          var i = run.index;
+          var batchLabel = "Batch " + (i + 1) + " von " + run.batches.length;
+          els.ragStatusNote.textContent = batchLabel + ": Claude schreibt … (bisher ~" + estimateTokens(run.charsIn + run.charsOut).toLocaleString("de-DE") + " Tokens geschätzt)";
+          renderRagBatchList(run);
+          var batchPrompt = ragBuildPrompt(kind, run.batches[i]);
+          run.charsIn += batchPrompt.length;
+          var batchResult = await sampleApi(batchPrompt, {
+            signal: ctl.signal, modelTier: "default", cache: false,
+            onText: function (u) { lastText = u.text; els.ragOutput.textContent = "[" + batchLabel + " wird verarbeitet …]\n\n" + u.text; }
+          });
+          run.charsOut += batchResult.text.length;
+          run.partials.push(batchResult.text);
+          run.mdFiles.push(ragBuildBatchMdFile(kind, i, run.batches.length, run.batches[i], batchResult.text));
+          if (batchResult.truncated) truncatedAny = true;
+          renderRagBatchList(run);
+        }
+        els.ragStatusNote.textContent = "Zusammenführung der " + run.batches.length + " Teilschritt-Dateien …";
+        var synthesisPrompt = ragBuildSynthesisPrompt(kind, run.partials);
+        run.charsIn += synthesisPrompt.length;
+        var synthResult = await sampleApi(synthesisPrompt, {
+          signal: ctl.signal, modelTier: "default", cache: false,
+          onText: function (u) { lastText = u.text; els.ragOutput.textContent = u.text; els.ragStatusNote.textContent = "Claude führt zusammen …"; }
+        });
+        run.charsOut += synthResult.text.length;
+        finalText = synthResult.text;
+        if (synthResult.truncated) truncatedAny = true;
+      }
+      els.ragOutput.textContent = finalText;
+      els.ragDownloadBtn.disabled = false;
+      var totalTokens = estimateTokens(run.charsIn + run.charsOut);
+      var statusNote = "KI-generiert (" + (kind === "summary" ? "Zusammenfassung" : "Fließtext") +
+        (run.batches.length > 1 ? ", " + run.batches.length + " Batches zusammengeführt" : "") + ") – bitte redaktionell prüfen." +
+        (truncatedAny ? " Hinweis: Antwort wurde gekürzt (Auswahl eingrenzen für vollständige Antwort)." : "");
+      els.ragStatusNote.textContent = statusNote;
+      els.ragTokenUsage.textContent = "Geschätzter Tokenverbrauch dieses Durchlaufs: ~" + totalTokens.toLocaleString("de-DE") + " Tokens (Eingabe ~" +
+        estimateTokens(run.charsIn).toLocaleString("de-DE") + " / Ausgabe ~" + estimateTokens(run.charsOut).toLocaleString("de-DE") +
+        ") – grobe Schätzung auf Zeichenbasis (~4 Zeichen/Token), keine exakte Angabe durch die KI-Schnittstelle verfügbar.";
+      addLog("RAG: " + (kind === "summary" ? "Zusammenfassung" : "Fließtext") + " für " + ragExtractedRows.length + " Tickets generiert (Claude)" +
+        (run.batches.length > 1 ? ", " + run.batches.length + " Batches" : "") + ", geschätzt ~" + totalTokens + " Tokens.");
+      ragHasGenerated = true;
+      ragOriginalOutputText = finalText;
+      ragOriginalStatusNote = statusNote;
+      ragOutputLang = "de";
+      els.ragTranslateBtn.disabled = false;
+      els.ragTranslateBtn.textContent = "Übersetzen (Englisch)";
+      run.status = "done";
+      run.finalMd = ragBuildFinalSummaryMd(kind, finalText, run);
+      renderRagBatchList(run);
+      renderAllJobSteps();
+    } catch (err) {
+      run.status = "paused";
+      var isBatchRun = run.batches.length > 1;
+      if (err && err.code === "cancelled") {
+        els.ragStatusNote.textContent = isBatchRun
+          ? "Angehalten nach " + run.mdFiles.length + " von " + run.batches.length + " Teilschritten – mit \"Fortsetzen\" weiterverarbeiten."
+          : "Abgebrochen.";
+        if (lastText) els.ragOutput.textContent = lastText;
+      } else {
+        var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
+        els.ragStatusNote.textContent = "Fehlgeschlagen: " + msg +
+          (isBatchRun && run.mdFiles.length ? " (" + run.mdFiles.length + " von " + run.batches.length + " Teilschritten bereits fertig – mit \"Fortsetzen\" erneut versuchen.)" : "");
+        if (err && err.text) els.ragOutput.textContent = err.text;
+        showToast("Generierung fehlgeschlagen", msg, true);
+      }
+      els.ragResumeBtn.hidden = false;
+      renderRagBatchList(run);
+    } finally {
+      els.ragStopBtn.hidden = true;
+      els.ragGenerateSummaryBtn.disabled = false;
+      els.ragGenerateFliesstextBtn.disabled = false;
+      ragAbortController = null;
+    }
+  }
+
+  // Startet einen NEUEN Lauf (verwirft einen evtl. angehaltenen vorherigen
+  // Lauf) - Fortsetzen eines angehaltenen Laufs erfolgt ausschliesslich
+  // ueber den separaten "Fortsetzen"-Button/ragResumeRun.
+  function ragGenerate(kind) {
     if (!sampleApi) {
       showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
       return;
@@ -8932,90 +9121,41 @@
       showToast("Zu viele Tickets", capMsg, true);
       return;
     }
-    ragLastKind = kind;
     var batches = chunkRagRows(ragExtractedRows, RAG_BATCH_CHAR_BUDGET);
-    els.ragGenerateSummaryBtn.disabled = true;
-    els.ragGenerateFliesstextBtn.disabled = true;
-    els.ragDownloadBtn.disabled = true;
-    els.ragTranslateBtn.disabled = true;
-    els.ragStopBtn.hidden = false;
-    els.ragStatusNote.textContent = "Claude denkt nach …";
-    els.ragOutput.textContent = "";
-    var ctl = new AbortController();
-    ragAbortController = ctl;
-    var lastText = "";
-    try {
-      var finalText, truncatedAny = false;
-      if (batches.length <= 1) {
-        var prompt = ragBuildPrompt(kind, ragExtractedRows);
-        var result = await sampleApi(prompt, {
-          signal: ctl.signal, modelTier: "default", cache: false,
-          onText: function (u) { lastText = u.text; els.ragOutput.textContent = u.text; els.ragStatusNote.textContent = "Claude schreibt …"; }
-        });
-        finalText = result.text;
-        truncatedAny = !!result.truncated;
-      } else {
-        var partials = [];
-        for (var i = 0; i < batches.length; i++) {
-          var batchLabel = "Batch " + (i + 1) + "/" + batches.length;
-          els.ragStatusNote.textContent = batchLabel + ": Claude schreibt …";
-          var batchPrompt = ragBuildPrompt(kind, batches[i]);
-          var batchResult = await sampleApi(batchPrompt, {
-            signal: ctl.signal, modelTier: "default", cache: false,
-            onText: function (u) { lastText = u.text; els.ragOutput.textContent = "[" + batchLabel + " wird verarbeitet …]\n\n" + u.text; }
-          });
-          partials.push(batchResult.text);
-          if (batchResult.truncated) truncatedAny = true;
-        }
-        els.ragStatusNote.textContent = "Zusammenführung der " + batches.length + " Teiltexte …";
-        var synthesisPrompt = ragBuildSynthesisPrompt(kind, partials);
-        var synthResult = await sampleApi(synthesisPrompt, {
-          signal: ctl.signal, modelTier: "default", cache: false,
-          onText: function (u) { lastText = u.text; els.ragOutput.textContent = u.text; els.ragStatusNote.textContent = "Claude führt zusammen …"; }
-        });
-        finalText = synthResult.text;
-        if (synthResult.truncated) truncatedAny = true;
-      }
-      els.ragOutput.textContent = finalText;
-      els.ragDownloadBtn.disabled = false;
-      var statusNote = "KI-generiert (" + (kind === "summary" ? "Zusammenfassung" : "Fließtext") +
-        (batches.length > 1 ? ", " + batches.length + " Batches zusammengeführt" : "") + ") – bitte redaktionell prüfen." +
-        (truncatedAny ? " Hinweis: Antwort wurde gekürzt (Auswahl eingrenzen für vollständige Antwort)." : "");
-      els.ragStatusNote.textContent = statusNote;
-      addLog("RAG: " + (kind === "summary" ? "Zusammenfassung" : "Fließtext") + " für " + ragExtractedRows.length + " Tickets generiert (Claude)" +
-        (batches.length > 1 ? ", " + batches.length + " Batches" : "") + ".");
-      ragHasGenerated = true;
-      ragOriginalOutputText = finalText;
-      ragOriginalStatusNote = statusNote;
-      ragOutputLang = "de";
-      els.ragTranslateBtn.disabled = false;
-      els.ragTranslateBtn.textContent = "Übersetzen (Englisch)";
-      renderAllJobSteps();
-    } catch (err) {
-      if (err && err.code === "cancelled") {
-        els.ragStatusNote.textContent = "Abgebrochen.";
-        if (lastText) els.ragOutput.textContent = lastText;
-      } else {
-        var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
-        els.ragStatusNote.textContent = "Fehlgeschlagen: " + msg;
-        if (err && err.text) els.ragOutput.textContent = err.text;
-        showToast("Generierung fehlgeschlagen", msg, true);
-      }
-    } finally {
-      els.ragStopBtn.hidden = true;
-      els.ragGenerateSummaryBtn.disabled = false;
-      els.ragGenerateFliesstextBtn.disabled = false;
-      ragAbortController = null;
-    }
+    ragBatchRun = { kind: kind, batches: batches, partials: [], mdFiles: [], index: 0, charsIn: 0, charsOut: 0, status: "running", finalMd: "" };
+    els.ragTokenUsage.textContent = "";
+    renderRagBatchList(ragBatchRun);
+    ragRunBatches();
+  }
+  function ragResumeRun() {
+    if (!ragBatchRun || ragBatchRun.status !== "paused") return;
+    ragBatchRun.status = "running";
+    ragRunBatches();
   }
   els.ragGenerateSummaryBtn.addEventListener("click", function () { ragGenerate("summary"); });
   els.ragGenerateFliesstextBtn.addEventListener("click", function () { ragGenerate("fliesstext"); });
   els.ragStopBtn.addEventListener("click", function () { if (ragAbortController) ragAbortController.abort(); });
+  els.ragResumeBtn.addEventListener("click", ragResumeRun);
   els.ragDownloadBtn.addEventListener("click", async function () {
     var title = "RAG-" + (ragLastKind === "summary" ? "Zusammenfassung" : "Fliesstext") + (ragOutputLang === "en" ? "-EN" : "");
     var md = "# " + title + "\n\n_Automatisch mit Claude generiert" + (ragOutputLang === "en" ? " und übersetzt" : "") + " – bitte redaktionell prüfen._\n\n" + els.ragOutput.textContent;
     var ok = await saveOrWarn(safeFilename(title) + ".md", md);
     if (ok) showToast("Gespeichert", "Text heruntergeladen.");
+  });
+  els.ragBatchZipBtn.addEventListener("click", async function () {
+    var run = ragBatchRun;
+    if (!run || !run.mdFiles.length) return;
+    if (typeof JSZip === "undefined") { showToast("Fehlgeschlagen", "ZIP-Bibliothek konnte nicht geladen werden.", true); return; }
+    try {
+      var zip = new JSZip();
+      run.mdFiles.forEach(function (f) { zip.file(f.filename, f.md); });
+      if (run.status === "done" && run.finalMd) zip.file("00_Gesamt-Zusammenfassung.md", run.finalMd);
+      var blob = await zip.generateAsync({ type: "blob" });
+      var ok = await saveOrWarn("RAG-Batch-Teilschritte_" + run.batches.length + ".zip", blob);
+      if (ok) showToast("Gespeichert", run.mdFiles.length + " Teilschritt-Dateien als ZIP heruntergeladen.");
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "ZIP konnte nicht erzeugt werden.", true);
+    }
   });
 
   // "Übersetzen"-Umschalter: Deutsch -> Englisch ruft Claude einmal auf und
@@ -9040,6 +9180,7 @@
     els.ragGenerateFliesstextBtn.disabled = true;
     els.ragDownloadBtn.disabled = true;
     els.ragStopBtn.hidden = false;
+    els.ragResumeBtn.hidden = true;
     els.ragStatusNote.textContent = "Übersetzung wird erstellt …";
     var ctl = new AbortController();
     ragAbortController = ctl;

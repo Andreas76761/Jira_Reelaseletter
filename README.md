@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.11.1"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.12.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -411,16 +411,33 @@ anderen Länderformaten (Kennzeichen).
      gekennzeichnet und redaktionell zu prüfen. Verarbeitet bis zu **800
      Tickets pro Durchlauf**: passen die Rohdaten in ein Zeichen-Budget,
      läuft wie zuvor ein einzelner Claude-Aufruf; sonst teilt die App sie
-     automatisch in mehrere Batches auf, lässt Claude je Batch einen
-     Teiltext schreiben und führt diese in einem letzten Aufruf zu einem
-     einzigen, redundanzbereinigten Endtext zusammen (Map-Reduce) – darüber
-     (mehr als 800 Tickets) lehnt die App die Generierung mit einer
-     verständlichen Meldung ab, statt einen zu großen Prompt an Claude zu
-     schicken. Ein neuer **"Übersetzen (Englisch)"**-Button übersetzt den
-     zuletzt generierten Text per Claude ins Englische; ein erneuter Klick
-     schaltet ohne weitere KI-Anfrage zum zwischengespeicherten deutschen
-     Original zurück. Der Download als Markdown berücksichtigt die aktuell
-     angezeigte Sprache (Dateiname/Inhalt).
+     automatisch in mehrere Batches auf ("Batch 1 von N", "Batch 2 von N"
+     usw., aus der aktuellen Auswahl/Extraktion), lässt Claude je Batch
+     einen Teiltext schreiben und führt diese am Ende in einem letzten
+     Aufruf zu einem einzigen, redundanzbereinigten Endtext zusammen
+     (Map-Reduce) – darüber (mehr als 800 Tickets) lehnt die App die
+     Generierung mit einer verständlichen Meldung ab, statt einen zu großen
+     Prompt an Claude zu schicken. RAG als Herzstück der Verarbeitung: bei
+     mehreren Batches wird jeder fertige Teilschritt intern als eigene
+     Markdown-Datei gehalten (im Batch-Protokoll unterhalb der
+     Generieren-Buttons live sichtbar, inkl. Zeichen-/Tokenschätzung je
+     Batch) und lässt sich jederzeit – auch während ein Lauf noch läuft
+     oder angehalten ist – als ZIP herunterladen (alle Teilschritt-Dateien
+     plus, nach Abschluss, eine zusammenführende Gesamt-Zusammenfassungs-
+     Datei). Ein laufender Batch-Durchlauf lässt sich per **Stop**-Button
+     jederzeit anhalten, ohne bereits fertige Batches zu verwerfen; ein
+     **"Fortsetzen"**-Button setzt exakt beim nächsten offenen Batch fort
+     (kein erneutes Abfragen bereits abgeschlossener Batches). Nach jeder
+     Generierung zeigt die App einen **geschätzten Tokenverbrauch**
+     (Eingabe/Ausgabe, grobe Zeichen-basierte Schätzung ~4 Zeichen/Token) –
+     die `sample`-Laufzeit-Capability liefert keine echte Token-/
+     Nutzungszahl, daher bewusst als Schätzung ausgewiesen statt eine
+     exakte Zahl vorzutäuschen. Ein neuer **"Übersetzen (Englisch)"**-Button
+     übersetzt den zuletzt generierten Text per Claude ins Englische; ein
+     erneuter Klick schaltet ohne weitere KI-Anfrage zum
+     zwischengespeicherten deutschen Original zurück. Der Download als
+     Markdown berücksichtigt die aktuell angezeigte Sprache
+     (Dateiname/Inhalt).
 - **Releaseletter / Benutzerhandbuch** – Textentwürfe aus ausgewählten
   Tickets (aktuelle Dashboard-Filterung oder Ticket-Keys), Vorschau +
   Download als Markdown, DOCX, PDF oder XLSX (Tickets-Tabelle mit
