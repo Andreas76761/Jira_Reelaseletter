@@ -939,6 +939,40 @@
         </section>
 
         <section>
+          <p class="section-label">Referenz-Handbuch (bestehende Word-Version)</p>
+          <div class="callout">
+            Ein bereits bestehendes Word-Benutzerhandbuch (z. B. die aktuell gültige, ca. 200-seitige Version)
+            hochladen, um es als Vergleichsgrundlage ("alter Stand") für Releaseletter und Benutzerhandbuch zu
+            nutzen. <strong>Enthält keine Jira-Tickets</strong> und erscheint deshalb NICHT in
+            Dashboard/Verarbeitung – gespeichert werden nur die aus den Word-Formatvorlagen ("Überschrift 1/2/…")
+            erkannten Kapitel (Titel + Text), mit derselben Namens-/Datenbereinigung wie beim Ticket-Import. Es
+            können mehrere Versionen hochgeladen werden.
+          </div>
+          <div class="upload-row">
+            <div class="dropzone" id="reference-manual-dropzone" tabindex="0" role="button" aria-label="Referenz-Handbuch (.docx) auswählen">
+              <span class="btn-spinner dropzone-spinner" id="reference-manual-spinner" hidden></span>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+              <span class="txt">
+                <strong>Bestehendes Handbuch (.docx) hier ablegen</strong>
+                <span>oder klicken zum Auswählen &middot; nur echte .docx-Dateien (keine .doc/.rtf/HTML-Exporte)</span>
+              </span>
+            </div>
+            <div class="upload-side">
+              <label for="reference-manual-version-input" style="display:block; font-size:13px; margin-bottom:4px;">Versionsbezeichnung</label>
+              <input type="text" id="reference-manual-version-input" class="text-input" placeholder="z. B. Handbuch v3.2 (Stand 2026-06)" autocomplete="off" maxlength="120">
+            </div>
+          </div>
+          <input type="file" id="reference-manual-file-input" accept=".docx,.doc" hidden>
+          <div class="table-wrap" id="reference-manual-table-wrap" hidden>
+            <table class="field-table">
+              <thead><tr><th>Version</th><th>Datei</th><th>Kapitel</th><th>Importiert am</th><th></th></tr></thead>
+              <tbody id="reference-manual-tbody"></tbody>
+            </table>
+          </div>
+          <p class="step-note" id="reference-manual-empty">Noch kein Referenz-Handbuch hochgeladen.</p>
+        </section>
+
+        <section>
           <p class="section-label">Dateiansicht</p>
           <p class="desc">Eine bereits importierte Datei in lesbarer Form ansehen – zeigt die daraus geladenen Tickets als bereinigtes, XML-ähnliches Format (dieselbe Bereinigung wie überall in der App: Namen pseudonymisiert, E-Mails/VIN/Adressen entfernt), unabhängig vom ursprünglichen Format (HTML, XML, .docx, .xlsx, .pdf, CSV, Ticket-Liste). Zeigt NICHT die Rohdatei selbst, da diese unredigierte personenbezogene Daten enthalten könnte.</p>
           <div class="controls">
@@ -1553,6 +1587,45 @@
           <p id="manual-status-note" class="step-note"></p>
           <div id="manual-chapters-list"></div>
           <div class="empty-hint" id="manual-chapters-empty">Noch keine Kapitel erzeugt.</div>
+        </section>
+
+        <section>
+          <p class="section-label">Handbuch-Änderung nach Kapitel (Vergleich mit Referenz-Handbuch)</p>
+          <div class="callout">
+            Ordnet jedem Kapitel eines unter Import → "Referenz-Handbuch" hochgeladenen, bestehenden Word-Handbuchs
+            ein Kapitel dieser Gliederung zu (Vorschlag anhand Titel-Ähnlichkeit, pro Zeile überschreibbar) – Basis
+            für den Vergleich "alter Stand" (Referenz-Handbuch) gegen "neuer Stand" (aus den Jira-Tickets erzeugter
+            Kapitel-Generator-Text, s. oben): "Vergleichen" zeigt beide Fassungen nebeneinander sowie eine
+            KI-Änderungsanalyse (neue Features, Widersprüche). Setzt voraus, dass für das zugeordnete App-Kapitel
+            oben bereits ein Text erzeugt wurde. Kein Zuordnungs-Vorschlag bei zu geringer Titel-Ähnlichkeit – dann
+            bitte manuell zuordnen.
+          </div>
+          <div class="controls" id="refcompare-controls" hidden>
+            <label for="refcompare-manual-select" style="font-weight:500;">Referenz-Handbuch</label>
+            <select id="refcompare-manual-select" aria-label="Referenz-Handbuch für den Vergleich"></select>
+          </div>
+          <div class="table-wrap" id="refcompare-mapping-wrap" hidden>
+            <table class="field-table">
+              <thead><tr><th>Referenz-Handbuch-Kapitel</th><th>Zugeordnetes App-Kapitel</th><th></th></tr></thead>
+              <tbody id="refcompare-mapping-tbody"></tbody>
+            </table>
+          </div>
+          <p class="step-note" id="refcompare-empty">Noch kein Referenz-Handbuch hochgeladen (Import → "Referenz-Handbuch").</p>
+          <div id="refcompare-result" hidden>
+            <p class="step-note" id="refcompare-result-status"></p>
+            <div class="extract-grid">
+              <div>
+                <p class="section-label" id="refcompare-old-title">Alter Stand (Referenz-Handbuch)</p>
+                <textarea id="refcompare-old-text" rows="14" readonly></textarea>
+              </div>
+              <div>
+                <p class="section-label" id="refcompare-new-title">Neuer Stand (aus Jira-Tickets)</p>
+                <textarea id="refcompare-new-text" rows="14" readonly></textarea>
+              </div>
+            </div>
+            <p class="section-label">Änderungsanalyse (KI)</p>
+            <div class="callout" id="refcompare-analysis-output"></div>
+          </div>
         </section>
       </section>
 
@@ -3969,7 +4042,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.32.0";
+  var APP_VERSION = "2.33.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5258,6 +5331,8 @@
     "listenauswahl-count", "listenauswahl-tbody", "listenauswahl-empty",
     "dropzone", "dropzone-title", "dropzone-hint", "dropzone-icon", "dropzone-spinner", "file-input", "reset-session-btn", "format-callout", "import-tabs",
     "import-comment-input", "ticketsplitt-callout",
+    "reference-manual-dropzone", "reference-manual-spinner", "reference-manual-file-input", "reference-manual-version-input",
+    "reference-manual-table-wrap", "reference-manual-tbody", "reference-manual-empty",
     "paste-textarea", "paste-from-clipboard-btn", "paste-process-btn", "paste-spinner", "paste-process-label",
     "fileview-import-select", "fileview-show-btn", "fileview-wrap", "fileview-summary", "fileview-content",
     "importstats-import-select", "importstats-wrap", "importstats-summary", "importstats-tbody", "importstats-empty",
@@ -5282,6 +5357,9 @@
     "dq-tickets-total", "dq-tickets-affected", "dq-findings-total", "dq-empty-state", "dq-wrap", "dq-tbody",
     "manual-domain-select", "manual-label-select", "manual-chapter-select", "manual-role-select", "manual-group-select", "manual-match-count",
     "manual-generate-btn", "manual-stop-btn", "manual-status-note", "manual-chapters-list", "manual-chapters-empty",
+    "refcompare-controls", "refcompare-manual-select", "refcompare-mapping-wrap", "refcompare-mapping-tbody", "refcompare-empty",
+    "refcompare-result", "refcompare-result-status", "refcompare-old-title", "refcompare-old-text",
+    "refcompare-new-title", "refcompare-new-text", "refcompare-analysis-output",
     "gl-use-selection-cb", "gl-selection-count",
     "gl-subchapter-select", "gl-label-select", "gl-generate-btn", "gl-status-note", "gl-keywords-list", "gl-keywords-empty",
     "gl-new-term-input", "gl-add-term-btn", "gl-chat-btn", "gl-grill-btn", "gl-chat-panel", "gl-chat-history",
@@ -5446,7 +5524,20 @@
     // speichern/laden). Chat-Verlauf/Grill-me-Ausgabe sind bewusst NICHT
     // hier gespeichert (wie RAG-Ausgaben - s. Kommentar bei "Sitzung
     // speichern/laden" weiter unten), sondern nur ephemer im Modul-Scope.
-    chapterKeywords: {}
+    chapterKeywords: {},
+    // Referenz-Handbuch-Import (Teil 11): hochgeladene, bereits bestehende
+    // Word-Benutzerhandbücher (mit Versionsangabe), aus denen eine
+    // Kapitelstruktur (Titel + Fließtext je Kapitel) extrahiert wird - dient
+    // NICHT als Ticket-Import (kein Jira-Bezug, erscheint nicht in
+    // Dashboard/Verarbeitung), sondern nur als Vergleichsgrundlage
+    // ("alter Stand") für Releaseletter/Benutzerhandbuch. Sitzungsdatensatz
+    // wie manualChapters/chapterKeywords (reset bei "Alle Daten
+    // löschen"/"Sitzung zurücksetzen", Teil von Sitzung speichern/laden).
+    referenceManuals: [],
+    // Welches Referenz-Handbuch (referenceManuals[].id) aktuell für die
+    // Kapitel-Zuordnung/den Vergleich ausgewählt ist. Sitzungsdatensatz wie
+    // referenceManuals selbst.
+    refCompareActiveManualId: null
   };
 
   function addLog(message) {
@@ -5618,6 +5709,9 @@
     renderManualChapters();
     app.chapterKeywords = {};
     renderGliederung();
+    app.referenceManuals = [];
+    app.refCompareActiveManualId = null;
+    renderReferenceManuals();
   }
 
   // Admin-Funktion (Einstellungen): im Unterschied zu resetSession() werden
@@ -5657,6 +5751,9 @@
     renderManualChapters();
     app.chapterKeywords = {};
     renderGliederung();
+    app.referenceManuals = [];
+    app.refCompareActiveManualId = null;
+    renderReferenceManuals();
     addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
   }
   els.deleteAllDataBtn.addEventListener("click", async function () {
@@ -5717,7 +5814,9 @@
       ragPrompts: app.ragPrompts,
       manualChapters: app.manualChapters,
       chapterKeywords: app.chapterKeywords,
-      importFormats: app.importFormats
+      importFormats: app.importFormats,
+      referenceManuals: app.referenceManuals,
+      refCompareActiveManualId: app.refCompareActiveManualId
     };
   }
   function restoreSessionState(data) {
@@ -5754,6 +5853,8 @@
     if (data.manualChapters) app.manualChapters = data.manualChapters;
     if (data.chapterKeywords) app.chapterKeywords = data.chapterKeywords;
     if (data.importFormats) app.importFormats = data.importFormats;
+    if (Array.isArray(data.referenceManuals)) app.referenceManuals = data.referenceManuals;
+    if (data.refCompareActiveManualId !== undefined) app.refCompareActiveManualId = data.refCompareActiveManualId;
     app.initialized = true;
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
@@ -5773,6 +5874,8 @@
     renderManualChapters();
     renderGliederung();
     renderImportFormats();
+    renderReferenceManuals();
+    renderRefCompareMapping();
     els.releaseMatchSummary.hidden = true;
     els.releaseMissingWrap.hidden = true;
     els.releaseKeysInput.value = "";
@@ -7043,6 +7146,7 @@
     renderAllJobSteps();
     ragPopulateSelects();
     manualPopulateSelects();
+    renderRefCompareMapping();
     glPopulateSelects();
     renderSavedLists();
     buildListenauswahlTypeChips();
@@ -7742,6 +7846,96 @@
     return extractWordLikeText(await readFileAsArrayBuffer(file));
   }
 
+  // Kapitel-Erkennung fuer den Referenz-Handbuch-Import (Teil 11): baut auf
+  // derselben Absatz-/Tabellen-Traversierung wie docxXmlToLines auf, liest
+  // dabei aber zusaetzlich die Formatvorlage jedes Absatzes (w:pStyle) aus,
+  // um Ueberschriften von Fliesstext zu unterscheiden und daraus eine
+  // Kapitelstruktur (Titel + Fliesstext je Kapitel) statt nur einer
+  // flachen Zeilenliste zu gewinnen. Deckt sowohl englische ("Heading1")
+  // als auch deutsche Formatvorlagen-IDs ab - Word entfernt beim Erzeugen
+  // der internen Style-ID Umlaute, "Überschrift 1" wird intern i. d. R. zu
+  // "berschrift1". Text vor der ersten erkannten Ueberschrift landet in
+  // einem eigenen "Vorspann"-Kapitel, damit kein Inhalt verloren geht.
+  function docxParagraphStyleId(pEl) {
+    var pPr = pEl.getElementsByTagName("w:pPr")[0];
+    if (!pPr) return "";
+    var pStyle = pPr.getElementsByTagName("w:pStyle")[0];
+    if (!pStyle) return "";
+    return pStyle.getAttribute("w:val") || "";
+  }
+  var HEADING_STYLE_RE = /^(heading|berschrift|uberschrift)\s*([1-9])$/i;
+  function docxHeadingLevel(styleId) {
+    if (!styleId) return 0;
+    var s = styleId.trim();
+    if (/^title$/i.test(s)) return 1;
+    var m = HEADING_STYLE_RE.exec(s);
+    return m ? parseInt(m[2], 10) : 0;
+  }
+  function docxXmlToChapters(xmlText) {
+    var doc = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (doc.querySelector("parsererror")) throw new Error("word/document.xml konnte nicht gelesen werden (beschädigte .docx-Datei?).");
+    var body = doc.getElementsByTagName("w:body")[0];
+    if (!body) throw new Error("Kein Dokumentinhalt (w:body) in der .docx-Datei gefunden.");
+    var chapters = [];
+    var current = { level: 0, title: "Vorspann (Text vor der ersten Überschrift)", paragraphs: [] };
+    chapters.push(current);
+    Array.prototype.forEach.call(body.childNodes, function (node) {
+      if (node.nodeType !== 1) return;
+      var tag = node.tagName;
+      if (tag === "w:p") {
+        var level = docxHeadingLevel(docxParagraphStyleId(node));
+        var t = docxParagraphText(node);
+        if (!t) return;
+        if (level > 0) {
+          current = { level: level, title: t, paragraphs: [] };
+          chapters.push(current);
+        } else {
+          current.paragraphs.push(t);
+        }
+      } else if (tag === "w:tbl") {
+        Array.prototype.forEach.call(node.getElementsByTagName("w:tr"), function (tr) {
+          if (tr.getElementsByTagName("w:tbl").length > 0) return; // Wrapper-Zeile ueberspringen
+          var cells = Array.prototype.map.call(tr.getElementsByTagName("w:tc"), docxCellText);
+          if (cells.some(function (c) { return c; })) current.paragraphs.push(cells.join("\t"));
+        });
+      }
+    });
+    // Leeres Vorspann-Kapitel (kein Text vor der ersten Ueberschrift)
+    // verwerfen, damit die Kapitelliste nicht mit einem leeren Eintrag
+    // beginnt.
+    if (chapters.length > 1 && chapters[0].paragraphs.length === 0) chapters.shift();
+    return chapters;
+  }
+  async function docxArrayBufferToChapters(buf) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek (JSZip) nicht geladen - .docx kann nicht gelesen werden.");
+    var zip;
+    try { zip = await JSZip.loadAsync(buf); }
+    catch (e) { throw new Error("Datei konnte nicht als .docx (ZIP) gelesen werden - ist es wirklich ein Word-Dokument?"); }
+    var docXmlEntry = zip.file("word/document.xml");
+    if (!docXmlEntry) throw new Error("Kein word/document.xml in der .docx-Datei gefunden - ist es wirklich ein Word-Dokument?");
+    var xmlText = await docXmlEntry.async("string");
+    return docxXmlToChapters(xmlText);
+  }
+  // Referenz-Handbuch verlangt (anders als der tolerante Ticket-Import via
+  // extractWordLikeText) ein ECHTES .docx, da die Kapitelerkennung auf der
+  // Formatvorlagen-Struktur (w:pStyle) aufbaut, die eine als HTML/RTF
+  // getarnte ".docx"-Datei nicht besitzt.
+  async function extractReferenceManualChapters(buf) {
+    var kind = classifyWordBuffer(buf);
+    if (kind === "zip") return docxArrayBufferToChapters(buf);
+    if (kind === "ole") {
+      throw new Error(
+        "Altes .doc-Format (vor Word 2007, binäres Format) wird nicht unterstützt. Bitte die Datei in Word über " +
+        "„Speichern unter“ als .docx speichern und erneut hochladen."
+      );
+    }
+    throw new Error(
+      "Nur echte .docx-Dateien werden als Referenz-Handbuch unterstützt (keine HTML-/RTF-Exporte mit .doc/.docx-" +
+      "Endung), da die Kapitelerkennung auf den Word-Formatvorlagen (Überschrift 1/2/…) aufbaut. Bitte die Datei " +
+      "in Word über „Speichern unter“ als .docx speichern und erneut hochladen."
+    );
+  }
+
   // .xlsx ist wie .docx ein ZIP mit OOXML-Inhalt darin - dieselbe bereits
   // geladene JSZip-Bibliothek liest ALLE Arbeitsblaetter aus (Zellen aus
   // xl/worksheets/sheetN.xml, Textwerte ueber xl/sharedStrings.xml
@@ -8181,6 +8375,118 @@
       els.pasteFromClipboardBtn.disabled = false;
     }
   });
+
+  /* ============ Teil 5b: Referenz-Handbuch-Import (bestehendes Word-
+     Handbuch als Vergleichsgrundlage fuer Releaseletter/Benutzerhandbuch)
+     ============
+     Bewusst getrennt von Teil 5 (Ticket-Import): eine hier hochgeladene
+     Datei wird NIE zu app.ticketStore hinzugefuegt (kein ingestTickets()-
+     Aufruf) und erscheint daher nicht in Dashboard/Verarbeitung/
+     Dateiverwaltung - sie dient ausschliesslich als "alter Stand" fuer die
+     Handbuch-Vergleichsfunktion (Teil 9c). Freitext wird trotzdem durch
+     redactText() geleitet (dieselbe musterbasierte PII-Bereinigung wie
+     ueberall in der App), da auch ein bestehendes Handbuch personen-/
+     fahrzeugbezogene Beispieldaten enthalten kann. */
+  var nextReferenceManualId = 1;
+  function renderReferenceManuals() {
+    var list = app.referenceManuals;
+    els.referenceManualEmpty.hidden = list.length > 0;
+    els.referenceManualTableWrap.hidden = list.length === 0;
+    els.referenceManualTbody.innerHTML = list.map(function (m) {
+      return "<tr>" +
+        "<td>" + escapeHtml(m.version) + "</td>" +
+        "<td>" + escapeHtml(m.filename) + "</td>" +
+        "<td>" + m.chapters.length + "</td>" +
+        "<td>" + escapeHtml(m.importedAt) + "</td>" +
+        '<td><button type="button" class="btn danger reference-manual-delete-btn" data-id="' + m.id + '">Löschen</button></td>' +
+        "</tr>";
+    }).join("");
+    renderRefCompareMapping();
+  }
+  async function handleReferenceManualFile(file) {
+    var version = (els.referenceManualVersionInput.value || "").trim();
+    if (!version) {
+      showToast("Versionsbezeichnung fehlt", "Bitte zuerst eine Versionsbezeichnung für dieses Handbuch eingeben (z. B. „Handbuch v3.2“).", true);
+      return;
+    }
+    els.referenceManualDropzone.classList.add("processing");
+    els.referenceManualSpinner.hidden = false;
+    await wait(30); // UI (Sanduhr) einmal rendern lassen, bevor das synchrone Parsing startet
+    try {
+      var buf = await readFileAsArrayBuffer(file);
+      var rawChapters = await extractReferenceManualChapters(buf);
+      var chapters = rawChapters.map(function (c, idx) {
+        var paragraphs = c.paragraphs.map(function (p) { return redactText(p); });
+        var title = redactText(c.title);
+        return {
+          id: idx + 1,
+          level: c.level,
+          title: title,
+          text: paragraphs.join("\n\n"),
+          wordCount: paragraphs.join(" ").split(/\s+/).filter(Boolean).length,
+          // Einmalig beim Import vorgeschlagene Zuordnung zu einem
+          // App-Kapitel (Teil 9c-2) - danach nur noch vom Nutzer geändert,
+          // kein automatisches Rematch bei jedem Render.
+          mappedAppChapter: suggestAppChapterForReferenceChapter(title)
+        };
+      });
+      if (!chapters.length) {
+        showToast("Keine Kapitel erkannt", "In der Datei wurden keine Absätze gefunden - ist die Datei leer oder beschädigt?", true);
+        return;
+      }
+      var newManualId = nextReferenceManualId++;
+      app.referenceManuals.unshift({
+        id: newManualId, filename: file.name || "Handbuch.docx", version: version,
+        importedAt: nowLabel(), chapters: chapters
+      });
+      // Neuester Upload wird automatisch zum aktiven Referenz-Handbuch fuer
+      // die Kapitel-Zuordnung (Teil 9c-2) - sonst wuerde die Zuordnungs-
+      // tabelle weiter das zuvor aktive (aeltere) Handbuch zeigen.
+      app.refCompareActiveManualId = newManualId;
+      renderReferenceManuals();
+      addLog("Referenz-Handbuch „" + version + "“ importiert (" + (file.name || "") + ", " + chapters.length + " Kapitel erkannt).");
+      showToast("Referenz-Handbuch importiert", chapters.length + " Kapitel aus „" + version + "“ erkannt.");
+      els.referenceManualVersionInput.value = "";
+    } catch (err) {
+      showToast("Import fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.referenceManualDropzone.classList.remove("processing");
+      els.referenceManualSpinner.hidden = true;
+    }
+  }
+  els.referenceManualDropzone.addEventListener("click", function () { els.referenceManualFileInput.click(); });
+  els.referenceManualDropzone.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.referenceManualFileInput.click(); }
+  });
+  els.referenceManualFileInput.addEventListener("change", function () {
+    var file = els.referenceManualFileInput.files && els.referenceManualFileInput.files[0];
+    els.referenceManualFileInput.value = "";
+    if (file) handleReferenceManualFile(file);
+  });
+  ["dragenter", "dragover"].forEach(function (evt) {
+    els.referenceManualDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.referenceManualDropzone.classList.add("dragover"); });
+  });
+  ["dragleave", "drop"].forEach(function (evt) {
+    els.referenceManualDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.referenceManualDropzone.classList.remove("dragover"); });
+  });
+  els.referenceManualDropzone.addEventListener("drop", function (e) {
+    var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) handleReferenceManualFile(file);
+  });
+  els.referenceManualTbody.addEventListener("click", async function (e) {
+    var delBtn = e.target.closest(".reference-manual-delete-btn");
+    if (!delBtn) return;
+    var id = parseInt(delBtn.getAttribute("data-id"), 10);
+    var entry = app.referenceManuals.filter(function (m) { return m.id === id; })[0];
+    if (!entry) return;
+    var ok = await confirmDialog('Referenz-Handbuch „' + entry.version + '“ (' + entry.filename + ') wirklich löschen?');
+    if (!ok) return;
+    app.referenceManuals = app.referenceManuals.filter(function (m) { return m.id !== id; });
+    renderReferenceManuals();
+    addLog("Referenz-Handbuch „" + entry.version + "“ gelöscht.");
+    showToast("Gelöscht", 'Referenz-Handbuch „' + entry.version + '“ wurde entfernt.');
+  });
+  renderReferenceManuals();
 
   /* ============ Teil 6: Dashboard-Steuerelemente ============ */
 
@@ -12279,7 +12585,8 @@
     fliesstextSynthesis: "Du bist Technischer Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Die folgenden Teiltexte sind Fließtext-Abschnitte unterschiedlicher Ausschnitte derselben Jira-Ticket-Rohdaten (aus technischen Gründen in mehreren Durchläufen erzeugt). Verschmelze sie zu EINEM einzigen, zusammenhängenden, gut lesbaren Fließtext für ein Benutzerhandbuch auf Deutsch (mehrere Absätze erlaubt, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen, ohne Hinweise auf 'Teiltexte' oder 'Batches'). Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
     translation: "Übersetze den folgenden deutschen Text sinngemäß ins Englische, ohne Inhalte hinzuzufügen oder wegzulassen und ohne zusätzliche Erklärungen oder Anmerkungen. Gib ausschließlich den übersetzten Text aus:",
     manualChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender (erfahrene Nutzer im operativen Tagesgeschäft). Schreibe für das unten genannte Kapitel einen sachlichen, professionellen Fließtext im Stil eines Softwarehandbuchs auf Deutsch, mindestens 3, idealerweise bis zu 12 DIN-A4-Seiten Umfang (ca. 500-600 Wörter je Seite). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen (roter Faden), gefolgt von zusammenhängenden Abschnitten statt einer reinen Aufzählung. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, deutlich mit den Tags \"[Nur PKW]\", \"[Nur Van]\" bzw. \"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Dealer\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\" (Market Operation) und weise explizit darauf hin, wenn ein Feature dem Dealer NICHT zur Verfügung steht. Nutze ausschließlich Informationen aus den Ticket-Rohdaten unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text.",
-    manualChapterSynthesis: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender. Die folgenden Teiltexte sind Abschnitte desselben Kapitels, aus technischen Gründen in mehreren Durchläufen aus unterschiedlichen Ausschnitten derselben Ticket-Rohdaten erzeugt. Verschmelze sie zu EINEM einzigen, zusammenhängenden Kapiteltext auf Deutsch (roter Faden, mindestens 3 DIN-A4-Seiten, sachlicher Softwarehandbuch-Stil), ohne Hinweise auf \"Teiltexte\" oder \"Batches\". Erhalte dabei die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\" sowie die Zwischenüberschriften \"## Dealer\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" aus den Teiltexten. Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:"
+    manualChapterSynthesis: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender. Die folgenden Teiltexte sind Abschnitte desselben Kapitels, aus technischen Gründen in mehreren Durchläufen aus unterschiedlichen Ausschnitten derselben Ticket-Rohdaten erzeugt. Verschmelze sie zu EINEM einzigen, zusammenhängenden Kapiteltext auf Deutsch (roter Faden, mindestens 3 DIN-A4-Seiten, sachlicher Softwarehandbuch-Stil), ohne Hinweise auf \"Teiltexte\" oder \"Batches\". Erhalte dabei die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\" sowie die Zwischenüberschriften \"## Dealer\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" aus den Teiltexten. Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
+    refCompare: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen zwei Fassungen desselben Kapitels: der ALTE STAND (aus einem bestehenden, bereits veröffentlichten Word-Handbuch) und der NEUE STAND (frisch aus aktuellen Jira-Tickets erzeugter Text). Vergleiche beide Fassungen inhaltlich und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Features\n- (ein Stichpunkt je im neuen Stand beschriebenem Inhalt, der im alten Stand fehlt oder dort erkennbar anders/noch nicht vorhanden war)\n\n### Widersprüche\n- (ein Stichpunkt je Aussage im alten Stand, die dem neuen Stand inhaltlich widerspricht oder durch ihn überholt/ungültig wird)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den beiden Texten unten, erfinde nichts hinzu:"
   };
   var RAG_PROMPT_LABELS = {
     summary: "Zusammenfassung erzeugen",
@@ -12288,7 +12595,8 @@
     fliesstextSynthesis: "Fließtext zusammenführen (Batch-Modus)",
     translation: "Übersetzen (DE → EN)",
     manualChapter: "Benutzerhandbuch-Kapitel erstellen",
-    manualChapterSynthesis: "Benutzerhandbuch-Kapitel zusammenführen (Batch-Modus)"
+    manualChapterSynthesis: "Benutzerhandbuch-Kapitel zusammenführen (Batch-Modus)",
+    refCompare: "Handbuch-Änderung nach Kapitel (Vergleich mit Referenz-Handbuch)"
   };
   function ragPromptFor(promptKey) {
     var override = app.ragPrompts[promptKey];
@@ -13173,6 +13481,161 @@
     var title = card.getAttribute("data-manual-chapter");
     var lang = ta.getAttribute("data-lang");
     if (app.manualChapters[title]) app.manualChapters[title][lang] = ta.value;
+  });
+
+  /* ============ Teil 9c-2: Handbuch-Änderung nach Kapitel - Kapitel-
+     Zuordnung (Referenz-Handbuch ↔ App-Kapitel) ============
+     Ordnet jedes Kapitel eines importierten Referenz-Handbuchs (Teil 5b)
+     einem Kapitel dieser Gliederung (app.outline) zu - Vorauswahl per
+     einfacher wortbasierter Titel-Ähnlichkeit (Jaccard über normalisierte
+     Titel-Wörter), pro Zeile manuell überschreibbar. Bewusst KEIN
+     Auto-Rematch bei jedem Render (würde eine manuelle Korrektur beim
+     nächsten Rendern wieder überschreiben) - der Vorschlag wird einmalig
+     beim Import berechnet (s. handleReferenceManualFile, Teil 5b) und
+     danach nur noch vom Nutzer geändert. Grundlage für den späteren
+     Text-Vergleich (Teil 9c-3): "alter Stand" (Referenz-Handbuch-Kapitel)
+     vs. "neuer Stand" (app.manualChapters-Text desselben App-Kapitels). */
+  function normalizeChapterTitleForMatch(title) {
+    return ("" + (title || ""))
+      .toLowerCase()
+      .replace(/^(kapitel|chapter)\s*\d+[:.]?\s*/i, "")
+      .replace(/[^a-zà-öø-ÿ0-9\s]/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+  function chapterTitleSimilarity(a, b) {
+    var na = normalizeChapterTitleForMatch(a);
+    var nb = normalizeChapterTitleForMatch(b);
+    if (!na || !nb) return 0;
+    if (na === nb) return 1;
+    var setA = {}; na.split(" ").filter(Boolean).forEach(function (w) { setA[w] = true; });
+    var setB = {}; nb.split(" ").filter(Boolean).forEach(function (w) { setB[w] = true; });
+    var common = 0;
+    Object.keys(setA).forEach(function (w) { if (setB[w]) common++; });
+    var union = Object.keys(setA).length + Object.keys(setB).length - common;
+    return union ? common / union : 0;
+  }
+  // Ab dieser Jaccard-Ähnlichkeit (gemeinsame Wörter / alle Wörter beider
+  // Titel) gilt ein automatischer Zuordnungsvorschlag als vertrauenswürdig
+  // genug, um ihn vorauszufüllen - darunter bleibt die Zeile bewusst leer
+  // ("ehrlich anzeigen statt raten", wie bei den Vorgangstyp-Aliasen im
+  // Importformat), der Nutzer ordnet dann manuell zu.
+  var CHAPTER_MATCH_THRESHOLD = 0.34;
+  function suggestAppChapterForReferenceChapter(title) {
+    var best = "", bestScore = 0;
+    (app.outline || []).forEach(function (c) {
+      var score = chapterTitleSimilarity(title, c.title);
+      if (score > bestScore) { bestScore = score; best = c.title; }
+    });
+    return bestScore >= CHAPTER_MATCH_THRESHOLD ? best : "";
+  }
+  function activeRefCompareManual() {
+    var list = app.referenceManuals || [];
+    if (!list.length) return null;
+    var found = list.filter(function (m) { return m.id === app.refCompareActiveManualId; })[0];
+    return found || list[0];
+  }
+  function renderRefCompareMapping() {
+    var list = app.referenceManuals || [];
+    var has = list.length > 0;
+    els.refcompareEmpty.hidden = has;
+    els.refcompareMappingWrap.hidden = !has;
+    els.refcompareControls.hidden = !has;
+    if (!has) {
+      els.refcompareManualSelect.innerHTML = "";
+      els.refcompareMappingTbody.innerHTML = "";
+      els.refcompareResult.hidden = true;
+      return;
+    }
+    var active = activeRefCompareManual();
+    app.refCompareActiveManualId = active.id;
+    els.refcompareManualSelect.innerHTML = list.map(function (m) {
+      return '<option value="' + m.id + '"' + (m.id === active.id ? " selected" : "") + ">" + escapeHtml(m.version) + " (" + escapeHtml(m.filename) + ")</option>";
+    }).join("");
+    var outlineTitles = (app.outline || []).map(function (c) { return c.title; });
+    els.refcompareMappingTbody.innerHTML = active.chapters.map(function (c) {
+      var options = '<option value="">– nicht zugeordnet –</option>' + outlineTitles.map(function (t) {
+        return '<option value="' + escapeHtml(t) + '"' + (c.mappedAppChapter === t ? " selected" : "") + ">" + escapeHtml(t) + "</option>";
+      }).join("");
+      return "<tr>" +
+        "<td>" + escapeHtml(c.title) + "</td>" +
+        '<td><select class="refcompare-mapping-select" data-chapter-id="' + c.id + '" aria-label="App-Kapitel für Referenz-Kapitel \'' + escapeHtml(c.title) + '\'">' + options + "</select></td>" +
+        '<td><button type="button" class="btn ghost btn-tiny refcompare-run-btn" data-chapter-id="' + c.id + '"' + (c.mappedAppChapter ? "" : " disabled") + '>Vergleichen</button></td>' +
+        "</tr>";
+    }).join("");
+  }
+  els.refcompareManualSelect.addEventListener("change", function () {
+    app.refCompareActiveManualId = parseInt(els.refcompareManualSelect.value, 10) || null;
+    renderRefCompareMapping();
+  });
+  els.refcompareMappingTbody.addEventListener("change", function (e) {
+    var sel = e.target.closest(".refcompare-mapping-select");
+    if (!sel) return;
+    var active = activeRefCompareManual();
+    if (!active) return;
+    var chapterId = parseInt(sel.getAttribute("data-chapter-id"), 10);
+    var chapter = active.chapters.filter(function (c) { return c.id === chapterId; })[0];
+    if (chapter) { chapter.mappedAppChapter = sel.value; renderRefCompareMapping(); }
+  });
+
+  // Vergleichsanalyse (Teil 9c-3): "alter Stand" (Referenz-Handbuch-Kapitel)
+  // gegen "neuer Stand" (app.manualChapters-Text desselben, zugeordneten
+  // App-Kapitels) - Claude liefert eine strukturierte Liste "Neue Features"/
+  // "Widersprüche" (Prompt s. RAG_PROMPT_DEFAULTS.refCompare, editierbar
+  // unter Einstellungen → RAG-Prompts). Ergebnis wird am zugehörigen
+  // Referenz-Kapitel gespeichert (Teil von referenceManuals, also mit
+  // Sitzung speichern/laden exportiert), beim Laden aber nicht automatisch
+  // wieder in die Anzeige geladen - wie bei RAG ist das erneute Anzeigen
+  // einer VORHER erzeugten Analyse (ohne neuen Claude-Aufruf) bewusst kein
+  // Ziel dieser ersten Fassung.
+  function refCompareBuildPrompt(oldText, newText) {
+    return ragPromptFor("refCompare") + "\n\nALTER STAND:\n" + oldText + "\n\nNEUER STAND:\n" + newText;
+  }
+  async function runRefCompare(manualId, chapterId) {
+    var manual = (app.referenceManuals || []).filter(function (m) { return m.id === manualId; })[0];
+    if (!manual) return;
+    var chapter = manual.chapters.filter(function (c) { return c.id === chapterId; })[0];
+    if (!chapter) return;
+    var appChapterTitle = chapter.mappedAppChapter;
+    if (!appChapterTitle) {
+      showToast("Keine Zuordnung", "Bitte zuerst ein App-Kapitel zuordnen.", true);
+      return;
+    }
+    var newEntry = app.manualChapters[appChapterTitle];
+    if (!newEntry || !newEntry.de) {
+      showToast("Noch kein neuer Text", "Für „" + appChapterTitle + "“ wurde oben im Kapitel-Generator noch kein Text erzeugt.", true);
+      return;
+    }
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "Die KI-Vergleichsfunktion ist nur innerhalb der veröffentlichten Claude-Artifact-Ansicht verfügbar.", true);
+      return;
+    }
+    els.refcompareResult.hidden = false;
+    els.refcompareOldTitle.textContent = "Alter Stand: " + chapter.title + " (" + manual.version + ")";
+    els.refcompareNewTitle.textContent = "Neuer Stand: " + appChapterTitle;
+    els.refcompareOldText.value = chapter.text;
+    els.refcompareNewText.value = newEntry.de;
+    els.refcompareAnalysisOutput.textContent = "Wird analysiert …";
+    els.refcompareResultStatus.textContent = "";
+    try {
+      var result = await sampleApi(refCompareBuildPrompt(chapter.text, newEntry.de), { modelTier: "default", cache: false });
+      els.refcompareAnalysisOutput.textContent = result.text || "";
+      chapter.compareResult = { generatedAt: nowLabel(), appChapterTitle: appChapterTitle, analysisText: result.text || "" };
+      addLog("Handbuch-Vergleich für Kapitel „" + chapter.title + "“ (Referenz-Handbuch „" + manual.version + "“) erzeugt.");
+    } catch (err) {
+      els.refcompareAnalysisOutput.textContent = "";
+      els.refcompareResultStatus.textContent = "Fehler: " + ((err && err.message) || "Unbekannter Fehler.");
+      showToast("Vergleich fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    }
+  }
+  els.refcompareMappingTbody.addEventListener("click", async function (e) {
+    var btn = e.target.closest(".refcompare-run-btn");
+    if (!btn) return;
+    var active = activeRefCompareManual();
+    if (!active) return;
+    btn.disabled = true;
+    try { await runRefCompare(active.id, parseInt(btn.getAttribute("data-chapter-id"), 10)); }
+    finally { btn.disabled = false; }
   });
 
   /* ============ Teil 9d: Gliederung (Stichwort-Register je Unterkapitel) ============

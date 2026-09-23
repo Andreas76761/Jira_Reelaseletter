@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.32.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.33.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -848,6 +848,40 @@ grundlegend umgebaut werden.
   aktuellen Fassung) und einzeln **wiederherstellbar** (die bis dahin aktuelle
   Fassung wird dabei selbst zur neuen Version, kein Datenverlust). Begrenzt
   auf die letzten 20 Versionen je Kapitel/Label.
+- **Referenz-Handbuch-Import + Handbuch-Änderung nach Kapitel** – Import →
+  eigener Bereich "Referenz-Handbuch" zum Hochladen eines bereits
+  bestehenden, veröffentlichten Word-Benutzerhandbuchs (z. B. eine ca.
+  200-seitige aktuelle Version) mit frei vergebener Versionsbezeichnung.
+  Bewusst **kein Ticket-Import**: die Datei enthält keine Jira-Tickets,
+  erscheint daher nicht in Dashboard/Verarbeitung/Dateiverwaltung, sondern
+  dient ausschließlich als Vergleichsgrundlage ("alter Stand") für
+  Releaseletter/Benutzerhandbuch. Kapitel werden über die
+  Word-Formatvorlagen ("Überschrift 1/2/…", auch als interne Style-ID
+  "berschrift1" o. Ä.) erkannt – Text vor der ersten Überschrift landet in
+  einem eigenen "Vorspann"-Kapitel, ein leeres Vorspann-Kapitel (Dokument
+  beginnt direkt mit einer Überschrift) wird nicht mitgezählt. Der erkannte
+  Text durchläuft dieselbe musterbasierte PII-Bereinigung wie überall in
+  der App. Es können mehrere Versionen parallel gespeichert werden; die
+  Auswahl, welche gerade als Vergleichsgrundlage dient, lässt sich jederzeit
+  umschalten. Im Benutzerhandbuch (unterhalb des Kapitel-Generators, s.
+  oben) ordnet ein neuer Abschnitt "Handbuch-Änderung nach Kapitel" jedes
+  erkannte Referenz-Kapitel automatisch einem Kapitel der
+  Benutzerhandbuch-Gliederung zu (Vorschlag anhand wortbasierter
+  Titel-Ähnlichkeit) – bei zu geringer Ähnlichkeit bewusst **kein**
+  Vorschlag (ehrlich anzeigen statt zu raten), stattdessen manuell per
+  Dropdown zuordenbar; einmal gesetzte Zuordnungen bleiben bei erneutem
+  Rendern erhalten. Ein Klick auf **"Vergleichen"** zeigt "alter Stand"
+  (Referenz-Handbuch-Kapitel) und "neuer Stand" (der für das zugeordnete
+  Kapitel bereits erzeugte Kapitel-Generator-Text) nebeneinander in zwei
+  Textfenstern sowie darunter eine über Claude (sample-Capability)
+  erzeugte **Änderungsanalyse** mit den Abschnitten "Neue Features" (im
+  neuen Stand beschriebene, im alten Stand fehlende Inhalte) und
+  "Widersprüche" (Aussagen im alten Stand, die der neue Stand entkräftet
+  oder überholt) – die Anweisung dafür ist unter Einstellungen →
+  RAG-Prompts editierbar ("Handbuch-Änderung nach Kapitel"). Setzt voraus,
+  dass für das zugeordnete Kapitel oben bereits ein Kapitel-Generator-Text
+  erzeugt wurde, sonst erscheint ein verständlicher Hinweis statt eines
+  stillen Fehlschlags.
 - **Rollen-Navigation (oneSCM)** – Einstellungen → eigener Bereich
   "Rollen-Navigation": aus einer vom Nutzer hochgeladenen Navigationsvorlage
   (Bildschirmaufnahmen + Beschriftungen der oneSCM-Menüstruktur) abgeleitete,
