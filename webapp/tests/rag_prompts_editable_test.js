@@ -65,7 +65,7 @@ function setValue(el, v) { el.value = v; fire(el, "input"); }
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
   await wait(100);
   const textareas = Array.from(doc.querySelectorAll(".ragprompt-textarea"));
-  check("Genau 5 editierbare RAG-Prompts vorhanden", textareas.length === 5);
+  check("Genau 7 editierbare RAG-Prompts vorhanden (inkl. Benutzerhandbuch-Kapitel + Zusammenführung)", textareas.length === 7);
   const summaryTa = doc.querySelector('.ragprompt-textarea[data-ragprompt-key="summary"]');
   check("Zusammenfassungs-Prompt initial mit Standardtext befüllt", summaryTa.value.includes("prägnanten, endnutzergerechten Zusammenfassung"));
   const summaryBlock = summaryTa.closest(".ragprompt-block");

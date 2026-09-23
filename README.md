@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.26.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.27.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -711,6 +711,37 @@ anderen Länderformaten (Kennzeichen).
   Herleitung wie in Verarbeitung Job 4-6, siehe Einstellungen). DOCX/PDF
   werden direkt im Browser erzeugt (minimales OOXML über das bereits
   geladene JSZip bzw. jsPDF) – kein Server nötig.
+- **Benutzerhandbuch – Kapitel-Generator (KI-Fließtext je Gliederungskapitel)**
+  – zusätzlich zum Rohgerüst oben: analog zu RAG (Verarbeitung → 7. RAG),
+  aber mit **Domäne/Label-Themengebiet/Gliederungskapitel** als Filter
+  (Datei-Scope kommt von der bestehenden globalen "Datei(en)/Liste(n)
+  auswählen"-Einschränkung, Verarbeitung Prozessschritt 1). Ein Klick auf
+  **"Kapitel erstellen"** generiert je ausgewähltem Kapitel (oder, ist kein
+  Kapitel aber eine Domäne gewählt, für **alle** Kapitel dieser Domäne)
+  über Claude (sample-Capability) einen sachlichen, professionellen
+  Fließtext im Softwarehandbuch-Stil für Fachanwender, mindestens 3,
+  idealerweise bis zu 12 DIN-A4-Seiten – nutzt dabei einen reichhaltigeren
+  Ticket-Datensatz als die RAG-Kurzfassung (zusätzlich Typ und
+  automatisch erkannte Labels). Sehr umfangreiche Kapitel werden wie bei
+  RAG per Zeichen-Budget in mehrere Teil-Durchläufe zerlegt und
+  anschließend zu einem Text zusammengeführt (Map-Reduce). Inhalte, die
+  ausschließlich für PKW/Van/einen Marktumfang gelten, werden mit den
+  Tags "[Nur PKW]"/"[Nur Van]"/"[Nur Markt]" gekennzeichnet; wo sich die
+  Bedienung je Rolle unterscheidet, gliedert der Text mit eigenen
+  Zwischenüberschriften "Dealer"/"Markt"/"HQ"/"Sparte"/"MO" (Market
+  Operation) und weist explizit auf Features hin, die dem Dealer nicht
+  zur Verfügung stehen. Die Anweisung selbst ist unter Einstellungen →
+  RAG-Prompts editierbar ("Benutzerhandbuch-Kapitel erstellen"). Ergebnis
+  je Kapitel: editierbares Textfeld (im Browser gespeichert, übersteht
+  Navigation, wird über Sitzung speichern/laden mit exportiert, aber bei
+  "Alle Daten löschen"/"Sitzung zurücksetzen" geleert), ein
+  "Ins Englische übersetzen"-Button (identischer Übersetzungs-Mechanismus
+  wie bei RAG) sowie **"Als PDF"/"Als Word"**-Export in einem
+  eigenständigen, professionell formatierten Layout (Kapitel-Titel als
+  Überschrift, "## "-Zwischenüberschriften als echte Word-Überschriften/
+  fette PDF-Zwischentitel, "[Nur PKW]"/"[Nur Van]"/"[Nur Markt]"-Zeilen
+  farbig/fett hervorgehoben – bewusst keine Bild-Icons/Emoji, da jsPDFs
+  Kernschriftart deren Glyphen nicht zuverlässig unterstützt).
 - **Clickanweisung** – bewusst **kein** Ticket-Protokoll: erzeugt eine
   Bedienungsanleitung für die Benutzung in oneSCM, zusammengestellt aus
   den Beschreibungstexten der ausgewählten Tickets und nach Domäne

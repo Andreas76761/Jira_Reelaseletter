@@ -1394,6 +1394,58 @@
             <div class="gen-preview" id="benutzerhandbuch-preview">Noch kein Entwurf generiert.</div>
           </div>
         </div>
+
+        <section id="manual-chapters-section" style="margin-top:26px;">
+          <p class="section-label">Kapitel-Generator (KI-Fließtext je Gliederungskapitel)</p>
+          <div class="callout">
+            Erzeugt professionellen, sachlichen Fließtext (mehrere Seiten, Schreibstil wie ein Softwarehandbuch,
+            Zielgruppe Fachanwender) für ein oder mehrere Kapitel der Benutzerhandbuch-Gliederung (Einstellungen),
+            auf Basis der ausgewählten Tickets. <b>Datei-Scope</b>: wie in Verarbeitung ("Datei(en)/Liste(n)
+            auswählen", Prozessschritt 1) – gilt hier ebenfalls. Zusätzlich Domäne/Label-Themengebiet/Kapitel als
+            Filter. Ein Klick auf "Kapitel erstellen" generiert je ausgewähltem Kapitel einen eigenen Text – ist
+            kein Kapitel, aber eine Domäne gewählt, für <b>alle</b> Kapitel dieser Domäne. Ergebnis ist editierbar
+            und bleibt im Browser erhalten (bis "Alle Daten löschen"/"Sitzung zurücksetzen"; wird über Sitzung
+            speichern/laden mit exportiert). Nutzt Claude über die sample-Capability (nur innerhalb der
+            Claude-Artifact-Laufzeit verfügbar) – erfindet keine Fakten, nur vorhandene Ticket-Daten. Die
+            Anweisung selbst ist unter Einstellungen → RAG-Prompts ("Benutzerhandbuch-Kapitel erstellen")
+            editierbar.
+          </div>
+          <div class="controls">
+            <div class="graph-filter-col">
+              <label for="manual-domain-select">Domäne (Mehrfachauswahl, leer = alle)</label>
+              <div class="select-actions">
+                <button class="btn ghost btn-tiny" type="button" data-select-all="manual-domain-select">Alle auswählen</button>
+                <button class="btn ghost btn-tiny" type="button" data-select-clear="manual-domain-select">Auswahl aufheben</button>
+              </div>
+              <select id="manual-domain-select" multiple size="4" aria-label="Domäne (Mehrfachauswahl, leer = alle)"></select>
+            </div>
+            <div class="graph-filter-col">
+              <label for="manual-label-select">Label-Themengebiet (Mehrfachauswahl, leer = alle)</label>
+              <div class="select-actions">
+                <button class="btn ghost btn-tiny" type="button" data-select-all="manual-label-select">Alle auswählen</button>
+                <button class="btn ghost btn-tiny" type="button" data-select-clear="manual-label-select">Auswahl aufheben</button>
+              </div>
+              <select id="manual-label-select" multiple size="4" aria-label="Label-Themengebiet (Mehrfachauswahl, leer = alle)"></select>
+            </div>
+            <div class="graph-filter-col">
+              <label for="manual-chapter-select">Gliederungskapitel (Mehrfachauswahl, leer = alle Kapitel der gewählten Domäne)</label>
+              <div class="select-actions">
+                <button class="btn ghost btn-tiny" type="button" data-select-all="manual-chapter-select">Alle auswählen</button>
+                <button class="btn ghost btn-tiny" type="button" data-select-clear="manual-chapter-select">Auswahl aufheben</button>
+              </div>
+              <select id="manual-chapter-select" multiple size="4" aria-label="Gliederungskapitel (Mehrfachauswahl, leer = alle Kapitel der gewählten Domäne)"></select>
+            </div>
+          </div>
+          <div class="controls">
+            <span class="result-count" id="manual-match-count"></span>
+            <span class="spacer"></span>
+            <button class="btn primary" id="manual-generate-btn" type="button">Kapitel erstellen</button>
+            <button class="btn ghost" id="manual-stop-btn" type="button" hidden>Abbrechen</button>
+          </div>
+          <p id="manual-status-note" class="step-note"></p>
+          <div id="manual-chapters-list"></div>
+          <div class="empty-hint" id="manual-chapters-empty">Noch keine Kapitel erzeugt.</div>
+        </section>
       </section>
 
       <!-- ================= Prozessbild ================= -->
@@ -3778,7 +3830,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.26.0";
+  var APP_VERSION = "2.27.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5089,6 +5141,8 @@
     "trend-burndown-section", "trend-burndown-legend", "trend-burndown-container", "trend-burndown-export-btn",
     "trend-domain-section", "trend-domain-select", "trend-domain-legend", "trend-domain-container", "trend-domain-export-btn",
     "dq-tickets-total", "dq-tickets-affected", "dq-findings-total", "dq-empty-state", "dq-wrap", "dq-tbody",
+    "manual-domain-select", "manual-label-select", "manual-chapter-select", "manual-match-count",
+    "manual-generate-btn", "manual-stop-btn", "manual-status-note", "manual-chapters-list", "manual-chapters-empty",
     "graph-multiselect-count", "graph-multiselect-name-input", "graph-multiselect-save-btn", "graph-multiselect-clear-btn",
     "graph-zoom-out-btn", "graph-zoom-in-btn", "graph-zoom-reset-btn", "graph-zoom-level",
     "graph-view-tabs", "graph-view-desc",
@@ -5219,7 +5273,13 @@
     // RAG-Prompts (Einstellungen): Abweichungen von RAG_PROMPT_DEFAULTS je
     // Prompt-Schluessel (leer = Standardtext, s. Teil 9b). Ebenfalls
     // Konfiguration, kein Sitzungsdatensatz.
-    ragPrompts: {}
+    ragPrompts: {},
+    // Benutzerhandbuch-Kapitel-Generator: je Kapiteltitel der erzeugte
+    // Text (Deutsch/Englisch) + Metadaten. Im Unterschied zu ragPrompts
+    // ist das erzeugter INHALT (wie RAG-Ausgabe/Bilder-Galerie), also
+    // Sitzungsdatensatz - wird bei "Sitzung zurücksetzen"/"Alle Daten
+    // löschen" geleert, aber über Sitzung speichern/laden mit exportiert.
+    manualChapters: {}
   };
 
   function addLog(message) {
@@ -5381,6 +5441,8 @@
     els.evaluateSummary.hidden = true;
     els.evaluateTableWrap.hidden = true;
     ragResetOutput();
+    app.manualChapters = {};
+    renderManualChapters();
   }
 
   // Admin-Funktion (Einstellungen): im Unterschied zu resetSession() werden
@@ -5415,6 +5477,8 @@
     els.evaluateSummary.hidden = true;
     els.evaluateTableWrap.hidden = true;
     ragResetOutput();
+    app.manualChapters = {};
+    renderManualChapters();
     addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
   }
   els.deleteAllDataBtn.addEventListener("click", async function () {
@@ -5472,7 +5536,8 @@
       outline: app.outline,
       domainColors: app.domainColors,
       statusColors: app.statusColors,
-      ragPrompts: app.ragPrompts
+      ragPrompts: app.ragPrompts,
+      manualChapters: app.manualChapters
     };
   }
   function restoreSessionState(data) {
@@ -5506,6 +5571,7 @@
     if (data.domainColors) app.domainColors = data.domainColors;
     if (data.statusColors) app.statusColors = data.statusColors;
     if (data.ragPrompts) app.ragPrompts = data.ragPrompts;
+    if (data.manualChapters) app.manualChapters = data.manualChapters;
     app.initialized = true;
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
@@ -5522,6 +5588,7 @@
     renderLabelsList();
     renderOutlineList();
     renderRagPromptsList();
+    renderManualChapters();
     els.releaseMatchSummary.hidden = true;
     els.releaseMissingWrap.hidden = true;
     els.releaseKeysInput.value = "";
@@ -6311,6 +6378,7 @@
     renderDomainOverview();
     renderAllJobSteps();
     ragPopulateSelects();
+    manualPopulateSelects();
     renderSavedLists();
     buildListenauswahlTypeChips();
     renderListenauswahlPreview();
@@ -11490,14 +11558,18 @@
     fliesstext: "Du bist Technischer Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Formuliere aus den folgenden Jira-Ticket-Rohdaten einen zusammenhängenden, gut lesbaren Fließtext für ein Benutzerhandbuch auf Deutsch (mehrere Absätze erlaubt, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen im Text). Nutze ausschließlich Informationen aus den Rohdaten unten, erfinde nichts hinzu:",
     summarySynthesis: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Die folgenden Teiltexte sind Zusammenfassungen unterschiedlicher Ausschnitte derselben Jira-Ticket-Rohdaten (aus technischen Gründen in mehreren Durchläufen erzeugt). Verschmelze sie zu EINER einzigen, prägnanten, endnutzergerechten Gesamt-Zusammenfassung auf Deutsch (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen, ohne Hinweise auf 'Teiltexte' oder 'Batches'). Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
     fliesstextSynthesis: "Du bist Technischer Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Die folgenden Teiltexte sind Fließtext-Abschnitte unterschiedlicher Ausschnitte derselben Jira-Ticket-Rohdaten (aus technischen Gründen in mehreren Durchläufen erzeugt). Verschmelze sie zu EINEM einzigen, zusammenhängenden, gut lesbaren Fließtext für ein Benutzerhandbuch auf Deutsch (mehrere Absätze erlaubt, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen, ohne Hinweise auf 'Teiltexte' oder 'Batches'). Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
-    translation: "Übersetze den folgenden deutschen Text sinngemäß ins Englische, ohne Inhalte hinzuzufügen oder wegzulassen und ohne zusätzliche Erklärungen oder Anmerkungen. Gib ausschließlich den übersetzten Text aus:"
+    translation: "Übersetze den folgenden deutschen Text sinngemäß ins Englische, ohne Inhalte hinzuzufügen oder wegzulassen und ohne zusätzliche Erklärungen oder Anmerkungen. Gib ausschließlich den übersetzten Text aus:",
+    manualChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender (erfahrene Nutzer im operativen Tagesgeschäft). Schreibe für das unten genannte Kapitel einen sachlichen, professionellen Fließtext im Stil eines Softwarehandbuchs auf Deutsch, mindestens 3, idealerweise bis zu 12 DIN-A4-Seiten Umfang (ca. 500-600 Wörter je Seite). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen (roter Faden), gefolgt von zusammenhängenden Abschnitten statt einer reinen Aufzählung. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, deutlich mit den Tags \"[Nur PKW]\", \"[Nur Van]\" bzw. \"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Dealer\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\" (Market Operation) und weise explizit darauf hin, wenn ein Feature dem Dealer NICHT zur Verfügung steht. Nutze ausschließlich Informationen aus den Ticket-Rohdaten unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text.",
+    manualChapterSynthesis: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender. Die folgenden Teiltexte sind Abschnitte desselben Kapitels, aus technischen Gründen in mehreren Durchläufen aus unterschiedlichen Ausschnitten derselben Ticket-Rohdaten erzeugt. Verschmelze sie zu EINEM einzigen, zusammenhängenden Kapiteltext auf Deutsch (roter Faden, mindestens 3 DIN-A4-Seiten, sachlicher Softwarehandbuch-Stil), ohne Hinweise auf \"Teiltexte\" oder \"Batches\". Erhalte dabei die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\" sowie die Zwischenüberschriften \"## Dealer\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" aus den Teiltexten. Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:"
   };
   var RAG_PROMPT_LABELS = {
     summary: "Zusammenfassung erzeugen",
     fliesstext: "Fließtext erzeugen",
     summarySynthesis: "Zusammenfassung zusammenführen (Batch-Modus)",
     fliesstextSynthesis: "Fließtext zusammenführen (Batch-Modus)",
-    translation: "Übersetzen (DE → EN)"
+    translation: "Übersetzen (DE → EN)",
+    manualChapter: "Benutzerhandbuch-Kapitel erstellen",
+    manualChapterSynthesis: "Benutzerhandbuch-Kapitel zusammenführen (Batch-Modus)"
   };
   function ragPromptFor(promptKey) {
     var override = app.ragPrompts[promptKey];
@@ -11865,6 +11937,355 @@
     }
   }
   els.ragTranslateBtn.addEventListener("click", ragTranslate);
+
+  /* ============ Teil 9c: Benutzerhandbuch - Kapitel-Generator (KI-Fließtext je Kapitel) ============
+     Analog zu RAG (Teil 9b): Domäne/Label-Themengebiet/Kapitel als Filter
+     (Datei-Scope kommt von scopedTickets() - dieselbe globale "Datei(en)/
+     Liste(n) auswählen"-Einschränkung wie Jobs 3-7), Claude über die
+     sample-Capability, Batch-Verarbeitung über die bereits vorhandenen
+     chunkRagRows()/RAG-Fehlermeldungen. Ergebnis je Kapitel editierbar und
+     in app.manualChapters gespeichert (Sitzungsdatensatz, s. Teil 2 -
+     reset bei "Alle Daten löschen", Teil von Sitzung speichern/laden). */
+
+  function manualPopulateSelects() {
+    var list = scopedTickets();
+    var domainSel = selectedValues(els.manualDomainSelect);
+    var labelSel = selectedValues(els.manualLabelSelect);
+    var chapterSel = selectedValues(els.manualChapterSelect);
+    var domains = distinctFieldValues(list, "domain");
+    var categories = distinctArrayFieldValues(list, "autoLabelCategories");
+    var chapters = distinctOutlineChaptersPresent(list);
+    els.manualDomainSelect.innerHTML = domains.map(function (d) {
+      return '<option value="' + escapeHtml(d) + '"' + (domainSel.indexOf(d) !== -1 ? " selected" : "") + ">" + escapeHtml(d) + "</option>";
+    }).join("");
+    els.manualLabelSelect.innerHTML = categories.map(function (c) {
+      return '<option value="' + escapeHtml(c) + '"' + (labelSel.indexOf(c) !== -1 ? " selected" : "") + ">" + escapeHtml(c) + "</option>";
+    }).join("");
+    els.manualChapterSelect.innerHTML = chapters.map(function (c) {
+      return '<option value="' + escapeHtml(c) + '"' + (chapterSel.indexOf(c) !== -1 ? " selected" : "") + ">" + escapeHtml(c) + "</option>";
+    }).join("");
+    manualUpdateMatchCount();
+  }
+  function manualMatchedTickets() {
+    var list = scopedTickets();
+    var domains = selectedValues(els.manualDomainSelect);
+    var categories = selectedValues(els.manualLabelSelect);
+    var chapters = selectedValues(els.manualChapterSelect);
+    return list.filter(function (t) {
+      if (domains.length && domains.indexOf(t.domain) === -1) return false;
+      if (categories.length && !categories.some(function (c) { return (t.autoLabelCategories || []).indexOf(c) !== -1; })) return false;
+      if (chapters.length && !chapters.some(function (c) { return (t.outlineChapters || []).indexOf(c) !== -1; })) return false;
+      return true;
+    });
+  }
+  function manualUpdateMatchCount() {
+    els.manualMatchCount.textContent = manualMatchedTickets().length + " Ticket(s) treffen auf die aktuelle Auswahl zu";
+  }
+  [els.manualDomainSelect, els.manualLabelSelect, els.manualChapterSelect].forEach(function (sel) {
+    sel.addEventListener("change", manualUpdateMatchCount);
+  });
+
+  // Zielkapitel: explizit gewählte Kapitel, sonst (falls Domäne(n)
+  // gewählt) alle Kapitel dieser Domäne(n) aus der Gliederung.
+  function manualTargetChapters() {
+    var chapters = selectedValues(els.manualChapterSelect);
+    if (chapters.length) return chapters;
+    var domains = selectedValues(els.manualDomainSelect);
+    if (!domains.length) return [];
+    var titles = {};
+    app.outline.forEach(function (c) {
+      if ((c.domains || []).some(function (d) { return domains.indexOf(d) !== -1; })) titles[c.title] = true;
+    });
+    return Object.keys(titles);
+  }
+  // Tickets für EIN bestimmtes Kapitel: die allgemeine Filterauswahl,
+  // zusätzlich eingeschränkt auf Tickets, deren berechnete outlineChapters
+  // dieses eine Kapitel enthalten (wichtig im "alle Kapitel einer
+  // Domäne"-Modus, damit jedes Kapitel nur seine eigenen Tickets bekommt
+  // statt des gesamten Domänen-Mixes).
+  function manualRowsForChapter(chapterTitle) {
+    return manualMatchedTickets().filter(function (t) { return (t.outlineChapters || []).indexOf(chapterTitle) !== -1; });
+  }
+
+  // Reichhaltigerer Datensatz je Ticket als bei RAG (Typ + Labels
+  // zusätzlich) - "nutze alle vorhandenen Daten".
+  function manualTicketBlock(t) {
+    var parts = ["Domäne: " + (t.domain || "–"), "Typ: " + (t.issueType || "–"), "Status: " + (t.status || "–")];
+    if (t.autoLabels && t.autoLabels.length) parts.push("Labels: " + t.autoLabels.join(", "));
+    if (t.summary) parts.push("Überschrift: " + t.summary);
+    if (t.description) parts.push("Beschreibung: " + t.description);
+    return "- " + parts.join(" | ");
+  }
+  function manualBuildPrompt(chapterTitle, rows) {
+    var body = rows.map(manualTicketBlock).join("\n");
+    return ragPromptFor("manualChapter") + "\n\nKapitel: " + chapterTitle + "\n\nTicket-Rohdaten:\n" + body;
+  }
+  function manualBuildSynthesisPrompt(chapterTitle, partialTexts) {
+    var body = partialTexts.map(function (t, i) { return "Teiltext " + (i + 1) + ":\n" + t; }).join("\n\n");
+    return ragPromptFor("manualChapterSynthesis") + "\n\nKapitel: " + chapterTitle + "\n\n" + body;
+  }
+
+  var manualAbortController = null;
+  // Map-Reduce ueber dieselbe Zeichen-Budget-Chunking-Funktion wie RAG
+  // (chunkRagRows) - bei sehr vielen Tickets je Kapitel mehrere
+  // Teil-Durchlaeufe + ein abschliessender Zusammenfuehrungs-Aufruf, sonst
+  // ein einzelner Aufruf.
+  async function manualGenerateOneChapter(chapterTitle, rows, signal, onProgress) {
+    var batches = chunkRagRows(rows, RAG_BATCH_CHAR_BUDGET);
+    if (batches.length <= 1) {
+      var prompt = manualBuildPrompt(chapterTitle, rows);
+      var result = await sampleApi(prompt, { signal: signal, modelTier: "default", cache: false });
+      return result.text || "";
+    }
+    var partials = [];
+    for (var i = 0; i < batches.length; i++) {
+      if (onProgress) onProgress("Teil " + (i + 1) + " von " + batches.length + " …");
+      var batchResult = await sampleApi(manualBuildPrompt(chapterTitle, batches[i]), { signal: signal, modelTier: "default", cache: false });
+      partials.push(batchResult.text || "");
+    }
+    if (onProgress) onProgress("Führe " + batches.length + " Teile zusammen …");
+    var synthResult = await sampleApi(manualBuildSynthesisPrompt(chapterTitle, partials), { signal: signal, modelTier: "default", cache: false });
+    return synthResult.text || "";
+  }
+  function manualWordCount(text) {
+    var trimmed = (text || "").trim();
+    return trimmed ? trimmed.split(/\s+/).length : 0;
+  }
+
+  async function manualGenerateChapters() {
+    var targetChapters = manualTargetChapters();
+    if (!targetChapters.length) { showToast("Keine Auswahl", "Bitte mindestens ein Kapitel oder eine Domäne auswählen.", true); return; }
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
+    els.manualGenerateBtn.disabled = true;
+    els.manualStopBtn.hidden = false;
+    var ctl = new AbortController();
+    manualAbortController = ctl;
+    var aborted = false;
+    for (var i = 0; i < targetChapters.length; i++) {
+      var chapterTitle = targetChapters[i];
+      var rows = manualRowsForChapter(chapterTitle);
+      if (!rows.length) {
+        els.manualStatusNote.textContent = "Kapitel \"" + chapterTitle + "\" übersprungen (keine passenden Tickets).";
+        continue;
+      }
+      els.manualStatusNote.textContent = "Erzeuge Kapitel " + (i + 1) + " von " + targetChapters.length + ": \"" + chapterTitle + "\" (" + rows.length + " Tickets) …";
+      try {
+        var text = await manualGenerateOneChapter(chapterTitle, rows, ctl.signal, function (note) {
+          els.manualStatusNote.textContent = "\"" + chapterTitle + "\": " + note;
+        });
+        app.manualChapters[chapterTitle] = { de: text, en: "", generatedAt: new Date().toLocaleString("de-DE"), ticketCount: rows.length };
+        renderManualChapters();
+        addLog("Benutzerhandbuch-Kapitel erzeugt: \"" + chapterTitle + "\" (" + rows.length + " Tickets, ~" + manualWordCount(text) + " Wörter).");
+      } catch (err) {
+        if (err && err.code === "cancelled") { aborted = true; break; }
+        var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
+        showToast("Kapitel \"" + chapterTitle + "\" fehlgeschlagen", msg, true);
+      }
+    }
+    els.manualStatusNote.textContent = aborted ? "Abgebrochen." : (targetChapters.length > 1 ? "Fertig." : "");
+    els.manualGenerateBtn.disabled = false;
+    els.manualStopBtn.hidden = true;
+    manualAbortController = null;
+  }
+  els.manualGenerateBtn.addEventListener("click", manualGenerateChapters);
+  els.manualStopBtn.addEventListener("click", function () { if (manualAbortController) manualAbortController.abort(); });
+
+  async function manualTranslateChapter(chapterTitle) {
+    var entry = app.manualChapters[chapterTitle];
+    if (!entry || !entry.de) return;
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
+    var ctl = new AbortController();
+    manualAbortController = ctl;
+    els.manualStatusNote.textContent = "Übersetze \"" + chapterTitle + "\" …";
+    try {
+      var result = await sampleApi(ragBuildTranslationPrompt(entry.de), { signal: ctl.signal, modelTier: "default", cache: false });
+      entry.en = result.text || "";
+      manualChapterLangView[chapterTitle] = "en";
+      renderManualChapters();
+      addLog("Benutzerhandbuch-Kapitel \"" + chapterTitle + "\" ins Englische übersetzt.");
+      els.manualStatusNote.textContent = "";
+    } catch (err) {
+      var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
+      showToast("Übersetzung fehlgeschlagen", msg, true);
+      els.manualStatusNote.textContent = "";
+    } finally {
+      manualAbortController = null;
+    }
+  }
+
+  // Export: einfache Konventionen aus dem generierten/bearbeiteten Text
+  // erkannt - Zeilen "## Dealer"/"## Markt"/"## HQ"/"## Sparte"/"## MO"
+  // werden zu Zwischenüberschriften, Zeilen mit "[Nur PKW]"/"[Nur Van]"/
+  // "[Nur Markt]" am Anfang werden hervorgehoben (fett/farbig) statt
+  // echter Bild-Icons - robust in PDF UND DOCX ohne Font-/Glyph-Risiko
+  // (Emoji werden von jsPDFs Kernschriftart nicht zuverlässig unterstützt).
+  var MANUAL_SCOPE_TAGS = ["[Nur PKW]", "[Nur Van]", "[Nur Markt]"];
+  function manualParseParagraphs(text) {
+    return (text || "").split(/\n+/).map(function (line) { return line.trim(); }).filter(Boolean);
+  }
+  function manualIsHeading(line) { return /^##\s+/.test(line); }
+  function manualHeadingText(line) { return line.replace(/^##\s+/, ""); }
+  // Erkennt einen Scope-Tag IRGENDWO im Absatz (nicht nur am Anfang) - der
+  // Prompt weist Claude zwar an, den Tag direkt vor den betreffenden
+  // Satz zu stellen, aber ein LLM folgt Formatierungsvorgaben nicht immer
+  // exakt; die ganze betroffene Zeile hervorzuheben ist robuster als eine
+  // strikte Positionsprüfung.
+  function manualScopeTagOf(line) {
+    return MANUAL_SCOPE_TAGS.filter(function (tag) { return line.indexOf(tag) !== -1; })[0] || null;
+  }
+
+  function manualChapterDocumentXml(title, text) {
+    var body = '<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>' + xmlEsc(title) + "</w:t></w:r></w:p>";
+    manualParseParagraphs(text).forEach(function (line) {
+      if (manualIsHeading(line)) {
+        body += '<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>' + xmlEsc(manualHeadingText(line)) + "</w:t></w:r></w:p>";
+        return;
+      }
+      var tag = manualScopeTagOf(line);
+      if (tag) {
+        body += '<w:p><w:r><w:rPr><w:b/><w:color w:val="C0392B"/></w:rPr><w:t xml:space="preserve">' + xmlEsc(line) + "</w:t></w:r></w:p>";
+        return;
+      }
+      body += '<w:p><w:r><w:t xml:space="preserve">' + xmlEsc(line) + "</w:t></w:r></w:p>";
+    });
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+      "<w:body>" + body + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/></w:sectPr></w:body></w:document>';
+  }
+  function buildManualChapterDocxBlob(title, text) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek konnte nicht geladen werden.");
+    var zip = new JSZip();
+    zip.file("[Content_Types].xml",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+      "</Types>");
+    zip.file("_rels/.rels",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+      "</Relationships>");
+    zip.file("word/document.xml", manualChapterDocumentXml(title, text));
+    return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  }
+  function buildManualChapterPdfDoc(title, text) {
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
+    var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    var margin = 18, pageW = 210, pageHLimit = 280, y = margin;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(18);
+    var titleLines = doc.splitTextToSize(title, pageW - margin * 2);
+    doc.text(titleLines, margin, y); y += titleLines.length * 8 + 6;
+    manualParseParagraphs(text).forEach(function (line) {
+      var isHeading = manualIsHeading(line);
+      var tag = manualScopeTagOf(line);
+      var displayLine = isHeading ? manualHeadingText(line) : line;
+      doc.setFont("helvetica", isHeading ? "bold" : "normal");
+      doc.setFontSize(isHeading ? 13 : 11);
+      doc.setTextColor.apply(doc, tag ? [192, 57, 43] : [0, 0, 0]);
+      var lines = doc.splitTextToSize(displayLine, pageW - margin * 2);
+      lines.forEach(function (l) {
+        if (y > pageHLimit) { doc.addPage(); y = margin; }
+        doc.text(l, margin, y);
+        y += isHeading ? 7 : 6;
+      });
+      y += isHeading ? 2 : 3;
+    });
+    return doc;
+  }
+  async function manualExportChapterDocx(title) {
+    var entry = app.manualChapters[title];
+    if (!entry) return;
+    var lang = manualChapterLangView[title] || "de";
+    var text = lang === "en" ? entry.en : entry.de;
+    if (!text) { showToast("Kein Text", "Für diese Sprache liegt noch kein Text vor.", true); return; }
+    try {
+      var blob = await buildManualChapterDocxBlob(title, text);
+      var filename = safeFilename(title) + (lang === "en" ? "_en" : "") + ".docx";
+      var ok = await saveOrWarn(filename, blob);
+      if (ok) addLog("Benutzerhandbuch-Kapitel \"" + title + "\" als DOCX exportiert.");
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "DOCX-Export fehlgeschlagen.", true);
+    }
+  }
+  async function manualExportChapterPdf(title) {
+    var entry = app.manualChapters[title];
+    if (!entry) return;
+    var lang = manualChapterLangView[title] || "de";
+    var text = lang === "en" ? entry.en : entry.de;
+    if (!text) { showToast("Kein Text", "Für diese Sprache liegt noch kein Text vor.", true); return; }
+    try {
+      var blob = buildManualChapterPdfDoc(title, text).output("blob");
+      var filename = safeFilename(title) + (lang === "en" ? "_en" : "") + ".pdf";
+      var ok = await saveOrWarn(filename, blob);
+      if (ok) addLog("Benutzerhandbuch-Kapitel \"" + title + "\" als PDF exportiert.");
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "PDF-Export fehlgeschlagen.", true);
+    }
+  }
+
+  var manualChapterLangView = {};
+  function renderManualChapters() {
+    var titles = Object.keys(app.manualChapters);
+    els.manualChaptersEmpty.hidden = titles.length > 0;
+    els.manualChaptersList.innerHTML = titles.map(function (title) {
+      var entry = app.manualChapters[title];
+      var lang = manualChapterLangView[title] || "de";
+      var text = lang === "en" ? (entry.en || "") : entry.de;
+      var hasEn = !!entry.en;
+      return '<div class="manual-chapter-card panel" data-manual-chapter="' + escapeHtml(title) + '" style="margin-bottom:16px; padding:14px;">' +
+        '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;">' +
+        "<h3 style=\"margin:0;\">" + escapeHtml(title) + "</h3>" +
+        '<span class="mono" style="font-size:11.5px; color:var(--text-muted);">' + manualWordCount(entry.de) + " Wörter · " + entry.ticketCount +
+        " Tickets · erzeugt " + escapeHtml(entry.generatedAt) + "</span></div>" +
+        '<div class="preview-toggle" style="margin:8px 0;">' +
+        '<button type="button" class="preview-toggle-btn' + (lang === "de" ? " active" : "") + '" data-manual-lang="de">Deutsch</button>' +
+        '<button type="button" class="preview-toggle-btn' + (lang === "en" ? " active" : "") + '" data-manual-lang="en"' + (hasEn ? "" : " disabled") +
+        ">English" + (hasEn ? "" : " (noch nicht übersetzt)") + "</button></div>" +
+        '<textarea class="text-input manual-chapter-textarea" data-manual-text data-lang="' + lang + '" rows="16" style="width:100%; font-family:inherit;">' +
+        escapeHtml(text) + "</textarea>" +
+        '<div class="controls" style="margin-top:8px;">' +
+        '<button type="button" class="btn ghost btn-tiny" data-manual-action="translate">Ins Englische übersetzen</button>' +
+        '<button type="button" class="btn ghost btn-tiny" data-manual-action="export-pdf">Als PDF</button>' +
+        '<button type="button" class="btn ghost btn-tiny" data-manual-action="export-docx">Als Word</button>' +
+        '<span class="spacer"></span>' +
+        '<button type="button" class="btn ghost btn-tiny" data-manual-action="delete">Kapitel löschen</button></div></div>';
+    }).join("");
+  }
+  els.manualChaptersList.addEventListener("click", function (e) {
+    var card = e.target.closest("[data-manual-chapter]");
+    if (!card) return;
+    var title = card.getAttribute("data-manual-chapter");
+    var langBtn = e.target.closest("[data-manual-lang]");
+    if (langBtn) {
+      if (langBtn.disabled) return;
+      manualChapterLangView[title] = langBtn.getAttribute("data-manual-lang");
+      renderManualChapters();
+      return;
+    }
+    var actionBtn = e.target.closest("[data-manual-action]");
+    if (!actionBtn) return;
+    var action = actionBtn.getAttribute("data-manual-action");
+    if (action === "translate") manualTranslateChapter(title);
+    else if (action === "export-pdf") manualExportChapterPdf(title);
+    else if (action === "export-docx") manualExportChapterDocx(title);
+    else if (action === "delete") {
+      delete app.manualChapters[title];
+      delete manualChapterLangView[title];
+      renderManualChapters();
+      addLog("Benutzerhandbuch-Kapitel \"" + title + "\" gelöscht.");
+    }
+  });
+  els.manualChaptersList.addEventListener("input", function (e) {
+    var ta = e.target.closest("[data-manual-text]");
+    if (!ta) return;
+    var card = ta.closest("[data-manual-chapter]");
+    var title = card.getAttribute("data-manual-chapter");
+    var lang = ta.getAttribute("data-lang");
+    if (app.manualChapters[title]) app.manualChapters[title][lang] = ta.value;
+  });
 
   /* ============ Teil 10: Navigation ============ */
 
