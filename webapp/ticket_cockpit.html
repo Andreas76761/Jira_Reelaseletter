@@ -246,6 +246,10 @@
   }
   .dq-count-zero { color: var(--text-muted); font-style: italic; }
   .dq-count-nonzero { color: var(--blocked); font-weight: 700; }
+  .dq-count-warn { color: var(--warn-text); font-weight: 700; background: var(--warn-soft); border: 1px solid var(--warn-border); border-radius: 4px; padding: 1px 6px; font-size: 11.5px; }
+  .role-nav-role { margin-bottom: 14px; padding: 12px 14px; }
+  .role-nav-module { margin-bottom: 10px; }
+  .role-nav-module ul { margin: 4px 0 0 18px; padding: 0; }
   .test-status-pass { color: var(--done); font-weight: 700; }
   .test-status-fail { color: var(--blocked); font-weight: 700; }
 
@@ -606,6 +610,7 @@
       <li><button class="nav-item" data-view="import" type="button">Import</button></li>
       <li><button class="nav-item" data-view="dateiverwaltung" type="button">Dateiverwaltung<span class="count-badge" id="nav-badge-changes" hidden>0</span></button></li>
       <li><button class="nav-item" data-view="listenauswahl" type="button">Listenauswahl<span class="count-badge" id="nav-badge-lists" hidden>0</span></button></li>
+      <li><button class="nav-item" data-view="gliederung" type="button">Gliederung</button></li>
       <li><button class="nav-item" data-view="verarbeitung" type="button">Verarbeitung</button></li>
       <li class="nav-sep">Dokumente</li>
       <li><button class="nav-item" data-view="releaseletter" type="button">Releaseletter</button></li>
@@ -1052,6 +1057,72 @@
         </section>
       </section>
 
+      <!-- ================= Gliederung ================= -->
+      <section class="view-panel" data-view-panel="gliederung" hidden>
+        <div class="view-head"><h2>Gliederung</h2><p class="desc">Stichwort-Register je Unterkapitel der Benutzerhandbuch-Gliederung (Einstellungen), optional zusätzlich nach Label-Themengebiet eingegrenzt &ndash; aus den zugeordneten Jira-Tickets deterministisch extrahiert (Text-Häufigkeitsanalyse, kein KI-Aufruf, daher immer verfügbar und die Mindestanzahl zuverlässig erreichbar). Grundlage: Gliederung, Labels und Rollen-Navigation aus Einstellungen.</p></div>
+
+        <section>
+          <p class="section-label">Stichwörter</p>
+          <div class="callout">
+            Je Unterkapitel + Label-Themengebiet mindestens <b>80 Stichwörter</b>, aus den zugeordneten Tickets extrahiert
+            (Wort-/Begriffshäufigkeit über Zusammenfassung, Beschreibung, automatisch erkannte Labels; bei zu wenig
+            Ticket-Text mit passenden Begriffen aus Einstellungen → Labels aufgefüllt &ndash; solche Stichwörter sind mit "0
+            Tickets" gekennzeichnet). Frei editierbar: umbenennen (Textfeld), löschen, manuell neue Stichwörter anlegen. Jedes
+            Stichwort lässt sich über den Pfeil aufklappen &ndash; zeigt dann einen Text (aus dem Benutzerhandbuch-Kapitel-Generator,
+            falls für dieses Kapitel bereits erzeugt, sonst einen Rohdaten-Auszug) inkl. Datenquelle sowie die zugehörigen
+            Jira-Tickets (anklickbar, öffnet das Ticket-Detail).
+          </div>
+          <div class="controls">
+            <div class="graph-filter-col">
+              <label for="gl-subchapter-select">Unterkapitel</label>
+              <select id="gl-subchapter-select"></select>
+            </div>
+            <div class="graph-filter-col">
+              <label for="gl-label-select">Label-Themengebiet</label>
+              <select id="gl-label-select"><option value="alle">Alle Themengebiete</option></select>
+            </div>
+            <span class="spacer"></span>
+            <button class="btn primary" id="gl-generate-btn" type="button">Stichwörter erzeugen</button>
+          </div>
+          <p id="gl-status-note" class="step-note"></p>
+          <div id="gl-keywords-list"></div>
+          <div class="empty-hint" id="gl-keywords-empty">Noch keine Stichwörter erzeugt.</div>
+          <div class="paste-actions" style="margin-top:10px; align-items:center;">
+            <input type="text" class="text-input" id="gl-new-term-input" placeholder="Neues Stichwort, z. B. Preismatrix" style="max-width:280px;">
+            <button class="btn ghost" id="gl-add-term-btn" type="button">Stichwort hinzufügen</button>
+          </div>
+
+          <div class="controls" style="margin-top:16px;">
+            <button class="btn ghost" id="gl-chat-btn" type="button">Chat</button>
+            <button class="btn ghost" id="gl-grill-btn" type="button">Grill me</button>
+          </div>
+          <div id="gl-chat-panel" class="panel" style="margin-top:10px; padding:12px;" hidden>
+            <p class="section-label" style="margin-top:0;">Chat zu diesem Unterkapitel</p>
+            <div id="gl-chat-history" style="max-height:320px; overflow:auto; margin-bottom:8px;"></div>
+            <div class="controls">
+              <input type="text" class="text-input" id="gl-chat-input" placeholder="Frage zu den ausgewählten Tickets/Stichwörtern…" style="flex:1;">
+              <button class="btn primary" id="gl-chat-send-btn" type="button">Senden</button>
+            </div>
+          </div>
+          <div id="gl-grill-panel" style="margin-top:10px;" hidden>
+            <p class="section-label" style="margin-top:0;">Grill me &ndash; offene Themen, Widersprüche, Verbesserungen</p>
+            <div class="gen-preview" id="gl-grill-output">Noch nicht ausgeführt.</div>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">Erweiterte Suche</p>
+          <div class="callout">
+            Volltextsuche über alle aktuell geladenen Tickets (Zusammenfassung, Beschreibung, erkannte Labels, Domäne) &ndash;
+            zeigt die Trefferanzahl sowie benachbarte Themenfelder: bereits erzeugte Stichwörter (aus beliebigen
+            Unterkapiteln), deren Tickets sich mit den Suchtreffern überschneiden.
+          </div>
+          <input type="text" class="text-input" id="gl-search-input" placeholder="Im Ticket-Inhalt suchen, z. B. API, Blueprint, Indien …" style="max-width:420px;">
+          <p id="gl-search-summary" class="step-note"></p>
+          <div id="gl-search-neighbors"></div>
+        </section>
+      </section>
+
       <!-- ================= Verarbeitung ================= -->
       <section class="view-panel" data-view-panel="verarbeitung" hidden>
         <div class="view-head"><h2>Verarbeitung</h2><p class="desc">Sieben Arbeitsschritte, um aus den importierten Ticket-Beschreibungen die Rohdaten für Releaseletter, Benutzerhandbuch, Prozessbild und Clickanweisung aufzubereiten. Jobs 1-6 lassen sich zusätzlich als XLSX, DOCX oder PDF exportieren; Job 7 (RAG) erzeugt stattdessen einen KI-generierten Text zum Speichern als Markdown.</p></div>
@@ -1350,6 +1421,14 @@
             <div class="checkbox-row"><input type="checkbox" id="releaseletter-use-filtered" checked><label for="releaseletter-use-filtered" style="font-weight:500;">Aktuell im Dashboard gefilterte Tickets verwenden</label></div>
             <label for="releaseletter-keys">Oder Ticket-Keys (einer pro Zeile)</label>
             <textarea id="releaseletter-keys" rows="6" placeholder="ONESCM-101&#10;ONESCM-102"></textarea>
+            <label for="releaseletter-role-select">Rollenhinweis (oneSCM, optional)</label>
+            <select id="releaseletter-role-select">
+              <option value="alle">Kein Rollenhinweis</option>
+              <option value="dealer">Dealer</option>
+              <option value="markt">Markt</option>
+              <option value="mo">MO (Market Operation)</option>
+              <option value="hq">HQ (Headquarters)</option>
+            </select>
             <button class="btn primary" id="releaseletter-generate-btn" type="button">Entwurf generieren</button>
             <div class="job-export-row">
               <button class="btn ghost" id="releaseletter-download-btn" type="button" disabled>Als Markdown</button>
@@ -1434,6 +1513,16 @@
                 <button class="btn ghost btn-tiny" type="button" data-select-clear="manual-chapter-select">Auswahl aufheben</button>
               </div>
               <select id="manual-chapter-select" multiple size="4" aria-label="Gliederungskapitel (Mehrfachauswahl, leer = alle Kapitel der gewählten Domäne)"></select>
+            </div>
+            <div class="graph-filter-col">
+              <label for="manual-role-select">Rolle (oneSCM)</label>
+              <select id="manual-role-select" aria-label="Rolle (oneSCM)">
+                <option value="alle">Alle Rollen</option>
+                <option value="dealer">Dealer</option>
+                <option value="markt">Markt</option>
+                <option value="mo">MO (Market Operation)</option>
+                <option value="hq">HQ (Headquarters)</option>
+              </select>
             </div>
           </div>
           <div class="controls">
@@ -1742,6 +1831,19 @@
             <input type="text" class="text-input" id="outline-new-chapter-input" placeholder="Neues Kapitel, z. B. Kapitel 17: Ausblick" style="max-width:320px;">
             <button class="btn primary" id="outline-add-chapter-btn" type="button">Kapitel hinzufügen</button>
           </div>
+        </section>
+
+        <section>
+          <p class="section-label">Rollen-Navigation (oneSCM)</p>
+          <div class="callout">
+            Aus der hochgeladenen Navigationsvorlage (<code>Navigation_oneSCM_Version3.docx</code>, Bildschirmaufnahmen +
+            Beschriftungen der oneSCM-Menüstruktur) abgeleitete Menü-/Modulliste je Rolle &ndash; <b>Dealer</b>, <b>Markt</b>,
+            <b>MO</b> (Market Operation) und <b>HQ</b>. Reine Referenzanzeige (nicht editierbar). Grau/orange markierte
+            Bereiche (<span class="dq-count-warn">Lücke</span>) sind in der Vorlage nicht bzw. nicht vollständig
+            dokumentiert oder nur abgeleitet &ndash; bitte fachlich prüfen. Dient als Grundlage für den Rollen-Filter bei
+            Verarbeitung → 7. RAG, Benutzerhandbuch → Kapitel-Generator und Releaseletter.
+          </div>
+          <div id="role-nav-list"></div>
         </section>
 
         <section>
@@ -3830,7 +3932,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.27.0";
+  var APP_VERSION = "2.29.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5141,8 +5243,12 @@
     "trend-burndown-section", "trend-burndown-legend", "trend-burndown-container", "trend-burndown-export-btn",
     "trend-domain-section", "trend-domain-select", "trend-domain-legend", "trend-domain-container", "trend-domain-export-btn",
     "dq-tickets-total", "dq-tickets-affected", "dq-findings-total", "dq-empty-state", "dq-wrap", "dq-tbody",
-    "manual-domain-select", "manual-label-select", "manual-chapter-select", "manual-match-count",
+    "manual-domain-select", "manual-label-select", "manual-chapter-select", "manual-role-select", "manual-match-count",
     "manual-generate-btn", "manual-stop-btn", "manual-status-note", "manual-chapters-list", "manual-chapters-empty",
+    "gl-subchapter-select", "gl-label-select", "gl-generate-btn", "gl-status-note", "gl-keywords-list", "gl-keywords-empty",
+    "gl-new-term-input", "gl-add-term-btn", "gl-chat-btn", "gl-grill-btn", "gl-chat-panel", "gl-chat-history",
+    "gl-chat-input", "gl-chat-send-btn", "gl-grill-panel", "gl-grill-output", "gl-search-input", "gl-search-summary",
+    "gl-search-neighbors",
     "graph-multiselect-count", "graph-multiselect-name-input", "graph-multiselect-save-btn", "graph-multiselect-clear-btn",
     "graph-zoom-out-btn", "graph-zoom-in-btn", "graph-zoom-reset-btn", "graph-zoom-level",
     "graph-view-tabs", "graph-view-desc",
@@ -5158,6 +5264,7 @@
     "domaincolors-tbody", "domaincolors-empty", "statuscolors-tbody", "statuscolors-empty", "ragprompts-list",
     "labels-tbody", "labels-new-category", "labels-new-de", "labels-new-en", "labels-add-btn", "label-category-datalist",
     "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn", "outline-domain-datalist",
+    "role-nav-list",
     "test-results-date", "test-results-suites", "test-results-files-passed", "test-results-total", "test-results-passed",
     "test-results-failed", "test-results-duration", "test-results-failed-banner", "test-results-tbody", "test-results-empty",
     "test-optimizations-tbody", "test-optimizations-empty",
@@ -5260,6 +5367,13 @@
     // Tickets zugeordnet - siehe outlineSeedData()/computeAutoOutline().
     // Ebenfalls Konfiguration, kein Sitzungsdatensatz.
     outline: outlineSeedData(),
+    // Rollen-Navigation (Einstellungen): aus der oneSCM-Navigationsvorlage
+    // abgeleitete Menüstruktur je Rolle (Dealer/Markt/MO/HQ), s.
+    // roleNavigationSeedData(). Reine Referenzanzeige (nicht editierbar wie
+    // Punkte-System/Labels/Gliederung), daher auch nicht Teil von Sitzung
+    // speichern/laden - Grundlage für den Rollen-Filter bei RAG/
+    // Benutzerhandbuch-Kapitel-Generator/Releaseletter.
+    roleNavigation: roleNavigationSeedData(),
     // Farbschema (Einstellungen): je Domäne eine frei waehlbare Farbe (leer =
     // automatisch aus DOMAIN_COLOR_PALETTE zugewiesen, s. colorForDomain()),
     // je Status eine Ampel-Kategorie rot/gelb/gruen (leer = automatisch aus
@@ -5279,7 +5393,16 @@
     // ist das erzeugter INHALT (wie RAG-Ausgabe/Bilder-Galerie), also
     // Sitzungsdatensatz - wird bei "Sitzung zurücksetzen"/"Alle Daten
     // löschen" geleert, aber über Sitzung speichern/laden mit exportiert.
-    manualChapters: {}
+    manualChapters: {},
+    // Gliederung (Navigation, oberhalb Verarbeitung): je Unterkapitel +
+    // optionalem Label-Themengebiet eine editierbare Stichwortliste, s.
+    // Teil 9d. Key: chapterTitle + "||" + subTitle + "||" + (labelCategory
+    // || "alle"). Sitzungsdatensatz wie manualChapters (reset bei "Alle
+    // Daten löschen"/"Sitzung zurücksetzen", Teil von Sitzung
+    // speichern/laden). Chat-Verlauf/Grill-me-Ausgabe sind bewusst NICHT
+    // hier gespeichert (wie RAG-Ausgaben - s. Kommentar bei "Sitzung
+    // speichern/laden" weiter unten), sondern nur ephemer im Modul-Scope.
+    chapterKeywords: {}
   };
 
   function addLog(message) {
@@ -5443,6 +5566,8 @@
     ragResetOutput();
     app.manualChapters = {};
     renderManualChapters();
+    app.chapterKeywords = {};
+    renderGliederung();
   }
 
   // Admin-Funktion (Einstellungen): im Unterschied zu resetSession() werden
@@ -5479,6 +5604,8 @@
     ragResetOutput();
     app.manualChapters = {};
     renderManualChapters();
+    app.chapterKeywords = {};
+    renderGliederung();
     addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
   }
   els.deleteAllDataBtn.addEventListener("click", async function () {
@@ -5537,7 +5664,8 @@
       domainColors: app.domainColors,
       statusColors: app.statusColors,
       ragPrompts: app.ragPrompts,
-      manualChapters: app.manualChapters
+      manualChapters: app.manualChapters,
+      chapterKeywords: app.chapterKeywords
     };
   }
   function restoreSessionState(data) {
@@ -5572,6 +5700,7 @@
     if (data.statusColors) app.statusColors = data.statusColors;
     if (data.ragPrompts) app.ragPrompts = data.ragPrompts;
     if (data.manualChapters) app.manualChapters = data.manualChapters;
+    if (data.chapterKeywords) app.chapterKeywords = data.chapterKeywords;
     app.initialized = true;
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
@@ -5589,6 +5718,7 @@
     renderOutlineList();
     renderRagPromptsList();
     renderManualChapters();
+    renderGliederung();
     els.releaseMatchSummary.hidden = true;
     els.releaseMissingWrap.hidden = true;
     els.releaseKeysInput.value = "";
@@ -5859,7 +5989,10 @@
       ["Governance & Blueprint", "Qualitätssicherung", "Quality assurance"],
       ["Governance & Blueprint", "Datenschutz", "Data protection"],
       ["Governance & Blueprint", "Zuständigkeit", "Responsibility"],
-      ["Governance & Blueprint", "Marktorganisation", "Market organization"]
+      ["Governance & Blueprint", "Marktorganisation", "Market organization"],
+      ["System, Rollen & Zugang", "Vorlagenverwaltung", "Template management"],
+      ["System, Rollen & Zugang", "Administrationsbereich", "Admin section"],
+      ["System, Rollen & Zugang", "International Workshop", "International workshop"]
     ];
     return rows.map(function (r) { return { category: r[0], de: r[1], en: r[2] }; });
   }
@@ -5879,7 +6012,10 @@
   // Kapitel 9 (Troubleshooting), Kapitel 13-16 (Markt-/MO-/HQ-Rolle,
   // Glossar) sowie die Domäne "DevOps" (60 Tickets, zweitgrößte Domäne) -
   // für keine davon gibt es einen eindeutig passenden Kapitel-Domänen-Fit,
-  // eine erzwungene Zuordnung wäre geraten statt hergeleitet.
+  // eine erzwungene Zuordnung wäre geraten statt hergeleitet. Kapitel 13-15
+  // tragen stattdessen ein 4. Array-Element (gapNote) mit einem konkreten
+  // Hinweis, WAS an der Navigationsvorlage für diese Rolle (noch) fehlt
+  // bzw. nur abgeleitet ist - s. roleNavigationSeedData() für Details.
   function outlineSeedData() {
     var raw = [
       ["Willkommen zu Ihrer oneSCM-Schulung", []],
@@ -5893,11 +6029,14 @@
       ["Kapitel 7: Verträge im Alltag verwalten", ["7.1 Änderungen", "7.2 Kündigung", "7.3 Verlängerung"], ["Contract Management"]],
       ["Kapitel 8: Geschäftskunden, Kampagnen, Sonderfälle", ["8.1 Geschäftskunden", "8.2 Kampagnen", "8.3 Sonderkonditionen"], ["Customer & Partner Management", "Customer Account Center"]],
       ["Kapitel 9: Troubleshooting und Support", ["9.1 Bekannte Fehler", "9.2 Eskalationswege", "9.3 Häufig gestellte Fragen"]],
-      ["Kapitel 13: Markt-Rolle", ["13.1 Aufgaben und Abgrenzung der Marktrolle", "13.2 Marktspezifische Einstellungen", "13.3 Länderabweichungen vom Blueprint"]],
-      ["Kapitel 14: MO Checks (Market Operation)", ["14.1 Aufgaben der MO-Rolle", "14.2 Der MO-Check im Aktivierungsprozess", "14.3 Qualitätssicherung und Systemprüfungen"]],
+      ["Kapitel 13: Markt-Rolle", ["13.1 Aufgaben und Abgrenzung der Marktrolle", "13.2 Marktspezifische Einstellungen", "13.3 Länderabweichungen vom Blueprint"], [],
+        "Die Navigationsvorlage zeigt für die Markt-Rolle zusätzliche Bereiche (Vorlagenverwaltung/Template Management, Administrationsbereich/Admin Section), die hier noch nicht als eigene Unterkapitel abgebildet sind - siehe Einstellungen → Rollen-Navigation."],
+      ["Kapitel 14: MO Checks (Market Operation)", ["14.1 Aufgaben der MO-Rolle", "14.2 Der MO-Check im Aktivierungsprozess", "14.3 Qualitätssicherung und Systemprüfungen"], [],
+        "Die Navigationsvorlage dokumentiert für die MO-Rolle ausschließlich den MO-Check innerhalb der Vertragsanlage (Contract Generation) - weitere MO-spezifische Arbeitsschritte sind nicht belegt, siehe Einstellungen → Rollen-Navigation."],
       ["Kapitel 10: Prozesse und Schaubilder", ["10.1 Prozesslandkarte", "10.2 Schnittstellen", "10.3 Ablaufdiagramme"], ["Architecture"]],
       ["Kapitel 11: Governance, Qualität, Datenschutz", ["11.1 Datenschutz", "11.2 Qualitätssicherung", "11.3 Freigabeworkflow"], ["Documents & Communications", "Archiving"]],
-      ["Kapitel 15: HQ-Rolle und Blueprint", ["15.1 Aufgaben der HQ-Rolle", "15.2 Blueprint-Pflege und Rollout in neue Länder", "15.3 Governance auf HQ-Ebene"]],
+      ["Kapitel 15: HQ-Rolle und Blueprint", ["15.1 Aufgaben der HQ-Rolle", "15.2 Blueprint-Pflege und Rollout in neue Länder", "15.3 Governance auf HQ-Ebene"], [],
+        "Für die HQ-Rolle enthält die Navigationsvorlage keine einzige Bildschirmaufnahme - dieses Kapitel beruht auf abgeleiteten Governance-/Blueprint-Aufgaben, nicht auf dokumentierter Navigation, siehe Einstellungen → Rollen-Navigation."],
       ["Kapitel 16: Glossar, Checklisten, Anhang", ["16.1 Glossar", "16.2 Checkliste", "16.3 Anhang"]],
       ["Glossar", []],
       ["Checkliste für den Alltag", []],
@@ -5916,7 +6055,13 @@
         // computeAutoOutline()) - s. Kommentar oben zur Herkunft des
         // Vorschlags; der Nutzer pflegt/korrigiert dies selbst in
         // Einstellungen -> Benutzerhandbuch-Gliederung.
-        domains: c[2] || []
+        domains: c[2] || [],
+        // Optionaler Hinweis auf fehlende/nicht belegte Arbeitsschritte bzw.
+        // Unterkapitel (s. Rollen-Navigation, Einstellungen), z. B. wenn die
+        // hochgeladene Navigationsvorlage für dieses Kapitel keine oder nur
+        // unvollständige Bildschirm-Dokumentation liefert. Leerstring = kein
+        // Hinweis (Standardfall).
+        gapNote: c[3] || ""
       };
     });
   }
@@ -5927,6 +6072,94 @@
       c.subs.forEach(function (s) { if (s.id > maxId) maxId = s.id; });
     });
     return maxId + 1;
+  }
+
+  // Rollen-Navigation (Einstellungen -> Rollen-Navigation): aus der vom
+  // Nutzer hochgeladenen Navigationsvorlage "Navigation_oneSCM_Version3.docx"
+  // (Bildschirmaufnahmen + Beschriftungen der oneSCM-Menüstruktur je Rolle)
+  // abgeleitete, je Rolle EIGENSTÄNDIGE Menü-/Modulliste (nicht editierbar -
+  // reine Referenzanzeige + Grundlage für den Rollen-Filter bei RAG/
+  // Benutzerhandbuch-Kapitel-Generator/Releaseletter, s. ROLE_NAVIGATION).
+  // "Markt" ist die in der Vorlage mit Abstand am vollständigsten
+  // dokumentierte Rolle (fast alle Bildschirme sind entweder allgemein oder
+  // explizit "Market Role" beschriftet) und dient hier als Basis. "Dealer"
+  // ist nur an EINER Stelle explizit abgegrenzt ("Diese Funktionen sind
+  // nicht in der Dealer Role vorhanden", bei der Produktverwaltungs-
+  // Übersicht) - alles andere ist unbestätigt. "MO" kommt in der Vorlage
+  // nur als ein einzelner Prüfschritt innerhalb der Vertragsanlage vor
+  // ("MO Checks"). Für "HQ" enthält die Vorlage KEINE einzige
+  // Bildschirmaufnahme oder Beschriftung. Jedes Modul trägt daher ein
+  // gap-Flag: false = direkt aus der Vorlage belegt, true = nicht/nicht
+  // vollständig in der Vorlage dokumentiert bzw. abgeleitet - mit gapNote
+  // als Begründung, statt eine nicht belegte Struktur zu erfinden (s.
+  // Nutzeranfrage: "wo notwendig zeige fehlende Arbeitsschritte,
+  // Unterkapitel auf").
+  function roleNavigationSeedData() {
+    return [
+      {
+        key: "dealer", label: "Dealer",
+        source: "Navigation_oneSCM_Version3.docx – Abschnitt „Acess Mainpage – Dealer Role“",
+        modules: [
+          { title: "Startseite (Access Mainpage – Dealer Role)", items: [], gap: false, gapNote: "" },
+          {
+            title: "Produktverwaltung – Übersicht (eingeschränkt)", items: [],
+            gap: true,
+            gapNote: "Laut Vorlage: „Diese Funktionen sind nicht in der Dealer Role vorhanden“ (Zusatzfunktionen der Market-Role-Übersicht fehlen der Dealer-Rolle)."
+          },
+          { title: "Servicevertrag anlegen (Contract Generation)", items: ["Contract Proposal", "Proposal Management", "Special Cases"], gap: false, gapNote: "" },
+          { title: "Verträge verwalten (Contract Management)", items: ["Contract Management", "Link: oneSCM"], gap: false, gapNote: "" },
+          { title: "Kundenverwaltung (Customer Management)", items: ["Private Customer", "Commercial Customer"], gap: false, gapNote: "" },
+          {
+            title: "MO Checks, Finanzen, Markteinstellungen, Vorlagenverwaltung, Administrationsbereich, International Workshop",
+            items: [], gap: true,
+            gapNote: "In der Vorlage nicht als Dealer-Funktion dokumentiert - vermutlich Markt-/HQ-/MO-exklusiv, aber nicht explizit als für Dealer ausgeschlossen bestätigt. Bitte fachlich prüfen."
+          }
+        ]
+      },
+      {
+        key: "markt", label: "Markt",
+        source: "Navigation_oneSCM_Version3.docx – Abschnitt „Acess Mainpage – Market Role“ (Basis-Navigation der Vorlage)",
+        modules: [
+          { title: "Startseite (Access Mainpage – Market Role)", items: [], gap: false, gapNote: "" },
+          { title: "Produktverwaltung (Product Management)", items: ["Overview Product Management", "Manage Vehicle Groups", "Manage Products and Prices", "Manage Campaign", "Manage Blueprints", "Vega Codes", "Product Testing"], gap: false, gapNote: "" },
+          { title: "Servicevertrag anlegen (Contract Generation)", items: ["Overview Contract Generation", "Contract Proposal", "Proposal Management", "Special Cases"], gap: false, gapNote: "" },
+          { title: "Verträge verwalten (Contract Management)", items: ["Overview Contract Management", "Contract Management", "Link: oneSCM"], gap: false, gapNote: "" },
+          { title: "Kundenverwaltung (Customer Management)", items: ["Overview Customer Management", "Private Customer", "Commercial Customer"], gap: false, gapNote: "" },
+          { title: "Finanzen (Finance)", items: ["Overview Finance", "Status FI Document", "Document Type", "Financial Control", "Link: oneSCM", "oneERP Checks"], gap: false, gapNote: "" },
+          { title: "International Workshop", items: ["Nemesis"], gap: false, gapNote: "" },
+          { title: "Markteinstellungen (Market Settings)", items: ["Inflation", "Nemesis", "Template Management"], gap: false, gapNote: "" },
+          { title: "Vorlagenverwaltung (Template Management)", items: [], gap: false, gapNote: "" },
+          { title: "Administrationsbereich (Admin Section)", items: ["Material Number", "Batch Jobs", "Vehicle Management", "Health Check", "Cross File Transfer", "Information Banner"], gap: false, gapNote: "" }
+        ]
+      },
+      {
+        key: "mo", label: "MO (Market Operation)",
+        source: "Navigation_oneSCM_Version3.docx – einzige explizite MO-Erwähnung, innerhalb Contract Generation",
+        modules: [
+          { title: "MO-Check im Aktivierungsprozess (innerhalb Contract Generation)", items: [], gap: false, gapNote: "" },
+          {
+            title: "Weitere MO-Navigationsschritte", items: [], gap: true,
+            gapNote: "In der bereitgestellten Vorlage sind über den MO-Check im Contract-Generation-Prozess hinaus keine weiteren MO-spezifischen Bildschirme dokumentiert."
+          }
+        ]
+      },
+      {
+        key: "hq", label: "HQ (Headquarters)",
+        source: "Navigation_oneSCM_Version3.docx – keine direkte Bildschirmaufnahme für HQ vorhanden",
+        modules: [
+          {
+            title: "HQ-Navigation", items: [], gap: true,
+            gapNote: "Die Vorlage enthält keine einzige Bildschirmaufnahme oder Beschriftung für die HQ-Rolle."
+          },
+          {
+            title: "Governance & Blueprint-Pflege (abgeleitet, nicht aus Vorlage belegt)",
+            items: ["Blueprint-Rollout in neue Länder", "Markteinstellungen/Governance freigeben"],
+            gap: true,
+            gapNote: "Abgeleitet aus Kapitel 15 der Benutzerhandbuch-Gliederung (Governance/Blueprint) - fachlich zu bestätigen, keine Quelle in der Navigationsvorlage."
+          }
+        ]
+      }
+    ];
   }
 
   /* ============ Einstellungen: Punkte-System + Labels ============ */
@@ -6116,6 +6349,9 @@
       var chapterRow = '<tr class="outline-chapter-row"><td><b>' + escapeHtml(c.title) + '</b> <span class="domain-count">(' +
         c.domains.length + (c.domains.length === 1 ? " Domäne" : " Domänen") + ')</span></td><td>' +
         '<button type="button" class="btn danger btn-tiny" data-action="delete-chapter" data-chapter-id="' + c.id + '">Kapitel löschen</button></td></tr>';
+      var gapNoteRow = c.gapNote
+        ? '<tr class="outline-gapnote-row"><td colspan="2"><span class="dq-count-warn">Lücke</span> ' + escapeHtml(c.gapNote) + "</td></tr>"
+        : "";
       var subRows = c.subs.map(function (s) {
         return '<tr class="outline-sub-row"><td style="padding-left:28px;">' + escapeHtml(s.title) + '</td><td>' +
           '<button type="button" class="btn danger btn-tiny" data-action="delete-sub" data-chapter-id="' + c.id + '" data-sub-id="' + s.id + '">Löschen</button></td></tr>';
@@ -6130,7 +6366,7 @@
       var addDomainRow = '<tr class="outline-add-domain-row"><td colspan="2" style="padding-left:28px;">' +
         '<input type="text" class="text-input outline-new-domain-input" list="outline-domain-datalist" data-chapter-id="' + c.id + '" placeholder="Domäne zuordnen, z. B. Contract Management" style="max-width:280px;">' +
         '<button type="button" class="btn ghost btn-tiny" data-action="add-domain" data-chapter-id="' + c.id + '">Domäne hinzufügen</button></td></tr>';
-      return chapterRow + subRows + addSubRow + domainRows + addDomainRow;
+      return chapterRow + gapNoteRow + subRows + addSubRow + domainRows + addDomainRow;
     }).join("");
   }
   els.outlineTbody.addEventListener("click", function (e) {
@@ -6188,6 +6424,32 @@
     refreshDashboard(false);
   });
   els.outlineNewChapterInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); els.outlineAddChapterBtn.click(); } });
+
+  // Rollen-Navigation (Einstellungen): reine Referenzanzeige aus
+  // app.roleNavigation (s. roleNavigationSeedData()) - keine Bearbeitung,
+  // daher wird nur einmal beim Start gerendert (s. /* Start */-Block).
+  function roleNavLabel(key) {
+    var found = app.roleNavigation.filter(function (r) { return r.key === key; })[0];
+    return found ? found.label : key;
+  }
+  function renderRoleNavigationList() {
+    if (!els.roleNavList) return;
+    els.roleNavList.innerHTML = app.roleNavigation.map(function (role) {
+      var modulesHtml = role.modules.map(function (m) {
+        var itemsHtml = m.items && m.items.length
+          ? "<ul>" + m.items.map(function (i) { return "<li>" + escapeHtml(i) + "</li>"; }).join("") + "</ul>"
+          : "";
+        var gapBadge = m.gap ? ' <span class="dq-count-warn">Lücke</span>' : "";
+        var noteHtml = m.gap && m.gapNote
+          ? '<div class="callout warn" style="margin-top:4px; padding:6px 10px; font-size:12px;">' + escapeHtml(m.gapNote) + "</div>"
+          : "";
+        return '<div class="role-nav-module"><strong>' + escapeHtml(m.title) + "</strong>" + gapBadge + itemsHtml + noteHtml + "</div>";
+      }).join("");
+      return '<div class="panel role-nav-role"><p style="font-weight:700; margin:0 0 2px;">' + escapeHtml(role.label) + "</p>" +
+        '<p style="font-size:11.5px; color:var(--text-muted); margin:0 0 10px;">Quelle: ' + escapeHtml(role.source) + "</p>" +
+        modulesHtml + "</div>";
+    }).join("");
+  }
 
   /* ============ Einstellungen: Dokumentation -> Testing (eingebettetes Testdashboard) ============
      Datenquelle: webapp/tests/run-all.js schreibt bei jedem Lauf webapp/tests/test-results.json
@@ -6379,6 +6641,7 @@
     renderAllJobSteps();
     ragPopulateSelects();
     manualPopulateSelects();
+    glPopulateSelects();
     renderSavedLists();
     buildListenauswahlTypeChips();
     renderListenauswahlPreview();
@@ -10006,7 +10269,8 @@
       shapeLabelAction: "Aktion", shapeLabelInput: "Eingabe", shapeLabelConfirm: "Bestätigung",
       designTemplateLabel: "Designvorlage:",
       freeTextNote: "**Hinweis:** Freitext aus den Tickets (Zusammenfassung/Beschreibung) wird unverändert aus Jira übernommen und deshalb NICHT automatisch übersetzt (Risiko fachlicher Verfälschung) - er kann daher auch hier in einer anderen Sprache als die Vorlage erscheinen.",
-      dateLocale: "de-DE"
+      dateLocale: "de-DE",
+      roleNoteTitle: "Rollenhinweis", roleNoteIntro: "Betrifft insbesondere folgende Bereiche der oneSCM-Navigation:", roleNoteGapPrefix: "Dokumentationslücke:"
     },
     en: {
       releaseletterTitle: "Release Letter", standLabel: "As of:", umfangLabel: "Scope:", ticketsWord: "tickets",
@@ -10025,7 +10289,8 @@
       shapeLabelAction: "Action", shapeLabelInput: "Input", shapeLabelConfirm: "Confirm",
       designTemplateLabel: "Design template:",
       freeTextNote: "**Note:** Free text from the tickets (summary/description) is taken unchanged from Jira and is therefore NOT automatically translated (risk of altering technical meaning) - it may therefore appear in a different language than the template here as well.",
-      dateLocale: "en-GB"
+      dateLocale: "en-GB",
+      roleNoteTitle: "Role note", roleNoteIntro: "Particularly relevant for the following oneSCM navigation areas:", roleNoteGapPrefix: "Documentation gap:"
     }
   };
   function genLang(lang) { return GEN_I18N[lang] ? lang : "de"; }
@@ -10045,7 +10310,26 @@
     return parts.join(" · ");
   }
 
-  function renderReleaseLetter(name, tickets, lang) {
+  // Rollenhinweis-Abschnitt (optional, 4. Parameter role): stellt - anders
+  // als der KI-gestützte Rollenfilter beim Benutzerhandbuch-Kapitel-
+  // Generator - eine reine TEXTBAUSTEIN-Zusammenfassung der für die
+  // gewählte Rolle laut Rollen-Navigation (Einstellungen) relevanten
+  // oneSCM-Bereiche dar, inkl. bekannter Dokumentationslücken. Kein
+  // Ticket-zu-Rolle-Matching (dafür fehlt ein belastbares Datenfeld), daher
+  // bewusst als eigener Abschnitt statt als Ticket-Filter umgesetzt.
+  function releaseLetterRoleNoteLines(role, lang) {
+    if (!role || role === "alle") return [];
+    var i18n = GEN_I18N[genLang(lang)];
+    var roleData = (app.roleNavigation || []).filter(function (r) { return r.key === role; })[0];
+    if (!roleData) return [];
+    var lines = ["", "## " + i18n.roleNoteTitle + " (" + roleData.label + ")", "", i18n.roleNoteIntro, ""];
+    roleData.modules.forEach(function (m) {
+      lines.push("- " + m.title + (m.gap ? " ⚠" : ""));
+      if (m.gap && m.gapNote) lines.push("  " + i18n.roleNoteGapPrefix + " " + m.gapNote);
+    });
+    return lines;
+  }
+  function renderReleaseLetter(name, tickets, lang, role) {
     var i18n = GEN_I18N[genLang(lang)];
     var lines = [
       "# " + i18n.releaseletterTitle + " – " + name, "",
@@ -10064,6 +10348,7 @@
     var open = tickets.filter(function (t) { var b = bucketFor(t.status); return b !== "done" && b !== "cancelled"; });
     if (open.length) open.forEach(function (t) { lines.push("- " + t.key + ": " + (t.summary || "") + " (" + i18n.statusLabel + ": " + t.status + ")"); });
     else lines.push(i18n.noOpenItems);
+    lines = lines.concat(releaseLetterRoleNoteLines(role, lang));
     return lines.join("\n");
   }
   function renderUserManual(name, tickets, lang) {
@@ -10793,6 +11078,10 @@
     var generateBtn = document.getElementById(kind + "-generate-btn");
     var variantDeBtn = document.getElementById(kind + "-variant-de");
     var variantEnBtn = document.getElementById(kind + "-variant-en");
+    // Nur bei "releaseletter" vorhanden (s. Rollenhinweis) - bei den
+    // anderen 2 Generatoren liefert getElementById null, roleSelect.value
+    // wird dann per "&&"-Kurzschluss einfach nicht gelesen (kein Fehler).
+    var roleSelect = document.getElementById(kind + "-role-select");
     var contentByVariant = { de: "", en: "" };
     var currentVariant = "de";
     var lastContent = "";
@@ -10810,8 +11099,9 @@
       var tickets = resolveGeneratorTickets(kind);
       if (!tickets.length) { showToast("Keine Tickets", "Keine passenden Tickets gefunden.", true); return; }
       lastTitle = nameInput.value.trim() || "Release";
-      contentByVariant.de = cfg.render(lastTitle, tickets, "de");
-      contentByVariant.en = cfg.render(lastTitle, tickets, "en");
+      var role = roleSelect ? roleSelect.value : "alle";
+      contentByVariant.de = cfg.render(lastTitle, tickets, "de", role);
+      contentByVariant.en = cfg.render(lastTitle, tickets, "en", role);
       lastTickets = tickets;
       applyVariant(currentVariant);
       downloadBtn.disabled = false;
@@ -12016,13 +12306,30 @@
     if (t.description) parts.push("Beschreibung: " + t.description);
     return "- " + parts.join(" | ");
   }
-  function manualBuildPrompt(chapterTitle, rows) {
-    var body = rows.map(manualTicketBlock).join("\n");
-    return ragPromptFor("manualChapter") + "\n\nKapitel: " + chapterTitle + "\n\nTicket-Rohdaten:\n" + body;
+  // Rollenbewusste Zusatzanweisung (Rolle "alle"/leer = keine Anweisung,
+  // unveraendertes Verhalten). Nutzt app.roleNavigation (s.
+  // roleNavigationSeedData()), damit die KI bei einer gewaehlten Rolle
+  // explizit auf fuer diese Rolle NICHT verfuegbare Funktionen hinweist und
+  // bekannte Dokumentationsluecken (gapNote) nicht verschweigt, statt sie zu
+  // erfinden.
+  function manualRoleInstruction(role) {
+    if (!role || role === "alle") return "";
+    var roleData = app.roleNavigation.filter(function (r) { return r.key === role; })[0];
+    var label = roleData ? roleData.label : role;
+    var txt = "\n\nZielrolle: " + label + " (oneSCM). Beschreibe die Inhalte gezielt für diese Rolle. " +
+      "Weise ausdrücklich darauf hin, wenn eine beschriebene Funktion für diese Rolle NICHT oder nur " +
+      "eingeschränkt zur Verfügung steht.";
+    var gapNotes = roleData ? roleData.modules.filter(function (m) { return m.gap && m.gapNote; }).map(function (m) { return m.gapNote; }) : [];
+    if (gapNotes.length) txt += " Bekannte Dokumentationslücken für diese Rolle (nicht verschweigen, transparent benennen): " + gapNotes.join(" ");
+    return txt;
   }
-  function manualBuildSynthesisPrompt(chapterTitle, partialTexts) {
+  function manualBuildPrompt(chapterTitle, rows, role) {
+    var body = rows.map(manualTicketBlock).join("\n");
+    return ragPromptFor("manualChapter") + "\n\nKapitel: " + chapterTitle + manualRoleInstruction(role) + "\n\nTicket-Rohdaten:\n" + body;
+  }
+  function manualBuildSynthesisPrompt(chapterTitle, partialTexts, role) {
     var body = partialTexts.map(function (t, i) { return "Teiltext " + (i + 1) + ":\n" + t; }).join("\n\n");
-    return ragPromptFor("manualChapterSynthesis") + "\n\nKapitel: " + chapterTitle + "\n\n" + body;
+    return ragPromptFor("manualChapterSynthesis") + "\n\nKapitel: " + chapterTitle + manualRoleInstruction(role) + "\n\n" + body;
   }
 
   var manualAbortController = null;
@@ -12030,21 +12337,21 @@
   // (chunkRagRows) - bei sehr vielen Tickets je Kapitel mehrere
   // Teil-Durchlaeufe + ein abschliessender Zusammenfuehrungs-Aufruf, sonst
   // ein einzelner Aufruf.
-  async function manualGenerateOneChapter(chapterTitle, rows, signal, onProgress) {
+  async function manualGenerateOneChapter(chapterTitle, rows, role, signal, onProgress) {
     var batches = chunkRagRows(rows, RAG_BATCH_CHAR_BUDGET);
     if (batches.length <= 1) {
-      var prompt = manualBuildPrompt(chapterTitle, rows);
+      var prompt = manualBuildPrompt(chapterTitle, rows, role);
       var result = await sampleApi(prompt, { signal: signal, modelTier: "default", cache: false });
       return result.text || "";
     }
     var partials = [];
     for (var i = 0; i < batches.length; i++) {
       if (onProgress) onProgress("Teil " + (i + 1) + " von " + batches.length + " …");
-      var batchResult = await sampleApi(manualBuildPrompt(chapterTitle, batches[i]), { signal: signal, modelTier: "default", cache: false });
+      var batchResult = await sampleApi(manualBuildPrompt(chapterTitle, batches[i], role), { signal: signal, modelTier: "default", cache: false });
       partials.push(batchResult.text || "");
     }
     if (onProgress) onProgress("Führe " + batches.length + " Teile zusammen …");
-    var synthResult = await sampleApi(manualBuildSynthesisPrompt(chapterTitle, partials), { signal: signal, modelTier: "default", cache: false });
+    var synthResult = await sampleApi(manualBuildSynthesisPrompt(chapterTitle, partials, role), { signal: signal, modelTier: "default", cache: false });
     return synthResult.text || "";
   }
   function manualWordCount(text) {
@@ -12056,6 +12363,7 @@
     var targetChapters = manualTargetChapters();
     if (!targetChapters.length) { showToast("Keine Auswahl", "Bitte mindestens ein Kapitel oder eine Domäne auswählen.", true); return; }
     if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
+    var role = (els.manualRoleSelect && els.manualRoleSelect.value) || "alle";
     els.manualGenerateBtn.disabled = true;
     els.manualStopBtn.hidden = false;
     var ctl = new AbortController();
@@ -12070,12 +12378,12 @@
       }
       els.manualStatusNote.textContent = "Erzeuge Kapitel " + (i + 1) + " von " + targetChapters.length + ": \"" + chapterTitle + "\" (" + rows.length + " Tickets) …";
       try {
-        var text = await manualGenerateOneChapter(chapterTitle, rows, ctl.signal, function (note) {
+        var text = await manualGenerateOneChapter(chapterTitle, rows, role, ctl.signal, function (note) {
           els.manualStatusNote.textContent = "\"" + chapterTitle + "\": " + note;
         });
-        app.manualChapters[chapterTitle] = { de: text, en: "", generatedAt: new Date().toLocaleString("de-DE"), ticketCount: rows.length };
+        app.manualChapters[chapterTitle] = { de: text, en: "", generatedAt: new Date().toLocaleString("de-DE"), ticketCount: rows.length, role: role };
         renderManualChapters();
-        addLog("Benutzerhandbuch-Kapitel erzeugt: \"" + chapterTitle + "\" (" + rows.length + " Tickets, ~" + manualWordCount(text) + " Wörter).");
+        addLog("Benutzerhandbuch-Kapitel erzeugt: \"" + chapterTitle + "\" (" + rows.length + " Tickets, ~" + manualWordCount(text) + " Wörter" + (role !== "alle" ? ", Rolle " + role : "") + ").");
       } catch (err) {
         if (err && err.code === "cancelled") { aborted = true; break; }
         var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
@@ -12235,11 +12543,12 @@
       var lang = manualChapterLangView[title] || "de";
       var text = lang === "en" ? (entry.en || "") : entry.de;
       var hasEn = !!entry.en;
+      var roleSuffix = entry.role && entry.role !== "alle" ? " · Rolle: " + escapeHtml(roleNavLabel(entry.role)) : "";
       return '<div class="manual-chapter-card panel" data-manual-chapter="' + escapeHtml(title) + '" style="margin-bottom:16px; padding:14px;">' +
         '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;">' +
         "<h3 style=\"margin:0;\">" + escapeHtml(title) + "</h3>" +
         '<span class="mono" style="font-size:11.5px; color:var(--text-muted);">' + manualWordCount(entry.de) + " Wörter · " + entry.ticketCount +
-        " Tickets · erzeugt " + escapeHtml(entry.generatedAt) + "</span></div>" +
+        " Tickets · erzeugt " + escapeHtml(entry.generatedAt) + roleSuffix + "</span></div>" +
         '<div class="preview-toggle" style="margin:8px 0;">' +
         '<button type="button" class="preview-toggle-btn' + (lang === "de" ? " active" : "") + '" data-manual-lang="de">Deutsch</button>' +
         '<button type="button" class="preview-toggle-btn' + (lang === "en" ? " active" : "") + '" data-manual-lang="en"' + (hasEn ? "" : " disabled") +
@@ -12287,6 +12596,374 @@
     if (app.manualChapters[title]) app.manualChapters[title][lang] = ta.value;
   });
 
+  /* ============ Teil 9d: Gliederung (Stichwort-Register je Unterkapitel) ============
+     Neuer Navigationspunkt oberhalb Verarbeitung. Nutzt Gliederung (app.outline),
+     Labels (app.labels) und Rollen-Navigation (app.roleNavigation) aus
+     Einstellungen. Stichwort-EXTRAKTION ist bewusst KEIN KI-Aufruf, sondern
+     deterministische Text-Häufigkeitsanalyse über die dem Unterkapitel
+     zugeordneten Tickets (+ Auffüllung aus der Label-Begriffsliste, falls zu
+     wenig Ticket-Text vorhanden) - dadurch ist die Vorgabe "mindestens 80
+     Stichwörter" IMMER zuverlässig erfüllbar, unabhängig von der
+     Claude-Artifact-Laufzeit (die nur "Chat"/"Grill me" brauchen). Stichworte
+     sind frei editierbar (anlegen/umbenennen/löschen) und Sitzungsdatensatz
+     (app.chapterKeywords, s. Teil 2). Chat-Verlauf und Grill-me-Ausgabe sind
+     bewusst NICHT gespeichert (wie RAG-Ausgaben) - nur ephemer je aktueller
+     Auswahl im Modul-Scope. */
+
+  var GL_MIN_KEYWORDS = 80;
+  var GL_STOPWORDS = {};
+  ["der", "die", "das", "den", "dem", "des", "ein", "eine", "einer", "eines", "einem", "einen",
+    "und", "oder", "aber", "auch", "als", "am", "an", "auf", "aus", "bei", "bis", "durch", "für",
+    "gegen", "im", "in", "ist", "sind", "war", "waren", "mit", "nach", "ohne", "seit", "über",
+    "um", "unter", "von", "vor", "während", "wegen", "zu", "zum", "zur", "sich", "sie", "wir",
+    "ihr", "er", "es", "man", "kann", "können", "muss", "müssen", "soll", "sollte", "wird",
+    "werden", "wurde", "wurden", "hat", "haben", "hatte", "hatten", "wie", "was", "wenn", "dass",
+    "nicht", "nur", "noch", "schon", "sehr", "dies", "diese", "dieser", "dieses", "je", "oder",
+    "the", "and", "for", "with", "from", "this", "that", "are", "was", "were", "has", "have",
+    "will", "shall", "can", "not", "only", "also", "into", "onto", "per", "via", "all", "any"
+  ].forEach(function (w) { GL_STOPWORDS[w] = true; });
+
+  function glTokenize(text) {
+    return (text || "").match(/[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß0-9\-]{2,}/g) || [];
+  }
+  // Kurze, vollstaendig grossgeschriebene Tokens (Abkuerzungen wie API, VIN,
+  // MO, HQ) bleiben gross; sonst Titel-Case (erster Buchstabe gross) - reine
+  // Anzeigeform, die Zaehlung/Dedupe selbst laeuft ueber lowercase.
+  function glPreferredCase(w) {
+    if (w === w.toUpperCase() && w.length <= 6) return w.toUpperCase();
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  }
+  // Extrahiert Stichwoerter aus den uebergebenen Tickets (Zusammenfassung +
+  // Beschreibung + Domäne/Typ als Text-Basis, automatisch erkannte Labels
+  // zusaetzlich UND hoeher gewichtet, da fachlich kuratiert). Zaehlung pro
+  // Ticket-ABDECKUNG (ein Begriff zaehlt je Ticket hoechstens 1x), nicht
+  // reine Worthaeufigkeit - vermeidet Verzerrung durch ein einzelnes,
+  // wortreiches Ticket.
+  function glExtractKeywords(tickets) {
+    var freq = {}, ticketsByTerm = {}, displayByTerm = {};
+    tickets.forEach(function (t) {
+      var text = [t.summary, t.description, t.domain, t.issueType].filter(Boolean).join(" ");
+      var seen = {};
+      glTokenize(text).forEach(function (w) {
+        var lower = w.toLowerCase();
+        if (GL_STOPWORDS[lower] || seen[lower]) return;
+        seen[lower] = true;
+        freq[lower] = (freq[lower] || 0) + 1;
+        if (!displayByTerm[lower]) displayByTerm[lower] = glPreferredCase(w);
+        (ticketsByTerm[lower] = ticketsByTerm[lower] || []).push(t.key);
+      });
+      (t.autoLabels || []).forEach(function (lbl) {
+        var lower = lbl.toLowerCase();
+        var markerKey = "#" + lower;
+        if (seen[markerKey]) return;
+        seen[markerKey] = true;
+        freq[lower] = (freq[lower] || 0) + 2;
+        displayByTerm[lower] = lbl;
+        (ticketsByTerm[lower] = ticketsByTerm[lower] || []).push(t.key);
+      });
+    });
+    var order = Object.keys(freq).sort(function (a, b) { return freq[b] - freq[a] || a.localeCompare(b, "de"); });
+    return order.map(function (lower) {
+      return { term: displayByTerm[lower], tickets: dedupeStrings(ticketsByTerm[lower]) };
+    });
+  }
+  // Fuellt bei Bedarf mit Begriffen aus der Label-Begriffsliste (Einstellungen)
+  // auf, bis die Mindestanzahl erreicht ist - bevorzugt aus der gewaehlten
+  // Kategorie, sonst aus allen Kategorien. Aufgefuellte Stichwoerter haben
+  // 0 zugeordnete Tickets (in der UI klar erkennbar) statt eine nicht
+  // belegte Ticket-Zuordnung vorzutaeuschen.
+  function glPadToMinimum(list, minCount, labelCategory) {
+    if (list.length >= minCount) return list;
+    var existing = {};
+    list.forEach(function (k) { existing[k.term.toLowerCase()] = true; });
+    function addFrom(pool) {
+      pool.forEach(function (l) {
+        if (list.length >= minCount) return;
+        if (existing[l.de.toLowerCase()]) return;
+        existing[l.de.toLowerCase()] = true;
+        list.push({ term: l.de, tickets: [] });
+      });
+    }
+    if (labelCategory && labelCategory !== "alle") addFrom(app.labels.filter(function (l) { return l.category === labelCategory; }));
+    if (list.length < minCount) addFrom(app.labels);
+    return list;
+  }
+
+  function glSubchapterOptionValue(chapterTitle, subTitle) { return chapterTitle + " :: " + subTitle; }
+  function glParseSubchapterOption(value) {
+    var idx = value.indexOf(" :: ");
+    return idx === -1 ? null : { chapterTitle: value.slice(0, idx), subTitle: value.slice(idx + 4) };
+  }
+  function glPopulateSelects() {
+    var prevSub = els.glSubchapterSelect.value;
+    var prevLabel = els.glLabelSelect.value;
+    var options = [];
+    app.outline.forEach(function (c) {
+      c.subs.forEach(function (s) { options.push(glSubchapterOptionValue(c.title, s.title)); });
+    });
+    els.glSubchapterSelect.innerHTML = options.map(function (v) {
+      return '<option value="' + escapeHtml(v) + '"' + (v === prevSub ? " selected" : "") + ">" + escapeHtml(v) + "</option>";
+    }).join("");
+    var categories = dedupeStrings(app.labels.map(function (l) { return l.category; }));
+    els.glLabelSelect.innerHTML = '<option value="alle">Alle Themengebiete</option>' + categories.map(function (c) {
+      return '<option value="' + escapeHtml(c) + '"' + (c === prevLabel ? " selected" : "") + ">" + escapeHtml(c) + "</option>";
+    }).join("");
+  }
+
+  // Tickets fuer ein Unterkapitel: Basis ist die Domänen-Zuordnung des
+  // ÜBERGEORDNETEN Kapitels (Unterkapitel selbst tragen keine eigene
+  // Domänen-Zuordnung, s. Benutzerhandbuch-Gliederung), optional zusaetzlich
+  // per Label-Themengebiet gefiltert. Zusaetzlich wird versucht, INNERHALB
+  // dieser Basis auf Tickets einzugrenzen, deren Text ein Wort aus dem
+  // Unterkapitel-Titel selbst enthaelt (z. B. "4.1 Vertragsarten" ->
+  // "Vertragsart") - bei zu wenig Treffern (< 3) faellt dies auf die volle
+  // Kapitel-Basis zurueck, damit die Extraktion genug Datengrundlage hat.
+  function glMatchedTickets(chapterTitle, subTitle, labelCategory) {
+    var base = scopedTickets().filter(function (t) { return (t.outlineChapters || []).indexOf(chapterTitle) !== -1; });
+    if (labelCategory && labelCategory !== "alle") {
+      base = base.filter(function (t) { return (t.autoLabelCategories || []).indexOf(labelCategory) !== -1; });
+    }
+    var subWords = glTokenize((subTitle || "").replace(/^[0-9.]+\s*/, "")).map(function (w) { return w.toLowerCase(); }).filter(function (w) { return !GL_STOPWORDS[w]; });
+    if (!subWords.length) return { tickets: base, narrowed: false };
+    var narrowed = base.filter(function (t) {
+      var text = ((t.summary || "") + " " + (t.description || "")).toLowerCase();
+      return subWords.some(function (w) { return text.indexOf(w) !== -1; });
+    });
+    if (narrowed.length >= 3) return { tickets: narrowed, narrowed: true };
+    return { tickets: base, narrowed: false };
+  }
+  function glKeywordKey(chapterTitle, subTitle, labelCategory) { return chapterTitle + "||" + subTitle + "||" + (labelCategory || "alle"); }
+  function ticketByKey(key) {
+    var found = app.tickets.filter(function (t) { return t.key === key; });
+    return found[0] || null;
+  }
+
+  var glExpanded = {};
+  els.glGenerateBtn.addEventListener("click", function () {
+    var sel = glParseSubchapterOption(els.glSubchapterSelect.value || "");
+    if (!sel) { showToast("Keine Auswahl", "Bitte ein Unterkapitel auswählen.", true); return; }
+    var labelCategory = els.glLabelSelect.value || "alle";
+    var match = glMatchedTickets(sel.chapterTitle, sel.subTitle, labelCategory);
+    if (!match.tickets.length) { showToast("Keine Tickets", "Für diese Auswahl sind aktuell keine Tickets zugeordnet.", true); return; }
+    var list = glPadToMinimum(glExtractKeywords(match.tickets), GL_MIN_KEYWORDS, labelCategory);
+    var key = glKeywordKey(sel.chapterTitle, sel.subTitle, labelCategory);
+    app.chapterKeywords[key] = {
+      chapterTitle: sel.chapterTitle, subTitle: sel.subTitle, labelCategory: labelCategory,
+      keywords: list, narrowedToSubchapter: match.narrowed, ticketCount: match.tickets.length,
+      generatedAt: new Date().toLocaleString("de-DE")
+    };
+    glExpanded = {};
+    els.glStatusNote.textContent = list.length + " Stichwörter erzeugt (" + match.tickets.length + " Tickets" +
+      (match.narrowed ? ", auf das Unterkapitel eingegrenzt" : ", gesamte Kapitel-Basis, da Unterkapitel-Eingrenzung zu wenige Treffer ergab") + ").";
+    addLog("Gliederung: " + list.length + " Stichwörter für \"" + sel.subTitle + "\" (" + sel.chapterTitle + (labelCategory !== "alle" ? ", Label " + labelCategory : "") + ") erzeugt.");
+    renderGliederung();
+  });
+
+  function glCurrentKey() {
+    var sel = glParseSubchapterOption(els.glSubchapterSelect.value || "");
+    if (!sel) return null;
+    return glKeywordKey(sel.chapterTitle, sel.subTitle, els.glLabelSelect.value || "alle");
+  }
+  // Text + Datenquelle fuer die aufgeklappte Stichwort-Box: bevorzugt der
+  // bereits erzeugte Benutzerhandbuch-Kapitel-Text (app.manualChapters,
+  // Teil 9c) fuer das uebergeordnete Kapitel - RAG-Ausgaben werden bewusst
+  // NICHT gespeichert (s. Kommentar bei "Sitzung speichern/laden") und
+  // stehen daher hier nicht zur Verfuegung. Ohne Kapitel-Text: kurzer
+  // Rohdaten-Auszug aus dem ersten zugeordneten Ticket.
+  function glTextAndSource(group, kw) {
+    var manual = app.manualChapters[group.chapterTitle];
+    if (manual && manual.de) {
+      return { text: truncate(manual.de, 600), source: "Benutzerhandbuch-Kapitel-Generator (erzeugt " + manual.generatedAt + ")" };
+    }
+    if (kw.tickets.length) {
+      var t = ticketByKey(kw.tickets[0]);
+      if (t && t.description) return { text: truncate(t.description, 400), source: "Ticket-Rohdaten " + t.key + " (kein Benutzerhandbuch-Kapitel für \"" + group.chapterTitle + "\" vorhanden)" };
+    }
+    return { text: "Kein Text verfügbar.", source: "Keine Datenquelle (Stichwort ohne Ticket-Zuordnung, aus Begriffsliste ergänzt)" };
+  }
+  function renderGliederung() {
+    var key = glCurrentKey();
+    var group = key ? app.chapterKeywords[key] : null;
+    els.glKeywordsEmpty.hidden = !!group;
+    if (!group) { els.glKeywordsList.innerHTML = ""; return; }
+    els.glKeywordsList.innerHTML = '<p class="step-note">' + group.keywords.length + " Stichwörter · " + group.ticketCount +
+      " Tickets · erzeugt " + escapeHtml(group.generatedAt) + "</p>" +
+      group.keywords.map(function (kw, idx) {
+        var expanded = !!glExpanded[idx];
+        var countClass = kw.tickets.length ? "dq-count-nonzero" : "dq-count-zero";
+        var header = '<div class="manual-chapter-card panel" style="margin-bottom:8px; padding:10px 12px;">' +
+          '<div style="display:flex; align-items:center; gap:8px;">' +
+          '<button type="button" class="dq-group-toggle" data-gl-toggle="' + idx + '" aria-expanded="' + expanded + '">' + (expanded ? "▾" : "▸") + "</button>" +
+          '<input type="text" class="text-input gl-term-input" data-gl-rename="' + idx + '" value="' + escapeHtml(kw.term) + '" style="flex:1; max-width:260px;">' +
+          '<span class="' + countClass + '">' + kw.tickets.length + " Ticket(s)</span>" +
+          '<button type="button" class="btn danger btn-tiny" data-gl-delete="' + idx + '">Löschen</button></div>';
+        if (!expanded) return header + "</div>";
+        var info = glTextAndSource(group, kw);
+        var ticketBtns = kw.tickets.length
+          ? kw.tickets.map(function (k) { return '<button type="button" class="btn ghost btn-tiny" data-gl-open-ticket="' + escapeHtml(k) + '">' + escapeHtml(k) + "</button>"; }).join(" ")
+          : '<span class="dq-count-zero">Keine zugeordneten Tickets.</span>';
+        return header +
+          '<div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border);">' +
+          '<p style="margin:0 0 6px; white-space:pre-wrap;">' + escapeHtml(info.text) + "</p>" +
+          '<p style="margin:0 0 8px; font-size:11.5px; color:var(--text-muted);">Quelle: ' + escapeHtml(info.source) + "</p>" +
+          '<div style="display:flex; flex-wrap:wrap; gap:6px;">' + ticketBtns + "</div></div></div>";
+      }).join("");
+  }
+  els.glSubchapterSelect.addEventListener("change", renderGliederung);
+  els.glLabelSelect.addEventListener("change", renderGliederung);
+  els.glKeywordsList.addEventListener("click", function (e) {
+    var key = glCurrentKey();
+    var group = key ? app.chapterKeywords[key] : null;
+    if (!group) return;
+    var toggleBtn = e.target.closest("[data-gl-toggle]");
+    if (toggleBtn) {
+      var idx = toggleBtn.getAttribute("data-gl-toggle");
+      glExpanded[idx] = !glExpanded[idx];
+      renderGliederung();
+      return;
+    }
+    var deleteBtn = e.target.closest("[data-gl-delete]");
+    if (deleteBtn) {
+      group.keywords.splice(parseInt(deleteBtn.getAttribute("data-gl-delete"), 10), 1);
+      glExpanded = {};
+      renderGliederung();
+      return;
+    }
+    var openBtn = e.target.closest("[data-gl-open-ticket]");
+    if (openBtn) {
+      var t = ticketByKey(openBtn.getAttribute("data-gl-open-ticket"));
+      if (t) openModal(t);
+    }
+  });
+  els.glKeywordsList.addEventListener("change", function (e) {
+    var input = e.target.closest("[data-gl-rename]");
+    if (!input) return;
+    var key = glCurrentKey();
+    var group = key ? app.chapterKeywords[key] : null;
+    if (!group) return;
+    var val = input.value.trim();
+    if (!val) { renderGliederung(); return; }
+    group.keywords[parseInt(input.getAttribute("data-gl-rename"), 10)].term = val;
+  });
+  els.glAddTermBtn.addEventListener("click", function () {
+    var key = glCurrentKey();
+    var group = key ? app.chapterKeywords[key] : null;
+    if (!group) { showToast("Keine Auswahl", "Bitte zuerst \"Stichwörter erzeugen\" für ein Unterkapitel.", true); return; }
+    var val = (els.glNewTermInput.value || "").trim();
+    if (!val) { showToast("Kein Stichwort", "Bitte einen Begriff eingeben.", true); return; }
+    group.keywords.unshift({ term: val, tickets: [] });
+    els.glNewTermInput.value = "";
+    renderGliederung();
+  });
+
+  // Chat (ephemer, nicht Sitzungsdatensatz): mehrstufiger Dialog ueber
+  // Claude (sample-Capability), Kontext = aktuelle Auswahl (Kapitel/
+  // Unterkapitel/Label) + Stichwortliste + Ticket-Rohdaten.
+  var glChatHistory = [];
+  function glContextBlock(group) {
+    var lines = ["Unterkapitel: " + group.subTitle + " (Kapitel: " + group.chapterTitle + ")"];
+    if (group.labelCategory !== "alle") lines.push("Label-Themengebiet: " + group.labelCategory);
+    lines.push("Stichwörter: " + group.keywords.slice(0, 120).map(function (k) { return k.term; }).join(", "));
+    var ticketKeys = dedupeStrings([].concat.apply([], group.keywords.map(function (k) { return k.tickets; }))).slice(0, 40);
+    lines.push("Ticket-Rohdaten:");
+    ticketKeys.forEach(function (k) {
+      var t = ticketByKey(k);
+      if (t) lines.push("- " + t.key + ": " + (t.summary || "") + (t.description ? " | " + truncate(t.description, 200) : ""));
+    });
+    return lines.join("\n");
+  }
+  els.glChatBtn.addEventListener("click", function () {
+    if (els.glGrillPanel) els.glGrillPanel.hidden = true;
+    els.glChatPanel.hidden = !els.glChatPanel.hidden;
+  });
+  function glRenderChatHistory() {
+    els.glChatHistory.innerHTML = glChatHistory.map(function (m) {
+      var label = m.role === "user" ? "Sie" : "Claude";
+      return '<p style="margin:0 0 8px;"><b>' + label + ":</b> " + escapeHtml(m.content) + "</p>";
+    }).join("") || '<p class="step-note">Noch keine Nachrichten.</p>';
+  }
+  els.glChatSendBtn.addEventListener("click", async function () {
+    var key = glCurrentKey();
+    var group = key ? app.chapterKeywords[key] : null;
+    if (!group) { showToast("Keine Auswahl", "Bitte zuerst \"Stichwörter erzeugen\" für ein Unterkapitel.", true); return; }
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
+    var question = (els.glChatInput.value || "").trim();
+    if (!question) return;
+    els.glChatInput.value = "";
+    if (!glChatHistory.length) {
+      glChatHistory.push({ role: "user", content: "Kontext:\n" + glContextBlock(group) + "\n\nFrage: " + question });
+    } else {
+      glChatHistory.push({ role: "user", content: question });
+    }
+    glRenderChatHistory();
+    try {
+      var result = await sampleApi(glChatHistory.map(function (m) { return { role: m.role, content: m.content }; }), { modelTier: "default", cache: false });
+      glChatHistory.push({ role: "assistant", content: result.text || "" });
+      glRenderChatHistory();
+    } catch (err) {
+      var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
+      showToast("Chat fehlgeschlagen", msg, true);
+    }
+  });
+
+  // Grill me (ephemer): einmaliger Kritik-Durchlauf ueber dieselbe
+  // Kontext-Basis wie Chat - liefert strukturiert offene Themen,
+  // Widersprueche, Verbesserungsvorschlaege.
+  els.glGrillBtn.addEventListener("click", async function () {
+    var key = glCurrentKey();
+    var group = key ? app.chapterKeywords[key] : null;
+    if (!group) { showToast("Keine Auswahl", "Bitte zuerst \"Stichwörter erzeugen\" für ein Unterkapitel.", true); return; }
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
+    if (els.glChatPanel) els.glChatPanel.hidden = true;
+    els.glGrillPanel.hidden = false;
+    els.glGrillOutput.textContent = "Analysiere …";
+    var prompt = "Prüfe kritisch die folgenden Stichwörter und Ticket-Rohdaten eines oneSCM-Benutzerhandbuch-Unterkapitels:\n\n" +
+      glContextBlock(group) +
+      "\n\nAntworte strukturiert mit genau diesen drei Überschriften:\n## Offene Themen\n## Widersprüche\n## Verbesserungen\n" +
+      "Nenne unter jeder Überschrift stichpunktartig konkrete Beobachtungen - falls es zu einer Überschrift nichts zu berichten gibt, schreibe \"Keine Auffälligkeiten.\".";
+    try {
+      var result = await sampleApi(prompt, { modelTier: "default", cache: false });
+      els.glGrillOutput.textContent = result.text || "";
+    } catch (err) {
+      var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
+      els.glGrillOutput.textContent = "Fehlgeschlagen: " + msg;
+      showToast("Grill me fehlgeschlagen", msg, true);
+    }
+  });
+
+  // Erweiterte Suche: Volltextsuche ueber ALLE aktuell geladenen Tickets
+  // (nicht auf die aktuelle Unterkapitel-Auswahl beschraenkt), zeigt
+  // Trefferanzahl + "benachbarte Themenfelder" (bereits erzeugte
+  // Stichwoerter aus BELIEBIGEN Unterkapiteln, deren Ticket-Zuordnung sich
+  // mit den Suchtreffern ueberschneidet, absteigend nach Ueberschneidung).
+  function glSearchNeighbors(hitKeys, excludeTerm) {
+    var hitSet = {};
+    hitKeys.forEach(function (k) { hitSet[k] = true; });
+    var counts = {};
+    Object.keys(app.chapterKeywords).forEach(function (groupKey) {
+      app.chapterKeywords[groupKey].keywords.forEach(function (kw) {
+        if (kw.term.toLowerCase() === excludeTerm) return;
+        var overlap = kw.tickets.filter(function (k) { return hitSet[k]; }).length;
+        if (overlap > 0) counts[kw.term] = Math.max(counts[kw.term] || 0, overlap);
+      });
+    });
+    return Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; }).slice(0, 12).map(function (term) { return { term: term, overlap: counts[term] }; });
+  }
+  var glSearchDebounced = debounce(function () {
+    var q = (els.glSearchInput.value || "").trim().toLowerCase();
+    if (!q) { els.glSearchSummary.textContent = ""; els.glSearchNeighbors.innerHTML = ""; return; }
+    var hits = app.tickets.filter(function (t) {
+      var text = [t.summary, t.description, t.domain].concat(t.autoLabels || []).filter(Boolean).join(" ").toLowerCase();
+      return text.indexOf(q) !== -1;
+    });
+    els.glSearchSummary.textContent = hits.length + " Treffer für \"" + els.glSearchInput.value.trim() + "\" in den aktuell geladenen Tickets.";
+    var neighbors = glSearchNeighbors(hits.map(function (t) { return t.key; }), q);
+    els.glSearchNeighbors.innerHTML = neighbors.length
+      ? neighbors.map(function (n) { return '<span class="chip">' + escapeHtml(n.term) + " (" + n.overlap + ")</span>"; }).join(" ")
+      : (hits.length ? '<span class="step-note">Keine benachbarten Themenfelder (noch keine Stichwörter für andere Unterkapitel erzeugt, die dieselben Tickets treffen).</span>' : "");
+  }, 200);
+  els.glSearchInput.addEventListener("input", glSearchDebounced);
+
   /* ============ Teil 10: Navigation ============ */
 
   var viewPanels = document.querySelectorAll("[data-view-panel]");
@@ -12321,6 +12998,7 @@
   renderPointsTable();
   renderLabelsList();
   renderOutlineList();
+  renderRoleNavigationList();
   renderTestResults();
   resetSession();
 })();

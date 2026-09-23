@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.27.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.29.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -575,6 +575,36 @@ anderen Länderformaten (Kennzeichen).
   Übernehmen laufen **sowohl das Dashboard als auch alle Verarbeitung-Jobs**
   (3–7, inkl. RAG) einheitlich nur noch auf den aktiven Dateien, da die
   Filterung an einer einzigen Stelle (dem Aufbau der Ticketliste) erfolgt.
+- **Gliederung** – Stichwort-Register je **Unterkapitel** der
+  Benutzerhandbuch-Gliederung, optional zusätzlich nach **Label-
+  Themengebiet** eingegrenzt (beides aus Einstellungen). Ein Klick auf
+  **"Stichwörter erzeugen"** extrahiert für die gewählte Kombination
+  **mindestens 80 Stichwörter** aus den zugeordneten Tickets – rein
+  deterministisch über Text-Häufigkeitsanalyse (Zusammenfassung,
+  Beschreibung, Domäne, Typ sowie die bereits automatisch erkannten Labels,
+  letztere höher gewichtet), **kein KI-Aufruf**, daher immer verfügbar und
+  die Mindestanzahl zuverlässig erreichbar; reicht der Ticket-Text nicht
+  aus, wird mit passenden Begriffen aus der Label-Begriffsliste aufgefüllt
+  (klar als "0 Tickets" gekennzeichnet). Innerhalb des durch die
+  Kapitel-Domäne bestimmten Ticket-Pools wird zusätzlich versucht, auf
+  Tickets einzugrenzen, deren Text ein Wort aus dem Unterkapitel-Titel
+  selbst enthält – bei zu wenigen Treffern automatischer Rückfall auf den
+  gesamten Kapitel-Pool. Jedes Stichwort ist frei **umbenennbar** (Textfeld)
+  und **löschbar**, neue lassen sich manuell **hinzufügen**; ein Klick auf
+  den Pfeil klappt eine Box mit einem Text (bevorzugt aus einem bereits
+  erzeugten Benutzerhandbuch-Kapitel, sonst ein Rohdaten-Auszug), der
+  jeweiligen **Datenquelle** sowie den zugehörigen **Jira-Tickets** auf
+  (Klick öffnet das Ticket-Detail). Zwei KI-Funktionen (sample-Capability,
+  nur innerhalb der Claude-Artifact-Laufzeit) ergänzen die deterministische
+  Liste, beide bewusst **nicht** Sitzungsdatensatz (wie RAG-Ausgaben): ein
+  **Chat** (mehrstufiger Dialog mit den Stichwörtern/Ticket-Rohdaten als
+  Kontext) sowie **"Grill me"** (einmaliger Kritik-Durchlauf, liefert
+  strukturiert offene Themen, Widersprüche und Verbesserungsvorschläge).
+  Eine **erweiterte Suche** durchsucht Zusammenfassung/Beschreibung/Labels/
+  Domäne aller aktuell geladenen Tickets, zeigt die Trefferanzahl sowie
+  **benachbarte Themenfelder** – bereits erzeugte Stichwörter aus
+  beliebigen anderen Unterkapiteln, deren Ticket-Zuordnung sich mit den
+  Suchtreffern überschneidet.
 - **Verarbeitung** – sieben Jobs für wiederkehrende Arbeitsschritte rund
   um die geladenen Tickets, erreichbar über die Tab-Leiste oder das kompakte
   Burger-Menü (☰) daneben. Jeder Job zeigt oben seine **Prozessschritte**
@@ -742,6 +772,28 @@ anderen Länderformaten (Kennzeichen).
   fette PDF-Zwischentitel, "[Nur PKW]"/"[Nur Van]"/"[Nur Markt]"-Zeilen
   farbig/fett hervorgehoben – bewusst keine Bild-Icons/Emoji, da jsPDFs
   Kernschriftart deren Glyphen nicht zuverlässig unterstützt).
+- **Rollen-Navigation (oneSCM)** – Einstellungen → eigener Bereich
+  "Rollen-Navigation": aus einer vom Nutzer hochgeladenen Navigationsvorlage
+  (Bildschirmaufnahmen + Beschriftungen der oneSCM-Menüstruktur) abgeleitete,
+  je Rolle **eigenständige** Menü-/Modulliste für **Dealer**, **Markt**,
+  **MO** (Market Operation) und **HQ** (Headquarters) – reine
+  Referenzanzeige, nicht editierbar. "Markt" ist in der Quellvorlage am
+  vollständigsten dokumentiert und dient als Basis; für "Dealer" ist nur
+  eine explizite Einschränkung belegt, für "MO" nur ein einzelner
+  Prüfschritt (MO-Check in der Vertragsanlage) und für "HQ" **keine einzige**
+  Bildschirmaufnahme. Nicht bzw. nicht vollständig belegte Bereiche sind
+  transparent mit einem "Lücke"-Badge und Begründungstext gekennzeichnet,
+  statt eine nicht abgesicherte Struktur zu erfinden. Kapitel 13-15 der
+  Benutzerhandbuch-Gliederung (Markt-/MO-/HQ-Rolle) zeigen denselben
+  Lücke-Hinweis direkt in der Gliederungstabelle. Darauf aufbauend gibt es
+  einen **Rollen-Filter**: im Benutzerhandbuch-Kapitel-Generator steuert die
+  Rollenwahl eine Zusatzanweisung an die KI (auf für diese Rolle nicht
+  verfügbare Funktionen sowie bekannte Dokumentationslücken ausdrücklich
+  hinweisen, nicht verschweigen); im Releaseletter fügt eine Rollenwahl
+  einen zusätzlichen "Rollenhinweis"-Abschnitt mit den für die Rolle
+  relevanten Navigationsbereichen (inkl. Lücken) an – hier bewusst als
+  Textbaustein statt als Ticket-Filter, da kein belastbares
+  Rolle-zu-Ticket-Datenfeld existiert.
 - **Clickanweisung** – bewusst **kein** Ticket-Protokoll: erzeugt eine
   Bedienungsanleitung für die Benutzung in oneSCM, zusammengestellt aus
   den Beschreibungstexten der ausgewählten Tickets und nach Domäne
