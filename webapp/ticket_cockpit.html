@@ -1487,6 +1487,44 @@
             <div class="gen-preview" id="releaseletter-preview">Noch kein Entwurf generiert.</div>
           </div>
         </div>
+
+        <section style="margin-top:26px;">
+          <p class="section-label">Handbuch-Änderung nach Kapitel (Vergleich mit Referenz-Handbuch)</p>
+          <div class="callout">
+            Dieselbe Kapitel-Zuordnung und Vergleichsanalyse wie im Benutzerhandbuch (unter Import →
+            "Referenz-Handbuch" hochgeladen) – praktisch, um beim Verfassen des Releaseletters direkt zu sehen,
+            welche Kapitel sich inhaltlich geändert haben. "Vergleichen" zeigt "alter Stand" (Referenz-Handbuch) und
+            "neuer Stand" (bereits im Benutzerhandbuch-Kapitel-Generator erzeugter Text) nebeneinander sowie eine
+            KI-Änderungsanalyse (neue Features, Widersprüche). Zuordnung und aktives Referenz-Handbuch sind mit der
+            Ansicht im Benutzerhandbuch geteilt (an einer Stelle geändert, überall aktuell).
+          </div>
+          <div class="controls" id="rlrefcompare-controls" hidden>
+            <label for="rlrefcompare-manual-select" style="font-weight:500;">Referenz-Handbuch</label>
+            <select id="rlrefcompare-manual-select" aria-label="Referenz-Handbuch für den Vergleich"></select>
+          </div>
+          <div class="table-wrap" id="rlrefcompare-mapping-wrap" hidden>
+            <table class="field-table">
+              <thead><tr><th>Referenz-Handbuch-Kapitel</th><th>Zugeordnetes App-Kapitel</th><th></th></tr></thead>
+              <tbody id="rlrefcompare-mapping-tbody"></tbody>
+            </table>
+          </div>
+          <p class="step-note" id="rlrefcompare-empty">Noch kein Referenz-Handbuch hochgeladen (Import → "Referenz-Handbuch").</p>
+          <div id="rlrefcompare-result" hidden>
+            <p class="step-note" id="rlrefcompare-result-status"></p>
+            <div class="extract-grid">
+              <div>
+                <p class="section-label" id="rlrefcompare-old-title">Alter Stand (Referenz-Handbuch)</p>
+                <textarea id="rlrefcompare-old-text" rows="14" readonly></textarea>
+              </div>
+              <div>
+                <p class="section-label" id="rlrefcompare-new-title">Neuer Stand (aus Jira-Tickets)</p>
+                <textarea id="rlrefcompare-new-text" rows="14" readonly></textarea>
+              </div>
+            </div>
+            <p class="section-label">Änderungsanalyse (KI)</p>
+            <div class="callout" id="rlrefcompare-analysis-output"></div>
+          </div>
+        </section>
       </section>
 
       <!-- ================= Benutzerhandbuch ================= -->
@@ -4042,7 +4080,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.34.0";
+  var APP_VERSION = "2.35.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5360,6 +5398,9 @@
     "refcompare-controls", "refcompare-manual-select", "refcompare-mapping-wrap", "refcompare-mapping-tbody", "refcompare-empty",
     "refcompare-result", "refcompare-result-status", "refcompare-old-title", "refcompare-old-text",
     "refcompare-new-title", "refcompare-new-text", "refcompare-analysis-output",
+    "rlrefcompare-controls", "rlrefcompare-manual-select", "rlrefcompare-mapping-wrap", "rlrefcompare-mapping-tbody", "rlrefcompare-empty",
+    "rlrefcompare-result", "rlrefcompare-result-status", "rlrefcompare-old-title", "rlrefcompare-old-text",
+    "rlrefcompare-new-title", "rlrefcompare-new-text", "rlrefcompare-analysis-output",
     "gl-use-selection-cb", "gl-selection-count",
     "gl-subchapter-select", "gl-label-select", "gl-generate-btn", "gl-status-note", "gl-keywords-list", "gl-keywords-empty",
     "gl-new-term-input", "gl-add-term-btn", "gl-chat-btn", "gl-grill-btn", "gl-chat-panel", "gl-chat-history",
@@ -13494,7 +13535,12 @@
      beim Import berechnet (s. handleReferenceManualFile, Teil 5b) und
      danach nur noch vom Nutzer geändert. Grundlage für den späteren
      Text-Vergleich (Teil 9c-3): "alter Stand" (Referenz-Handbuch-Kapitel)
-     vs. "neuer Stand" (app.manualChapters-Text desselben App-Kapitels). */
+     vs. "neuer Stand" (app.manualChapters-Text desselben App-Kapitels).
+     Dieselbe Zuordnung/Vergleichsansicht erscheint zusätzlich im
+     Releaseletter (eigene HTML-Instanz mit Präfix "rlrefcompare", s.
+     makeRefCompareInstance/refCompareInstances) - beide Instanzen teilen
+     sich app.referenceManuals/app.refCompareActiveManualId, haben aber
+     je ein eigenes Ergebnis-Panel. */
   function normalizeChapterTitleForMatch(title) {
     return ("" + (title || ""))
       .toLowerCase()
@@ -13535,25 +13581,55 @@
     var found = list.filter(function (m) { return m.id === app.refCompareActiveManualId; })[0];
     return found || list[0];
   }
-  function renderRefCompareMapping() {
+  // Dieselbe Kapitel-Zuordnung/Vergleichsansicht erscheint sowohl im
+  // Benutzerhandbuch als auch im Releaseletter (Teil 9c-4) - beide
+  // Instanzen teilen sich dieselben Daten (app.referenceManuals,
+  // app.refCompareActiveManualId), haben aber JEWEILS ein eigenes
+  // Ergebnis-Panel (unabhängig, welche Zeile zuletzt in welcher Ansicht
+  // "Vergleichen" gedrückt hat). idPrefix + Suffix ergibt denselben
+  // camelCase-els-Key wie die HTML-ID (z.B. "refcompare-old-text" ->
+  // "refcompareOldText").
+  function makeRefCompareInstance(idPrefix) {
+    function el(suffix) { return els[idPrefix + suffix]; }
+    return {
+      controls: el("Controls"), manualSelect: el("ManualSelect"), mappingWrap: el("MappingWrap"),
+      mappingTbody: el("MappingTbody"), empty: el("Empty"), result: el("Result"),
+      resultStatus: el("ResultStatus"), oldTitle: el("OldTitle"), oldText: el("OldText"),
+      newTitle: el("NewTitle"), newText: el("NewText"), analysisOutput: el("AnalysisOutput")
+    };
+  }
+  // Lazy statt sofort beim Erreichen dieser Zeile aufgebaut: Teil 5b (weiter
+  // oben im Skript) enthaelt einen Top-Level-Aufruf von
+  // renderReferenceManuals() -> renderRefCompareMapping(), der wegen der
+  // linearen Ausfuehrungsreihenfolge frueher laeuft als diese Zeile hier -
+  // ein direktes "var refCompareInstances = [...]" waere zu diesem
+  // Zeitpunkt noch undefined (var-Zuweisungen sind NICHT wie
+  // Funktionsdeklarationen gehoisted) und wuerde die komplette weitere
+  // Skript-Ausfuehrung mit einem unbehandelten Fehler abbrechen.
+  var refCompareInstances = null;
+  function getRefCompareInstances() {
+    if (!refCompareInstances) refCompareInstances = [makeRefCompareInstance("refcompare"), makeRefCompareInstance("rlrefcompare")];
+    return refCompareInstances;
+  }
+  function renderRefCompareMappingInstance(inst) {
     var list = app.referenceManuals || [];
     var has = list.length > 0;
-    els.refcompareEmpty.hidden = has;
-    els.refcompareMappingWrap.hidden = !has;
-    els.refcompareControls.hidden = !has;
+    inst.empty.hidden = has;
+    inst.mappingWrap.hidden = !has;
+    inst.controls.hidden = !has;
     if (!has) {
-      els.refcompareManualSelect.innerHTML = "";
-      els.refcompareMappingTbody.innerHTML = "";
-      els.refcompareResult.hidden = true;
+      inst.manualSelect.innerHTML = "";
+      inst.mappingTbody.innerHTML = "";
+      inst.result.hidden = true;
       return;
     }
     var active = activeRefCompareManual();
     app.refCompareActiveManualId = active.id;
-    els.refcompareManualSelect.innerHTML = list.map(function (m) {
+    inst.manualSelect.innerHTML = list.map(function (m) {
       return '<option value="' + m.id + '"' + (m.id === active.id ? " selected" : "") + ">" + escapeHtml(m.version) + " (" + escapeHtml(m.filename) + ")</option>";
     }).join("");
     var outlineTitles = (app.outline || []).map(function (c) { return c.title; });
-    els.refcompareMappingTbody.innerHTML = active.chapters.map(function (c) {
+    inst.mappingTbody.innerHTML = active.chapters.map(function (c) {
       var options = '<option value="">– nicht zugeordnet –</option>' + outlineTitles.map(function (t) {
         return '<option value="' + escapeHtml(t) + '"' + (c.mappedAppChapter === t ? " selected" : "") + ">" + escapeHtml(t) + "</option>";
       }).join("");
@@ -13564,18 +13640,23 @@
         "</tr>";
     }).join("");
   }
-  els.refcompareManualSelect.addEventListener("change", function () {
-    app.refCompareActiveManualId = parseInt(els.refcompareManualSelect.value, 10) || null;
-    renderRefCompareMapping();
-  });
-  els.refcompareMappingTbody.addEventListener("change", function (e) {
-    var sel = e.target.closest(".refcompare-mapping-select");
-    if (!sel) return;
-    var active = activeRefCompareManual();
-    if (!active) return;
-    var chapterId = parseInt(sel.getAttribute("data-chapter-id"), 10);
-    var chapter = active.chapters.filter(function (c) { return c.id === chapterId; })[0];
-    if (chapter) { chapter.mappedAppChapter = sel.value; renderRefCompareMapping(); }
+  function renderRefCompareMapping() {
+    getRefCompareInstances().forEach(renderRefCompareMappingInstance);
+  }
+  getRefCompareInstances().forEach(function (inst) {
+    inst.manualSelect.addEventListener("change", function () {
+      app.refCompareActiveManualId = parseInt(inst.manualSelect.value, 10) || null;
+      renderRefCompareMapping();
+    });
+    inst.mappingTbody.addEventListener("change", function (e) {
+      var sel = e.target.closest(".refcompare-mapping-select");
+      if (!sel) return;
+      var active = activeRefCompareManual();
+      if (!active) return;
+      var chapterId = parseInt(sel.getAttribute("data-chapter-id"), 10);
+      var chapter = active.chapters.filter(function (c) { return c.id === chapterId; })[0];
+      if (chapter) { chapter.mappedAppChapter = sel.value; renderRefCompareMapping(); }
+    });
   });
 
   // Vergleichsanalyse (Teil 9c-3): "alter Stand" (Referenz-Handbuch-Kapitel)
@@ -13591,7 +13672,7 @@
   function refCompareBuildPrompt(oldText, newText) {
     return ragPromptFor("refCompare") + "\n\nALTER STAND:\n" + oldText + "\n\nNEUER STAND:\n" + newText;
   }
-  async function runRefCompare(manualId, chapterId) {
+  async function runRefCompare(inst, manualId, chapterId) {
     var manual = (app.referenceManuals || []).filter(function (m) { return m.id === manualId; })[0];
     if (!manual) return;
     var chapter = manual.chapters.filter(function (c) { return c.id === chapterId; })[0];
@@ -13610,32 +13691,34 @@
       showToast("Nicht verfügbar", "Die KI-Vergleichsfunktion ist nur innerhalb der veröffentlichten Claude-Artifact-Ansicht verfügbar.", true);
       return;
     }
-    els.refcompareResult.hidden = false;
-    els.refcompareOldTitle.textContent = "Alter Stand: " + chapter.title + " (" + manual.version + ")";
-    els.refcompareNewTitle.textContent = "Neuer Stand: " + appChapterTitle;
-    els.refcompareOldText.value = chapter.text;
-    els.refcompareNewText.value = newEntry.de;
-    els.refcompareAnalysisOutput.textContent = "Wird analysiert …";
-    els.refcompareResultStatus.textContent = "";
+    inst.result.hidden = false;
+    inst.oldTitle.textContent = "Alter Stand: " + chapter.title + " (" + manual.version + ")";
+    inst.newTitle.textContent = "Neuer Stand: " + appChapterTitle;
+    inst.oldText.value = chapter.text;
+    inst.newText.value = newEntry.de;
+    inst.analysisOutput.textContent = "Wird analysiert …";
+    inst.resultStatus.textContent = "";
     try {
       var result = await sampleApi(refCompareBuildPrompt(chapter.text, newEntry.de), { modelTier: "default", cache: false });
-      els.refcompareAnalysisOutput.textContent = result.text || "";
+      inst.analysisOutput.textContent = result.text || "";
       chapter.compareResult = { generatedAt: nowLabel(), appChapterTitle: appChapterTitle, analysisText: result.text || "" };
       addLog("Handbuch-Vergleich für Kapitel „" + chapter.title + "“ (Referenz-Handbuch „" + manual.version + "“) erzeugt.");
     } catch (err) {
-      els.refcompareAnalysisOutput.textContent = "";
-      els.refcompareResultStatus.textContent = "Fehler: " + ((err && err.message) || "Unbekannter Fehler.");
+      inst.analysisOutput.textContent = "";
+      inst.resultStatus.textContent = "Fehler: " + ((err && err.message) || "Unbekannter Fehler.");
       showToast("Vergleich fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
     }
   }
-  els.refcompareMappingTbody.addEventListener("click", async function (e) {
-    var btn = e.target.closest(".refcompare-run-btn");
-    if (!btn) return;
-    var active = activeRefCompareManual();
-    if (!active) return;
-    btn.disabled = true;
-    try { await runRefCompare(active.id, parseInt(btn.getAttribute("data-chapter-id"), 10)); }
-    finally { btn.disabled = false; }
+  getRefCompareInstances().forEach(function (inst) {
+    inst.mappingTbody.addEventListener("click", async function (e) {
+      var btn = e.target.closest(".refcompare-run-btn");
+      if (!btn) return;
+      var active = activeRefCompareManual();
+      if (!active) return;
+      btn.disabled = true;
+      try { await runRefCompare(inst, active.id, parseInt(btn.getAttribute("data-chapter-id"), 10)); }
+      finally { btn.disabled = false; }
+    });
   });
 
   /* ============ Teil 9d: Gliederung (Stichwort-Register je Unterkapitel) ============

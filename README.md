@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.34.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.35.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -881,7 +881,12 @@ grundlegend umgebaut werden.
   RAG-Prompts editierbar ("Handbuch-Änderung nach Kapitel"). Setzt voraus,
   dass für das zugeordnete Kapitel oben bereits ein Kapitel-Generator-Text
   erzeugt wurde, sonst erscheint ein verständlicher Hinweis statt eines
-  stillen Fehlschlags.
+  stillen Fehlschlags. Dieselbe Zuordnungstabelle und Vergleichsansicht
+  erscheint zusätzlich im Releaseletter – praktisch, um beim Verfassen des
+  Releaseletters direkt zu sehen, welche Kapitel sich inhaltlich geändert
+  haben. Beide Ansichten teilen sich dieselbe Zuordnung und dasselbe aktive
+  Referenz-Handbuch (an einer Stelle geändert, überall aktuell), haben aber
+  je ein eigenes, unabhängiges Vergleichsergebnis-Fenster.
 - **Rollen-Navigation (oneSCM)** – Einstellungen → eigener Bereich
   "Rollen-Navigation": aus einer vom Nutzer hochgeladenen Navigationsvorlage
   (Bildschirmaufnahmen + Beschriftungen der oneSCM-Menüstruktur) abgeleitete,
