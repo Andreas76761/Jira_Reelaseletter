@@ -188,6 +188,33 @@
   }
   .graph-tooltip b { display: block; font-size: 12.5px; margin-bottom: 3px; }
   .graph-tooltip .graph-tooltip-muted { color: #ced4da; font-style: italic; }
+  .graph-tooltip-close-hint { margin-top: 6px; font-size: 10.5px; color: #adb5bd; font-style: italic; }
+  .graph-desc-btn { cursor: pointer; }
+  .graph-matrix-wrap { overflow: auto; max-height: 640px; }
+  .graph-matrix-table { border-collapse: collapse; font-size: 10.5px; }
+  .graph-matrix-table th, .graph-matrix-table td { border: 1px solid var(--panel-border); padding: 0; }
+  .graph-matrix-corner { position: sticky; top: 0; left: 0; z-index: 3; background: var(--surface-1, #fff); }
+  .graph-matrix-row-head {
+    position: sticky; left: 0; z-index: 2; background: var(--surface-1, #fff); padding: 3px 8px !important;
+    text-align: right; font-family: "IBM Plex Mono", monospace; white-space: nowrap;
+  }
+  .graph-matrix-col-head { position: sticky; top: 0; z-index: 1; background: var(--surface-1, #fff); height: 90px; vertical-align: bottom; }
+  .graph-matrix-col-label {
+    writing-mode: vertical-rl; transform: rotate(180deg); font-family: "IBM Plex Mono", monospace;
+    padding: 4px 2px; white-space: nowrap;
+  }
+  .graph-matrix-cell { width: 22px; height: 22px; min-width: 22px; }
+  .graph-matrix-diag { background: repeating-linear-gradient(45deg, var(--surface-2, #e9ecef), var(--surface-2, #e9ecef) 3px, transparent 3px, transparent 6px); }
+  .ampel-toggle { display: inline-flex; gap: 6px; align-items: center; }
+  .ampel-btn { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+  .ampel-btn[data-cat="red"] { background: #E03131; }
+  .ampel-btn[data-cat="yellow"] { background: #F2B705; }
+  .ampel-btn[data-cat="green"] { background: #2F9E44; }
+  .ampel-btn.active { border-color: #1a1a1a; }
+  .color-swatch-input { width: 40px; height: 26px; padding: 0; border: 1px solid var(--panel-border); border-radius: 4px; cursor: pointer; }
+  .override-badge { font-size: 10.5px; color: var(--text-muted); font-style: italic; margin-left: 6px; }
+  .domain-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .domain-group-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
   .fileview-wrap { margin-top: 8px; padding: 12px; max-height: 640px; overflow: auto; }
   .fileview-ticket { border: 1px solid var(--panel-border); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; background: var(--panel-bg-alt, #fff); }
   .fileview-ticket pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; line-height: 1.5; }
@@ -692,6 +719,17 @@
         <div class="view-head"><h2>Ticket Graph</h2><p class="desc">Abhängigkeiten zwischen Tickets (Vorgänger, Nachfolger, Testtickets – aus Jira "Issue Links") als Wissensgraph. Knoten farbig nach Domäne, Status als Ampel (rot/gelb/grün) – beide Farbschemata unter Einstellungen editierbar. Abhängigkeiten sind nur aus Jira-XML-Exports verfügbar (HTML-Tabellen-/Einzelticket-Exporte enthalten diese Information nicht); es werden nur die aktuell aktiven Dateien berücksichtigt (Dateiverwaltung). Verlinkte Tickets, die (noch) nicht geladen sind, erscheinen als graue Platzhalter-Knoten statt stillschweigend zu fehlen.</p></div>
 
         <section>
+          <div class="import-tabs" id="graph-view-tabs" role="tablist" aria-label="Graph-Darstellung">
+            <button class="import-tab active" type="button" data-graph-view="layers">Schichten</button>
+            <button class="import-tab" type="button" data-graph-view="tree">Baum (Epic)</button>
+            <button class="import-tab" type="button" data-graph-view="network">Netzwerk</button>
+            <button class="import-tab" type="button" data-graph-view="matrix">Matrix</button>
+            <button class="import-tab" type="button" data-graph-view="timeline">Zeitleiste</button>
+          </div>
+          <p class="desc" id="graph-view-desc"></p>
+        </section>
+
+        <section>
           <div class="controls">
             <div class="graph-filter-col">
               <label for="graph-domain-select">Domäne (Mehrfachauswahl, leer = alle)</label>
@@ -726,7 +764,20 @@
             <button class="btn ghost btn-tiny" id="graph-export-image-btn" type="button">Als Bild exportieren (PNG)</button>
             <span class="result-count" id="graph-node-count"></span>
           </div>
+          <div class="controls" id="graph-multiselect-bar">
+            <span class="result-count" id="graph-multiselect-count"></span>
+            <input type="text" class="text-input" id="graph-multiselect-name-input" placeholder="Name für neue Liste" style="max-width:220px;">
+            <button class="btn primary btn-tiny" id="graph-multiselect-save-btn" type="button" disabled>Auswahl als Liste speichern</button>
+            <button class="btn ghost btn-tiny" id="graph-multiselect-clear-btn" type="button" disabled>Auswahl aufheben</button>
+          </div>
           <div class="panel graph-legend" id="graph-legend"></div>
+          <div class="controls" id="graph-zoom-bar">
+            <button class="btn ghost btn-tiny" id="graph-zoom-out-btn" type="button" aria-label="Verkleinern">−</button>
+            <span class="mono" id="graph-zoom-level">100%</span>
+            <button class="btn ghost btn-tiny" id="graph-zoom-in-btn" type="button" aria-label="Vergrößern">+</button>
+            <button class="btn ghost btn-tiny" id="graph-zoom-reset-btn" type="button">Zoom zurücksetzen</button>
+            <span class="step-note">Strg/Cmd + Mausrad zum Zoomen, oder scrollen zum Verschieben (Pan)</span>
+          </div>
           <div class="panel graph-svg-wrap">
             <div id="graph-svg-container"></div>
             <div class="empty-state" id="graph-empty-state" hidden>Keine Tickets mit erkannten Abhängigkeiten in der aktuellen Auswahl – Filter anpassen, "Nur Tickets mit Abhängigkeiten" abwählen, oder eine Jira-XML-Datei mit Issue-Links importieren.</div>
@@ -1461,6 +1512,22 @@
         <div class="view-head"><h2>Einstellungen</h2><p class="desc">Verwaltung der aktuellen Sitzung. Es gibt keinen Server &ndash; alle Daten liegen ausschließlich im Speicher dieses Browser-Tabs und sind mit dem Schließen der Seite ohnehin weg.</p></div>
 
         <section>
+          <p class="section-label">Sitzung speichern/laden</p>
+          <div class="callout">
+            Es gibt keinen Server – alle Daten sind mit dem Schließen dieser Seite weg. Hier lässt sich der komplette
+            aktuelle Stand (Tickets, Imports, Änderungsverlauf, Protokoll, Bilder-Galerie, Listenauswahl,
+            Aktiv/Inaktiv-Status, extrahierte Abkürzungen/Glossar-Begriffe sowie die Einstellungen Punkte-System/
+            Labels/Gliederung/Farbschema) als eine Datei sichern und später – auch in einer neuen Sitzung/einem
+            neuen Tab – wieder exakt so herstellen, um an derselben Stelle weiterzuarbeiten.
+          </div>
+          <div class="paste-actions" style="align-items:center;">
+            <button class="btn primary" id="session-export-btn" type="button">Sitzung als Datei exportieren</button>
+            <button class="btn ghost" id="session-import-btn" type="button">Sitzung aus Datei laden</button>
+            <input type="file" id="session-import-input" accept=".json,application/json" hidden>
+          </div>
+        </section>
+
+        <section>
           <p class="section-label">Admin-Bereich</p>
           <div class="panel danger-zone">
             <h3>Alle geladenen Daten löschen</h3>
@@ -1538,6 +1605,34 @@
           <div class="paste-actions" style="margin-top:10px; align-items:center;">
             <input type="text" class="text-input" id="outline-new-chapter-input" placeholder="Neues Kapitel, z. B. Kapitel 17: Ausblick" style="max-width:320px;">
             <button class="btn primary" id="outline-add-chapter-btn" type="button">Kapitel hinzufügen</button>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">Farbschema (Domänen &amp; Status-Ampel)</p>
+          <div class="callout">
+            Domänen erhalten automatisch eine von 16 festen Farben zugewiesen (stabil je Domänenname, s. Ticket
+            Graph). Status werden automatisch einer Ampel-Kategorie (Rot/Gelb/Grün) zugeordnet, abgeleitet aus dem
+            bestehenden Status-Bucket-System (Verarbeitung/Dashboard). Beides lässt sich hier für einzelne
+            Domänen/Status überschreiben – wirkt sich auf Ticket Graph, Dashboard (Domänen-Verteilung, Domänen-Spalte)
+            und Dateiverwaltung (Domänen-Übersicht) aus. Gelistet werden nur Domänen/Status aus den aktuell geladenen
+            Tickets.
+          </div>
+          <p class="section-label" style="margin-top:14px;">Domänen-Farben</p>
+          <div class="panel table-wrap" id="domaincolors-wrap" style="max-height:360px; overflow:auto;">
+            <table class="simple-table" id="domaincolors-table">
+              <thead><tr><th>Domäne</th><th>Farbe</th><th>Aktion</th></tr></thead>
+              <tbody id="domaincolors-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="domaincolors-empty" hidden>Keine Domänen in den aktuell geladenen Tickets.</div>
+          </div>
+          <p class="section-label" style="margin-top:14px;">Status-Ampel</p>
+          <div class="panel table-wrap" id="statuscolors-wrap" style="max-height:360px; overflow:auto;">
+            <table class="simple-table" id="statuscolors-table">
+              <thead><tr><th>Status</th><th>Ampel</th><th>Aktion</th></tr></thead>
+              <tbody id="statuscolors-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="statuscolors-empty" hidden>Keine Status in den aktuell geladenen Tickets.</div>
           </div>
         </section>
 
@@ -3564,7 +3659,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.18.0";
+  var APP_VERSION = "2.22.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -3651,6 +3746,15 @@
       // HTML-Tabellenexporte und Einzelticket-Detailseiten keine
       // strukturierten Issue-Links/Subtasks liefern.
       issuelinks: [],
+      // Schluessel des uebergeordneten Epics, falls das Jira-Feld "Epic
+      // Link" (XML-Custom-Field-Typ "...gh-epic-link", oder die gleich-
+      // namige Spalte in HTML-Tabellenexporten) einen Wert hat - separat
+      // von issuelinks gehalten (strukturell etwas anderes: eine feste
+      // Epic->Kind-Beziehung, kein frei benannter Linktyp), aber im
+      // Ticket-Graph als eigene Kantenkategorie "epic-child" dargestellt
+      // (s. graphBuildData()). NICHT als Zusatzfeld angezeigt (ein roher
+      // Jira-Schluessel ohne Kontext waere dort wenig hilfreich).
+      epicKey: null,
       // Interne Markierung (NICHT Teil des exportierten/angezeigten
       // Modells - von cleanTicket() aus der Ausgabe entfernt): Namen von
       // custom_fields-Eintraegen, deren Wert ein Personenname ist (z.B.
@@ -3667,6 +3771,11 @@
       ticket[canonical] = value.split(/[,;\n]/).map(function (v) { return v.trim(); }).filter(Boolean);
     } else if (canonical) {
       ticket[canonical] = value;
+    } else if (/^epic link$/i.test((rawLabelForCustom || "").trim())) {
+      // HTML-Tabellenexporte haben kein strukturelles Typ-Signal wie das
+      // XML-Custom-Field-"key"-Attribut (s. parseJiraXml) - hier stattdessen
+      // ueber den Spaltennamen "Epic Link" erkannt (Jiras Standardname).
+      ticket.epicKey = value.trim();
     } else {
       ticket.custom_fields[rawLabelForCustom] = value;
       // s. PERSON_CUSTOM_FIELD_NAME_RE - Best-Effort-Erkennung anhand des
@@ -3870,6 +3979,10 @@
           values = Array.prototype.map.call(cf.querySelectorAll("customfieldvalues label"), function (l) { return l.textContent.trim(); }).filter(Boolean);
         }
         if (!values.length) return;
+        // "Epic Link" (GreenHopper-Standardfeld): haelt den Schluessel des
+        // uebergeordneten Epics - strukturelle Beziehung (s. emptyTicket()),
+        // daher NICHT zusaetzlich als rohes Zusatzfeld angezeigt.
+        if (typeKey.indexOf("gh-epic-link") !== -1) { ticket.epicKey = values[0]; return; }
         ticket.custom_fields[name] = values.join("; ");
         // userpicker/multiuserpicker-Felder enthalten Personennamen - wie
         // Bearbeiter/Ersteller ueber PersonAnonymizer pseudonymisieren
@@ -4779,6 +4892,9 @@
     "domainoverview-domain-count", "domainoverview-ticket-count", "domainoverview-tbody", "domainoverview-empty",
     "graph-domain-select", "graph-status-select", "graph-type-select", "graph-search-input", "graph-only-linked-checkbox", "graph-node-count",
     "graph-export-image-btn", "graph-tooltip",
+    "graph-multiselect-count", "graph-multiselect-name-input", "graph-multiselect-save-btn", "graph-multiselect-clear-btn",
+    "graph-zoom-out-btn", "graph-zoom-in-btn", "graph-zoom-reset-btn", "graph-zoom-level",
+    "graph-view-tabs", "graph-view-desc",
     "graph-legend", "graph-svg-container", "graph-empty-state", "graph-selection-tbody", "graph-selection-empty",
     "rag-domain-select", "rag-status-select", "rag-label-category-select", "rag-outline-select", "rag-date-from", "rag-date-to", "rag-extract-btn",
     "rag-extract-summary", "rag-extract-count", "rag-extract-wrap", "rag-extract-tbody", "rag-export-row",
@@ -4786,7 +4902,9 @@
     "rag-batch-list-wrap", "rag-batch-tbody", "rag-output", "rag-token-usage", "rag-download-btn", "rag-batch-zip-btn",
     "rag-translate-btn",
     "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
+    "session-export-btn", "session-import-btn", "session-import-input",
     "points-tbody", "points-new-type", "points-new-value", "points-add-btn",
+    "domaincolors-tbody", "domaincolors-empty", "statuscolors-tbody", "statuscolors-empty",
     "labels-tbody", "labels-new-category", "labels-new-de", "labels-new-en", "labels-add-btn", "label-category-datalist",
     "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn", "outline-domain-datalist",
     "test-results-date", "test-results-suites", "test-results-total", "test-results-passed", "test-results-failed", "test-results-tbody",
@@ -5102,6 +5220,137 @@
     if (!ok) return;
     deleteAllData();
     showToast("Daten gelöscht", "Alle geladenen Daten wurden aus dieser Sitzung entfernt.");
+  });
+
+  /* ============ Sitzung speichern/laden ============
+     Es gibt keinen Server - der komplette Sitzungsstand existiert nur im
+     Speicher dieses Browser-Tabs. Diese Funktion serialisiert alle
+     relevanten app-Felder (inkl. der Einstellungen Punkte-System/Labels/
+     Gliederung/Farbschema, die sonst "Sitzung zurücksetzen" überleben
+     wuerden, hier aber bewusst MIT gesichert werden, damit eine
+     wiederhergestellte Sitzung wirklich 1:1 dem gespeicherten Stand
+     entspricht) als eine JSON-Datei, die sich spaeter - auch in einer
+     komplett neuen Sitzung/einem neuen Tab - wieder einlesen laesst.
+     app.ticketStore ist eine Map (nicht JSON-faehig) und wird daher als
+     Array von [key, entry]-Paaren serialisiert/wiederhergestellt. RAG-
+     Ausgaben werden bewusst NICHT gesichert (automatisch erzeugter Text,
+     ohnehin nicht in app gehalten, s. ragResetOutput()) - beim
+     Wiederherstellen leer, muesste bei Bedarf neu generiert werden. */
+  var SESSION_FILE_FORMAT_VERSION = 1;
+  function serializeSessionState() {
+    return {
+      sessionFileFormat: SESSION_FILE_FORMAT_VERSION,
+      savedAt: new Date().toISOString(),
+      appVersion: APP_VERSION,
+      ticketStoreEntries: Array.from(app.ticketStore.entries()),
+      imports: app.imports,
+      changes: app.changes,
+      log: app.log,
+      generatedImages: app.generatedImages,
+      uploadedImages: app.uploadedImages,
+      selectedKeys: app.selectedKeys,
+      savedLists: app.savedLists,
+      nextSavedListId: app.nextSavedListId,
+      listPreviewFilter: app.listPreviewFilter,
+      extracted: app.extracted,
+      jobState: app.jobState,
+      activeImportIds: app.activeImportIds,
+      activeListIds: app.activeListIds,
+      inactiveImportIds: app.inactiveImportIds,
+      appliedInactiveImportIds: app.appliedInactiveImportIds,
+      nextImportId: app.nextImportId,
+      view: app.view,
+      priorityPoints: app.priorityPoints,
+      labels: app.labels,
+      outline: app.outline,
+      domainColors: app.domainColors,
+      statusColors: app.statusColors
+    };
+  }
+  function restoreSessionState(data) {
+    if (!data || typeof data !== "object" || !Array.isArray(data.ticketStoreEntries)) {
+      throw new Error("Ungültiges Format – keine gültige Ticket-Cockpit-Sitzungsdatei.");
+    }
+    app.ticketStore = new Map(data.ticketStoreEntries);
+    app.imports = data.imports || [];
+    app.changes = data.changes || [];
+    app.log = data.log || [];
+    app.generatedImages = data.generatedImages || [];
+    app.uploadedImages = data.uploadedImages || [];
+    app.selectedKeys = data.selectedKeys || {};
+    app.savedLists = data.savedLists || [];
+    app.nextSavedListId = data.nextSavedListId || 1;
+    app.listPreviewFilter = data.listPreviewFilter || { issueType: "", excludeTypes: {} };
+    app.extracted = data.extracted || { abbreviations: [], glossaryCandidates: [], ran: false };
+    app.jobState = data.jobState || {
+      glossarExtrakt: { error: null },
+      releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
+    };
+    app.activeImportIds = data.activeImportIds || {};
+    app.activeListIds = data.activeListIds || {};
+    app.inactiveImportIds = data.inactiveImportIds || {};
+    app.appliedInactiveImportIds = data.appliedInactiveImportIds || {};
+    app.nextImportId = data.nextImportId || 1;
+    if (data.view) app.view = data.view;
+    if (data.priorityPoints) app.priorityPoints = data.priorityPoints;
+    if (data.labels) app.labels = data.labels;
+    if (data.outline) app.outline = data.outline;
+    if (data.domainColors) app.domainColors = data.domainColors;
+    if (data.statusColors) app.statusColors = data.statusColors;
+    app.initialized = true;
+    editingCommentImportId = null;
+    if (!els.modalOverlay.hidden) closeModal();
+    if (!els.compareModalOverlay.hidden) closeCompareModal();
+    refreshDashboard(false);
+    renderImportsTable();
+    renderChangesTable();
+    renderStats();
+    renderOutputCounts();
+    renderGallery();
+    renderExtractedAbbreviations();
+    renderExtractedGlossaryCandidates();
+    renderPointsTable();
+    renderLabelsList();
+    renderOutlineList();
+    els.releaseMatchSummary.hidden = true;
+    els.releaseMissingWrap.hidden = true;
+    els.releaseKeysInput.value = "";
+    els.evaluateSummary.hidden = true;
+    els.evaluateTableWrap.hidden = true;
+    ragResetOutput();
+  }
+  els.sessionExportBtn.addEventListener("click", async function () {
+    if (!app.tickets.length && !app.imports.length) { showToast("Nichts zu exportieren", "Es sind aktuell keine Daten geladen.", true); return; }
+    try {
+      var json = JSON.stringify(serializeSessionState());
+      var stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+      var ok = await saveOrWarn("ticket-cockpit-sitzung-" + stamp + ".json", json);
+      if (ok) { showToast("Gespeichert", "Sitzung wurde als Datei exportiert."); addLog("Sitzung als Datei exportiert (" + app.tickets.length + " Tickets, " + app.imports.length + " Import(e))."); }
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Sitzung konnte nicht exportiert werden.", true);
+    }
+  });
+  els.sessionImportBtn.addEventListener("click", function () { els.sessionImportInput.click(); });
+  els.sessionImportInput.addEventListener("change", async function () {
+    var file = els.sessionImportInput.files && els.sessionImportInput.files[0];
+    els.sessionImportInput.value = "";
+    if (!file) return;
+    if (app.tickets.length || app.imports.length) {
+      var ok = await confirmDialog(
+        "Eine Sitzungsdatei laden ersetzt den GESAMTEN aktuellen Stand (" + app.tickets.length + " Tickets aus " +
+        app.imports.length + " Import(en) sowie Protokoll, Bilder, Einstellungen) unwiderruflich. Trotzdem laden?"
+      );
+      if (!ok) return;
+    }
+    try {
+      var text = await file.text();
+      var data = JSON.parse(text);
+      restoreSessionState(data);
+      showToast("Sitzung geladen", file.name + ": " + app.tickets.length + " Ticket(s) aus " + app.imports.length + " Import(en) wiederhergestellt.");
+      addLog("Sitzung aus Datei „" + file.name + "“ geladen (" + app.tickets.length + " Tickets, " + app.imports.length + " Import(e)).");
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Sitzungsdatei konnte nicht gelesen werden.", true);
+    }
   });
 
   /* ============ Einstellungen: Punkte-System + Labels + Gliederung ============ */
@@ -5447,6 +5696,84 @@
     refreshDashboard(false);
   });
 
+  // Farbschema-Einstellungen (Teil 2b/Einstellungen): Domänen-Farben und
+  // Status-Ampel aus Ticket Graph Phase A (app.domainColors/app.statusColors,
+  // colorForDomain()/statusAmpelCategory()) editierbar machen - gelistet
+  // werden nur Domänen/Status, die in den AKTUELL GELADENEN Tickets
+  // vorkommen (sonst muesste man erraten, welche Werte ueberhaupt jemals
+  // auftauchen). Ein Override wirkt sofort ueberall dort, wo colorForDomain/
+  // statusAmpelCategory() verwendet werden (Ticket Graph, Dashboard-
+  // Domänenverteilung/-Spalte, Domänen-Übersicht in der Dateiverwaltung).
+  function domainColorRowHtml(d) {
+    var hasOverride = !!app.domainColors[d];
+    return "<tr><td>" + escapeHtml(d) + "</td><td><input type=\"color\" class=\"color-swatch-input domaincolor-input\" data-domain=\"" +
+      escapeHtml(d) + "\" value=\"" + colorForDomain(d) + "\" aria-label=\"Farbe für Domäne " + escapeHtml(d) + "\">" +
+      '<span class="override-badge">' + (hasOverride ? "angepasst" : "automatisch") + "</span></td><td>" +
+      (hasOverride ? '<button type="button" class="btn ghost btn-tiny" data-action="reset-domaincolor" data-domain="' + escapeHtml(d) + '">Zurücksetzen</button>' : "") +
+      "</td></tr>";
+  }
+  function renderDomainColorsTable() {
+    var domains = app.domainList || [];
+    els.domaincolorsTbody.innerHTML = domains.map(domainColorRowHtml).join("");
+    els.domaincolorsEmpty.hidden = domains.length > 0;
+  }
+  els.domaincolorsTbody.addEventListener("change", function (e) {
+    var input = e.target.closest(".domaincolor-input");
+    if (!input) return;
+    var d = input.getAttribute("data-domain");
+    app.domainColors[d] = input.value;
+    addLog("Farbschema: Domäne „" + d + "“ auf " + input.value + " gesetzt.");
+    renderDomainColorsTable();
+    refreshDashboard(false);
+  });
+  els.domaincolorsTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest('button[data-action="reset-domaincolor"]');
+    if (!btn) return;
+    var d = btn.getAttribute("data-domain");
+    delete app.domainColors[d];
+    addLog("Farbschema: Domänenfarbe für „" + d + "“ zurückgesetzt (automatisch).");
+    renderDomainColorsTable();
+    refreshDashboard(false);
+  });
+
+  function statusColorRowHtml(s) {
+    var hasOverride = !!app.statusColors[s];
+    var current = statusAmpelCategory(s);
+    var btns = ["red", "yellow", "green"].map(function (cat) {
+      return '<button type="button" class="ampel-btn' + (current === cat ? " active" : "") + '" data-cat="' + cat +
+        '" data-status="' + escapeHtml(s) + '" title="' + AMPEL_LABEL[cat] + '" aria-label="' + AMPEL_LABEL[cat] + ' für Status ' + escapeHtml(s) + '"></button>';
+    }).join("");
+    return "<tr><td>" + escapeHtml(s) + "</td><td><span class=\"ampel-toggle\">" + btns + "</span>" +
+      '<span class="override-badge">' + (hasOverride ? "angepasst" : "automatisch") + "</span></td><td>" +
+      (hasOverride ? '<button type="button" class="btn ghost btn-tiny" data-action="reset-statuscolor" data-status="' + escapeHtml(s) + '">Zurücksetzen</button>' : "") +
+      "</td></tr>";
+  }
+  function renderStatusColorsTable() {
+    var statuses = distinctFieldValues(app.tickets, "status");
+    els.statuscolorsTbody.innerHTML = statuses.map(statusColorRowHtml).join("");
+    els.statuscolorsEmpty.hidden = statuses.length > 0;
+  }
+  els.statuscolorsTbody.addEventListener("click", function (e) {
+    var ampelBtn = e.target.closest(".ampel-btn");
+    if (ampelBtn) {
+      var s = ampelBtn.getAttribute("data-status");
+      var cat = ampelBtn.getAttribute("data-cat");
+      app.statusColors[s] = cat;
+      addLog("Farbschema: Status „" + s + "“ auf Ampel „" + AMPEL_LABEL[cat] + "“ gesetzt.");
+      renderStatusColorsTable();
+      refreshDashboard(false);
+      return;
+    }
+    var resetBtn = e.target.closest('button[data-action="reset-statuscolor"]');
+    if (resetBtn) {
+      var s2 = resetBtn.getAttribute("data-status");
+      delete app.statusColors[s2];
+      addLog("Farbschema: Status-Ampel für „" + s2 + "“ zurückgesetzt (automatisch).");
+      renderStatusColorsTable();
+      refreshDashboard(false);
+    }
+  });
+
   // Labels-Tabelle (Kategorie/Deutsch/Englisch) - jede Zeile einzeln
   // löschbar über ihren Index (wie zuvor bei der flachen Liste); das
   // Kategorie-Datalist wird bei jedem Render frisch aus app.labels
@@ -5751,6 +6078,8 @@
     renderTicketGraph();
     renderFileviewImportSelect();
     renderImportStatsSelect();
+    renderDomainColorsTable();
+    renderStatusColorsTable();
   }
 
   function buildFormatCallout() {
@@ -5892,8 +6221,10 @@
       var row = document.createElement("button");
       row.className = "domain-row"; row.type = "button"; row.setAttribute("aria-pressed", app.view.domain === d ? "true" : "false");
       var widthPct = Math.max(4, Math.round((app.domainCounts[d] / max) * 100));
+      // Balkenfarbe = Domänenfarbe (s. colorForDomain(), Farbschema unter
+      // Einstellungen editierbar) - dasselbe Farbschema wie im Ticket Graph.
       row.innerHTML = '<span class="name">' + escapeHtml(d) + '</span><span class="track"><span class="fill" style="width:' + widthPct +
-        '%"></span></span><span class="count mono">' + app.domainCounts[d] + "</span>";
+        '%;background:' + colorForDomain(d) + '"></span></span><span class="count mono">' + app.domainCounts[d] + "</span>";
       row.addEventListener("click", function () {
         app.view.domain = app.view.domain === d ? "" : d;
         els.domainSelect.value = app.view.domain;
@@ -6106,7 +6437,7 @@
         '<td class="description" title="' + escapeHtml(t.description) + '">' + (t.description ? escapeHtml(truncate(t.description, 90)) : "&ndash;") + "</td>" +
         '<td class="summary">' + (t.summary ? escapeHtml(t.summary) : "&ndash;") + "</td>" +
         "<td>" + pillHtml(t) + "</td>" +
-        '<td class="domain">' + (t.domain ? escapeHtml(t.domain) : "&ndash;") + "</td>" +
+        '<td class="domain">' + (t.domain ? '<span class="domain-dot" style="background:' + colorForDomain(t.domain) + '"></span>' + escapeHtml(t.domain) : "&ndash;") + "</td>" +
         "<td>" + (t.issueType ? escapeHtml(t.issueType) : "&ndash;") + "</td>" +
         '<td class="date">' + escapeHtml(dateOnly(t.created)) + "</td>" +
         '<td class="date">' + escapeHtml(dateOnly(t.updated)) + "</td></tr>";
@@ -7283,7 +7614,7 @@
   // Speicherzeitpunkt) - fuer Schluessel, die bereits importiert sind,
   // mit vollem Inhalt; unbekannte Schluessel ehrlich mit leeren Feldern
   // (ingestTickets() hat sie zuvor als Platzhalter angelegt, s. Aufrufer).
-  function saveKeysAsNamedList(keys, name) {
+  function saveKeysAsNamedList(keys, name, sourceLabel) {
     var byKey = {};
     app.tickets.forEach(function (t) { byKey[t.key] = t; });
     var tickets = keys.map(function (k) {
@@ -7295,7 +7626,7 @@
     app.savedLists.unshift({ id: app.nextSavedListId++, name: name, when: nowLabel(), keys: keys, tickets: tickets });
     renderSavedLists();
     renderAllJobSteps();
-    addLog("Liste „" + name + "“ aus importierter Ticket-Nummern-Liste gespeichert (" + keys.length + " Tickets).");
+    addLog("Liste „" + name + "“ " + (sourceLabel || "aus importierter Ticket-Nummern-Liste") + " gespeichert (" + keys.length + " Tickets).");
   }
 
   function renderSavedLists() {
@@ -7788,7 +8119,7 @@
     els.domainoverviewDomainCount.textContent = groups.length;
     els.domainoverviewTicketCount.textContent = totalTickets;
     var html = groups.map(function (g) {
-      var header = '<tr class="domain-group-row"><td colspan="8">' + escapeHtml(g.domain) +
+      var header = '<tr class="domain-group-row"><td colspan="8"><span class="domain-group-dot" style="background:' + colorForDomain(g.domain) + '"></span>' + escapeHtml(g.domain) +
         ' <span class="domain-count">(' + g.tickets.length + " Ticket" + (g.tickets.length === 1 ? "" : "s") + ")</span></td></tr>";
       var rows = g.tickets.map(function (t) {
         var datum = dateOnly(t.updated || t.created || "–");
@@ -7818,6 +8149,41 @@
   // geladene, aber verlinkte Tickets) - fuer die Auswahltabelle, da diese
   // Platzhalter nicht in graphScopeTickets() (app.tickets) vorkommen.
   var graphLastData = null;
+  // Mehrfachauswahl (Strg/Cmd-Klick auf einen Knoten) - bewusst getrennt
+  // von graphSelectedKey (Einzelauswahl fuer die Detail-Tabelle darunter)
+  // UND von app.selectedKeys (Dashboard-Checkbox-Auswahl), damit beide
+  // Mechanismen sich nicht gegenseitig ueberraschend beeinflussen. Dient
+  // einzig dazu, mehrere Knoten direkt aus dem Graph heraus als neue
+  // Liste (Listenauswahl) zu speichern, s. saveKeysAsNamedList().
+  var graphMultiSelectedKeys = {};
+  // Zoom/Pan: Zoom aendert bewusst NUR die gerenderte Pixelgroesse des SVG
+  // (width/height-Attribute), NICHT dessen viewBox/Koordinatensystem -
+  // dadurch bleibt die Positionslogik (Kanten, Tooltip-Erkennung ueber
+  // data-key) unveraendert, und Pan ergibt sich automatisch aus dem
+  // bestehenden overflow:auto des umgebenden .graph-svg-wrap (native
+  // Browser-Bildlaufleisten/Scroll-Drag), ohne eigene Pan-Logik. Bleibt
+  // ueber Re-Renders (Filteraenderungen) hinweg erhalten wie die Auswahl.
+  var graphZoomLevel = 1;
+  var graphLastLayout = null;
+  var GRAPH_ZOOM_MIN = 0.4, GRAPH_ZOOM_MAX = 2.5, GRAPH_ZOOM_STEP = 0.2;
+  // Ticket-Schluessel, dessen Beschreibung ueber den neuen "i"-Knopf am
+  // Knoten (s. graphRenderSvg()) "angepinnt" wurde - anders als der
+  // fluechtige Hover-Tooltip bleibt dieses Panel sichtbar, bis erneut auf
+  // denselben Knopf geklickt wird (oder der Knoten aus der Ansicht faellt).
+  var graphPinnedDescKey = null;
+  // Aktive Graph-Darstellung: "layers" (Schichten, Standard), "tree" (Baum,
+  // Epic-zentriert), "network" (Kraeftelayout), "matrix" (Tabellen-Raster,
+  // kein SVG) oder "timeline" (nach Erstelldatum). Bleibt ueber Re-Renders
+  // (Filteraenderungen) hinweg erhalten, bis der Nutzer aktiv umschaltet.
+  var graphViewMode = "layers";
+  var GRAPH_VIEW_LABELS = { layers: "Schichten", tree: "Baum (Epic)", network: "Netzwerk", matrix: "Matrix", timeline: "Zeitleiste" };
+  var GRAPH_VIEW_DESCRIPTIONS = {
+    layers: "Schichten-Layout: Vorgänger links, Nachfolger rechts, entlang des längsten Abhängigkeitspfads.",
+    tree: "Baumansicht: EPICs als Wurzelknoten, ihre Kind-Tickets (Feld \"Epic Link\") darunter angeordnet. Tickets ohne Epic-Bezug erscheinen als eigene Wurzeln.",
+    network: "Netzwerk-Ansicht: freies Kräftelayout (verwandte Tickets rücken zusammen, unverbundene driften auseinander) statt fester Spalten - nützlich bei vielen sich überschneidenden Abhängigkeiten.",
+    matrix: "Matrix-Ansicht: Raster statt Diagramm (Zeile = Ausgangs-, Spalte = Zielticket der Verknüpfung) - kompakter Gesamtüberblick bei vielen Tickets, ohne dass sich Linien optisch überschneiden.",
+    timeline: "Zeitleisten-Ansicht: Tickets nach Erstellungsdatum (links = früher) angeordnet, je Domäne eine Zeile; Tickets ohne verwertbares Datum stehen in einer eigenen Spalte rechts."
+  };
 
   function graphScopeTickets() { return app.tickets; }
 
@@ -7870,6 +8236,20 @@
         seenEdge[edgeKey] = true;
         edges.push({ from: key, to: l.key, category: l.category, verb: l.verb });
       });
+      // Epic->Kind-Beziehung (Jira-Feld "Epic Link", s. emptyTicket()): die
+      // Kante geht VOM EPIC ZUM KIND (nicht umgekehrt wie beim rohen
+      // epicKey-Feldwert, der auf dem Kind-Ticket steht) - genau wie
+      // "vom Epic gehen die Verbindungen zu den einzelnen Tickets".
+      var epicKey = t.raw && t.raw.epicKey;
+      if (epicKey) {
+        nodeKeys[key] = true; nodeKeys[epicKey] = true;
+        if (!byKey[epicKey]) phantomByKey[epicKey] = graphPhantomNode(epicKey);
+        var epicEdgeKey = epicKey + "|" + key + "|epic-child";
+        if (!seenEdge[epicEdgeKey]) {
+          seenEdge[epicEdgeKey] = true;
+          edges.push({ from: epicKey, to: key, category: "epic-child", verb: "Epic Link" });
+        }
+      }
     });
     if (!onlyLinked) Object.keys(candidateKeys).forEach(function (k) { nodeKeys[k] = true; });
 
@@ -7879,28 +8259,22 @@
     return { nodes: nodes, edges: edges, byKey: fullByKey };
   }
 
-  // Schichten-Tiefe je Knoten ueber den laengsten Pfad durch die
-  // predecessor/successor-Kanten (Test-/sonstige Verknuepfungen definieren
-  // keine zeitliche Reihenfolge, beeinflussen die Tiefe nicht). Ein
-  // Zirkelbezug (A Vorgänger von B, B Vorgänger von A) wird erkannt und an
+  // Gemeinsamer Schichten-Layout-Kern fuer "Schichten" (Vorgänger/
+  // Nachfolger) UND "Baum" (Epic->Kind): Tiefe je Knoten ueber den
+  // laengsten Pfad durch eine vorgegebene Eltern-Zuordnung (parentsOf,
+  // kleinere Tiefe = weiter links). Ein Zirkelbezug wird erkannt und an
   // der Stelle einfach gekappt (0 verankert) statt in eine Endlosrekursion
   // zu laufen - der Graph bleibt damit immer darstellbar, auch bei
   // widerspruechlichen Daten.
-  function graphComputeLayout(nodes, edges) {
-    var incoming = {};
-    nodes.forEach(function (n) { incoming[n.key] = []; });
-    edges.forEach(function (e) {
-      if (e.category === "predecessor" && incoming[e.from]) incoming[e.from].push(e.to);
-      else if (e.category === "successor" && incoming[e.to]) incoming[e.to].push(e.from);
-    });
+  function graphLayeredPositions(nodes, parentsOf) {
     var depth = {}, visiting = {};
     function computeDepth(key) {
       if (depth[key] != null) return depth[key];
       if (visiting[key]) return 0;
       visiting[key] = true;
       var d = 0;
-      (incoming[key] || []).forEach(function (p) {
-        if (incoming[p]) d = Math.max(d, computeDepth(p) + 1);
+      (parentsOf[key] || []).forEach(function (p) {
+        if (parentsOf[p] !== undefined) d = Math.max(d, computeDepth(p) + 1);
       });
       visiting[key] = false;
       depth[key] = d;
@@ -7929,6 +8303,31 @@
       height: marginY * 2 + maxRows * rowH
     };
   }
+  // "Schichten"-Ansicht (Standard): Tiefe aus predecessor/successor-Kanten
+  // (Test-/sonstige/Subtask-/Epic-Verknuepfungen definieren keine
+  // zeitliche Reihenfolge, beeinflussen die Tiefe nicht).
+  function graphComputeLayout(nodes, edges) {
+    var parentsOf = {};
+    nodes.forEach(function (n) { parentsOf[n.key] = []; });
+    edges.forEach(function (e) {
+      if (e.category === "predecessor" && parentsOf[e.from]) parentsOf[e.from].push(e.to);
+      else if (e.category === "successor" && parentsOf[e.to]) parentsOf[e.to].push(e.from);
+    });
+    return graphLayeredPositions(nodes, parentsOf);
+  }
+  // "Baum"-Ansicht (Epic-zentriert): Tiefe ausschließlich aus
+  // epic-child-Kanten (Epic = Tiefe 0, seine Kinder Tiefe 1, usw.) - alle
+  // anderen Verknuepfungsarten werden weiterhin als Linien gezeichnet,
+  // beeinflussen aber nicht die Baum-Struktur/Positionierung. Tickets ohne
+  // jede Epic-Beziehung landen als eigene Wurzeln auf Tiefe 0.
+  function graphComputeTreeLayout(nodes, edges) {
+    var parentsOf = {};
+    nodes.forEach(function (n) { parentsOf[n.key] = []; });
+    edges.forEach(function (e) {
+      if (e.category === "epic-child" && parentsOf[e.to]) parentsOf[e.to].push(e.from);
+    });
+    return graphLayeredPositions(nodes, parentsOf);
+  }
 
   var GRAPH_NODE_W = 190, GRAPH_NODE_H = 58;
   var GRAPH_EDGE_STYLE = {
@@ -7936,9 +8335,10 @@
     successor: { color: "#495057", dash: "" },
     test: { color: "#AE3EC9", dash: "5,4" },
     subtask: { color: "#1098AD", dash: "1,2" },
+    "epic-child": { color: "#E8590C", dash: "" },
     other: { color: "#ADB5BD", dash: "2,3" }
   };
-  var GRAPH_CATEGORY_LABEL = { predecessor: "Vorgänger", successor: "Nachfolger", test: "Testticket", subtask: "Subtask", other: "Verknüpft" };
+  var GRAPH_CATEGORY_LABEL = { predecessor: "Vorgänger", successor: "Nachfolger", test: "Testticket", subtask: "Subtask", "epic-child": "Epic-Verknüpfung", other: "Verknüpft" };
 
   function graphEdgeEndpoints(fromPos, toPos) {
     // Gerade Linie von Knotenmitte zu Knotenmitte, am Rand der Knoten-Box
@@ -7952,8 +8352,153 @@
     return { x1: a.x + ux * halfW, y1: a.y + uy * halfH, x2: b.x - ux * halfW, y2: b.y - uy * halfH };
   }
 
+  // "Netzwerk"-Ansicht: einfaches, selbst implementiertes Kraeftelayout
+  // (Fruchterman-Reingold-artig: Abstossung zwischen ALLEN Knotenpaaren,
+  // Anziehung entlang der Kanten, mit abkuehlender maximaler Schrittweite)
+  // statt einer externen Graph-Bibliothek - deterministisch (Startpositionen
+  // im Kreis, kein Zufall), damit derselbe Datenstand immer dasselbe Layout
+  // ergibt. Rechenaufwand ist O(Knoten^2) je Iteration; bei sehr vielen
+  // Knoten wird die Iterationszahl reduziert, um die Ansicht responsiv zu
+  // halten (auf Kosten eines etwas weniger "eingeschwungenen" Layouts).
+  function graphComputeForceLayout(nodes, edges) {
+    if (!nodes.length) return { positions: {}, width: GRAPH_NODE_W + 60, height: GRAPH_NODE_H + 60 };
+    var keys = nodes.map(function (n) { return n.key; });
+    var positions = {};
+    var R = Math.max(160, keys.length * 36);
+    keys.forEach(function (key, i) {
+      var angle = (2 * Math.PI * i) / keys.length;
+      positions[key] = { x: R + R * Math.cos(angle), y: R + R * Math.sin(angle) };
+    });
+    var edgeList = edges.filter(function (e) { return positions[e.from] && positions[e.to] && e.from !== e.to; });
+    var iterations = keys.length > 70 ? 80 : (keys.length > 30 ? 150 : 260);
+    var idealLen = 150;
+    for (var iter = 0; iter < iterations; iter++) {
+      var disp = {};
+      keys.forEach(function (key) { disp[key] = { x: 0, y: 0 }; });
+      for (var i = 0; i < keys.length; i++) {
+        for (var j = i + 1; j < keys.length; j++) {
+          var a = positions[keys[i]], b = positions[keys[j]];
+          var dx = a.x - b.x, dy = a.y - b.y;
+          var dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
+          var force = (idealLen * idealLen) / dist;
+          var ux = dx / dist, uy = dy / dist;
+          disp[keys[i]].x += ux * force; disp[keys[i]].y += uy * force;
+          disp[keys[j]].x -= ux * force; disp[keys[j]].y -= uy * force;
+        }
+      }
+      edgeList.forEach(function (e) {
+        var a = positions[e.from], b = positions[e.to];
+        var dx = a.x - b.x, dy = a.y - b.y;
+        var dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
+        var force = (dist * dist) / idealLen;
+        var ux = dx / dist, uy = dy / dist;
+        disp[e.from].x -= ux * force; disp[e.from].y -= uy * force;
+        disp[e.to].x += ux * force; disp[e.to].y += uy * force;
+      });
+      var maxStep = Math.max(1, 30 * (1 - iter / iterations));
+      keys.forEach(function (key) {
+        var d = disp[key];
+        var len = Math.sqrt(d.x * d.x + d.y * d.y) || 0.01;
+        var capped = Math.min(len, maxStep);
+        positions[key].x += (d.x / len) * capped;
+        positions[key].y += (d.y / len) * capped;
+      });
+    }
+    var margin = 40;
+    var minX = Math.min.apply(null, keys.map(function (k) { return positions[k].x; }));
+    var minY = Math.min.apply(null, keys.map(function (k) { return positions[k].y; }));
+    keys.forEach(function (key) {
+      positions[key].x = positions[key].x - minX + margin;
+      positions[key].y = positions[key].y - minY + margin;
+    });
+    var maxX = Math.max.apply(null, keys.map(function (k) { return positions[k].x; })) + GRAPH_NODE_W + margin;
+    var maxY = Math.max.apply(null, keys.map(function (k) { return positions[k].y; })) + GRAPH_NODE_H + margin;
+    return { positions: positions, width: maxX, height: maxY };
+  }
+
+  // "Zeitleisten"-Ansicht: X-Position nach Erstellungsdatum (kein
+  // verwertbares Datum -> eigene Spalte ganz rechts statt geraten), Y nach
+  // Domäne gruppiert (eine Zeile je Domäne), damit Tickets mit aehnlichem
+  // Datum nicht zwangslaeufig uebereinanderfallen. Bewusst simple
+  // Ein-Zeile-je-Domäne-Gruppierung statt vollstaendiger Kollisions-
+  // vermeidung innerhalb einer Zeile - bei sehr vielen Tickets derselben
+  // Domäne mit aehnlichem Datum ist etwas Ueberlappung eine bekannte,
+  // akzeptierte Einschraenkung dieser Ansicht.
+  function graphComputeTimelineLayout(nodes, edges) {
+    if (!nodes.length) return { positions: {}, width: GRAPH_NODE_W + 60, height: GRAPH_NODE_H + 60 };
+    function dateOf(n) {
+      if (n.notLoaded || !n.raw || !n.raw.created) return null;
+      // parseJiraDate() gibt 0 zurueck, wenn der Wert nicht geparst werden
+      // konnte (kein NaN) - 0 wird hier daher ebenfalls als "kein
+      // verwertbares Datum" behandelt statt faelschlich als Jahr 1970.
+      var t = parseJiraDate(n.raw.created);
+      return t || null;
+    }
+    var withDate = nodes.filter(function (n) { return dateOf(n) != null; });
+    var withoutDate = nodes.filter(function (n) { return dateOf(n) == null; });
+    var domainsOrder = [];
+    var seenDomain = {};
+    nodes.forEach(function (n) {
+      var d = n.domain || "Ohne Domäne";
+      if (!seenDomain[d]) { seenDomain[d] = true; domainsOrder.push(d); }
+    });
+    var rowIndexOf = {};
+    domainsOrder.forEach(function (d, i) { rowIndexOf[d] = i; });
+    var marginX = 40, marginY = 30, rowH = 90, colSpan = Math.max(500, withDate.length * 60);
+    var times = withDate.map(dateOf);
+    var minT = times.length ? Math.min.apply(null, times) : 0;
+    var maxT = times.length ? Math.max.apply(null, times) : 1;
+    var span = Math.max(1, maxT - minT);
+    var positions = {};
+    withDate.forEach(function (n) {
+      var t = dateOf(n);
+      positions[n.key] = {
+        x: marginX + ((t - minT) / span) * colSpan,
+        y: marginY + rowIndexOf[n.domain || "Ohne Domäne"] * rowH
+      };
+    });
+    var noDateColX = marginX + colSpan + 60;
+    withoutDate.forEach(function (n, i) {
+      positions[n.key] = { x: noDateColX, y: marginY + i * rowH };
+    });
+    var maxRows = Math.max(domainsOrder.length, withoutDate.length, 1);
+    return {
+      positions: positions,
+      width: noDateColX + (withoutDate.length ? GRAPH_NODE_W + marginX : 0),
+      height: marginY * 2 + maxRows * rowH
+    };
+  }
+
+  // "Matrix"-Ansicht: kein SVG, sondern ein HTML-Raster (Zeile = Quelle,
+  // Spalte = Ziel einer Verknuepfung) - kompakter Gesamtueberblick bei
+  // vielen Tickets, ohne dass sich Kantenlinien optisch ueberschneiden
+  // koennen. Alphabetisch sortiert (nicht nach Layout-Tiefe, die es hier
+  // nicht gibt) fuer eine vorhersehbare, stabile Reihenfolge.
+  function graphRenderMatrix(nodes, edges) {
+    if (!nodes.length) return "";
+    var edgeMap = {};
+    edges.forEach(function (e) { edgeMap[e.from + "|" + e.to] = e; });
+    var sorted = nodes.slice().sort(function (a, b) { return a.key.localeCompare(b.key); });
+    var headerCells = sorted.map(function (n) {
+      return '<th class="graph-matrix-col-head"><div class="graph-matrix-col-label" title="' + escapeHtml(n.key) + '">' + escapeHtml(n.key) + "</div></th>";
+    }).join("");
+    var rows = sorted.map(function (rowNode) {
+      var cells = sorted.map(function (colNode) {
+        if (rowNode.key === colNode.key) return '<td class="graph-matrix-diag"></td>';
+        var e = edgeMap[rowNode.key + "|" + colNode.key];
+        if (!e) return "<td></td>";
+        var style = GRAPH_EDGE_STYLE[e.category] || GRAPH_EDGE_STYLE.other;
+        var title = rowNode.key + " → " + colNode.key + ": " + (GRAPH_CATEGORY_LABEL[e.category] || e.category);
+        return '<td class="graph-matrix-cell" style="background:' + style.color + '" title="' + escapeHtml(title) + '"></td>';
+      }).join("");
+      return '<tr><th class="graph-matrix-row-head" title="' + escapeHtml(rowNode.key) + '">' + escapeHtml(rowNode.key) + "</th>" + cells + "</tr>";
+    }).join("");
+    return '<div class="graph-matrix-wrap"><table class="graph-matrix-table"><thead><tr><th class="graph-matrix-corner"></th>' +
+      headerCells + "</tr></thead><tbody>" + rows + "</tbody></table></div>";
+  }
+
   function graphRenderSvg(nodes, edges, layout) {
-    var defsInner = ["predecessor", "successor", "test", "other"].map(function (cat) {
+    var defsInner = ["predecessor", "successor", "test", "subtask", "epic-child", "other"].map(function (cat) {
       return svgArrowMarkerDefs("graphArrow-" + cat, GRAPH_EDGE_STYLE[cat].color).replace(/^<defs>|<\/defs>$/g, "");
     }).join("");
     var parts = ["<defs>" + defsInner + "</defs>"];
@@ -7974,9 +8519,20 @@
       var pos = layout.positions[n.key];
       if (!pos) return;
       var selected = n.key === graphSelectedKey;
+      // Mehrfachauswahl (Strg/Cmd-Klick, s. graphMultiSelectedKeys): eigener
+      // gestrichelter gruener Ring AUSSERHALB des Knotens, damit er sich
+      // nicht mit dem blauen Rahmen der Einzelauswahl (Detail-Tabelle
+      // darunter) ueberlagert - beide Auswahlarten sind unabhaengig
+      // voneinander gleichzeitig sichtbar.
+      var multiSelected = !!graphMultiSelectedKeys[n.key];
+      var multiRingHtml = multiSelected
+        ? '<rect x="' + (pos.x - 4) + '" y="' + (pos.y - 4) + '" width="' + (GRAPH_NODE_W + 8) + '" height="' + (GRAPH_NODE_H + 8) +
+          '" rx="11" fill="none" stroke="#2f9e44" stroke-width="2.5" stroke-dasharray="5,3"></rect>'
+        : "";
       if (n.notLoaded) {
         parts.push(
-          '<g class="graph-node graph-node-phantom" data-key="' + escapeHtml(n.key) + '">' +
+          '<g class="graph-node graph-node-phantom' + (multiSelected ? " graph-node-multiselected" : "") + '" data-key="' + escapeHtml(n.key) + '">' +
+          multiRingHtml +
           '<rect x="' + pos.x + '" y="' + pos.y + '" width="' + GRAPH_NODE_W + '" height="' + GRAPH_NODE_H +
             '" rx="8" fill="#f1f3f5" stroke="' + (selected ? "#1c7ed6" : "#adb5bd") + '" stroke-width="' + (selected ? 3 : 1.5) + '" stroke-dasharray="4,3"></rect>' +
           '<text x="' + (pos.x + 16) + '" y="' + (pos.y + 24) + '" font-size="12.5" font-weight="700" fill="#5b6579">' + escapeHtml(n.key) + "</text>" +
@@ -7988,16 +8544,33 @@
       var domainColor = colorForDomain(n.domain);
       var ampel = statusAmpelHex(n.status);
       var descLines = svgLimitLines(svgWrapText(n.summary || n.description || "", GRAPH_NODE_W - 40, 10.5), 1);
+      // EPICs bekommen einen fetten Rahmen (dicker + dunkler, statt einer
+      // weiteren Farbe, die mit Domäne/Ampel kollidieren koennte) - bleibt
+      // bei Einzelauswahl (blauer Rahmen) weiterhin unterscheidbar, da dort
+      // die Randstaerke zusaetzlich erhoeht wird.
+      var isEpic = n.issueType === "Epic";
+      var nodeStrokeWidth = (selected ? 3 : 1.5) + (isEpic ? 2 : 0);
+      var nodeStrokeColor = selected ? "#1c7ed6" : (isEpic ? "#343a40" : "#dee2e6");
+      // Kleiner Rundknopf am rechten unteren Eck (haelftig ueberlappend) -
+      // neuer Button je Knoten, um die Beschreibung "angepinnt" (bleibt bis
+      // zum erneuten Klick sichtbar, anders als der fluechtige Hover-
+      // Tooltip) in einem Panel anzuzeigen, s. graphPinnedDescKey.
+      var descBtnHtml = '<g class="graph-desc-btn" data-key="' + escapeHtml(n.key) + '">' +
+        '<circle cx="' + (pos.x + GRAPH_NODE_W) + '" cy="' + (pos.y + GRAPH_NODE_H) + '" r="9" fill="#495057" stroke="#ffffff" stroke-width="1.5"></circle>' +
+        '<text x="' + (pos.x + GRAPH_NODE_W) + '" y="' + (pos.y + GRAPH_NODE_H + 4) + '" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">i</text>' +
+        "</g>";
       parts.push(
-        '<g class="graph-node" data-key="' + escapeHtml(n.key) + '">' +
+        '<g class="graph-node' + (multiSelected ? " graph-node-multiselected" : "") + (isEpic ? " graph-node-epic" : "") + '" data-key="' + escapeHtml(n.key) + '">' +
+        multiRingHtml +
         '<rect x="' + pos.x + '" y="' + pos.y + '" width="' + GRAPH_NODE_W + '" height="' + GRAPH_NODE_H +
-          '" rx="8" fill="#ffffff" stroke="' + (selected ? "#1c7ed6" : "#dee2e6") + '" stroke-width="' + (selected ? 3 : 1.5) + '"></rect>' +
+          '" rx="8" fill="#ffffff" stroke="' + nodeStrokeColor + '" stroke-width="' + nodeStrokeWidth + '"></rect>' +
         '<rect x="' + pos.x + '" y="' + pos.y + '" width="6" height="' + GRAPH_NODE_H + '" rx="3" fill="' + domainColor + '"></rect>' +
         '<circle cx="' + (pos.x + GRAPH_NODE_W - 14) + '" cy="' + (pos.y + 14) + '" r="7" fill="' + ampel + '" stroke="#ffffff" stroke-width="1.5"></circle>' +
         '<text x="' + (pos.x + 16) + '" y="' + (pos.y + 21) + '" font-size="12.5" font-weight="700" fill="#1a1a1a">' + escapeHtml(n.key) + "</text>" +
         (descLines.length ? '<text x="' + (pos.x + 16) + '" y="' + (pos.y + 38) + '" font-size="10.5" fill="#5b6579">' + escapeHtml(descLines[0]) + "</text>" : "") +
         '<text x="' + (pos.x + 16) + '" y="' + (pos.y + GRAPH_NODE_H - 8) + '" font-size="9.5" fill="' + domainColor + '" font-weight="600">' +
           escapeHtml(truncate(n.domain || "Ohne Domäne", 24)) + "</text>" +
+        descBtnHtml +
         "</g>"
       );
     });
@@ -8023,9 +8596,12 @@
       return;
     }
     var links = (t.raw && t.raw.issuelinks) || [];
-    var linksText = links.length
-      ? links.map(function (l) { return (GRAPH_CATEGORY_LABEL[l.category] || l.category) + ": " + l.key; }).join(", ")
-      : "–";
+    var linkTexts = links.map(function (l) { return (GRAPH_CATEGORY_LABEL[l.category] || l.category) + ": " + l.key; });
+    // Epic Link (s. epicKey) ist strukturell separat von issuelinks gehalten
+    // (s. emptyTicket()), erscheint hier aber als gleichwertige Zeile, damit
+    // die Detail-Tabelle mit den im Graph gezeichneten Kanten uebereinstimmt.
+    if (t.raw && t.raw.epicKey) linkTexts.push(GRAPH_CATEGORY_LABEL["epic-child"] + ": " + t.raw.epicKey);
+    var linksText = linkTexts.length ? linkTexts.join(", ") : "–";
     els.graphSelectionTbody.innerHTML = "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(t.status || "–") +
       "</td><td>" + escapeHtml(t.domain || "–") + "</td><td>" + (t.description ? escapeHtml(truncate(t.description, 200)) : "&ndash;") +
       "</td><td>" + escapeHtml(linksText) + "</td></tr>";
@@ -8041,7 +8617,7 @@
     var ampelHtml = ["green", "yellow", "red"].map(function (cat) {
       return '<span class="graph-legend-chip"><span class="graph-legend-dot" style="background:' + AMPEL_HEX[cat] + '"></span>' + AMPEL_LABEL[cat] + "</span>";
     }).join("");
-    var edgeHtml = ["predecessor", "successor", "test", "subtask"].map(function (cat) {
+    var edgeHtml = ["predecessor", "successor", "test", "subtask", "epic-child"].map(function (cat) {
       return '<span class="graph-legend-chip"><span class="graph-legend-line" style="background:' + GRAPH_EDGE_STYLE[cat].color + '"></span>' + GRAPH_CATEGORY_LABEL[cat] + "</span>";
     }).join("");
     els.graphLegend.innerHTML =
@@ -8053,14 +8629,34 @@
         : "");
   }
 
+  // Entfernt Mehrfachauswahl-Eintraege fuer Tickets, die es im aktuellen
+  // Bestand gar nicht mehr gibt (z.B. nach "Alle Daten löschen") - anders
+  // als eine reine Filteraenderung (die die Auswahl bewusst UEBERLEBT,
+  // gleiches Verhalten wie app.selectedKeys im Dashboard).
+  function graphPruneMultiSelect() {
+    var stillExists = {};
+    app.tickets.forEach(function (t) { stillExists[t.key] = true; });
+    Object.keys(graphMultiSelectedKeys).forEach(function (k) { if (!stillExists[k]) delete graphMultiSelectedKeys[k]; });
+  }
+  function renderGraphMultiSelectBar() {
+    var keys = Object.keys(graphMultiSelectedKeys);
+    els.graphMultiselectCount.textContent = keys.length
+      ? keys.length + " Ticket(s) mehrfach ausgewählt (Strg/Cmd-Klick zum Hinzufügen/Entfernen)"
+      : "Mehrfachauswahl: Strg/Cmd-Klick auf Knoten, um mehrere direkt als Liste zu speichern";
+    els.graphMultiselectSaveBtn.disabled = keys.length === 0;
+    els.graphMultiselectClearBtn.disabled = keys.length === 0;
+  }
   function renderTicketGraph() {
+    graphPruneMultiSelect();
     var data = graphBuildData();
     graphLastData = data;
+    if (graphPinnedDescKey && !data.byKey[graphPinnedDescKey]) { graphPinnedDescKey = null; els.graphTooltip.hidden = true; }
     var phantomCount = data.nodes.filter(function (n) { return n.notLoaded; }).length;
     els.graphNodeCount.textContent = data.nodes.length + " Ticket(s)" +
       (phantomCount ? " (davon " + phantomCount + " nicht geladen)" : "") +
       ", " + data.edges.length + " Verknüpfung(en)";
     renderGraphLegend(data.nodes);
+    renderGraphMultiSelectBar();
     if (!data.nodes.length) {
       els.graphSvgContainer.innerHTML = "";
       els.graphEmptyState.hidden = false;
@@ -8071,10 +8667,65 @@
     els.graphEmptyState.hidden = true;
     if (graphSelectedKey && !data.byKey[graphSelectedKey]) graphSelectedKey = null;
     if (!graphSelectedKey) graphSelectedKey = data.nodes[0].key;
-    var layout = graphComputeLayout(data.nodes, data.edges);
-    els.graphSvgContainer.innerHTML = graphRenderSvg(data.nodes, data.edges, layout);
+    if (graphViewMode === "matrix") {
+      // Kein SVG in dieser Ansicht - Zoom/Pan (svg-basiert) ist hier
+      // bedeutungslos; graphApplyZoom() no-opt bereits selbst, wenn kein
+      // <svg> gefunden wird.
+      graphLastLayout = null;
+      els.graphSvgContainer.innerHTML = graphRenderMatrix(data.nodes, data.edges);
+    } else {
+      var layout = graphViewMode === "tree" ? graphComputeTreeLayout(data.nodes, data.edges)
+        : graphViewMode === "network" ? graphComputeForceLayout(data.nodes, data.edges)
+        : graphViewMode === "timeline" ? graphComputeTimelineLayout(data.nodes, data.edges)
+        : graphComputeLayout(data.nodes, data.edges);
+      graphLastLayout = layout;
+      els.graphSvgContainer.innerHTML = graphRenderSvg(data.nodes, data.edges, layout);
+      graphApplyZoom();
+    }
     renderGraphSelectionTable();
   }
+  // Setzt die gerenderte Pixelgroesse des <svg> gemaess graphZoomLevel neu -
+  // muss nach JEDEM renderTicketGraph() erneut aufgerufen werden, da dabei
+  // ein komplett neues <svg>-Element eingesetzt wird (innerHTML), das die
+  // vorherige width/height-Anpassung nicht mehr traegt.
+  function graphApplyZoom() {
+    var svg = els.graphSvgContainer.querySelector("svg");
+    if (!svg || !graphLastLayout) return;
+    svg.setAttribute("width", Math.round(graphLastLayout.width * graphZoomLevel));
+    svg.setAttribute("height", Math.round(graphLastLayout.height * graphZoomLevel));
+    els.graphZoomLevel.textContent = Math.round(graphZoomLevel * 100) + "%";
+  }
+  function graphSetZoom(z) {
+    graphZoomLevel = Math.min(GRAPH_ZOOM_MAX, Math.max(GRAPH_ZOOM_MIN, z));
+    graphApplyZoom();
+  }
+  function graphSetViewMode(mode) {
+    if (!GRAPH_VIEW_LABELS[mode] || mode === graphViewMode) return;
+    graphViewMode = mode;
+    Array.prototype.forEach.call(els.graphViewTabs.querySelectorAll("[data-graph-view]"), function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-graph-view") === mode);
+    });
+    els.graphViewDesc.textContent = GRAPH_VIEW_DESCRIPTIONS[mode] || "";
+    graphSetZoom(1);
+    renderTicketGraph();
+  }
+  els.graphViewTabs.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-graph-view]");
+    if (!btn) return;
+    graphSetViewMode(btn.getAttribute("data-graph-view"));
+  });
+  els.graphViewDesc.textContent = GRAPH_VIEW_DESCRIPTIONS[graphViewMode];
+  els.graphZoomInBtn.addEventListener("click", function () { graphSetZoom(graphZoomLevel + GRAPH_ZOOM_STEP); });
+  els.graphZoomOutBtn.addEventListener("click", function () { graphSetZoom(graphZoomLevel - GRAPH_ZOOM_STEP); });
+  els.graphZoomResetBtn.addEventListener("click", function () { graphSetZoom(1); });
+  // Strg/Cmd + Mausrad zoomt (Browser-Konvention); normales Scrollen bleibt
+  // unangetastet und dient dem Verschieben (Pan) ueber das ohnehin
+  // vorhandene overflow:auto von .graph-svg-wrap.
+  els.graphSvgContainer.addEventListener("wheel", function (e) {
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    graphSetZoom(graphZoomLevel + (e.deltaY < 0 ? GRAPH_ZOOM_STEP : -GRAPH_ZOOM_STEP));
+  }, { passive: false });
   // Tooltip beim Hovern ueber einen Knoten: zeigt zusaetzliche Inhalte, die
   // im kompakten Knoten selbst keinen Platz haben (volle Zusammenfassung,
   // Beschreibungs-Ausschnitt, Verknuepfungen) - eigenes leichtgewichtiges
@@ -8104,6 +8755,7 @@
     els.graphTooltip.style.top = y + "px";
   }
   els.graphSvgContainer.addEventListener("mousemove", function (e) {
+    if (graphPinnedDescKey) return; // angepinntes Panel offen - Hover aendert es nicht
     var g = e.target.closest(".graph-node");
     if (!g) { els.graphTooltip.hidden = true; return; }
     var key = g.getAttribute("data-key");
@@ -8113,11 +8765,60 @@
     els.graphTooltip.hidden = false;
     graphTooltipPosition(e);
   });
-  els.graphSvgContainer.addEventListener("mouseleave", function () { els.graphTooltip.hidden = true; });
+  els.graphSvgContainer.addEventListener("mouseleave", function () { if (!graphPinnedDescKey) els.graphTooltip.hidden = true; });
   els.graphSvgContainer.addEventListener("click", function (e) {
+    // Neuer "i"-Knopf je Knoten (s. graphRenderSvg()): pinnt/loest die
+    // Beschreibungsanzeige, unabhaengig vom fluechtigen Hover-Tooltip -
+    // MUSS vor der generischen .graph-node-Behandlung geprueft werden, da
+    // der Knopf INNERHALB der Knoten-<g> liegt (closest() wuerde sonst
+    // beides treffen).
+    var descBtn = e.target.closest(".graph-desc-btn");
+    if (descBtn) {
+      var descKey = descBtn.getAttribute("data-key");
+      if (graphPinnedDescKey === descKey) {
+        graphPinnedDescKey = null;
+        els.graphTooltip.hidden = true;
+      } else {
+        graphPinnedDescKey = descKey;
+        var pinnedNode = graphLastData && graphLastData.byKey[descKey];
+        if (pinnedNode) {
+          els.graphTooltip.innerHTML = graphTooltipContentFor(pinnedNode) +
+            '<div class="graph-tooltip-close-hint">Erneut auf „i“ klicken zum Schließen</div>';
+          els.graphTooltip.hidden = false;
+          var btnRect = descBtn.getBoundingClientRect();
+          els.graphTooltip.style.left = (btnRect.left + 16) + "px";
+          els.graphTooltip.style.top = (btnRect.top + 16) + "px";
+        }
+      }
+      return;
+    }
     var g = e.target.closest(".graph-node");
     if (!g) return;
-    graphSelectedKey = g.getAttribute("data-key");
+    var key = g.getAttribute("data-key");
+    // Strg/Cmd-Klick schaltet die Mehrfachauswahl um (fuer "Als Liste
+    // speichern"), OHNE die Einzelauswahl fuer die Detail-Tabelle darunter
+    // zu veraendern - ein normaler Klick verhaelt sich unveraendert wie
+    // zuvor (Einzelauswahl).
+    if (e.ctrlKey || e.metaKey) {
+      if (graphMultiSelectedKeys[key]) delete graphMultiSelectedKeys[key]; else graphMultiSelectedKeys[key] = true;
+      renderTicketGraph();
+      return;
+    }
+    graphSelectedKey = key;
+    renderTicketGraph();
+  });
+  els.graphMultiselectSaveBtn.addEventListener("click", function () {
+    var keys = Object.keys(graphMultiSelectedKeys);
+    if (!keys.length) return;
+    var name = (els.graphMultiselectNameInput.value || "").trim() || ("Graph-Auswahl vom " + nowLabel());
+    saveKeysAsNamedList(keys, name, "aus einer Mehrfachauswahl im Ticket Graph");
+    els.graphMultiselectNameInput.value = "";
+    graphMultiSelectedKeys = {};
+    renderTicketGraph();
+    showToast("Liste gespeichert", "„" + name + "“ mit " + keys.length + " Ticket(s) unter Listenauswahl gespeichert.");
+  });
+  els.graphMultiselectClearBtn.addEventListener("click", function () {
+    graphMultiSelectedKeys = {};
     renderTicketGraph();
   });
   els.graphDomainSelect.addEventListener("change", renderTicketGraph);

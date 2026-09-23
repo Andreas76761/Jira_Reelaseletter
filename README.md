@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.18.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.22.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -264,8 +264,56 @@ anderen Länderformaten (Kennzeichen).
   dieses Tickets. Der Graph lässt sich über **"Als Bild exportieren
   (PNG)"** als Rastergrafik herunterladen (client-seitig aus dem SVG über
   ein Canvas gerendert, benötigt wie die übrigen Downloads die
-  Claude-Artifact-Laufzeit). Reines, selbst erzeugtes SVG (keine externe
-  Graph-Bibliothek).
+  Claude-Artifact-Laufzeit). **Mehrfachauswahl** (Strg/Cmd-Klick auf
+  mehrere Knoten, eigene gestrichelte grüne Markierung – unabhängig von
+  der Einzelauswahl für die Detail-Tabelle darunter) lässt sich direkt
+  über "Auswahl als Liste speichern" als neue, benannte Liste unter
+  Listenauswahl sichern, ohne vorher irgendwo anders auswählen zu müssen.
+  **Zoom/Pan**: Buttons zum Vergrößern/Verkleinern/Zurücksetzen sowie
+  Strg/Cmd + Mausrad zum Zoomen direkt über dem Graphen; verschoben
+  (Pan) wird über die ohnehin vorhandenen Bildlaufleisten des
+  Graph-Bereichs (normales Scrollen bleibt dafür bewusst unverändert,
+  ohne Strg/Cmd nutzbar). **EPICs** erhalten einen fetten (dickeren,
+  dunkleren) Rahmen zur besseren Unterscheidung. Ist das Jira-Feld "Epic
+  Link" (XML-Custom-Field-Typ "...gh-epic-link" bzw. die gleichnamige
+  Spalte in HTML-Tabellenexporten) auf einem Ticket gesetzt, zeichnet der
+  Graph zusätzlich eine eigene Kantenart **"Epic-Verknüpfung"** vom Epic
+  zum jeweiligen Kind-Ticket (Pfeilrichtung: Epic → Kind, unabhängig
+  davon, dass der Feldwert technisch auf dem Kind-Ticket steht) – auch in
+  der Auswahltabelle darunter sichtbar. Jeder Knoten hat außerdem einen
+  neuen **"i"-Knopf** (rechte untere Ecke): zeigt die Beschreibung sowie
+  weitere Details in einem angepinnten Panel, das – anders als der
+  flüchtige Hover-Tooltip – bis zum erneuten Klick sichtbar bleibt und
+  auch beim Hovern über andere Knoten nicht verschwindet. Reines, selbst
+  erzeugtes SVG (keine externe Graph-Bibliothek).
+  **5 wählbare Darstellungen** (Reiter oberhalb der Filter, dieselben
+  Filter/dieselbe Auswahl gelten in jeder Ansicht):
+  - *Schichten* (Standard) – wie oben beschrieben.
+  - *Baum (Epic)* – EPICs als Wurzelknoten, ihre Kind-Tickets (Feld "Epic
+    Link") darunter angeordnet; Tickets ohne Epic-Bezug erscheinen als
+    eigene Wurzeln. Nutzt denselben Schichten-Layout-Algorithmus wie
+    "Schichten", nur mit der Epic-Verknüpfung statt Vorgänger/Nachfolger
+    als Tiefen-Kriterium.
+  - *Netzwerk* – freies, selbst implementiertes Kräftelayout
+    (Fruchterman-Reingold-artig: Abstoßung zwischen allen Knotenpaaren,
+    Anziehung entlang der Kanten, abkühlende Schrittweite) statt fester
+    Spalten – verwandte Tickets rücken zusammen, unverbundene driften
+    auseinander. Deterministisch (Startpositionen im Kreis, kein Zufall) –
+    derselbe Datenstand ergibt immer dasselbe Layout. Bei sehr vielen
+    Knoten wird die Iterationszahl automatisch reduziert, um die Ansicht
+    responsiv zu halten.
+  - *Matrix* – kein Diagramm, sondern ein Raster (Zeile = Ausgangs-,
+    Spalte = Zielticket einer Verknüpfung, Zelle eingefärbt nach
+    Verknüpfungsart) – kompakter Gesamtüberblick bei vielen Tickets, ohne
+    dass sich Linien optisch überschneiden können. Zoom/Pan sind hier
+    ohne Wirkung (kein SVG), stattdessen normales Tabellen-Scrollen mit
+    fixierten Zeilen-/Spaltenköpfen.
+  - *Zeitleiste* – Tickets nach Erstellungsdatum (links = früher)
+    angeordnet, je Domäne eine eigene Zeile; Tickets ohne verwertbares
+    Datum stehen in einer eigenen Spalte ganz rechts statt geraten zu
+    werden. Bei vielen Tickets derselben Domäne mit ähnlichem Datum ist
+    etwas Überlappung eine bekannte, akzeptierte Einschränkung dieser
+    Ansicht (keine vollständige Kollisionsvermeidung innerhalb einer Zeile).
 - **Listenauswahl** – die im Dashboard per Checkbox ausgewählten Tickets
   lassen sich hier benannt als eigenständige Liste speichern (Name,
   Zeitpunkt automatisch, Ticket-Inhalte UND die reine Liste der
@@ -299,7 +347,13 @@ anderen Länderformaten (Kennzeichen).
     gelesen.
   - **Subtasks** (`<subtasks>`) fließen jetzt als eigene
     Verknüpfungskategorie in den Ticket-Graph ein (bisher komplett
-    unerfasst).
+    unerfasst) – dabei auch ein Zeichnungs-Bug behoben: der Pfeil-Marker
+    für diese Kategorie fehlte im SVG (nur die Linie ohne Pfeilspitze
+    wurde gezeichnet).
+  - Das Feld **"Epic Link"** (XML-Custom-Field-Typ "...gh-epic-link" bzw.
+    die gleichnamige Spalte in HTML-Tabellenexporten) wird jetzt als
+    eigene Kantenart "Epic-Verknüpfung" im Ticket-Graph dargestellt (s.
+    Ticket-Graph-Bullet oben) statt bisher komplett unerfasst zu bleiben.
   - Ein **"labels"-Custom-Field** (z. B. "INT Tag") liefert seine Werte im
     XML als `<label>`-Kindelemente statt als `<customfieldvalue>` – wurde
     dadurch bisher komplett verworfen, wird jetzt erkannt.
@@ -703,6 +757,18 @@ anderen Länderformaten (Kennzeichen).
 - **Infobox / Glossar / Abkürzungen** – Kurzerklärung der App, Begriffsliste
   bzw. extrahierte Abkürzungen (siehe Verarbeitung → 3.).
 - **Einstellungen**
+  - *Sitzung speichern/laden* – da es keinen Server gibt und mit dem
+    Schließen der Seite alles verloren geht, lässt sich der komplette
+    aktuelle Stand (Tickets, Imports, Änderungsverlauf, Protokoll,
+    Bilder-Galerie, Listenauswahl, Aktiv/Inaktiv-Status, extrahierte
+    Abkürzungen/Glossar-Begriffe sowie Punkte-System/Labels/Gliederung/
+    Farbschema) über "Sitzung als Datei exportieren" als eine JSON-Datei
+    sichern und über "Sitzung aus Datei laden" – auch in einer neuen
+    Sitzung/einem neuen Tab – wieder exakt herstellen, um an derselben
+    Stelle weiterzuarbeiten. Das Laden ersetzt den gesamten aktuellen
+    Stand unwiderruflich (mit Sicherheitsabfrage, falls bereits Daten
+    geladen sind) und benötigt – anders als das Exportieren – **nicht**
+    die Claude-Artifact-Laufzeit, da es ein normaler Datei-Upload ist.
   - *Admin-Bereich* – Funktion "Alle Daten löschen": leert die komplette
     Sitzung (Tickets, Imports, Protokoll, Vergleiche, Extraktionen)
     unwiderruflich, mit Sicherheitsabfrage. Anders als "Sitzung
@@ -750,15 +816,30 @@ anderen Länderformaten (Kennzeichen).
     Vorschlag blieben Kapitel 1-3, 9, 13-16 (keine eindeutig passende
     Domäne) sowie die Domäne *DevOps* (mit 60 Tickets die zweitgrößte im
     Demo-Datensatz – passt thematisch zu keinem Kapitel).
+  - *Farbschema (Domänen &amp; Status-Ampel)* – die im Ticket Graph
+    verwendeten Farben (Domänen: eine von 16 festen Farben, stabil je
+    Domänenname; Status: Ampel-Kategorie Rot/Gelb/Grün, aus dem
+    Status-Bucket-System hergeleitet) lassen sich hier je Domäne/Status
+    überschreiben – gelistet werden nur Domänen/Status aus den aktuell
+    geladenen Tickets. Domänen-Farben über einen normalen Farbwähler,
+    Status-Ampel über drei Umschalt-Buttons (nur Rot/Gelb/Grün wählbar,
+    kein freier Farbwert, damit die Ampel-Bedeutung als festes
+    Drei-Zustands-System erhalten bleibt). Ein "Zurücksetzen"-Button je
+    Zeile entfernt die Anpassung wieder (zurück auf automatisch). Wirkt
+    sich sofort überall aus, wo dieselbe Farblogik verwendet wird: Ticket
+    Graph, Dashboard (Domänen-Verteilungs-Balken + farbiger Punkt vor der
+    Domäne in der Ticket-Tabelle) und Dateiverwaltung (Domänen-Übersicht,
+    farbiger Punkt je Gruppen-Kopfzeile).
   - *Testergebnisse* – eingebetteter Bericht der automatisierten Tests
     (Browsertests der Web-App + pytest für das CLI-Tool) aus dem letzten
     Verifikationslauf während der Entwicklung dieser Version, gruppiert
     nach Testgruppe mit Datum und Status je Check (auf-/zuklappbar). Läuft
     nicht live im Browser, sondern ist ein zum Build-Zeitpunkt
     eingebetteter Stand.
-  - Punkte-System, Labels und Benutzerhandbuch-Gliederung sind Konfiguration
-    (kein Sitzungsdatensatz) und bleiben daher auch nach "Sitzung
-    zurücksetzen"/"Alle Daten löschen" erhalten.
+  - Punkte-System, Labels, Benutzerhandbuch-Gliederung und die
+    Farbschema-Overrides sind Konfiguration (kein Sitzungsdatensatz) und
+    bleiben daher auch nach "Sitzung zurücksetzen"/"Alle Daten löschen"
+    erhalten.
 - Detail-HTML-Exports (ein Abschnitt pro Ticket statt einer Tabelle)
   werden von der Web-App **nicht** unterstützt – dafür das CLI-Tool
   verwenden. Word-Exporte (`.docx`) werden dagegen sowohl beim Import

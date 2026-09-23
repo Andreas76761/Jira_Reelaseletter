@@ -27,9 +27,12 @@ function linkItemLegacyDescAttr(desc, direction, targetKey) {
   return `<issuelinktype><name>Link</name><${direction}links desc="${desc}"><issuelink><issuekey id="1">${targetKey}</issuekey></issuelink></${direction}links></issuelinktype>`;
 }
 function ticketXml(opts) {
+  var epicLinkField = opts.epicLink
+    ? `<customfield id="customfield_10207" key="com.pyxis.greenhopper.jira:gh-epic-link"><customfieldname>Epic Link</customfieldname><customfieldvalues><customfieldvalue>${opts.epicLink}</customfieldvalue></customfieldvalues></customfield>`
+    : "";
   return `<item><key>${opts.key}</key><summary>${opts.summary}</summary><description>${opts.summary}</description>` +
     `<status>${opts.status}</status><type>${opts.type || "Task"}</type>` +
-    `<customfields><customfield><customfieldname>Domain</customfieldname><customfieldvalues><customfieldvalue>${opts.domain}</customfieldvalue></customfieldvalues></customfield></customfields>` +
+    `<customfields><customfield><customfieldname>Domain</customfieldname><customfieldvalues><customfieldvalue>${opts.domain}</customfieldvalue></customfieldvalues></customfield>${epicLinkField}</customfields>` +
     (opts.links ? `<issuelinks>${opts.links}</issuelinks>` : "") +
     `</item>`;
 }
@@ -42,6 +45,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   ${ticketXml({ key: "GRAPH-5", summary: "Isoliertes Ticket ohne Verknuepfung", status: "Offen", domain: "Domain A" })}
   ${ticketXml({ key: "GRAPH-6", summary: "Zirkel A", status: "Offen", domain: "Domain C", links: linkItem("GRAPH-6", "is blocked by", "inward", "GRAPH-7") })}
   ${ticketXml({ key: "GRAPH-7", summary: "Zirkel B", status: "Offen", domain: "Domain C", links: linkItem("GRAPH-7", "is blocked by", "inward", "GRAPH-6") })}
+  ${ticketXml({ key: "GRAPH-8", summary: "Epic-Kind von GRAPH-1", status: "Offen", domain: "Domain A", type: "Story", epicLink: "GRAPH-1" })}
 </channel></rss>`;
 
 (async () => {
@@ -81,6 +85,47 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("Platzhalter-Knoten traegt die Klasse 'graph-node-phantom'", !!phantomNode && phantomNode.classList.contains("graph-node-phantom"));
   check("Platzhalter-Knoten zeigt Hinweistext 'nicht geladen'", svg1.includes("nicht geladen"));
   check("Knotenanzahl-Anzeige nennt die Anzahl nicht geladener Tickets", /davon \d+ nicht geladen/.test(doc.getElementById("graph-node-count").textContent));
+
+  // ===================== EPIC: fetter Rahmen + Epic->Kind-Kante (Feld "Epic Link") =====================
+  const epicNodeGroup = doc.querySelector('.graph-node[data-key="GRAPH-1"]');
+  check("GRAPH-1 (Typ Epic) traegt die Klasse 'graph-node-epic'", !!epicNodeGroup && epicNodeGroup.classList.contains("graph-node-epic"));
+  const epicRect = epicNodeGroup && epicNodeGroup.querySelector("rect");
+  check("EPIC-Knoten hat eine deutlich dickere Rahmenstaerke als normale Knoten (fetter Rahmen)",
+    !!epicRect && parseFloat(epicRect.getAttribute("stroke-width")) >= 3.5);
+  check("GRAPH-8 (Epic-Kind ueber Feld 'Epic Link') als Knoten im Graph", svg1.includes("GRAPH-8"));
+  const epicChildNode = doc.querySelector('.graph-node[data-key="GRAPH-8"]');
+  check("GRAPH-8 selbst hat KEINEN fetten Epic-Rahmen (ist kein Epic)", !!epicChildNode && !epicChildNode.classList.contains("graph-node-epic"));
+  if (epicChildNode) {
+    fire(epicChildNode, "click");
+    await wait(100);
+    const epicChildSelText = doc.getElementById("graph-selection-tbody").textContent;
+    check("Auswahltabelle nennt die Epic-Verknüpfung zu GRAPH-1 fuer GRAPH-8", epicChildSelText.includes("Epic-Verknüpfung: GRAPH-1"));
+  }
+  const legendTextEpic = doc.getElementById("graph-legend").textContent;
+  check("Legende nennt 'Epic-Verknüpfung' als Verknuepfungsart", legendTextEpic.includes("Epic-Verknüpfung"));
+
+  // ===================== Neuer "i"-Knopf je Knoten: Beschreibung anpinnen =====================
+  const tooltipPin = doc.getElementById("graph-tooltip");
+  const descBtn1 = doc.querySelector('.graph-desc-btn[data-key="GRAPH-1"]');
+  check("Neuer 'i'-Knopf am Knoten GRAPH-1 vorhanden", !!descBtn1);
+  if (descBtn1) {
+    fire(descBtn1, "click");
+    await wait(50);
+    check("Nach Klick auf 'i': Beschreibungs-Panel sichtbar (angepinnt)", tooltipPin.hidden === false);
+    check("Angepinntes Panel zeigt Inhalt zu GRAPH-1", tooltipPin.textContent.includes("GRAPH-1"));
+    check("Angepinntes Panel nennt den Schließen-Hinweis", tooltipPin.textContent.includes("Schließen"));
+    // Normales Hovern ueber einen ANDEREN Knoten darf das angepinnte Panel NICHT ueberschreiben.
+    const otherNodeForHover = doc.querySelector('.graph-node[data-key="GRAPH-2"]');
+    if (otherNodeForHover) {
+      fire(otherNodeForHover, "mousemove");
+      await wait(50);
+      check("Angepinntes Panel bleibt bei GRAPH-1, auch wenn ueber GRAPH-2 gehovert wird", doc.getElementById("graph-tooltip").textContent.includes("GRAPH-1") && !doc.getElementById("graph-tooltip").textContent.includes("Zweites Ticket"));
+    }
+    // Erneuter Klick auf denselben Knopf schliesst das Panel wieder.
+    fire(doc.querySelector('.graph-desc-btn[data-key="GRAPH-1"]'), "click");
+    await wait(50);
+    check("Erneuter Klick auf 'i' schließt das angepinnte Panel wieder", doc.getElementById("graph-tooltip").hidden === true);
+  }
 
   // ===================== "Nur Tickets mit Abhaengigkeiten" abwaehlen =====================
   const onlyLinkedCb = doc.getElementById("graph-only-linked-checkbox");
@@ -238,6 +283,94 @@ const xml = `<?xml version="1.0"?><rss><channel>
     // Chromium-Umgebung mit Canvas voraus).
     check("Klick auf Bild-Export loest keinen unbehandelten JS-Fehler aus", errors.length === errCountBefore);
   }
+
+  // ===================== Mehrfachauswahl (Strg/Cmd-Klick) -> als Liste speichern =====================
+  function fireCtrlClick(el) { el.dispatchEvent(new win.MouseEvent("click", { bubbles: true, ctrlKey: true })); }
+  const msBar = doc.getElementById("graph-multiselect-count");
+  check("Mehrfachauswahl-Leiste vorhanden, initial leer", msBar.textContent.includes("Strg/Cmd-Klick"));
+  const msSaveBtn = doc.getElementById("graph-multiselect-save-btn");
+  const msClearBtn = doc.getElementById("graph-multiselect-clear-btn");
+  check("'Als Liste speichern'-Button initial deaktiviert (keine Auswahl)", msSaveBtn.disabled === true);
+  const node1 = doc.querySelector('.graph-node[data-key="GRAPH-1"]');
+  const node2bExists = !!doc.querySelector('.graph-node[data-key="GRAPH-2"]');
+  if (node1 && node2bExists) {
+    fireCtrlClick(node1);
+    await wait(50);
+    // Jeder renderTicketGraph()-Aufruf ersetzt das komplette SVG (innerHTML)
+    // - vorher abgefragte Knoten-Elemente sind danach vom Dokument getrennt
+    // und wuerden Klicks NICHT mehr an den Container-Listener bubblen
+    // lassen. Daher nach jedem Render frisch abfragen.
+    fireCtrlClick(doc.querySelector('.graph-node[data-key="GRAPH-2"]'));
+    await wait(50);
+    check("Nach 2x Strg-Klick: Mehrfachauswahl-Leiste nennt 2 Tickets", doc.getElementById("graph-multiselect-count").textContent.includes("2 Ticket"));
+    check("'Als Liste speichern'-Button jetzt aktiviert", doc.getElementById("graph-multiselect-save-btn").disabled === false);
+    check("Beide Knoten tragen die Mehrfachauswahl-Markierung (graph-node-multiselected)",
+      doc.querySelectorAll(".graph-node-multiselected").length === 2);
+    check("Normale Einzelauswahl (Detail-Tabelle) bleibt von Strg-Klick unberührt (kein Absturz/Seiteneffekt)", !!doc.getElementById("graph-selection-tbody"));
+
+    // Strg-Klick auf GRAPH-1 erneut -> aus der Mehrfachauswahl entfernen.
+    fireCtrlClick(doc.querySelector('.graph-node[data-key="GRAPH-1"]'));
+    await wait(50);
+    check("Erneuter Strg-Klick entfernt aus der Mehrfachauswahl (jetzt nur noch 1)", doc.getElementById("graph-multiselect-count").textContent.includes("1 Ticket"));
+    // GRAPH-1 wieder dazu, dann als Liste speichern.
+    fireCtrlClick(doc.querySelector('.graph-node[data-key="GRAPH-1"]'));
+    await wait(50);
+
+    const nameInput = doc.getElementById("graph-multiselect-name-input");
+    nameInput.value = "Graph-Testliste";
+    fire(doc.getElementById("graph-multiselect-save-btn"), "click");
+    await wait(100);
+    check("Nach Speichern: Mehrfachauswahl wieder leer (0 Tickets)", doc.getElementById("graph-multiselect-count").textContent.includes("Strg/Cmd-Klick"));
+    check("'Als Liste speichern'-Button nach dem Speichern wieder deaktiviert", doc.getElementById("graph-multiselect-save-btn").disabled === true);
+
+    doc.querySelector('.nav-item[data-view="listenauswahl"]').click();
+    await wait(100);
+    const listenauswahlText = doc.getElementById("listenauswahl-tbody").textContent;
+    check("Neue Liste 'Graph-Testliste' unter Listenauswahl mit 2 Tickets gespeichert", listenauswahlText.includes("Graph-Testliste") && listenauswahlText.includes("2"));
+    doc.querySelector('.nav-item[data-view="ticketgraph"]').click();
+    await wait(150);
+  }
+  // "Auswahl aufheben"-Button testen (mit frischer Auswahl).
+  const node3 = doc.querySelector('.graph-node[data-key="GRAPH-1"]');
+  if (node3) {
+    fireCtrlClick(node3);
+    await wait(50);
+    check("Vor 'Auswahl aufheben': mind. 1 Ticket ausgewählt", doc.getElementById("graph-multiselect-count").textContent.includes("1 Ticket"));
+    fire(doc.getElementById("graph-multiselect-clear-btn"), "click");
+    await wait(50);
+    check("Nach 'Auswahl aufheben': Mehrfachauswahl wieder leer", doc.getElementById("graph-multiselect-count").textContent.includes("Strg/Cmd-Klick"));
+    check("Keine Knoten mehr mit Mehrfachauswahl-Markierung", doc.querySelectorAll(".graph-node-multiselected").length === 0);
+  }
+
+  // ===================== Zoom/Pan =====================
+  const zoomLevelEl = doc.getElementById("graph-zoom-level");
+  check("Zoom-Stufe initial 100%", zoomLevelEl.textContent === "100%");
+  const svgBeforeZoom = doc.querySelector("#graph-svg-container svg");
+  const widthBeforeZoom = svgBeforeZoom ? parseFloat(svgBeforeZoom.getAttribute("width")) : 0;
+  fire(doc.getElementById("graph-zoom-in-btn"), "click");
+  await wait(50);
+  check("Nach Zoom-In: Zoom-Stufe > 100%", parseInt(doc.getElementById("graph-zoom-level").textContent, 10) > 100);
+  const svgAfterZoomIn = doc.querySelector("#graph-svg-container svg");
+  check("Nach Zoom-In: SVG-Breite (Pixel) größer als zuvor", parseFloat(svgAfterZoomIn.getAttribute("width")) > widthBeforeZoom);
+  fire(doc.getElementById("graph-zoom-reset-btn"), "click");
+  await wait(50);
+  check("Nach 'Zoom zurücksetzen': wieder 100%", doc.getElementById("graph-zoom-level").textContent === "100%");
+  fire(doc.getElementById("graph-zoom-out-btn"), "click");
+  await wait(50);
+  check("Nach Zoom-Out: Zoom-Stufe < 100%", parseInt(doc.getElementById("graph-zoom-level").textContent, 10) < 100);
+  fire(doc.getElementById("graph-zoom-reset-btn"), "click");
+  await wait(50);
+  // Strg+Mausrad zoomt; normales Scrollen (ohne ctrlKey) darf die Zoom-Stufe NICHT aendern.
+  const wheelCtrl = new win.WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: -100, ctrlKey: true });
+  doc.getElementById("graph-svg-container").dispatchEvent(wheelCtrl);
+  await wait(50);
+  check("Strg+Mausrad (deltaY<0) zoomt hinein (> 100%)", parseInt(doc.getElementById("graph-zoom-level").textContent, 10) > 100);
+  fire(doc.getElementById("graph-zoom-reset-btn"), "click");
+  await wait(50);
+  const wheelNoCtrl = new win.WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: -100, ctrlKey: false });
+  doc.getElementById("graph-svg-container").dispatchEvent(wheelNoCtrl);
+  await wait(50);
+  check("Mausrad OHNE Strg/Cmd aendert die Zoom-Stufe NICHT (normales Scrollen bleibt frei)", doc.getElementById("graph-zoom-level").textContent === "100%");
 
   // ===================== Regression: Teil-Import ohne Issue-Links behaelt bestehende Links =====================
   const xmlPartial = `<?xml version="1.0"?><rss><channel><item><key>GRAPH-1</key><status>Fertig</status><type>Task</type></item></channel></rss>`;
