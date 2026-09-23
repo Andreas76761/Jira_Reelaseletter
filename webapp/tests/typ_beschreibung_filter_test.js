@@ -35,7 +35,7 @@ RTYP-1\tOffen\tEpic\tGrosses Vorhaben\tAusführliche Beschreibung des Vorhabens`
   doc.querySelector('.nav-item[data-view="dashboard"]').click();
   let row = Array.from(doc.querySelectorAll("#table-body tr")).find((r) => r.textContent.includes("RTYP-1"));
   check("Releaseinfo-Ticket mit 'Typ'-Spalte gefunden", !!row);
-  check("Releaseinfo: 'Typ'-Spalte wird korrekt als Typ 'Epic' erkannt (nicht mehr '–')", !!row && row.querySelectorAll("td")[6].textContent.trim() === "Epic");
+  check("Releaseinfo: 'Typ'-Spalte wird korrekt als Typ 'Epic' erkannt (nicht mehr '–')", !!row && row.querySelectorAll("td")[7].textContent.trim().endsWith("Epic"));
   check("Releaseinfo: 'Beschreibung'-Spalte landet im description-Feld (nicht nur custom_fields)", !!row && row.querySelectorAll("td")[2].textContent.includes("Ausführliche Beschreibung"));
 
   // ===================== Bugfix: Icon-only Typ-Zelle (nur <img alt="..">, kein Text) wird jetzt gelesen =====================
@@ -57,7 +57,7 @@ RTYP-1\tOffen\tEpic\tGrosses Vorhaben\tAusführliche Beschreibung des Vorhabens`
   check("Icon-only-HTML-Import erfolgreich (kein Absturz)", doc.getElementById("toast").textContent.includes("Import erfolgreich"));
   doc.querySelector('.nav-item[data-view="dashboard"]').click();
   row = Array.from(doc.querySelectorAll("#table-body tr")).find((r) => r.textContent.includes("ICON-1"));
-  check("Icon-only Typ-Zelle: Typ 'Epic' aus img[alt] erkannt (nicht mehr leer)", !!row && row.querySelectorAll("td")[6].textContent.trim() === "Epic");
+  check("Icon-only Typ-Zelle: Typ 'Epic' aus img[alt] erkannt (nicht mehr leer)", !!row && row.querySelectorAll("td")[7].textContent.trim().endsWith("Epic"));
 
   // ===================== Dashboard: Beschreibung rechts von Schlüssel, Datum ohne Uhrzeit =====================
   const xmlQ = `<?xml version="1.0"?><rss><channel>
@@ -89,8 +89,8 @@ RTYP-1\tOffen\tEpic\tGrosses Vorhaben\tAusführliche Beschreibung des Vorhabens`
   check("Dashboard: Beschreibungs-Zelle direkt rechts von Schlüssel-Zelle", q1Cells[1].textContent.trim() === "Q-1" && q1Cells[2].classList.contains("description"));
   check("Dashboard: Beschreibung wird optisch gekürzt (Zelltext kürzer als Original)", q1Cells[2].textContent.length < 100 && q1Cells[2].textContent.includes("…"));
   check("Dashboard: volle Beschreibung im title-Attribut für Hover-Tooltip erhalten", q1Cells[2].getAttribute("title").includes("deutlich länger"));
-  check("Dashboard: Erstellt-Datum ohne Uhrzeit angezeigt ('20/Dez/24', nicht '4:41 PM')", q1Cells[7].textContent.trim() === "20/Dez/24");
-  check("Dashboard: Aktualisiert-Datum ohne Uhrzeit angezeigt ('18/Jun/26', nicht '12:11 PM')", q1Cells[8].textContent.trim() === "18/Jun/26");
+  check("Dashboard: Erstellt-Datum ohne Uhrzeit angezeigt ('20/Dez/24', nicht '4:41 PM')", q1Cells[8].textContent.trim() === "20/Dez/24");
+  check("Dashboard: Aktualisiert-Datum ohne Uhrzeit angezeigt ('18/Jun/26', nicht '12:11 PM')", q1Cells[9].textContent.trim() === "18/Jun/26");
 
   // Sortierung bleibt trotz gekürzter Anzeige nach vollem Zeitstempel (Uhrzeit fließt weiterhin in die Sortierung ein)
   const createdHeader = doc.querySelector('thead th[data-key="created"]');

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.29.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.30.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -186,7 +186,15 @@ anderen Länderformaten (Kennzeichen).
   (optisch gekürzt mit "…", voller Text als Hover-Tooltip) sowie Spalte
   **Typ** (Jira-Feld "Typ" – Epic, Story, Feature, Bug, ...; fehlt der Typ
   im Export wirklich, wird das ehrlich als "–" ausgewiesen statt geraten –
-  die Erkennung selbst wurde robuster gemacht, siehe unten), Erstellt-/
+  die Erkennung selbst wurde robuster gemacht, siehe unten) mit einem
+  **Icon** je erkanntem Importformat (🎯 Epic, ✨ Feature, 🐞 Bug, 🚨
+  Incident, 🔄 Change Request; nicht zuordenbare Typen wie "Story"/
+  "Reporting" bekommen ein neutrales ▪, s. Einstellungen → Importformat)
+  sowie eine neue Spalte **Datenprofil** direkt nach Status: ein 0-100%-
+  Balken, der anzeigt, wie viele der für den erkannten Vorgangstyp
+  erwarteten (aktiven) Spalten am jeweiligen Ticket tatsächlich befüllt
+  sind – "–" wenn der Typ keinem der 5 Importformate zugeordnet werden
+  konnte oder für den Typ noch keine Spaltenliste hinterlegt ist. Erstellt-/
   Aktualisiert-Spalten **ohne Uhrzeit** (nur das Datum, z. B. "20/Dez/24"
   statt "20/Dez/24 4:41 PM" – sortiert wird weiterhin nach dem vollen
   Zeitstempel, nur die Anzeige ist gekürzt), Ticket-Detailansicht (18
@@ -794,6 +802,25 @@ anderen Länderformaten (Kennzeichen).
   relevanten Navigationsbereichen (inkl. Lücken) an – hier bewusst als
   Textbaustein statt als Ticket-Filter, da kein belastbares
   Rolle-zu-Ticket-Datenfeld existiert.
+- **Importformat (Spalten je Vorgangstyp)** – Einstellungen → eigener
+  Bereich "Importformat": legt je Vorgangstyp (**Epic**, **Feature**,
+  **Bug**, **Incident**, **Change Request**) fest, welche Spalten aus dem
+  Jira-Export erwartet werden – jede Spalte einzeln **aktivierbar/
+  deaktivierbar**, **umbenennbar**, **löschbar**; neue Spalten lassen sich
+  einzeln oder per **Mehrfach-Einfügen** (eine pro Zeile, oder Tab-/Komma-
+  getrennt – z. B. direkt aus Excel eingefügt) ergänzen. Nur "Change
+  Request" ist mit einer echten, ca. 120 Spalten umfassenden Liste (aus
+  einem realen Jira-Tabellenexport) vorbefüllt; die anderen 4 Typen starten
+  bewusst leer und werden bei Bedarf nachgereicht. Deaktivierte Spalten
+  werden beim Einlesen (Einzel-/Massenupload) NICHT übernommen – dieser
+  Filter greift NACH der bestehenden automatischen Bereinigung
+  personenbezogener Daten (Pseudonymisierung/Redaktion läuft davon
+  unabhängig immer zuerst) und kann Daten daher nur **entfernen**, nie die
+  Bereinigung umgehen; er wirkt zudem nur auf künftige Importe, nicht
+  rückwirkend auf bereits geladene Tickets. Vorgangstyp und Icon werden
+  automatisch anhand des Jira-Felds "Vorgangstyp" erkannt (gängige
+  deutsche/englische Schreibweisen) und zusammen mit den aktiven Spalten
+  zur Grundlage des **Datenprofils** im Dashboard (s. oben).
 - **Clickanweisung** – bewusst **kein** Ticket-Protokoll: erzeugt eine
   Bedienungsanleitung für die Benutzung in oneSCM, zusammengestellt aus
   den Beschreibungstexten der ausgewählten Tickets und nach Domäne
