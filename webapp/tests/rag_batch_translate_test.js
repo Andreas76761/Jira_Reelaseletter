@@ -119,17 +119,20 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("Nach neuer Generierung: Ausgabe wieder auf Deutsch (kein Alt-Zustand der Übersetzung)", doc.getElementById("rag-output").textContent !== "This is the translated text.");
   check("Nach neuer Generierung: 'Übersetzen'-Button-Text zurückgesetzt", doc.getElementById("rag-translate-btn").textContent === "Übersetzen (Englisch)");
 
-  // ===================== Obergrenze: > 800 Tickets werden clientseitig abgelehnt (kein API-Call) =====================
+  // ===================== Obergrenze: > 10000 Tickets werden clientseitig abgelehnt (kein API-Call) =====================
   let capItems = "";
-  for (let i = 0; i < 250; i++) {
+  for (let i = 0; i < 9500; i++) {
     capItems += `<item><key>CAP-${i}</key><summary>Cap-Ticket ${i}</summary><description>Kurz ${i}</description><status>Offen</status><type>Task</type></item>`;
   }
   const xmlCap = `<?xml version="1.0"?><rss><channel>${capItems}</channel></rss>`;
   doc.querySelector('.nav-item[data-view="import"]').click();
   doc.querySelector('.import-tab[data-mode="massenupload"]').click();
-  Object.defineProperty(input, "files", { value: [new win.File([xmlCap], "cap250.xml", { type: "application/xml" })], configurable: true });
+  Object.defineProperty(input, "files", { value: [new win.File([xmlCap], "cap9500.xml", { type: "application/xml" })], configurable: true });
   fire(input, "change");
-  await wait(500);
+  // Grosszuegige Wartezeit: das Einlesen/Aufbereiten von ~9500 zusaetzlichen
+  // Tickets (insgesamt >10000 mit den Demo-/Batch-Tickets) braucht spuerbar
+  // laenger als die kleinen Fixtures anderswo in dieser Datei.
+  await wait(4000);
 
   doc.querySelector('.nav-item[data-view="verarbeitung"]').click();
   doc.querySelector('.import-tab[data-vsub="rag"]').click();
@@ -137,16 +140,16 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   Array.from(doc.getElementById("rag-domain-select").options).forEach((o) => { o.selected = false; });
   Array.from(doc.getElementById("rag-status-select").options).forEach((o) => { o.selected = false; });
   fire(doc.getElementById("rag-extract-btn"), "click");
-  await wait(100);
+  await wait(300);
   const extractedTotal = parseInt(doc.getElementById("rag-extract-count").textContent, 10);
-  check("Gesamtauswahl liegt jetzt über der 800er-Grenze (663 Demo + 16 + 250)", extractedTotal > 800);
-  check("Extraktion selbst zeigt bereits proaktiv den Hinweis auf die 800er-Grenze", doc.getElementById("rag-status-note").textContent.includes("maximal 800 Tickets"));
+  check("Gesamtauswahl liegt jetzt über der 10000er-Grenze (663 Demo + 16 + 9500)", extractedTotal > 10000);
+  check("Extraktion selbst zeigt bereits proaktiv den Hinweis auf die 10000er-Grenze", doc.getElementById("rag-status-note").textContent.includes("maximal 10000 Tickets"));
 
   sampleCalls = [];
   fire(doc.getElementById("rag-generate-summary-btn"), "click");
   await wait(150);
-  check("Über 800 Tickets: Generierung wird clientseitig abgelehnt, KEIN Claude-Aufruf", sampleCalls.length === 0);
-  check("Fehlermeldung nennt die 800er-Grenze", doc.getElementById("rag-status-note").textContent.includes("Maximal 800"));
+  check("Über 10000 Tickets: Generierung wird clientseitig abgelehnt, KEIN Claude-Aufruf", sampleCalls.length === 0);
+  check("Fehlermeldung nennt die 10000er-Grenze", doc.getElementById("rag-status-note").textContent.includes("Maximal 10000"));
   check("Buttons nach Ablehnung weiterhin nutzbar (kein Deadlock)", !doc.getElementById("rag-generate-summary-btn").disabled);
 
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }

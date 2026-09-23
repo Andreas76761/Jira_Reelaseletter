@@ -1408,7 +1408,7 @@
               <div style="flex:1;"><label for="rag-date-to">bis</label><input type="date" id="rag-date-to"></div>
             </div>
             <button class="btn primary" id="rag-extract-btn" type="button" style="margin-top:10px;">Rohdaten extrahieren</button>
-            <p class="step-note">Die Generierung verarbeitet bis zu 800 Tickets automatisch in mehreren Batches (Claude-Anfragen je Zeichen-Budget, anschließend zu einem Text zusammengeführt); darüber Auswahl (Domäne/Status/Zeitraum) weiter eingrenzen.</p>
+            <p class="step-note">Die Generierung verarbeitet bis zu 10000 Tickets automatisch in mehreren Batches (Claude-Anfragen je Zeichen-Budget, anschließend zu einem Text zusammengeführt); darüber Auswahl (Domäne/Status/Zeitraum) weiter eingrenzen.</p>
             <div class="stat-line" id="rag-extract-summary" style="margin-top:10px;" hidden>
               <div class="chip"><b class="mono" id="rag-extract-count">0</b> Tickets extrahiert</div>
             </div>
@@ -4042,7 +4042,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.33.0";
+  var APP_VERSION = "2.34.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -12408,7 +12408,7 @@
   // mehreren Batches verarbeitet (s. chunkRagRows/ragRunBatches), statt wie
   // zuvor immer alle Rohdaten in einem einzigen Claude-Aufruf zu senden, was
   // bei vielen Tickets mit "prompt_too_large" fehlschlug.
-  var RAG_MAX_TICKETS = 800;
+  var RAG_MAX_TICKETS = 10000;
   var RAG_BATCH_CHAR_BUDGET = 9000;
   // Grobe, zeichenbasierte Tokenschaetzung (Daumenregel ~4 Zeichen/Token).
   // Die sample()-Schnittstelle liefert KEINE echte Token-/Nutzungszahl
