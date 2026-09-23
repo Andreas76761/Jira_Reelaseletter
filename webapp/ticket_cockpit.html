@@ -168,6 +168,15 @@
   .comment-hint { color: var(--text-muted); font-style: italic; }
   .inactive-import-row { opacity: 0.55; }
   .inactive-import-row td { font-style: italic; }
+  .checkbox-label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
+  .graph-svg-wrap { overflow: auto; max-height: 640px; padding: 12px; }
+  .graph-legend { display: flex; flex-direction: column; gap: 4px; padding: 10px 14px; margin-top: 8px; font-size: 12.5px; }
+  .graph-legend-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .graph-legend-chip { display: inline-flex; align-items: center; gap: 5px; }
+  .graph-legend-chip.muted { color: var(--text-muted); font-style: italic; }
+  .graph-legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .graph-legend-line { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
+  .graph-node:hover rect:first-child { stroke: #1c7ed6; }
   .chip-list { display: flex; flex-wrap: wrap; gap: 8px; }
   .label-chip {
     display: inline-flex; align-items: center; gap: 6px; padding: 5px 6px 5px 12px; border-radius: 100px;
@@ -538,6 +547,7 @@
     </div>
     <ul class="nav-list" id="nav-list">
       <li><button class="nav-item" data-view="dashboard" type="button">Dashboard</button></li>
+      <li><button class="nav-item" data-view="ticketgraph" type="button">Ticket Graph</button></li>
       <li><button class="nav-item" data-view="import" type="button">Import</button></li>
       <li><button class="nav-item" data-view="dateiverwaltung" type="button">Dateiverwaltung<span class="count-badge" id="nav-badge-changes" hidden>0</span></button></li>
       <li><button class="nav-item" data-view="listenauswahl" type="button">Listenauswahl<span class="count-badge" id="nav-badge-lists" hidden>0</span></button></li>
@@ -651,6 +661,37 @@
               <tbody id="table-body"></tbody>
             </table>
             <div class="empty-state" id="empty-state" hidden>Keine Tickets für diese Filterkombination.</div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= Ticket Graph ================= -->
+      <section class="view-panel" data-view-panel="ticketgraph" hidden>
+        <div class="view-head"><h2>Ticket Graph</h2><p class="desc">Abhängigkeiten zwischen Tickets (Vorgänger, Nachfolger, Testtickets – aus Jira "Issue Links") als Wissensgraph. Knoten farbig nach Domäne, Status als Ampel (rot/gelb/grün) – beide Farbschemata unter Einstellungen editierbar. Abhängigkeiten sind nur aus Jira-XML-Exports verfügbar (HTML-Tabellen-/Einzelticket-Exporte enthalten diese Information nicht); es werden nur die aktuell aktiven Dateien berücksichtigt (Dateiverwaltung).</p></div>
+
+        <section>
+          <div class="controls">
+            <select id="graph-domain-select" multiple size="4" aria-label="Domäne (Mehrfachauswahl, leer = alle)"></select>
+            <select id="graph-status-select" multiple size="4" aria-label="Status (Mehrfachauswahl, leer = alle)"></select>
+            <label class="checkbox-label"><input type="checkbox" id="graph-only-linked-checkbox" checked> Nur Tickets mit Abhängigkeiten anzeigen</label>
+            <span class="spacer"></span>
+            <span class="result-count" id="graph-node-count"></span>
+          </div>
+          <div class="panel graph-legend" id="graph-legend"></div>
+          <div class="panel graph-svg-wrap">
+            <div id="graph-svg-container"></div>
+            <div class="empty-state" id="graph-empty-state" hidden>Keine Tickets mit erkannten Abhängigkeiten in der aktuellen Auswahl – Filter anpassen, "Nur Tickets mit Abhängigkeiten" abwählen, oder eine Jira-XML-Datei mit Issue-Links importieren.</div>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">Ausgewähltes Ticket</p>
+          <div class="panel table-wrap">
+            <table class="simple-table" id="graph-selection-table">
+              <thead><tr><th>Ticket</th><th>Status</th><th>Domäne</th><th>Beschreibung</th><th>Verknüpfungen</th></tr></thead>
+              <tbody id="graph-selection-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="graph-selection-empty">Kein Ticket ausgewählt – auf einen Knoten im Graph klicken.</div>
           </div>
         </section>
       </section>
@@ -3442,7 +3483,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.13.1";
+  var APP_VERSION = "2.14.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -3481,7 +3522,15 @@
       key: key, summary: "", issue_type: null, status: null, priority: null, project: null,
       resolution: null, assignee: null, reporter: null, created: null, updated: null,
       labels: [], components: [], fix_versions: [], description: "", comments: [],
-      watchers: [], custom_fields: {}
+      watchers: [], custom_fields: {},
+      // Abhaengigkeiten zu anderen Tickets (Jira "Issue Links") - je Eintrag
+      // { key: "<verlinktes Ticket>", verb: "<roher Jira-Linktext, z.B.
+      // 'is blocked by'>", category: "predecessor"|"successor"|"test"|"other" }.
+      // category ist eine Best-Effort-Einordnung (s. classifyLinkDesc()) -
+      // nur aus XML-Exports befuellt (s. parseJiraXml), da HTML-Tabellen-
+      // exporte und Einzelticket-Detailseiten keine strukturierten Issue-
+      // Links liefern.
+      issuelinks: []
     };
   }
 
@@ -3551,6 +3600,53 @@
     var t = el.textContent.trim();
     return t || null;
   }
+
+  // Best-Effort-Einordnung eines Jira-Issue-Link-Textes (z. B. "is blocked
+  // by", "blocks", "tests", "wird getestet von") in eine der drei fachlich
+  // benannten Kategorien fuer den Ticket-Graph (Vorgänger/Nachfolger/
+  // Testticket) - deckt sowohl die deutschen als auch englischen
+  // Standardformulierungen ab. Jira selbst kennt "Vorgänger"/"Nachfolger"
+  // NICHT als festen Linktyp-Namen (das sind meist projektspezifisch
+  // angelegte Linktypen, z. B. ueber ein Gantt-/Projektplan-Plugin) - diese
+  // Zuordnung ist daher ausdrücklich ein Vorschlag auf Basis gängiger
+  // Formulierungen, keine Jira-Standard-Garantie. Nicht erkannter Text
+  // landet ehrlich in "other" (wird im Graph trotzdem angezeigt, nur ohne
+  // eigene Kategorie-Farbe/Legende) statt geraten einer der drei
+  // Kategorien zugeschlagen zu werden.
+  var LINK_CATEGORY_PATTERNS = [
+    { category: "predecessor", re: /vorgänger|vorgaenger|predecessor|blocked by|depends on|abhängig von|abhaengig von|has to be done after/i },
+    { category: "successor", re: /nachfolger|successor|^blocks$|blockiert|has to be done before/i },
+    { category: "test", re: /test/i }
+  ];
+  function classifyLinkDesc(desc) {
+    var d = (desc || "").trim();
+    for (var i = 0; i < LINK_CATEGORY_PATTERNS.length; i++) {
+      if (LINK_CATEGORY_PATTERNS[i].re.test(d)) return LINK_CATEGORY_PATTERNS[i].category;
+    }
+    return "other";
+  }
+  // Liest <issuelinks><issuelinktype><name>...</name><outwardlinks desc="...">
+  // <issuelink><issuekey>KEY</issuekey></issuelink>...</outwardlinks>
+  // <inwardlinks desc="...">...</inwardlinks></issuelinktype>...</issuelinks>
+  // (Standard-Jira-XML-Exportschema) aus einem <item> aus - sowohl outward-
+  // als auch inwardlinks (jeweils mit ihrem eigenen "desc"-Verb-Text, z. B.
+  // "blocks" outward / "is blocked by" inward fuer denselben Linktyp).
+  function parseIssueLinksFromXmlItem(item) {
+    var links = [];
+    item.querySelectorAll("issuelinks issuelinktype").forEach(function (linkType) {
+      ["outwardlinks", "inwardlinks"].forEach(function (dir) {
+        var dirEl = linkType.querySelector(dir);
+        if (!dirEl) return;
+        var desc = dirEl.getAttribute("desc") || "";
+        dirEl.querySelectorAll("issuelink issuekey").forEach(function (keyEl) {
+          var linkedKey = keyEl.textContent.trim();
+          if (!linkedKey) return;
+          links.push({ key: linkedKey, verb: desc, category: classifyLinkDesc(desc) });
+        });
+      });
+    });
+    return links;
+  }
   function parseJiraXml(doc) {
     var items = doc.querySelectorAll("item");
     if (!items.length) return null;
@@ -3589,6 +3685,7 @@
         var values = Array.prototype.map.call(cf.querySelectorAll("customfieldvalues customfieldvalue"), function (v) { return v.textContent.trim(); }).filter(Boolean);
         if (values.length) ticket.custom_fields[nameEl.textContent.trim()] = values.join("; ");
       });
+      ticket.issuelinks = parseIssueLinksFromXmlItem(item);
       tickets.push(ticket);
     });
     return tickets;
@@ -4260,6 +4357,42 @@
     return "backlog";
   }
 
+  /* ============ App-weites Farbschema: Domänen-Farben + Status-Ampel ============
+     Zwei unabhaengige Achsen, beide in Einstellungen editierbar
+     (app.domainColors/app.statusColors, s. Teil "Einstellungen: Farbschema"):
+     - Domäne -> eine von 16 kategorialen Farben (automatisch stabil per
+       Namens-Hash zugewiesen, bis der Nutzer eine eigene Farbe waehlt).
+       Die Palette meidet bewusst reine Rot/Gelb/Gruen-Toene, damit keine
+       Domänenfarbe mit der Status-Ampel verwechselt werden kann.
+     - Status -> Ampel-Kategorie rot/gelb/gruen (Standard aus bucketFor()
+       abgeleitet: erledigt=gruen, in Bearbeitung/offen=gelb,
+       blockiert/abgebrochen=rot; ebenfalls per Status uebersteuerbar). */
+  var DOMAIN_COLOR_PALETTE = [
+    "#4C6EF5", "#7048E8", "#0CA678", "#F76707", "#1098AD", "#AE3EC9",
+    "#3B5BDB", "#0B7285", "#E8590C", "#5F3DC4", "#087F5B", "#862E9C",
+    "#1864AB", "#2B8A3E", "#D9480F", "#5C940D"
+  ];
+  function hashString(s) {
+    var h = 0;
+    for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; }
+    return Math.abs(h);
+  }
+  function colorForDomain(domain) {
+    var d = domain || "";
+    if (app.domainColors[d]) return app.domainColors[d];
+    if (!d) return "#868E96";
+    return DOMAIN_COLOR_PALETTE[hashString(d) % DOMAIN_COLOR_PALETTE.length];
+  }
+  var AMPEL_HEX = { red: "#E03131", yellow: "#F2B705", green: "#2F9E44" };
+  var AMPEL_LABEL = { red: "Rot", yellow: "Gelb", green: "Grün" };
+  var BUCKET_TO_AMPEL = { done: "green", progress: "yellow", backlog: "yellow", blocked: "red", cancelled: "red" };
+  function statusAmpelCategory(status) {
+    var s = status || "";
+    if (app.statusColors[s]) return app.statusColors[s];
+    return BUCKET_TO_AMPEL[bucketFor(s)] || "yellow";
+  }
+  function statusAmpelHex(status) { return AMPEL_HEX[statusAmpelCategory(status)]; }
+
   function parseJiraDate(s) {
     if (!s) return 0;
     var m = /(\d{2})\/(\w{3})\/(\d{2})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?/.exec(s);
@@ -4356,6 +4489,8 @@
     "release-missing-wrap", "release-missing-table", "release-missing-tbody",
     "jiraliste-count", "jiraliste-tbody",
     "domainoverview-domain-count", "domainoverview-ticket-count", "domainoverview-tbody", "domainoverview-empty",
+    "graph-domain-select", "graph-status-select", "graph-only-linked-checkbox", "graph-node-count",
+    "graph-legend", "graph-svg-container", "graph-empty-state", "graph-selection-tbody", "graph-selection-empty",
     "rag-domain-select", "rag-status-select", "rag-label-category-select", "rag-outline-select", "rag-date-from", "rag-date-to", "rag-extract-btn",
     "rag-extract-summary", "rag-extract-count", "rag-extract-wrap", "rag-extract-tbody", "rag-export-row",
     "rag-generate-summary-btn", "rag-generate-fliesstext-btn", "rag-stop-btn", "rag-resume-btn", "rag-status-note",
@@ -4464,7 +4599,17 @@
     // wird beim Verarbeiten per Text-Abgleich (wie Labels) automatisch
     // Tickets zugeordnet - siehe outlineSeedData()/computeAutoOutline().
     // Ebenfalls Konfiguration, kein Sitzungsdatensatz.
-    outline: outlineSeedData()
+    outline: outlineSeedData(),
+    // Farbschema (Einstellungen): je Domäne eine frei waehlbare Farbe (leer =
+    // automatisch aus DOMAIN_COLOR_PALETTE zugewiesen, s. colorForDomain()),
+    // je Status eine Ampel-Kategorie rot/gelb/gruen (leer = automatisch aus
+    // bucketFor() abgeleitet, s. statusAmpelCategory()). Wird u. a. vom
+    // Ticket-Graph genutzt, ist aber als App-weites Farbschema gedacht
+    // (Dashboard/Domänen-Übersicht etc.). Konfiguration, kein
+    // Sitzungsdatensatz - bleibt auch bei "Sitzung zurücksetzen"/"Alle Daten
+    // löschen" erhalten.
+    domainColors: {},
+    statusColors: {}
   };
 
   function addLog(message) {
@@ -5310,6 +5455,8 @@
     renderListenauswahlPreview();
     renderAssignmentPanel();
     populateOutlineDomainDatalist();
+    graphPopulateSelects();
+    renderTicketGraph();
   }
 
   function buildFormatCallout() {
@@ -7215,6 +7362,257 @@
     }).join("");
     els.domainoverviewTbody.innerHTML = html;
     els.domainoverviewEmpty.hidden = totalTickets > 0;
+  }
+
+  /* ============ Ticket Graph: Knowledge-Graph aus Issue-Links ============
+     Zeigt Abhaengigkeiten zwischen Tickets (Vorgänger/Nachfolger/Testticket,
+     s. classifyLinkDesc()) als Graph: Knoten = Tickets (Domänenfarbe +
+     Status-Ampel, s. Farbschema oben), Kanten = Issue-Links. Layout: ein
+     einfaches Schichten-Layout (longest-path von Vorgänger-Wurzeln durch
+     die predecessor/successor-Kanten) statt einer generischen Force-
+     Simulation - fuer Abhaengigkeitsketten deutlich lesbarer (Fluss klar
+     erkennbar von links nach rechts), ohne neue Bibliothek (reines
+     selbst erzeugtes SVG, wie beim Prozessbild - nutzt dessen Helfer
+     svgWrapText/svgLimitLines/svgArrowMarkerDefs mit, s. Teil 12). */
+  var graphSelectedKey = null;
+
+  function graphScopeTickets() { return app.tickets; }
+
+  function graphBuildData() {
+    var domains = selectedValues(els.graphDomainSelect);
+    var statuses = selectedValues(els.graphStatusSelect);
+    var onlyLinked = els.graphOnlyLinkedCheckbox.checked;
+    var byKey = {};
+    graphScopeTickets().forEach(function (t) { byKey[t.key] = t; });
+
+    var candidateKeys = {};
+    graphScopeTickets().forEach(function (t) {
+      if (domains.length && domains.indexOf(t.domain) === -1) return;
+      if (statuses.length && statuses.indexOf(t.status) === -1) return;
+      candidateKeys[t.key] = true;
+    });
+
+    // Verlinkte Nachbarn werden auch dann als Knoten aufgenommen, wenn sie
+    // selbst nicht zum Domäne-/Status-Filter passen (sonst wuerden Kanten
+    // "ins Leere" fuehren) - nur Links zu Tickets, die GAR NICHT im
+    // aktuellen Bestand vorhanden sind (anderes Projekt, nicht importiert),
+    // werden ehrlich weggelassen statt einen Phantom-Knoten zu erzeugen.
+    var nodeKeys = {};
+    var edges = [];
+    var seenEdge = {};
+    Object.keys(candidateKeys).forEach(function (key) {
+      var t = byKey[key];
+      var links = (t.raw && t.raw.issuelinks) || [];
+      links.forEach(function (l) {
+        if (!byKey[l.key]) return;
+        nodeKeys[key] = true; nodeKeys[l.key] = true;
+        var edgeKey = key + "|" + l.key + "|" + l.category;
+        if (seenEdge[edgeKey]) return;
+        seenEdge[edgeKey] = true;
+        edges.push({ from: key, to: l.key, category: l.category, verb: l.verb });
+      });
+    });
+    if (!onlyLinked) Object.keys(candidateKeys).forEach(function (k) { nodeKeys[k] = true; });
+
+    var nodes = Object.keys(nodeKeys).sort().map(function (k) { return byKey[k]; }).filter(Boolean);
+    return { nodes: nodes, edges: edges, byKey: byKey };
+  }
+
+  // Schichten-Tiefe je Knoten ueber den laengsten Pfad durch die
+  // predecessor/successor-Kanten (Test-/sonstige Verknuepfungen definieren
+  // keine zeitliche Reihenfolge, beeinflussen die Tiefe nicht). Ein
+  // Zirkelbezug (A Vorgänger von B, B Vorgänger von A) wird erkannt und an
+  // der Stelle einfach gekappt (0 verankert) statt in eine Endlosrekursion
+  // zu laufen - der Graph bleibt damit immer darstellbar, auch bei
+  // widerspruechlichen Daten.
+  function graphComputeLayout(nodes, edges) {
+    var incoming = {};
+    nodes.forEach(function (n) { incoming[n.key] = []; });
+    edges.forEach(function (e) {
+      if (e.category === "predecessor" && incoming[e.from]) incoming[e.from].push(e.to);
+      else if (e.category === "successor" && incoming[e.to]) incoming[e.to].push(e.from);
+    });
+    var depth = {}, visiting = {};
+    function computeDepth(key) {
+      if (depth[key] != null) return depth[key];
+      if (visiting[key]) return 0;
+      visiting[key] = true;
+      var d = 0;
+      (incoming[key] || []).forEach(function (p) {
+        if (incoming[p]) d = Math.max(d, computeDepth(p) + 1);
+      });
+      visiting[key] = false;
+      depth[key] = d;
+      return d;
+    }
+    nodes.forEach(function (n) { computeDepth(n.key); });
+
+    var columns = {};
+    nodes.forEach(function (n) {
+      var d = depth[n.key] || 0;
+      (columns[d] = columns[d] || []).push(n);
+    });
+    var colW = 220, rowH = 76, marginX = 30, marginY = 30;
+    var positions = {};
+    var depthKeys = Object.keys(columns).map(Number).sort(function (a, b) { return a - b; });
+    depthKeys.forEach(function (d) {
+      columns[d].forEach(function (n, i) {
+        positions[n.key] = { x: marginX + d * colW, y: marginY + i * rowH };
+      });
+    });
+    var maxDepth = depthKeys.length ? depthKeys[depthKeys.length - 1] : 0;
+    var maxRows = Math.max.apply(null, depthKeys.map(function (d) { return columns[d].length; }).concat([1]));
+    return {
+      positions: positions,
+      width: marginX * 2 + (maxDepth + 1) * colW,
+      height: marginY * 2 + maxRows * rowH
+    };
+  }
+
+  var GRAPH_NODE_W = 190, GRAPH_NODE_H = 58;
+  var GRAPH_EDGE_STYLE = {
+    predecessor: { color: "#495057", dash: "" },
+    successor: { color: "#495057", dash: "" },
+    test: { color: "#AE3EC9", dash: "5,4" },
+    other: { color: "#ADB5BD", dash: "2,3" }
+  };
+  var GRAPH_CATEGORY_LABEL = { predecessor: "Vorgänger", successor: "Nachfolger", test: "Testticket", other: "Verknüpft" };
+
+  function graphEdgeEndpoints(fromPos, toPos) {
+    // Gerade Linie von Knotenmitte zu Knotenmitte, am Rand der Knoten-Box
+    // gekappt (Pfeilspitze soll am Rand ankommen, nicht mitten im Knoten).
+    var a = { x: fromPos.x + GRAPH_NODE_W / 2, y: fromPos.y + GRAPH_NODE_H / 2 };
+    var b = { x: toPos.x + GRAPH_NODE_W / 2, y: toPos.y + GRAPH_NODE_H / 2 };
+    var dx = b.x - a.x, dy = b.y - a.y;
+    var len = Math.sqrt(dx * dx + dy * dy) || 1;
+    var ux = dx / len, uy = dy / len;
+    var halfW = GRAPH_NODE_W / 2 + 4, halfH = GRAPH_NODE_H / 2 + 4;
+    return { x1: a.x + ux * halfW, y1: a.y + uy * halfH, x2: b.x - ux * halfW, y2: b.y - uy * halfH };
+  }
+
+  function graphRenderSvg(nodes, edges, layout) {
+    var defsInner = ["predecessor", "successor", "test", "other"].map(function (cat) {
+      return svgArrowMarkerDefs("graphArrow-" + cat, GRAPH_EDGE_STYLE[cat].color).replace(/^<defs>|<\/defs>$/g, "");
+    }).join("");
+    var parts = ["<defs>" + defsInner + "</defs>"];
+
+    edges.forEach(function (e) {
+      var fromPos = layout.positions[e.from], toPos = layout.positions[e.to];
+      if (!fromPos || !toPos) return;
+      var style = GRAPH_EDGE_STYLE[e.category] || GRAPH_EDGE_STYLE.other;
+      var p = graphEdgeEndpoints(fromPos, toPos);
+      parts.push(
+        '<line x1="' + p.x1 + '" y1="' + p.y1 + '" x2="' + p.x2 + '" y2="' + p.y2 + '" stroke="' + style.color +
+        '" stroke-width="2"' + (style.dash ? ' stroke-dasharray="' + style.dash + '"' : "") +
+        ' marker-end="url(#graphArrow-' + e.category + ')" opacity="0.85"></line>'
+      );
+    });
+
+    nodes.forEach(function (n) {
+      var pos = layout.positions[n.key];
+      if (!pos) return;
+      var selected = n.key === graphSelectedKey;
+      var domainColor = colorForDomain(n.domain);
+      var ampel = statusAmpelHex(n.status);
+      var descLines = svgLimitLines(svgWrapText(n.summary || n.description || "", GRAPH_NODE_W - 40, 10.5), 1);
+      parts.push(
+        '<g class="graph-node" data-key="' + escapeHtml(n.key) + '">' +
+        '<rect x="' + pos.x + '" y="' + pos.y + '" width="' + GRAPH_NODE_W + '" height="' + GRAPH_NODE_H +
+          '" rx="8" fill="#ffffff" stroke="' + (selected ? "#1c7ed6" : "#dee2e6") + '" stroke-width="' + (selected ? 3 : 1.5) + '"></rect>' +
+        '<rect x="' + pos.x + '" y="' + pos.y + '" width="6" height="' + GRAPH_NODE_H + '" rx="3" fill="' + domainColor + '"></rect>' +
+        '<circle cx="' + (pos.x + GRAPH_NODE_W - 14) + '" cy="' + (pos.y + 14) + '" r="7" fill="' + ampel + '" stroke="#ffffff" stroke-width="1.5"></circle>' +
+        '<text x="' + (pos.x + 16) + '" y="' + (pos.y + 21) + '" font-size="12.5" font-weight="700" fill="#1a1a1a">' + escapeHtml(n.key) + "</text>" +
+        (descLines.length ? '<text x="' + (pos.x + 16) + '" y="' + (pos.y + 38) + '" font-size="10.5" fill="#5b6579">' + escapeHtml(descLines[0]) + "</text>" : "") +
+        '<text x="' + (pos.x + 16) + '" y="' + (pos.y + GRAPH_NODE_H - 8) + '" font-size="9.5" fill="' + domainColor + '" font-weight="600">' +
+          escapeHtml(truncate(n.domain || "Ohne Domäne", 24)) + "</text>" +
+        "</g>"
+      );
+    });
+
+    return '<svg viewBox="0 0 ' + layout.width + " " + layout.height + '" width="' + layout.width + '" height="' + layout.height +
+      '" xmlns="http://www.w3.org/2000/svg">' + parts.join("") + "</svg>";
+  }
+
+  function graphSelectionTicket() {
+    if (!graphSelectedKey) return null;
+    return graphScopeTickets().filter(function (t) { return t.key === graphSelectedKey; })[0] || null;
+  }
+  function renderGraphSelectionTable() {
+    var t = graphSelectionTicket();
+    if (!t) {
+      els.graphSelectionTbody.innerHTML = "";
+      els.graphSelectionEmpty.hidden = false;
+      return;
+    }
+    els.graphSelectionEmpty.hidden = true;
+    var links = (t.raw && t.raw.issuelinks) || [];
+    var linksText = links.length
+      ? links.map(function (l) { return (GRAPH_CATEGORY_LABEL[l.category] || l.category) + ": " + l.key; }).join(", ")
+      : "–";
+    els.graphSelectionTbody.innerHTML = "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(t.status || "–") +
+      "</td><td>" + escapeHtml(t.domain || "–") + "</td><td>" + (t.description ? escapeHtml(truncate(t.description, 200)) : "&ndash;") +
+      "</td><td>" + escapeHtml(linksText) + "</td></tr>";
+  }
+  function renderGraphLegend(nodes) {
+    var domainsPresent = [], seen = {};
+    nodes.forEach(function (n) { if (n.domain && !seen[n.domain]) { seen[n.domain] = true; domainsPresent.push(n.domain); } });
+    var domainHtml = domainsPresent.length
+      ? domainsPresent.map(function (d) {
+          return '<span class="graph-legend-chip"><span class="graph-legend-dot" style="background:' + colorForDomain(d) + '"></span>' + escapeHtml(d) + "</span>";
+        }).join("")
+      : '<span class="graph-legend-chip muted">Keine Domäne in der aktuellen Auswahl</span>';
+    var ampelHtml = ["green", "yellow", "red"].map(function (cat) {
+      return '<span class="graph-legend-chip"><span class="graph-legend-dot" style="background:' + AMPEL_HEX[cat] + '"></span>' + AMPEL_LABEL[cat] + "</span>";
+    }).join("");
+    var edgeHtml = ["predecessor", "successor", "test"].map(function (cat) {
+      return '<span class="graph-legend-chip"><span class="graph-legend-line" style="background:' + GRAPH_EDGE_STYLE[cat].color + '"></span>' + GRAPH_CATEGORY_LABEL[cat] + "</span>";
+    }).join("");
+    els.graphLegend.innerHTML =
+      '<div class="graph-legend-row"><b>Domäne:</b> ' + domainHtml + "</div>" +
+      '<div class="graph-legend-row"><b>Status:</b> ' + ampelHtml + "</div>" +
+      '<div class="graph-legend-row"><b>Verknüpfung:</b> ' + edgeHtml + "</div>";
+  }
+
+  function renderTicketGraph() {
+    var data = graphBuildData();
+    els.graphNodeCount.textContent = data.nodes.length + " Ticket(s), " + data.edges.length + " Verknüpfung(en)";
+    renderGraphLegend(data.nodes);
+    if (!data.nodes.length) {
+      els.graphSvgContainer.innerHTML = "";
+      els.graphEmptyState.hidden = false;
+      graphSelectedKey = null;
+      renderGraphSelectionTable();
+      return;
+    }
+    els.graphEmptyState.hidden = true;
+    if (graphSelectedKey && !data.byKey[graphSelectedKey]) graphSelectedKey = null;
+    if (!graphSelectedKey) graphSelectedKey = data.nodes[0].key;
+    var layout = graphComputeLayout(data.nodes, data.edges);
+    els.graphSvgContainer.innerHTML = graphRenderSvg(data.nodes, data.edges, layout);
+    renderGraphSelectionTable();
+  }
+  els.graphSvgContainer.addEventListener("click", function (e) {
+    var g = e.target.closest(".graph-node");
+    if (!g) return;
+    graphSelectedKey = g.getAttribute("data-key");
+    renderTicketGraph();
+  });
+  els.graphDomainSelect.addEventListener("change", renderTicketGraph);
+  els.graphStatusSelect.addEventListener("change", renderTicketGraph);
+  els.graphOnlyLinkedCheckbox.addEventListener("change", renderTicketGraph);
+
+  function graphPopulateSelects() {
+    var list = graphScopeTickets();
+    var domainSel = selectedValues(els.graphDomainSelect);
+    var statusSel = selectedValues(els.graphStatusSelect);
+    var domains = distinctFieldValues(list, "domain");
+    var statuses = distinctFieldValues(list, "status");
+    els.graphDomainSelect.innerHTML = domains.map(function (d) {
+      return '<option value="' + escapeHtml(d) + '"' + (domainSel.indexOf(d) !== -1 ? " selected" : "") + ">" + escapeHtml(d) + "</option>";
+    }).join("");
+    els.graphStatusSelect.innerHTML = statuses.map(function (s) {
+      return '<option value="' + escapeHtml(s) + '"' + (statusSel.indexOf(s) !== -1 ? " selected" : "") + ">" + escapeHtml(s) + "</option>";
+    }).join("");
   }
 
   els.releaseMatchBtn.addEventListener("click", function () {

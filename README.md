@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.13.1"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.14.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -218,6 +218,36 @@ anderen Länderformaten (Kennzeichen).
   hineingeraten zu werden; ein Ticket kann mehrere Gruppen treffen und
   erscheint dann mehrfach (wie schon die Labels-Spalte selbst mehrwertig
   ist).
+- **Ticket Graph** (neu, direkt unter Dashboard) – Wissensgraph der
+  Abhängigkeiten zwischen Tickets (Jira "Issue Links": Vorgänger,
+  Nachfolger, Testtickets, sonstige Verknüpfungen wie "relates to").
+  **Wichtige Einschränkung:** Abhängigkeiten sind nur aus **Jira-XML-
+  Exports** verfügbar – HTML-Tabellenexporte (Issue-Navigator) und
+  Einzelticket-Detailseiten liefern diese Information in Jira nicht
+  strukturiert mit, daher bleiben ihre Tickets im Graph ohne Kanten. Die
+  Zuordnung eines Jira-Linktyps (z. B. der "desc"-Text "is blocked by")
+  zu Vorgänger/Nachfolger/Testticket ist ein **Vorschlag anhand gängiger
+  deutscher/englischer Formulierungen** (Jira kennt "Vorgänger"/
+  "Nachfolger" nicht als festen Standard-Linktyp – das sind meist
+  projektspezifisch angelegte Typen); nicht erkannte Linktexte landen
+  ehrlich als "Verknüpft" statt geraten einer der drei Kategorien
+  zugeschlagen zu werden. Jeder Knoten zeigt Ticket-Schlüssel, Domäne
+  (Farbe am linken Rand) und Status (Ampel-Punkt oben rechts: rot/gelb/
+  grün) – beide Farbschemata sind unter Einstellungen editierbar (siehe
+  dort). Layout: ein Schichten-Layout (Vorgänger links, Nachfolger
+  rechts, entlang des längsten Abhängigkeitspfads) statt einer generischen
+  Kraft-Simulation – bei einem Zirkelbezug (A Vorgänger von B, B Vorgänger
+  von A) wird die Schicht-Berechnung an der Stelle sauber gekappt statt
+  in eine Endlosschleife zu laufen, der Graph bleibt immer darstellbar.
+  Filter nach Domäne/Status sowie ein Umschalter "Nur Tickets mit
+  Abhängigkeiten anzeigen" (Standard an); verlinkte Nachbar-Tickets
+  bleiben auch dann sichtbar, wenn sie selbst nicht zum Filter passen
+  (sonst würden Kanten "ins Leere" führen) – nur Links zu Tickets, die
+  gar nicht im aktuellen Bestand vorhanden sind, werden ehrlich
+  weggelassen statt einen Phantom-Knoten zu erzeugen. Ein Klick auf
+  einen Knoten zeigt darunter eine Tabelle mit Ticket-Nummer, Status,
+  Domäne, Beschreibung und allen Verknüpfungen dieses Tickets. Reines,
+  selbst erzeugtes SVG (keine externe Graph-Bibliothek).
 - **Listenauswahl** – die im Dashboard per Checkbox ausgewählten Tickets
   lassen sich hier benannt als eigenständige Liste speichern (Name,
   Zeitpunkt automatisch, Ticket-Inhalte UND die reine Liste der
