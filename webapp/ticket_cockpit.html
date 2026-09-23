@@ -3969,7 +3969,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.31.0";
+  var APP_VERSION = "2.31.1";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5586,6 +5586,7 @@
   }
 
   function resetSession() {
+    ticketDerivedCache.clear();
     app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
     app.generatedImages = []; app.uploadedImages = []; app.initialized = false; app.nextImportId = 1;
     app.extracted = { abbreviations: [], glossaryCandidates: [], ran: false };
@@ -5623,6 +5624,7 @@
   // NICHT wieder die eingebetteten Ausgangsdaten geladen, sondern die
   // Sitzung wird vollständig geleert (0 Tickets, 0 Imports).
   function deleteAllData() {
+    ticketDerivedCache.clear();
     app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
     app.generatedImages = []; app.uploadedImages = []; app.initialized = false; app.nextImportId = 1;
     app.extracted = { abbreviations: [], glossaryCandidates: [], ran: false };
@@ -6864,6 +6866,96 @@
     return matched;
   }
 
+  // ============ Performance: Pro-Ticket-Cache fuer Label-/Gliederungs-/
+  // Datenprofil-Zuordnung ============
+  // refreshDashboard() lief bisher bei JEDER Einstellungsaenderung (Label
+  // hinzufuegen/loeschen, Gliederung/Importformat-Spalte aendern - ueber 25
+  // Aufrufstellen) die komplette Label-Zuordnung (matchedLabelEntries) fuer
+  // ALLE geladenen Tickets neu: bei ~660 Tickets x ~230 Begriffen (Deutsch +
+  // Englisch je 1 indexOf-Suche) ergab das gemessen ueber 1,9 Sekunden PRO
+  // Klick (z.B. ein einzelnes Label hinzufuegen) - deutlich spuerbar u.a.
+  // beim Wechsel zwischen Verarbeitung/Benutzerhandbuch/RAG, weil dort
+  // Filter-Dropdowns dieselbe app.tickets-Liste referenzieren, die nach
+  // jeder Einstellungsaenderung neu aufgebaut werden muss. Zusaetzlich rief
+  // die alte Fassung matchedLabelEntries() PRO TICKET zweimal auf
+  // (computeAutoLabels + computeAutoLabelCategories getrennt) - unnoetige
+  // Verdopplung.
+  //
+  // Fix: ein Cache je Ticket-Schluessel (ticketDerivedCache), der die
+  // teuren Ergebnisse (Labels/Kategorien, Gliederungskapitel, Datenprofil)
+  // nur dann neu berechnet, wenn sich entweder der Ticket-INHALT selbst
+  // (Zusammenfassung/Beschreibung/Domäne/Typ) ODER die jeweils relevante
+  // KONFIGURATION (Labels/Gliederung/Importformat) seit der letzten
+  // Berechnung geaendert hat - erkannt ueber billige Pruefsummen
+  // (cheapHash), NICHT ueber manuell an jeder Mutationsstelle gepflegte
+  // Versionszaehler (fehleranfaellig, leicht zu vergessen). Aendert sich
+  // z.B. nur eine Importformat-Spalte, bleiben die (teuren) Label-/
+  // Gliederungs-Ergebnisse alle Tickets unveraendert aus dem Cache erhalten
+  // - nur das (billige) Datenprofil wird neu berechnet. Aendert sich der
+  // Ticket-INHALT (Re-Import mit neuem Text), erkennt der Content-Hash das
+  // zuverlaessig und alles wird fuer GENAU dieses Ticket neu berechnet.
+  var ticketDerivedCache = new Map();
+  function cheapHash(str) {
+    var h = 0;
+    for (var i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) | 0; }
+    return h;
+  }
+  function computeLabelsSignature() {
+    var parts = [];
+    for (var i = 0; i < app.labels.length; i++) {
+      var l = app.labels[i];
+      parts.push((l.category || "") + "|" + (l.de || "") + "|" + (l.en || ""));
+    }
+    return app.labels.length + ":" + cheapHash(parts.join("\u0001"));
+  }
+  function computeOutlineSignature() {
+    var parts = [];
+    app.outline.forEach(function (c) { parts.push(c.title + "|" + (c.domains || []).join(",")); });
+    return app.outline.length + ":" + cheapHash(parts.join("\u0001"));
+  }
+  function computeImportFormatsSignature() {
+    var parts = [];
+    app.importFormats.forEach(function (f) {
+      f.columns.forEach(function (c) { parts.push(f.key + "|" + c.name + "|" + (c.active ? 1 : 0)); });
+    });
+    return cheapHash(parts.join("\u0001"));
+  }
+  function ticketContentSignature(t, domain) {
+    return cheapHash(t.key + "|" + (t.summary || "") + "|" + (t.description || "") + "|" + domain + "|" + (t.issue_type || ""));
+  }
+  // Liefert {autoLabels, autoLabelCategories, outlineChapters, dataProfile}
+  // fuer EIN Ticket - aus dem Cache, soweit gueltig, sonst neu berechnet
+  // (nur der jeweils betroffene Teil). labelsSig/outlineSig/
+  // importFormatsSig werden vom Aufrufer EINMAL pro refreshDashboard()-Lauf
+  // berechnet (nicht je Ticket) und hier durchgereicht.
+  function ticketDerivedData(t, domain, labelsSig, outlineSig, importFormatsSig) {
+    var contentSig = ticketContentSignature(t, domain);
+    var cached = ticketDerivedCache.get(t.key);
+    var contentChanged = !cached || cached.contentSig !== contentSig;
+    var result = {
+      contentSig: contentSig, labelsSig: labelsSig, outlineSig: outlineSig, importFormatsSig: importFormatsSig
+    };
+    if (!contentChanged && cached.labelsSig === labelsSig) {
+      result.autoLabels = cached.autoLabels; result.autoLabelCategories = cached.autoLabelCategories;
+    } else {
+      var matched = matchedLabelEntries(t);
+      result.autoLabels = matched.map(function (lbl) { return lbl.de; });
+      result.autoLabelCategories = dedupeStrings(matched.map(function (lbl) { return lbl.category; }));
+    }
+    if (!contentChanged && cached.outlineSig === outlineSig) {
+      result.outlineChapters = cached.outlineChapters;
+    } else {
+      result.outlineChapters = computeAutoOutline(t);
+    }
+    if (!contentChanged && cached.importFormatsSig === importFormatsSig) {
+      result.dataProfile = cached.dataProfile;
+    } else {
+      result.dataProfile = computeDataProfile(t);
+    }
+    ticketDerivedCache.set(t.key, result);
+    return result;
+  }
+
   function refreshDashboard(resetFilters) {
     // Tickets ausschliesslich inaktiv gesetzter Importe (Dateiverwaltung,
     // app.appliedInactiveImportIds) werden hier - und damit ueberall, was
@@ -6880,20 +6972,27 @@
       var isActive = entry.sources.some(function (s) { return !app.appliedInactiveImportIds[s.importId]; });
       if (isActive) list.push(entry);
     });
+    // Konfigurations-Pruefsummen EINMAL pro Lauf (nicht je Ticket) - s.
+    // Kommentar bei ticketDerivedData() weiter oben (Performance-Cache).
+    var labelsSig = computeLabelsSignature();
+    var outlineSig = computeOutlineSignature();
+    var importFormatsSig = computeImportFormatsSignature();
     app.tickets = list.map(function (entry) {
       var t = entry.current;
       var changed = entry.sources.length > 1 && app.changes.some(function (c) { return c.key === t.key; });
+      var domain = (t.custom_fields && t.custom_fields.Domain) || "";
+      var derived = ticketDerivedData(t, domain, labelsSig, outlineSig, importFormatsSig);
       return {
         raw: t, key: t.key, summary: t.summary || "", status: t.status || "–",
-        bucket: bucketFor(t.status), domain: (t.custom_fields && t.custom_fields.Domain) || "",
+        bucket: bucketFor(t.status), domain: domain,
         issueType: t.issue_type || "", description: t.description || "",
         created: t.created || "", updated: t.updated || "",
         createdSort: parseJiraDate(t.created), updatedSort: parseJiraDate(t.updated),
         changed: changed,
         points: pointsForIssueType(t.issue_type),
-        autoLabels: computeAutoLabels(t),
-        autoLabelCategories: computeAutoLabelCategories(t),
-        outlineChapters: computeAutoOutline(t),
+        autoLabels: derived.autoLabels,
+        autoLabelCategories: derived.autoLabelCategories,
+        outlineChapters: derived.outlineChapters,
         // Importformat (Einstellungen -> Importformat): welchem der 5
         // Vorgangstypen dieses Ticket zugeordnet ist (s.
         // resolveImportFormatKey()) - am gespeicherten Ticket-Dict
@@ -6902,7 +7001,7 @@
         // geladene Tickets (ohne importFormatKey-Feld) sofort ein
         // Typ-Icon/Datenprofil bekommen.
         importFormatKey: t.importFormatKey || resolveImportFormatKey(t.issue_type),
-        dataProfile: computeDataProfile(t)
+        dataProfile: derived.dataProfile
       };
     });
     if (resetFilters) {

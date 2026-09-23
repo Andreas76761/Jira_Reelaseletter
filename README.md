@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.31.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.31.1"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -169,6 +169,36 @@ System ist und Ticket-Freitext entsprechende Daten enthalten kann. Wie
 bei der Namenserkennung gilt: musterbasiert und Best-Effort, keine
 Garantie auf lückenlose Erkennung bei untypischer Schreibweise oder
 anderen Länderformaten (Kennzeichen).
+
+**Performance (Pro-Ticket-Cache):** `refreshDashboard()` – der zentrale
+Rebuild-Schritt hinter Dashboard, Verarbeitung, RAG, Benutzerhandbuch und
+Gliederung – lief bisher bei **jeder** Einstellungsänderung (Label
+hinzufügen, Gliederungs-/Importformat-Spalte ändern – über 25
+Aufrufstellen im Code) die komplette automatische Label-/Gliederungs-/
+Datenprofil-Zuordnung für **alle** geladenen Tickets neu durch. Gemessen
+bei 663 Demo-Tickets und ~230 Label-Begriffen: **~2 Sekunden pro Klick**,
+spürbar u. a. beim Wechseln zwischen Verarbeitung/Benutzerhandbuch/RAG,
+weil deren Filter-Dropdowns dieselbe Ticketliste referenzieren. Zusätzlich
+rief die alte Fassung die Label-Suche pro Ticket **zweimal** auf (für
+Labels und Label-Kategorien getrennt).
+
+Fix: ein Cache je Ticket (`ticketDerivedCache`), der die teuren Ergebnisse
+nur dann neu berechnet, wenn sich entweder der **Ticket-Inhalt** selbst
+(Zusammenfassung/Beschreibung/Domäne/Typ) oder die jeweils **relevante
+Konfiguration** (Labels/Gliederung/Importformat, je über eine eigene,
+billige Prüfsumme erkannt) seit der letzten Berechnung geändert hat.
+Ändert sich z. B. nur eine Importformat-Spalte, bleiben die (teuren)
+Label-/Gliederungs-Ergebnisse aus dem Cache erhalten – nur das (billige)
+Datenprofil wird neu berechnet. Gemessene Wirkung: der ohnehin
+unvermeidbare erste Durchlauf nach einer echten Label-/Gliederungs-
+Änderung sinkt leicht (durch den Wegfall der doppelten Label-Suche); jeder
+**weitere** `refreshDashboard()`-Aufruf, der Labels/Gliederung nicht
+berührt (die deutliche Mehrheit realer Interaktionen – Importformat-
+Toggles, Kapitel-Generator-/RAG-/Gliederung-Filterwechsel, Punkte-System-
+Änderungen), fällt von ~1,6–2 Sekunden auf **unter 1 Millisekunde**
+(Cache-Treffer). Der Cache wird bei "Sitzung zurücksetzen"/"Alle Daten
+löschen" geleert; inhaltlich geänderte Tickets (erneuter Import) werden
+über die Inhalts-Prüfsumme automatisch erkannt und gezielt neu berechnet.
 
 - **Dashboard** – zusammengeführter, aktueller Stand aller importierten
   Tickets: Status-Kacheln, ein **Typ-Schnellfilter** (Chips je Tickettyp,
