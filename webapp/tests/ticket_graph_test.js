@@ -1,3 +1,11 @@
+// Ticket Graph - Teil 1/3: Navigation, Standardansicht, Platzhalter-Knoten,
+// EPIC-Rahmen/Epic-Verknuepfung, Beschreibungs-Pin-Knopf, Legende,
+// Domaenen-/Status-"Alle auswaehlen"/"Auswahl aufheben"-Buttons.
+// Aufgeteilt aus einer vorher einzelnen, sehr grossen Datei (409 Zeilen/87
+// Checks) in mehrere kleinere, fokussierte Dateien (siehe
+// ticket_graph_filter_test.js und ticket_graph_interact_test.js fuer die
+// weiteren Abschnitte) - jede Datei bleibt eigenstaendig lauffaehig (eigenes
+// JSDOM-Setup) und liefert dadurch frueher/granularer Ergebnisse.
 const fs = require("fs");
 const path = require("path");
 const BUILD_HTML = path.join(__dirname, "..", "ticket_cockpit.build.html");
@@ -20,11 +28,6 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
 // "description" (NICHT "desc" - das war ein Bug, s. parseIssueLinksFromXmlItem).
 function linkItem(key, desc, direction, targetKey) {
   return `<issuelinktype><name>Link</name><${direction}links description="${desc}"><issuelink><issuekey id="1">${targetKey}</issuekey></issuelink></${direction}links></issuelinktype>`;
-}
-// Fuer den expliziten Fallback-Regressionstest: dieselbe Struktur, aber mit
-// dem ALTEN Attributnamen "desc" - muss weiterhin funktionieren.
-function linkItemLegacyDescAttr(desc, direction, targetKey) {
-  return `<issuelinktype><name>Link</name><${direction}links desc="${desc}"><issuelink><issuekey id="1">${targetKey}</issuekey></issuelink></${direction}links></issuelinktype>`;
 }
 function ticketXml(opts) {
   var epicLinkField = opts.epicLink
@@ -180,230 +183,9 @@ const xml = `<?xml version="1.0"?><rss><channel>
     check("'Auswahl aufheben' hebt wirklich alle Domäne-Optionen auf", noneSelected);
   }
 
-  // ===================== Ticket-Suche filtert Knoten nach Nummer/Text =====================
-  const searchInput = doc.getElementById("graph-search-input");
-  check("Suchfeld fuer Ticket-Nummer/Text vorhanden", !!searchInput);
-  searchInput.value = "Drittes";
-  fire(searchInput, "input");
-  await wait(250);
-  const svgSearch = doc.getElementById("graph-svg-container").innerHTML;
-  check("Suche nach 'Drittes' (Zusammenfassung von GRAPH-3): GRAPH-3 im Graph", svgSearch.includes("GRAPH-3"));
-  check("Suche nach 'Drittes': GRAPH-4 (kein Treffer, kein Nachbar von GRAPH-3) NICHT im Graph", !svgSearch.includes("GRAPH-4"));
-  searchInput.value = "";
-  fire(searchInput, "input");
-  await wait(250);
-
-  // ===================== Knoten anklicken -> Auswahltabelle aktualisiert sich =====================
-  const node2 = doc.querySelector('.graph-node[data-key="GRAPH-2"]');
-  check("SVG-Knoten fuer GRAPH-2 im DOM vorhanden", !!node2);
-  if (node2) {
-    fire(node2, "click");
-    await wait(100);
-    const selTbody = doc.getElementById("graph-selection-tbody").textContent;
-    check("Auswahltabelle zeigt GRAPH-2 nach Klick", selTbody.includes("GRAPH-2"));
-    check("Auswahltabelle zeigt Status 'BAT Testing'", selTbody.includes("BAT Testing"));
-    check("Auswahltabelle zeigt Domäne 'Domain A'", selTbody.includes("Domain A"));
-    check("Auswahltabelle nennt Vorgänger-Verknüpfung zu GRAPH-1", selTbody.includes("Vorgänger: GRAPH-1"));
-    check("Auswahltabelle nennt Testticket-Verknüpfung zu GRAPH-4", selTbody.includes("Testticket: GRAPH-4"));
-    check("Auswahl-Hinweistext ('kein Ticket ausgewählt') jetzt versteckt", doc.getElementById("graph-selection-empty").hidden === true);
-  }
-
-  // ===================== Domänen-Filter grenzt Knoten ein =====================
-  const domainSelect = doc.getElementById("graph-domain-select");
-  Array.from(domainSelect.options).forEach((o) => { o.selected = o.value === "Domain B"; });
-  fire(domainSelect, "change");
-  await wait(100);
-  const svg3 = doc.getElementById("graph-svg-container").innerHTML;
-  check("Domänen-Filter 'Domain B': GRAPH-3 im Graph", svg3.includes("GRAPH-3"));
-  check("Domänen-Filter 'Domain B': GRAPH-1 (Nachbar, andere Domäne) bleibt als Kontext sichtbar", svg3.includes("GRAPH-1"));
-  Array.from(domainSelect.options).forEach((o) => { o.selected = false; });
-  fire(domainSelect, "change");
-  await wait(100);
-
-  // ===================== Typ-Schnellfilter (Mehrfachauswahl) =====================
-  const typeSelect = doc.getElementById("graph-type-select");
-  check("Typ-Auswahl vorhanden", !!typeSelect);
-  const typeOptionLabels = Array.from(typeSelect.options).map((o) => o.value);
-  check("Typ-Auswahl listet 'Epic' und 'Bug' (aus den Testtickets)", typeOptionLabels.includes("Epic") && typeOptionLabels.includes("Bug"));
-  Array.from(typeSelect.options).forEach((o) => { o.selected = o.value === "Epic"; });
-  fire(typeSelect, "change");
-  await wait(100);
-  const svgTypeEpic = doc.getElementById("graph-svg-container").innerHTML;
-  check("Nur 'Epic' gefiltert: GRAPH-1 (Epic) im Graph", svgTypeEpic.includes("GRAPH-1"));
-  check("Nur 'Epic' gefiltert: GRAPH-3 (Task, kein Nachbar von GRAPH-1) NICHT im Graph", !svgTypeEpic.includes("GRAPH-3"));
-  // Mehrere Typ-Filter gleichzeitig aktiv (Epic + Bug) - beide Tickets als Knoten.
-  Array.from(typeSelect.options).forEach((o) => { o.selected = o.value === "Epic" || o.value === "Bug"; });
-  fire(typeSelect, "change");
-  await wait(100);
-  const svgTypeBoth = doc.getElementById("graph-svg-container").innerHTML;
-  check("Epic+Bug gleichzeitig gefiltert: GRAPH-1 (Epic) im Graph", svgTypeBoth.includes("GRAPH-1"));
-  check("Epic+Bug gleichzeitig gefiltert: GRAPH-2 (Bug) im Graph", svgTypeBoth.includes("GRAPH-2"));
-  check("Epic+Bug gleichzeitig gefiltert: GRAPH-4 (Nachbar von GRAPH-2/Bug) im Graph", svgTypeBoth.includes("GRAPH-4"));
-  Array.from(typeSelect.options).forEach((o) => { o.selected = false; });
-  fire(typeSelect, "change");
-  await wait(100);
-
-  // ===================== Hover-Tooltip zeigt zusaetzliche Inhalte =====================
-  const tooltip = doc.getElementById("graph-tooltip");
-  check("Tooltip-Element initial versteckt", tooltip.hidden === true);
-  const hoverNode = doc.querySelector('.graph-node[data-key="GRAPH-1"]');
-  if (hoverNode) {
-    const moveEvt = new win.MouseEvent("mousemove", { bubbles: true, clientX: 100, clientY: 100 });
-    hoverNode.dispatchEvent(moveEvt);
-    await wait(50);
-    check("Tooltip nach Hover ueber Knoten sichtbar", tooltip.hidden === false);
-    check("Tooltip zeigt Ticket-Schlüssel GRAPH-1", tooltip.textContent.includes("GRAPH-1"));
-    check("Tooltip zeigt Zusammenfassung ('Erstes Ticket')", tooltip.textContent.includes("Erstes Ticket"));
-    fire(doc.getElementById("graph-svg-container"), "mouseleave");
-    await wait(50);
-    check("Tooltip nach Verlassen des Graphen wieder versteckt", tooltip.hidden === true);
-  }
-  // Hover ueber einen Platzhalter-Knoten (nicht geladen) - eigener Hinweistext statt Absturz.
-  const phantomHover = doc.querySelector('.graph-node[data-key="GRAPH-EXT-99"]');
-  if (phantomHover) {
-    const moveEvt2 = new win.MouseEvent("mousemove", { bubbles: true, clientX: 100, clientY: 100 });
-    phantomHover.dispatchEvent(moveEvt2);
-    await wait(50);
-    check("Tooltip bei Platzhalter-Knoten nennt 'Nicht geladen'", tooltip.textContent.includes("Nicht geladen"));
-  }
-  fire(doc.getElementById("graph-svg-container"), "mouseleave");
-  await wait(50);
-
-  // ===================== Bild-Export-Button vorhanden und ausloesbar (kein Absturz) =====================
-  const exportBtn = doc.getElementById("graph-export-image-btn");
-  check("Button 'Als Bild exportieren' vorhanden", !!exportBtn);
-  if (exportBtn) {
-    const errCountBefore = errors.length;
-    fire(exportBtn, "click");
-    await wait(300);
-    // In jsdom ist Canvas/Image-Unterstuetzung eingeschraenkt/nicht immer
-    // vorhanden - hier wird nur geprueft, dass der Klick sauber behandelt
-    // wird (Erfolg ODER eine per showToast() abgefangene Fehlermeldung),
-    // NICHT dass die PNG-Erzeugung selbst gelingt (das setzt eine echte
-    // Chromium-Umgebung mit Canvas voraus).
-    check("Klick auf Bild-Export loest keinen unbehandelten JS-Fehler aus", errors.length === errCountBefore);
-  }
-
-  // ===================== Mehrfachauswahl (Strg/Cmd-Klick) -> als Liste speichern =====================
-  function fireCtrlClick(el) { el.dispatchEvent(new win.MouseEvent("click", { bubbles: true, ctrlKey: true })); }
-  const msBar = doc.getElementById("graph-multiselect-count");
-  check("Mehrfachauswahl-Leiste vorhanden, initial leer", msBar.textContent.includes("Strg/Cmd-Klick"));
-  const msSaveBtn = doc.getElementById("graph-multiselect-save-btn");
-  const msClearBtn = doc.getElementById("graph-multiselect-clear-btn");
-  check("'Als Liste speichern'-Button initial deaktiviert (keine Auswahl)", msSaveBtn.disabled === true);
-  const node1 = doc.querySelector('.graph-node[data-key="GRAPH-1"]');
-  const node2bExists = !!doc.querySelector('.graph-node[data-key="GRAPH-2"]');
-  if (node1 && node2bExists) {
-    fireCtrlClick(node1);
-    await wait(50);
-    // Jeder renderTicketGraph()-Aufruf ersetzt das komplette SVG (innerHTML)
-    // - vorher abgefragte Knoten-Elemente sind danach vom Dokument getrennt
-    // und wuerden Klicks NICHT mehr an den Container-Listener bubblen
-    // lassen. Daher nach jedem Render frisch abfragen.
-    fireCtrlClick(doc.querySelector('.graph-node[data-key="GRAPH-2"]'));
-    await wait(50);
-    check("Nach 2x Strg-Klick: Mehrfachauswahl-Leiste nennt 2 Tickets", doc.getElementById("graph-multiselect-count").textContent.includes("2 Ticket"));
-    check("'Als Liste speichern'-Button jetzt aktiviert", doc.getElementById("graph-multiselect-save-btn").disabled === false);
-    check("Beide Knoten tragen die Mehrfachauswahl-Markierung (graph-node-multiselected)",
-      doc.querySelectorAll(".graph-node-multiselected").length === 2);
-    check("Normale Einzelauswahl (Detail-Tabelle) bleibt von Strg-Klick unberührt (kein Absturz/Seiteneffekt)", !!doc.getElementById("graph-selection-tbody"));
-
-    // Strg-Klick auf GRAPH-1 erneut -> aus der Mehrfachauswahl entfernen.
-    fireCtrlClick(doc.querySelector('.graph-node[data-key="GRAPH-1"]'));
-    await wait(50);
-    check("Erneuter Strg-Klick entfernt aus der Mehrfachauswahl (jetzt nur noch 1)", doc.getElementById("graph-multiselect-count").textContent.includes("1 Ticket"));
-    // GRAPH-1 wieder dazu, dann als Liste speichern.
-    fireCtrlClick(doc.querySelector('.graph-node[data-key="GRAPH-1"]'));
-    await wait(50);
-
-    const nameInput = doc.getElementById("graph-multiselect-name-input");
-    nameInput.value = "Graph-Testliste";
-    fire(doc.getElementById("graph-multiselect-save-btn"), "click");
-    await wait(100);
-    check("Nach Speichern: Mehrfachauswahl wieder leer (0 Tickets)", doc.getElementById("graph-multiselect-count").textContent.includes("Strg/Cmd-Klick"));
-    check("'Als Liste speichern'-Button nach dem Speichern wieder deaktiviert", doc.getElementById("graph-multiselect-save-btn").disabled === true);
-
-    doc.querySelector('.nav-item[data-view="listenauswahl"]').click();
-    await wait(100);
-    const listenauswahlText = doc.getElementById("listenauswahl-tbody").textContent;
-    check("Neue Liste 'Graph-Testliste' unter Listenauswahl mit 2 Tickets gespeichert", listenauswahlText.includes("Graph-Testliste") && listenauswahlText.includes("2"));
-    doc.querySelector('.nav-item[data-view="ticketgraph"]').click();
-    await wait(150);
-  }
-  // "Auswahl aufheben"-Button testen (mit frischer Auswahl).
-  const node3 = doc.querySelector('.graph-node[data-key="GRAPH-1"]');
-  if (node3) {
-    fireCtrlClick(node3);
-    await wait(50);
-    check("Vor 'Auswahl aufheben': mind. 1 Ticket ausgewählt", doc.getElementById("graph-multiselect-count").textContent.includes("1 Ticket"));
-    fire(doc.getElementById("graph-multiselect-clear-btn"), "click");
-    await wait(50);
-    check("Nach 'Auswahl aufheben': Mehrfachauswahl wieder leer", doc.getElementById("graph-multiselect-count").textContent.includes("Strg/Cmd-Klick"));
-    check("Keine Knoten mehr mit Mehrfachauswahl-Markierung", doc.querySelectorAll(".graph-node-multiselected").length === 0);
-  }
-
-  // ===================== Zoom/Pan =====================
-  const zoomLevelEl = doc.getElementById("graph-zoom-level");
-  check("Zoom-Stufe initial 100%", zoomLevelEl.textContent === "100%");
-  const svgBeforeZoom = doc.querySelector("#graph-svg-container svg");
-  const widthBeforeZoom = svgBeforeZoom ? parseFloat(svgBeforeZoom.getAttribute("width")) : 0;
-  fire(doc.getElementById("graph-zoom-in-btn"), "click");
-  await wait(50);
-  check("Nach Zoom-In: Zoom-Stufe > 100%", parseInt(doc.getElementById("graph-zoom-level").textContent, 10) > 100);
-  const svgAfterZoomIn = doc.querySelector("#graph-svg-container svg");
-  check("Nach Zoom-In: SVG-Breite (Pixel) größer als zuvor", parseFloat(svgAfterZoomIn.getAttribute("width")) > widthBeforeZoom);
-  fire(doc.getElementById("graph-zoom-reset-btn"), "click");
-  await wait(50);
-  check("Nach 'Zoom zurücksetzen': wieder 100%", doc.getElementById("graph-zoom-level").textContent === "100%");
-  fire(doc.getElementById("graph-zoom-out-btn"), "click");
-  await wait(50);
-  check("Nach Zoom-Out: Zoom-Stufe < 100%", parseInt(doc.getElementById("graph-zoom-level").textContent, 10) < 100);
-  fire(doc.getElementById("graph-zoom-reset-btn"), "click");
-  await wait(50);
-  // Strg+Mausrad zoomt; normales Scrollen (ohne ctrlKey) darf die Zoom-Stufe NICHT aendern.
-  const wheelCtrl = new win.WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: -100, ctrlKey: true });
-  doc.getElementById("graph-svg-container").dispatchEvent(wheelCtrl);
-  await wait(50);
-  check("Strg+Mausrad (deltaY<0) zoomt hinein (> 100%)", parseInt(doc.getElementById("graph-zoom-level").textContent, 10) > 100);
-  fire(doc.getElementById("graph-zoom-reset-btn"), "click");
-  await wait(50);
-  const wheelNoCtrl = new win.WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: -100, ctrlKey: false });
-  doc.getElementById("graph-svg-container").dispatchEvent(wheelNoCtrl);
-  await wait(50);
-  check("Mausrad OHNE Strg/Cmd aendert die Zoom-Stufe NICHT (normales Scrollen bleibt frei)", doc.getElementById("graph-zoom-level").textContent === "100%");
-
-  // ===================== Regression: Teil-Import ohne Issue-Links behaelt bestehende Links =====================
-  const xmlPartial = `<?xml version="1.0"?><rss><channel><item><key>GRAPH-1</key><status>Fertig</status><type>Task</type></item></channel></rss>`;
-  doc.querySelector('.nav-item[data-view="import"]').click();
-  Object.defineProperty(input, "files", { value: [new win.File([xmlPartial], "graph_update.xml", { type: "application/xml" })], configurable: true });
-  fire(input, "change");
-  await wait(300);
-  doc.querySelector('.nav-item[data-view="ticketgraph"]').click();
-  await wait(150);
-  const svg4 = doc.getElementById("graph-svg-container").innerHTML;
-  check("Nach Teil-Import (nur Status-Update): GRAPH-1 behaelt seine Verknuepfung zu GRAPH-2 (weiterhin im Graph)", svg4.includes("GRAPH-1") && svg4.includes("GRAPH-2"));
-
-  // ===================== Regression: Fallback auf altes Attribut "desc" funktioniert weiterhin =====================
-  const xmlLegacyAttr = `<?xml version="1.0"?><rss><channel>
-    <item><key>LEGACY-1</key><summary>Legacy Vorgaenger</summary><status>Offen</status><type>Task</type>
-      <issuelinks>${linkItemLegacyDescAttr("blocked by", "inward", "LEGACY-2")}</issuelinks></item>
-    <item><key>LEGACY-2</key><summary>Legacy Nachfolger</summary><status>Offen</status><type>Task</type></item>
-  </channel></rss>`;
-  doc.querySelector('.nav-item[data-view="import"]').click();
-  Object.defineProperty(input, "files", { value: [new win.File([xmlLegacyAttr], "legacy_desc.xml", { type: "application/xml" })], configurable: true });
-  fire(input, "change");
-  await wait(300);
-  doc.querySelector('.nav-item[data-view="ticketgraph"]').click();
-  await wait(150);
-  const legacyNode = doc.querySelector('.graph-node[data-key="LEGACY-1"]');
-  if (legacyNode) fire(legacyNode, "click");
-  await wait(100);
-  const legacySelText = doc.getElementById("graph-selection-tbody").textContent;
-  check("Altes Attribut 'desc' (Fallback) wird weiterhin korrekt als Vorgänger klassifiziert", legacySelText.includes("Vorgänger: LEGACY-2"));
-
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }
   const failed = checks.filter((c) => !c[1]);
   console.log("\n" + (checks.length - failed.length) + "/" + checks.length + " bestanden");
   if (failed.length) { console.error("FEHLGESCHLAGEN:", failed.map((f) => f[0])); process.exit(1); }
-  console.log("ALLE TICKET-GRAPH-TESTS BESTANDEN");
+  console.log("ALLE TICKET-GRAPH-TESTS (TEIL 1) BESTANDEN");
 })().catch((e) => { console.error(e); process.exit(1); });

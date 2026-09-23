@@ -17,6 +17,7 @@ from pathlib import Path
 
 _DATA_PLACEHOLDER = "__TICKET_DATA__"
 _META_PLACEHOLDER = "__TICKET_META__"
+_TEST_RESULTS_PLACEHOLDER = "__TEST_RESULTS__"
 
 
 def build_webapp(
@@ -24,13 +25,19 @@ def build_webapp(
     template_path: Path,
     output_path: Path,
     meta: dict | None = None,
+    test_results: dict | None = None,
 ) -> Path:
     template = template_path.read_text(encoding="utf-8")
     if _DATA_PLACEHOLDER not in template:
         raise ValueError(f"Platzhalter {_DATA_PLACEHOLDER} nicht in {template_path} gefunden.")
     data_json = json.dumps(tickets, ensure_ascii=False, separators=(",", ":"))
     meta_json = json.dumps(meta or {}, ensure_ascii=False)
+    test_results_json = json.dumps(test_results or {}, ensure_ascii=False, separators=(",", ":"))
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    content = template.replace(_DATA_PLACEHOLDER, data_json).replace(_META_PLACEHOLDER, meta_json)
+    content = (
+        template.replace(_DATA_PLACEHOLDER, data_json)
+        .replace(_META_PLACEHOLDER, meta_json)
+        .replace(_TEST_RESULTS_PLACEHOLDER, test_results_json)
+    )
     output_path.write_text(content, encoding="utf-8")
     return output_path

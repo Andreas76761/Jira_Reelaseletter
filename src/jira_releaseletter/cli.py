@@ -188,8 +188,27 @@ def cmd_build_webapp(args: argparse.Namespace) -> int:
     tickets = load_tickets_json(str(data_store))
     meta_path = data_store.parent / "import_meta.json"
     meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else None
-    output_path = build_webapp(tickets, Path(args.template), Path(args.output), meta=meta)
+    test_results_path = Path(args.template).parent / "tests" / "test-results.json"
+    test_results = (
+        json.loads(test_results_path.read_text(encoding="utf-8")) if test_results_path.exists() else None
+    )
+    output_path = build_webapp(
+        tickets, Path(args.template), Path(args.output), meta=meta, test_results=test_results
+    )
     print(f"Web-App gebaut: {output_path} ({len(tickets)} Tickets eingebettet)")
+    if test_results:
+        summary = test_results.get("summary", {})
+        print(
+            "Testergebnisse eingebettet: "
+            f"{summary.get('filesPassed', '?')}/{summary.get('filesTotal', '?')} Dateien, "
+            f"{summary.get('checksPassed', '?')}/{summary.get('checksTotal', '?')} Testfaelle "
+            f"(Stand: {test_results.get('generatedAt', '?')})"
+        )
+    else:
+        print(
+            f"Hinweis: keine Testergebnisse gefunden ({test_results_path}) - "
+            "Testdashboard in der App bleibt leer, bis 'node run-all.js' einmal gelaufen ist."
+        )
     print(
         "Hinweis: Lokal geöffnet funktionieren Ansicht/Suche/Filter; Downloads "
         "(einzelnes Ticket/ZIP) benötigen die Claude-Artifact-Laufzeit."

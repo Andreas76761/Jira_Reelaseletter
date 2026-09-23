@@ -32,7 +32,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
 
   // --- Tab-Steuerung ---
   const tabs = doc.querySelectorAll("#import-tabs .import-tab");
-  check("6 Import-Tabs vorhanden", tabs.length === 6);
+  check("7 Import-Tabs vorhanden", tabs.length === 7);
   check("Standard-Tab 'massenupload' aktiv", doc.querySelector('.import-tab[data-mode="massenupload"]').classList.contains("active"));
 
   // --- 1. Jira Einzelticket ---

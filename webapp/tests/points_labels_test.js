@@ -149,19 +149,9 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   const epicRowAfterReset = pointsRows().find((r) => r.textContent.includes("Epic"));
   check("Punkte-System bleibt nach Sitzung-Reset erhalten (Epic weiterhin 8 Punkte)", !!epicRowAfterReset && epicRowAfterReset.querySelector(".points-value-input").value === "8");
 
-  // ===================== Testergebnisse-Bereich =====================
-  const suitesCount = parseInt(doc.getElementById("test-results-suites").textContent, 10);
-  const totalCount = parseInt(doc.getElementById("test-results-total").textContent, 10);
-  const passedCount = parseInt(doc.getElementById("test-results-passed").textContent, 10);
-  check("Testergebnisse zeigen mind. 15 Testgruppen", suitesCount >= 15);
-  check("Testergebnisse zeigen mehrere hundert Checks", totalCount > 400);
-  check("Alle eingebetteten Checks sind 'bestanden' (kein Fake-Erfolg)", passedCount === totalCount);
-  check("Datum ist gesetzt", doc.getElementById("test-results-date").textContent.trim().length > 0);
-  check("Testergebnis-Tabelle initial eingeklappt (keine Check-Zeilen sichtbar)", doc.querySelectorAll("#test-results-tbody .test-check-row:not([hidden])").length === 0);
-  const firstToggle = doc.querySelector(".test-group-toggle");
-  fire(firstToggle, "click");
-  check("Erste Testgruppe nach Klick aufgeklappt (Check-Zeilen sichtbar)", doc.querySelectorAll("#test-results-tbody .test-check-row:not([hidden])").length > 0);
-  check("Sichtbare Check-Zeile zeigt Status 'bestanden'", doc.querySelector("#test-results-tbody .test-check-row:not([hidden]) .test-status-pass") !== null);
+  // Testdashboard (Dokumentation -> Testing) hat seit v2.23.0 eine eigene,
+  // dedizierte Testdatei (test_dashboard_test.js) gegen die echten,
+  // dynamischen Live-Daten aus run-all.js - hier nur noch der XSS-Check.
 
   // ===================== XSS-Schutz in allen neuen Bereichen =====================
   check("Keine ungeschützten Script-Tags in Punkte-Tabelle/Labels/Testergebnissen",

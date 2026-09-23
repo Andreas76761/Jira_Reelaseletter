@@ -808,6 +808,13 @@
           <button class="import-tab" data-mode="docx" type="button">Word (DOC/DOCX)</button>
           <button class="import-tab" data-mode="zip" type="button">ZIP-Archiv</button>
           <button class="import-tab" data-mode="andere" type="button">Andere Importe</button>
+          <button class="import-tab" data-mode="ticketsplitt" type="button">Ticket-Splitt</button>
+        </div>
+        <div class="callout" id="ticketsplitt-callout" hidden style="margin-bottom:12px;">
+          Diese Word-Datei wird wie ein normaler Import gespeichert (erscheint in Dateiverwaltung/Dashboard) UND zusätzlich
+          zerlegt: für jedes enthaltene Jira-Ticket wird eine eigene .docx-Datei im selben Ticket-Layout erzeugt (Feld/Wert-Tabelle
+          + Beschreibung, bereinigt wie überall in der App), Dateiname = Jira-Nummer. Alle Einzeldateien werden gebündelt als
+          ZIP heruntergeladen.
         </div>
 
         <div class="import-comment-row">
@@ -1637,24 +1644,46 @@
         </section>
 
         <section>
-          <p class="section-label">Testergebnisse</p>
+          <p class="section-label">Dokumentation</p>
+          <p class="section-label" style="margin-top:6px;">Testing</p>
           <div class="callout">
-            Ergebnisse der automatisierten Tests (Browsertests für die Web-App via jsdom/Playwright + pytest für das
+            Testdashboard der automatisierten Tests (Browsertests für die Web-App via jsdom + pytest für das
             Python-CLI-Tool) aus dem letzten Verifikationslauf während der Entwicklung dieser Version. Läuft
-            <b>nicht live</b> in diesem Browser, sondern ist ein zum Build-Zeitpunkt eingebetteter Bericht. Stand:
-            <b id="test-results-date"></b>.
+            <b>nicht live</b> in diesem Browser, sondern ist ein zum Build-Zeitpunkt eingebetteter Bericht (aus
+            <span class="mono">node run-all.js</span>). Stand: <b id="test-results-date">–</b>.
           </div>
           <div class="stat-line" style="margin: 10px 0 14px;">
-            <div class="chip"><b class="mono" id="test-results-suites">0</b> Testgruppen</div>
-            <div class="chip"><b class="mono" id="test-results-total">0</b> Checks gesamt</div>
+            <div class="chip"><b class="mono" id="test-results-suites">0</b> Testdateien</div>
+            <div class="chip"><b class="mono" id="test-results-files-passed">0</b> Dateien bestanden</div>
+            <div class="chip"><b class="mono" id="test-results-total">0</b> Testfälle (Schritte) gesamt</div>
             <div class="chip"><b class="mono" id="test-results-passed">0</b> bestanden</div>
             <div class="chip"><b class="mono" id="test-results-failed">0</b> fehlgeschlagen</div>
+            <div class="chip"><b class="mono" id="test-results-duration">0</b> Laufzeit</div>
           </div>
+          <div class="empty-hint" id="test-results-failed-banner" hidden style="margin-bottom:12px;"></div>
           <div class="panel table-wrap" style="max-height:520px; overflow:auto;">
             <table class="simple-table" id="test-results-table">
-              <thead><tr><th>Testgruppe / Check</th><th>Status</th><th>Datum</th></tr></thead>
+              <thead><tr><th>Testdatei / Testfall (Schritt)</th><th>Status</th><th>Dauer</th></tr></thead>
               <tbody id="test-results-tbody"></tbody>
             </table>
+            <div class="empty-hint" id="test-results-empty" hidden>
+              Noch kein Testbericht eingebettet. Einmal <span class="mono">node run-all.js</span> im Verzeichnis
+              webapp/tests ausführen und die App anschließend neu bauen (<span class="mono">jira-releaseletter
+              build-webapp</span>).
+            </div>
+          </div>
+
+          <p class="section-label" style="margin-top:18px;">Optimierungen</p>
+          <div class="callout">
+            Erkenntnisse aus der Performance-Analyse der Testroutinen: warum die Testsuite so lange dauert und was
+            dagegen getan wurde.
+          </div>
+          <div class="panel table-wrap" id="test-optimizations-wrap" style="max-height:360px; overflow:auto;">
+            <table class="simple-table" id="test-optimizations-table">
+              <thead><tr><th>Optimierung</th><th>Details</th></tr></thead>
+              <tbody id="test-optimizations-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="test-optimizations-empty" hidden>Keine Optimierungsdaten im aktuellen Bericht.</div>
           </div>
         </section>
       </section>
@@ -1726,7 +1755,8 @@
 
 <script id="initial-ticket-data" type="application/json">__TICKET_DATA__</script>
 <script id="initial-ticket-meta" type="application/json">__TICKET_META__</script>
-<script id="test-results-data" type="application/json">[
+<script id="test-results-data" type="application/json">__TEST_RESULTS__</script>
+<script id="test-results-data-OLD-UNUSED" type="application/json" hidden>[
   {
     "file": "test_pipeline.py",
     "label": "Python CLI-Pipeline (pytest)",
@@ -3659,7 +3689,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.22.0";
+  var APP_VERSION = "2.23.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -4290,7 +4320,8 @@
     einzelticket: parseAsEinzelticket,
     releaseinfo: parseAsReleaseinfo,
     docx: parseAsAndere,
-    andere: parseAsAndere
+    andere: parseAsAndere,
+    ticketsplitt: parseAsAndere
   };
 
   var EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
@@ -4626,6 +4657,79 @@
     return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
   }
 
+  // Feld/Wert-Zeilen fuer EIN Ticket, im selben Layout wie renderMarkdown()/
+  // buildPdfDoc() (Kernfelder aus FIELD_DISPLAY_ORDER, danach Custom Fields) -
+  // fuer den Ticket-Splitt-Import (ein .docx pro Ticket) wiederverwendet, damit
+  // alle Ticket-Einzelexporte (MD/PDF/DOCX) dasselbe Feld-Layout zeigen.
+  function ticketFieldRows(t) {
+    var rows = [];
+    FIELD_DISPLAY_ORDER.forEach(function (f) {
+      if (!(f in t)) return;
+      var v = t[f];
+      if (Array.isArray(v)) v = v.join(", ");
+      rows.push([DISPLAY_LABELS_DE[f], v]);
+    });
+    Object.keys(t.custom_fields || {}).forEach(function (k) { rows.push([k, t.custom_fields[k]]); });
+    return rows;
+  }
+  // Eigenstaendiges .docx (eine Datei pro Ticket, Hochformat) fuer den
+  // Ticket-Splitt-Import - bewusst NICHT ueber buildDocxBlob(), da dessen
+  // "sections" nur je EINE Tabelle je Abschnitt kennen (keine freien
+  // Beschreibungs-Absaetze) und Hochformat statt der dortigen Querformat-
+  // Tabellenexporte gebraucht wird.
+  function buildSingleTicketDocxBlob(t) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek konnte nicht geladen werden.");
+    var title = t.key + (t.summary ? " – " + t.summary : "");
+    var body = '<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>' + xmlEsc(title) + "</w:t></w:r></w:p>";
+    body += docxTableXml(["Feld", "Wert"], ticketFieldRows(t));
+    if (t.description) {
+      body += '<w:p/><w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Beschreibung</w:t></w:r></w:p>';
+      String(t.description).split(/\n+/).forEach(function (para) {
+        body += '<w:p><w:r><w:t xml:space="preserve">' + xmlEsc(para) + "</w:t></w:r></w:p>";
+      });
+    }
+    var documentXml =
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+      "<w:body>" + body + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/></w:sectPr></w:body>' +
+      "</w:document>";
+    var zip = new JSZip();
+    zip.file("[Content_Types].xml",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+      "</Types>");
+    zip.file("_rels/.rels",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+      "</Relationships>");
+    zip.file("word/document.xml", documentXml);
+    return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  }
+  // Baut aus allen Tickets EINES Ticket-Splitt-Imports ein ZIP mit je einer
+  // .docx-Datei pro Ticket (Dateiname = Jira-Nummer) und bietet es zum
+  // Download an. Tickets kommen bereits bereinigt/pseudonymisiert aus
+  // ingestTickets() (importRecord.tickets, aktueller Stand je Ticket).
+  var TICKETSPLITT_CHUNK = 25;
+  async function exportTicketSplitDocx(tickets, sourceFileName) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek konnte nicht geladen werden.");
+    var zip = new JSZip();
+    for (var i = 0; i < tickets.length; i++) {
+      var t = tickets[i];
+      var blob = await buildSingleTicketDocxBlob(t);
+      zip.file(safeFilename(t.key) + ".docx", blob);
+      if (i % TICKETSPLITT_CHUNK === TICKETSPLITT_CHUNK - 1) await wait(0);
+    }
+    var zipBlob = await zip.generateAsync({ type: "blob", mimeType: "application/zip" });
+    var zipName = safeFilename(sourceFileName.replace(/\.[^.]+$/, "")) + "_ticketsplitt.zip";
+    var ok = await saveOrWarn(zipName, zipBlob);
+    if (ok) addLog("Ticket-Splitt: " + tickets.length + " Einzel-Word-Dateien aus „" + sourceFileName + "“ erzeugt und als " + zipName + " heruntergeladen.");
+    return ok;
+  }
+
   function buildSectionsPdfBlob(title, sections) {
     var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
     if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
@@ -4873,7 +4977,7 @@
     "listenauswahl-preview-count", "listenauswahl-preview-total", "listenauswahl-preview-tbody", "listenauswahl-preview-empty",
     "listenauswahl-count", "listenauswahl-tbody", "listenauswahl-empty",
     "dropzone", "dropzone-title", "dropzone-hint", "dropzone-icon", "dropzone-spinner", "file-input", "reset-session-btn", "format-callout", "import-tabs",
-    "import-comment-input",
+    "import-comment-input", "ticketsplitt-callout",
     "paste-textarea", "paste-from-clipboard-btn", "paste-process-btn", "paste-spinner", "paste-process-label",
     "fileview-import-select", "fileview-show-btn", "fileview-wrap", "fileview-summary", "fileview-content",
     "importstats-import-select", "importstats-wrap", "importstats-summary", "importstats-tbody", "importstats-empty",
@@ -4907,7 +5011,9 @@
     "domaincolors-tbody", "domaincolors-empty", "statuscolors-tbody", "statuscolors-empty",
     "labels-tbody", "labels-new-category", "labels-new-de", "labels-new-en", "labels-add-btn", "label-category-datalist",
     "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn", "outline-domain-datalist",
-    "test-results-date", "test-results-suites", "test-results-total", "test-results-passed", "test-results-failed", "test-results-tbody",
+    "test-results-date", "test-results-suites", "test-results-files-passed", "test-results-total", "test-results-passed",
+    "test-results-failed", "test-results-duration", "test-results-failed-banner", "test-results-tbody", "test-results-empty",
+    "test-optimizations-tbody", "test-optimizations-empty",
     "evaluate-tickets-btn", "evaluate-summary", "evaluate-count-manual", "evaluate-count-internal", "evaluate-count-unknown",
     "evaluate-table-wrap", "evaluate-tbody",
     "prozessbild-theme", "prozessbild-layout", "prozessbild-layout-desc",
@@ -5128,7 +5234,11 @@
       comment: (meta.comment || "").trim(),
       // Aus den ROHEN (noch nicht bereinigten) Tickets berechnet - s.
       // computeImportFieldStats() - fuer die Import-Statistik-Anzeige.
-      fieldStats: computeImportFieldStats(rawTickets)
+      fieldStats: computeImportFieldStats(rawTickets),
+      // Aktueller (bereinigter, ggf. mit vorherigen Importen zusammengeführter)
+      // Stand je in DIESEM Import enthaltenem Ticket - z.B. fuer Ticket-Splitt
+      // (ein .docx pro Ticket direkt nach dem Import erzeugen).
+      tickets: cleaned.map(function (t) { return app.ticketStore.get(t.key).current; })
     };
     app.imports.push(importRecord);
     addLog(
@@ -5912,38 +6022,70 @@
   });
   els.outlineNewChapterInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); els.outlineAddChapterBtn.click(); } });
 
-  /* ============ Einstellungen: Testergebnisse (eingebetteter Bericht) ============ */
+  /* ============ Einstellungen: Dokumentation -> Testing (eingebettetes Testdashboard) ============
+     Datenquelle: webapp/tests/run-all.js schreibt bei jedem Lauf webapp/tests/test-results.json
+     (jeder einzelne check()-Aufruf als eigener Testfall/Schritt, plus Laufzeit je Datei und
+     Performance-Erkenntnisse), jira-releaseletter build-webapp bettet das zum Build-Zeitpunkt
+     ueber den Platzhalter __TEST_RESULTS__ ein. Laeuft NICHT live in diesem Browser - reiner
+     Bericht des letzten Verifikationslaufs waehrend der Entwicklung. */
 
-  var TEST_RESULTS = JSON.parse(document.getElementById("test-results-data").textContent);
-  var TEST_RESULTS_DATE = "21.09.2026";
+  var TEST_RESULTS = JSON.parse(document.getElementById("test-results-data").textContent) || {};
+  var TEST_RESULTS_FILES = TEST_RESULTS.files || [];
+  function formatDuration(ms) {
+    if (ms == null) return "–";
+    return ms >= 1000 ? (ms / 1000).toFixed(1) + " s" : ms + " ms";
+  }
   var testResultsExpanded = {};
   function renderTestResults() {
-    var totalChecks = 0, totalPassed = 0, totalFailed = 0;
-    var rowsHtml = TEST_RESULTS.map(function (suite, sIdx) {
-      var passed = suite.checks.filter(function (c) { return c.status === "pass"; }).length;
-      var failed = suite.checks.length - passed;
-      totalChecks += suite.checks.length; totalPassed += passed; totalFailed += failed;
-      var expanded = !!testResultsExpanded[sIdx];
-      var header = '<tr class="test-group-row" data-suite-idx="' + sIdx + '"><td colspan="3">' +
-        '<button type="button" class="test-group-toggle" data-suite-idx="' + sIdx + '" aria-expanded="' + expanded + '">' + (expanded ? "▾" : "▸") + "</button>" +
-        escapeHtml(suite.label) + ' <span class="domain-count">(' + passed + "/" + suite.checks.length + " bestanden" + (failed ? ", " + failed + " fehlgeschlagen" : "") + ")</span></td></tr>";
-      var rows = suite.checks.map(function (c) {
-        return '<tr class="test-check-row"' + (expanded ? "" : " hidden") + '><td style="padding-left:30px;">' + escapeHtml(c.text) + "</td><td><span class=\"test-status test-status-" +
-          c.status + '">' + (c.status === "pass" ? "✓ bestanden" : "✗ fehlgeschlagen") + "</span></td><td class=\"mono\">" + escapeHtml(TEST_RESULTS_DATE) + "</td></tr>";
+    els.testResultsEmpty.hidden = !!TEST_RESULTS_FILES.length;
+    var filesPassed = 0, checksTotal = 0, checksPassed = 0, failedNames = [];
+    var rowsHtml = TEST_RESULTS_FILES.map(function (file, fIdx) {
+      var checks = file.checks || [];
+      var passed = typeof file.passCount === "number" ? file.passCount : checks.filter(function (c) { return c.ok; }).length;
+      var total = typeof file.totalCount === "number" ? file.totalCount : checks.length;
+      var fileOk = file.status === "pass";
+      if (fileOk) filesPassed++; else failedNames.push(file.name);
+      checksTotal += total; checksPassed += passed;
+      var expanded = !!testResultsExpanded[fIdx] || !fileOk;
+      var header = '<tr class="test-group-row' + (fileOk ? "" : " test-group-row-failed") + '" data-file-idx="' + fIdx + '"><td>' +
+        '<button type="button" class="test-group-toggle" data-file-idx="' + fIdx + '" aria-expanded="' + expanded + '">' + (expanded ? "▾" : "▸") + "</button>" +
+        '<span class="mono">' + escapeHtml(file.name) + '</span> <span class="domain-count">(' + passed + "/" + total + " Testfälle bestanden" +
+        (fileOk ? "" : ", DATEI FEHLGESCHLAGEN") + ")</span></td><td><span class=\"test-status test-status-" + (fileOk ? "pass" : "fail") + '">' +
+        (fileOk ? "✓ bestanden" : "✗ fehlgeschlagen") + "</span></td><td class=\"mono\">" + escapeHtml(formatDuration(file.durationMs)) + "</td></tr>";
+      var rows = checks.map(function (c) {
+        return '<tr class="test-check-row"' + (expanded ? "" : " hidden") + '><td style="padding-left:30px;">' + escapeHtml(c.text) +
+          "</td><td><span class=\"test-status test-status-" + (c.ok ? "pass" : "fail") + '">' + (c.ok ? "✓ bestanden" : "✗ fehlgeschlagen") + "</span></td><td></td></tr>";
       }).join("");
-      return header + rows;
+      var errorRow = (!fileOk && file.errorOutput)
+        ? '<tr class="test-check-row"' + (expanded ? "" : " hidden") + '><td colspan="3" style="padding-left:30px; color:var(--danger, #c0392b);"><b>Fehlerausgabe:</b><br><span class="mono" style="white-space:pre-wrap;">' + escapeHtml(file.errorOutput) + "</span></td></tr>"
+        : "";
+      return header + rows + errorRow;
     }).join("");
     els.testResultsTbody.innerHTML = rowsHtml;
-    els.testResultsSuites.textContent = TEST_RESULTS.length;
-    els.testResultsTotal.textContent = totalChecks;
-    els.testResultsPassed.textContent = totalPassed;
-    els.testResultsFailed.textContent = totalFailed;
-    els.testResultsDate.textContent = TEST_RESULTS_DATE;
+    els.testResultsSuites.textContent = TEST_RESULTS_FILES.length;
+    els.testResultsFilesPassed.textContent = filesPassed;
+    els.testResultsTotal.textContent = checksTotal;
+    els.testResultsPassed.textContent = checksPassed;
+    els.testResultsFailed.textContent = checksTotal - checksPassed;
+    els.testResultsDuration.textContent = formatDuration(TEST_RESULTS.wallDurationMs);
+    els.testResultsDate.textContent = TEST_RESULTS.generatedAt ? new Date(TEST_RESULTS.generatedAt).toLocaleString("de-DE") : "–";
+    if (failedNames.length) {
+      els.testResultsFailedBanner.hidden = false;
+      els.testResultsFailedBanner.textContent = failedNames.length + " Testdatei(en) fehlgeschlagen: " + failedNames.join(", ");
+    } else {
+      els.testResultsFailedBanner.hidden = true;
+    }
+
+    var opts = TEST_RESULTS.optimizations || [];
+    els.testOptimizationsEmpty.hidden = !!opts.length;
+    els.testOptimizationsTbody.innerHTML = opts.map(function (o) {
+      return "<tr><td><b>" + escapeHtml(o.title) + "</b></td><td>" + escapeHtml(o.detail) + "</td></tr>";
+    }).join("");
   }
   els.testResultsTbody.addEventListener("click", function (e) {
     var btn = e.target.closest(".test-group-toggle");
     if (!btn) return;
-    var idx = parseInt(btn.getAttribute("data-suite-idx"), 10);
+    var idx = parseInt(btn.getAttribute("data-file-idx"), 10);
     testResultsExpanded[idx] = !testResultsExpanded[idx];
     renderTestResults();
   });
@@ -7014,6 +7156,11 @@
       title: "Beliebige Exportdatei(en) hier ablegen",
       hint: "oder klicken zum Auswählen · Format wird automatisch erkannt (Massenupload, Einzelticket, Releaseinfo/Confluence, Ticket-Liste, CSV/Excel-Tabelle, auch .docx/.pdf)",
       accept: ".html,.htm,.xml,.txt,.docx,.doc,.pdf,.csv,.xlsx"
+    },
+    ticketsplitt: {
+      title: "Word-Datei mit mehreren Jira-Tickets hier ablegen",
+      hint: "oder klicken zum Auswählen · wird importiert UND zusätzlich je Ticket als eigene .docx-Datei (ZIP) bereitgestellt",
+      accept: ".docx,.doc"
     }
   };
   var importMode = "massenupload";
@@ -7027,6 +7174,7 @@
     Array.prototype.forEach.call(els.importTabs.querySelectorAll(".import-tab"), function (btn) {
       btn.classList.toggle("active", btn.getAttribute("data-mode") === mode);
     });
+    if (els.ticketsplittCallout) els.ticketsplittCallout.hidden = mode !== "ticketsplitt";
   }
   Array.prototype.forEach.call(els.importTabs.querySelectorAll(".import-tab"), function (btn) {
     btn.addEventListener("click", function () { setImportMode(btn.getAttribute("data-mode")); });
@@ -7071,6 +7219,13 @@
             var fileListName = comment || ("Ticketliste aus " + file.name);
             saveKeysAsNamedList(result.keys, fileListName);
             extra += " Als Liste „" + fileListName + "“ unter Listenauswahl gespeichert.";
+          }
+          if (importMode === "ticketsplitt" && record.tickets && record.tickets.length) {
+            els.dropzoneHint.textContent = "Erzeuge " + record.tickets.length + " Einzel-Word-Dateien …";
+            var splitOk = await exportTicketSplitDocx(record.tickets, file.name);
+            extra += splitOk
+              ? " " + record.tickets.length + " Einzel-.docx-Dateien als ZIP heruntergeladen."
+              : " Einzel-.docx-Export nicht möglich (Download nicht verfügbar).";
           }
           showToast(
             "Import erfolgreich",

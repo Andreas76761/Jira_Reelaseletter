@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.22.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.23.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -463,6 +463,15 @@ anderen Länderformaten (Kennzeichen).
     Sanduhr und ist bis zum Abschluss deaktiviert.
   - *Andere Importe* – probiert alle Parser automatisch durch (inkl. .docx/.pdf,
     .csv, .xlsx sowie reine Ticket-Nummern-Listen).
+  - *Ticket-Splitt* – eine .docx mit mehreren Jira-Tickets (gleiche
+    automatische Formaterkennung wie "Andere Importe"/"Word") wird wie ein
+    normaler Import gespeichert (erscheint zusätzlich in Dateiverwaltung/
+    Dashboard) **und** zusätzlich zerlegt: für jedes enthaltene Ticket wird
+    eine eigene .docx-Datei erzeugt, im selben Feld/Wert-Ticket-Layout wie
+    der bestehende Markdown-/PDF-Einzelticket-Export (`renderMarkdown()`),
+    bereinigt/pseudonymisiert wie überall in der App. Dateiname je
+    Einzeldatei = Jira-Nummer (z. B. `ONESCM-12345.docx`), alle zusammen als
+    ein ZIP-Archiv zum Download.
   - **Dateiansicht** (am Ende des Import-Bereichs) – eine bereits
     importierte Datei auswählen und ihre daraus geladenen Tickets in einem
     lesbaren, XML-ähnlichen Format ansehen, unabhängig vom
@@ -830,12 +839,17 @@ anderen Länderformaten (Kennzeichen).
     Graph, Dashboard (Domänen-Verteilungs-Balken + farbiger Punkt vor der
     Domäne in der Ticket-Tabelle) und Dateiverwaltung (Domänen-Übersicht,
     farbiger Punkt je Gruppen-Kopfzeile).
-  - *Testergebnisse* – eingebetteter Bericht der automatisierten Tests
-    (Browsertests der Web-App + pytest für das CLI-Tool) aus dem letzten
-    Verifikationslauf während der Entwicklung dieser Version, gruppiert
-    nach Testgruppe mit Datum und Status je Check (auf-/zuklappbar). Läuft
-    nicht live im Browser, sondern ist ein zum Build-Zeitpunkt
-    eingebetteter Stand.
+  - *Dokumentation → Testing* – visuelles Testdashboard mit dem
+    eingebetteten Bericht der automatisierten Tests (Browsertests der
+    Web-App + pytest für das CLI-Tool) aus dem letzten Verifikationslauf
+    während der Entwicklung dieser Version: Zusammenfassung (Dateien/
+    Testfälle bestanden, Gesamtlaufzeit, Stand), je Testdatei
+    auf-/zuklappbar bis auf den einzelnen Testfall/Schritt (inkl.
+    Fehlerausgabe bei fehlgeschlagenen Dateien), sowie ein eigener
+    "Optimierungen"-Abschnitt mit den Erkenntnissen aus der
+    Performance-Analyse der Testroutinen (siehe Abschnitt "Tests" weiter
+    unten). Läuft nicht live im Browser, sondern ist ein zum
+    Build-Zeitpunkt eingebetteter Stand (`webapp/tests/test-results.json`).
   - Punkte-System, Labels, Benutzerhandbuch-Gliederung und die
     Farbschema-Overrides sind Konfiguration (kein Sitzungsdatensatz) und
     bleiben daher auch nach "Sitzung zurücksetzen"/"Alle Daten löschen"
@@ -893,7 +907,7 @@ prüfen den kompletten Weg von Parsing bis Dokumenterzeugung.
 ### Web-App (`webapp/ticket_cockpit.html`)
 
 Die Web-App hat eine eigene, separate Testsuite unter `webapp/tests/`
-(jsdom-basierte End-to-End-Tests, ~29 Dateien, über 1000 einzelne
+(jsdom-basierte End-to-End-Tests, ~50 Dateien, über 1200 einzelne
 Prüfungen) – sie simulieren echte Nutzerinteraktionen (Klicks, Uploads,
 Formulareingaben) gegen die tatsächlich gebaute Web-App, nicht gegen
 isolierte Funktionsaufrufe:
@@ -902,7 +916,7 @@ isolierte Funktionsaufrufe:
 jira-releaseletter build-webapp        # erzeugt webapp/ticket_cockpit.build.html
 cd webapp/tests
 npm install
-npm test                               # führt alle *_test.js nacheinander aus
+npm test                               # führt alle *_test.js aus (siehe unten: parallel)
 ```
 
 Jede Testdatei ist ein eigenständiges Skript (kein Test-Framework wie
@@ -913,6 +927,37 @@ RAG-Funktion, dort mit einer gemockten `sample`-Capability), die vier
 Dokument-Generatoren samt XLSX/DOCX/PDF-Export, die 5
 Clickanweisung-Designvorlagen, den Original/Nur-Deutsch-Umschalter,
 Bilder-Upload/OCR/Metadaten sowie den Lösch-Bestätigungsdialog ab.
+
+**Performance des Testrunners (`webapp/tests/run-all.js`):** Eine Messung
+der Einzeldauern ergab, dass die Laufzeit je Testdatei überwiegend vom
+JSDOM-Boot (Parsen/Ausführen der großen `ticket_cockpit.build.html`) und
+festen `wait()`-Sleeps dominiert wird, **nicht** von der Anzahl der
+`check()`-Aufrufe – eine Datei mit 19 Checks kann genauso lange laufen wie
+eine mit 87. Da jede Testdatei ohnehin in einem eigenen, isolierten
+Node-Prozess läuft, führt `run-all.js` seit dieser Version alle Dateien
+**parallel** aus (Worker-Pool, Standard: CPU-Kernzahl, override via
+`TEST_CONCURRENCY=1` für rein serielle/deterministische Ausgabe-Reihenfolge
+beim Debuggen) statt seriell – das reduziert die Wanduhrzeit der
+Gesamtsuite deutlich. Zusätzlich wurde die bis dahin größte Testdatei
+(`ticket_graph_test.js`, 409 Zeilen/87 Checks) entlang ihrer fachlichen
+Abschnitte in drei kleinere, fokussierte Dateien aufgeteilt
+(`ticket_graph_test.js`, `ticket_graph_filter_test.js`,
+`ticket_graph_interact_test.js`) – kleinere Einheiten liefern früher
+Zwischenergebnisse und profitieren stärker von der Parallelisierung.
+
+Jeder Lauf schreibt außerdem einen strukturierten Bericht nach
+`webapp/tests/test-results.json` (jeder einzelne `check()`-Aufruf als
+eigener Testfall/Schritt, Laufzeit je Datei, die oben genannten
+Performance-Erkenntnisse). `jira-releaseletter build-webapp` bettet diesen
+Bericht automatisch in den Build ein, sofern er beim Bauen bereits
+existiert (sonst bleibt das Dashboard leer, mit entsprechendem Hinweis) –
+sichtbar in der Web-App unter **Einstellungen → Dokumentation → Testing**:
+ein visuelles Testdashboard mit Zusammenfassung (Dateien/Testfälle
+bestanden, Gesamtlaufzeit, Stand), einer je Datei aufklappbaren Tabelle
+aller einzelnen Testfälle samt Status, sowie einem eigenen
+"Optimierungen"-Abschnitt mit den obigen Performance-Erkenntnissen im
+Klartext. Läuft nicht live im Browser, sondern zeigt den Stand des
+letzten Verifikationslaufs während der Entwicklung.
 
 ## Bei 1000 Tickets
 
