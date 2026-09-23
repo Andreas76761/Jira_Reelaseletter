@@ -239,11 +239,13 @@
   }
   .label-chip button:hover { background: var(--surface-2); color: var(--blocked); }
   .points-value-input { width: 80px; }
-  .test-group-row td { background: var(--surface-2); font-weight: 700; color: var(--text); cursor: pointer; }
-  .test-group-toggle {
+  .test-group-row td, .dq-group-row td { background: var(--surface-2); font-weight: 700; color: var(--text); cursor: pointer; }
+  .test-group-toggle, .dq-group-toggle {
     background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 11px; margin-right: 6px;
     width: 16px; display: inline-block;
   }
+  .dq-count-zero { color: var(--text-muted); font-style: italic; }
+  .dq-count-nonzero { color: var(--blocked); font-weight: 700; }
   .test-status-pass { color: var(--done); font-weight: 700; }
   .test-status-fail { color: var(--blocked); font-weight: 700; }
 
@@ -600,6 +602,7 @@
       <li><button class="nav-item" data-view="dashboard" type="button">Dashboard</button></li>
       <li><button class="nav-item" data-view="ticketgraph" type="button">Ticket Graph</button></li>
       <li><button class="nav-item" data-view="trend" type="button">Trend</button></li>
+      <li><button class="nav-item" data-view="dataquality" type="button">Datenqualität</button></li>
       <li><button class="nav-item" data-view="import" type="button">Import</button></li>
       <li><button class="nav-item" data-view="dateiverwaltung" type="button">Dateiverwaltung<span class="count-badge" id="nav-badge-changes" hidden>0</span></button></li>
       <li><button class="nav-item" data-view="listenauswahl" type="button">Listenauswahl<span class="count-badge" id="nav-badge-lists" hidden>0</span></button></li>
@@ -847,6 +850,26 @@
           <div class="panel" id="trend-domain-legend"></div>
           <div class="panel graph-svg-wrap">
             <div id="trend-domain-container"></div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= Datenqualität ================= -->
+      <section class="view-panel" data-view-panel="dataquality" hidden>
+        <div class="view-head"><h2>Datenqualität</h2><p class="desc">12 automatisierte Prüfpunkte gegen die aktuell geladenen Tickets (nur aktive Dateien, Dateiverwaltung) – rein aus vorhandenen Feldern abgeleitet, kein KI-Aufruf. Ein Treffer bedeutet "möglicherweise unvollständig/inkonsistent", keine automatische Bewertung der inhaltlichen Richtigkeit.</p></div>
+
+        <section>
+          <div class="stat-line" style="margin: 10px 0 14px;">
+            <div class="chip"><b class="mono" id="dq-tickets-total">0</b> Tickets geprüft</div>
+            <div class="chip"><b class="mono" id="dq-tickets-affected">0</b> mit mind. 1 Fund</div>
+            <div class="chip"><b class="mono" id="dq-findings-total">0</b> Funde gesamt</div>
+          </div>
+          <div class="empty-state" id="dq-empty-state" hidden>Keine Tickets geladen.</div>
+          <div class="panel table-wrap" id="dq-wrap" style="max-height:640px; overflow:auto;">
+            <table class="simple-table" id="dq-table">
+              <thead><tr><th>Prüfpunkt</th><th>Anzahl</th><th>Aktion</th></tr></thead>
+              <tbody id="dq-tbody"></tbody>
+            </table>
           </div>
         </section>
       </section>
@@ -3755,7 +3778,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.25.0";
+  var APP_VERSION = "2.26.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5065,6 +5088,7 @@
     "trend-granularity-select", "trend-range-note", "trend-empty-state",
     "trend-burndown-section", "trend-burndown-legend", "trend-burndown-container", "trend-burndown-export-btn",
     "trend-domain-section", "trend-domain-select", "trend-domain-legend", "trend-domain-container", "trend-domain-export-btn",
+    "dq-tickets-total", "dq-tickets-affected", "dq-findings-total", "dq-empty-state", "dq-wrap", "dq-tbody",
     "graph-multiselect-count", "graph-multiselect-name-input", "graph-multiselect-save-btn", "graph-multiselect-clear-btn",
     "graph-zoom-out-btn", "graph-zoom-in-btn", "graph-zoom-reset-btn", "graph-zoom-level",
     "graph-view-tabs", "graph-view-desc",
@@ -6295,6 +6319,7 @@
     graphPopulateSelects();
     renderTicketGraph();
     renderTrend();
+    renderDataQuality();
     renderFileviewImportSelect();
     renderImportStatsSelect();
     renderDomainColorsTable();
@@ -9411,6 +9436,107 @@
   }
   els.trendBurndownExportBtn.addEventListener("click", function () { trendExportPng(els.trendBurndownContainer, "trend-burndown.png"); });
   els.trendDomainExportBtn.addEventListener("click", function () { trendExportPng(els.trendDomainContainer, "trend-domain.png"); });
+
+  /* ============ Teil 8b-3: Datenqualität (12 Prüfpunkte) ============
+     Rein deterministisch aus bereits vorhandenen/berechneten Feldern
+     (app.tickets, computeAutoLabelCategories/computeAutoOutline aus
+     refreshDashboard(), issuelinks/epicKey aus dem Parser) - kein KI-Aufruf,
+     keine inhaltliche Bewertung ("moeglicherweise unvollstaendig", nicht
+     zwingend falsch). Jeder Pruefpunkt liefert die Liste der betroffenen
+     Ticket-Objekte; die UI zeigt Anzahl + aufklappbare Liste je Punkt. */
+
+  var DQ_STALE_DAYS = 90;
+  var DATA_QUALITY_CHECKS = [
+    { id: "missing-summary", title: "Fehlende Zusammenfassung", desc: "Ticket hat keine (oder nur leere) Zusammenfassung.",
+      test: function (t) { return !t.summary || !t.summary.trim(); } },
+    { id: "missing-description", title: "Fehlende Beschreibung", desc: "Ticket hat keine (oder nur leere) Beschreibung.",
+      test: function (t) { return !t.description || !t.description.trim(); } },
+    { id: "missing-domain", title: "Fehlende Domäne", desc: "Custom Field \"Domain\" ist leer.",
+      test: function (t) { return !t.domain; } },
+    { id: "missing-type", title: "Fehlender Typ", desc: "Jira-Feld \"Typ\" (issue_type) ist leer.",
+      test: function (t) { return !t.issueType; } },
+    { id: "missing-created", title: "Fehlendes Erstellungsdatum", desc: "Feld \"Erstellt\" fehlt oder ist nicht als Datum erkennbar.",
+      test: function (t) { return !t.createdSort; } },
+    { id: "done-without-resolved", title: "Erledigt ohne \"Gelöst am\"", desc: "Status zählt als erledigt (grüne Ampel-Kategorie \"done\"), aber das Feld \"Gelöst am\" ist leer.",
+      test: function (t) { return t.bucket === "done" && !parseJiraDate(t.raw.resolved); } },
+    { id: "stale", title: "Veraltet (> " + DQ_STALE_DAYS + " Tage keine Aktualisierung)", desc: "Status offen/in Bearbeitung, aber seit über " + DQ_STALE_DAYS + " Tagen keine Aktualisierung (Feld \"Aktualisiert\", ersatzweise \"Erstellt\").",
+      test: function (t) {
+        if (t.bucket !== "backlog" && t.bucket !== "progress") return false;
+        var ts = t.updatedSort || t.createdSort;
+        return ts > 0 && (Date.now() - ts) > DQ_STALE_DAYS * 24 * 3600 * 1000;
+      } },
+    { id: "orphan-link", title: "Verwaiste Verknüpfung", desc: "Mindestens eine Issue-Link-Verknüpfung zeigt auf ein Ticket, das im aktuellen Bestand nicht geladen ist (Platzhalter-Knoten im Ticket Graph).",
+      test: function (t, ctx) { return (t.raw.issuelinks || []).some(function (l) { return l.key && !ctx.keySet[l.key]; }); } },
+    { id: "orphan-epic", title: "Verwaiste Epic-Verknüpfung", desc: "Feld \"Epic Link\" zeigt auf ein Epic, das im aktuellen Bestand nicht geladen ist.",
+      test: function (t, ctx) { return !!t.raw.epicKey && !ctx.keySet[t.raw.epicKey]; } },
+    { id: "no-label-category", title: "Kein Label-Themengebiet zugeordnet", desc: "Kein Eintrag der in Einstellungen gepflegten Label-Liste trifft auf Zusammenfassung/Beschreibung/Domäne zu.",
+      test: function (t) { return !(t.autoLabelCategories && t.autoLabelCategories.length); } },
+    { id: "no-outline-chapter", title: "Kein Benutzerhandbuch-Kapitel zugeordnet", desc: "Die Domäne des Tickets ist keinem Kapitel der Benutzerhandbuch-Gliederung (Einstellungen) zugeordnet.",
+      test: function (t) { return !(t.outlineChapters && t.outlineChapters.length); } },
+    { id: "no-points-config", title: "Tickettyp ohne Punkte-Konfiguration", desc: "Der Tickettyp ist gesetzt, aber im Punkte-System (Einstellungen) nicht gepflegt.",
+      test: function (t) { return !!t.issueType && pointsForIssueType(t.issueType) === null; } }
+  ];
+  var DQ_ITEM_LIMIT = 300;
+  var dqExpanded = {};
+  function computeDataQualityResults() {
+    var keySet = {};
+    app.tickets.forEach(function (t) { keySet[t.key] = true; });
+    var ctx = { keySet: keySet };
+    return DATA_QUALITY_CHECKS.map(function (check) {
+      var matches = app.tickets.filter(function (t) { return check.test(t, ctx); });
+      return { id: check.id, title: check.title, desc: check.desc, matches: matches };
+    });
+  }
+  function renderDataQuality() {
+    var total = app.tickets.length;
+    els.dqEmptyState.hidden = total > 0;
+    els.dqWrap.hidden = total === 0;
+    els.dqTicketsTotal.textContent = total;
+    if (!total) { els.dqTbody.innerHTML = ""; els.dqTicketsAffected.textContent = "0"; els.dqFindingsTotal.textContent = "0"; return; }
+
+    var results = computeDataQualityResults();
+    var affectedKeys = {};
+    var findingsTotal = 0;
+    results.forEach(function (r) { r.matches.forEach(function (t) { affectedKeys[t.key] = true; }); findingsTotal += r.matches.length; });
+    els.dqTicketsAffected.textContent = Object.keys(affectedKeys).length;
+    els.dqFindingsTotal.textContent = findingsTotal;
+
+    els.dqTbody.innerHTML = results.map(function (r) {
+      var expanded = !!dqExpanded[r.id];
+      var countClass = r.matches.length ? "dq-count-nonzero" : "dq-count-zero";
+      var header = '<tr class="dq-group-row" data-dq-id="' + r.id + '"><td>' +
+        '<button type="button" class="dq-group-toggle" data-dq-id="' + r.id + '" aria-expanded="' + expanded + '" ' + (r.matches.length ? "" : "disabled") + '>' + (expanded ? "▾" : "▸") + "</button>" +
+        escapeHtml(r.title) + '<br><span style="font-weight:400; font-size:11.5px; color:var(--text-muted);">' + escapeHtml(r.desc) + "</span></td>" +
+        '<td><span class="' + countClass + '">' + r.matches.length + "</span></td><td></td></tr>";
+      if (!r.matches.length) return header;
+      var shown = r.matches.slice(0, DQ_ITEM_LIMIT);
+      var rows = shown.map(function (t) {
+        return '<tr class="dq-item-row"' + (expanded ? "" : " hidden") + '><td colspan="2" style="padding-left:30px;"><span class="mono">' + escapeHtml(t.key) +
+          "</span> – " + (t.summary ? escapeHtml(t.summary) : '<span class="dq-count-zero">(ohne Zusammenfassung)</span>') +
+          '</td><td><button type="button" class="btn ghost btn-tiny" data-dq-jump="' + escapeHtml(t.key) + '">Im Dashboard anzeigen</button></td></tr>';
+      }).join("");
+      var overflowRow = r.matches.length > DQ_ITEM_LIMIT
+        ? '<tr class="dq-item-row"' + (expanded ? "" : " hidden") + '><td colspan="3" style="padding-left:30px; font-style:italic; color:var(--text-muted);">… und ' + (r.matches.length - DQ_ITEM_LIMIT) + " weitere.</td></tr>"
+        : "";
+      return header + rows + overflowRow;
+    }).join("");
+  }
+  els.dqTbody.addEventListener("click", function (e) {
+    var toggle = e.target.closest(".dq-group-toggle");
+    if (toggle) {
+      var id = toggle.getAttribute("data-dq-id");
+      dqExpanded[id] = !dqExpanded[id];
+      renderDataQuality();
+      return;
+    }
+    var jumpBtn = e.target.closest("[data-dq-jump]");
+    if (jumpBtn) {
+      var key = jumpBtn.getAttribute("data-dq-jump");
+      showView("dashboard");
+      els.searchInput.value = key;
+      els.searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  });
 
   /* ============ Teil 8c: Prozessschritte je Job (visuelle Statusanzeige) ============ */
 

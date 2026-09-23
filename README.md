@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.25.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.26.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -333,6 +333,20 @@ anderen Länderformaten (Kennzeichen).
   Beide Diagramme als reines, selbst erzeugtes SVG (keine externe
   Chart-Bibliothek, gleiche Technik wie der Ticket Graph) und lassen sich
   einzeln über "Als Bild exportieren (PNG)" herunterladen.
+- **Datenqualität** (neu, direkt unter Trend) – 12 automatisierte
+  Prüfpunkte gegen die aktuell geladenen Tickets, rein aus bereits
+  vorhandenen/berechneten Feldern abgeleitet (kein KI-Aufruf, keine
+  Bewertung der inhaltlichen Richtigkeit – ein Treffer bedeutet
+  "möglicherweise unvollständig/inkonsistent"): fehlende Zusammenfassung,
+  fehlende Beschreibung, fehlende Domäne, fehlender Typ, fehlendes
+  Erstellungsdatum, "erledigt" ohne "Gelöst am"-Datum, veraltet (offen/in
+  Bearbeitung seit über 90 Tagen ohne Aktualisierung), verwaiste
+  Issue-Link-Verknüpfung (zeigt auf nicht geladenes Ticket), verwaiste
+  Epic-Verknüpfung, kein Label-Themengebiet zugeordnet, kein
+  Benutzerhandbuch-Kapitel zugeordnet, sowie Tickettyp ohne
+  Punkte-Konfiguration (Einstellungen). Je Prüfpunkt eine auf-/zuklappbare
+  Liste der betroffenen Tickets mit "Im Dashboard anzeigen"-Sprung
+  (springt zum Dashboard und sucht direkt nach dem Ticket-Schlüssel).
 - **Listenauswahl** – die im Dashboard per Checkbox ausgewählten Tickets
   lassen sich hier benannt als eigenständige Liste speichern (Name,
   Zeitpunkt automatisch, Ticket-Inhalte UND die reine Liste der
