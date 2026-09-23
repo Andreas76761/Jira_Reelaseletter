@@ -174,6 +174,47 @@ async function confirmViaModal(doc) {
   fire(doc.getElementById("gl-generate-btn"), "click");
   await wait(50);
 
+  // ===================== Datenquelle: im Dashboard ausgewählte Tickets =====================
+  doc.querySelector('.nav-item[data-view="dashboard"]').click();
+  await wait(50);
+  Array.from(doc.querySelectorAll("#table-body input.row-select-checkbox")).forEach((cb) => {
+    if (cb.getAttribute("data-key") === "GL-1" || cb.getAttribute("data-key") === "GL-2") {
+      cb.checked = true;
+      fire(cb, "click");
+    }
+  });
+  await wait(30);
+
+  doc.querySelector('.nav-item[data-view="gliederung"]').click();
+  await wait(50);
+  const useSelectionCb = doc.getElementById("gl-use-selection-cb");
+  useSelectionCb.checked = true;
+  fire(useSelectionCb, "change");
+  await wait(30);
+  check("Checkbox 'Ausgewählte Tickets verwenden' aktiviert", useSelectionCb.checked);
+  check("Live-Zähler zeigt 2 ausgewählte Tickets", doc.getElementById("gl-selection-count").textContent.indexOf("2 Tickets") !== -1);
+  check("Unterkapitel-/Label-Selects deaktiviert, solange Dashboard-Auswahl aktiv ist", doc.getElementById("gl-subchapter-select").disabled && doc.getElementById("gl-label-select").disabled);
+
+  fire(doc.getElementById("gl-generate-btn"), "click");
+  await wait(50);
+  const selectionList = doc.getElementById("gl-keywords-list");
+  check("Stichwörter aus Dashboard-Auswahl erzeugt (mindestens 80)", selectionList.querySelectorAll(".gl-term-input").length >= 80);
+  check("Status-Hinweis nennt die Dashboard-Auswahl als Quelle", doc.getElementById("gl-status-note").textContent.indexOf("Dashboard-Auswahl") !== -1);
+  const selectionTerms = Array.from(selectionList.querySelectorAll(".gl-term-input")).map((i) => i.value);
+  check("Enthält aus GL-1/GL-2 extrahiertes Stichwort 'Preismatrix' (nur die 2 ausgewählten Tickets, nicht die ganze Kapitel-Basis)", selectionTerms.some((t) => t.toLowerCase() === "preismatrix"));
+
+  fire(doc.getElementById("gl-keywords-list").querySelector("[data-gl-toggle]"), "click");
+  await wait(30);
+  const expandedSelectionCard = doc.getElementById("gl-keywords-list").querySelector('[data-gl-toggle][aria-expanded="true"]').closest(".manual-chapter-card");
+  check("Aufgeklappte Box im Auswahl-Modus verweist auf die Dashboard-Auswahl als Datenquelle (kein Unterkapitel-Bezug)", expandedSelectionCard.textContent.indexOf("Dashboard-Auswahl") !== -1);
+
+  useSelectionCb.checked = false;
+  fire(useSelectionCb, "change");
+  await wait(30);
+  check("Deaktivieren der Checkbox gibt Unterkapitel-/Label-Selects wieder frei", !doc.getElementById("gl-subchapter-select").disabled && !doc.getElementById("gl-label-select").disabled);
+  check("Nach Deaktivieren: wieder die Unterkapitel-basierte Stichwortliste sichtbar (eigener Sitzungseintrag je Datenquelle, unabhängig von der Dashboard-Auswahl-Liste)",
+    Array.from(doc.getElementById("gl-keywords-list").querySelectorAll(".gl-term-input")).some((i) => i.value === "API"));
+
   // ===================== Chat (KI, mehrstufig) =====================
   fire(doc.getElementById("gl-chat-btn"), "click");
   await wait(30);

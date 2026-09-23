@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.30.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.30.1"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -597,7 +597,12 @@ anderen Länderformaten (Kennzeichen).
   Kapitel-Domäne bestimmten Ticket-Pools wird zusätzlich versucht, auf
   Tickets einzugrenzen, deren Text ein Wort aus dem Unterkapitel-Titel
   selbst enthält – bei zu wenigen Treffern automatischer Rückfall auf den
-  gesamten Kapitel-Pool. Jedes Stichwort ist frei **umbenennbar** (Textfeld)
+  gesamten Kapitel-Pool. Alternative Datenquelle per Checkbox: statt
+  Unterkapitel/Label die im **Dashboard per Checkbox ausgewählten Tickets**
+  (dieselbe Auswahl wie bei Listenauswahl/Dashboard-Export) – mit Live-Zähler
+  der aktuellen Auswahl; die Unterkapitel-/Label-Selects werden währenddessen
+  deaktiviert, die zuvor erzeugte Unterkapitel-basierte Stichwortliste bleibt
+  dabei unangetastet erhalten (eigener Sitzungseintrag je Datenquelle). Jedes Stichwort ist frei **umbenennbar** (Textfeld)
   und **löschbar**, neue lassen sich manuell **hinzufügen**; ein Klick auf
   den Pfeil klappt eine Box mit einem Text (bevorzugt aus einem bereits
   erzeugten Benutzerhandbuch-Kapitel, sonst ein Rohdaten-Auszug), der

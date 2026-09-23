@@ -1065,13 +1065,20 @@
         <section>
           <p class="section-label">Stichwörter</p>
           <div class="callout">
-            Je Unterkapitel + Label-Themengebiet mindestens <b>80 Stichwörter</b>, aus den zugeordneten Tickets extrahiert
-            (Wort-/Begriffshäufigkeit über Zusammenfassung, Beschreibung, automatisch erkannte Labels; bei zu wenig
+            Je Unterkapitel + Label-Themengebiet (oder wahlweise direkt für die im Dashboard per Checkbox ausgewählten
+            Tickets, s. u.) mindestens <b>80 Stichwörter</b>, aus den Zusammenfassungen/Überschriften und Beschreibungen der
+            betreffenden Tickets extrahiert (Wort-/Begriffshäufigkeit, automatisch erkannte Labels zusätzlich; bei zu wenig
             Ticket-Text mit passenden Begriffen aus Einstellungen → Labels aufgefüllt &ndash; solche Stichwörter sind mit "0
             Tickets" gekennzeichnet). Frei editierbar: umbenennen (Textfeld), löschen, manuell neue Stichwörter anlegen. Jedes
             Stichwort lässt sich über den Pfeil aufklappen &ndash; zeigt dann einen Text (aus dem Benutzerhandbuch-Kapitel-Generator,
             falls für dieses Kapitel bereits erzeugt, sonst einen Rohdaten-Auszug) inkl. Datenquelle sowie die zugehörigen
-            Jira-Tickets (anklickbar, öffnet das Ticket-Detail).
+            Jira-Tickets (anklickbar, öffnet das Ticket-Detail) &ndash; jedes Stichwort bleibt so bis auf die konkreten
+            Ursprungs-Tickets zurückverfolgbar.
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="gl-use-selection-cb">
+            <label for="gl-use-selection-cb" style="font-weight:500;">Datenquelle: im Dashboard per Checkbox <b>ausgewählte Tickets</b> verwenden (statt Unterkapitel/Label) &ndash;
+              <span id="gl-selection-count" class="mono">0 Tickets aktuell ausgewählt</span></label>
           </div>
           <div class="controls">
             <div class="graph-filter-col">
@@ -3951,7 +3958,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.30.0";
+  var APP_VERSION = "2.30.1";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5264,6 +5271,7 @@
     "dq-tickets-total", "dq-tickets-affected", "dq-findings-total", "dq-empty-state", "dq-wrap", "dq-tbody",
     "manual-domain-select", "manual-label-select", "manual-chapter-select", "manual-role-select", "manual-match-count",
     "manual-generate-btn", "manual-stop-btn", "manual-status-note", "manual-chapters-list", "manual-chapters-empty",
+    "gl-use-selection-cb", "gl-selection-count",
     "gl-subchapter-select", "gl-label-select", "gl-generate-btn", "gl-status-note", "gl-keywords-list", "gl-keywords-empty",
     "gl-new-term-input", "gl-add-term-btn", "gl-chat-btn", "gl-grill-btn", "gl-chat-panel", "gl-chat-history",
     "gl-chat-input", "gl-chat-send-btn", "gl-grill-panel", "gl-grill-output", "gl-search-input", "gl-search-summary",
@@ -13050,27 +13058,55 @@
   }
 
   var glExpanded = {};
+  // Datenquelle "Ausgewählte Tickets (Dashboard)": nutzt dieselbe
+  // Checkbox-Auswahl wie Listenauswahl/Dashboard-Export (app.selectedKeys,
+  // s. selectedTickets()) statt der Unterkapitel/Label-Zuordnung - eigener,
+  // fester Gruppen-Schluessel (leerer chapterTitle kollidiert nie mit einem
+  // echten Kapiteltitel) statt eines Gliederungsbezugs.
+  var GL_SELECTION_SUBTITLE = "Ausgewählte Tickets (Dashboard)";
+  function glSelectionMode() { return !!(els.glUseSelectionCb && els.glUseSelectionCb.checked); }
+  function glUpdateSelectionCount() {
+    if (!els.glSelectionCount) return;
+    var n = selectedTickets().length;
+    els.glSelectionCount.textContent = n + (n === 1 ? " Ticket aktuell ausgewählt" : " Tickets aktuell ausgewählt");
+  }
+  els.glUseSelectionCb.addEventListener("change", function () {
+    els.glSubchapterSelect.disabled = glSelectionMode();
+    els.glLabelSelect.disabled = glSelectionMode();
+    glUpdateSelectionCount();
+    renderGliederung();
+  });
+
   els.glGenerateBtn.addEventListener("click", function () {
-    var sel = glParseSubchapterOption(els.glSubchapterSelect.value || "");
-    if (!sel) { showToast("Keine Auswahl", "Bitte ein Unterkapitel auswählen.", true); return; }
-    var labelCategory = els.glLabelSelect.value || "alle";
-    var match = glMatchedTickets(sel.chapterTitle, sel.subTitle, labelCategory);
-    if (!match.tickets.length) { showToast("Keine Tickets", "Für diese Auswahl sind aktuell keine Tickets zugeordnet.", true); return; }
-    var list = glPadToMinimum(glExtractKeywords(match.tickets), GL_MIN_KEYWORDS, labelCategory);
-    var key = glKeywordKey(sel.chapterTitle, sel.subTitle, labelCategory);
+    var matchTickets, chapterTitle, subTitle, labelCategory, narrowed;
+    if (glSelectionMode()) {
+      matchTickets = selectedTickets();
+      if (!matchTickets.length) { showToast("Keine Auswahl", "Bitte zuerst Tickets im Dashboard per Checkbox auswählen.", true); return; }
+      chapterTitle = ""; subTitle = GL_SELECTION_SUBTITLE; labelCategory = "alle"; narrowed = false;
+    } else {
+      var sel = glParseSubchapterOption(els.glSubchapterSelect.value || "");
+      if (!sel) { showToast("Keine Auswahl", "Bitte ein Unterkapitel auswählen.", true); return; }
+      labelCategory = els.glLabelSelect.value || "alle";
+      var match = glMatchedTickets(sel.chapterTitle, sel.subTitle, labelCategory);
+      if (!match.tickets.length) { showToast("Keine Tickets", "Für diese Auswahl sind aktuell keine Tickets zugeordnet.", true); return; }
+      matchTickets = match.tickets; chapterTitle = sel.chapterTitle; subTitle = sel.subTitle; narrowed = match.narrowed;
+    }
+    var list = glPadToMinimum(glExtractKeywords(matchTickets), GL_MIN_KEYWORDS, labelCategory);
+    var key = glKeywordKey(chapterTitle, subTitle, labelCategory);
     app.chapterKeywords[key] = {
-      chapterTitle: sel.chapterTitle, subTitle: sel.subTitle, labelCategory: labelCategory,
-      keywords: list, narrowedToSubchapter: match.narrowed, ticketCount: match.tickets.length,
+      chapterTitle: chapterTitle, subTitle: subTitle, labelCategory: labelCategory,
+      keywords: list, narrowedToSubchapter: narrowed, ticketCount: matchTickets.length,
       generatedAt: new Date().toLocaleString("de-DE")
     };
     glExpanded = {};
-    els.glStatusNote.textContent = list.length + " Stichwörter erzeugt (" + match.tickets.length + " Tickets" +
-      (match.narrowed ? ", auf das Unterkapitel eingegrenzt" : ", gesamte Kapitel-Basis, da Unterkapitel-Eingrenzung zu wenige Treffer ergab") + ").";
-    addLog("Gliederung: " + list.length + " Stichwörter für \"" + sel.subTitle + "\" (" + sel.chapterTitle + (labelCategory !== "alle" ? ", Label " + labelCategory : "") + ") erzeugt.");
+    els.glStatusNote.textContent = list.length + " Stichwörter erzeugt (" + matchTickets.length + " Tickets" +
+      (chapterTitle ? (narrowed ? ", auf das Unterkapitel eingegrenzt" : ", gesamte Kapitel-Basis, da Unterkapitel-Eingrenzung zu wenige Treffer ergab") : ", aus der Dashboard-Auswahl") + ").";
+    addLog("Gliederung: " + list.length + " Stichwörter für \"" + subTitle + "\"" + (chapterTitle ? " (" + chapterTitle + (labelCategory !== "alle" ? ", Label " + labelCategory : "") + ")" : "") + " erzeugt.");
     renderGliederung();
   });
 
   function glCurrentKey() {
+    if (glSelectionMode()) return glKeywordKey("", GL_SELECTION_SUBTITLE, "alle");
     var sel = glParseSubchapterOption(els.glSubchapterSelect.value || "");
     if (!sel) return null;
     return glKeywordKey(sel.chapterTitle, sel.subTitle, els.glLabelSelect.value || "alle");
@@ -13082,13 +13118,14 @@
   // stehen daher hier nicht zur Verfuegung. Ohne Kapitel-Text: kurzer
   // Rohdaten-Auszug aus dem ersten zugeordneten Ticket.
   function glTextAndSource(group, kw) {
-    var manual = app.manualChapters[group.chapterTitle];
+    var manual = group.chapterTitle ? app.manualChapters[group.chapterTitle] : null;
     if (manual && manual.de) {
       return { text: truncate(manual.de, 600), source: "Benutzerhandbuch-Kapitel-Generator (erzeugt " + manual.generatedAt + ")" };
     }
     if (kw.tickets.length) {
       var t = ticketByKey(kw.tickets[0]);
-      if (t && t.description) return { text: truncate(t.description, 400), source: "Ticket-Rohdaten " + t.key + " (kein Benutzerhandbuch-Kapitel für \"" + group.chapterTitle + "\" vorhanden)" };
+      var noChapterNote = group.chapterTitle ? "kein Benutzerhandbuch-Kapitel für \"" + group.chapterTitle + "\" vorhanden" : "kein Unterkapitel-Bezug (Datenquelle: Dashboard-Auswahl)";
+      if (t && t.description) return { text: truncate(t.description, 400), source: "Ticket-Rohdaten " + t.key + " (" + noChapterNote + ")" };
     }
     return { text: "Kein Text verfügbar.", source: "Keine Datenquelle (Stichwort ohne Ticket-Zuordnung, aus Begriffsliste ergänzt)" };
   }
@@ -13172,7 +13209,7 @@
   // Unterkapitel/Label) + Stichwortliste + Ticket-Rohdaten.
   var glChatHistory = [];
   function glContextBlock(group) {
-    var lines = ["Unterkapitel: " + group.subTitle + " (Kapitel: " + group.chapterTitle + ")"];
+    var lines = [group.chapterTitle ? "Unterkapitel: " + group.subTitle + " (Kapitel: " + group.chapterTitle + ")" : "Datenquelle: " + group.subTitle];
     if (group.labelCategory !== "alle") lines.push("Label-Themengebiet: " + group.labelCategory);
     lines.push("Stichwörter: " + group.keywords.slice(0, 120).map(function (k) { return k.term; }).join(", "));
     var ticketKeys = dedupeStrings([].concat.apply([], group.keywords.map(function (k) { return k.tickets; }))).slice(0, 40);
