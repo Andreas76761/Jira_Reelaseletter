@@ -21,6 +21,7 @@ webapp/ticket_cockpit.build.html
 
 # JS-Test-Abhängigkeiten (npm install in webapp/tests/) - nicht versionieren.
 webapp/tests/node_modules/
+webapp/tests/package-lock.json
 
 # Von run-all.js bei jedem Testlauf neu geschriebener Bericht - generiert,
 # wird von build-webapp gelesen und in ticket_cockpit.build.html eingebettet
