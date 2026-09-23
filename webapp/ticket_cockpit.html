@@ -176,6 +176,8 @@
   .graph-legend-chip.muted { color: var(--text-muted); font-style: italic; }
   .graph-legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .graph-legend-line { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
+  .trend-legend-item { display: inline-flex; align-items: center; gap: 5px; margin: 4px 14px 4px 0; font-size: 12.5px; }
+  .trend-legend-swatch { width: 12px; height: 3px; border-radius: 2px; display: inline-block; }
   .graph-node:hover rect:first-child { stroke: #1c7ed6; }
   .graph-node-phantom { opacity: 0.75; }
   .graph-filter-col { display: flex; flex-direction: column; gap: 2px; min-width: 170px; }
@@ -597,6 +599,7 @@
     <ul class="nav-list" id="nav-list">
       <li><button class="nav-item" data-view="dashboard" type="button">Dashboard</button></li>
       <li><button class="nav-item" data-view="ticketgraph" type="button">Ticket Graph</button></li>
+      <li><button class="nav-item" data-view="trend" type="button">Trend</button></li>
       <li><button class="nav-item" data-view="import" type="button">Import</button></li>
       <li><button class="nav-item" data-view="dateiverwaltung" type="button">Dateiverwaltung<span class="count-badge" id="nav-badge-changes" hidden>0</span></button></li>
       <li><button class="nav-item" data-view="listenauswahl" type="button">Listenauswahl<span class="count-badge" id="nav-badge-lists" hidden>0</span></button></li>
@@ -793,6 +796,57 @@
               <tbody id="graph-selection-tbody"></tbody>
             </table>
             <div class="empty-hint" id="graph-selection-empty">Kein Ticket ausgewählt – auf einen Knoten im Graph klicken.</div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= Trend ================= -->
+      <section class="view-panel" data-view-panel="trend" hidden>
+        <div class="view-head"><h2>Trend</h2><p class="desc">Zeitlicher Verlauf der aktuell geladenen Tickets: Burndown (erstellt/gelöst/offen kumulativ über die Zeit) und Domain-Trend (neu erstellte Tickets je Domäne über die Zeit). Basiert auf den Feldern "Erstellt"/"Gelöst am" – Tickets ohne erkennbares Erstellungsdatum fließen nicht ein. Nur die aktuell aktiven Dateien werden berücksichtigt (Dateiverwaltung).</p></div>
+
+        <section>
+          <div class="controls">
+            <div class="graph-filter-col">
+              <label for="trend-granularity-select">Zeitraster</label>
+              <select id="trend-granularity-select" aria-label="Zeitraster">
+                <option value="week">Woche</option>
+                <option value="month">Monat</option>
+              </select>
+            </div>
+            <span class="result-count" id="trend-range-note"></span>
+          </div>
+          <div class="empty-state" id="trend-empty-state" hidden>Keine Tickets mit erkennbarem Erstellungsdatum in der aktuellen Auswahl – Import prüfen (Feld "Erstellt" wird benötigt).</div>
+        </section>
+
+        <section id="trend-burndown-section">
+          <p class="section-label">Burndown (kumulativ)</p>
+          <div class="controls">
+            <span class="spacer"></span>
+            <button class="btn ghost btn-tiny" id="trend-burndown-export-btn" type="button">Als Bild exportieren (PNG)</button>
+          </div>
+          <div class="panel" id="trend-burndown-legend"></div>
+          <div class="panel graph-svg-wrap">
+            <div id="trend-burndown-container"></div>
+          </div>
+        </section>
+
+        <section id="trend-domain-section">
+          <p class="section-label">Domain-Trend (neu erstellte Tickets je Zeitraster)</p>
+          <div class="controls">
+            <div class="graph-filter-col">
+              <label for="trend-domain-select">Domäne (Mehrfachauswahl, leer = Top 6)</label>
+              <div class="select-actions">
+                <button class="btn ghost btn-tiny" type="button" data-select-all="trend-domain-select">Alle auswählen</button>
+                <button class="btn ghost btn-tiny" type="button" data-select-clear="trend-domain-select">Auswahl aufheben</button>
+              </div>
+              <select id="trend-domain-select" multiple size="4" aria-label="Domäne (Mehrfachauswahl, leer = Top 6)"></select>
+            </div>
+            <span class="spacer"></span>
+            <button class="btn ghost btn-tiny" id="trend-domain-export-btn" type="button">Als Bild exportieren (PNG)</button>
+          </div>
+          <div class="panel" id="trend-domain-legend"></div>
+          <div class="panel graph-svg-wrap">
+            <div id="trend-domain-container"></div>
           </div>
         </section>
       </section>
@@ -3701,7 +3755,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.24.0";
+  var APP_VERSION = "2.25.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5008,6 +5062,9 @@
     "domainoverview-domain-count", "domainoverview-ticket-count", "domainoverview-tbody", "domainoverview-empty",
     "graph-domain-select", "graph-status-select", "graph-type-select", "graph-search-input", "graph-only-linked-checkbox", "graph-node-count",
     "graph-export-image-btn", "graph-tooltip",
+    "trend-granularity-select", "trend-range-note", "trend-empty-state",
+    "trend-burndown-section", "trend-burndown-legend", "trend-burndown-container", "trend-burndown-export-btn",
+    "trend-domain-section", "trend-domain-select", "trend-domain-legend", "trend-domain-container", "trend-domain-export-btn",
     "graph-multiselect-count", "graph-multiselect-name-input", "graph-multiselect-save-btn", "graph-multiselect-clear-btn",
     "graph-zoom-out-btn", "graph-zoom-in-btn", "graph-zoom-reset-btn", "graph-zoom-level",
     "graph-view-tabs", "graph-view-desc",
@@ -6237,6 +6294,7 @@
     populateOutlineDomainDatalist();
     graphPopulateSelects();
     renderTicketGraph();
+    renderTrend();
     renderFileviewImportSelect();
     renderImportStatsSelect();
     renderDomainColorsTable();
@@ -9137,6 +9195,222 @@
     }
     renderAllJobSteps();
   });
+
+  /* ============ Teil 8b-2: Trend (Burndown + Domain-Trend) ============
+     Zeitlicher Verlauf der aktuell geladenen Tickets (app.tickets, respektiert
+     also bereits die aktiv/inaktiv-Filterung der Dateiverwaltung). Zwei rein
+     deterministische, aus vorhandenen Feldern (created/resolved/Domain)
+     berechnete Diagramme - kein KI-Aufruf, keine erfundenen Werte. Als
+     handgebautes SVG gerendert (gleiche Technik wie Ticket Graph), keine
+     zusaetzliche Chart-Bibliothek. */
+
+  function trendGranularity() { return els.trendGranularitySelect.value === "month" ? "month" : "week"; }
+
+  function trendBucketKey(ts, granularity) {
+    var d = new Date(ts);
+    if (granularity === "month") return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+    var dow = (d.getDay() + 6) % 7; // Montag = 0
+    var monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - dow);
+    return monday.getFullYear() + "-" + String(monday.getMonth() + 1).padStart(2, "0") + "-" + String(monday.getDate()).padStart(2, "0");
+  }
+  function trendBucketStartTime(key, granularity) {
+    var p = key.split("-").map(function (n) { return parseInt(n, 10); });
+    return granularity === "month" ? new Date(p[0], p[1] - 1, 1).getTime() : new Date(p[0], p[1] - 1, p[2]).getTime();
+  }
+  function trendNextBucketStart(startTs, granularity) {
+    var d = new Date(startTs);
+    return granularity === "month" ? new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime() : startTs + 7 * 24 * 3600 * 1000;
+  }
+  var TREND_MONTH_LABELS = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+  function trendBucketLabel(key, granularity) {
+    var p = key.split("-");
+    return granularity === "month" ? TREND_MONTH_LABELS[parseInt(p[1], 10) - 1] + " " + p[0].slice(2) : p[2] + "." + p[1] + ".";
+  }
+  // Erzeugt die lueckenlose Liste aller Bucket-Keys von minTs bis maxTs
+  // (inklusive) - auch Zeitraeume ohne Tickets erscheinen so als "leere"
+  // Punkte im Diagramm statt die Zeitachse zu verzerren.
+  function trendBuildBuckets(minTs, maxTs, granularity) {
+    var keys = [];
+    var cur = trendBucketStartTime(trendBucketKey(minTs, granularity), granularity);
+    var guard = 0;
+    while (cur <= maxTs && guard < 600) {
+      keys.push(trendBucketKey(cur, granularity));
+      cur = trendNextBucketStart(cur, granularity);
+      guard++;
+    }
+    if (!keys.length) keys.push(trendBucketKey(minTs || Date.now(), granularity));
+    return keys;
+  }
+
+  function trendTicketsWithCreated() {
+    return app.tickets.filter(function (t) { return t.createdSort > 0; });
+  }
+
+  // Kumulativ: je Zeit-Bucket, wie viele Tickets bis zum Bucket-Ende
+  // erstellt bzw. geloest (Feld "resolved") waren - klassische
+  // Burndown/Burnup-Darstellung. "offen" = erstellt - geloest zu dem
+  // Zeitpunkt (kann bei nachtraeglich korrigierten Daten rechnerisch nie
+  // negativ werden, da ein Ticket nur als geloest zaehlt, wenn es auch
+  // als erstellt zaehlt).
+  function trendBurndownData(granularity) {
+    var tickets = trendTicketsWithCreated();
+    if (!tickets.length) return null;
+    var resolvedByKey = {};
+    tickets.forEach(function (t) {
+      var r = parseJiraDate(t.raw.resolved);
+      if (r) resolvedByKey[t.key] = r;
+    });
+    var minTs = Math.min.apply(null, tickets.map(function (t) { return t.createdSort; }));
+    var resolvedVals = Object.keys(resolvedByKey).map(function (k) { return resolvedByKey[k]; });
+    var maxTs = Math.max(Date.now(), minTs, resolvedVals.length ? Math.max.apply(null, resolvedVals) : 0);
+    var buckets = trendBuildBuckets(minTs, maxTs, granularity);
+    var rows = buckets.map(function (key) {
+      var bucketEnd = trendNextBucketStart(trendBucketStartTime(key, granularity), granularity) - 1;
+      var created = 0, resolved = 0;
+      tickets.forEach(function (t) {
+        if (t.createdSort <= bucketEnd) created++;
+        if (resolvedByKey[t.key] && resolvedByKey[t.key] <= bucketEnd) resolved++;
+      });
+      return { key: key, label: trendBucketLabel(key, granularity), created: created, resolved: resolved, open: created - resolved };
+    });
+    return { granularity: granularity, rows: rows, totalCreated: tickets.length, totalResolved: resolvedVals.length };
+  }
+
+  // Nicht-kumulativ: je Zeit-Bucket + Domaene, wie viele Tickets in genau
+  // diesem Bucket ERSTELLT wurden - zeigt Aktivitaets-Trend je Domaene statt
+  // eines wachsenden Gesamtbestands.
+  function trendDomainData(granularity, selectedDomains) {
+    var tickets = trendTicketsWithCreated().filter(function (t) { return t.domain; });
+    if (!tickets.length) return null;
+    var minTs = Math.min.apply(null, tickets.map(function (t) { return t.createdSort; }));
+    var maxTs = Math.max(Date.now(), minTs);
+    var buckets = trendBuildBuckets(minTs, maxTs, granularity);
+    var bucketIndex = {};
+    buckets.forEach(function (k, i) { bucketIndex[k] = i; });
+    var domains = (selectedDomains && selectedDomains.length) ? selectedDomains : (app.domainList || []).slice(0, 6);
+    var series = domains.map(function (domain) {
+      var counts = buckets.map(function () { return 0; });
+      tickets.forEach(function (t) {
+        if (t.domain !== domain) return;
+        var idx = bucketIndex[trendBucketKey(t.createdSort, granularity)];
+        if (idx != null) counts[idx]++;
+      });
+      return { domain: domain, color: colorForDomain(domain), counts: counts };
+    });
+    return { granularity: granularity, labels: buckets.map(function (k) { return trendBucketLabel(k, granularity); }), series: series };
+  }
+
+  // Generischer, handgebauter SVG-Liniendiagramm-Builder (Grid + Achsen +
+  // Linien + Punkte mit Tooltip-<title>, optional gefuellte Flaeche) - von
+  // Burndown UND Domain-Trend gemeinsam genutzt statt zwei aehnlicher, aber
+  // leicht unterschiedlicher SVG-Implementierungen.
+  function trendRenderLineChartSvg(labels, lines, opts) {
+    opts = opts || {};
+    var W = opts.width || 860, H = opts.height || 260;
+    var M = { left: 42, right: 16, top: 14, bottom: 30 };
+    var innerW = W - M.left - M.right, innerH = H - M.top - M.bottom;
+    var n = labels.length;
+    var maxY = 1;
+    lines.forEach(function (l) { l.values.forEach(function (v) { if (v > maxY) maxY = v; }); });
+    maxY = Math.max(1, Math.ceil(maxY * 1.15));
+    function xAt(i) { return n <= 1 ? M.left + innerW / 2 : M.left + (innerW * i / (n - 1)); }
+    function yAt(v) { return M.top + innerH - (innerH * v / maxY); }
+    var ySteps = 4, gridSvg = "";
+    for (var s = 0; s <= ySteps; s++) {
+      var v = Math.round(maxY * s / ySteps);
+      var y = yAt(v);
+      gridSvg += '<line x1="' + M.left + '" x2="' + (W - M.right) + '" y1="' + y + '" y2="' + y + '" stroke="#e9ecef" stroke-width="1"/>' +
+        '<text x="' + (M.left - 6) + '" y="' + (y + 3) + '" font-size="9.5" text-anchor="end" fill="#868e96">' + v + "</text>";
+    }
+    var labelEvery = Math.max(1, Math.ceil(n / 12));
+    var xLabelsSvg = labels.map(function (lab, i) {
+      if (i % labelEvery !== 0 && i !== n - 1) return "";
+      return '<text x="' + xAt(i).toFixed(1) + '" y="' + (H - M.bottom + 15) + '" font-size="9.5" text-anchor="middle" fill="#868e96">' + escapeHtml(lab) + "</text>";
+    }).join("");
+    var linesSvg = lines.map(function (l) {
+      var d = l.values.map(function (v, i) { return (i === 0 ? "M" : "L") + xAt(i).toFixed(1) + "," + yAt(v).toFixed(1); }).join(" ");
+      var areaSvg = "";
+      if (l.fill) {
+        var areaD = d + " L" + xAt(n - 1).toFixed(1) + "," + yAt(0).toFixed(1) + " L" + xAt(0).toFixed(1) + "," + yAt(0).toFixed(1) + " Z";
+        areaSvg = '<path d="' + areaD + '" fill="' + l.color + '" fill-opacity="0.12" stroke="none"/>';
+      }
+      var dotsSvg = l.values.map(function (v, i) {
+        return '<circle class="trend-point" cx="' + xAt(i).toFixed(1) + '" cy="' + yAt(v).toFixed(1) + '" r="2.6" fill="' + l.color +
+          '"><title>' + escapeHtml(l.label) + " – " + escapeHtml(labels[i]) + ": " + v + "</title></circle>";
+      }).join("");
+      return areaSvg + '<path d="' + d + '" fill="none" stroke="' + l.color + '" stroke-width="2"/>' + dotsSvg;
+    }).join("");
+    return '<svg viewBox="0 0 ' + W + " " + H + '" width="' + W + '" height="' + H + '" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#ffffff"/>' + gridSvg + linesSvg + xLabelsSvg + "</svg>";
+  }
+  function trendLegendHtml(lines) {
+    return lines.map(function (l) {
+      return '<span class="trend-legend-item"><span class="trend-legend-swatch" style="background:' + l.color + '"></span>' + escapeHtml(l.label) + "</span>";
+    }).join("");
+  }
+
+  function trendPopulateDomainSelect() {
+    var domainSel = selectedValues(els.trendDomainSelect);
+    var domains = app.domainList || [];
+    els.trendDomainSelect.innerHTML = domains.map(function (d) {
+      return '<option value="' + escapeHtml(d) + '"' + (domainSel.indexOf(d) !== -1 ? " selected" : "") + ">" + escapeHtml(d) + " (" + app.domainCounts[d] + ")</option>";
+    }).join("");
+  }
+
+  function renderTrend() {
+    trendPopulateDomainSelect();
+    var granularity = trendGranularity();
+    var withCreated = trendTicketsWithCreated();
+    els.trendEmptyState.hidden = withCreated.length > 0;
+    els.trendBurndownSection.hidden = withCreated.length === 0;
+    els.trendDomainSection.hidden = withCreated.length === 0;
+    if (!withCreated.length) {
+      els.trendRangeNote.textContent = "";
+      els.trendBurndownContainer.innerHTML = "";
+      els.trendDomainContainer.innerHTML = "";
+      return;
+    }
+    els.trendRangeNote.textContent = withCreated.length + " Ticket(s) mit Erstellungsdatum · Zeitraster: " + (granularity === "month" ? "Monat" : "Woche");
+
+    var burndown = trendBurndownData(granularity);
+    var burndownLines = [
+      { label: "Erstellt (kumulativ)", color: "#4C6EF5", values: burndown.rows.map(function (r) { return r.created; }) },
+      { label: "Gelöst (kumulativ)", color: "#2F9E44", values: burndown.rows.map(function (r) { return r.resolved; }) },
+      { label: "Offen", color: "#F76707", values: burndown.rows.map(function (r) { return r.open; }), fill: true }
+    ];
+    els.trendBurndownContainer.innerHTML = trendRenderLineChartSvg(burndown.rows.map(function (r) { return r.label; }), burndownLines);
+    els.trendBurndownLegend.innerHTML = trendLegendHtml(burndownLines) +
+      '<span class="trend-legend-item mono">Aktuell offen: ' + (burndown.rows.length ? burndown.rows[burndown.rows.length - 1].open : 0) + "</span>";
+
+    var domainSel = selectedValues(els.trendDomainSelect);
+    var domainData = trendDomainData(granularity, domainSel);
+    if (domainData) {
+      var domainLines = domainData.series.map(function (s) { return { label: s.domain, color: s.color, values: s.counts }; });
+      els.trendDomainContainer.innerHTML = domainLines.length
+        ? trendRenderLineChartSvg(domainData.labels, domainLines)
+        : "";
+      els.trendDomainLegend.innerHTML = domainLines.length ? trendLegendHtml(domainLines) : '<span class="trend-legend-item">Keine Domäne ausgewählt/vorhanden.</span>';
+    } else {
+      els.trendDomainContainer.innerHTML = "";
+      els.trendDomainLegend.innerHTML = '<span class="trend-legend-item">Keine Tickets mit Domäne in der aktuellen Auswahl.</span>';
+    }
+  }
+  els.trendGranularitySelect.addEventListener("change", renderTrend);
+  els.trendDomainSelect.addEventListener("change", renderTrend);
+
+  async function trendExportPng(container, filename) {
+    var svgEl = container.querySelector("svg");
+    if (!svgEl) { showToast("Nichts zu exportieren", "Kein Diagramm zum Exportieren vorhanden.", true); return; }
+    try {
+      var blob = await svgToPngBlob(svgEl, 2);
+      var ok = await saveOrWarn(filename, blob);
+      if (ok) { showToast("Gespeichert", filename + " wurde heruntergeladen."); addLog("Trend-Diagramm als Bild (PNG) exportiert: " + filename); }
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Diagramm konnte nicht als Bild exportiert werden.", true);
+    }
+  }
+  els.trendBurndownExportBtn.addEventListener("click", function () { trendExportPng(els.trendBurndownContainer, "trend-burndown.png"); });
+  els.trendDomainExportBtn.addEventListener("click", function () { trendExportPng(els.trendDomainContainer, "trend-domain.png"); });
 
   /* ============ Teil 8c: Prozessschritte je Job (visuelle Statusanzeige) ============ */
 

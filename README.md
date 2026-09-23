@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.24.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.25.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -314,6 +314,25 @@ anderen Länderformaten (Kennzeichen).
     werden. Bei vielen Tickets derselben Domäne mit ähnlichem Datum ist
     etwas Überlappung eine bekannte, akzeptierte Einschränkung dieser
     Ansicht (keine vollständige Kollisionsvermeidung innerhalb einer Zeile).
+- **Trend** (neu, direkt unter Ticket Graph) – zeitlicher Verlauf der
+  aktuell geladenen Tickets, rein deterministisch aus den Feldern
+  "Erstellt"/"Gelöst am"/Domäne berechnet (kein KI-Aufruf). Zeitraster
+  Woche/Monat umschaltbar. Tickets ohne erkennbares Erstellungsdatum
+  fließen nicht ein (ehrlicher Leer-Zustand statt eines irreführenden
+  Diagramms, wenn keines der geladenen Tickets ein Datum hat).
+  - *Burndown* – drei kumulative Linien über die Zeit: "Erstellt",
+    "Gelöst" (Feld "Gelöst am") und die gefüllte Fläche "Offen"
+    (= Erstellt − Gelöst zu diesem Zeitpunkt) – klassische
+    Burndown/Burnup-Darstellung zum Fortschritt Richtung
+    Release-Fertigstellung.
+  - *Domain-Trend* – je Domäne eine eigene Linie mit der Anzahl **neu
+    erstellter** Tickets je Zeitraster (nicht kumulativ) – zeigt, welche
+    Domänen gerade aktiv sind. Domänen-Filter (Mehrfachauswahl mit "Alle
+    auswählen"/"Auswahl aufheben", leer = automatisch die 6
+    ticketreichsten Domänen).
+  Beide Diagramme als reines, selbst erzeugtes SVG (keine externe
+  Chart-Bibliothek, gleiche Technik wie der Ticket Graph) und lassen sich
+  einzeln über "Als Bild exportieren (PNG)" herunterladen.
 - **Listenauswahl** – die im Dashboard per Checkbox ausgewählten Tickets
   lassen sich hier benannt als eigenständige Liste speichern (Name,
   Zeitpunkt automatisch, Ticket-Inhalte UND die reine Liste der
