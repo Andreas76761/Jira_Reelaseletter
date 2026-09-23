@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.36.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.37.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -217,6 +217,22 @@ sequenziell, weil er als fortsetzbarer Lauf mit Live-Streaming-Vorschau und
 batch-genauem Stop/Resume gebaut ist (`ragBatchRun.index`) – das setzt
 echte Sequenzialität voraus und müsste für eine Parallelisierung erst
 grundlegend umgebaut werden.
+
+**Wartbarkeit (vereinheitlichter Ticket-Index):** RAG (Verarbeitung → 7.
+RAG), der Benutzerhandbuch-Kapitel-Generator und Gliederung filterten
+Tickets bislang über drei fast identische, unabhängig gepflegte
+Kopien derselben Domäne/Label-Themengebiet/Gliederungskapitel-Prüfungen.
+Diese Prüfungen sind jetzt in gemeinsamen, reinen Prädikat-Funktionen
+(`queryTickets()` + `ticketMatches*()`) gebündelt, die alle drei Stellen
+intern nutzen – nach außen unverändertes Verhalten (identische Ergebnisse,
+gleiche Funktionssignaturen), nur ohne die dreifache Kopie derselben Logik.
+Der Releaseletter/Benutzerhandbuch/Clickanweisung-Rohgerüst-Generator
+(`resolveGeneratorTickets()`) bleibt bewusst außen vor: er arbeitet auf
+rohen statt normalisierten Ticket-Daten und umgeht die Datei-/Listen-
+Sichteinschränkung bewusst zugunsten der aktuellen Dashboard-Filterung
+bzw. einer expliziten Ticket-Schlüssel-Liste – eine erzwungene
+Vereinheitlichung hätte hier nur Komplexität hinzugefügt, ohne echte
+Duplikation zu entfernen.
 
 - **Dashboard** – zusammengeführter, aktueller Stand aller importierten
   Tickets: Status-Kacheln, ein **Typ-Schnellfilter** (Chips je Tickettyp,

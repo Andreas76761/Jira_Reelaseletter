@@ -4098,7 +4098,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.36.0";
+  var APP_VERSION = "2.37.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -9607,6 +9607,59 @@
     return app.tickets.filter(function (t) { return keys[t.key]; });
   }
 
+  /* ============ Ticket-Index: gemeinsame Filter-Bausteine ============
+     RAG (Verarbeitung -> 7. RAG, ragExtract), der Benutzerhandbuch-
+     Kapitel-Generator (manualMatchedTickets) und Gliederung
+     (glMatchedTickets) filtern alle auf Basis von scopedTickets() nach
+     denselben Grundkriterien - Domäne, Label-Themengebiet,
+     Gliederungskapitel, RAG zusätzlich Status - mit identischer "leere
+     Auswahl = alle treffen zu"-Semantik auf denselben Feldern
+     (t.domain/t.status/t.autoLabelCategories/t.outlineChapters). Diese
+     kleinen, reinen Prädikat-Bausteine bündeln genau diesen bisher
+     dreifach kopierten Kern; jede der drei Funktionen bleibt äußerlich
+     unverändert (gleiche Signatur, gleiches Rückgabeverhalten), nutzt
+     ihn aber jetzt intern statt eigener Kopien derselben if-Klauseln.
+     glMatchedTickets' Einzelwert-Parameter (chapterTitle/labelCategory)
+     werden dafür als Ein-Element- bzw. leeres Array an dieselben
+     Bausteine übergeben - verhält sich exakt wie die bisherige
+     Einzelwert-Prüfung.
+
+     Bewusst NICHT einbezogen: resolveGeneratorTickets()
+     (Releaseletter/Benutzerhandbuch/Clickanweisung-Rohgerüste) - die
+     arbeitet auf rohen Ticket-Dicts (app.ticketStore-Einträge bzw.
+     currentFiltered()) statt der hier normalisierten app.tickets-
+     Objekte, umgeht scopedTickets() bewusst komplett (nutzt stattdessen
+     die Dashboard-Sichtfilterung bzw. eine explizite Schlüssel-Liste)
+     und teilt inhaltlich keine der hier gebündelten Domäne/Label/
+     Kapitel-Prädikate - eine erzwungene Vereinheitlichung würde nur
+     Komplexität hinzufügen, ohne echte Duplikation zu entfernen. */
+  function ticketMatchesDomains(t, domains) {
+    return !domains.length || domains.indexOf(t.domain) !== -1;
+  }
+  function ticketMatchesStatuses(t, statuses) {
+    return !statuses.length || statuses.indexOf(t.status) !== -1;
+  }
+  function ticketMatchesLabelCategories(t, categories) {
+    return !categories.length || categories.some(function (c) { return (t.autoLabelCategories || []).indexOf(c) !== -1; });
+  }
+  function ticketMatchesOutlineChapters(t, chapters) {
+    return !chapters.length || chapters.some(function (c) { return (t.outlineChapters || []).indexOf(c) !== -1; });
+  }
+  // criteria: { domains?, statuses?, categories?, chapters? } - je leer/
+  // weggelassen = dieses Kriterium wird nicht eingeschränkt (s. o.).
+  function queryTickets(list, criteria) {
+    var domains = (criteria && criteria.domains) || [];
+    var statuses = (criteria && criteria.statuses) || [];
+    var categories = (criteria && criteria.categories) || [];
+    var chapters = (criteria && criteria.chapters) || [];
+    return list.filter(function (t) {
+      return ticketMatchesDomains(t, domains) &&
+        ticketMatchesStatuses(t, statuses) &&
+        ticketMatchesLabelCategories(t, categories) &&
+        ticketMatchesOutlineChapters(t, chapters);
+    });
+  }
+
   // Gemeinsame Anzeige-Helfer fuer die neuen Spalten Beschreibung/Priorität
   // (Punkte-System)/Labels in den Verarbeitung-Tabellen (Jobs 4-6).
   function pointsDisplay(points) { return points == null ? "Unbekannt" : String(points); }
@@ -12747,11 +12800,7 @@
     var chapters = selectedValues(els.ragOutlineSelect);
     var fromTs = els.ragDateFrom.value ? new Date(els.ragDateFrom.value).getTime() : null;
     var toTs = els.ragDateTo.value ? new Date(els.ragDateTo.value).getTime() + 24 * 60 * 60 * 1000 - 1 : null;
-    var rows = list.filter(function (t) {
-      if (domains.length && domains.indexOf(t.domain) === -1) return false;
-      if (statuses.length && statuses.indexOf(t.status) === -1) return false;
-      if (categories.length && !categories.some(function (c) { return (t.autoLabelCategories || []).indexOf(c) !== -1; })) return false;
-      if (chapters.length && !chapters.some(function (c) { return (t.outlineChapters || []).indexOf(c) !== -1; })) return false;
+    var rows = queryTickets(list, { domains: domains, statuses: statuses, categories: categories, chapters: chapters }).filter(function (t) {
       var ts = t.updatedSort || t.createdSort;
       if (fromTs != null && (!ts || ts < fromTs)) return false;
       if (toTs != null && (!ts || ts > toTs)) return false;
@@ -13212,15 +13261,10 @@
     manualUpdateMatchCount();
   }
   function manualMatchedTickets() {
-    var list = scopedTickets();
-    var domains = selectedValues(els.manualDomainSelect);
-    var categories = selectedValues(els.manualLabelSelect);
-    var chapters = selectedValues(els.manualChapterSelect);
-    return list.filter(function (t) {
-      if (domains.length && domains.indexOf(t.domain) === -1) return false;
-      if (categories.length && !categories.some(function (c) { return (t.autoLabelCategories || []).indexOf(c) !== -1; })) return false;
-      if (chapters.length && !chapters.some(function (c) { return (t.outlineChapters || []).indexOf(c) !== -1; })) return false;
-      return true;
+    return queryTickets(scopedTickets(), {
+      domains: selectedValues(els.manualDomainSelect),
+      categories: selectedValues(els.manualLabelSelect),
+      chapters: selectedValues(els.manualChapterSelect)
     });
   }
   function manualUpdateMatchCount() {
@@ -14021,10 +14065,8 @@
   // "Vertragsart") - bei zu wenig Treffern (< 3) faellt dies auf die volle
   // Kapitel-Basis zurueck, damit die Extraktion genug Datengrundlage hat.
   function glMatchedTickets(chapterTitle, subTitle, labelCategory) {
-    var base = scopedTickets().filter(function (t) { return (t.outlineChapters || []).indexOf(chapterTitle) !== -1; });
-    if (labelCategory && labelCategory !== "alle") {
-      base = base.filter(function (t) { return (t.autoLabelCategories || []).indexOf(labelCategory) !== -1; });
-    }
+    var categories = (labelCategory && labelCategory !== "alle") ? [labelCategory] : [];
+    var base = queryTickets(scopedTickets(), { chapters: [chapterTitle], categories: categories });
     var subWords = glTokenize((subTitle || "").replace(/^[0-9.]+\s*/, "")).map(function (w) { return w.toLowerCase(); }).filter(function (w) { return !GL_STOPWORDS[w]; });
     if (!subWords.length) return { tickets: base, narrowed: false };
     var narrowed = base.filter(function (t) {
