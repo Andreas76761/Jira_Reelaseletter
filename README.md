@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.30.1"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.31.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -785,6 +785,21 @@ anderen Länderformaten (Kennzeichen).
   fette PDF-Zwischentitel, "[Nur PKW]"/"[Nur Van]"/"[Nur Markt]"-Zeilen
   farbig/fett hervorgehoben – bewusst keine Bild-Icons/Emoji, da jsPDFs
   Kernschriftart deren Glyphen nicht zuverlässig unterstützt).
+  **Gruppierung**: wahlweise "Nach Kapitel" (Standard, wie oben) oder "Nach
+  Label-Themengebiet" – dann ein eigener Text je Label-Themengebiet (Karten-
+  Titel z. B. "Zahlung & Rechnung (Label-Themengebiet)") statt je
+  Gliederungskapitel, auf Basis derselben Filter/Tickets. Bei mehr als 20 in
+  einem Lauf fertiggestellten Kapiteln/Labels erscheint zusätzlich zu den
+  Einzel-Protokolleinträgen alle 20 Stück ein gebündelter
+  "Zwischenstand"-Eintrag im Protokoll (Verarbeitung), damit sehr große Läufe
+  nicht mit Einzelzeilen fluten. **Versionierung**: erneutes Erzeugen für ein
+  bereits vorhandenes Kapitel/Label überschreibt die bisherige Fassung nicht,
+  sondern legt sie mit Name (Standard: Zeitstempel, frei umbenennbar) und
+  Datum in einer Versionsliste ab ("Versionen (N)", aufklappbar) – dort pro
+  Version einsehbar ("Text anzeigen", schreibgeschützt zum Vergleich mit der
+  aktuellen Fassung) und einzeln **wiederherstellbar** (die bis dahin aktuelle
+  Fassung wird dabei selbst zur neuen Version, kein Datenverlust). Begrenzt
+  auf die letzten 20 Versionen je Kapitel/Label.
 - **Rollen-Navigation (oneSCM)** – Einstellungen → eigener Bereich
   "Rollen-Navigation": aus einer vom Nutzer hochgeladenen Navigationsvorlage
   (Bildschirmaufnahmen + Beschriftungen der oneSCM-Menüstruktur) abgeleitete,

@@ -110,7 +110,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   // ===================== Ohne Auswahl: Fehlermeldung statt stillem Nichtstun =====================
   fire(doc.getElementById("manual-generate-btn"), "click");
   await wait(100);
-  check("Ohne Domäne/Kapitel-Auswahl: Fehlermeldung statt Absturz", doc.getElementById("toast").textContent.includes("Bitte mindestens ein Kapitel oder eine Domäne"));
+  check("Ohne Domäne/Kapitel-Auswahl: Fehlermeldung statt Absturz", doc.getElementById("toast").textContent.includes("Bitte mindestens ein Kapitel/Label-Themengebiet oder eine Domäne"));
 
   // ===================== Kapitel für eine Domäne erstellen (alle Kapitel dieser Domäne) =====================
   const domainSelect = doc.getElementById("manual-domain-select");

@@ -1489,13 +1489,17 @@
             Zielgruppe Fachanwender) für ein oder mehrere Kapitel der Benutzerhandbuch-Gliederung (Einstellungen),
             auf Basis der ausgewählten Tickets. <b>Datei-Scope</b>: wie in Verarbeitung ("Datei(en)/Liste(n)
             auswählen", Prozessschritt 1) – gilt hier ebenfalls. Zusätzlich Domäne/Label-Themengebiet/Kapitel als
-            Filter. Ein Klick auf "Kapitel erstellen" generiert je ausgewähltem Kapitel einen eigenen Text – ist
-            kein Kapitel, aber eine Domäne gewählt, für <b>alle</b> Kapitel dieser Domäne. Ergebnis ist editierbar
-            und bleibt im Browser erhalten (bis "Alle Daten löschen"/"Sitzung zurücksetzen"; wird über Sitzung
-            speichern/laden mit exportiert). Nutzt Claude über die sample-Capability (nur innerhalb der
-            Claude-Artifact-Laufzeit verfügbar) – erfindet keine Fakten, nur vorhandene Ticket-Daten. Die
-            Anweisung selbst ist unter Einstellungen → RAG-Prompts ("Benutzerhandbuch-Kapitel erstellen")
-            editierbar.
+            Filter sowie eine <b>Gruppierung</b>: "Nach Kapitel" (Standard, ein Text je Gliederungskapitel – ist
+            kein Kapitel, aber eine Domäne gewählt, für <b>alle</b> Kapitel dieser Domäne) oder "Nach
+            Label-Themengebiet" (ein eigener Text je Themengebiet statt je Kapitel). Bei mehr als 20 in einem Lauf
+            fertiggestellten Texten erscheint alle 20 Stück ein Zwischenstand im Protokoll (Verarbeitung). Ergebnis
+            ist editierbar und bleibt im Browser erhalten (bis "Alle Daten löschen"/"Sitzung zurücksetzen"; wird
+            über Sitzung speichern/laden mit exportiert). Bei erneutem Erzeugen für ein bereits vorhandenes
+            Kapitel/Label wird die bisherige Fassung nicht überschrieben, sondern als <b>Version</b> (Name + Datum)
+            aufbewahrt und lässt sich später einsehen oder wiederherstellen. Nutzt Claude über die sample-Capability
+            (nur innerhalb der Claude-Artifact-Laufzeit verfügbar) – erfindet keine Fakten, nur vorhandene
+            Ticket-Daten. Die Anweisung selbst ist unter Einstellungen → RAG-Prompts ("Benutzerhandbuch-Kapitel
+            erstellen") editierbar.
           </div>
           <div class="controls">
             <div class="graph-filter-col">
@@ -1530,6 +1534,13 @@
                 <option value="markt">Markt</option>
                 <option value="mo">MO (Market Operation)</option>
                 <option value="hq">HQ (Headquarters)</option>
+              </select>
+            </div>
+            <div class="graph-filter-col">
+              <label for="manual-group-select">Gruppierung</label>
+              <select id="manual-group-select" aria-label="Gruppierung">
+                <option value="chapter">Nach Kapitel (Standard)</option>
+                <option value="label">Nach Label-Themengebiet</option>
               </select>
             </div>
           </div>
@@ -3958,7 +3969,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.30.1";
+  var APP_VERSION = "2.31.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5269,7 +5280,7 @@
     "trend-burndown-section", "trend-burndown-legend", "trend-burndown-container", "trend-burndown-export-btn",
     "trend-domain-section", "trend-domain-select", "trend-domain-legend", "trend-domain-container", "trend-domain-export-btn",
     "dq-tickets-total", "dq-tickets-affected", "dq-findings-total", "dq-empty-state", "dq-wrap", "dq-tbody",
-    "manual-domain-select", "manual-label-select", "manual-chapter-select", "manual-role-select", "manual-match-count",
+    "manual-domain-select", "manual-label-select", "manual-chapter-select", "manual-role-select", "manual-group-select", "manual-match-count",
     "manual-generate-btn", "manual-stop-btn", "manual-status-note", "manual-chapters-list", "manual-chapters-empty",
     "gl-use-selection-cb", "gl-selection-count",
     "gl-subchapter-select", "gl-label-select", "gl-generate-btn", "gl-status-note", "gl-keywords-list", "gl-keywords-empty",
@@ -12615,6 +12626,31 @@
   function manualRowsForChapter(chapterTitle) {
     return manualMatchedTickets().filter(function (t) { return (t.outlineChapters || []).indexOf(chapterTitle) !== -1; });
   }
+  // Gruppierung (Filterpanel "Gruppierung"): "chapter" (Standard, wie
+  // bisher) oder "label" - dann ein eigener Text je Label-Themengebiet
+  // statt je Gliederungskapitel. Einheitliche Gruppen-Objekte {kind, name}
+  // fuer beide Modi, damit der restliche Erzeugungs-/Speicher-Code nicht
+  // zwischen beiden unterscheiden muss.
+  function manualGroupMode() { return (els.manualGroupSelect && els.manualGroupSelect.value === "label") ? "label" : "chapter"; }
+  function manualTargetGroups() {
+    if (manualGroupMode() === "label") {
+      var selectedLabels = selectedValues(els.manualLabelSelect);
+      var categories = selectedLabels.length ? selectedLabels : distinctArrayFieldValues(manualMatchedTickets(), "autoLabelCategories");
+      return categories.map(function (c) { return { kind: "label", name: c }; });
+    }
+    return manualTargetChapters().map(function (c) { return { kind: "chapter", name: c }; });
+  }
+  function manualRowsForGroup(group) {
+    if (group.kind === "label") {
+      return manualMatchedTickets().filter(function (t) { return (t.autoLabelCategories || []).indexOf(group.name) !== -1; });
+    }
+    return manualRowsForChapter(group.name);
+  }
+  // Speicher-Schluessel in app.manualChapters: Label-Gruppen werden mit
+  // "Label: "-Praefix abgelegt, damit sie nie mit einem echten Kapiteltitel
+  // kollidieren (auch nicht bei Gliederungs-Aenderungen durch den Nutzer).
+  function manualStorageKey(group) { return group.kind === "label" ? "Label: " + group.name : group.name; }
+  function manualGroupDescriptor(group) { return (group.kind === "label" ? "Label-Themengebiet: " : "Kapitel: ") + group.name; }
 
   // Reichhaltigerer Datensatz je Ticket als bei RAG (Typ + Labels
   // zusätzlich) - "nutze alle vorhandenen Daten".
@@ -12642,35 +12678,36 @@
     if (gapNotes.length) txt += " Bekannte Dokumentationslücken für diese Rolle (nicht verschweigen, transparent benennen): " + gapNotes.join(" ");
     return txt;
   }
-  function manualBuildPrompt(chapterTitle, rows, role) {
+  function manualBuildPrompt(groupDescriptor, rows, role) {
     var body = rows.map(manualTicketBlock).join("\n");
-    return ragPromptFor("manualChapter") + "\n\nKapitel: " + chapterTitle + manualRoleInstruction(role) + "\n\nTicket-Rohdaten:\n" + body;
+    return ragPromptFor("manualChapter") + "\n\n" + groupDescriptor + manualRoleInstruction(role) + "\n\nTicket-Rohdaten:\n" + body;
   }
-  function manualBuildSynthesisPrompt(chapterTitle, partialTexts, role) {
+  function manualBuildSynthesisPrompt(groupDescriptor, partialTexts, role) {
     var body = partialTexts.map(function (t, i) { return "Teiltext " + (i + 1) + ":\n" + t; }).join("\n\n");
-    return ragPromptFor("manualChapterSynthesis") + "\n\nKapitel: " + chapterTitle + manualRoleInstruction(role) + "\n\n" + body;
+    return ragPromptFor("manualChapterSynthesis") + "\n\n" + groupDescriptor + manualRoleInstruction(role) + "\n\n" + body;
   }
 
   var manualAbortController = null;
   // Map-Reduce ueber dieselbe Zeichen-Budget-Chunking-Funktion wie RAG
-  // (chunkRagRows) - bei sehr vielen Tickets je Kapitel mehrere
+  // (chunkRagRows) - bei sehr vielen Tickets je Kapitel/Label mehrere
   // Teil-Durchlaeufe + ein abschliessender Zusammenfuehrungs-Aufruf, sonst
-  // ein einzelner Aufruf.
-  async function manualGenerateOneChapter(chapterTitle, rows, role, signal, onProgress) {
+  // ein einzelner Aufruf. groupDescriptor ist die fertige Zeile "Kapitel:
+  // X" bzw. "Label-Themengebiet: X" (s. manualGroupDescriptor()).
+  async function manualGenerateOneChapter(groupDescriptor, rows, role, signal, onProgress) {
     var batches = chunkRagRows(rows, RAG_BATCH_CHAR_BUDGET);
     if (batches.length <= 1) {
-      var prompt = manualBuildPrompt(chapterTitle, rows, role);
+      var prompt = manualBuildPrompt(groupDescriptor, rows, role);
       var result = await sampleApi(prompt, { signal: signal, modelTier: "default", cache: false });
       return result.text || "";
     }
     var partials = [];
     for (var i = 0; i < batches.length; i++) {
       if (onProgress) onProgress("Teil " + (i + 1) + " von " + batches.length + " …");
-      var batchResult = await sampleApi(manualBuildPrompt(chapterTitle, batches[i], role), { signal: signal, modelTier: "default", cache: false });
+      var batchResult = await sampleApi(manualBuildPrompt(groupDescriptor, batches[i], role), { signal: signal, modelTier: "default", cache: false });
       partials.push(batchResult.text || "");
     }
     if (onProgress) onProgress("Führe " + batches.length + " Teile zusammen …");
-    var synthResult = await sampleApi(manualBuildSynthesisPrompt(chapterTitle, partials, role), { signal: signal, modelTier: "default", cache: false });
+    var synthResult = await sampleApi(manualBuildSynthesisPrompt(groupDescriptor, partials, role), { signal: signal, modelTier: "default", cache: false });
     return synthResult.text || "";
   }
   function manualWordCount(text) {
@@ -12678,9 +12715,40 @@
     return trimmed ? trimmed.split(/\s+/).length : 0;
   }
 
+  // Versionierung: eine bereits vorhandene Fassung wird bei erneutem
+  // Erzeugen NICHT ueberschrieben, sondern mit Name (Standard: Zeitstempel,
+  // umbenennbar) und Datum in entry.history aufbewahrt - Grundlage fuer den
+  // spaeteren Vergleich (s. renderManualChapters()). Begrenzt auf die
+  // letzten MANUAL_HISTORY_LIMIT Fassungen je Kapitel/Label, um kein
+  // unbegrenzt wachsendes Sitzungsdatenvolumen zu erzeugen.
+  var MANUAL_HISTORY_LIMIT = 20;
+  function manualStoreVersion(key, newData) {
+    var existing = app.manualChapters[key];
+    var history = existing ? (existing.history || []).slice() : [];
+    if (existing && existing.de) {
+      history.push({ name: "Version vom " + existing.generatedAt, de: existing.de, en: existing.en || "", generatedAt: existing.generatedAt, ticketCount: existing.ticketCount });
+      if (history.length > MANUAL_HISTORY_LIMIT) history = history.slice(history.length - MANUAL_HISTORY_LIMIT);
+    }
+    newData.history = history;
+    app.manualChapters[key] = newData;
+  }
+  // Zwischenstand alle 20 fertiggestellte Kapitel/Labels EINES Laufs: ein
+  // gebuendelter Protokolleintrag statt (zusaetzlich zu) der bereits
+  // bestehenden Einzel-Log-Zeile je Kapitel - hilft bei sehr grossen
+  // Gliederungen/vielen Labels, den Fortschritt im Protokoll (Verarbeitung)
+  // auf einen Blick zu ueberblicken, ohne es mit Einzelzeilen zu fluten.
+  var MANUAL_CHECKPOINT_SIZE = 20;
+  function manualLogCheckpoint(items) {
+    var kindLabel = items[0].kind === "label" ? "Labels" : "Kapiteln";
+    var avgWords = Math.round(items.reduce(function (s, it) { return s + it.words; }, 0) / items.length);
+    var avgTickets = Math.round(items.reduce(function (s, it) { return s + it.tickets; }, 0) / items.length);
+    addLog("Zwischenstand nach " + items.length + " " + kindLabel + ": \"" + items[0].name + "\" … \"" + items[items.length - 1].name +
+      "\" fertig (im Schnitt " + avgWords + " Wörter, " + avgTickets + " Tickets).");
+  }
+
   async function manualGenerateChapters() {
-    var targetChapters = manualTargetChapters();
-    if (!targetChapters.length) { showToast("Keine Auswahl", "Bitte mindestens ein Kapitel oder eine Domäne auswählen.", true); return; }
+    var groups = manualTargetGroups();
+    if (!groups.length) { showToast("Keine Auswahl", "Bitte mindestens ein Kapitel/Label-Themengebiet oder eine Domäne auswählen.", true); return; }
     if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
     var role = (els.manualRoleSelect && els.manualRoleSelect.value) || "alle";
     els.manualGenerateBtn.disabled = true;
@@ -12688,28 +12756,33 @@
     var ctl = new AbortController();
     manualAbortController = ctl;
     var aborted = false;
-    for (var i = 0; i < targetChapters.length; i++) {
-      var chapterTitle = targetChapters[i];
-      var rows = manualRowsForChapter(chapterTitle);
+    var checkpointItems = [];
+    for (var i = 0; i < groups.length; i++) {
+      var group = groups[i];
+      var rows = manualRowsForGroup(group);
+      var kindLabel = group.kind === "label" ? "Label" : "Kapitel";
       if (!rows.length) {
-        els.manualStatusNote.textContent = "Kapitel \"" + chapterTitle + "\" übersprungen (keine passenden Tickets).";
+        els.manualStatusNote.textContent = kindLabel + " \"" + group.name + "\" übersprungen (keine passenden Tickets).";
         continue;
       }
-      els.manualStatusNote.textContent = "Erzeuge Kapitel " + (i + 1) + " von " + targetChapters.length + ": \"" + chapterTitle + "\" (" + rows.length + " Tickets) …";
+      els.manualStatusNote.textContent = "Erzeuge " + kindLabel + " " + (i + 1) + " von " + groups.length + ": \"" + group.name + "\" (" + rows.length + " Tickets) …";
       try {
-        var text = await manualGenerateOneChapter(chapterTitle, rows, role, ctl.signal, function (note) {
-          els.manualStatusNote.textContent = "\"" + chapterTitle + "\": " + note;
+        var text = await manualGenerateOneChapter(manualGroupDescriptor(group), rows, role, ctl.signal, function (note) {
+          els.manualStatusNote.textContent = "\"" + group.name + "\": " + note;
         });
-        app.manualChapters[chapterTitle] = { de: text, en: "", generatedAt: new Date().toLocaleString("de-DE"), ticketCount: rows.length, role: role };
+        var key = manualStorageKey(group);
+        manualStoreVersion(key, { de: text, en: "", generatedAt: new Date().toLocaleString("de-DE"), ticketCount: rows.length, role: role, groupKind: group.kind, groupName: group.name });
         renderManualChapters();
-        addLog("Benutzerhandbuch-Kapitel erzeugt: \"" + chapterTitle + "\" (" + rows.length + " Tickets, ~" + manualWordCount(text) + " Wörter" + (role !== "alle" ? ", Rolle " + role : "") + ").");
+        addLog((group.kind === "label" ? "Benutzerhandbuch-Text (Label-Themengebiet) erzeugt: \"" : "Benutzerhandbuch-Kapitel erzeugt: \"") + group.name + "\" (" + rows.length + " Tickets, ~" + manualWordCount(text) + " Wörter" + (role !== "alle" ? ", Rolle " + role : "") + ").");
+        checkpointItems.push({ name: group.name, kind: group.kind, words: manualWordCount(text), tickets: rows.length });
+        if (checkpointItems.length === MANUAL_CHECKPOINT_SIZE) { manualLogCheckpoint(checkpointItems); checkpointItems = []; }
       } catch (err) {
         if (err && err.code === "cancelled") { aborted = true; break; }
         var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
-        showToast("Kapitel \"" + chapterTitle + "\" fehlgeschlagen", msg, true);
+        showToast(kindLabel + " \"" + group.name + "\" fehlgeschlagen", msg, true);
       }
     }
-    els.manualStatusNote.textContent = aborted ? "Abgebrochen." : (targetChapters.length > 1 ? "Fertig." : "");
+    els.manualStatusNote.textContent = aborted ? "Abgebrochen." : (groups.length > 1 ? "Fertig." : "");
     els.manualGenerateBtn.disabled = false;
     els.manualStopBtn.hidden = true;
     manualAbortController = null;
@@ -12854,6 +12927,33 @@
   }
 
   var manualChapterLangView = {};
+  // Aufklapp-/Anzeige-Status der Versionsliste je Kapitel/Label - nur
+  // UI-Zustand, kein Sitzungsdatensatz (wie glExpanded bei Gliederung).
+  var manualHistoryExpanded = {};
+  var manualHistoryTextShown = {};
+  function manualHistoryHtml(title, entry) {
+    var history = entry.history || [];
+    if (!history.length) return "";
+    var expanded = !!manualHistoryExpanded[title];
+    var out = '<div style="margin-top:10px;"><button type="button" class="btn ghost btn-tiny" data-manual-history-toggle="' + escapeHtml(title) + '">' +
+      (expanded ? "▾" : "▸") + " Versionen (" + history.length + ")</button>";
+    if (expanded) {
+      out += history.map(function (v, idx) {
+        var shownKey = title + "|" + idx;
+        var shown = !!manualHistoryTextShown[shownKey];
+        return '<div class="panel" style="margin:6px 0 0 22px; padding:8px 10px;">' +
+          '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">' +
+          '<input type="text" class="text-input" data-manual-history-name="' + idx + '" data-manual-history-chapter="' + escapeHtml(title) + '" value="' + escapeHtml(v.name) + '" style="max-width:220px;">' +
+          '<span class="mono step-note">' + escapeHtml(v.generatedAt) + " · " + manualWordCount(v.de) + " Wörter · " + v.ticketCount + " Tickets</span>" +
+          '<button type="button" class="btn ghost btn-tiny" data-manual-history-view="' + idx + '" data-manual-history-chapter="' + escapeHtml(title) + '">' + (shown ? "Text verbergen" : "Text anzeigen") + "</button>" +
+          '<button type="button" class="btn ghost btn-tiny" data-manual-history-restore="' + idx + '" data-manual-history-chapter="' + escapeHtml(title) + '">Wiederherstellen</button>' +
+          "</div>" +
+          (shown ? '<textarea class="text-input" rows="8" readonly style="width:100%; margin-top:6px; font-family:inherit;">' + escapeHtml(v.de) + "</textarea>" : "") +
+          "</div>";
+      }).join("");
+    }
+    return out + "</div>";
+  }
   function renderManualChapters() {
     var titles = Object.keys(app.manualChapters);
     els.manualChaptersEmpty.hidden = titles.length > 0;
@@ -12863,9 +12963,10 @@
       var text = lang === "en" ? (entry.en || "") : entry.de;
       var hasEn = !!entry.en;
       var roleSuffix = entry.role && entry.role !== "alle" ? " · Rolle: " + escapeHtml(roleNavLabel(entry.role)) : "";
+      var displayTitle = entry.groupKind === "label" ? entry.groupName + " (Label-Themengebiet)" : title;
       return '<div class="manual-chapter-card panel" data-manual-chapter="' + escapeHtml(title) + '" style="margin-bottom:16px; padding:14px;">' +
         '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;">' +
-        "<h3 style=\"margin:0;\">" + escapeHtml(title) + "</h3>" +
+        "<h3 style=\"margin:0;\">" + escapeHtml(displayTitle) + "</h3>" +
         '<span class="mono" style="font-size:11.5px; color:var(--text-muted);">' + manualWordCount(entry.de) + " Wörter · " + entry.ticketCount +
         " Tickets · erzeugt " + escapeHtml(entry.generatedAt) + roleSuffix + "</span></div>" +
         '<div class="preview-toggle" style="margin:8px 0;">' +
@@ -12879,7 +12980,8 @@
         '<button type="button" class="btn ghost btn-tiny" data-manual-action="export-pdf">Als PDF</button>' +
         '<button type="button" class="btn ghost btn-tiny" data-manual-action="export-docx">Als Word</button>' +
         '<span class="spacer"></span>' +
-        '<button type="button" class="btn ghost btn-tiny" data-manual-action="delete">Kapitel löschen</button></div></div>';
+        '<button type="button" class="btn ghost btn-tiny" data-manual-action="delete">Kapitel löschen</button></div>' +
+        manualHistoryHtml(title, entry) + "</div>";
     }).join("");
   }
   els.manualChaptersList.addEventListener("click", function (e) {
@@ -12893,6 +12995,37 @@
       renderManualChapters();
       return;
     }
+    var historyToggle = e.target.closest("[data-manual-history-toggle]");
+    if (historyToggle) {
+      manualHistoryExpanded[title] = !manualHistoryExpanded[title];
+      renderManualChapters();
+      return;
+    }
+    var historyViewBtn = e.target.closest("[data-manual-history-view]");
+    if (historyViewBtn) {
+      var viewIdx = historyViewBtn.getAttribute("data-manual-history-view");
+      var shownKey = title + "|" + viewIdx;
+      manualHistoryTextShown[shownKey] = !manualHistoryTextShown[shownKey];
+      renderManualChapters();
+      return;
+    }
+    var historyRestoreBtn = e.target.closest("[data-manual-history-restore]");
+    if (historyRestoreBtn) {
+      var restoreIdx = parseInt(historyRestoreBtn.getAttribute("data-manual-history-restore"), 10);
+      var entryToRestore = app.manualChapters[title];
+      var version = entryToRestore && entryToRestore.history && entryToRestore.history[restoreIdx];
+      if (entryToRestore && version) {
+        // Aktuellen Stand selbst in die History verschieben, bevor er
+        // ersetzt wird - kein Datenverlust durch "Wiederherstellen".
+        entryToRestore.history.push({ name: "Version vom " + entryToRestore.generatedAt, de: entryToRestore.de, en: entryToRestore.en || "", generatedAt: entryToRestore.generatedAt, ticketCount: entryToRestore.ticketCount });
+        entryToRestore.history.splice(restoreIdx, 1);
+        entryToRestore.de = version.de; entryToRestore.en = version.en || "";
+        entryToRestore.generatedAt = version.generatedAt; entryToRestore.ticketCount = version.ticketCount;
+        renderManualChapters();
+        addLog("Benutzerhandbuch-Kapitel \"" + title + "\": Version vom " + version.generatedAt + " wiederhergestellt.");
+      }
+      return;
+    }
     var actionBtn = e.target.closest("[data-manual-action]");
     if (!actionBtn) return;
     var action = actionBtn.getAttribute("data-manual-action");
@@ -12902,9 +13035,20 @@
     else if (action === "delete") {
       delete app.manualChapters[title];
       delete manualChapterLangView[title];
+      delete manualHistoryExpanded[title];
       renderManualChapters();
       addLog("Benutzerhandbuch-Kapitel \"" + title + "\" gelöscht.");
     }
+  });
+  els.manualChaptersList.addEventListener("change", function (e) {
+    var nameInput = e.target.closest("[data-manual-history-name]");
+    if (!nameInput) return;
+    var title = nameInput.getAttribute("data-manual-history-chapter");
+    var idx = parseInt(nameInput.getAttribute("data-manual-history-name"), 10);
+    var entry = app.manualChapters[title];
+    var val = nameInput.value.trim();
+    if (entry && entry.history && entry.history[idx] && val) entry.history[idx].name = val;
+    else renderManualChapters();
   });
   els.manualChaptersList.addEventListener("input", function (e) {
     var ta = e.target.closest("[data-manual-text]");
