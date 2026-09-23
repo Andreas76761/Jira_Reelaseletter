@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.31.1"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.32.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -199,6 +199,24 @@ Toggles, Kapitel-Generator-/RAG-/Gliederung-Filterwechsel, Punkte-System-
 (Cache-Treffer). Der Cache wird bei "Sitzung zurücksetzen"/"Alle Daten
 löschen" geleert; inhaltlich geänderte Tickets (erneuter Import) werden
 über die Inhalts-Prüfsumme automatisch erkannt und gezielt neu berechnet.
+
+**Performance (Batch-Parallelisierung im Kapitel-Generator):** Bei sehr
+vielen Tickets je Kapitel/Label-Themengebiet teilt der Benutzerhandbuch-
+Kapitel-Generator die Texte (wie das RAG-Modul) über `chunkRagRows()` in
+mehrere zeichen-budgetierte Teil-Batches und lässt daraus einen
+Zusammenfassungstext erzeugen. Diese Teil-Batches sind unabhängig
+voneinander (jeder bekommt eine eigene Ticket-Teilmenge) und werden daher
+**parallel statt nacheinander** an Claude geschickt (`Promise.all` statt
+einer sequenziellen Schleife) – bei z. B. 3 Teil-Batches etwa um den Faktor
+3 kürzere Wartezeit für diesen Schritt, da die Antwortzeit des KI-Aufrufs
+dominiert, nicht lokale Rechenarbeit. Die Reihenfolge der Teiltexte im
+abschließenden Zusammenführungs-Aufruf bleibt dabei unabhängig von der
+tatsächlichen Fertigstellungsreihenfolge korrekt erhalten. **Bewusst nicht
+verändert:** der Batch-Lauf im RAG-Modul (Verarbeitung → 7. RAG) bleibt
+sequenziell, weil er als fortsetzbarer Lauf mit Live-Streaming-Vorschau und
+batch-genauem Stop/Resume gebaut ist (`ragBatchRun.index`) – das setzt
+echte Sequenzialität voraus und müsste für eine Parallelisierung erst
+grundlegend umgebaut werden.
 
 - **Dashboard** – zusammengeführter, aktueller Stand aller importierten
   Tickets: Status-Kacheln, ein **Typ-Schnellfilter** (Chips je Tickettyp,

@@ -3969,7 +3969,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.31.1";
+  var APP_VERSION = "2.32.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -12792,6 +12792,20 @@
   // Teil-Durchlaeufe + ein abschliessender Zusammenfuehrungs-Aufruf, sonst
   // ein einzelner Aufruf. groupDescriptor ist die fertige Zeile "Kapitel:
   // X" bzw. "Label-Themengebiet: X" (s. manualGroupDescriptor()).
+  //
+  // Performance: die Teil-Batches sind UNABHAENGIG voneinander (jeder
+  // bekommt eine eigene Ticket-Teilmenge, keiner braucht das Ergebnis
+  // eines anderen) und werden daher PARALLEL statt nacheinander an Claude
+  // geschickt (Promise.all statt sequenzieller for-await-Schleife) - bei
+  // z.B. 3 Batches etwa Faktor 3 kuerzere Wartezeit fuer diesen Schritt,
+  // da die Antwortzeit des KI-Aufrufs dominiert, nicht lokale
+  // Rechenarbeit. Promise.all erhaelt dabei die Batch-REIHENFOLGE in
+  // "partials" unabhaengig von der tatsaechlichen Fertigstellungs-
+  // reihenfolge. Bewusst NICHT auf den RAG-Batch-Lauf (Teil 9b) uebertragen:
+  // der ist als fortsetzbarer Lauf mit Live-Streaming-Vorschau UND
+  // batch-genauem Stop/Resume gebaut (ragBatchRun.index) - das setzt
+  // echte Sequenzialitaet voraus und muesste fuer Parallelisierung erst
+  // grundlegend umgebaut werden (separater, groesserer Schritt).
   async function manualGenerateOneChapter(groupDescriptor, rows, role, signal, onProgress) {
     var batches = chunkRagRows(rows, RAG_BATCH_CHAR_BUDGET);
     if (batches.length <= 1) {
@@ -12799,12 +12813,15 @@
       var result = await sampleApi(prompt, { signal: signal, modelTier: "default", cache: false });
       return result.text || "";
     }
-    var partials = [];
-    for (var i = 0; i < batches.length; i++) {
-      if (onProgress) onProgress("Teil " + (i + 1) + " von " + batches.length + " …");
-      var batchResult = await sampleApi(manualBuildPrompt(groupDescriptor, batches[i], role), { signal: signal, modelTier: "default", cache: false });
-      partials.push(batchResult.text || "");
-    }
+    var completedCount = 0;
+    var partials = await Promise.all(batches.map(function (batchRows) {
+      return sampleApi(manualBuildPrompt(groupDescriptor, batchRows, role), { signal: signal, modelTier: "default", cache: false })
+        .then(function (batchResult) {
+          completedCount++;
+          if (onProgress) onProgress(completedCount + " von " + batches.length + " Teilen fertig …");
+          return batchResult.text || "";
+        });
+    }));
     if (onProgress) onProgress("Führe " + batches.length + " Teile zusammen …");
     var synthResult = await sampleApi(manualBuildSynthesisPrompt(groupDescriptor, partials, role), { signal: signal, modelTier: "default", cache: false });
     return synthResult.text || "";
