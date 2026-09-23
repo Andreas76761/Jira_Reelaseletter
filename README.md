@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.35.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.36.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1028,6 +1028,26 @@ grundlegend umgebaut werden.
     Stand unwiderruflich (mit Sicherheitsabfrage, falls bereits Daten
     geladen sind) und benötigt – anders als das Exportieren – **nicht**
     die Claude-Artifact-Laufzeit, da es ein normaler Datei-Upload ist.
+  - *Persistenter Speicher (automatisches Speichern)* – ergänzt das
+    manuelle Exportieren/Laden oben um automatisches, entprelltes
+    Speichern im Browser selbst (IndexedDB), derselbe Datenumfang. Ein
+    einziger, breiter document-weiter Listener (Eingabe/Änderung/Klick,
+    entprellt auf 2,5 Sekunden Inaktivität) löst das Speichern aus, statt
+    einer langen, fehleranfälligen Liste einzelner Mutationsstellen –
+    deckt dadurch auch künftige neue Bedienelemente automatisch ab. Beim
+    nächsten Öffnen der Seite in **demselben Browser** wird angeboten,
+    die zuletzt automatisch gespeicherte Sitzung wiederherzustellen – nie
+    automatisch geladen, immer mit Rückfrage; bei Ablehnung werden
+    stattdessen die Ausgangsdaten geladen und der gespeicherte Stand
+    bleibt unangetastet erhalten. Ein Schalter erlaubt das Deaktivieren
+    (gilt nur für die aktuelle Sitzung) sowie ein Button zum gezielten
+    Löschen des automatisch gespeicherten Stands. Steht IndexedDB in
+    dieser Umgebung nicht zur Verfügung (z. B. manche eingebetteten/
+    sandboxed Ansichten), bleibt die Funktion ohne Fehlermeldung inaktiv
+    (Schalter erscheint deaktiviert mit erklärendem Hinweis) – der
+    document-weite Listener wird dann bewusst gar nicht erst registriert,
+    um keine unnötige Arbeit zu leisten; das manuelle Exportieren/Laden
+    als Datei bleibt davon immer unabhängig nutzbar.
   - *Admin-Bereich* – Funktion "Alle Daten löschen": leert die komplette
     Sitzung (Tickets, Imports, Protokoll, Vergleiche, Extraktionen)
     unwiderruflich, mit Sicherheitsabfrage. Anders als "Sitzung
@@ -1172,10 +1192,12 @@ prüfen den kompletten Weg von Parsing bis Dokumenterzeugung.
 ### Web-App (`webapp/ticket_cockpit.html`)
 
 Die Web-App hat eine eigene, separate Testsuite unter `webapp/tests/`
-(jsdom-basierte End-to-End-Tests, ~50 Dateien, über 1200 einzelne
+(jsdom-basierte End-to-End-Tests, ~70 Dateien, über 1600 einzelne
 Prüfungen) – sie simulieren echte Nutzerinteraktionen (Klicks, Uploads,
 Formulareingaben) gegen die tatsächlich gebaute Web-App, nicht gegen
-isolierte Funktionsaufrufe:
+isolierte Funktionsaufrufe. Für den Persistenter-Speicher-Test kommt
+zusätzlich `fake-indexeddb` zum Einsatz, da jsdom selbst keine IndexedDB
+mitbringt:
 
 ```bash
 jira-releaseletter build-webapp        # erzeugt webapp/ticket_cockpit.build.html

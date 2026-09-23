@@ -1883,6 +1883,24 @@
         </section>
 
         <section>
+          <p class="section-label">Persistenter Speicher (automatisches Speichern)</p>
+          <div class="callout">
+            Speichert die Sitzung zusätzlich automatisch (nach kurzer Inaktivität) im Browser selbst (IndexedDB) –
+            derselbe Datenumfang wie oben bei "Sitzung als Datei exportieren", nur ohne manuellen Download. Beim
+            nächsten Öffnen dieser Seite in <b>demselben Browser</b> wird angeboten, die zuletzt automatisch
+            gespeicherte Sitzung wiederherzustellen – nie automatisch geladen, immer mit Rückfrage. Steht IndexedDB
+            in dieser Umgebung nicht zur Verfügung (z. B. manche eingebetteten/sandboxed Ansichten), bleibt diese
+            Funktion ohne Fehlermeldung inaktiv – "Sitzung speichern/laden" als Datei funktioniert davon unabhängig
+            immer. Der Ein/Aus-Schalter gilt nur für die aktuelle Sitzung (nicht selbst gespeichert).
+          </div>
+          <div class="checkbox-row"><input type="checkbox" id="autosave-enabled-cb" checked><label for="autosave-enabled-cb" style="font-weight:500;">Automatisches Speichern aktiv</label></div>
+          <p class="step-note" id="autosave-status"></p>
+          <div class="paste-actions" style="align-items:center;">
+            <button class="btn ghost" id="autosave-delete-btn" type="button">Automatisch gespeicherte Sitzung löschen</button>
+          </div>
+        </section>
+
+        <section>
           <p class="section-label">Admin-Bereich</p>
           <div class="panel danger-zone">
             <h3>Alle geladenen Daten löschen</h3>
@@ -4080,7 +4098,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.35.0";
+  var APP_VERSION = "2.36.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5417,6 +5435,7 @@
     "rag-translate-btn",
     "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
     "session-export-btn", "session-import-btn", "session-import-input",
+    "autosave-enabled-cb", "autosave-status", "autosave-delete-btn",
     "points-tbody", "points-new-type", "points-new-value", "points-add-btn",
     "domaincolors-tbody", "domaincolors-empty", "statuscolors-tbody", "statuscolors-empty", "ragprompts-list",
     "labels-tbody", "labels-new-category", "labels-new-de", "labels-new-en", "labels-add-btn", "label-category-datalist",
@@ -5957,6 +5976,164 @@
       showToast("Fehlgeschlagen", (err && err.message) || "Sitzungsdatei konnte nicht gelesen werden.", true);
     }
   });
+
+  /* ============ Persistenter Speicher (automatisches Speichern in IndexedDB) ============
+     Ergaenzt "Sitzung speichern/laden" (Datei-Export oben) um
+     automatisches, entprelltes Speichern im Browser selbst - kein
+     manueller Datei-Download noetig, um bei einem versehentlichen
+     Tab-Schliessen/Neuladen nicht bei Null anzufangen. Nutzt denselben
+     serializeSessionState()/restoreSessionState() wie der Datei-Export,
+     also exakt derselbe Datenumfang. IndexedDB ist NICHT ueberall
+     verfuegbar (z. B. manche eingebetteten/sandboxed Ansichten wie beim
+     Ausfuehren als Claude-Artifact in bestimmten Kontexten) - alle
+     Zugriffe sind daher best-effort und degradieren ohne Fehlermeldung
+     auf "Funktion inaktiv"; "Sitzung speichern/laden" als Datei bleibt
+     davon unberuehrt immer nutzbar. Der Ein/Aus-Schalter selbst ist
+     bewusst NICHT persistiert (gilt nur fuer die aktuelle Sitzung/den
+     aktuellen Tab) - vermeidet eine weitere Speicherstelle nur fuer
+     dieses eine Flag. Ausloeser fuer ein Auto-Save ist bewusst NICHT eine
+     lange Liste einzelner Mutationsstellen (zu fehleranfaellig bei
+     kuenftigen Aenderungen), sondern ein einziger, breiter
+     document-weiter Listener auf input/change/click, entprellt - deckt
+     dadurch auch kuenftige neue Bedienelemente automatisch ab. */
+  var AUTOSAVE_DB_NAME = "ticket-cockpit-autosave";
+  var AUTOSAVE_STORE = "session";
+  var AUTOSAVE_KEY = "current";
+  var AUTOSAVE_DEBOUNCE_MS = 2500;
+  // Nur wenn IndexedDB ueberhaupt existiert lohnt sich der document-weite
+  // Listener (Teil 2, s. unten) - sonst wuerde er nur bei jedem Klick
+  // sinnlos einen Timer (neu) starten, der ohnehin nie etwas speichern
+  // kann (openAutoSaveDb() liefert dann immer null). Einmalig zur
+  // Skript-Ladezeit geprueft, nicht bei jedem Aufruf neu.
+  var autoSaveAvailable = !!window.indexedDB;
+  var autoSaveEnabled = true;
+  var autoSaveDbPromise = null;
+  var autoSaveTimer = null;
+  var autoSaveInFlight = false;
+  var autoSavePendingAgain = false;
+
+  function openAutoSaveDb() {
+    if (autoSaveDbPromise) return autoSaveDbPromise;
+    autoSaveDbPromise = new Promise(function (resolve) {
+      if (!window.indexedDB) { resolve(null); return; }
+      var req;
+      try { req = window.indexedDB.open(AUTOSAVE_DB_NAME, 1); }
+      catch (e) { resolve(null); return; }
+      req.onupgradeneeded = function () {
+        if (!req.result.objectStoreNames.contains(AUTOSAVE_STORE)) req.result.createObjectStore(AUTOSAVE_STORE);
+      };
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror = function () { resolve(null); };
+      req.onblocked = function () { resolve(null); };
+    });
+    return autoSaveDbPromise;
+  }
+  function autoSaveWrite(db, data) {
+    return new Promise(function (resolve) {
+      try {
+        var tx = db.transaction(AUTOSAVE_STORE, "readwrite");
+        tx.objectStore(AUTOSAVE_STORE).put(data, AUTOSAVE_KEY);
+        tx.oncomplete = function () { resolve(true); };
+        tx.onerror = function () { resolve(false); };
+        tx.onabort = function () { resolve(false); };
+      } catch (e) { resolve(false); }
+    });
+  }
+  function autoSaveRead(db) {
+    return new Promise(function (resolve) {
+      try {
+        var tx = db.transaction(AUTOSAVE_STORE, "readonly");
+        var req = tx.objectStore(AUTOSAVE_STORE).get(AUTOSAVE_KEY);
+        req.onsuccess = function () { resolve(req.result || null); };
+        req.onerror = function () { resolve(null); };
+      } catch (e) { resolve(null); }
+    });
+  }
+  function autoSaveDelete(db) {
+    return new Promise(function (resolve) {
+      try {
+        var tx = db.transaction(AUTOSAVE_STORE, "readwrite");
+        tx.objectStore(AUTOSAVE_STORE).delete(AUTOSAVE_KEY);
+        tx.oncomplete = function () { resolve(true); };
+        tx.onerror = function () { resolve(false); };
+      } catch (e) { resolve(false); }
+    });
+  }
+  async function autoSaveNow() {
+    if (!autoSaveEnabled) return;
+    if (autoSaveInFlight) { autoSavePendingAgain = true; return; }
+    autoSaveInFlight = true;
+    try {
+      var db = await openAutoSaveDb();
+      if (!db) { els.autosaveStatus.textContent = "Automatisches Speichern in dieser Umgebung nicht verfügbar."; return; }
+      var data = serializeSessionState();
+      var ok = await autoSaveWrite(db, data);
+      els.autosaveStatus.textContent = ok
+        ? "Zuletzt automatisch gespeichert: " + nowLabel() + " (" + app.tickets.length + " Tickets)."
+        : "Automatisches Speichern fehlgeschlagen.";
+    } finally {
+      autoSaveInFlight = false;
+      if (autoSavePendingAgain) { autoSavePendingAgain = false; autoSaveNow(); }
+    }
+  }
+  function scheduleAutoSave() {
+    if (!autoSaveEnabled || !autoSaveAvailable) return;
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(autoSaveNow, AUTOSAVE_DEBOUNCE_MS);
+  }
+  if (autoSaveAvailable) {
+    ["input", "change", "click"].forEach(function (evt) {
+      document.addEventListener(evt, scheduleAutoSave, true);
+    });
+  } else {
+    els.autosaveEnabledCb.checked = false;
+    els.autosaveEnabledCb.disabled = true;
+    els.autosaveStatus.textContent = "Automatisches Speichern in dieser Umgebung nicht verfügbar (IndexedDB fehlt).";
+  }
+  els.autosaveEnabledCb.addEventListener("change", function () {
+    autoSaveEnabled = els.autosaveEnabledCb.checked;
+    if (autoSaveEnabled) { scheduleAutoSave(); }
+    else { clearTimeout(autoSaveTimer); els.autosaveStatus.textContent = "Automatisches Speichern deaktiviert."; }
+  });
+  els.autosaveDeleteBtn.addEventListener("click", async function () {
+    var ok = await confirmDialog("Automatisch gespeicherte Sitzung wirklich löschen? Die aktuell sichtbaren Daten in der App bleiben unverändert.");
+    if (!ok) return;
+    var db = await openAutoSaveDb();
+    if (db) await autoSaveDelete(db);
+    els.autosaveStatus.textContent = "Automatisch gespeicherte Sitzung gelöscht.";
+    showToast("Gelöscht", "Automatisch gespeicherte Sitzung wurde entfernt.");
+  });
+  // Beim Start: falls eine automatisch gespeicherte Sitzung existiert, wird
+  // NICHT stillschweigend geladen (koennte unerwartet die Demo-/
+  // Ausgangsdaten verdraengen), sondern per Bestaetigungsdialog angeboten -
+  // bei Ablehnung oder falls keine vorhanden ist, startet die Sitzung wie
+  // gehabt mit den eingebetteten Ausgangsdaten (resetSession()).
+  async function bootWithAutoSaveCheck() {
+    var restored = false;
+    var db = await openAutoSaveDb();
+    if (db) {
+      var saved = await autoSaveRead(db);
+      if (saved && Array.isArray(saved.ticketStoreEntries)) {
+        var when = saved.savedAt ? new Date(saved.savedAt).toLocaleString("de-DE") : "unbekannt";
+        var ok = await confirmDialog(
+          "Es wurde eine automatisch gespeicherte Sitzung gefunden (Stand: " + when + ", " + saved.ticketStoreEntries.length +
+          " Ticket(s)). Diese Sitzung jetzt wiederherstellen? Bei „Abbrechen“ werden stattdessen die Ausgangsdaten geladen.",
+          "Wiederherstellen"
+        );
+        if (ok) {
+          try {
+            restoreSessionState(saved);
+            restored = true;
+            addLog("Automatisch gespeicherte Sitzung wiederhergestellt (Stand: " + when + ").");
+            els.autosaveStatus.textContent = "Wiederhergestellt (Stand: " + when + ").";
+          } catch (e) {
+            showToast("Wiederherstellen fehlgeschlagen", (e && e.message) || "Unbekannter Fehler.", true);
+          }
+        }
+      }
+    }
+    if (!restored) resetSession();
+  }
 
   /* ============ Einstellungen: Punkte-System + Labels + Gliederung ============ */
 
@@ -14155,6 +14332,6 @@
   renderRoleNavigationList();
   renderImportFormats();
   renderTestResults();
-  resetSession();
+  bootWithAutoSaveCheck();
 })();
 </script>

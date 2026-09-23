@@ -7,9 +7,10 @@
     "test": "node run-all.js"
   },
   "devDependencies": {
+    "fake-indexeddb": "^6.2.5",
     "jsdom": "^30.1.0",
-    "jszip": "^3.10.2",
     "jspdf": "^4.2.1",
+    "jszip": "^3.10.2",
     "mammoth": "^1.12.3",
     "pdf-parse": "^2.4.5",
     "xlsx": "^0.18.5"
