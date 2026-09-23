@@ -1644,6 +1644,18 @@
         </section>
 
         <section>
+          <p class="section-label">RAG-Prompts (KI-Texterzeugung)</p>
+          <div class="callout">
+            Die Anweisungen ("Prompts"), mit denen Claude aus den gefilterten Ticket-Rohdaten (Verarbeitung → 7. RAG)
+            einen Zusammenfassungs- oder Fließtext erzeugt bzw. übersetzt/zusammenführt. Hier frei anpassbar (z. B.
+            anderer Ton, andere Zielgruppe, andere Sprache) – die Rohdaten selbst werden weiterhin automatisch
+            angehängt, nicht mit editieren. Wirkt sich auf den nächsten Klick auf "Generieren"/"Übersetzen" aus,
+            nicht rückwirkend auf bereits erzeugte Texte.
+          </div>
+          <div id="ragprompts-list"></div>
+        </section>
+
+        <section>
           <p class="section-label">Dokumentation</p>
           <p class="section-label" style="margin-top:6px;">Testing</p>
           <div class="callout">
@@ -3689,7 +3701,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.23.0";
+  var APP_VERSION = "2.24.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5008,7 +5020,7 @@
     "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
     "session-export-btn", "session-import-btn", "session-import-input",
     "points-tbody", "points-new-type", "points-new-value", "points-add-btn",
-    "domaincolors-tbody", "domaincolors-empty", "statuscolors-tbody", "statuscolors-empty",
+    "domaincolors-tbody", "domaincolors-empty", "statuscolors-tbody", "statuscolors-empty", "ragprompts-list",
     "labels-tbody", "labels-new-category", "labels-new-de", "labels-new-en", "labels-add-btn", "label-category-datalist",
     "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn", "outline-domain-datalist",
     "test-results-date", "test-results-suites", "test-results-files-passed", "test-results-total", "test-results-passed",
@@ -5122,7 +5134,11 @@
     // Sitzungsdatensatz - bleibt auch bei "Sitzung zurücksetzen"/"Alle Daten
     // löschen" erhalten.
     domainColors: {},
-    statusColors: {}
+    statusColors: {},
+    // RAG-Prompts (Einstellungen): Abweichungen von RAG_PROMPT_DEFAULTS je
+    // Prompt-Schluessel (leer = Standardtext, s. Teil 9b). Ebenfalls
+    // Konfiguration, kein Sitzungsdatensatz.
+    ragPrompts: {}
   };
 
   function addLog(message) {
@@ -5374,7 +5390,8 @@
       labels: app.labels,
       outline: app.outline,
       domainColors: app.domainColors,
-      statusColors: app.statusColors
+      statusColors: app.statusColors,
+      ragPrompts: app.ragPrompts
     };
   }
   function restoreSessionState(data) {
@@ -5407,6 +5424,7 @@
     if (data.outline) app.outline = data.outline;
     if (data.domainColors) app.domainColors = data.domainColors;
     if (data.statusColors) app.statusColors = data.statusColors;
+    if (data.ragPrompts) app.ragPrompts = data.ragPrompts;
     app.initialized = true;
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
@@ -5422,6 +5440,7 @@
     renderPointsTable();
     renderLabelsList();
     renderOutlineList();
+    renderRagPromptsList();
     els.releaseMatchSummary.hidden = true;
     els.releaseMissingWrap.hidden = true;
     els.releaseKeysInput.value = "";
@@ -11058,6 +11077,65 @@
   }
   els.ragExtractBtn.addEventListener("click", ragExtract);
 
+  /* ============ Einstellungen: RAG-Prompts (editierbare KI-Anweisungen) ============
+     Die Anweisungstexte fuer die 3 RAG-Schritte (Erzeugen, Batch-Zusammenfuehrung,
+     Uebersetzen) waren bisher fest im Code verdrahtet. Jetzt als Konfiguration
+     (wie priorityPoints/labels/domainColors) frei editierbar - app.ragPrompts
+     haelt nur Abweichungen vom Standard (leer = Standard, wie bei domainColors).
+     Die Rohdaten (Ticket-Liste bzw. Teiltexte) werden weiterhin automatisch
+     angehaengt, NICHT Teil des editierbaren Texts - sonst koennte ein Tippfehler
+     versehentlich die komplette Datengrundlage entfernen. */
+  var RAG_PROMPT_DEFAULTS = {
+    summary: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Fasse die folgenden Jira-Ticket-Rohdaten in einer prägnanten, endnutzergerechten Zusammenfassung auf Deutsch zusammen (ca. 100-200 Wörter, sachlich, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen im Text). Nutze ausschließlich Informationen aus den Rohdaten unten, erfinde nichts hinzu:",
+    fliesstext: "Du bist Technischer Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Formuliere aus den folgenden Jira-Ticket-Rohdaten einen zusammenhängenden, gut lesbaren Fließtext für ein Benutzerhandbuch auf Deutsch (mehrere Absätze erlaubt, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen im Text). Nutze ausschließlich Informationen aus den Rohdaten unten, erfinde nichts hinzu:",
+    summarySynthesis: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Die folgenden Teiltexte sind Zusammenfassungen unterschiedlicher Ausschnitte derselben Jira-Ticket-Rohdaten (aus technischen Gründen in mehreren Durchläufen erzeugt). Verschmelze sie zu EINER einzigen, prägnanten, endnutzergerechten Gesamt-Zusammenfassung auf Deutsch (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen, ohne Hinweise auf 'Teiltexte' oder 'Batches'). Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
+    fliesstextSynthesis: "Du bist Technischer Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Die folgenden Teiltexte sind Fließtext-Abschnitte unterschiedlicher Ausschnitte derselben Jira-Ticket-Rohdaten (aus technischen Gründen in mehreren Durchläufen erzeugt). Verschmelze sie zu EINEM einzigen, zusammenhängenden, gut lesbaren Fließtext für ein Benutzerhandbuch auf Deutsch (mehrere Absätze erlaubt, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen, ohne Hinweise auf 'Teiltexte' oder 'Batches'). Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
+    translation: "Übersetze den folgenden deutschen Text sinngemäß ins Englische, ohne Inhalte hinzuzufügen oder wegzulassen und ohne zusätzliche Erklärungen oder Anmerkungen. Gib ausschließlich den übersetzten Text aus:"
+  };
+  var RAG_PROMPT_LABELS = {
+    summary: "Zusammenfassung erzeugen",
+    fliesstext: "Fließtext erzeugen",
+    summarySynthesis: "Zusammenfassung zusammenführen (Batch-Modus)",
+    fliesstextSynthesis: "Fließtext zusammenführen (Batch-Modus)",
+    translation: "Übersetzen (DE → EN)"
+  };
+  function ragPromptFor(promptKey) {
+    var override = app.ragPrompts[promptKey];
+    return (override !== undefined && override !== null) ? override : RAG_PROMPT_DEFAULTS[promptKey];
+  }
+  function renderRagPromptsList() {
+    els.ragpromptsList.innerHTML = Object.keys(RAG_PROMPT_DEFAULTS).map(function (key) {
+      var isOverridden = app.ragPrompts[key] !== undefined && app.ragPrompts[key] !== RAG_PROMPT_DEFAULTS[key];
+      return '<div class="ragprompt-block" style="margin-bottom:16px;">' +
+        '<div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">' +
+        '<b>' + escapeHtml(RAG_PROMPT_LABELS[key]) + '</b>' +
+        '<span class="override-badge">' + (isOverridden ? "angepasst" : "Standard") + '</span>' +
+        '<button type="button" class="btn ghost" data-ragprompt-reset="' + key + '" ' + (isOverridden ? "" : "disabled") + '>Zurücksetzen</button>' +
+        '</div>' +
+        '<textarea class="text-input ragprompt-textarea" data-ragprompt-key="' + key + '" rows="4" style="width:100%; font-family:inherit; resize:vertical;">' +
+        escapeHtml(ragPromptFor(key)) + '</textarea></div>';
+    }).join("");
+  }
+  els.ragpromptsList.addEventListener("input", function (e) {
+    var ta = e.target.closest(".ragprompt-textarea");
+    if (!ta) return;
+    var key = ta.getAttribute("data-ragprompt-key");
+    app.ragPrompts[key] = ta.value;
+    var badge = ta.closest(".ragprompt-block").querySelector(".override-badge");
+    var resetBtn = ta.closest(".ragprompt-block").querySelector("[data-ragprompt-reset]");
+    var isOverridden = ta.value !== RAG_PROMPT_DEFAULTS[key];
+    badge.textContent = isOverridden ? "angepasst" : "Standard";
+    resetBtn.disabled = !isOverridden;
+  });
+  els.ragpromptsList.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-ragprompt-reset]");
+    if (!btn) return;
+    var key = btn.getAttribute("data-ragprompt-reset");
+    delete app.ragPrompts[key];
+    renderRagPromptsList();
+  });
+  renderRagPromptsList();
+
   function ragBuildPrompt(kind, rows) {
     var body = rows.map(function (r) {
       var parts = ["Domäne: " + r.domain, "Status: " + r.status];
@@ -11065,9 +11143,7 @@
       if (r.description) parts.push("Beschreibung: " + r.description);
       return "- " + parts.join(" | ");
     }).join("\n");
-    var instruction = kind === "summary"
-      ? "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Fasse die folgenden Jira-Ticket-Rohdaten in einer prägnanten, endnutzergerechten Zusammenfassung auf Deutsch zusammen (ca. 100-200 Wörter, sachlich, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen im Text). Nutze ausschließlich Informationen aus den Rohdaten unten, erfinde nichts hinzu:"
-      : "Du bist Technischer Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Formuliere aus den folgenden Jira-Ticket-Rohdaten einen zusammenhängenden, gut lesbaren Fließtext für ein Benutzerhandbuch auf Deutsch (mehrere Absätze erlaubt, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen im Text). Nutze ausschließlich Informationen aus den Rohdaten unten, erfinde nichts hinzu:";
+    var instruction = ragPromptFor(kind === "summary" ? "summary" : "fliesstext");
     return instruction + "\n\n" + body;
   }
 
@@ -11076,14 +11152,12 @@
   // Einzeldurchlauf, ohne Hinweise auf die technische Batch-Aufteilung.
   function ragBuildSynthesisPrompt(kind, partialTexts) {
     var body = partialTexts.map(function (t, i) { return "Teiltext " + (i + 1) + ":\n" + t; }).join("\n\n");
-    var instruction = kind === "summary"
-      ? "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Die folgenden Teiltexte sind Zusammenfassungen unterschiedlicher Ausschnitte derselben Jira-Ticket-Rohdaten (aus technischen Gründen in mehreren Durchläufen erzeugt). Verschmelze sie zu EINER einzigen, prägnanten, endnutzergerechten Gesamt-Zusammenfassung auf Deutsch (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen, ohne Hinweise auf 'Teiltexte' oder 'Batches'). Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:"
-      : "Du bist Technischer Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Die folgenden Teiltexte sind Fließtext-Abschnitte unterschiedlicher Ausschnitte derselben Jira-Ticket-Rohdaten (aus technischen Gründen in mehreren Durchläufen erzeugt). Verschmelze sie zu EINEM einzigen, zusammenhängenden, gut lesbaren Fließtext für ein Benutzerhandbuch auf Deutsch (mehrere Absätze erlaubt, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen, ohne Hinweise auf 'Teiltexte' oder 'Batches'). Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:";
+    var instruction = ragPromptFor(kind === "summary" ? "summarySynthesis" : "fliesstextSynthesis");
     return instruction + "\n\n" + body;
   }
 
   function ragBuildTranslationPrompt(text) {
-    return "Übersetze den folgenden deutschen Text sinngemäß ins Englische, ohne Inhalte hinzuzufügen oder wegzulassen und ohne zusätzliche Erklärungen oder Anmerkungen. Gib ausschließlich den übersetzten Text aus:\n\n" + text;
+    return ragPromptFor("translation") + "\n\n" + text;
   }
 
   // Teilt die extrahierten Rohdaten in mehrere Batches anhand eines Zeichen-

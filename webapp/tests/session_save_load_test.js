@@ -74,6 +74,12 @@ const xml = `<?xml version="1.0"?><rss><channel>
   const domainInput = doc.querySelector('.domaincolor-input[data-domain="Sitzungsdomäne"]');
   if (domainInput) { domainInput.value = "#123456"; fire(domainInput, "change"); await wait(100); }
 
+  // Einen RAG-Prompt anpassen (Einstellungen/RAG-Prompts) - ebenfalls
+  // Konfiguration, muss also mit exportiert/wiederhergestellt werden.
+  const ragSummaryTa = doc.querySelector('.ragprompt-textarea[data-ragprompt-key="summary"]');
+  const customRagPrompt = "Fasse als Testprompt aus der Sitzung zusammen:";
+  if (ragSummaryTa) { ragSummaryTa.value = customRagPrompt; fire(ragSummaryTa, "input"); await wait(50); }
+
   const ticketCountBefore = doc.getElementById("stat-tickets").textContent;
   const importCountBefore = doc.getElementById("settings-current-imports").textContent;
 
@@ -88,6 +94,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
     check("Export enthält ticketStoreEntries (Ticket-Daten)", Array.isArray(exportedJson.ticketStoreEntries) && exportedJson.ticketStoreEntries.length >= 2);
     check("Export enthält die gespeicherte Liste 'Vor-Speichern-Liste'", exportedJson.savedLists.some((l) => l.name === "Vor-Speichern-Liste"));
     check("Export enthält die angepasste Domänenfarbe", exportedJson.domainColors["Sitzungsdomäne"] === "#123456");
+    check("Export enthält den angepassten RAG-Prompt", exportedJson.ragPrompts && exportedJson.ragPrompts.summary === customRagPrompt);
   }
 
   // ===================== Alles löschen, dann aus der exportierten Datei wiederherstellen =====================
@@ -113,6 +120,8 @@ const xml = `<?xml version="1.0"?><rss><channel>
   await wait(100);
   const restoredDomainInput = doc.querySelector('.domaincolor-input[data-domain="Sitzungsdomäne"]');
   check("Nach Laden: Domänenfarbe wiederhergestellt", !!restoredDomainInput && restoredDomainInput.value.toLowerCase() === "#123456");
+  const restoredRagSummaryTa = doc.querySelector('.ragprompt-textarea[data-ragprompt-key="summary"]');
+  check("Nach Laden: angepasster RAG-Prompt wiederhergestellt", !!restoredRagSummaryTa && restoredRagSummaryTa.value === customRagPrompt);
 
   // ===================== Sicherheitsabfrage beim Laden ueber bereits vorhandene Daten =====================
   const sessionFile2 = new win.File([JSON.stringify(exportedJson)], "session2.json", { type: "application/json" });

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.23.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.24.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -839,6 +839,21 @@ anderen Länderformaten (Kennzeichen).
     Graph, Dashboard (Domänen-Verteilungs-Balken + farbiger Punkt vor der
     Domäne in der Ticket-Tabelle) und Dateiverwaltung (Domänen-Übersicht,
     farbiger Punkt je Gruppen-Kopfzeile).
+  - *RAG-Prompts (KI-Texterzeugung)* – die 5 Anweisungstexte, mit denen
+    Claude aus den RAG-Rohdaten (Verarbeitung → 7. RAG) einen Text erzeugt
+    (Zusammenfassung, Fließtext), mehrere Teiltexte bei sehr vielen Tickets
+    zu einem Gesamttext zusammenführt (je ein eigener Prompt für
+    Zusammenfassung/Fließtext) oder ins Englische übersetzt, sind hier frei
+    editierbar – vorher fest im Code verdrahtet. Je Prompt ein
+    "Zurücksetzen"-Button auf den Standardtext sowie ein "angepasst"/
+    "Standard"-Badge (gleiches Muster wie die Farbschema-Overrides). Die
+    Ticket-Rohdaten selbst werden weiterhin automatisch an den editierten
+    Text angehängt, sind also nicht Teil des editierbaren Felds – ein
+    Tippfehler kann die Datengrundlage daher nicht versehentlich entfernen.
+    Wirkt sich erst auf den nächsten Klick auf "Generieren"/"Übersetzen"
+    aus, nicht rückwirkend auf bereits erzeugte Texte. Konfiguration (kein
+    Sitzungsdatensatz) – bleibt auch bei "Sitzung zurücksetzen"/"Alle Daten
+    löschen" erhalten, wird über Sitzung speichern/laden mit exportiert.
   - *Dokumentation → Testing* – visuelles Testdashboard mit dem
     eingebetteten Bericht der automatisierten Tests (Browsertests der
     Web-App + pytest für das CLI-Tool) aus dem letzten Verifikationslauf
