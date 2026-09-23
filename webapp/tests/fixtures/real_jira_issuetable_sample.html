@@ -1,0 +1,82 @@
+<!--
+  Getrimmte, anonymisierte Nachbildung eines echten Jira-Issue-Table-HTML-
+  Exports (Massenupload), bereitgestellt vom Nutzer als Vorlage fuer eine
+  Parser-Ueberarbeitung. Nur die fuer die entdeckten Parser-Luecken
+  relevanten Spalten sind enthalten (das echte Original hat 90+ Spalten,
+  v.a. Test-/Cucumber-Zusatzfelder ohne Bedeutung fuer diese Tests):
+  - resolutiondate/duedate: echte data-id-Namen, wurden bisher nicht auf
+    die (neuen) Kernfelder resolved/due abgebildet.
+  - watches: reiner Zaehler (kein <watcher>-Text) - wurde bisher
+    faelschlich als "Beobachter-Name"-Array interpretiert.
+  - customfield_11204 "Responsible PO": Klartext-Personenname ohne
+    strukturelles Typ-Signal (anders als im XML-Export) - muss ueber die
+    Namens-Heuristik (PERSON_CUSTOM_FIELD_NAME_RE) trotzdem pseudonymisiert
+    werden statt nur musterbasiert redigiert.
+-->
+<html>
+<body>
+<table id="issuetable" border="1">
+<thead>
+<tr class="rowHeader">
+<th data-id="project">Projekt</th>
+<th data-id="issuekey">Schlüssel</th>
+<th data-id="summary">Zusammenfassung</th>
+<th data-id="issuetype">Vorgangstyp</th>
+<th data-id="status">Status</th>
+<th data-id="assignee">Bearbeiter</th>
+<th data-id="reporter">Autor</th>
+<th data-id="creator">Ersteller</th>
+<th data-id="created">Erstellt</th>
+<th data-id="updated">Aktualisiert</th>
+<th data-id="resolutiondate">Erledigt</th>
+<th data-id="duedate">Fälligkeitsdatum</th>
+<th data-id="watches">Beobachter verwalten</th>
+<th data-id="issuelinks">Verknüpfte Vorgänge</th>
+<th data-id="labels">Stichwörter</th>
+<th data-id="customfield_10601">Domain</th>
+<th data-id="customfield_11204">Responsible PO</th>
+</tr>
+</thead>
+<tbody>
+<tr data-issuekey="TESTP-1" class="issuerow">
+<td class="project">TESTP</td>
+<td class="issuekey"><a class="issue-link" href="https://jira.example.com/browse/TESTP-1">TESTP-1</a></td>
+<td class="summary">Erstes Ticket der Tabelle</td>
+<td class="issuetype">Story</td>
+<td class="status"><span class="jira-issue-status-lozenge">Fertig</span></td>
+<td class="assignee">Test Person Eins</td>
+<td class="reporter">Test Person Eins</td>
+<td class="creator">Test Person Eins</td>
+<td class="created">10/Apr/24 8:52 AM</td>
+<td class="updated">10/Apr/24 9:13 AM</td>
+<td class="resolutiondate">10/Apr/24 9:13 AM</td>
+<td class="duedate">&nbsp;</td>
+<td class="watches">1</td>
+<td class="issuelinks">TESTP-2</td>
+<td class="labels">AQA</td>
+<td class="customfield_10601">Contract Generation</td>
+<td class="customfield_11204">Test Person Drei</td>
+</tr>
+<tr data-issuekey="TESTP-2" class="issuerow">
+<td class="project">TESTP</td>
+<td class="issuekey"><a class="issue-link" href="https://jira.example.com/browse/TESTP-2">TESTP-2</a></td>
+<td class="summary">Zweites Ticket der Tabelle</td>
+<td class="issuetype">Bug</td>
+<td class="status"><span class="jira-issue-status-lozenge">Offen</span></td>
+<td class="assignee">Test Person Zwei</td>
+<td class="reporter">Test Person Zwei</td>
+<td class="creator">Test Person Zwei</td>
+<td class="created">1/Mai/24 10:00 AM</td>
+<td class="updated">2/Mai/24 11:00 AM</td>
+<td class="resolutiondate">&nbsp;</td>
+<td class="duedate">15/Mai/24 12:00 AM</td>
+<td class="watches">0</td>
+<td class="issuelinks"></td>
+<td class="labels"></td>
+<td class="customfield_10601">Revenue Management</td>
+<td class="customfield_11204"></td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

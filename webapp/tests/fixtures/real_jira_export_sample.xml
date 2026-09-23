@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Anonymisiertes Beispiel eines echten Jira-XML-Exports (Jira Server
+  10.3.15), vom Nutzer als Vorlage fuer eine Parser-Ueberarbeitung
+  bereitgestellt. Hostname und Personennamen wurden durch Platzhalter
+  ersetzt, die STRUKTUR (Attributnamen, Custom-Field-Varianten) ist
+  unveraendert - genau diese Struktur deckte mehrere konkrete Luecken im
+  bisherigen Parser auf (s. Kommentare in ticket_cockpit.html):
+  - issuelinks nutzt das Attribut "description", nicht "desc" (siehe
+    parseIssueLinksFromXmlItem/classifyLinkDesc - kritischer Bugfix, ohne
+    ihn wurde JEDER Link als "other" statt Vorgaenger/Nachfolger/Test
+    eingeordnet).
+  - ein "labels"-Custom-Field liefert seine Werte als <label>-Kindelemente
+    statt als <customfieldvalue> (INT Tag) - wurde bisher komplett verworfen.
+  - ein "userpicker"-Custom-Field (Responsible PO) traegt den lesbaren Namen
+    im Attribut "displayname", nicht im Textinhalt (der nur den technischen
+    Usernamen enthaelt) - und muss wie Bearbeiter/Ersteller pseudonymisiert
+    werden, nicht nur musterbasiert redigiert.
+  - <resolved>/<due> und <statusCategory key="..."/> wurden bisher gar
+    nicht erfasst.
+  - <watches> ist hier ein reiner Zaehler (Text "2"), keine <watcher>-Liste.
+  - <subtasks><subtask id="...">KEY</subtask></subtasks> wurde bisher gar
+    nicht erfasst.
+-->
+<rss version="0.92">
+<channel>
+<title>Jira ONESCM</title>
+<link>https://jira.example.com</link>
+<description>Diese Datei ist eine XML-Entsprechung eines Vorgangs.</description>
+<language>de-de</language>
+<item>
+<title>[ONESCM-24171] Revenue Management - Allow a user to edit a invoice somebody else created</title>
+<link>https://jira.example.com/browse/ONESCM-24171</link>
+<project id="10000" key="ONESCM">DOT ONESCM</project>
+<description><p>Allow a user to edit an invoice that he sees in the notification.</p></description>
+<environment/>
+<key id="35093">ONESCM-24171</key>
+<summary>Revenue Management - Allow a user to edit a invoice somebody else created</summary>
+<type id="10000" iconUrl="https://jira.example.com/icon.png">Epic</type>
+<priority id="4" iconUrl="https://jira.example.com/low.svg">Geringfügig</priority>
+<status id="10001" iconUrl="https://jira.example.com/" description="">Fertig</status>
+<statusCategory id="3" key="done" colorName="success"/>
+<resolution id="10000">Fertig</resolution>
+<assignee username="testuser1">Test Person Eins</assignee>
+<reporter username="testuser2">Test Person Zwei</reporter>
+<labels>
+<label>Van_FullGoLive_Scope</label>
+</labels>
+<created>Fri, 30 Aug 2024 15:32:56 +0200</created>
+<updated>Wed, 15 Apr 2026 14:10:25 +0200</updated>
+<resolved>Tue, 7 Apr 2026 15:48:34 +0200</resolved>
+<component>oneSCM Frontend</component>
+<component>Revenue Management</component>
+<due>Thu, 23 Apr 2026 00:00:00 +0200</due>
+<votes>0</votes>
+<watches>2</watches>
+<comments>
+<comment id="34348" author="JIRAUSER11806" created="Wed, 15 Apr 2026 12:52:17 +0200"><p>Tested on INT</p></comment>
+<comment id="34145" author="JIRAUSER10205" created="Tue, 7 Apr 2026 12:59:34 +0200"><p>Please take into consideration...</p></comment>
+</comments>
+<issuelinks>
+<issuelinktype id="10003">
+<name>Relates</name>
+<inwardlinks description="relates to">
+<issuelink>
+<issuekey id="35090">ONESCM-24168</issuekey>
+</issuelink>
+</inwardlinks>
+</issuelinktype>
+</issuelinks>
+<attachments>
+<attachment id="31575" name="image-1.png" size="87681" author="TESTUSER3" created="Tue, 21 Oct 2025 10:45:31 +0200"/>
+</attachments>
+<subtasks>
+<subtask id="50390">ONESCM-38600</subtask>
+</subtasks>
+<customfields>
+<customfield id="customfield_11301" key="com.atlassian.jira.plugin.system.customfieldtypes:textarea">
+<customfieldname>Affected Services/Domains</customfieldname>
+<customfieldvalues>
+<customfieldvalue><p>Revenue Management</p></customfieldvalue>
+</customfieldvalues>
+</customfield>
+<customfield id="customfield_10100" key="com.atlassian.jira.plugins.jira-development-integration-plugin:devsummary">
+<customfieldname>Development</customfieldname>
+<customfieldvalues> </customfieldvalues>
+</customfield>
+<customfield id="customfield_10601" key="com.atlassian.jira.plugin.system.customfieldtypes:select">
+<customfieldname>Domain</customfieldname>
+<customfieldvalues>
+<customfieldvalue key="10504">
+<![CDATA[ Revenue Management ]]>
+</customfieldvalue>
+</customfieldvalues>
+</customfield>
+<customfield id="customfield_10700" key="com.atlassian.jira.plugin.system.customfieldtypes:labels">
+<customfieldname>INT Tag</customfieldname>
+<customfieldvalues>
+<label>MFE-51.0.0-07.04.2026</label>
+<label>REV-49.0.0-08.04.2026</label>
+</customfieldvalues>
+</customfield>
+<customfield id="customfield_11204" key="com.atlassian.jira.plugin.system.customfieldtypes:userpicker">
+<customfieldname>Responsible PO</customfieldname>
+<customfieldvalues>
+<customfieldvalue displayname="Test Person Drei">testuser3</customfieldvalue>
+</customfieldvalues>
+</customfield>
+<customfield id="customfield_10206" key="com.pyxis.greenhopper.jira:gh-sprint">
+<customfieldname>Sprint</customfieldname>
+<customfieldvalues>
+<customfieldvalue id="444">Sprint 14.4- Caffeine Overflow</customfieldvalue>
+<customfieldvalue id="445">Sprint 14.5- Caffeine Overflow</customfieldvalue>
+</customfieldvalues>
+</customfield>
+<customfield id="customfield_10220" key="com.almworks.jira.structure:index-monitor-cf-type">
+<customfieldname>Structure Index Monitor</customfieldname>
+<customfieldvalues> </customfieldvalues>
+</customfield>
+</customfields>
+</item>
+</channel>
+</rss>

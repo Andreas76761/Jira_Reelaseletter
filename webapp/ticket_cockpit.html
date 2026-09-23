@@ -177,6 +177,28 @@
   .graph-legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .graph-legend-line { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
   .graph-node:hover rect:first-child { stroke: #1c7ed6; }
+  .graph-node-phantom { opacity: 0.75; }
+  .graph-filter-col { display: flex; flex-direction: column; gap: 2px; min-width: 170px; }
+  .graph-filter-col label { font-size: 12px; color: var(--text-muted); }
+  #graph-search-input { min-width: 200px; }
+  .graph-tooltip {
+    position: fixed; z-index: 500; max-width: 320px; padding: 10px 12px; border-radius: 8px;
+    background: #1a1a1a; color: #fff; font-size: 12px; line-height: 1.5; box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    pointer-events: none;
+  }
+  .graph-tooltip b { display: block; font-size: 12.5px; margin-bottom: 3px; }
+  .graph-tooltip .graph-tooltip-muted { color: #ced4da; font-style: italic; }
+  .fileview-wrap { margin-top: 8px; padding: 12px; max-height: 640px; overflow: auto; }
+  .fileview-ticket { border: 1px solid var(--panel-border); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; background: var(--panel-bg-alt, #fff); }
+  .fileview-ticket pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; line-height: 1.5; }
+  .fileview-tag { color: #862e9c; }
+  .fileview-value { color: #1a1a1a; }
+  .coverage-bar { width: 120px; height: 8px; border-radius: 4px; background: #e9ecef; overflow: hidden; }
+  .coverage-bar-fill { height: 100%; border-radius: 4px; }
+  .coverage-bar-fill.full { background: #2f9e44; }
+  .coverage-bar-fill.partial { background: #f2b705; }
+  .coverage-bar-fill.empty { width: 100% !important; background: #e03131; opacity: 0.35; }
+  .importstats-section-row td { padding-top: 14px; border-top: 1px solid var(--panel-border); }
   .chip-list { display: flex; flex-wrap: wrap; gap: 8px; }
   .label-chip {
     display: inline-flex; align-items: center; gap: 6px; padding: 5px 6px 5px 12px; border-radius: 100px;
@@ -667,14 +689,41 @@
 
       <!-- ================= Ticket Graph ================= -->
       <section class="view-panel" data-view-panel="ticketgraph" hidden>
-        <div class="view-head"><h2>Ticket Graph</h2><p class="desc">Abhängigkeiten zwischen Tickets (Vorgänger, Nachfolger, Testtickets – aus Jira "Issue Links") als Wissensgraph. Knoten farbig nach Domäne, Status als Ampel (rot/gelb/grün) – beide Farbschemata unter Einstellungen editierbar. Abhängigkeiten sind nur aus Jira-XML-Exports verfügbar (HTML-Tabellen-/Einzelticket-Exporte enthalten diese Information nicht); es werden nur die aktuell aktiven Dateien berücksichtigt (Dateiverwaltung).</p></div>
+        <div class="view-head"><h2>Ticket Graph</h2><p class="desc">Abhängigkeiten zwischen Tickets (Vorgänger, Nachfolger, Testtickets – aus Jira "Issue Links") als Wissensgraph. Knoten farbig nach Domäne, Status als Ampel (rot/gelb/grün) – beide Farbschemata unter Einstellungen editierbar. Abhängigkeiten sind nur aus Jira-XML-Exports verfügbar (HTML-Tabellen-/Einzelticket-Exporte enthalten diese Information nicht); es werden nur die aktuell aktiven Dateien berücksichtigt (Dateiverwaltung). Verlinkte Tickets, die (noch) nicht geladen sind, erscheinen als graue Platzhalter-Knoten statt stillschweigend zu fehlen.</p></div>
 
         <section>
           <div class="controls">
-            <select id="graph-domain-select" multiple size="4" aria-label="Domäne (Mehrfachauswahl, leer = alle)"></select>
-            <select id="graph-status-select" multiple size="4" aria-label="Status (Mehrfachauswahl, leer = alle)"></select>
+            <div class="graph-filter-col">
+              <label for="graph-domain-select">Domäne (Mehrfachauswahl, leer = alle)</label>
+              <div class="select-actions">
+                <button class="btn ghost btn-tiny" type="button" data-select-all="graph-domain-select">Alle auswählen</button>
+                <button class="btn ghost btn-tiny" type="button" data-select-clear="graph-domain-select">Auswahl aufheben</button>
+              </div>
+              <select id="graph-domain-select" multiple size="4" aria-label="Domäne (Mehrfachauswahl, leer = alle)"></select>
+            </div>
+            <div class="graph-filter-col">
+              <label for="graph-status-select">Status (Mehrfachauswahl, leer = alle)</label>
+              <div class="select-actions">
+                <button class="btn ghost btn-tiny" type="button" data-select-all="graph-status-select">Alle auswählen</button>
+                <button class="btn ghost btn-tiny" type="button" data-select-clear="graph-status-select">Auswahl aufheben</button>
+              </div>
+              <select id="graph-status-select" multiple size="4" aria-label="Status (Mehrfachauswahl, leer = alle)"></select>
+            </div>
+            <div class="graph-filter-col">
+              <label for="graph-type-select">Typ (Mehrfachauswahl, leer = alle)</label>
+              <div class="select-actions">
+                <button class="btn ghost btn-tiny" type="button" data-select-all="graph-type-select">Alle auswählen</button>
+                <button class="btn ghost btn-tiny" type="button" data-select-clear="graph-type-select">Auswahl aufheben</button>
+              </div>
+              <select id="graph-type-select" multiple size="4" aria-label="Typ (Mehrfachauswahl, leer = alle)"></select>
+            </div>
+            <div class="graph-filter-col">
+              <label for="graph-search-input">Ticket suchen</label>
+              <input type="text" id="graph-search-input" placeholder="Ticket-Nummer oder Text …" aria-label="Ticket suchen (Nummer oder Text)">
+            </div>
             <label class="checkbox-label"><input type="checkbox" id="graph-only-linked-checkbox" checked> Nur Tickets mit Abhängigkeiten anzeigen</label>
             <span class="spacer"></span>
+            <button class="btn ghost btn-tiny" id="graph-export-image-btn" type="button">Als Bild exportieren (PNG)</button>
             <span class="result-count" id="graph-node-count"></span>
           </div>
           <div class="panel graph-legend" id="graph-legend"></div>
@@ -682,6 +731,7 @@
             <div id="graph-svg-container"></div>
             <div class="empty-state" id="graph-empty-state" hidden>Keine Tickets mit erkannten Abhängigkeiten in der aktuellen Auswahl – Filter anpassen, "Nur Tickets mit Abhängigkeiten" abwählen, oder eine Jira-XML-Datei mit Issue-Links importieren.</div>
           </div>
+          <div class="graph-tooltip" id="graph-tooltip" hidden></div>
         </section>
 
         <section>
@@ -744,6 +794,37 @@
                 <span id="paste-process-label">Verarbeiten und speichern</span>
               </button>
             </div>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">Dateiansicht</p>
+          <p class="desc">Eine bereits importierte Datei in lesbarer Form ansehen – zeigt die daraus geladenen Tickets als bereinigtes, XML-ähnliches Format (dieselbe Bereinigung wie überall in der App: Namen pseudonymisiert, E-Mails/VIN/Adressen entfernt), unabhängig vom ursprünglichen Format (HTML, XML, .docx, .xlsx, .pdf, CSV, Ticket-Liste). Zeigt NICHT die Rohdatei selbst, da diese unredigierte personenbezogene Daten enthalten könnte.</p>
+          <div class="controls">
+            <select id="fileview-import-select"><option value="">Datei auswählen …</option></select>
+            <button class="btn primary" id="fileview-show-btn" type="button" disabled>Dateiansicht</button>
+          </div>
+          <div class="panel fileview-wrap" id="fileview-wrap" hidden>
+            <p class="step-note" id="fileview-summary"></p>
+            <div id="fileview-content"></div>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">Import-Statistik</p>
+          <p class="desc">Wird nach jedem Import automatisch aktualisiert (neuester Import vorausgewählt, ältere über die Auswahl abrufbar): welche Felder waren – gemessen an den tatsächlich eingelesenen Tickets – in der Quelle mit einem Wert belegt, wie vollständig (Abdeckung in %) und welche Zusatzfelder (custom_fields) das Format zusätzlich zu den festen Kernfeldern geliefert hat. Kommentare/Beobachter werden separat ausgewiesen, da sie bei JEDEM Format grundsätzlich aus Datenschutzgründen entfernt werden (s. Dateiansicht) – ihre "Abdeckung" zeigt daher, wie viele Tickets sie in der Quelle hatten, bevor sie entfernt wurden. Ein Feld mit 0% Abdeckung war entweder in der Quelldatei gar nicht enthalten (typisch, wenn eine Spalte beim Export nicht mit ausgewählt wurde) oder konnte vom Parser für dieses Format/diese Quellstruktur nicht erkannt werden.</p>
+          <div class="controls">
+            <select id="importstats-import-select"></select>
+          </div>
+          <div class="panel" id="importstats-wrap">
+            <p class="step-note" id="importstats-summary"></p>
+            <div class="table-wrap">
+              <table class="simple-table" id="importstats-table">
+                <thead><tr><th>Feld</th><th>Übernommen</th><th>Abdeckung</th></tr></thead>
+                <tbody id="importstats-tbody"></tbody>
+              </table>
+            </div>
+            <div class="empty-hint" id="importstats-empty" hidden>Noch keine Tickets importiert.</div>
           </div>
         </section>
       </section>
@@ -3483,29 +3564,64 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.14.0";
+  var APP_VERSION = "2.18.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
+  // "resolutiondate"/"duedate" (echte data-id-Namen im Jira-Issue-Table-
+  // Export, bestaetigt an einem realen Export) auf die Kernfelder
+  // resolved/due abgebildet. "watches" bewusst NICHT hier gemappt (anders
+  // als fixVersions/description) - der Zellenwert ist in Tabellenexporten
+  // nur ein reiner Zaehler (z.B. "1"), keine Beobachter-Namensliste; eine
+  // Zuordnung auf das mehrwertige Feld "watchers" wuerde die Zahl faelschlich
+  // als einzelnen "Beobachternamen" interpretieren. Der Zaehler landet
+  // stattdessen unter dem Original-Label (z.B. "Beobachter verwalten") als
+  // Zusatzfeld - nicht verloren, nur nicht als Namensliste fehlinterpretiert.
   var JIRA_DATA_ID_MAP = {
     issuekey: "key", summary: "summary", issuetype: "issue_type", status: "status",
     priority: "priority", project: "project", resolution: "resolution",
     assignee: "assignee", reporter: "reporter", created: "created", updated: "updated",
+    resolutiondate: "resolved", duedate: "due",
     labels: "labels", components: "components", fixVersions: "fix_versions",
-    fixfor: "fix_versions", description: "description", comment: "comments", watches: "watchers"
+    fixfor: "fix_versions", description: "description", comment: "comments"
   };
+  // Best-Effort-Sicherheitsnetz fuer Zusatzfelder (custom_fields), deren
+  // NAME stark auf einen Personennamen als Wert hindeutet (an einem realen
+  // Export bestaetigt: "Responsible PO"/customfield_11204 taucht sowohl im
+  // XML- als auch im HTML-Tabellen-Export als Klartext-Name auf). Fuer
+  // HTML-/Tabellenformate gibt es - anders als bei XML, s.
+  // "userpicker"-Typ-Attribut in parseJiraXml - KEIN strukturelles Signal,
+  // welches Zusatzfeld einen Namen enthaelt, daher bewusst eng gefasst
+  // (nur konkret bestaetigte Bezeichnungen), um keine falschen Treffer
+  // (z.B. Team-/Komponentennamen bei generischeren Begriffen wie "Owner")
+  // zu erzeugen - eine unvollstaendige, aber sichere Annaeherung.
+  var PERSON_CUSTOM_FIELD_NAME_RE = /responsible\s*po|product\s*owner/i;
+  // Alias-Liste bewusst grosszuegig (viele gaengige Jira-Feldbezeichnungen,
+  // deutsch/englisch, inkl. Cloud-/Server-Varianten) - ein Feld, das hier
+  // NICHT gelistet ist, geht dadurch nicht verloren (landet dann als
+  // Zusatzfeld in custom_fields), wird aber nicht als eines der typisierten
+  // Kernfelder erkannt. Mehr Treffer hier bedeuten praezisere Auswertung
+  // (z.B. im Dashboard/RAG) statt "nur" als generisches Zusatzfeld.
   var FIELD_LABEL_ALIASES = {
-    key: ["key", "schlüssel", "issue key", "ticket"],
-    summary: ["summary", "zusammenfassung", "titel"],
-    issue_type: ["type", "issue type", "typ", "vorgangstyp"],
-    status: ["status"], priority: ["priority", "priorität"], project: ["project", "projekt"],
-    resolution: ["resolution", "lösung"], assignee: ["assignee", "bearbeiter", "zugewiesen an"],
-    reporter: ["reporter", "ersteller", "melder"], created: ["created", "erstellt", "erstellungsdatum"],
-    updated: ["updated", "aktualisiert", "geändert"], labels: ["labels", "label", "schlagwörter"],
+    key: ["key", "schlüssel", "issue key", "ticket", "vorgangsschlüssel", "id", "issue id"],
+    summary: ["summary", "zusammenfassung", "titel", "bezeichnung"],
+    issue_type: ["type", "issue type", "typ", "vorgangstyp", "issuetype", "art"],
+    status: ["status", "vorgangsstatus"],
+    priority: ["priority", "priorität"],
+    project: ["project", "projekt", "projektname", "project name"],
+    resolution: ["resolution", "lösung", "loesung"],
+    assignee: ["assignee", "bearbeiter", "zugewiesen an", "verantwortlich", "owner"],
+    reporter: ["reporter", "ersteller", "melder", "gemeldet von", "erstellt von"],
+    created: ["created", "erstellt", "erstellungsdatum", "erstelldatum"],
+    updated: ["updated", "aktualisiert", "geändert", "geaendert", "letzte änderung", "letzte aenderung", "zuletzt geändert", "zuletzt geaendert"],
+    labels: ["labels", "label", "schlagwörter", "schlagworte", "stichwörter", "stichworte"],
     components: ["component", "components", "komponente", "komponenten"],
-    fix_versions: ["fix version", "fix versions", "fix version/s", "fixversion", "ziel-version", "fixversionen"],
-    description: ["description", "beschreibung"], comments: ["comments", "kommentare"],
-    watchers: ["watchers", "beobachter"]
+    fix_versions: ["fix version", "fix versions", "fix version/s", "fixversion", "ziel-version", "fixversionen", "zielversion", "zielversionen"],
+    description: ["description", "beschreibung", "detailbeschreibung"],
+    comments: ["comments", "kommentare"],
+    watchers: ["watchers", "beobachter", "watcher"],
+    resolved: ["resolved", "gelöst", "geloest", "gelöst am", "geloest am", "lösungsdatum", "loesungsdatum", "erledigt"],
+    due: ["due", "due date", "fällig", "faellig", "fälligkeitsdatum", "faelligkeitsdatum", "fällig am", "faellig am"]
   };
   var LABEL_TO_FIELD = {};
   Object.keys(FIELD_LABEL_ALIASES).forEach(function (canonical) {
@@ -3521,16 +3637,27 @@
     return {
       key: key, summary: "", issue_type: null, status: null, priority: null, project: null,
       resolution: null, assignee: null, reporter: null, created: null, updated: null,
+      // resolved/due: bisher gar nicht erfasste Jira-Standardfelder (an
+      // einem realen Export entdeckt) - "wann geloest"/"faellig am".
+      resolved: null, due: null,
       labels: [], components: [], fix_versions: [], description: "", comments: [],
       watchers: [], custom_fields: {},
       // Abhaengigkeiten zu anderen Tickets (Jira "Issue Links") - je Eintrag
       // { key: "<verlinktes Ticket>", verb: "<roher Jira-Linktext, z.B.
-      // 'is blocked by'>", category: "predecessor"|"successor"|"test"|"other" }.
-      // category ist eine Best-Effort-Einordnung (s. classifyLinkDesc()) -
-      // nur aus XML-Exports befuellt (s. parseJiraXml), da HTML-Tabellen-
-      // exporte und Einzelticket-Detailseiten keine strukturierten Issue-
-      // Links liefern.
-      issuelinks: []
+      // 'is blocked by'>", category: "predecessor"|"successor"|"test"|"other"|
+      // "subtask" }. category ist eine Best-Effort-Einordnung (s.
+      // classifyLinkDesc()) fuer echte Issue-Links bzw. fest "subtask" fuer
+      // <subtasks> - nur aus XML-Exports befuellt (s. parseJiraXml), da
+      // HTML-Tabellenexporte und Einzelticket-Detailseiten keine
+      // strukturierten Issue-Links/Subtasks liefern.
+      issuelinks: [],
+      // Interne Markierung (NICHT Teil des exportierten/angezeigten
+      // Modells - von cleanTicket() aus der Ausgabe entfernt): Namen von
+      // custom_fields-Eintraegen, deren Wert ein Personenname ist (z.B.
+      // ein "userpicker"-Feld wie "Responsible PO") und daher ueber
+      // PersonAnonymizer statt nur musterbasiert (redactText) bereinigt
+      // werden muss.
+      personCustomFields: []
     };
   }
 
@@ -3542,6 +3669,14 @@
       ticket[canonical] = value;
     } else {
       ticket.custom_fields[rawLabelForCustom] = value;
+      // s. PERSON_CUSTOM_FIELD_NAME_RE - Best-Effort-Erkennung anhand des
+      // Spaltennamens fuer Formate ohne strukturelles Typ-Signal (HTML-
+      // Tabellen/Einzelticket/Releaseinfo), damit z.B. "Responsible PO"
+      // ueber PersonAnonymizer statt nur musterbasiert bereinigt wird.
+      if (PERSON_CUSTOM_FIELD_NAME_RE.test(rawLabelForCustom)) {
+        ticket.personCustomFields = ticket.personCustomFields || [];
+        if (ticket.personCustomFields.indexOf(rawLabelForCustom) === -1) ticket.personCustomFields.push(rawLabelForCustom);
+      }
     }
   }
 
@@ -3625,19 +3760,25 @@
     }
     return "other";
   }
-  // Liest <issuelinks><issuelinktype><name>...</name><outwardlinks desc="...">
+  // Liest <issuelinks><issuelinktype><name>...</name><outwardlinks description="...">
   // <issuelink><issuekey>KEY</issuekey></issuelink>...</outwardlinks>
-  // <inwardlinks desc="...">...</inwardlinks></issuelinktype>...</issuelinks>
+  // <inwardlinks description="...">...</inwardlinks></issuelinktype>...</issuelinks>
   // (Standard-Jira-XML-Exportschema) aus einem <item> aus - sowohl outward-
-  // als auch inwardlinks (jeweils mit ihrem eigenen "desc"-Verb-Text, z. B.
+  // als auch inwardlinks (jeweils mit ihrem eigenen Verb-Text, z. B.
   // "blocks" outward / "is blocked by" inward fuer denselben Linktyp).
+  // WICHTIG: das Verb-Attribut heisst in echten Jira-Exports "description"
+  // (bestaetigt an einem realen Jira-10.3.15-Export) - "desc" (die
+  // urspruengliche Annahme hier) existiert dort NICHT, wodurch bisher JEDER
+  // Link mangels erkanntem Verb als "other" statt Vorgänger/Nachfolger/Test
+  // eingeordnet wurde. Beide Namen werden geprüft (description zuerst),
+  // falls doch eine Jira-Version/ein Plugin "desc" verwendet.
   function parseIssueLinksFromXmlItem(item) {
     var links = [];
     item.querySelectorAll("issuelinks issuelinktype").forEach(function (linkType) {
       ["outwardlinks", "inwardlinks"].forEach(function (dir) {
         var dirEl = linkType.querySelector(dir);
         if (!dirEl) return;
-        var desc = dirEl.getAttribute("desc") || "";
+        var desc = dirEl.getAttribute("description") || dirEl.getAttribute("desc") || "";
         dirEl.querySelectorAll("issuelink issuekey").forEach(function (keyEl) {
           var linkedKey = keyEl.textContent.trim();
           if (!linkedKey) return;
@@ -3647,6 +3788,7 @@
     });
     return links;
   }
+  var JIRA_STATUS_CATEGORY_LABELS_DE = { new: "Neu", indeterminate: "In Arbeit", done: "Erledigt" };
   function parseJiraXml(doc) {
     var items = doc.querySelectorAll("item");
     if (!items.length) return null;
@@ -3671,21 +3813,81 @@
       ticket.reporter = (reporterEl && reporterEl.textContent.trim()) ? reporterEl.textContent.trim() : null;
       ticket.created = textOf(item, "created");
       ticket.updated = textOf(item, "updated");
+      ticket.resolved = textOf(item, "resolved");
+      ticket.due = textOf(item, "due");
       ticket.description = textOf(item, "description") || "";
       ticket.labels = Array.prototype.map.call(item.querySelectorAll("labels label"), function (l) { return l.textContent.trim(); }).filter(Boolean);
       ticket.components = Array.prototype.map.call(item.querySelectorAll("component"), function (c) { return c.textContent.trim(); }).filter(Boolean);
       ticket.fix_versions = Array.prototype.map.call(item.querySelectorAll("fixVersion"), function (v) { return v.textContent.trim(); }).filter(Boolean);
-      ticket.watchers = Array.prototype.map.call(item.querySelectorAll("watches watcher"), function (w) { return w.textContent.trim(); }).filter(Boolean);
+
+      // statusCategory: eigenes, leeres Element mit nur Attributen (kein
+      // Textinhalt) - liefert eine robustere, sprachunabhaengige
+      // Grobeinordnung (z.B. "done") zusaetzlich zum freien Statustext.
+      var statusCategoryEl = item.querySelector("statusCategory");
+      var statusCategoryKey = statusCategoryEl ? statusCategoryEl.getAttribute("key") : null;
+      if (statusCategoryKey) {
+        ticket.custom_fields["Statuskategorie"] = JIRA_STATUS_CATEGORY_LABELS_DE[statusCategoryKey] || statusCategoryKey;
+      }
+
+      // <watches> hat je nach Jira-Version/-Konfiguration zwei sehr
+      // unterschiedliche Formen: entweder eine Liste benannter
+      // <watcher>-Kindelemente (aeltere Annahme dieses Parsers) ODER (an
+      // einem realen Export bestaetigt) ein reiner Zaehler als Textinhalt
+      // ("<watches>2</watches>", keine Namen). Ohne diese Fallunterscheidung
+      // ging die Zaehler-Variante bisher komplett verloren.
+      var watcherEls = item.querySelectorAll("watches watcher");
+      if (watcherEls.length) {
+        ticket.watchers = Array.prototype.map.call(watcherEls, function (w) { return w.textContent.trim(); }).filter(Boolean);
+      } else {
+        var watchesEl = item.querySelector("watches");
+        var watchesCount = watchesEl ? watchesEl.textContent.trim() : "";
+        if (/^\d+$/.test(watchesCount)) ticket.custom_fields["Beobachter (Anzahl)"] = watchesCount;
+      }
+
       ticket.comments = Array.prototype.map.call(item.querySelectorAll("comments comment"), function (c) {
         return { author: c.getAttribute("author"), created: c.getAttribute("created"), body: c.textContent.trim() };
       });
+
       item.querySelectorAll("customfields customfield").forEach(function (cf) {
         var nameEl = cf.querySelector("customfieldname");
         if (!nameEl || !nameEl.textContent.trim()) return;
-        var values = Array.prototype.map.call(cf.querySelectorAll("customfieldvalues customfieldvalue"), function (v) { return v.textContent.trim(); }).filter(Boolean);
-        if (values.length) ticket.custom_fields[nameEl.textContent.trim()] = values.join("; ");
+        var name = nameEl.textContent.trim();
+        var typeKey = cf.getAttribute("key") || "";
+        var valueEls = cf.querySelectorAll("customfieldvalues customfieldvalue");
+        var values;
+        if (valueEls.length) {
+          // "displayname" bevorzugen, wenn vorhanden (z.B. userpicker-Felder
+          // wie "Responsible PO": der Textinhalt ist dort nur der technische
+          // Username, der lesbare Name steckt im Attribut).
+          values = Array.prototype.map.call(valueEls, function (v) {
+            var displayName = v.getAttribute && v.getAttribute("displayname");
+            return (displayName && displayName.trim()) ? displayName.trim() : v.textContent.trim();
+          }).filter(Boolean);
+        } else {
+          // "labels"-Custom-Fields (z.B. "INT Tag") liefern ihre Werte als
+          // direkte <label>-Kindelemente statt als <customfieldvalue> -
+          // ohne diesen Fallback wurde das Feld bisher komplett verworfen.
+          values = Array.prototype.map.call(cf.querySelectorAll("customfieldvalues label"), function (l) { return l.textContent.trim(); }).filter(Boolean);
+        }
+        if (!values.length) return;
+        ticket.custom_fields[name] = values.join("; ");
+        // userpicker/multiuserpicker-Felder enthalten Personennamen - wie
+        // Bearbeiter/Ersteller ueber PersonAnonymizer pseudonymisieren
+        // (s. cleanTicket()) statt nur musterbasiert zu bereinigen, was
+        // Namen in Freitext nicht zuverlaessig erkennt.
+        if (typeKey.indexOf("userpicker") !== -1 || PERSON_CUSTOM_FIELD_NAME_RE.test(name)) ticket.personCustomFields.push(name);
       });
+
       ticket.issuelinks = parseIssueLinksFromXmlItem(item);
+      // Subtasks sind strukturell etwas anderes als "Issue Links" (feste
+      // Eltern-Kind-Beziehung statt eines frei benannten Linktyps), werden
+      // dem Ticket-Graph aber als eigene Kategorie "subtask" hinzugefuegt -
+      // bisher komplett unerfasst.
+      item.querySelectorAll("subtasks subtask").forEach(function (st) {
+        var stKey = st.textContent.trim();
+        if (stKey) ticket.issuelinks.push({ key: stKey, verb: "Subtask", category: "subtask" });
+      });
+
       tickets.push(ticket);
     });
     return tickets;
@@ -4021,10 +4223,23 @@
     return redactPii(out);
   }
   function cleanTicket(ticket, anonymizer) {
+    // Zusatzfelder, die laut Parser einen Personennamen enthalten (z.B. ein
+    // "userpicker"-Feld wie "Responsible PO", s. parseJiraXml) - werden wie
+    // Bearbeiter/Ersteller ueber PersonAnonymizer pseudonymisiert statt nur
+    // musterbasiert (redactText), das Namen in Freitext nicht zuverlaessig
+    // erkennt.
+    var personFieldNames = {};
+    (ticket.personCustomFields || []).forEach(function (k) { personFieldNames[k] = true; });
     var cf = {};
-    Object.keys(ticket.custom_fields || {}).forEach(function (k) { cf[k] = redactText(ticket.custom_fields[k]); });
+    Object.keys(ticket.custom_fields || {}).forEach(function (k) {
+      cf[k] = personFieldNames[k] ? anonymizer.anonymize(ticket.custom_fields[k]) : redactText(ticket.custom_fields[k]);
+    });
     var out = {};
-    Object.keys(ticket).forEach(function (k) { out[k] = ticket[k]; });
+    Object.keys(ticket).forEach(function (k) {
+      // Interne Markierung, nicht Teil des bereinigten/exportierten Modells.
+      if (k === "personCustomFields") return;
+      out[k] = ticket[k];
+    });
     out.summary = redactText(ticket.summary);
     out.description = redactText(ticket.description);
     out.assignee = anonymizer.anonymize(ticket.assignee);
@@ -4047,10 +4262,11 @@
     return out;
   }
 
-  var FIELD_DISPLAY_ORDER = ["issue_type", "status", "priority", "project", "resolution", "assignee", "reporter", "created", "updated", "labels", "components", "fix_versions"];
+  var FIELD_DISPLAY_ORDER = ["issue_type", "status", "priority", "project", "resolution", "assignee", "reporter", "created", "updated", "resolved", "due", "labels", "components", "fix_versions"];
   var DISPLAY_LABELS_DE = {
     issue_type: "Typ", status: "Status", priority: "Priorität", project: "Projekt", resolution: "Lösung",
     assignee: "Bearbeiter", reporter: "Ersteller", created: "Erstellt", updated: "Aktualisiert",
+    resolved: "Gelöst am", due: "Fällig am",
     labels: "Labels", components: "Komponenten", fix_versions: "Fix-Version(en)"
   };
 
@@ -4065,6 +4281,8 @@
     { key: "reporter", label: "Ersteller", kind: "field" },
     { key: "created", label: "Erstellt", kind: "field" },
     { key: "updated", label: "Aktualisiert", kind: "field" },
+    { key: "resolved", label: "Gelöst am", kind: "field" },
+    { key: "due", label: "Fällig am", kind: "field" },
     { key: "labels", label: "Labels", kind: "field" },
     { key: "components", label: "Komponenten", kind: "field" },
     { key: "fix_versions", label: "Fix-Version(en)", kind: "field" },
@@ -4077,6 +4295,74 @@
   ];
   var NOT_IN_EXPORT = "Nicht im Export enthalten";
   var REMOVED_FOR_PRIVACY = "Aus Datenschutzgründen bei der Bereinigung entfernt";
+
+  // Import-Statistik (Teil 2c): pro Import wird ausgewertet, wie viele der
+  // eingelesenen Tickets fuer jedes bekannte Kernfeld tatsaechlich einen
+  // Wert hatten - berechnet aus den ROHEN, noch nicht bereinigten Tickets
+  // (vor cleanTicket()), damit Kommentare/Beobachter korrekt als "vorhanden,
+  // aber aus Datenschutzgruenden entfernt" statt faelschlich als "in der
+  // Quelle fehlend" ausgewiesen werden. Das ist eine pragmatische
+  // Annaeherung an "was war in der Quelle": statt pro Parser exakt
+  // mitzuprotokollieren, welche Spalten/Labels im Rohdokument vorkamen
+  // (aufwaendig, je Format unterschiedlich strukturiert), wird direkt
+  // gemessen, wie viele der resultierenden Tickets pro Feld einen Wert
+  // erhalten haben - das beantwortet die eigentliche Nutzerfrage ("wie viel
+  // wurde tatsaechlich uebernommen") unmittelbar und formatuebergreifend.
+  var IMPORT_STATS_CORE_FIELDS = [
+    { field: "summary", label: "Zusammenfassung" },
+    { field: "issue_type", label: "Typ" },
+    { field: "status", label: "Status" },
+    { field: "priority", label: "Priorität" },
+    { field: "project", label: "Projekt" },
+    { field: "resolution", label: "Lösung" },
+    { field: "assignee", label: "Bearbeiter" },
+    { field: "reporter", label: "Ersteller" },
+    { field: "created", label: "Erstellt" },
+    { field: "updated", label: "Aktualisiert" },
+    { field: "resolved", label: "Gelöst am" },
+    { field: "due", label: "Fällig am" },
+    { field: "labels", label: "Labels" },
+    { field: "components", label: "Komponenten" },
+    { field: "fix_versions", label: "Fix-Version(en)" },
+    { field: "description", label: "Beschreibung" },
+    { field: "issuelinks", label: "Verknüpfungen (Vorgänger/Nachfolger/Test/Subtask)" }
+  ];
+  // Werden bei jedem Format IMMER aus Datenschutzgruenden entfernt (s.
+  // cleanTicket()) - unabhaengig davon, ob die Quelle sie geliefert hat.
+  var IMPORT_STATS_PRIVACY_FIELDS = [
+    { field: "comments", label: "Kommentare" },
+    { field: "watchers", label: "Beobachter" }
+  ];
+  function importStatsFieldFilled(value) {
+    if (value == null) return false;
+    if (Array.isArray(value)) return value.length > 0;
+    return ("" + value).trim() !== "";
+  }
+  function computeImportFieldStats(rawTickets) {
+    var n = rawTickets.length;
+    function coverageOf(field) {
+      var withValue = 0;
+      rawTickets.forEach(function (t) { if (importStatsFieldFilled(t[field])) withValue++; });
+      return withValue;
+    }
+    var coverage = IMPORT_STATS_CORE_FIELDS.map(function (f) {
+      return { field: f.field, label: f.label, withValue: coverageOf(f.field), total: n };
+    });
+    var privacy = IMPORT_STATS_PRIVACY_FIELDS.map(function (f) {
+      return { field: f.field, label: f.label, withValue: coverageOf(f.field), total: n };
+    });
+    var customFieldNames = {};
+    rawTickets.forEach(function (t) {
+      Object.keys(t.custom_fields || {}).forEach(function (k) { customFieldNames[k] = true; });
+    });
+    var customCoverage = Object.keys(customFieldNames).sort(function (a, b) { return a.localeCompare(b, "de"); }).map(function (k) {
+      var withValue = 0;
+      rawTickets.forEach(function (t) { if (importStatsFieldFilled((t.custom_fields || {})[k])) withValue++; });
+      return { field: "custom:" + k, label: k, withValue: withValue, total: n };
+    });
+    var emptyCore = coverage.filter(function (c) { return c.withValue === 0; });
+    return { ticketCount: n, coverage: coverage, privacy: privacy, customCoverage: customCoverage, emptyCoreCount: emptyCore.length };
+  }
 
   function renderMarkdown(t) {
     var lines = ["# " + t.key + (t.summary ? " – " + t.summary : ""), ""];
@@ -4476,6 +4762,8 @@
     "dropzone", "dropzone-title", "dropzone-hint", "dropzone-icon", "dropzone-spinner", "file-input", "reset-session-btn", "format-callout", "import-tabs",
     "import-comment-input",
     "paste-textarea", "paste-from-clipboard-btn", "paste-process-btn", "paste-spinner", "paste-process-label",
+    "fileview-import-select", "fileview-show-btn", "fileview-wrap", "fileview-summary", "fileview-content",
+    "importstats-import-select", "importstats-wrap", "importstats-summary", "importstats-tbody", "importstats-empty",
     "imports-tbody", "imports-refresh-btn", "imports-refresh-pending-hint", "changes-tbody", "changes-empty", "domain-aliases-tbody",
     "log-list", "log-empty",
     "verarbeitung-tabs", "changes-tbody-verarbeitung", "changes-empty-verarbeitung",
@@ -4489,7 +4777,8 @@
     "release-missing-wrap", "release-missing-table", "release-missing-tbody",
     "jiraliste-count", "jiraliste-tbody",
     "domainoverview-domain-count", "domainoverview-ticket-count", "domainoverview-tbody", "domainoverview-empty",
-    "graph-domain-select", "graph-status-select", "graph-only-linked-checkbox", "graph-node-count",
+    "graph-domain-select", "graph-status-select", "graph-type-select", "graph-search-input", "graph-only-linked-checkbox", "graph-node-count",
+    "graph-export-image-btn", "graph-tooltip",
     "graph-legend", "graph-svg-container", "graph-empty-state", "graph-selection-tbody", "graph-selection-empty",
     "rag-domain-select", "rag-status-select", "rag-label-category-select", "rag-outline-select", "rag-date-from", "rag-date-to", "rag-extract-btn",
     "rag-extract-summary", "rag-extract-count", "rag-extract-wrap", "rag-extract-tbody", "rag-export-row",
@@ -4718,7 +5007,10 @@
     var importRecord = {
       id: importId, source: meta.source, when: meta.when, format: meta.format,
       ticketCount: cleaned.length, personCount: anonymizer.count, stats: stats,
-      comment: (meta.comment || "").trim()
+      comment: (meta.comment || "").trim(),
+      // Aus den ROHEN (noch nicht bereinigten) Tickets berechnet - s.
+      // computeImportFieldStats() - fuer die Import-Statistik-Anzeige.
+      fieldStats: computeImportFieldStats(rawTickets)
     };
     app.imports.push(importRecord);
     addLog(
@@ -5457,6 +5749,8 @@
     populateOutlineDomainDatalist();
     graphPopulateSelects();
     renderTicketGraph();
+    renderFileviewImportSelect();
+    renderImportStatsSelect();
   }
 
   function buildFormatCallout() {
@@ -6623,6 +6917,151 @@
     Object.keys(app.appliedInactiveImportIds).forEach(function (k) { ids[k] = true; });
     return Object.keys(ids).some(function (k) { return !!app.inactiveImportIds[k] !== !!app.appliedInactiveImportIds[k]; });
   }
+  /* ============ Dateiansicht (Import): bereinigte, lesbare Ansicht einer
+     bereits importierten Datei ============
+     Zeigt NICHT die Rohdatei (die App bewahrt Original-Dateibytes bewusst
+     nirgends auf) - stattdessen werden die aus dieser Datei geladenen
+     Tickets als XML-aehnliche, eingerueckte Textbloecke aus den bereits
+     bereinigten Ticketdaten (app.tickets, nach cleanTicket()/
+     PersonAnonymizer) neu zusammengesetzt. Das ist bewusst SICHERER als
+     eine nachtraegliche Text-Redaktion der Rohdatei: redactText() erkennt
+     nur mustererkennbare PII (E-Mail/VIN/Adresse/Telefon), nicht aber
+     Personennamen in beliebigem Freitext - Namen werden nur ueber
+     PersonAnonymizer sicher erkannt, weil bekannt ist, WELCHES Feld
+     (Bearbeiter/Ersteller) ein Name ist. Ein blinder Redaktionsdurchlauf
+     ueber die rohe HTML/XML-Datei koennte Namen daher unbemerkt
+     durchlassen. */
+  function xmlEscapeReadable(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function ticketToReadableXml(raw) {
+    var lines = ["<item>"];
+    function tag(name, value) {
+      if (value == null || value === "") return;
+      var safeName = xmlEscapeReadable(name);
+      lines.push('  <span class="fileview-tag">&lt;' + safeName + '&gt;</span><span class="fileview-value">' + xmlEscapeReadable(value) + '</span><span class="fileview-tag">&lt;/' + safeName + '&gt;</span>');
+    }
+    tag("key", raw.key);
+    tag("summary", raw.summary);
+    FIELD_DISPLAY_ORDER.forEach(function (f) {
+      if (!(f in raw)) return;
+      var v = raw[f];
+      if (Array.isArray(v)) { if (!v.length) return; v = v.join(", "); }
+      tag(f, v);
+    });
+    Object.keys(raw.custom_fields || {}).forEach(function (k) { tag("customfield name=\"" + k + "\"", raw.custom_fields[k]); });
+    (raw.issuelinks || []).forEach(function (l) { tag("issuelink category=\"" + l.category + "\"", l.key); });
+    if (raw.description) tag("description", raw.description);
+    lines.push("</item>");
+    return lines.join("\n");
+  }
+  function ticketsForImport(importId) {
+    var out = [];
+    app.tickets.forEach(function (t) {
+      var entry = app.ticketStore.get(t.key);
+      if (entry && entry.sources.some(function (s) { return s.importId === importId; })) out.push(t);
+    });
+    return out;
+  }
+  var FILEVIEW_MAX_TICKETS = 100;
+  function renderFileviewImportSelect() {
+    var current = els.fileviewImportSelect.value;
+    els.fileviewImportSelect.innerHTML = '<option value="">Datei auswählen …</option>' + app.imports.map(function (imp) {
+      return '<option value="' + imp.id + '">' + escapeHtml(imp.source) + " (" + escapeHtml(imp.format) + ", " + imp.ticketCount + " Tickets)</option>";
+    }).join("");
+    if (app.imports.some(function (imp) { return String(imp.id) === current; })) els.fileviewImportSelect.value = current;
+    els.fileviewShowBtn.disabled = !els.fileviewImportSelect.value;
+  }
+  els.fileviewImportSelect.addEventListener("change", function () {
+    els.fileviewShowBtn.disabled = !els.fileviewImportSelect.value;
+  });
+  els.fileviewShowBtn.addEventListener("click", function () {
+    var importId = parseInt(els.fileviewImportSelect.value, 10);
+    var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
+    if (!imp) return;
+    var tickets = ticketsForImport(importId);
+    els.fileviewWrap.hidden = false;
+    var shown = tickets.slice(0, FILEVIEW_MAX_TICKETS);
+    els.fileviewSummary.textContent = "„" + imp.source + "“ (" + imp.format + ") – " + tickets.length + " Ticket(s) aus dieser Datei" +
+      (tickets.length > shown.length ? ", zeige die ersten " + shown.length + " (Auswahl eingrenzen für mehr)" : "") +
+      " – bereinigte Ansicht (Namen pseudonymisiert, E-Mail/VIN/Adresse entfernt), nicht die Originaldatei.";
+    els.fileviewContent.innerHTML = shown.length
+      ? shown.map(function (t) { return '<div class="fileview-ticket"><pre>' + ticketToReadableXml(t.raw) + "</pre></div>"; }).join("")
+      : '<p class="empty-hint">Keine Tickets (mehr) aus dieser Datei im aktuellen Bestand.</p>';
+    addLog("Dateiansicht geöffnet: „" + imp.source + "“ (" + tickets.length + " Tickets, bereinigte Anzeige).");
+  });
+
+  /* ============ Import-Statistik (Teil 2c/Import): Feldabdeckung je
+     Import - s. computeImportFieldStats() fuer die Berechnung. Wird nach
+     jedem Import automatisch neu aufgebaut (renderImportStatsSelect(), Teil
+     der refreshDashboard()-Rendering-Kette) und waehlt dabei automatisch
+     den JEWEILS NEUESTEN Import aus, sodass die Statistik ohne weiteren
+     Klick sichtbar ist ("immer nach dem Import") - ueber die Auswahlbox
+     lassen sich aber auch aeltere Imports weiterhin nachtraeglich pruefen. */
+  function importStatsPctText(c) {
+    if (!c.total) return "–";
+    var pct = Math.round((c.withValue / c.total) * 100);
+    return c.withValue + "/" + c.total + " (" + pct + "%)";
+  }
+  function importStatsBarHtml(c) {
+    var pct = c.total ? Math.round((c.withValue / c.total) * 100) : 0;
+    var cls = pct === 0 ? "empty" : (pct >= 100 ? "full" : "partial");
+    return '<div class="coverage-bar"><div class="coverage-bar-fill ' + cls + '" style="width:' + pct + '%"></div></div>';
+  }
+  function importStatsRowHtml(c) {
+    return "<tr><td>" + escapeHtml(c.label) + "</td><td>" + importStatsPctText(c) + "</td><td>" + importStatsBarHtml(c) + "</td></tr>";
+  }
+  function renderImportFieldStats() {
+    if (!app.imports.length) {
+      els.importstatsSummary.textContent = "";
+      els.importstatsTbody.innerHTML = "";
+      els.importstatsEmpty.hidden = false;
+      return;
+    }
+    els.importstatsEmpty.hidden = true;
+    var importId = parseInt(els.importstatsImportSelect.value, 10);
+    var imp = app.imports.filter(function (i) { return i.id === importId; })[0] || app.imports[app.imports.length - 1];
+    var fs = imp.fieldStats;
+    if (!fs) {
+      els.importstatsSummary.textContent = "„" + imp.source + "“ (" + imp.format + ") – für diesen Import liegt keine Feldstatistik vor (vor Einführung der Import-Statistik importiert).";
+      els.importstatsTbody.innerHTML = "";
+      return;
+    }
+    els.importstatsSummary.textContent = "„" + imp.source + "“ (" + imp.format + ") – " + fs.ticketCount + " Ticket(s) importiert" +
+      (fs.emptyCoreCount ? ", " + fs.emptyCoreCount + " Kernfeld(er) in dieser Datei komplett ohne Wert" : ", alle Kernfelder mindestens teilweise befüllt") + ".";
+    var rows = fs.coverage.map(importStatsRowHtml);
+    if (fs.customCoverage.length) {
+      rows.push('<tr class="importstats-section-row"><td colspan="3"><b>Zusatzfelder (custom_fields, formatabhängig)</b></td></tr>');
+      fs.customCoverage.forEach(function (c) { rows.push(importStatsRowHtml(c)); });
+    }
+    rows.push('<tr class="importstats-section-row"><td colspan="3"><b>' + escapeHtml(REMOVED_FOR_PRIVACY) + '</b></td></tr>');
+    fs.privacy.forEach(function (c) {
+      rows.push("<tr><td>" + escapeHtml(c.label) + "</td><td>" + c.withValue + " von " + c.total + " Ticket(s) hatten dies in der Quelle</td><td><em>" + escapeHtml(REMOVED_FOR_PRIVACY) + "</em></td></tr>");
+    });
+    els.importstatsTbody.innerHTML = rows.join("");
+  }
+  // Merkt sich die zuletzt gesehene Anzahl Imports, um zu erkennen, ob seit
+  // dem letzten Rendern ein NEUER Import dazugekommen ist - nur dann wird
+  // automatisch auf dessen Statistik gesprungen ("immer nach dem Import"),
+  // eine manuell gewaehlte AELTERE Import-Statistik bleibt bei jedem
+  // anderen Grund fuer ein Neu-Rendern (Filteraenderung o.ae.) erhalten.
+  var importstatsLastCount = 0;
+  function renderImportStatsSelect() {
+    var current = els.importstatsImportSelect.value;
+    var isNewImport = app.imports.length > importstatsLastCount;
+    importstatsLastCount = app.imports.length;
+    els.importstatsImportSelect.innerHTML = app.imports.map(function (imp) {
+      return '<option value="' + imp.id + '">' + escapeHtml(imp.source) + " (" + escapeHtml(imp.format) + ", " + imp.ticketCount + " Tickets)</option>";
+    }).join("");
+    if (!isNewImport && app.imports.some(function (imp) { return String(imp.id) === current; })) {
+      els.importstatsImportSelect.value = current;
+    } else if (app.imports.length) {
+      els.importstatsImportSelect.value = String(app.imports[app.imports.length - 1].id);
+    }
+    renderImportFieldStats();
+  }
+  els.importstatsImportSelect.addEventListener("change", renderImportFieldStats);
+
   function renderImportsTable() {
     els.importsTbody.innerHTML = app.imports.map(function (imp) {
       var isActive = !app.inactiveImportIds[imp.id];
@@ -7375,13 +7814,26 @@
      selbst erzeugtes SVG, wie beim Prozessbild - nutzt dessen Helfer
      svgWrapText/svgLimitLines/svgArrowMarkerDefs mit, s. Teil 12). */
   var graphSelectedKey = null;
+  // Zuletzt gerenderte Graph-Daten (inkl. Platzhalter-Knoten fuer nicht
+  // geladene, aber verlinkte Tickets) - fuer die Auswahltabelle, da diese
+  // Platzhalter nicht in graphScopeTickets() (app.tickets) vorkommen.
+  var graphLastData = null;
 
   function graphScopeTickets() { return app.tickets; }
+
+  // Minimaler Platzhalter-Knoten fuer ein verlinktes, aber nicht geladenes
+  // Ticket (andere/nicht importierte Datei) - wird im Graph grau
+  // dargestellt statt die Abhaengigkeit stillschweigend zu unterschlagen.
+  function graphPhantomNode(key) {
+    return { key: key, notLoaded: true, status: "", domain: "", summary: "", description: "", issueType: "", raw: null };
+  }
 
   function graphBuildData() {
     var domains = selectedValues(els.graphDomainSelect);
     var statuses = selectedValues(els.graphStatusSelect);
+    var types = selectedValues(els.graphTypeSelect);
     var onlyLinked = els.graphOnlyLinkedCheckbox.checked;
+    var query = (els.graphSearchInput.value || "").trim().toLowerCase();
     var byKey = {};
     graphScopeTickets().forEach(function (t) { byKey[t.key] = t; });
 
@@ -7389,23 +7841,30 @@
     graphScopeTickets().forEach(function (t) {
       if (domains.length && domains.indexOf(t.domain) === -1) return;
       if (statuses.length && statuses.indexOf(t.status) === -1) return;
+      if (types.length && types.indexOf(t.issueType) === -1) return;
+      if (query &&
+        t.key.toLowerCase().indexOf(query) === -1 &&
+        (t.summary || "").toLowerCase().indexOf(query) === -1 &&
+        (t.description || "").toLowerCase().indexOf(query) === -1) return;
       candidateKeys[t.key] = true;
     });
 
     // Verlinkte Nachbarn werden auch dann als Knoten aufgenommen, wenn sie
-    // selbst nicht zum Domäne-/Status-Filter passen (sonst wuerden Kanten
-    // "ins Leere" fuehren) - nur Links zu Tickets, die GAR NICHT im
-    // aktuellen Bestand vorhanden sind (anderes Projekt, nicht importiert),
-    // werden ehrlich weggelassen statt einen Phantom-Knoten zu erzeugen.
+    // selbst nicht zum Domäne-/Status-/Such-Filter passen (sonst wuerden
+    // Kanten "ins Leere" fuehren). Ist ein verlinktes Ticket GAR NICHT im
+    // aktuellen Bestand vorhanden (anderes Projekt, noch nicht
+    // importiert/aktiviert), wird dafuer ein grauer Platzhalter-Knoten
+    // erzeugt statt die Abhaengigkeit stillschweigend zu unterschlagen.
     var nodeKeys = {};
+    var phantomByKey = {};
     var edges = [];
     var seenEdge = {};
     Object.keys(candidateKeys).forEach(function (key) {
       var t = byKey[key];
       var links = (t.raw && t.raw.issuelinks) || [];
       links.forEach(function (l) {
-        if (!byKey[l.key]) return;
         nodeKeys[key] = true; nodeKeys[l.key] = true;
+        if (!byKey[l.key]) phantomByKey[l.key] = graphPhantomNode(l.key);
         var edgeKey = key + "|" + l.key + "|" + l.category;
         if (seenEdge[edgeKey]) return;
         seenEdge[edgeKey] = true;
@@ -7414,8 +7873,10 @@
     });
     if (!onlyLinked) Object.keys(candidateKeys).forEach(function (k) { nodeKeys[k] = true; });
 
-    var nodes = Object.keys(nodeKeys).sort().map(function (k) { return byKey[k]; }).filter(Boolean);
-    return { nodes: nodes, edges: edges, byKey: byKey };
+    var nodes = Object.keys(nodeKeys).sort().map(function (k) { return byKey[k] || phantomByKey[k]; }).filter(Boolean);
+    var fullByKey = {};
+    nodes.forEach(function (n) { fullByKey[n.key] = n; });
+    return { nodes: nodes, edges: edges, byKey: fullByKey };
   }
 
   // Schichten-Tiefe je Knoten ueber den laengsten Pfad durch die
@@ -7474,9 +7935,10 @@
     predecessor: { color: "#495057", dash: "" },
     successor: { color: "#495057", dash: "" },
     test: { color: "#AE3EC9", dash: "5,4" },
+    subtask: { color: "#1098AD", dash: "1,2" },
     other: { color: "#ADB5BD", dash: "2,3" }
   };
-  var GRAPH_CATEGORY_LABEL = { predecessor: "Vorgänger", successor: "Nachfolger", test: "Testticket", other: "Verknüpft" };
+  var GRAPH_CATEGORY_LABEL = { predecessor: "Vorgänger", successor: "Nachfolger", test: "Testticket", subtask: "Subtask", other: "Verknüpft" };
 
   function graphEdgeEndpoints(fromPos, toPos) {
     // Gerade Linie von Knotenmitte zu Knotenmitte, am Rand der Knoten-Box
@@ -7512,6 +7974,17 @@
       var pos = layout.positions[n.key];
       if (!pos) return;
       var selected = n.key === graphSelectedKey;
+      if (n.notLoaded) {
+        parts.push(
+          '<g class="graph-node graph-node-phantom" data-key="' + escapeHtml(n.key) + '">' +
+          '<rect x="' + pos.x + '" y="' + pos.y + '" width="' + GRAPH_NODE_W + '" height="' + GRAPH_NODE_H +
+            '" rx="8" fill="#f1f3f5" stroke="' + (selected ? "#1c7ed6" : "#adb5bd") + '" stroke-width="' + (selected ? 3 : 1.5) + '" stroke-dasharray="4,3"></rect>' +
+          '<text x="' + (pos.x + 16) + '" y="' + (pos.y + 24) + '" font-size="12.5" font-weight="700" fill="#5b6579">' + escapeHtml(n.key) + "</text>" +
+          '<text x="' + (pos.x + 16) + '" y="' + (pos.y + 41) + '" font-size="10.5" font-style="italic" fill="#868e96">nicht geladen</text>' +
+          "</g>"
+        );
+        return;
+      }
       var domainColor = colorForDomain(n.domain);
       var ampel = statusAmpelHex(n.status);
       var descLines = svgLimitLines(svgWrapText(n.summary || n.description || "", GRAPH_NODE_W - 40, 10.5), 1);
@@ -7534,8 +8007,8 @@
   }
 
   function graphSelectionTicket() {
-    if (!graphSelectedKey) return null;
-    return graphScopeTickets().filter(function (t) { return t.key === graphSelectedKey; })[0] || null;
+    if (!graphSelectedKey || !graphLastData) return null;
+    return graphLastData.byKey[graphSelectedKey] || null;
   }
   function renderGraphSelectionTable() {
     var t = graphSelectionTicket();
@@ -7545,6 +8018,10 @@
       return;
     }
     els.graphSelectionEmpty.hidden = true;
+    if (t.notLoaded) {
+      els.graphSelectionTbody.innerHTML = "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td colspan=\"4\"><em>Nicht geladen – wird von einem anderen Ticket verlinkt, ist aber in keiner aktuell aktiven Datei enthalten.</em></td></tr>";
+      return;
+    }
     var links = (t.raw && t.raw.issuelinks) || [];
     var linksText = links.length
       ? links.map(function (l) { return (GRAPH_CATEGORY_LABEL[l.category] || l.category) + ": " + l.key; }).join(", ")
@@ -7564,18 +8041,25 @@
     var ampelHtml = ["green", "yellow", "red"].map(function (cat) {
       return '<span class="graph-legend-chip"><span class="graph-legend-dot" style="background:' + AMPEL_HEX[cat] + '"></span>' + AMPEL_LABEL[cat] + "</span>";
     }).join("");
-    var edgeHtml = ["predecessor", "successor", "test"].map(function (cat) {
+    var edgeHtml = ["predecessor", "successor", "test", "subtask"].map(function (cat) {
       return '<span class="graph-legend-chip"><span class="graph-legend-line" style="background:' + GRAPH_EDGE_STYLE[cat].color + '"></span>' + GRAPH_CATEGORY_LABEL[cat] + "</span>";
     }).join("");
     els.graphLegend.innerHTML =
       '<div class="graph-legend-row"><b>Domäne:</b> ' + domainHtml + "</div>" +
       '<div class="graph-legend-row"><b>Status:</b> ' + ampelHtml + "</div>" +
-      '<div class="graph-legend-row"><b>Verknüpfung:</b> ' + edgeHtml + "</div>";
+      '<div class="graph-legend-row"><b>Verknüpfung:</b> ' + edgeHtml + "</div>" +
+      (nodes.some(function (n) { return n.notLoaded; })
+        ? '<div class="graph-legend-row"><b>Hinweis:</b> <span class="graph-legend-chip"><span class="graph-legend-dot" style="background:#adb5bd"></span>verlinktes Ticket nicht geladen (graue Knoten)</span></div>'
+        : "");
   }
 
   function renderTicketGraph() {
     var data = graphBuildData();
-    els.graphNodeCount.textContent = data.nodes.length + " Ticket(s), " + data.edges.length + " Verknüpfung(en)";
+    graphLastData = data;
+    var phantomCount = data.nodes.filter(function (n) { return n.notLoaded; }).length;
+    els.graphNodeCount.textContent = data.nodes.length + " Ticket(s)" +
+      (phantomCount ? " (davon " + phantomCount + " nicht geladen)" : "") +
+      ", " + data.edges.length + " Verknüpfung(en)";
     renderGraphLegend(data.nodes);
     if (!data.nodes.length) {
       els.graphSvgContainer.innerHTML = "";
@@ -7591,6 +8075,45 @@
     els.graphSvgContainer.innerHTML = graphRenderSvg(data.nodes, data.edges, layout);
     renderGraphSelectionTable();
   }
+  // Tooltip beim Hovern ueber einen Knoten: zeigt zusaetzliche Inhalte, die
+  // im kompakten Knoten selbst keinen Platz haben (volle Zusammenfassung,
+  // Beschreibungs-Ausschnitt, Verknuepfungen) - eigenes leichtgewichtiges
+  // HTML-Tooltip (position: fixed) statt natives SVG-<title>, da Letzteres
+  // nur einfachen Text ohne Formatierung erlaubt und stark verzoegert
+  // erscheint. pointer-events:none auf dem Tooltip, damit er Klicks auf den
+  // darunterliegenden Knoten nicht blockiert.
+  function graphTooltipContentFor(n) {
+    if (n.notLoaded) {
+      return "<b>" + escapeHtml(n.key) + "</b><span class=\"graph-tooltip-muted\">Nicht geladen – wird verlinkt, ist aber in keiner aktuell aktiven Datei enthalten.</span>";
+    }
+    var parts = ["<b>" + escapeHtml(n.key) + (n.summary ? " – " + escapeHtml(n.summary) : "") + "</b>"];
+    parts.push(escapeHtml(n.status || "–") + " · " + escapeHtml(n.domain || "Ohne Domäne") + (n.issueType ? " · " + escapeHtml(n.issueType) : ""));
+    if (n.description) parts.push(escapeHtml(truncate(n.description, 260)));
+    var links = (n.raw && n.raw.issuelinks) || [];
+    if (links.length) {
+      parts.push(links.map(function (l) { return (GRAPH_CATEGORY_LABEL[l.category] || l.category) + ": " + l.key; }).join(", "));
+    }
+    return parts.join("<br>");
+  }
+  function graphTooltipPosition(e) {
+    var pad = 16;
+    var x = e.clientX + pad, y = e.clientY + pad;
+    var maxX = (window.innerWidth || document.documentElement.clientWidth || 1024) - 20;
+    if (x + 320 > maxX) x = Math.max(8, e.clientX - 320 - pad);
+    els.graphTooltip.style.left = x + "px";
+    els.graphTooltip.style.top = y + "px";
+  }
+  els.graphSvgContainer.addEventListener("mousemove", function (e) {
+    var g = e.target.closest(".graph-node");
+    if (!g) { els.graphTooltip.hidden = true; return; }
+    var key = g.getAttribute("data-key");
+    var n = graphLastData && graphLastData.byKey[key];
+    if (!n) { els.graphTooltip.hidden = true; return; }
+    els.graphTooltip.innerHTML = graphTooltipContentFor(n);
+    els.graphTooltip.hidden = false;
+    graphTooltipPosition(e);
+  });
+  els.graphSvgContainer.addEventListener("mouseleave", function () { els.graphTooltip.hidden = true; });
   els.graphSvgContainer.addEventListener("click", function (e) {
     var g = e.target.closest(".graph-node");
     if (!g) return;
@@ -7599,19 +8122,75 @@
   });
   els.graphDomainSelect.addEventListener("change", renderTicketGraph);
   els.graphStatusSelect.addEventListener("change", renderTicketGraph);
+  els.graphTypeSelect.addEventListener("change", renderTicketGraph);
   els.graphOnlyLinkedCheckbox.addEventListener("change", renderTicketGraph);
+  var debouncedGraphSearchRender = debounce(function () { renderTicketGraph(); }, 150);
+  els.graphSearchInput.addEventListener("input", debouncedGraphSearchRender);
+
+  // Graph als PNG exportieren: das SVG wird in ein Canvas gerendert (client-
+  // seitig, ohne externe Bibliothek) und ueber dieselbe downloads-
+  // Capability wie MD/PDF-Exporte gespeichert (s. saveOrWarn). Der Umweg
+  // ueber ein <img>-Element funktioniert hier gefahrlos, da das SVG
+  // vollstaendig selbst erzeugt ist (nur rect/circle/line/text) und keine
+  // externen Bildreferenzen enthaelt, die eine Canvas-"Verunreinigung"
+  // (tainted canvas) verursachen koennten.
+  function svgToPngBlob(svgEl, scale) {
+    return new Promise(function (resolve, reject) {
+      var vb = svgEl.viewBox && svgEl.viewBox.baseVal;
+      var w = (vb && vb.width) || svgEl.width.baseVal.value || 800;
+      var h = (vb && vb.height) || svgEl.height.baseVal.value || 600;
+      var svgText = new XMLSerializer().serializeToString(svgEl);
+      var svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+      var url = URL.createObjectURL(svgBlob);
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(w * scale));
+          canvas.height = Math.max(1, Math.round(h * scale));
+          var ctx = canvas.getContext("2d");
+          if (!ctx) { URL.revokeObjectURL(url); reject(new Error("Canvas wird in dieser Ansicht nicht unterstützt.")); return; }
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(url);
+          canvas.toBlob(function (blob) {
+            if (blob) resolve(blob); else reject(new Error("PNG-Konvertierung fehlgeschlagen."));
+          }, "image/png");
+        } catch (err) { URL.revokeObjectURL(url); reject(err); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("Graph-SVG konnte nicht als Bild geladen werden.")); };
+      img.src = url;
+    });
+  }
+  els.graphExportImageBtn.addEventListener("click", async function () {
+    var svgEl = els.graphSvgContainer.querySelector("svg");
+    if (!svgEl) { showToast("Nichts zu exportieren", "Kein Graph zum Exportieren vorhanden.", true); return; }
+    try {
+      var blob = await svgToPngBlob(svgEl, 2);
+      var ok = await saveOrWarn("ticket-graph.png", blob);
+      if (ok) { showToast("Gespeichert", "ticket-graph.png wurde heruntergeladen."); addLog("Ticket Graph als Bild (PNG) exportiert."); }
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Graph konnte nicht als Bild exportiert werden.", true);
+    }
+  });
 
   function graphPopulateSelects() {
     var list = graphScopeTickets();
     var domainSel = selectedValues(els.graphDomainSelect);
     var statusSel = selectedValues(els.graphStatusSelect);
+    var typeSel = selectedValues(els.graphTypeSelect);
     var domains = distinctFieldValues(list, "domain");
     var statuses = distinctFieldValues(list, "status");
+    var types = distinctFieldValues(list, "issueType");
     els.graphDomainSelect.innerHTML = domains.map(function (d) {
       return '<option value="' + escapeHtml(d) + '"' + (domainSel.indexOf(d) !== -1 ? " selected" : "") + ">" + escapeHtml(d) + "</option>";
     }).join("");
     els.graphStatusSelect.innerHTML = statuses.map(function (s) {
       return '<option value="' + escapeHtml(s) + '"' + (statusSel.indexOf(s) !== -1 ? " selected" : "") + ">" + escapeHtml(s) + "</option>";
+    }).join("");
+    els.graphTypeSelect.innerHTML = types.map(function (t) {
+      return '<option value="' + escapeHtml(t) + '"' + (typeSel.indexOf(t) !== -1 ? " selected" : "") + ">" + escapeHtml(t) + "</option>";
     }).join("");
   }
 
@@ -9498,13 +10077,19 @@
   Array.prototype.forEach.call(document.querySelectorAll("[data-select-all]"), function (btn) {
     btn.addEventListener("click", function () {
       var sel = document.getElementById(btn.getAttribute("data-select-all"));
-      if (sel) Array.prototype.forEach.call(sel.options, function (o) { o.selected = true; });
+      if (!sel) return;
+      Array.prototype.forEach.call(sel.options, function (o) { o.selected = true; });
+      // Fuer Konsumenten wie Ticket Graph, die live auf "change" neu rendern
+      // - bei RAG (kein "change"-Listener auf den Selects) wirkungslos.
+      sel.dispatchEvent(new Event("change", { bubbles: true }));
     });
   });
   Array.prototype.forEach.call(document.querySelectorAll("[data-select-clear]"), function (btn) {
     btn.addEventListener("click", function () {
       var sel = document.getElementById(btn.getAttribute("data-select-clear"));
-      if (sel) Array.prototype.forEach.call(sel.options, function (o) { o.selected = false; });
+      if (!sel) return;
+      Array.prototype.forEach.call(sel.options, function (o) { o.selected = false; });
+      sel.dispatchEvent(new Event("change", { bubbles: true }));
     });
   });
   function ragPopulateSelects() {

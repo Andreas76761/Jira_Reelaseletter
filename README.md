@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.14.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.18.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -220,34 +220,52 @@ anderen Länderformaten (Kennzeichen).
   ist).
 - **Ticket Graph** (neu, direkt unter Dashboard) – Wissensgraph der
   Abhängigkeiten zwischen Tickets (Jira "Issue Links": Vorgänger,
-  Nachfolger, Testtickets, sonstige Verknüpfungen wie "relates to").
-  **Wichtige Einschränkung:** Abhängigkeiten sind nur aus **Jira-XML-
-  Exports** verfügbar – HTML-Tabellenexporte (Issue-Navigator) und
-  Einzelticket-Detailseiten liefern diese Information in Jira nicht
-  strukturiert mit, daher bleiben ihre Tickets im Graph ohne Kanten. Die
-  Zuordnung eines Jira-Linktyps (z. B. der "desc"-Text "is blocked by")
-  zu Vorgänger/Nachfolger/Testticket ist ein **Vorschlag anhand gängiger
-  deutscher/englischer Formulierungen** (Jira kennt "Vorgänger"/
-  "Nachfolger" nicht als festen Standard-Linktyp – das sind meist
-  projektspezifisch angelegte Typen); nicht erkannte Linktexte landen
-  ehrlich als "Verknüpft" statt geraten einer der drei Kategorien
-  zugeschlagen zu werden. Jeder Knoten zeigt Ticket-Schlüssel, Domäne
-  (Farbe am linken Rand) und Status (Ampel-Punkt oben rechts: rot/gelb/
-  grün) – beide Farbschemata sind unter Einstellungen editierbar (siehe
-  dort). Layout: ein Schichten-Layout (Vorgänger links, Nachfolger
-  rechts, entlang des längsten Abhängigkeitspfads) statt einer generischen
-  Kraft-Simulation – bei einem Zirkelbezug (A Vorgänger von B, B Vorgänger
-  von A) wird die Schicht-Berechnung an der Stelle sauber gekappt statt
-  in eine Endlosschleife zu laufen, der Graph bleibt immer darstellbar.
-  Filter nach Domäne/Status sowie ein Umschalter "Nur Tickets mit
+  Nachfolger, Testtickets, sonstige Verknüpfungen wie "relates to", sowie
+  Subtasks als eigene Kategorie).
+  **Wichtige Einschränkung:** strukturierte Abhängigkeiten sind nur aus
+  **Jira-XML-Exports** verfügbar – HTML-Tabellenexporte (Issue-Navigator)
+  und Einzelticket-Detailseiten liefern diese Information in Jira nicht
+  strukturiert mit (eine reine Text-Referenz in einer "Verknüpfte
+  Vorgänge"-Spalte landet dort stattdessen als Zusatzfeld), daher bleiben
+  ihre Tickets im Graph ohne Kanten. Die Zuordnung eines Jira-Linktyps
+  (das Verb steht im XML-Attribut `description`, an einem realen Export
+  bestätigt – z. B. "is blocked by") zu Vorgänger/Nachfolger/Testticket
+  ist ein **Vorschlag anhand gängiger deutscher/englischer
+  Formulierungen** (Jira kennt "Vorgänger"/"Nachfolger" nicht als festen
+  Standard-Linktyp – das sind meist projektspezifisch angelegte Typen);
+  nicht erkannte Linktexte landen ehrlich als "Verknüpft" statt geraten
+  einer der Kategorien zugeschlagen zu werden. Jeder Knoten zeigt
+  Ticket-Schlüssel, Domäne (Farbe am linken Rand) und Status (Ampel-Punkt
+  oben rechts: rot/gelb/grün) – beide Farbschemata sind unter
+  Einstellungen editierbar (siehe dort). Layout: ein Schichten-Layout
+  (Vorgänger links, Nachfolger rechts, entlang des längsten
+  Abhängigkeitspfads) statt einer generischen Kraft-Simulation – bei
+  einem Zirkelbezug (A Vorgänger von B, B Vorgänger von A) wird die
+  Schicht-Berechnung an der Stelle sauber gekappt statt in eine
+  Endlosschleife zu laufen, der Graph bleibt immer darstellbar.
+  Filter nach Domäne/Status/**Typ** (je Mehrfachauswahl, mit "Alle
+  auswählen"/"Auswahl aufheben"-Buttons, mehrere Filter gleichzeitig
+  kombinierbar) sowie ein Suchfeld (Ticket-Nummer oder Text in
+  Zusammenfassung/Beschreibung) und ein Umschalter "Nur Tickets mit
   Abhängigkeiten anzeigen" (Standard an); verlinkte Nachbar-Tickets
   bleiben auch dann sichtbar, wenn sie selbst nicht zum Filter passen
-  (sonst würden Kanten "ins Leere" führen) – nur Links zu Tickets, die
-  gar nicht im aktuellen Bestand vorhanden sind, werden ehrlich
-  weggelassen statt einen Phantom-Knoten zu erzeugen. Ein Klick auf
-  einen Knoten zeigt darunter eine Tabelle mit Ticket-Nummer, Status,
-  Domäne, Beschreibung und allen Verknüpfungen dieses Tickets. Reines,
-  selbst erzeugtes SVG (keine externe Graph-Bibliothek).
+  (sonst würden Kanten "ins Leere" führen). Ist ein verlinktes Ticket gar
+  nicht im aktuellen Bestand vorhanden (andere/nicht geladene Datei), wird
+  dafür ein grauer, gestrichelter Platzhalter-Knoten ("nicht geladen")
+  gezeigt statt die Abhängigkeit stillschweigend zu unterschlagen – ein
+  Klick darauf zeigt in der Tabelle darunter einen entsprechenden Hinweis
+  statt Status/Domäne/Beschreibung, die für ein nicht geladenes Ticket
+  naturgemäß nicht bekannt sind. Beim **Überfahren eines Knotens mit der
+  Maus** zeigt ein Tooltip zusätzliche Inhalte (volle Zusammenfassung,
+  Beschreibungs-Ausschnitt, Status/Domäne/Typ, alle Verknüpfungen), die im
+  kompakten Knoten selbst keinen Platz haben. Ein Klick auf einen
+  (geladenen) Knoten zeigt zusätzlich darunter eine Tabelle mit
+  Ticket-Nummer, Status, Domäne, Beschreibung und allen Verknüpfungen
+  dieses Tickets. Der Graph lässt sich über **"Als Bild exportieren
+  (PNG)"** als Rastergrafik herunterladen (client-seitig aus dem SVG über
+  ein Canvas gerendert, benötigt wie die übrigen Downloads die
+  Claude-Artifact-Laufzeit). Reines, selbst erzeugtes SVG (keine externe
+  Graph-Bibliothek).
 - **Listenauswahl** – die im Dashboard per Checkbox ausgewählten Tickets
   lassen sich hier benannt als eigenständige Liste speichern (Name,
   Zeitpunkt automatisch, Ticket-Inhalte UND die reine Liste der
@@ -265,6 +283,53 @@ anderen Länderformaten (Kennzeichen).
   sich z. B. aus einer größeren Auswahl gezielt "nur die Epics daraus"
   oder "alles außer den Bugs daraus" als eigene Liste ablegen lässt, ohne
   vorher im Dashboard neu selektieren zu müssen.
+- **Feld-Mapping-Überarbeitung** anhand von zwei echten, anonymisierten
+  Jira-Exportvorlagen (ein XML- und ein HTML-Tabellenexport, vom Nutzer
+  bereitgestellt) – deckte mehrere konkrete Lücken auf, die jetzt behoben
+  sind:
+  - **Kritischer Bugfix:** das Verb-Attribut eines Issue-Links heißt in
+    echten Jira-Exports `description`, nicht `desc` (die bisherige,
+    unbestätigte Annahme) – dadurch wurde JEDER Link bisher als
+    "Verknüpft" statt korrekt als Vorgänger/Nachfolger/Testticket
+    eingeordnet. Beide Attributnamen werden jetzt geprüft (`description`
+    zuerst).
+  - Zwei neue Kernfelder **"Gelöst am"** (`resolved`) und **"Fällig am"**
+    (`due`) – bisher komplett unerfasste Standardfelder, aus
+    XML-Tags sowie den HTML-Tabellenspalten `resolutiondate`/`duedate`
+    gelesen.
+  - **Subtasks** (`<subtasks>`) fließen jetzt als eigene
+    Verknüpfungskategorie in den Ticket-Graph ein (bisher komplett
+    unerfasst).
+  - Ein **"labels"-Custom-Field** (z. B. "INT Tag") liefert seine Werte im
+    XML als `<label>`-Kindelemente statt als `<customfieldvalue>` – wurde
+    dadurch bisher komplett verworfen, wird jetzt erkannt.
+  - Ein **"userpicker"-Custom-Field** (z. B. "Responsible PO") trägt den
+    lesbaren Namen im Attribut `displayname` (der Textinhalt ist nur der
+    technische Username) – wird jetzt bevorzugt gelesen UND wie
+    Bearbeiter/Ersteller über `PersonAnonymizer` pseudonymisiert statt nur
+    musterbasiert redigiert (ein rein musterbasierter Durchlauf erkennt
+    Namen nicht zuverlässig). Für Formate ohne dieses Typ-Attribut
+    (HTML-Tabellen/Einzelticket) greift ergänzend eine enge, auf den
+    bestätigten Feldnamen zugeschnittene Namens-Heuristik
+    ("Responsible PO"/"Product Owner") – bewusst nicht breiter gefasst
+    (z. B. nicht "Owner" allein), um keine Team-/Komponentennamen fälschlich
+    zu pseudonymisieren.
+  - **"Beobachter"** (`watches`) ist in beiden Exportformaten nur ein
+    reiner Zähler (kein `<watcher>`-Namenstext) – wurde bisher fälschlich
+    als eine Beobachter-Namensliste mit dem Zähler als "Name"
+    interpretiert; der Zähler landet jetzt korrekt als eigenes Zusatzfeld
+    ("Beobachter (Anzahl)").
+  - Die `statusCategory` (z. B. `key="done"`) wird jetzt zusätzlich zum
+    freien Statustext als Zusatzfeld "Statuskategorie" erfasst.
+  - Die Feld-Alias-Tabelle wurde um weitere gängige deutsche/englische
+    Jira-Feldbezeichnungen erweitert.
+  Bekannte, bewusst nicht behobene Einschränkung: die Spalten "Autor"
+  (`reporter`) und "Ersteller" (`creator`) sind in Jira zwei technisch
+  unterschiedliche Felder, werden hier aber weiterhin auf dasselbe Feld
+  `reporter` abgebildet (in der weit überwiegenden Zahl der Fälle dieselbe
+  Person) – eine Auftrennung in zwei eigene Felder würde ein zusätzliches,
+  ebenfalls pseudonymisierungspflichtiges Personenfeld einführen, ohne in
+  der Praxis einen belastbaren Mehrwert zu bieten.
 - **Import** – vier Formate per Tab wählbar, jeweils mit Mehrfachauswahl
   und Drag&Drop; zusätzlich eine **Zwischenablage-Funktion**: Text direkt
   einfügen (Button „Aus Zwischenablage einfügen“ oder Strg+V in das
@@ -344,6 +409,47 @@ anderen Länderformaten (Kennzeichen).
     Sanduhr und ist bis zum Abschluss deaktiviert.
   - *Andere Importe* – probiert alle Parser automatisch durch (inkl. .docx/.pdf,
     .csv, .xlsx sowie reine Ticket-Nummern-Listen).
+  - **Dateiansicht** (am Ende des Import-Bereichs) – eine bereits
+    importierte Datei auswählen und ihre daraus geladenen Tickets in einem
+    lesbaren, XML-ähnlichen Format ansehen, unabhängig vom
+    Originalformat (HTML, XML, .docx, .xlsx, .pdf, CSV, Ticket-Liste).
+    **Wichtig:** gezeigt wird bewusst NICHT die Rohdatei, sondern
+    dieselben bereits bereinigten Ticketdaten, die auch überall sonst in
+    der App verwendet werden (Namen über `PersonAnonymizer`
+    pseudonymisiert, E-Mail/VIN/Kennzeichen/Telefon/Adresse über die
+    Muster-Erkennung entfernt) – ein blinder Redaktionsdurchlauf über die
+    rohe Originaldatei könnte z. B. Personennamen in Freitext unbemerkt
+    durchlassen, da diese nur sicher erkannt werden, wenn bekannt ist,
+    welches Feld (Bearbeiter/Ersteller) einen Namen enthält. Bei einer
+    Datei mit vielen Tickets werden aus Performance-Gründen maximal 100
+    angezeigt (mit Hinweis, die Auswahl einzugrenzen).
+  - **Import-Statistik** (am Ende des Import-Bereichs, letzter Abschnitt) –
+    erscheint automatisch nach jedem Import (ohne Klick, neuester Import
+    vorausgewählt; über die Auswahlbox auch für ältere Imports abrufbar)
+    und zeigt je Kernfeld (Zusammenfassung, Typ, Status, Priorität,
+    Projekt, Lösung, Bearbeiter, Ersteller, Erstellt/Aktualisiert, Labels,
+    Komponenten, Fix-Version(en), Beschreibung, Verknüpfungen) die
+    **Abdeckung**: bei wie vielen der aus dieser Datei eingelesenen
+    Tickets das Feld tatsächlich einen Wert hatte (Zahl, Prozent, Balken).
+    Zusatzfelder (`custom_fields`, z. B. Domain) werden in einem eigenen
+    Abschnitt separat gelistet, ebenso Kommentare/Beobachter – letztere
+    IMMER aus Datenschutzgründen entfernt (s. Dateiansicht), unabhängig
+    vom Quellformat; ihre Abdeckung zeigt daher nur, wie viele Tickets sie
+    laut Rohdaten *vor* der Entfernung hatten. Eine Abdeckung von 0 % kann
+    zwei Ursachen haben: entweder war das Feld in der exportierten Quelle
+    schlicht nicht enthalten (z. B. eine beim Jira-Export nicht mit
+    ausgewählte Spalte), oder der Parser für dieses Format konnte es aus
+    der jeweiligen Quellstruktur nicht erkennen – die Statistik selbst
+    unterscheidet diese beiden Fälle bewusst nicht (das müsste pro Format
+    exakt mitprotokolliert werden, was den Quellcode deutlich verkomplizieren
+    würde), macht aber in jedem Fall sichtbar, WIE VOLLSTÄNDIG eine
+    konkrete Datei tatsächlich ausgewertet werden konnte, statt es zu
+    erraten. Die Feld-Alias-Tabelle (Massenupload-/Releaseinfo-/
+    Einzelticket-Parser) wurde zusätzlich um weitere gängige deutsche/
+    englische Jira-Feldbezeichnungen erweitert (z. B. "Vorgangsschlüssel",
+    "Issuetype", "Owner", "Zielversion"), damit mehr Spalten als
+    typisiertes Kernfeld statt nur als generisches Zusatzfeld erkannt
+    werden.
 - **Dateiverwaltung** – Liste aller Imports dieser Sitzung sowie ein
   Vergleich von Tickets, die in mehreren Imports mit unterschiedlichem
   Status/Datum/Zusammenfassung vorkamen (Vorher/Nachher inkl. Quelle).
