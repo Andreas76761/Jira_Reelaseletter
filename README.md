@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.37.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.38.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -206,14 +206,23 @@ Kapitel-Generator die Texte (wie das RAG-Modul) über `chunkRagRows()` in
 mehrere zeichen-budgetierte Teil-Batches und lässt daraus einen
 Zusammenfassungstext erzeugen. Diese Teil-Batches sind unabhängig
 voneinander (jeder bekommt eine eigene Ticket-Teilmenge) und werden daher
-**parallel statt nacheinander** an Claude geschickt (`Promise.all` statt
-einer sequenziellen Schleife) – bei z. B. 3 Teil-Batches etwa um den Faktor
-3 kürzere Wartezeit für diesen Schritt, da die Antwortzeit des KI-Aufrufs
-dominiert, nicht lokale Rechenarbeit. Die Reihenfolge der Teiltexte im
-abschließenden Zusammenführungs-Aufruf bleibt dabei unabhängig von der
-tatsächlichen Fertigstellungsreihenfolge korrekt erhalten. **Bewusst nicht
-verändert:** der Batch-Lauf im RAG-Modul (Verarbeitung → 7. RAG) bleibt
-sequenziell, weil er als fortsetzbarer Lauf mit Live-Streaming-Vorschau und
+**parallel statt nacheinander** an Claude geschickt – bei z. B. 3
+Teil-Batches etwa um den Faktor 3 kürzere Wartezeit für diesen Schritt, da
+die Antwortzeit des KI-Aufrufs dominiert, nicht lokale Rechenarbeit. Die
+Reihenfolge der Teiltexte im abschließenden Zusammenführungs-Aufruf bleibt
+dabei unabhängig von der tatsächlichen Fertigstellungsreihenfolge korrekt
+erhalten. Höchstens **3 Teil-Batches gleichzeitig** (statt unbegrenzt viele
+auf einmal) – bei Kapiteln mit sehr vielen Tickets (z. B. 100+, entsprechend
+vielen Teil-Batches) führte eine unbegrenzte Parallelität dazu, dass die
+Claude-Artifact-Laufzeit einzelne gleichzeitige Aufrufe mit "zu viele
+Anfragen" ablehnte, statt sie zu bearbeiten; die Obergrenze behält den
+Großteil des Geschwindigkeitsgewinns, ohne denselben Fehlschlag zu
+riskieren. Zusätzlich wird genau dieser Fehler (aber kein anderer) bis zu
+zweimal mit wachsender Wartezeit automatisch wiederholt, bevor er als
+echter Fehler gemeldet wird – ein einzelner vorübergehender Ausreißer lässt
+also nicht gleich das ganze Kapitel scheitern. **Bewusst nicht verändert:**
+der Batch-Lauf im RAG-Modul (Verarbeitung → 7. RAG) bleibt sequenziell,
+weil er als fortsetzbarer Lauf mit Live-Streaming-Vorschau und
 batch-genauem Stop/Resume gebaut ist (`ragBatchRun.index`) – das setzt
 echte Sequenzialität voraus und müsste für eine Parallelisierung erst
 grundlegend umgebaut werden.

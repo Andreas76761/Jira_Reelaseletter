@@ -4098,7 +4098,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.37.0";
+  var APP_VERSION = "2.38.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -13357,6 +13357,78 @@
   }
 
   var manualAbortController = null;
+  // Wie waitOrAbort() weiter unten, aber als eigenstaendiger Fehler mit
+  // demselben err.code === "cancelled"-Vertrag wie ein abgebrochener
+  // sampleApi()-Aufruf, damit bestehende catch-Bloecke (s.
+  // manualGenerateChapters) einen Abbruch waehrend einer Rate-Limit-
+  // Wartezeit genauso behandeln wie einen Abbruch waehrend des eigentlichen
+  // KI-Aufrufs.
+  function manualCancelledError() {
+    var err = new Error("Abgebrochen.");
+    err.code = "cancelled";
+    return err;
+  }
+  // setTimeout, das bei einem AbortSignal-Abbruch sofort statt erst nach
+  // Ablauf der Wartezeit reagiert - haelt "Abbrechen" auch waehrend einer
+  // Rate-Limit-Backoff-Pause reaktionsschnell.
+  function waitOrAbort(ms, signal) {
+    return new Promise(function (resolve, reject) {
+      if (signal && signal.aborted) { reject(manualCancelledError()); return; }
+      var timer = setTimeout(function () {
+        if (signal) signal.removeEventListener("abort", onAbort);
+        resolve();
+      }, ms);
+      function onAbort() {
+        clearTimeout(timer);
+        reject(manualCancelledError());
+      }
+      if (signal) signal.addEventListener("abort", onAbort, { once: true });
+    });
+  }
+  // Bei vielen gleichzeitigen Teil-Batches (s. mapWithConcurrency unten)
+  // kann die Claude-Artifact-Laufzeit gelegentlich mit "rate_limited"
+  // antworten, obwohl derselbe Aufruf kurz danach durchgehen wuerde - ein
+  // einzelner Batch soll deswegen nicht gleich das ganze Kapitel scheitern
+  // lassen. Bis zu MANUAL_RATE_LIMIT_MAX_RETRIES automatische, mit
+  // wachsender Pause versehene Wiederholungen NUR fuer genau diesen
+  // Fehlercode (kein Endlos-Retry, andere Fehler wie "not_granted"/
+  // "refused" werden sofort durchgereicht).
+  var MANUAL_RATE_LIMIT_MAX_RETRIES = 2;
+  var MANUAL_RATE_LIMIT_BACKOFF_MS = [1500, 4000];
+  async function sampleWithRateLimitRetry(prompt, opts) {
+    var attempt = 0;
+    while (true) {
+      try {
+        return await sampleApi(prompt, opts);
+      } catch (err) {
+        if (err && err.code === "rate_limited" && attempt < MANUAL_RATE_LIMIT_MAX_RETRIES) {
+          await waitOrAbort(MANUAL_RATE_LIMIT_BACKOFF_MS[attempt], opts && opts.signal);
+          attempt++;
+          continue;
+        }
+        throw err;
+      }
+    }
+  }
+  // Fuehrt asynchrone Aufgaben mit begrenzter statt unbegrenzter
+  // Parallelitaet aus (statt Promise.all fuer ALLE Elemente auf einmal) -
+  // erhaelt dabei trotzdem die Ergebnis-REIHENFOLGE (nicht die
+  // Fertigstellungsreihenfolge), genau wie Promise.all.
+  async function mapWithConcurrency(items, limit, fn) {
+    var results = new Array(items.length);
+    var nextIndex = 0;
+    async function worker() {
+      while (nextIndex < items.length) {
+        var i = nextIndex++;
+        results[i] = await fn(items[i], i);
+      }
+    }
+    var workerCount = Math.min(limit, items.length);
+    var workers = [];
+    for (var w = 0; w < workerCount; w++) workers.push(worker());
+    await Promise.all(workers);
+    return results;
+  }
   // Map-Reduce ueber dieselbe Zeichen-Budget-Chunking-Funktion wie RAG
   // (chunkRagRows) - bei sehr vielen Tickets je Kapitel/Label mehrere
   // Teil-Durchlaeufe + ein abschliessender Zusammenfuehrungs-Aufruf, sonst
@@ -13366,34 +13438,45 @@
   // Performance: die Teil-Batches sind UNABHAENGIG voneinander (jeder
   // bekommt eine eigene Ticket-Teilmenge, keiner braucht das Ergebnis
   // eines anderen) und werden daher PARALLEL statt nacheinander an Claude
-  // geschickt (Promise.all statt sequenzieller for-await-Schleife) - bei
-  // z.B. 3 Batches etwa Faktor 3 kuerzere Wartezeit fuer diesen Schritt,
-  // da die Antwortzeit des KI-Aufrufs dominiert, nicht lokale
-  // Rechenarbeit. Promise.all erhaelt dabei die Batch-REIHENFOLGE in
-  // "partials" unabhaengig von der tatsaechlichen Fertigstellungs-
-  // reihenfolge. Bewusst NICHT auf den RAG-Batch-Lauf (Teil 9b) uebertragen:
-  // der ist als fortsetzbarer Lauf mit Live-Streaming-Vorschau UND
-  // batch-genauem Stop/Resume gebaut (ragBatchRun.index) - das setzt
-  // echte Sequenzialitaet voraus und muesste fuer Parallelisierung erst
-  // grundlegend umgebaut werden (separater, groesserer Schritt).
+  // geschickt - bei z. B. 3 Batches etwa Faktor 3 kuerzere Wartezeit fuer
+  // diesen Schritt, da die Antwortzeit des KI-Aufrufs dominiert, nicht
+  // lokale Rechenarbeit. Bewusst NICHT ALLE Batches gleichzeitig (wie in
+  // der ersten Fassung dieser Funktion): bei Kapiteln mit sehr vielen
+  // Tickets (z. B. 100+, entsprechend vielen Teil-Batches) fuehrte das
+  // dazu, dass die Claude-Artifact-Laufzeit einzelne Aufrufe mit
+  // "rate_limited" ablehnte, statt sie zu bearbeiten - MANUAL_BATCH_
+  // CONCURRENCY begrenzt die Anzahl GLEICHZEITIG laufender Batches auf
+  // einen mit der Praxis vertraeglichen Wert (mapWithConcurrency), plus
+  // automatischer Wiederholung bei genau diesem Fehlercode
+  // (sampleWithRateLimitRetry) - erhaelt den Grossteil des
+  // Geschwindigkeitsgewinns der Parallelisierung, ohne denselben Rate-
+  // Limit-Fehlschlag zu riskieren. mapWithConcurrency erhaelt dabei die
+  // Batch-REIHENFOLGE in "partials" unabhaengig von der tatsaechlichen
+  // Fertigstellungsreihenfolge (wie zuvor Promise.all). Bewusst NICHT auf
+  // den RAG-Batch-Lauf (Teil 9b) uebertragen: der ist als fortsetzbarer
+  // Lauf mit Live-Streaming-Vorschau UND batch-genauem Stop/Resume gebaut
+  // (ragBatchRun.index) - das setzt echte Sequenzialitaet voraus und
+  // muesste fuer Parallelisierung erst grundlegend umgebaut werden
+  // (separater, groesserer Schritt).
+  var MANUAL_BATCH_CONCURRENCY = 3;
   async function manualGenerateOneChapter(groupDescriptor, rows, role, signal, onProgress) {
     var batches = chunkRagRows(rows, RAG_BATCH_CHAR_BUDGET);
     if (batches.length <= 1) {
       var prompt = manualBuildPrompt(groupDescriptor, rows, role);
-      var result = await sampleApi(prompt, { signal: signal, modelTier: "default", cache: false });
+      var result = await sampleWithRateLimitRetry(prompt, { signal: signal, modelTier: "default", cache: false });
       return result.text || "";
     }
     var completedCount = 0;
-    var partials = await Promise.all(batches.map(function (batchRows) {
-      return sampleApi(manualBuildPrompt(groupDescriptor, batchRows, role), { signal: signal, modelTier: "default", cache: false })
+    var partials = await mapWithConcurrency(batches, MANUAL_BATCH_CONCURRENCY, function (batchRows) {
+      return sampleWithRateLimitRetry(manualBuildPrompt(groupDescriptor, batchRows, role), { signal: signal, modelTier: "default", cache: false })
         .then(function (batchResult) {
           completedCount++;
           if (onProgress) onProgress(completedCount + " von " + batches.length + " Teilen fertig …");
           return batchResult.text || "";
         });
-    }));
+    });
     if (onProgress) onProgress("Führe " + batches.length + " Teile zusammen …");
-    var synthResult = await sampleApi(manualBuildSynthesisPrompt(groupDescriptor, partials, role), { signal: signal, modelTier: "default", cache: false });
+    var synthResult = await sampleWithRateLimitRetry(manualBuildSynthesisPrompt(groupDescriptor, partials, role), { signal: signal, modelTier: "default", cache: false });
     return synthResult.text || "";
   }
   function manualWordCount(text) {
