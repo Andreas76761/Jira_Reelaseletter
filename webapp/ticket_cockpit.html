@@ -1472,6 +1472,9 @@
                 <tbody id="rag-library-tbody"></tbody>
               </table>
             </div>
+            <div class="job-export-row" id="rag-library-zip-row" style="margin-top:8px;" hidden>
+              <button class="btn ghost" id="rag-library-zip-btn" type="button">Bibliothek als ZIP speichern (je Eintrag eine .md-Datei)</button>
+            </div>
           </section>
 
           <section>
@@ -4134,7 +4137,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.40.0";
+  var APP_VERSION = "2.41.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5470,7 +5473,7 @@
     "rag-batch-list-wrap", "rag-batch-tbody", "rag-output", "rag-token-usage", "rag-download-btn", "rag-batch-zip-btn",
     "rag-translate-btn",
     "rag-library-save-btn", "rag-library-import-btn", "rag-library-import-input", "rag-library-import-note",
-    "rag-library-empty", "rag-library-table-wrap", "rag-library-tbody",
+    "rag-library-empty", "rag-library-table-wrap", "rag-library-tbody", "rag-library-zip-row", "rag-library-zip-btn",
     "rag-merge-btn", "rag-merge-status-note", "rag-merge-output", "rag-merge-download-btn",
     "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
     "session-export-btn", "session-import-btn", "session-import-input",
@@ -13294,6 +13297,7 @@
     var list = app.ragLibrary;
     els.ragLibraryEmpty.hidden = list.length > 0;
     els.ragLibraryTableWrap.hidden = list.length === 0;
+    els.ragLibraryZipRow.hidden = list.length === 0;
     var domainOptions = ragDomainOptionsList();
     var chapterOptions = ragChapterOptionsList();
     els.ragLibraryTbody.innerHTML = list.map(function (e) {
@@ -13456,6 +13460,40 @@
     renderAllJobSteps();
     addLog("RAG-Bibliothek: Eintrag \"" + entry.label + "\" gelöscht.");
     showToast("Gelöscht", 'Eintrag „' + entry.label + '“ wurde entfernt.');
+  });
+
+  // ZIP-Export der GESAMTEN Bibliothek (ein Eintrag = eine .md-Datei mit
+  // Metadaten-Kopf) - anders als "Alle zusammenführen" (Punkt 5, EIN
+  // Gesamtdokument) bleiben hier die einzelnen Textschnipsel als separate
+  // Dateien erhalten, z. B. um sie extern (Dateisystem/anderes Werkzeug)
+  // weiterzuverarbeiten oder sie unveraendert an Dritte weiterzugeben. Der
+  // Positions-Präfix (01_, 02_, ...) macht jeden Dateinamen eindeutig, auch
+  // wenn zwei Einträge dieselbe Bezeichnung tragen.
+  function ragBuildLibraryEntryMdFile(entry, index) {
+    var filename = String(index + 1).padStart(2, "0") + "_" + safeFilename(entry.label.replace(/\.[a-z0-9]+$/i, "")) + ".md";
+    var kindLabel = entry.kind === "summary" ? "Zusammenfassung" : entry.kind === "fliesstext" ? "Fließtext" : "Importiert";
+    var md = "# " + entry.label + "\n\n_Domäne: " + (entry.domain || "Ohne Domäne") + " · Kapitel: " + (entry.chapterTitle || "Nicht zugeordnet") +
+      " · Quelle: " + (entry.source === "imported" ? "Importiert" : "Generiert (" + kindLabel + ")") +
+      " · Gespeichert am: " + entry.savedAt + (entry.ticketCount != null ? " · " + entry.ticketCount + " Tickets" : "") +
+      "_\n\n" + entry.text;
+    return { filename: filename, md: md };
+  }
+  els.ragLibraryZipBtn.addEventListener("click", async function () {
+    if (!app.ragLibrary.length) return;
+    if (typeof JSZip === "undefined") { showToast("Fehlgeschlagen", "ZIP-Bibliothek konnte nicht geladen werden.", true); return; }
+    try {
+      var zip = new JSZip();
+      app.ragLibrary.forEach(function (entry, i) {
+        var file = ragBuildLibraryEntryMdFile(entry, i);
+        zip.file(file.filename, file.md);
+      });
+      var blob = await zip.generateAsync({ type: "blob" });
+      var ok = await saveOrWarn("RAG-Bibliothek_" + app.ragLibrary.length + "-Eintraege.zip", blob);
+      if (ok) showToast("Gespeichert", app.ragLibrary.length + " Bibliothekseintrag/-einträge als ZIP heruntergeladen.");
+      if (ok) addLog("RAG-Bibliothek: " + app.ragLibrary.length + " Einträge als ZIP heruntergeladen.");
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "ZIP konnte nicht erzeugt werden.", true);
+    }
   });
 
   // Zusammenfuehren (Punkt 5): gruppiert je Domäne (alphabetisch, "Ohne

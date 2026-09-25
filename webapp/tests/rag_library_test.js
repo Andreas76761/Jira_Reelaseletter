@@ -84,6 +84,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("(0) Merge-Button auf leerer Bibliothek: Fehlerhinweis statt Absturz", doc.getElementById("toast").textContent.includes("Bibliothek leer"));
   check("(0) 'In Bibliothek speichern' zu Beginn deaktiviert (noch nichts generiert)", doc.getElementById("rag-library-save-btn").disabled === true);
   check("(0) Bibliothekstabelle zu Beginn leer/ausgeblendet", doc.getElementById("rag-library-empty").hidden === false);
+  check("(0) ZIP-Export-Zeile bei leerer Bibliothek versteckt", doc.getElementById("rag-library-zip-row").hidden === true);
 
   // ===================== (1) Erzeugten Text speichern (Punkt 3) =====================
   const domainSelect = doc.getElementById("rag-domain-select");
@@ -163,6 +164,31 @@ const xml = `<?xml version="1.0"?><rss><channel>
   fire(delBtnFirst, "click");
   await confirmViaModal(doc);
   check("(5) Nach Löschen: 3 Einträge verbleiben", doc.querySelectorAll("#rag-library-tbody tr").length === 3);
+
+  // ===================== (5b) ZIP-Export der gesamten Bibliothek (je Eintrag eine .md-Datei) =====================
+  check("(5b) ZIP-Export-Button bei nicht-leerer Bibliothek sichtbar", doc.getElementById("rag-library-zip-row").hidden === false);
+  const zipSavedBefore = savedFiles.length;
+  fire(doc.getElementById("rag-library-zip-btn"), "click");
+  await wait(100);
+  check("(5b) Bibliotheks-ZIP wurde heruntergeladen", savedFiles.length === zipSavedBefore + 1 && savedFiles[zipSavedBefore].filename.endsWith(".zip"));
+  const libZipBuf = Buffer.from(await savedFiles[zipSavedBefore].data.arrayBuffer());
+  const libZip = await JSZipLib.loadAsync(libZipBuf);
+  const libZipNames = Object.keys(libZip.files);
+  check("(5b) ZIP enthält genau 3 Dateien (eine je Bibliothekseintrag)", libZipNames.length === 3);
+  check("(5b) Dateien tragen einen fortlaufenden Positions-Präfix", libZipNames.some((n) => n.startsWith("01_")) && libZipNames.some((n) => n.startsWith("02_")) && libZipNames.some((n) => n.startsWith("03_")));
+  const importSchnipselZipEntry = libZipNames.find((n) => n.includes("Import-Schnipsel"));
+  check("(5b) Datei für den zugeordneten Eintrag vorhanden", !!importSchnipselZipEntry);
+  if (importSchnipselZipEntry) {
+    const importSchnipselContent = await libZip.files[importSchnipselZipEntry].async("string");
+    check("(5b) Enthält die zugeordnete Domäne im Metadaten-Kopf", importSchnipselContent.includes("Domäne: Contract Management"));
+    check("(5b) Enthält das zugeordnete Kapitel im Metadaten-Kopf", importSchnipselContent.includes("Kapitel 4"));
+    check("(5b) Enthält weiterhin den redigierten Text (keine echte E-Mail-Adresse)", !importSchnipselContent.includes("max.mustermann@example.com") && importSchnipselContent.includes("[E-Mail entfernt]"));
+  }
+  const teilAZipEntry = libZipNames.find((n) => n.includes("Teil-A"));
+  if (teilAZipEntry) {
+    const teilAContent = await libZip.files[teilAZipEntry].async("string");
+    check("(5b) Nicht zugeordneter Eintrag zeigt 'Ohne Domäne'/'Nicht zugeordnet' im Metadaten-Kopf statt geratener Werte", teilAContent.includes("Ohne Domäne") && teilAContent.includes("Nicht zugeordnet"));
+  }
 
   // ===================== (6) Zusammenführen (Punkt 5): Gruppierung nach Domäne/Kapitel =====================
   fire(doc.getElementById("rag-merge-btn"), "click");

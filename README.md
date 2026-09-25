@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.40.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.41.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -275,7 +275,12 @@ zusammengeführte Text ist direkt editierbar und lässt sich als eigene
 Markdown-Datei herunterladen. Ziel: Ergebnisse aus vielen einzelnen
 RAG-Durchläufen (z. B. je Domäne/Kapitel separat generiert, um Vermischung
 zu vermeiden) am Ende sauber geordnet in einem Dokument zusammenführen,
-statt jeden Durchlauf einzeln zu verwalten.
+statt jeden Durchlauf einzeln zu verwalten. Zusätzlich lässt sich die
+gesamte Bibliothek unverändert als ZIP-Archiv herunterladen (eine
+`.md`-Datei je Eintrag, mit Domäne/Kapitel/Quelle/Datum als Metadaten-Kopf,
+fortlaufend nummeriert) – für externe Weiterverarbeitung oder Weitergabe,
+ohne die einzelnen Textschnipsel erst zu einem Gesamtdokument
+zusammenzuführen.
 
 - **Dashboard** – zusammengeführter, aktueller Stand aller importierten
   Tickets: Status-Kacheln, ein **Typ-Schnellfilter** (Chips je Tickettyp,
