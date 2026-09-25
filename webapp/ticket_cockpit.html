@@ -1464,7 +1464,7 @@
 
           <section>
             <p class="section-label">4. Domäne &amp; Kapitel zuordnen</p>
-            <p class="desc">Jedem gespeicherten/importierten Textschnipsel Domäne und Gliederungskapitel zuordnen &ndash; Grundlage für ein sauber sortiertes Gesamtdokument (Schritt 5). Änderungen werden sofort übernommen.</p>
+            <p class="desc">Jedem gespeicherten/importierten Textschnipsel Domäne und Gliederungskapitel zuordnen &ndash; Grundlage für ein sauber sortiertes Gesamtdokument (Schritt 5). Bei importierten Dateien wird anhand Dateiname/Überschrift automatisch ein Vorschlag gemacht (nur bei ausreichender Ähnlichkeit, sonst bewusst leer) &ndash; bitte prüfen. Änderungen werden sofort übernommen.</p>
             <div class="empty-hint" id="rag-library-empty">Noch keine Ergebnisse in der Bibliothek gespeichert oder importiert.</div>
             <div class="panel table-wrap" id="rag-library-table-wrap" style="max-height:360px; overflow:auto;" hidden>
               <table class="simple-table" id="rag-library-table">
@@ -4134,7 +4134,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.39.0";
+  var APP_VERSION = "2.40.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -13334,18 +13334,60 @@
     showToast("Gespeichert", "Ergebnis wurde in die Bibliothek übernommen – Domäne/Kapitel lassen sich in Schritt 4 zuordnen.");
   }
   els.ragLibrarySaveBtn.addEventListener("click", ragLibrarySaveCurrent);
+  // Auto-Vorschlag für Domäne/Kapitel bei importierten Dateien (anders als
+  // beim Speichern aus einer laufenden Generierung, s. ragLibrarySaveCurrent,
+  // ist hier keine RAG-Auswahl bekannt): nutzt dieselbe wortbasierte
+  // Titel-Ähnlichkeit (chapterTitleSimilarity/CHAPTER_MATCH_THRESHOLD) wie
+  // die Referenz-Handbuch-Kapitel-Zuordnung (Teil 9c-2), angewandt auf den
+  // Dateinamen UND die erste Überschriftzeile ("# ...") der Datei - beides
+  // ist die einzige verfügbare, vom Nutzer selbst gewählte Beschriftung.
+  // Unterhalb der Schwelle bleibt die Zuordnung bewusst leer ("ehrlich
+  // anzeigen statt raten") statt einen unsicheren Treffer vorzutäuschen.
+  function ragExtractHeadingTitle(mdText) {
+    var m = /^#\s+(.+)$/m.exec(mdText || "");
+    return m ? m[1].trim() : "";
+  }
+  function ragCandidateTitlesForSuggestion(filename, mdText) {
+    var candidates = [];
+    var base = (filename || "").replace(/\.[a-z0-9]+$/i, "").replace(/[_-]+/g, " ").trim();
+    if (base) candidates.push(base);
+    var heading = ragExtractHeadingTitle(mdText);
+    if (heading) candidates.push(heading);
+    return candidates;
+  }
+  function ragBestSuggestionMatch(candidates, options) {
+    var best = "", bestScore = 0;
+    candidates.forEach(function (cand) {
+      options.forEach(function (opt) {
+        var score = chapterTitleSimilarity(cand, opt);
+        if (score > bestScore) { bestScore = score; best = opt; }
+      });
+    });
+    return bestScore >= CHAPTER_MATCH_THRESHOLD ? best : "";
+  }
+  function ragSuggestDomainAndChapterForImport(filename, mdText) {
+    var candidates = ragCandidateTitlesForSuggestion(filename, mdText);
+    return {
+      domain: ragBestSuggestionMatch(candidates, ragDomainOptionsList()),
+      chapterTitle: ragBestSuggestionMatch(candidates, ragChapterOptionsList())
+    };
+  }
   function ragLibraryAddImportedEntry(filename, rawText) {
-    app.ragLibrary.push({
+    var text = redactText(rawText || "");
+    var suggestion = ragSuggestDomainAndChapterForImport(filename, text);
+    var entry = {
       id: nextRagLibraryId++,
       kind: "importiert",
-      domain: "",
-      chapterTitle: "",
+      domain: suggestion.domain,
+      chapterTitle: suggestion.chapterTitle,
       label: filename,
-      text: redactText(rawText || ""),
+      text: text,
       ticketCount: null,
       source: "imported",
       savedAt: nowLabel()
-    });
+    };
+    app.ragLibrary.push(entry);
+    return entry;
   }
   els.ragLibraryImportBtn.addEventListener("click", function () { els.ragLibraryImportInput.click(); });
   els.ragLibraryImportInput.addEventListener("change", async function () {
@@ -13361,18 +13403,25 @@
         var zip = await JSZip.loadAsync(buf);
         var mdNames = Object.keys(zip.files).filter(function (n) { return !zip.files[n].dir && n.toLowerCase().endsWith(".md"); });
         if (!mdNames.length) { showToast("Keine Markdown-Dateien", "Das ZIP-Archiv enthält keine .md-Dateien.", true); return; }
+        var addedEntries = [];
         for (var i = 0; i < mdNames.length; i++) {
           var raw = await zip.files[mdNames[i]].async("string");
-          ragLibraryAddImportedEntry(mdNames[i].split("/").pop(), raw);
+          addedEntries.push(ragLibraryAddImportedEntry(mdNames[i].split("/").pop(), raw));
         }
-        addLog("RAG-Bibliothek: " + mdNames.length + " Markdown-Datei(en) aus ZIP-Archiv „" + file.name + "“ importiert.");
-        els.ragLibraryImportNote.textContent = mdNames.length + " Datei(en) aus „" + file.name + "“ importiert - Domäne/Kapitel bitte in Schritt 4 zuordnen.";
+        var matchedCount = addedEntries.filter(function (e) { return e.domain || e.chapterTitle; }).length;
+        addLog("RAG-Bibliothek: " + mdNames.length + " Markdown-Datei(en) aus ZIP-Archiv „" + file.name + "“ importiert" +
+          (matchedCount ? ", bei " + matchedCount + " Domäne/Kapitel automatisch vorgeschlagen" : "") + ".");
+        els.ragLibraryImportNote.textContent = mdNames.length + " Datei(en) aus „" + file.name + "“ importiert" +
+          (matchedCount ? " – bei " + matchedCount + " von " + mdNames.length + " automatisch Domäne/Kapitel vorgeschlagen (bitte prüfen)" : "") +
+          " - Zuordnung ggf. in Schritt 4 anpassen.";
         showToast("Importiert", mdNames.length + " Datei(en) in die Bibliothek übernommen.");
       } else if (name.endsWith(".md")) {
         var text = await readFileAsText(file);
-        ragLibraryAddImportedEntry(file.name, text);
-        addLog("RAG-Bibliothek: Markdown-Datei „" + file.name + "“ importiert.");
-        els.ragLibraryImportNote.textContent = "„" + file.name + "“ importiert - Domäne/Kapitel bitte in Schritt 4 zuordnen.";
+        var importedEntry = ragLibraryAddImportedEntry(file.name, text);
+        var hasSuggestion = !!(importedEntry.domain || importedEntry.chapterTitle);
+        addLog("RAG-Bibliothek: Markdown-Datei „" + file.name + "“ importiert" + (hasSuggestion ? " (Domäne/Kapitel automatisch vorgeschlagen)" : "") + ".");
+        els.ragLibraryImportNote.textContent = "„" + file.name + "“ importiert" +
+          (hasSuggestion ? " – Domäne/Kapitel automatisch vorgeschlagen (bitte prüfen)." : " - Domäne/Kapitel bitte in Schritt 4 zuordnen.");
         showToast("Importiert", "„" + file.name + "“ in die Bibliothek übernommen.");
       } else {
         showToast("Nicht unterstützt", "Bitte eine .md-Datei oder ein .zip-Archiv mit .md-Dateien auswählen.", true);

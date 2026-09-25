@@ -213,6 +213,51 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("(9) Nach Laden: Gesamtdokument-Textfeld wiederhergestellt", doc.getElementById("rag-merge-output").value.includes("Manuell ergänzter Absatz."));
   check("(9) Nach Laden: Download-Button für Gesamtdokument aktiv", doc.getElementById("rag-merge-download-btn").disabled === false);
 
+  // ===================== (10) Auto-Vorschlag für Domäne/Kapitel bei Import =====================
+  // Dateiname/Überschrift-basierte Vorschläge (wortbasierte Ähnlichkeit, wie
+  // bei der Referenz-Handbuch-Kapitel-Zuordnung) - nur ab ausreichender
+  // Ähnlichkeit, sonst bewusst leer statt geraten.
+  let countBeforeSuggest = doc.querySelectorAll("#rag-library-tbody tr").length;
+
+  const mdDomainFile = new win.File(["# Kurzer Text\n\nInhalt ohne Kapitelbezug."], "Contract Management Zusammenfassung.md", { type: "text/markdown" });
+  Object.defineProperty(importInput, "files", { value: [mdDomainFile], configurable: true });
+  fire(importInput, "change");
+  await waitUntil(() => doc.querySelectorAll("#rag-library-tbody tr").length === countBeforeSuggest + 1, 2000);
+  let domainSuggestSel = doc.querySelectorAll(".rag-library-domain-select");
+  check("(10) Dateiname 'Contract Management Zusammenfassung.md' schlägt passende Domäne vor",
+    domainSuggestSel[domainSuggestSel.length - 1].value === "Contract Management");
+  check("(10) Importhinweis nennt den automatischen Vorschlag (Dateiname-Treffer)",
+    doc.getElementById("rag-library-import-note").textContent.includes("automatisch"));
+
+  const mdChapterFile = new win.File(["Freitext ohne eigene Überschrift."], "Kapitel 4 Servicevertrag anlegen Text.md", { type: "text/markdown" });
+  Object.defineProperty(importInput, "files", { value: [mdChapterFile], configurable: true });
+  fire(importInput, "change");
+  await waitUntil(() => doc.querySelectorAll("#rag-library-tbody tr").length === countBeforeSuggest + 2, 2000);
+  let chapterSuggestSel = doc.querySelectorAll(".rag-library-chapter-select");
+  check("(10) Dateiname 'Kapitel 4 Servicevertrag anlegen Text.md' schlägt passendes Kapitel vor",
+    chapterSuggestSel[chapterSuggestSel.length - 1].value.includes("Kapitel 4"));
+
+  const mdHeadingFile = new win.File(["# Kapitel 7: Verträge im Alltag verwalten\n\nFreitext."], "generischer-dateiname.md", { type: "text/markdown" });
+  Object.defineProperty(importInput, "files", { value: [mdHeadingFile], configurable: true });
+  fire(importInput, "change");
+  await waitUntil(() => doc.querySelectorAll("#rag-library-tbody tr").length === countBeforeSuggest + 3, 2000);
+  let chapterSuggestSel2 = doc.querySelectorAll(".rag-library-chapter-select");
+  check("(10) Passende Überschrift ('# Kapitel 7: ...') schlägt Kapitel vor, auch bei generischem Dateinamen",
+    chapterSuggestSel2[chapterSuggestSel2.length - 1].value.includes("Kapitel 7"));
+
+  const mdNoMatchFile = new win.File(["Beliebiger Text ohne Bezug."], "RAG-Batch-01-von-3.md", { type: "text/markdown" });
+  Object.defineProperty(importInput, "files", { value: [mdNoMatchFile], configurable: true });
+  fire(importInput, "change");
+  await waitUntil(() => doc.querySelectorAll("#rag-library-tbody tr").length === countBeforeSuggest + 4, 2000);
+  let domainSuggestSel2 = doc.querySelectorAll(".rag-library-domain-select");
+  let chapterSuggestSel3 = doc.querySelectorAll(".rag-library-chapter-select");
+  check("(10) Generischer, nicht zuordenbarer Dateiname bleibt ehrlich unzugeordnet (keine geratene Domäne)",
+    domainSuggestSel2[domainSuggestSel2.length - 1].value === "");
+  check("(10) Generischer, nicht zuordenbarer Dateiname bleibt ehrlich unzugeordnet (kein geratenes Kapitel)",
+    chapterSuggestSel3[chapterSuggestSel3.length - 1].value === "");
+  check("(10) Importhinweis bei nicht zuordenbarem Dateinamen verweist auf manuelle Zuordnung statt Vorschlag vorzutäuschen",
+    doc.getElementById("rag-library-import-note").textContent.includes("Schritt 4"));
+
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }
   const failed = checks.filter((c) => !c[1]);
   console.log("\n" + (checks.length - failed.length) + "/" + checks.length + " bestanden");

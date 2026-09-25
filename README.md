@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.39.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.40.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -257,7 +257,16 @@ wieder einladen – importierter Freitext wird wie überall in der App durch
 Domäne-/Kapitel-Zuordnung (Dropdown, volle Gliederung zur Auswahl, unabhängig
 von der ursprünglichen RAG-Auswahl); bei der Übernahme aus einer laufenden
 Generierung wird sie vorbelegt, falls zum Zeitpunkt des Speicherns genau
-eine Domäne bzw. ein Kapitel in der RAG-Auswahl gewählt war. "Alle
+eine Domäne bzw. ein Kapitel in der RAG-Auswahl gewählt war. Bei importierten
+Dateien übernimmt dieselbe wortbasierte Titel-Ähnlichkeit wie bei der
+Referenz-Handbuch-Kapitel-Zuordnung (`chapterTitleSimilarity`/
+`CHAPTER_MATCH_THRESHOLD`, Jaccard über normalisierte Wörter) die Vorbelegung
+– angewandt auf Dateiname und erste Überschriftzeile (`# ...`) der Datei
+gegen die tatsächlich vorkommenden Domänen bzw. die volle Gliederung; nur ab
+ausreichender Ähnlichkeit wird vorbelegt, sonst bewusst leer gelassen
+("ehrlich anzeigen statt raten") statt einen unsicheren Treffer
+vorzutäuschen – in jedem Fall bleibt die Zuordnung manuell überschreibbar.
+"Alle
 zusammenführen" fasst schließlich sämtliche Bibliothekseinträge zu einem
 Gesamtdokument zusammen – sortiert nach Domäne, darunter nach Kapitel
 ("Ohne Domäne"/"Nicht zugeordnet" am Ende), damit unvollständige Zuordnungen
