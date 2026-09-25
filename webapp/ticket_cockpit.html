@@ -1450,6 +1450,42 @@
               <button class="btn ghost" id="rag-translate-btn" type="button" disabled>Übersetzen (Englisch)</button>
             </div>
           </section>
+
+          <section>
+            <p class="section-label">3. In Bibliothek speichern / aus Datei importieren</p>
+            <p class="desc">Ein erzeugter Text lässt sich in eine interne Bibliothek übernehmen &ndash; bleibt in dieser Sitzung erhalten (auch nach einem Neuladen der Seite), z. B. um mehrere RAG-Durchläufe je Domäne zu sammeln. Zuvor heruntergeladene Markdown-Dateien oder ein Batch-ZIP-Archiv lassen sich ebenso wieder einladen.</p>
+            <div class="job-export-row">
+              <button class="btn ghost" id="rag-library-save-btn" type="button" disabled>Aktuellen Text in Bibliothek speichern</button>
+              <button class="btn ghost" id="rag-library-import-btn" type="button">Aus Datei importieren (.md / .zip)</button>
+              <input type="file" id="rag-library-import-input" accept=".md,.zip" hidden>
+            </div>
+            <p class="step-note" id="rag-library-import-note"></p>
+          </section>
+
+          <section>
+            <p class="section-label">4. Domäne &amp; Kapitel zuordnen</p>
+            <p class="desc">Jedem gespeicherten/importierten Textschnipsel Domäne und Gliederungskapitel zuordnen &ndash; Grundlage für ein sauber sortiertes Gesamtdokument (Schritt 5). Änderungen werden sofort übernommen.</p>
+            <div class="empty-hint" id="rag-library-empty">Noch keine Ergebnisse in der Bibliothek gespeichert oder importiert.</div>
+            <div class="panel table-wrap" id="rag-library-table-wrap" style="max-height:360px; overflow:auto;" hidden>
+              <table class="simple-table" id="rag-library-table">
+                <thead><tr><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Tickets</th><th>Quelle</th><th>Gespeichert am</th><th></th></tr></thead>
+                <tbody id="rag-library-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section>
+            <p class="section-label">5. Alle zusammenführen &amp; bearbeiten</p>
+            <p class="desc">Fasst alle Textschnipsel aus der Bibliothek zu einem Gesamtdokument zusammen &ndash; sortiert nach Domäne, darunter nach Kapitel. Der zusammengeführte Text lässt sich direkt hier bearbeiten und als Markdown-Datei speichern.</p>
+            <div class="job-export-row">
+              <button class="btn ghost" id="rag-merge-btn" type="button">Alle zusammenführen</button>
+            </div>
+            <p class="step-note" id="rag-merge-status-note"></p>
+            <textarea class="text-input" id="rag-merge-output" rows="16" placeholder="Noch nichts zusammengeführt." style="width:100%; margin-top:8px; font-family:inherit;"></textarea>
+            <div class="job-export-row" style="margin-top:8px;">
+              <button class="btn ghost" id="rag-merge-download-btn" type="button" disabled>Als Markdown speichern</button>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -4098,7 +4134,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.38.0";
+  var APP_VERSION = "2.39.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5433,6 +5469,9 @@
     "rag-generate-summary-btn", "rag-generate-fliesstext-btn", "rag-stop-btn", "rag-resume-btn", "rag-status-note",
     "rag-batch-list-wrap", "rag-batch-tbody", "rag-output", "rag-token-usage", "rag-download-btn", "rag-batch-zip-btn",
     "rag-translate-btn",
+    "rag-library-save-btn", "rag-library-import-btn", "rag-library-import-input", "rag-library-import-note",
+    "rag-library-empty", "rag-library-table-wrap", "rag-library-tbody",
+    "rag-merge-btn", "rag-merge-status-note", "rag-merge-output", "rag-merge-download-btn",
     "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
     "session-export-btn", "session-import-btn", "session-import-input",
     "autosave-enabled-cb", "autosave-status", "autosave-delete-btn",
@@ -5597,7 +5636,24 @@
     // Welches Referenz-Handbuch (referenceManuals[].id) aktuell für die
     // Kapitel-Zuordnung/den Vergleich ausgewählt ist. Sitzungsdatensatz wie
     // referenceManuals selbst.
-    refCompareActiveManualId: null
+    refCompareActiveManualId: null,
+    // RAG-Bibliothek (Teil 9b, Punkte 3-5): anders als der eigentliche RAG-
+    // Ausgabebereich (ragBatchRun/ragExtractedRows, s. Kommentar bei
+    // "Sitzung speichern/laden" weiter unten - bewusst NICHT gesichert)
+    // koennen hier fertige RAG-Ergebnisse BEWUSST in die Sitzung uebernommen
+    // werden, um mehrere Durchlaeufe (z. B. je Domäne/Kapitel) zu sammeln,
+    // richtig zuzuordnen und am Ende zu einem Gesamtdokument
+    // zusammenzufuehren - je Eintrag Domäne + Gliederungskapitel editierbar
+    // (Teil 9b Punkt 4). Sitzungsdatensatz wie manualChapters/
+    // referenceManuals (reset bei "Alle Daten löschen"/"Sitzung
+    // zurücksetzen", Teil von Sitzung speichern/laden).
+    ragLibrary: [],
+    // Zuletzt erzeugtes Gesamtdokument aus "Alle zusammenführen" (Teil 9b
+    // Punkt 5) - bewusst als eigener, editierbarer Text gespeichert (wie
+    // manualChapters-Text), nicht bei jedem Render neu zusammengebaut, damit
+    // manuelle Nacharbeiten (Ueberschriften/Uebergaenge) nicht verloren
+    // gehen.
+    ragMergedDoc: ""
   };
 
   function addLog(message) {
@@ -5772,6 +5828,12 @@
     app.referenceManuals = [];
     app.refCompareActiveManualId = null;
     renderReferenceManuals();
+    app.ragLibrary = [];
+    app.ragMergedDoc = "";
+    renderRagLibrary();
+    els.ragMergeOutput.value = "";
+    els.ragMergeDownloadBtn.disabled = true;
+    els.ragMergeStatusNote.textContent = "";
   }
 
   // Admin-Funktion (Einstellungen): im Unterschied zu resetSession() werden
@@ -5814,6 +5876,12 @@
     app.referenceManuals = [];
     app.refCompareActiveManualId = null;
     renderReferenceManuals();
+    app.ragLibrary = [];
+    app.ragMergedDoc = "";
+    renderRagLibrary();
+    els.ragMergeOutput.value = "";
+    els.ragMergeDownloadBtn.disabled = true;
+    els.ragMergeStatusNote.textContent = "";
     addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
   }
   els.deleteAllDataBtn.addEventListener("click", async function () {
@@ -5838,10 +5906,14 @@
      entspricht) als eine JSON-Datei, die sich spaeter - auch in einer
      komplett neuen Sitzung/einem neuen Tab - wieder einlesen laesst.
      app.ticketStore ist eine Map (nicht JSON-faehig) und wird daher als
-     Array von [key, entry]-Paaren serialisiert/wiederhergestellt. RAG-
-     Ausgaben werden bewusst NICHT gesichert (automatisch erzeugter Text,
-     ohnehin nicht in app gehalten, s. ragResetOutput()) - beim
-     Wiederherstellen leer, muesste bei Bedarf neu generiert werden. */
+     Array von [key, entry]-Paaren serialisiert/wiederhergestellt. Der
+     laufende RAG-Ausgabebereich (ragBatchRun/ragExtractedRows, Teil 9b
+     Punkte 1-2) wird bewusst NICHT gesichert (automatisch erzeugter
+     Zwischenstand, ohnehin nicht in app gehalten, s. ragResetOutput()) -
+     beim Wiederherstellen leer, muesste bei Bedarf neu generiert werden.
+     Ein Ergebnis, das der Nutzer per "In Bibliothek speichern" (Teil 9b
+     Punkt 3) BEWUSST uebernommen hat, liegt dagegen in app.ragLibrary/
+     app.ragMergedDoc und WIRD gesichert - genau wie manualChapters. */
   var SESSION_FILE_FORMAT_VERSION = 1;
   function serializeSessionState() {
     return {
@@ -5876,7 +5948,9 @@
       chapterKeywords: app.chapterKeywords,
       importFormats: app.importFormats,
       referenceManuals: app.referenceManuals,
-      refCompareActiveManualId: app.refCompareActiveManualId
+      refCompareActiveManualId: app.refCompareActiveManualId,
+      ragLibrary: app.ragLibrary,
+      ragMergedDoc: app.ragMergedDoc
     };
   }
   function restoreSessionState(data) {
@@ -5915,6 +5989,8 @@
     if (data.importFormats) app.importFormats = data.importFormats;
     if (Array.isArray(data.referenceManuals)) app.referenceManuals = data.referenceManuals;
     if (data.refCompareActiveManualId !== undefined) app.refCompareActiveManualId = data.refCompareActiveManualId;
+    if (Array.isArray(data.ragLibrary)) app.ragLibrary = data.ragLibrary;
+    if (typeof data.ragMergedDoc === "string") app.ragMergedDoc = data.ragMergedDoc;
     app.initialized = true;
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
@@ -5936,6 +6012,9 @@
     renderImportFormats();
     renderReferenceManuals();
     renderRefCompareMapping();
+    renderRagLibrary();
+    els.ragMergeOutput.value = app.ragMergedDoc;
+    els.ragMergeDownloadBtn.disabled = !app.ragMergedDoc;
     els.releaseMatchSummary.hidden = true;
     els.releaseMissingWrap.hidden = true;
     els.releaseKeysInput.value = "";
@@ -11112,6 +11191,8 @@
     }
     if (jobNum === 7) {
       var ragHasRows = ragExtractedRows.length > 0;
+      var ragLibCount = app.ragLibrary.length;
+      var ragLibAssigned = ragLibCount > 0 && app.ragLibrary.every(function (e) { return e.domain && e.chapterTitle; });
       return [
         loaded, processed,
         {
@@ -11121,6 +11202,18 @@
         {
           state: ragHasGenerated ? "done" : "pending", label: "Endnutzergerechten Text generiert (Claude)",
           note: ragHasGenerated ? "Text erzeugt – Markdown-Download bereit" : (sampleApi ? "Noch nicht generiert" : "KI-Funktion in dieser Ansicht nicht verfügbar")
+        },
+        {
+          state: ragLibCount > 0 ? "done" : "pending", label: "In Bibliothek gespeichert / aus Datei importiert",
+          note: ragLibCount > 0 ? ragLibCount + " Textschnipsel in der Bibliothek" : "Noch nichts gespeichert/importiert"
+        },
+        {
+          state: ragLibAssigned ? "done" : "pending", label: "Domäne & Kapitel je Textschnipsel zugeordnet",
+          note: ragLibCount === 0 ? "–" : ragLibAssigned ? "Alle " + ragLibCount + " Textschnipsel zugeordnet" : "Noch nicht vollständig zugeordnet"
+        },
+        {
+          state: app.ragMergedDoc ? "done" : "pending", label: "Alle Textschnipsel zu einem Gesamtdokument zusammengeführt",
+          note: app.ragMergedDoc ? "Gesamtdokument erzeugt – Markdown-Download bereit" : "Noch nicht zusammengeführt"
         }
       ];
     }
@@ -12702,6 +12795,10 @@
   // Klick auf "Fortsetzen" (ragResumeRun) setzt exakt bei index fort statt
   // von vorn zu beginnen. null = kein Lauf gestartet.
   var ragBatchRun = null;
+  // RAG-Bibliothek (Teil 9b, Punkte 3-5) - s. Kommentar bei app.ragLibrary
+  // (Teil 2) fuer den Unterschied zum obigen, bewusst NICHT gesicherten
+  // Batch-Lauf-Zustand.
+  var nextRagLibraryId = 1;
 
   function selectedValues(selectEl) {
     return Array.prototype.map.call(selectEl.selectedOptions, function (o) { return o.value; });
@@ -12782,6 +12879,7 @@
     ragHasGenerated = false;
     ragBatchRun = null;
     els.ragDownloadBtn.disabled = true;
+    els.ragLibrarySaveBtn.disabled = true;
     els.ragOutput.textContent = "Noch kein Text generiert.";
     els.ragStatusNote.textContent = "";
     els.ragTokenUsage.textContent = "";
@@ -12825,6 +12923,7 @@
     els.ragGenerateFliesstextBtn.disabled = !hasContent;
     els.ragExportRow.hidden = rows.length === 0;
     els.ragDownloadBtn.disabled = true;
+    els.ragLibrarySaveBtn.disabled = true;
     els.ragOutput.textContent = "Noch kein Text generiert.";
     ragResetTranslation();
     els.ragStatusNote.textContent = !hasContent
@@ -13022,6 +13121,7 @@
     els.ragGenerateSummaryBtn.disabled = true;
     els.ragGenerateFliesstextBtn.disabled = true;
     els.ragDownloadBtn.disabled = true;
+    els.ragLibrarySaveBtn.disabled = true;
     els.ragTranslateBtn.disabled = true;
     els.ragStopBtn.hidden = false;
     els.ragResumeBtn.hidden = true;
@@ -13076,6 +13176,7 @@
       }
       els.ragOutput.textContent = finalText;
       els.ragDownloadBtn.disabled = false;
+      els.ragLibrarySaveBtn.disabled = false;
       var totalTokens = estimateTokens(run.charsIn + run.charsOut);
       var statusNote = "KI-generiert (" + (kind === "summary" ? "Zusammenfassung" : "Fließtext") +
         (run.batches.length > 1 ? ", " + run.batches.length + " Batches zusammengeführt" : "") + ") – bitte redaktionell prüfen." +
@@ -13173,6 +13274,192 @@
     }
   });
 
+  /* ============ Teil 9b, Punkte 3-5: RAG-Bibliothek ============
+     Erweitert RAG um drei Schritte NACH der eigentlichen Generierung: (3)
+     ein fertiger Text kann bewusst in eine interne, sitzungsuebergreifend
+     gesicherte Bibliothek uebernommen ODER aus einer zuvor heruntergeladenen
+     Markdown-Datei/einem Batch-ZIP-Archiv wieder eingeladen werden, (4) jeder
+     Eintrag bekommt eine editierbare Domäne-/Kapitel-Zuordnung, (5) alle
+     Eintraege lassen sich - nach Domäne, darunter nach Kapitel sortiert - zu
+     einem editierbaren Gesamtdokument zusammenfuehren. Ziel: Textschnipsel
+     aus vielen einzelnen RAG-Durchlaeufen (z. B. je Domäne) am Ende sauber
+     nach Domäne/Kapitel geordnet in einem Dokument. */
+  function ragDomainOptionsList() { return distinctFieldValues(app.tickets, "domain"); }
+  function ragChapterOptionsList() { return app.outline.map(function (c) { return c.title; }); }
+  function ragLibraryOptionsHtml(options, current, unassignedLabel) {
+    return '<option value=""' + (current ? "" : " selected") + ">" + unassignedLabel + "</option>" +
+      options.map(function (o) { return '<option value="' + escapeHtml(o) + '"' + (current === o ? " selected" : "") + ">" + escapeHtml(o) + "</option>"; }).join("");
+  }
+  function renderRagLibrary() {
+    var list = app.ragLibrary;
+    els.ragLibraryEmpty.hidden = list.length > 0;
+    els.ragLibraryTableWrap.hidden = list.length === 0;
+    var domainOptions = ragDomainOptionsList();
+    var chapterOptions = ragChapterOptionsList();
+    els.ragLibraryTbody.innerHTML = list.map(function (e) {
+      return "<tr>" +
+        "<td>" + escapeHtml(e.label) + "</td>" +
+        '<td><select class="rag-library-domain-select" data-id="' + e.id + '" aria-label="Domäne">' +
+        ragLibraryOptionsHtml(domainOptions, e.domain, "Ohne Domäne") + "</select></td>" +
+        '<td><select class="rag-library-chapter-select" data-id="' + e.id + '" aria-label="Kapitel">' +
+        ragLibraryOptionsHtml(chapterOptions, e.chapterTitle, "Nicht zugeordnet") + "</select></td>" +
+        "<td class=\"mono\">" + (e.ticketCount != null ? e.ticketCount : "&ndash;") + "</td>" +
+        "<td>" + (e.source === "imported" ? "Importiert" : "Generiert") + "</td>" +
+        "<td class=\"mono\">" + escapeHtml(e.savedAt) + "</td>" +
+        '<td><button type="button" class="btn danger rag-library-delete-btn" data-id="' + e.id + '">Löschen</button></td>' +
+        "</tr>";
+    }).join("");
+  }
+  function ragLibrarySaveCurrent() {
+    if (!ragHasGenerated || !els.ragOutput.textContent) return;
+    var domainSel = selectedValues(els.ragDomainSelect);
+    var chapterSel = selectedValues(els.ragOutlineSelect);
+    var entry = {
+      id: nextRagLibraryId++,
+      kind: ragLastKind,
+      domain: domainSel.length === 1 ? domainSel[0] : "",
+      chapterTitle: chapterSel.length === 1 ? chapterSel[0] : "",
+      label: (ragLastKind === "summary" ? "Zusammenfassung" : "Fließtext") + " vom " + nowLabel() + (ragOutputLang === "en" ? " (EN)" : ""),
+      text: els.ragOutput.textContent,
+      ticketCount: ragExtractedRows.length,
+      source: "generated",
+      savedAt: nowLabel()
+    };
+    app.ragLibrary.push(entry);
+    renderRagLibrary();
+    renderAllJobSteps();
+    addLog("RAG-Bibliothek: Ergebnis \"" + entry.label + "\" gespeichert (" + entry.ticketCount + " Tickets)" +
+      (entry.domain || entry.chapterTitle ? " - vorbelegt mit " + (entry.domain ? "Domäne \"" + entry.domain + "\"" : "") +
+        (entry.domain && entry.chapterTitle ? ", " : "") + (entry.chapterTitle ? "Kapitel \"" + entry.chapterTitle + "\"" : "") : "") + ".");
+    showToast("Gespeichert", "Ergebnis wurde in die Bibliothek übernommen – Domäne/Kapitel lassen sich in Schritt 4 zuordnen.");
+  }
+  els.ragLibrarySaveBtn.addEventListener("click", ragLibrarySaveCurrent);
+  function ragLibraryAddImportedEntry(filename, rawText) {
+    app.ragLibrary.push({
+      id: nextRagLibraryId++,
+      kind: "importiert",
+      domain: "",
+      chapterTitle: "",
+      label: filename,
+      text: redactText(rawText || ""),
+      ticketCount: null,
+      source: "imported",
+      savedAt: nowLabel()
+    });
+  }
+  els.ragLibraryImportBtn.addEventListener("click", function () { els.ragLibraryImportInput.click(); });
+  els.ragLibraryImportInput.addEventListener("change", async function () {
+    var file = els.ragLibraryImportInput.files && els.ragLibraryImportInput.files[0];
+    els.ragLibraryImportInput.value = "";
+    if (!file) return;
+    var name = (file.name || "").toLowerCase();
+    els.ragLibraryImportNote.textContent = "";
+    try {
+      if (name.endsWith(".zip")) {
+        if (typeof JSZip === "undefined") { showToast("Fehlgeschlagen", "ZIP-Bibliothek konnte nicht geladen werden.", true); return; }
+        var buf = await readFileAsArrayBuffer(file);
+        var zip = await JSZip.loadAsync(buf);
+        var mdNames = Object.keys(zip.files).filter(function (n) { return !zip.files[n].dir && n.toLowerCase().endsWith(".md"); });
+        if (!mdNames.length) { showToast("Keine Markdown-Dateien", "Das ZIP-Archiv enthält keine .md-Dateien.", true); return; }
+        for (var i = 0; i < mdNames.length; i++) {
+          var raw = await zip.files[mdNames[i]].async("string");
+          ragLibraryAddImportedEntry(mdNames[i].split("/").pop(), raw);
+        }
+        addLog("RAG-Bibliothek: " + mdNames.length + " Markdown-Datei(en) aus ZIP-Archiv „" + file.name + "“ importiert.");
+        els.ragLibraryImportNote.textContent = mdNames.length + " Datei(en) aus „" + file.name + "“ importiert - Domäne/Kapitel bitte in Schritt 4 zuordnen.";
+        showToast("Importiert", mdNames.length + " Datei(en) in die Bibliothek übernommen.");
+      } else if (name.endsWith(".md")) {
+        var text = await readFileAsText(file);
+        ragLibraryAddImportedEntry(file.name, text);
+        addLog("RAG-Bibliothek: Markdown-Datei „" + file.name + "“ importiert.");
+        els.ragLibraryImportNote.textContent = "„" + file.name + "“ importiert - Domäne/Kapitel bitte in Schritt 4 zuordnen.";
+        showToast("Importiert", "„" + file.name + "“ in die Bibliothek übernommen.");
+      } else {
+        showToast("Nicht unterstützt", "Bitte eine .md-Datei oder ein .zip-Archiv mit .md-Dateien auswählen.", true);
+        return;
+      }
+      renderRagLibrary();
+      renderAllJobSteps();
+    } catch (err) {
+      showToast("Import fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    }
+  });
+  els.ragLibraryTbody.addEventListener("change", function (e) {
+    var domainSel = e.target.closest(".rag-library-domain-select");
+    var chapterSel = e.target.closest(".rag-library-chapter-select");
+    if (!domainSel && !chapterSel) return;
+    var id = parseInt((domainSel || chapterSel).getAttribute("data-id"), 10);
+    var entry = app.ragLibrary.filter(function (r) { return r.id === id; })[0];
+    if (!entry) return;
+    if (domainSel) entry.domain = domainSel.value;
+    if (chapterSel) entry.chapterTitle = chapterSel.value;
+  });
+  els.ragLibraryTbody.addEventListener("click", async function (e) {
+    var delBtn = e.target.closest(".rag-library-delete-btn");
+    if (!delBtn) return;
+    var id = parseInt(delBtn.getAttribute("data-id"), 10);
+    var entry = app.ragLibrary.filter(function (r) { return r.id === id; })[0];
+    if (!entry) return;
+    var ok = await confirmDialog('Eintrag „' + entry.label + '“ wirklich aus der Bibliothek löschen?');
+    if (!ok) return;
+    app.ragLibrary = app.ragLibrary.filter(function (r) { return r.id !== id; });
+    renderRagLibrary();
+    renderAllJobSteps();
+    addLog("RAG-Bibliothek: Eintrag \"" + entry.label + "\" gelöscht.");
+    showToast("Gelöscht", 'Eintrag „' + entry.label + '“ wurde entfernt.');
+  });
+
+  // Zusammenfuehren (Punkt 5): gruppiert je Domäne (alphabetisch, "Ohne
+  // Domäne" zuletzt), darunter je Kapitel (alphabetisch, "Nicht zugeordnet"
+  // zuletzt) - macht auf einen Blick sichtbar, welche Textschnipsel noch
+  // keine vollstaendige Zuordnung haben (Schritt 4 nachholen), statt sie
+  // stillschweigend irgendwo einzusortieren.
+  function ragBuildMergedDoc() {
+    var groups = {};
+    app.ragLibrary.forEach(function (e) {
+      var d = e.domain || "";
+      var c = e.chapterTitle || "";
+      if (!groups[d]) groups[d] = {};
+      if (!groups[d][c]) groups[d][c] = [];
+      groups[d][c].push(e);
+    });
+    var domainNames = Object.keys(groups).filter(function (d) { return d !== ""; }).sort();
+    if (groups[""]) domainNames.push("");
+    var parts = ["# RAG-Gesamtdokument\n\n_Automatisch aus " + app.ragLibrary.length +
+      " Textschnipsel(n) der RAG-Bibliothek zusammengeführt, sortiert nach Domäne und Kapitel. Bitte redaktionell prüfen._"];
+    domainNames.forEach(function (d) {
+      parts.push("\n\n## Domäne: " + (d || "Ohne Domäne"));
+      var chapterNames = Object.keys(groups[d]).filter(function (c) { return c !== ""; }).sort();
+      if (groups[d][""]) chapterNames.push("");
+      chapterNames.forEach(function (c) {
+        parts.push("\n\n### Kapitel: " + (c || "Nicht zugeordnet"));
+        groups[d][c].forEach(function (e) { parts.push("\n\n" + e.text); });
+      });
+    });
+    return parts.join("");
+  }
+  els.ragMergeBtn.addEventListener("click", function () {
+    if (!app.ragLibrary.length) { showToast("Bibliothek leer", "Bitte zuerst mindestens ein Ergebnis speichern oder importieren (Schritt 3).", true); return; }
+    var merged = ragBuildMergedDoc();
+    app.ragMergedDoc = merged;
+    els.ragMergeOutput.value = merged;
+    els.ragMergeDownloadBtn.disabled = false;
+    var unassigned = app.ragLibrary.filter(function (e) { return !e.domain || !e.chapterTitle; }).length;
+    els.ragMergeStatusNote.textContent = app.ragLibrary.length + " Textschnipsel zusammengeführt" +
+      (unassigned ? " – " + unassigned + " davon ohne vollständige Domäne-/Kapitel-Zuordnung (siehe Gruppen „Ohne Domäne“/„Nicht zugeordnet“ im Dokument)." : ".");
+    addLog("RAG-Bibliothek: " + app.ragLibrary.length + " Textschnipsel zu einem Gesamtdokument zusammengeführt.");
+    renderAllJobSteps();
+  });
+  els.ragMergeOutput.addEventListener("input", function () {
+    app.ragMergedDoc = els.ragMergeOutput.value;
+    els.ragMergeDownloadBtn.disabled = !els.ragMergeOutput.value.trim();
+  });
+  els.ragMergeDownloadBtn.addEventListener("click", async function () {
+    var ok = await saveOrWarn("RAG-Gesamtdokument.md", els.ragMergeOutput.value);
+    if (ok) showToast("Gespeichert", "Gesamtdokument heruntergeladen.");
+  });
+  renderRagLibrary();
+
   // "Übersetzen"-Umschalter: Deutsch -> Englisch ruft Claude einmal auf und
   // cacht das Ergebnis nicht extra (das Original bleibt in
   // ragOriginalOutputText erhalten); ein Zurückschalten Englisch -> Deutsch
@@ -13194,6 +13481,7 @@
     els.ragGenerateSummaryBtn.disabled = true;
     els.ragGenerateFliesstextBtn.disabled = true;
     els.ragDownloadBtn.disabled = true;
+    els.ragLibrarySaveBtn.disabled = true;
     els.ragStopBtn.hidden = false;
     els.ragResumeBtn.hidden = true;
     els.ragStatusNote.textContent = "Übersetzung wird erstellt …";
@@ -13227,6 +13515,7 @@
       els.ragGenerateSummaryBtn.disabled = false;
       els.ragGenerateFliesstextBtn.disabled = false;
       els.ragDownloadBtn.disabled = false;
+      els.ragLibrarySaveBtn.disabled = false;
       ragAbortController = null;
     }
   }

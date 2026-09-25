@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.38.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.39.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -242,6 +242,31 @@ Sichteinschränkung bewusst zugunsten der aktuellen Dashboard-Filterung
 bzw. einer expliziten Ticket-Schlüssel-Liste – eine erzwungene
 Vereinheitlichung hätte hier nur Komplexität hinzugefügt, ohne echte
 Duplikation zu entfernen.
+
+**RAG-Bibliothek (Verarbeitung → 7. RAG, Punkte 3-5, nach der eigentlichen
+Text-Generierung):** ein erzeugter Text (Zusammenfassung/Fließtext) lässt
+sich bewusst per Klick in eine interne, **sitzungsübergreifend gesicherte**
+Bibliothek übernehmen – anders als der eigentliche RAG-Ausgabebereich
+(automatisch erzeugter Zwischenstand, bewusst NICHT Teil von "Sitzung
+speichern/laden") wird ein so übernommenes Ergebnis über `app.ragLibrary`/
+`app.ragMergedDoc` mit exportiert/wiederhergestellt, genau wie die
+Benutzerhandbuch-Kapitel. Alternativ lässt sich eine zuvor heruntergeladene
+Markdown-Datei oder ein Batch-ZIP-Archiv (mehrere `.md`-Dateien auf einmal)
+wieder einladen – importierter Freitext wird wie überall in der App durch
+`redactText()` geleitet. Jeder Bibliothekseintrag bekommt eine editierbare
+Domäne-/Kapitel-Zuordnung (Dropdown, volle Gliederung zur Auswahl, unabhängig
+von der ursprünglichen RAG-Auswahl); bei der Übernahme aus einer laufenden
+Generierung wird sie vorbelegt, falls zum Zeitpunkt des Speicherns genau
+eine Domäne bzw. ein Kapitel in der RAG-Auswahl gewählt war. "Alle
+zusammenführen" fasst schließlich sämtliche Bibliothekseinträge zu einem
+Gesamtdokument zusammen – sortiert nach Domäne, darunter nach Kapitel
+("Ohne Domäne"/"Nicht zugeordnet" am Ende), damit unvollständige Zuordnungen
+sofort auffallen statt Textschnipsel unsortiert aneinanderzureihen. Der
+zusammengeführte Text ist direkt editierbar und lässt sich als eigene
+Markdown-Datei herunterladen. Ziel: Ergebnisse aus vielen einzelnen
+RAG-Durchläufen (z. B. je Domäne/Kapitel separat generiert, um Vermischung
+zu vermeiden) am Ende sauber geordnet in einem Dokument zusammenführen,
+statt jeden Durchlauf einzeln zu verwalten.
 
 - **Dashboard** – zusammengeführter, aktueller Stand aller importierten
   Tickets: Status-Kacheln, ein **Typ-Schnellfilter** (Chips je Tickettyp,
