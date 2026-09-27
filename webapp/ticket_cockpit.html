@@ -611,6 +611,7 @@
       <li><button class="nav-item" data-view="dateiverwaltung" type="button">Dateiverwaltung<span class="count-badge" id="nav-badge-changes" hidden>0</span></button></li>
       <li><button class="nav-item" data-view="listenauswahl" type="button">Listenauswahl<span class="count-badge" id="nav-badge-lists" hidden>0</span></button></li>
       <li><button class="nav-item" data-view="gliederung" type="button">Gliederung</button></li>
+      <li><button class="nav-item" data-view="massenverarbeitung" type="button">Massenverarbeitung</button></li>
       <li><button class="nav-item" data-view="verarbeitung" type="button">Verarbeitung</button></li>
       <li class="nav-sep">Dokumente</li>
       <li><button class="nav-item" data-view="releaseletter" type="button">Releaseletter</button></li>
@@ -1162,6 +1163,40 @@
           <input type="text" class="text-input" id="gl-search-input" placeholder="Im Ticket-Inhalt suchen, z. B. API, Blueprint, Indien …" style="max-width:420px;">
           <p id="gl-search-summary" class="step-note"></p>
           <div id="gl-search-neighbors"></div>
+        </section>
+      </section>
+
+      <!-- ================= Massenverarbeitung ================= -->
+      <!-- Eigenständige Funktion, unabhängig von der RAG-Bibliothek (Verarbeitung ->
+           7. RAG, Punkte 3-5): eigener Datenbestand (app.massFiles), eigener
+           Datei-Import, eigene Domäne/Kapitel-Zuordnung - bewusst NICHT dieselbe
+           app.ragLibrary. Besonderheit gegenüber der RAG-Bibliothek: zusätzlich zum
+           Datei-Upload lassen sich alle bereits an anderer Stelle der App erzeugten
+           MD-Inhalte (Benutzerhandbuch-Kapitel, Referenz-Handbuch-Kapitel) mit einem
+           Klick einlesen, und die Anzeige gruppiert je Domäne UND sortiert innerhalb
+           jeder Domäne nach der Reihenfolge der Gliederung (app.outline) - "nicht
+           zugeordnet" immer zuletzt. -->
+      <section class="view-panel" data-view-panel="massenverarbeitung" hidden>
+        <div class="view-head"><h2>Massenverarbeitung</h2><p class="desc">Alle Markdown-Textschnipsel an einem Ort: hochladen oder bereits im Programm erzeugte Inhalte (Benutzerhandbuch-Kapitel, Referenz-Handbuch) einlesen, je Domäne anzeigen und nach Gliederungspunkt (Kapitel) einordnen &ndash; als Vorbereitung, bevor es in die eigentliche Verarbeitung geht.</p></div>
+
+        <section>
+          <p class="section-label">1. MD-Dateien hinzufügen</p>
+          <p class="desc">Einzelne Markdown-Datei oder ein ZIP-Archiv mit mehreren .md-Dateien hochladen &ndash; Freitext wird wie überall in der App durch redactText() geleitet. Alternativ lassen sich alle bereits vorhandenen MD-Inhalte aus dem Programm selbst übernehmen.</p>
+          <div class="job-export-row">
+            <button class="btn ghost" id="mass-import-btn" type="button">Datei hochladen (.md / .zip)</button>
+            <input type="file" id="mass-import-input" accept=".md,.zip" hidden>
+            <button class="btn ghost" id="mass-collect-btn" type="button">Vorhandene Inhalte einlesen (Benutzerhandbuch/Referenz-Handbuch)</button>
+          </div>
+          <p class="step-note" id="mass-import-note"></p>
+        </section>
+
+        <section>
+          <p class="section-label">2. Nach Domäne anzeigen &amp; nach Gliederungspunkt ordnen</p>
+          <p class="desc">Jede Domäne als eigener Abschnitt, Textschnipsel darin automatisch in der Reihenfolge der Gliederung sortiert ("Nicht zugeordnet" zuletzt). Domäne/Kapitel-Zuordnung ist editierbar &ndash; bei hochgeladenen/eingelesenen Inhalten wird anhand Bezeichnung/Überschrift automatisch ein Vorschlag gemacht (nur bei ausreichender Ähnlichkeit, sonst bewusst leer), bitte prüfen. Änderungen werden sofort übernommen und sortieren live neu ein.</p>
+          <div class="empty-hint" id="mass-empty">Noch keine MD-Dateien hochgeladen oder eingelesen.</div>
+          <div id="mass-groups-wrap" hidden>
+            <div id="mass-groups"></div>
+          </div>
         </section>
       </section>
 
@@ -4137,7 +4172,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.41.0";
+  var APP_VERSION = "2.42.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5463,6 +5498,8 @@
     "gl-new-term-input", "gl-add-term-btn", "gl-chat-btn", "gl-grill-btn", "gl-chat-panel", "gl-chat-history",
     "gl-chat-input", "gl-chat-send-btn", "gl-grill-panel", "gl-grill-output", "gl-search-input", "gl-search-summary",
     "gl-search-neighbors",
+    "mass-import-btn", "mass-import-input", "mass-import-note", "mass-collect-btn",
+    "mass-empty", "mass-groups-wrap", "mass-groups",
     "graph-multiselect-count", "graph-multiselect-name-input", "graph-multiselect-save-btn", "graph-multiselect-clear-btn",
     "graph-zoom-out-btn", "graph-zoom-in-btn", "graph-zoom-reset-btn", "graph-zoom-level",
     "graph-view-tabs", "graph-view-desc",
@@ -5656,7 +5693,16 @@
     // manualChapters-Text), nicht bei jedem Render neu zusammengebaut, damit
     // manuelle Nacharbeiten (Ueberschriften/Uebergaenge) nicht verloren
     // gehen.
-    ragMergedDoc: ""
+    ragMergedDoc: "",
+    // Massenverarbeitung (eigener Navigationspunkt vor Verarbeitung): bewusst
+    // EIGENSTÄNDIGER Datenbestand, unabhängig von app.ragLibrary (RAG-
+    // Bibliothek, Teil 9b) - beide Funktionen sollen unabhängig voneinander
+    // nutzbar sein, keine gemeinsame Liste. Speist sich aus Datei-Upload UND
+    // (per "Vorhandene Inhalte einlesen") bereits an anderer Stelle der App
+    // erzeugten MD-Inhalten (Benutzerhandbuch-Kapitel, Referenz-Handbuch-
+    // Kapitel). Sitzungsdatensatz wie ragLibrary (reset bei "Alle Daten
+    // löschen"/"Sitzung zurücksetzen", Teil von Sitzung speichern/laden).
+    massFiles: []
   };
 
   function addLog(message) {
@@ -5837,6 +5883,8 @@
     els.ragMergeOutput.value = "";
     els.ragMergeDownloadBtn.disabled = true;
     els.ragMergeStatusNote.textContent = "";
+    app.massFiles = [];
+    renderMassFiles();
   }
 
   // Admin-Funktion (Einstellungen): im Unterschied zu resetSession() werden
@@ -5885,6 +5933,8 @@
     els.ragMergeOutput.value = "";
     els.ragMergeDownloadBtn.disabled = true;
     els.ragMergeStatusNote.textContent = "";
+    app.massFiles = [];
+    renderMassFiles();
     addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
   }
   els.deleteAllDataBtn.addEventListener("click", async function () {
@@ -5953,7 +6003,8 @@
       referenceManuals: app.referenceManuals,
       refCompareActiveManualId: app.refCompareActiveManualId,
       ragLibrary: app.ragLibrary,
-      ragMergedDoc: app.ragMergedDoc
+      ragMergedDoc: app.ragMergedDoc,
+      massFiles: app.massFiles
     };
   }
   function restoreSessionState(data) {
@@ -5994,6 +6045,7 @@
     if (data.refCompareActiveManualId !== undefined) app.refCompareActiveManualId = data.refCompareActiveManualId;
     if (Array.isArray(data.ragLibrary)) app.ragLibrary = data.ragLibrary;
     if (typeof data.ragMergedDoc === "string") app.ragMergedDoc = data.ragMergedDoc;
+    if (Array.isArray(data.massFiles)) app.massFiles = data.massFiles;
     app.initialized = true;
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
@@ -6018,6 +6070,7 @@
     renderRagLibrary();
     els.ragMergeOutput.value = app.ragMergedDoc;
     els.ragMergeDownloadBtn.disabled = !app.ragMergedDoc;
+    renderMassFiles();
     els.releaseMatchSummary.hidden = true;
     els.releaseMissingWrap.hidden = true;
     els.releaseKeysInput.value = "";
@@ -13607,6 +13660,236 @@
     }
   }
   els.ragTranslateBtn.addEventListener("click", ragTranslate);
+
+  /* ============ Teil 9b-2: Massenverarbeitung (eigener Navigationspunkt vor
+     Verarbeitung) ============
+     Bewusst eine von der RAG-Bibliothek (Teil 9b, Punkte 3-5) UNABHÄNGIGE
+     Funktion - eigener Datenbestand (app.massFiles), eigener Datei-Import,
+     eigene Domäne/Kapitel-Zuordnung. Beide Funktionen teilen sich nur
+     generische, app-weite Bausteine (redactText/escapeHtml/
+     distinctFieldValues/chapterTitleSimilarity/CHAPTER_MATCH_THRESHOLD/
+     ragLibraryOptionsHtml), nicht aber Daten oder Zustand. Besonderheit
+     gegenüber der RAG-Bibliothek: "Vorhandene Inhalte einlesen" übernimmt
+     zusätzlich zum Datei-Upload alle bereits an anderer Stelle der App
+     erzeugten MD-Inhalte (Benutzerhandbuch-Kapitel, Referenz-Handbuch-
+     Kapitel) - über sourceKey dedupliziert, ein erneuter Klick fügt also
+     nichts doppelt hinzu. Die Anzeige gruppiert je Domäne UND sortiert
+     innerhalb jeder Domäne nach der Reihenfolge der Gliederung (app.outline)
+     statt alphabetisch - "nicht zugeordnet" immer zuletzt. */
+  var nextMassFileId = 1;
+  function massDomainOptionsList() { return distinctFieldValues(app.tickets, "domain"); }
+  function massChapterOptionsList() { return app.outline.map(function (c) { return c.title; }); }
+  function massChapterOrderIndex(title) {
+    if (!title) return app.outline.length;
+    var idx = massChapterOptionsList().indexOf(title);
+    return idx === -1 ? app.outline.length : idx;
+  }
+  function massSourceLabel(source) {
+    return source === "manualChapter" ? "Benutzerhandbuch-Kapitel" : source === "referenceManual" ? "Referenz-Handbuch" : "Hochgeladen";
+  }
+  // Dieselbe wortbasierte Titel-Ähnlichkeit wie bei der RAG-Bibliothek/
+  // Referenz-Handbuch-Kapitel-Zuordnung (chapterTitleSimilarity/
+  // CHAPTER_MATCH_THRESHOLD, generische App-Bausteine), hier als eigene,
+  // unabhängige Funktion für Massenverarbeitung.
+  function massBestSuggestionMatch(candidates, options) {
+    var best = "", bestScore = 0;
+    candidates.forEach(function (cand) {
+      options.forEach(function (opt) {
+        var score = chapterTitleSimilarity(cand, opt);
+        if (score > bestScore) { bestScore = score; best = opt; }
+      });
+    });
+    return bestScore >= CHAPTER_MATCH_THRESHOLD ? best : "";
+  }
+  function massSuggestDomainAndChapter(candidates) {
+    return {
+      domain: massBestSuggestionMatch(candidates, massDomainOptionsList()),
+      chapterTitle: massBestSuggestionMatch(candidates, massChapterOptionsList())
+    };
+  }
+  function massCandidateTitlesForSuggestion(label, mdText) {
+    var candidates = [];
+    var base = (label || "").replace(/\.[a-z0-9]+$/i, "").replace(/[_-]+/g, " ").trim();
+    if (base) candidates.push(base);
+    var heading = /^#\s+(.+)$/m.exec(mdText || "");
+    if (heading) candidates.push(heading[1].trim());
+    return candidates;
+  }
+  function massAddDirectEntry(fields) {
+    var entry = {
+      id: nextMassFileId++,
+      label: fields.label,
+      domain: fields.domain || "",
+      chapterTitle: fields.chapterTitle || "",
+      text: fields.text,
+      source: fields.source,
+      sourceKey: fields.sourceKey || null,
+      ticketCount: fields.ticketCount != null ? fields.ticketCount : null,
+      savedAt: fields.savedAt || nowLabel()
+    };
+    app.massFiles.push(entry);
+    return entry;
+  }
+  function massAddUploadedEntry(filename, rawText) {
+    var text = redactText(rawText || "");
+    var suggestion = massSuggestDomainAndChapter(massCandidateTitlesForSuggestion(filename, text));
+    return massAddDirectEntry({
+      label: filename, domain: suggestion.domain, chapterTitle: suggestion.chapterTitle,
+      text: text, source: "upload"
+    });
+  }
+  function renderMassFiles() {
+    var list = app.massFiles;
+    els.massEmpty.hidden = list.length > 0;
+    els.massGroupsWrap.hidden = list.length === 0;
+    if (!list.length) { els.massGroups.innerHTML = ""; return; }
+    var domainOptions = massDomainOptionsList();
+    var chapterOptions = massChapterOptionsList();
+    var groups = {};
+    list.forEach(function (e) {
+      var d = e.domain || "";
+      if (!groups[d]) groups[d] = [];
+      groups[d].push(e);
+    });
+    var domainNames = Object.keys(groups).filter(function (d) { return d !== ""; }).sort();
+    if (groups[""]) domainNames.push("");
+    els.massGroups.innerHTML = domainNames.map(function (d) {
+      var entries = groups[d].slice().sort(function (a, b) { return massChapterOrderIndex(a.chapterTitle) - massChapterOrderIndex(b.chapterTitle); });
+      var rows = entries.map(function (e) {
+        return "<tr><td>" + escapeHtml(e.label) + "</td>" +
+          '<td><select class="mass-domain-select" data-id="' + e.id + '" aria-label="Domäne">' + ragLibraryOptionsHtml(domainOptions, e.domain, "Ohne Domäne") + "</select></td>" +
+          '<td><select class="mass-chapter-select" data-id="' + e.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapterOptions, e.chapterTitle, "Nicht zugeordnet") + "</select></td>" +
+          "<td>" + massSourceLabel(e.source) + "</td>" +
+          "<td class=\"mono\">" + (e.ticketCount != null ? e.ticketCount : "&ndash;") + "</td>" +
+          '<td><button type="button" class="btn danger mass-delete-btn" data-id="' + e.id + '">Löschen</button></td>' +
+          "</tr>";
+      }).join("");
+      return '<div class="panel" style="margin-bottom:14px; padding:12px;">' +
+        '<p class="section-label">' + escapeHtml(d || "Ohne Domäne") + " (" + entries.length + ")</p>" +
+        '<div class="table-wrap" style="max-height:300px; overflow:auto;"><table class="simple-table">' +
+        "<thead><tr><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Quelle</th><th>Tickets</th><th></th></tr></thead>" +
+        "<tbody>" + rows + "</tbody></table></div></div>";
+    }).join("");
+  }
+  els.massImportBtn.addEventListener("click", function () { els.massImportInput.click(); });
+  els.massImportInput.addEventListener("change", async function () {
+    var file = els.massImportInput.files && els.massImportInput.files[0];
+    els.massImportInput.value = "";
+    if (!file) return;
+    var name = (file.name || "").toLowerCase();
+    els.massImportNote.textContent = "";
+    try {
+      if (name.endsWith(".zip")) {
+        if (typeof JSZip === "undefined") { showToast("Fehlgeschlagen", "ZIP-Bibliothek konnte nicht geladen werden.", true); return; }
+        var buf = await readFileAsArrayBuffer(file);
+        var zip = await JSZip.loadAsync(buf);
+        var mdNames = Object.keys(zip.files).filter(function (n) { return !zip.files[n].dir && n.toLowerCase().endsWith(".md"); });
+        if (!mdNames.length) { showToast("Keine Markdown-Dateien", "Das ZIP-Archiv enthält keine .md-Dateien.", true); return; }
+        var addedEntries = [];
+        for (var i = 0; i < mdNames.length; i++) {
+          var raw = await zip.files[mdNames[i]].async("string");
+          addedEntries.push(massAddUploadedEntry(mdNames[i].split("/").pop(), raw));
+        }
+        var matchedCount = addedEntries.filter(function (e) { return e.domain || e.chapterTitle; }).length;
+        addLog("Massenverarbeitung: " + mdNames.length + " Markdown-Datei(en) aus ZIP-Archiv „" + file.name + "“ hinzugefügt" +
+          (matchedCount ? ", bei " + matchedCount + " Domäne/Kapitel automatisch vorgeschlagen" : "") + ".");
+        els.massImportNote.textContent = mdNames.length + " Datei(en) aus „" + file.name + "“ hinzugefügt" +
+          (matchedCount ? " – bei " + matchedCount + " von " + mdNames.length + " automatisch Domäne/Kapitel vorgeschlagen (bitte prüfen)." : ".");
+        showToast("Hinzugefügt", mdNames.length + " Datei(en) übernommen.");
+      } else if (name.endsWith(".md")) {
+        var text = await readFileAsText(file);
+        var entry = massAddUploadedEntry(file.name, text);
+        var hasSuggestion = !!(entry.domain || entry.chapterTitle);
+        addLog("Massenverarbeitung: Markdown-Datei „" + file.name + "“ hinzugefügt" + (hasSuggestion ? " (Domäne/Kapitel automatisch vorgeschlagen)" : "") + ".");
+        els.massImportNote.textContent = "„" + file.name + "“ hinzugefügt" + (hasSuggestion ? " – Domäne/Kapitel automatisch vorgeschlagen (bitte prüfen)." : ".");
+        showToast("Hinzugefügt", "„" + file.name + "“ übernommen.");
+      } else {
+        showToast("Nicht unterstützt", "Bitte eine .md-Datei oder ein .zip-Archiv mit .md-Dateien auswählen.", true);
+        return;
+      }
+      renderMassFiles();
+    } catch (err) {
+      showToast("Import fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    }
+  });
+  // "Vorhandene Inhalte einlesen": Benutzerhandbuch-Kapitel (app.manualChapters)
+  // - bei Kapitel-Gruppen (nicht Label-Themengebiet) ist der Speicher-
+  // Schluessel bereits der exakte Gliederungstitel (s. manualStorageKey),
+  // daher dort KEIN Rate-Vorschlag noetig, sondern direkte Zuordnung - sowie
+  // Referenz-Handbuch-Kapitel (app.referenceManuals[].chapters), dort analog
+  // ueber die bereits vorhandene mappedAppChapter-Zuordnung (Teil 9c-2).
+  // sourceKey verhindert doppelte Eintraege bei wiederholtem Klick.
+  function massCollectExistingContent() {
+    var existingKeys = {};
+    app.massFiles.forEach(function (e) { if (e.sourceKey) existingKeys[e.sourceKey] = true; });
+    var added = 0;
+    Object.keys(app.manualChapters).forEach(function (title) {
+      var entry = app.manualChapters[title];
+      if (!entry || !entry.de) return;
+      var key = "manualChapter:" + title;
+      if (existingKeys[key]) return;
+      var exactChapter = entry.groupKind === "chapter" ? title : "";
+      var suggestion = massSuggestDomainAndChapter([entry.groupName || title]);
+      massAddDirectEntry({
+        label: (entry.groupKind === "label" ? "Label-Themengebiet: " : "Kapitel: ") + (entry.groupName || title) +
+          (entry.role && entry.role !== "alle" ? " (Rolle " + entry.role + ")" : ""),
+        domain: suggestion.domain,
+        chapterTitle: exactChapter || suggestion.chapterTitle,
+        text: entry.de, source: "manualChapter", sourceKey: key,
+        ticketCount: entry.ticketCount, savedAt: entry.generatedAt
+      });
+      added++;
+    });
+    (app.referenceManuals || []).forEach(function (manual) {
+      (manual.chapters || []).forEach(function (c) {
+        if (!c.text) return;
+        var key = "referenceManual:" + manual.id + ":" + c.id;
+        if (existingKeys[key]) return;
+        var suggestion = massSuggestDomainAndChapter([c.title]);
+        massAddDirectEntry({
+          label: manual.version + " – " + c.title,
+          domain: suggestion.domain,
+          chapterTitle: c.mappedAppChapter || suggestion.chapterTitle,
+          text: c.text, source: "referenceManual", sourceKey: key,
+          savedAt: manual.importedAt
+        });
+        added++;
+      });
+    });
+    renderMassFiles();
+    if (added) {
+      addLog("Massenverarbeitung: " + added + " vorhandene(r) MD-Inhalt(e) eingelesen (Benutzerhandbuch-Kapitel/Referenz-Handbuch).");
+      showToast("Eingelesen", added + " vorhandene(r) Inhalt(e) übernommen.");
+    } else {
+      showToast("Nichts Neues", "Keine neuen vorhandenen Inhalte gefunden (bereits eingelesen oder noch nichts erzeugt/importiert).", true);
+    }
+  }
+  els.massCollectBtn.addEventListener("click", massCollectExistingContent);
+  els.massGroups.addEventListener("change", function (e) {
+    var domainSel = e.target.closest(".mass-domain-select");
+    var chapterSel = e.target.closest(".mass-chapter-select");
+    if (!domainSel && !chapterSel) return;
+    var id = parseInt((domainSel || chapterSel).getAttribute("data-id"), 10);
+    var entry = app.massFiles.filter(function (r) { return r.id === id; })[0];
+    if (!entry) return;
+    if (domainSel) entry.domain = domainSel.value;
+    if (chapterSel) entry.chapterTitle = chapterSel.value;
+    renderMassFiles();
+  });
+  els.massGroups.addEventListener("click", async function (e) {
+    var delBtn = e.target.closest(".mass-delete-btn");
+    if (!delBtn) return;
+    var id = parseInt(delBtn.getAttribute("data-id"), 10);
+    var entry = app.massFiles.filter(function (r) { return r.id === id; })[0];
+    if (!entry) return;
+    var ok = await confirmDialog('Eintrag „' + entry.label + '“ wirklich löschen?');
+    if (!ok) return;
+    app.massFiles = app.massFiles.filter(function (r) { return r.id !== id; });
+    renderMassFiles();
+    addLog("Massenverarbeitung: Eintrag \"" + entry.label + "\" gelöscht.");
+    showToast("Gelöscht", 'Eintrag „' + entry.label + '“ wurde entfernt.');
+  });
+  renderMassFiles();
 
   /* ============ Teil 9c: Benutzerhandbuch - Kapitel-Generator (KI-Fließtext je Kapitel) ============
      Analog zu RAG (Teil 9b): Domäne/Label-Themengebiet/Kapitel als Filter

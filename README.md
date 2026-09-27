@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.41.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.42.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -730,6 +730,28 @@ zusammenzuführen.
   **benachbarte Themenfelder** – bereits erzeugte Stichwörter aus
   beliebigen anderen Unterkapiteln, deren Ticket-Zuordnung sich mit den
   Suchtreffern überschneidet.
+- **Massenverarbeitung** (neu, eigener Navigationspunkt direkt vor
+  Verarbeitung) – bewusst **eigenständige** Funktion, unabhängig von der
+  RAG-Bibliothek (Verarbeitung → 7. RAG, s. u.): eigener Datenbestand
+  (`app.massFiles`), eigener Datei-Import (.md-Datei oder ZIP-Archiv mit
+  mehreren .md-Dateien), eigene Domäne-/Kapitel-Zuordnung – beide
+  Funktionen teilen sich keine Daten. Besonderheit: **"Vorhandene Inhalte
+  einlesen"** übernimmt zusätzlich zum Datei-Upload alle bereits an
+  anderer Stelle der App erzeugten MD-Inhalte (Benutzerhandbuch-Kapitel,
+  Referenz-Handbuch-Kapitel) auf einen Klick – über einen internen
+  Herkunfts-Schlüssel dedupliziert, ein erneuter Klick fügt also nichts
+  doppelt hinzu. Die Anzeige gruppiert **je Domäne** (tatsächlich
+  vorkommende Domänen der geladenen Tickets) und sortiert **innerhalb
+  jeder Domäne automatisch nach der Reihenfolge der Gliederung**
+  (`app.outline`, nicht alphabetisch) – "Ohne Domäne"/"Nicht zugeordnet"
+  jeweils zuletzt. Domäne/Kapitel sind je Eintrag editierbar (volle
+  Gliederung zur Auswahl); bei hochgeladenen/eingelesenen Inhalten wird
+  über dieselbe wortbasierte Titel-Ähnlichkeit wie bei der Referenz-
+  Handbuch-Kapitel-Zuordnung ein Vorschlag vorbelegt (nur ab ausreichender
+  Ähnlichkeit, sonst bewusst leer). Eine Änderung sortiert den Eintrag
+  sofort live in die passende Domänen-Gruppe/Position ein. Hochgeladener
+  Freitext wird wie überall in der App durch `redactText()` geleitet
+  (PII-Schutz).
 - **Verarbeitung** – sieben Jobs für wiederkehrende Arbeitsschritte rund
   um die geladenen Tickets, erreichbar über die Tab-Leiste oder das kompakte
   Burger-Menü (☰) daneben. Jeder Job zeigt oben seine **Prozessschritte**
