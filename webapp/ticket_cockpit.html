@@ -4172,7 +4172,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.42.0";
+  var APP_VERSION = "2.43.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -13738,6 +13738,10 @@
       text: text, source: "upload"
     });
   }
+  // Ephemere UI-Aufklapp-Zustaende (wie expandedStepIds bei den Prozess-
+  // schritten) - bewusst NICHT Teil von app.massFiles/Sitzung speichern,
+  // reiner Anzeige-Zustand dieser Sitzung.
+  var massExpandedIds = {};
   function renderMassFiles() {
     var list = app.massFiles;
     els.massEmpty.hidden = list.length > 0;
@@ -13756,18 +13760,24 @@
     els.massGroups.innerHTML = domainNames.map(function (d) {
       var entries = groups[d].slice().sort(function (a, b) { return massChapterOrderIndex(a.chapterTitle) - massChapterOrderIndex(b.chapterTitle); });
       var rows = entries.map(function (e) {
+        var isOpen = !!massExpandedIds[e.id];
+        var textCell = isOpen
+          ? '<div style="white-space:pre-wrap; max-height:260px; overflow:auto;">' + escapeHtml(e.text) + "</div>"
+          : "<span>" + escapeHtml(truncate(e.text, 220)) + "</span>";
         return "<tr><td>" + escapeHtml(e.label) + "</td>" +
           '<td><select class="mass-domain-select" data-id="' + e.id + '" aria-label="Domäne">' + ragLibraryOptionsHtml(domainOptions, e.domain, "Ohne Domäne") + "</select></td>" +
           '<td><select class="mass-chapter-select" data-id="' + e.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapterOptions, e.chapterTitle, "Nicht zugeordnet") + "</select></td>" +
           "<td>" + massSourceLabel(e.source) + "</td>" +
           "<td class=\"mono\">" + (e.ticketCount != null ? e.ticketCount : "&ndash;") + "</td>" +
+          "<td style=\"max-width:360px;\">" + textCell +
+          '<div><button type="button" class="btn ghost btn-tiny mass-toggle-btn" data-id="' + e.id + '">' + (isOpen ? "Weniger anzeigen" : "Ganzen Text anzeigen") + "</button></div></td>" +
           '<td><button type="button" class="btn danger mass-delete-btn" data-id="' + e.id + '">Löschen</button></td>' +
           "</tr>";
       }).join("");
       return '<div class="panel" style="margin-bottom:14px; padding:12px;">' +
         '<p class="section-label">' + escapeHtml(d || "Ohne Domäne") + " (" + entries.length + ")</p>" +
-        '<div class="table-wrap" style="max-height:300px; overflow:auto;"><table class="simple-table">' +
-        "<thead><tr><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Quelle</th><th>Tickets</th><th></th></tr></thead>" +
+        '<div class="table-wrap" style="max-height:400px; overflow:auto;"><table class="simple-table">' +
+        "<thead><tr><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Quelle</th><th>Tickets</th><th>Textschnipsel</th><th></th></tr></thead>" +
         "<tbody>" + rows + "</tbody></table></div></div>";
     }).join("");
   }
@@ -13877,6 +13887,13 @@
     renderMassFiles();
   });
   els.massGroups.addEventListener("click", async function (e) {
+    var toggleBtn = e.target.closest(".mass-toggle-btn");
+    if (toggleBtn) {
+      var toggleId = parseInt(toggleBtn.getAttribute("data-id"), 10);
+      if (massExpandedIds[toggleId]) delete massExpandedIds[toggleId]; else massExpandedIds[toggleId] = true;
+      renderMassFiles();
+      return;
+    }
     var delBtn = e.target.closest(".mass-delete-btn");
     if (!delBtn) return;
     var id = parseInt(delBtn.getAttribute("data-id"), 10);

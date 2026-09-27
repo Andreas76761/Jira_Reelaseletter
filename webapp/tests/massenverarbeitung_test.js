@@ -195,6 +195,35 @@ const xml = `<?xml version="1.0"?><rss><channel>
   const zipDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 5, 2000);
   check("(7) Nach ZIP-Upload (2 Dateien): 5 Zeilen insgesamt", zipDone);
 
+  // ===================== (7b) Textschnipsel anzeigen: Vorschau (gekürzt) + "Ganzen Text anzeigen" =====================
+  const longTail = "Ende-des-langen-Textes-Markierung";
+  const longText = "# Langer Textschnipsel\n\n" + "Lorem ipsum dolor sit amet, ".repeat(20) + longTail;
+  const longFile = new win.File([longText], "Langer-Schnipsel.md", { type: "text/markdown" });
+  Object.defineProperty(massImportInput, "files", { value: [longFile], configurable: true });
+  fire(massImportInput, "change");
+  const longDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 6, 2000);
+  check("(7b) Langer Textschnipsel hinzugefügt", longDone);
+  let groupsHtmlLong = doc.getElementById("mass-groups").innerHTML;
+  check("(7b) Vorschau standardmäßig gekürzt (Text-Ende noch nicht sichtbar)", !groupsHtmlLong.includes(longTail));
+  check("(7b) Umschalt-Button 'Ganzen Text anzeigen' vorhanden", groupsHtmlLong.includes("Ganzen Text anzeigen"));
+  const longToggleBtn = Array.from(doc.querySelectorAll(".mass-toggle-btn")).find((b) => {
+    const row = b.closest("tr");
+    return row && row.textContent.includes("Langer-Schnipsel.md");
+  });
+  check("(7b) Umschalt-Button für den langen Textschnipsel gefunden", !!longToggleBtn);
+  fire(longToggleBtn, "click");
+  await wait(30);
+  groupsHtmlLong = doc.getElementById("mass-groups").innerHTML;
+  check("(7b) Nach Klick: vollständiger Text sichtbar (Text-Ende jetzt enthalten)", groupsHtmlLong.includes(longTail));
+  check("(7b) Button-Beschriftung wechselt zu 'Weniger anzeigen'", groupsHtmlLong.includes("Weniger anzeigen"));
+  const longToggleBtn2 = Array.from(doc.querySelectorAll(".mass-toggle-btn")).find((b) => {
+    const row = b.closest("tr");
+    return row && row.textContent.includes("Langer-Schnipsel.md");
+  });
+  fire(longToggleBtn2, "click");
+  await wait(30);
+  check("(7b) Erneuter Klick: wieder gekürzt (Text-Ende wieder verborgen)", !doc.getElementById("mass-groups").innerHTML.includes(longTail));
+
   // ===================== (8) Unabhängigkeit von der RAG-Bibliothek: keine gemeinsamen Daten =====================
   doc.querySelector('.nav-item[data-view="verarbeitung"]').click();
   doc.querySelector('.import-tab[data-vsub="rag"]').click();
@@ -214,20 +243,20 @@ const xml = `<?xml version="1.0"?><rss><channel>
 
   doc.querySelector('.nav-item[data-view="massenverarbeitung"]').click();
   await wait(50);
-  check("(8) Massenverarbeitung zeigt weiterhin nur ihre eigenen 5 Einträge (kein RAG-Bibliothek-Eintrag mit eingemischt)",
-    doc.querySelectorAll("#mass-groups tbody tr").length === 5);
+  check("(8) Massenverarbeitung zeigt weiterhin nur ihre eigenen 6 Einträge (kein RAG-Bibliothek-Eintrag mit eingemischt)",
+    doc.querySelectorAll("#mass-groups tbody tr").length === 6);
 
   // ===================== (9) Löschen eines Eintrags =====================
   const delBtn = doc.querySelector(".mass-delete-btn");
   fire(delBtn, "click");
   await confirmViaModal(doc);
-  check("(9) Nach Löschen: 4 Zeilen verbleiben", doc.querySelectorAll("#mass-groups tbody tr").length === 4);
+  check("(9) Nach Löschen: 5 Zeilen verbleiben", doc.querySelectorAll("#mass-groups tbody tr").length === 5);
 
   // ===================== (10) Sitzung speichern/laden sichert app.massFiles =====================
   fire(doc.getElementById("session-export-btn"), "click");
   await wait(200);
   const exportedJson = JSON.parse(savedFiles[savedFiles.length - 1].data);
-  check("(10) Export enthält massFiles mit 4 Einträgen", Array.isArray(exportedJson.massFiles) && exportedJson.massFiles.length === 4);
+  check("(10) Export enthält massFiles mit 5 Einträgen", Array.isArray(exportedJson.massFiles) && exportedJson.massFiles.length === 5);
 
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
   await wait(100);
@@ -244,7 +273,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   await wait(300);
   doc.querySelector('.nav-item[data-view="massenverarbeitung"]').click();
   await wait(50);
-  check("(10) Nach Laden: 4 Einträge wiederhergestellt", doc.querySelectorAll("#mass-groups tbody tr").length === 4);
+  check("(10) Nach Laden: 5 Einträge wiederhergestellt", doc.querySelectorAll("#mass-groups tbody tr").length === 5);
 
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }
   const failed = checks.filter((c) => !c[1]);

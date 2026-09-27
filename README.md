@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.42.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.43.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -751,7 +751,9 @@ zusammenzuführen.
   Ähnlichkeit, sonst bewusst leer). Eine Änderung sortiert den Eintrag
   sofort live in die passende Domänen-Gruppe/Position ein. Hochgeladener
   Freitext wird wie überall in der App durch `redactText()` geleitet
-  (PII-Schutz).
+  (PII-Schutz). Jeder Eintrag zeigt eine gekürzte **Textschnipsel-Vorschau**
+  direkt in der Tabelle sowie einen Umschalter **"Ganzen Text anzeigen"**,
+  der den vollständigen Text der jeweiligen Zeile einblendet.
 - **Verarbeitung** – sieben Jobs für wiederkehrende Arbeitsschritte rund
   um die geladenen Tickets, erreichbar über die Tab-Leiste oder das kompakte
   Burger-Menü (☰) daneben. Jeder Job zeigt oben seine **Prozessschritte**
