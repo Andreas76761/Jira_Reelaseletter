@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.43.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.44.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -746,10 +746,19 @@ zusammenzuführen.
   (`app.outline`, nicht alphabetisch) – "Ohne Domäne"/"Nicht zugeordnet"
   jeweils zuletzt. Domäne/Kapitel sind je Eintrag editierbar (volle
   Gliederung zur Auswahl); bei hochgeladenen/eingelesenen Inhalten wird
-  über dieselbe wortbasierte Titel-Ähnlichkeit wie bei der Referenz-
-  Handbuch-Kapitel-Zuordnung ein Vorschlag vorbelegt (nur ab ausreichender
-  Ähnlichkeit, sonst bewusst leer). Eine Änderung sortiert den Eintrag
-  sofort live in die passende Domänen-Gruppe/Position ein. Hochgeladener
+  automatisch ein Vorschlag vorbelegt - **inhaltsbasiert**: durchsucht den
+  GESAMTEN Text der Datei (nicht nur Dateiname/erste Überschriftzeile)
+  danach, wie oft ein Domänenname wörtlich vorkommt (die Domäne mit den
+  meisten Treffern gewinnt) sowie danach, ob der (von "Kapitel N:"
+  befreite) Kapiteltitel als Wortfolge im Text vorkommt bzw. wie viele
+  bereits erzeugte Gliederungs-Stichwörter (Einstellungen/Navigation →
+  Gliederung, falls vorhanden) im Text auftauchen. Nur wenn der Text
+  selbst keinen Anhaltspunkt liefert, greift ersatzweise dieselbe
+  wortbasierte Titel-Ähnlichkeit wie bei der Referenz-Handbuch-Kapitel-
+  Zuordnung auf Dateiname/erste Überschriftzeile zurück; findet auch das
+  nichts, bleibt die Zuordnung bewusst leer statt geraten. Eine Änderung
+  sortiert den Eintrag sofort live in die passende Domänen-Gruppe/Position
+  ein. Hochgeladener
   Freitext wird wie überall in der App durch `redactText()` geleitet
   (PII-Schutz). Jeder Eintrag zeigt eine gekürzte **Textschnipsel-Vorschau**
   direkt in der Tabelle sowie einen Umschalter **"Ganzen Text anzeigen"**,

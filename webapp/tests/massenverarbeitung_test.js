@@ -174,14 +174,45 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("(5) Nach Zuordnung: eigene Domänen-Gruppe 'Contract Management' erscheint", groupsHtml2.includes("Contract Management ("));
   check("(5) 'Ohne Domäne'-Gruppe enthält jetzt nur noch den verbleibenden Eintrag", groupsHtml2.includes("Ohne Domäne (1)"));
 
+  // ===================== (5b) Inhaltsbasierte Zuordnung: Domäne/Kapitel aus dem DATEI-INHALT erkannt, nicht nur aus Dateiname/Überschrift =====================
+  const massImportInput = doc.getElementById("mass-import-input");
+  const domainContentFile = new win.File(
+    ["# Notizen\n\nDieser Abschnitt beschreibt Anpassungen im Contract Management für den Alltag."],
+    "notizen-generisch.md", { type: "text/markdown" }
+  );
+  Object.defineProperty(massImportInput, "files", { value: [domainContentFile], configurable: true });
+  fire(massImportInput, "change");
+  const domainContentDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 3, 2000);
+  check("(5b) Datei mit generischem Namen hinzugefügt", domainContentDone);
+  const domainContentSel = Array.from(doc.querySelectorAll(".mass-domain-select")).find((s) => {
+    const row = s.closest("tr");
+    return row && row.textContent.includes("notizen-generisch.md");
+  });
+  check("(5b) Domäne wird aus dem Datei-INHALT erkannt ('Contract Management' im Fließtext, nicht im Dateinamen)",
+    !!domainContentSel && domainContentSel.value === "Contract Management");
+
+  const chapterContentFile = new win.File(
+    ["# Interne Notiz\n\nHier wird beschrieben, wie man einen Servicevertrag anlegen kann, Schritt für Schritt."],
+    "notiz-2.md", { type: "text/markdown" }
+  );
+  Object.defineProperty(massImportInput, "files", { value: [chapterContentFile], configurable: true });
+  fire(massImportInput, "change");
+  const chapterContentDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 4, 2000);
+  check("(5b) Zweite Datei mit generischem Namen hinzugefügt", chapterContentDone);
+  const chapterContentSel = Array.from(doc.querySelectorAll(".mass-chapter-select")).find((s) => {
+    const row = s.closest("tr");
+    return row && row.textContent.includes("notiz-2.md");
+  });
+  check("(5b) Kapitel wird aus dem Datei-INHALT erkannt ('Servicevertrag anlegen' im Fließtext, nicht im Dateinamen)",
+    !!chapterContentSel && chapterContentSel.value.includes("Kapitel 4"));
+
   // ===================== (6) Datei-Upload (.md) mit PII - wird redigiert =====================
   const mdWithPii = "# Hochgeladener Test\n\nKontakt: pii.test@example.com";
   const mdFile = new win.File([mdWithPii], "Hochgeladen.md", { type: "text/markdown" });
-  const massImportInput = doc.getElementById("mass-import-input");
   Object.defineProperty(massImportInput, "files", { value: [mdFile], configurable: true });
   fire(massImportInput, "change");
-  const uploadDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 3, 2000);
-  check("(6) Nach .md-Upload: 3 Zeilen insgesamt", uploadDone);
+  const uploadDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 5, 2000);
+  check("(6) Nach .md-Upload: 5 Zeilen insgesamt", uploadDone);
   check("(6) Hochgeladener Inhalt ist redigiert (keine echte E-Mail-Adresse)", !doc.getElementById("mass-groups").innerHTML.includes("pii.test@example.com"));
 
   // ===================== (7) ZIP-Upload mit 2 .md-Dateien =====================
@@ -192,8 +223,8 @@ const xml = `<?xml version="1.0"?><rss><channel>
   const zipFile = new win.File([zipBuf], "MassArchiv.zip", { type: "application/zip" });
   Object.defineProperty(massImportInput, "files", { value: [zipFile], configurable: true });
   fire(massImportInput, "change");
-  const zipDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 5, 2000);
-  check("(7) Nach ZIP-Upload (2 Dateien): 5 Zeilen insgesamt", zipDone);
+  const zipDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 7, 2000);
+  check("(7) Nach ZIP-Upload (2 Dateien): 7 Zeilen insgesamt", zipDone);
 
   // ===================== (7b) Textschnipsel anzeigen: Vorschau (gekürzt) + "Ganzen Text anzeigen" =====================
   const longTail = "Ende-des-langen-Textes-Markierung";
@@ -201,7 +232,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   const longFile = new win.File([longText], "Langer-Schnipsel.md", { type: "text/markdown" });
   Object.defineProperty(massImportInput, "files", { value: [longFile], configurable: true });
   fire(massImportInput, "change");
-  const longDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 6, 2000);
+  const longDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 8, 2000);
   check("(7b) Langer Textschnipsel hinzugefügt", longDone);
   let groupsHtmlLong = doc.getElementById("mass-groups").innerHTML;
   check("(7b) Vorschau standardmäßig gekürzt (Text-Ende noch nicht sichtbar)", !groupsHtmlLong.includes(longTail));
@@ -243,20 +274,20 @@ const xml = `<?xml version="1.0"?><rss><channel>
 
   doc.querySelector('.nav-item[data-view="massenverarbeitung"]').click();
   await wait(50);
-  check("(8) Massenverarbeitung zeigt weiterhin nur ihre eigenen 6 Einträge (kein RAG-Bibliothek-Eintrag mit eingemischt)",
-    doc.querySelectorAll("#mass-groups tbody tr").length === 6);
+  check("(8) Massenverarbeitung zeigt weiterhin nur ihre eigenen 8 Einträge (kein RAG-Bibliothek-Eintrag mit eingemischt)",
+    doc.querySelectorAll("#mass-groups tbody tr").length === 8);
 
   // ===================== (9) Löschen eines Eintrags =====================
   const delBtn = doc.querySelector(".mass-delete-btn");
   fire(delBtn, "click");
   await confirmViaModal(doc);
-  check("(9) Nach Löschen: 5 Zeilen verbleiben", doc.querySelectorAll("#mass-groups tbody tr").length === 5);
+  check("(9) Nach Löschen: 7 Zeilen verbleiben", doc.querySelectorAll("#mass-groups tbody tr").length === 7);
 
   // ===================== (10) Sitzung speichern/laden sichert app.massFiles =====================
   fire(doc.getElementById("session-export-btn"), "click");
   await wait(200);
   const exportedJson = JSON.parse(savedFiles[savedFiles.length - 1].data);
-  check("(10) Export enthält massFiles mit 5 Einträgen", Array.isArray(exportedJson.massFiles) && exportedJson.massFiles.length === 5);
+  check("(10) Export enthält massFiles mit 7 Einträgen", Array.isArray(exportedJson.massFiles) && exportedJson.massFiles.length === 7);
 
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
   await wait(100);
@@ -273,7 +304,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   await wait(300);
   doc.querySelector('.nav-item[data-view="massenverarbeitung"]').click();
   await wait(50);
-  check("(10) Nach Laden: 5 Einträge wiederhergestellt", doc.querySelectorAll("#mass-groups tbody tr").length === 5);
+  check("(10) Nach Laden: 7 Einträge wiederhergestellt", doc.querySelectorAll("#mass-groups tbody tr").length === 7);
 
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }
   const failed = checks.filter((c) => !c[1]);
