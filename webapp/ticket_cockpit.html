@@ -1218,6 +1218,18 @@
             </div>
             <p class="step-note" id="mass-ai-status-note"></p>
             <div id="mass-groups"></div>
+            <p class="desc" style="margin-top:14px;">Fügt die MD-Dateien aller Domänen zu einer Datei zusammen &ndash; je Domäne wird der bereits gespeicherte Stand aus "Kapitel als MD-Datei erstellen" verwendet (falls vorhanden), sonst automatisch neu erzeugt. Ergebnis direkt hier ansehen, bearbeiten, speichern und herunterladen.</p>
+            <div class="job-export-row" id="mass-merge-domain-docs-row">
+              <button class="btn ghost" id="mass-merge-domain-docs-btn" type="button">
+                <span class="btn-spinner" id="mass-merge-domain-docs-spinner" hidden></span>
+                <span id="mass-merge-domain-docs-label">Alle MD-Dateien zusammenführen</span>
+              </button>
+            </div>
+            <p class="step-note" id="mass-merge-domain-docs-status-note"></p>
+            <textarea class="text-input" id="mass-merge-domain-docs-output" rows="16" placeholder="Noch nichts zusammengeführt." style="width:100%; margin-top:8px; font-family:inherit;"></textarea>
+            <div class="job-export-row" style="margin-top:8px;">
+              <button class="btn ghost" id="mass-merge-domain-docs-download-btn" type="button" disabled>Als Markdown speichern</button>
+            </div>
           </div>
         </section>
 
@@ -4232,7 +4244,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.48.0";
+  var APP_VERSION = "2.49.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5566,6 +5578,8 @@
     "mass-merge-btn", "mass-merge-spinner", "mass-merge-label", "mass-merge-status-note", "mass-merge-output", "mass-merge-download-btn",
     "mass-domain-md-modal-overlay", "mass-domain-md-modal-key", "mass-domain-md-textarea", "mass-domain-md-status-note",
     "mass-domain-md-modal-close", "mass-domain-md-modal-cancel-btn", "mass-domain-md-save-btn", "mass-domain-md-download-btn",
+    "mass-merge-domain-docs-btn", "mass-merge-domain-docs-spinner", "mass-merge-domain-docs-label",
+    "mass-merge-domain-docs-status-note", "mass-merge-domain-docs-output", "mass-merge-domain-docs-download-btn",
     "graph-multiselect-count", "graph-multiselect-name-input", "graph-multiselect-save-btn", "graph-multiselect-clear-btn",
     "graph-zoom-out-btn", "graph-zoom-in-btn", "graph-zoom-reset-btn", "graph-zoom-level",
     "graph-view-tabs", "graph-view-desc",
@@ -5781,7 +5795,13 @@
     // noch nichts gespeichert wurde; ein Download ist erst nach "Speichern"
     // moeglich, damit nie ein unbeabsichtigt bearbeiteter Zwischenstand
     // heruntergeladen wird.
-    massDomainDocs: {}
+    massDomainDocs: {},
+    // Zuletzt erzeugte "Alle MD-Dateien zusammenführen" (Ende Punkt 2) -
+    // fasst je Domäne den gespeicherten Stand aus massDomainDocs zusammen
+    // (Fallback: frisch erzeugt für Domänen ohne gespeicherten Stand) zu
+    // EINEM Gesamtdokument. Eigenstaendiger Text wie massMergedDoc, damit
+    // manuelle Nacharbeiten nicht verloren gehen.
+    massDomainDocsMerged: ""
   };
 
   function addLog(message) {
@@ -5971,6 +5991,10 @@
     els.massMergeStatusNote.textContent = "";
     app.massDomainDocs = {};
     if (!els.massDomainMdModalOverlay.hidden) closeMassDomainMdModal();
+    app.massDomainDocsMerged = "";
+    els.massMergeDomainDocsOutput.value = "";
+    els.massMergeDomainDocsDownloadBtn.disabled = true;
+    els.massMergeDomainDocsStatusNote.textContent = "";
   }
 
   // Admin-Funktion (Einstellungen): im Unterschied zu resetSession() werden
@@ -6028,6 +6052,10 @@
     els.massMergeStatusNote.textContent = "";
     app.massDomainDocs = {};
     if (!els.massDomainMdModalOverlay.hidden) closeMassDomainMdModal();
+    app.massDomainDocsMerged = "";
+    els.massMergeDomainDocsOutput.value = "";
+    els.massMergeDomainDocsDownloadBtn.disabled = true;
+    els.massMergeDomainDocsStatusNote.textContent = "";
     addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
   }
   els.deleteAllDataBtn.addEventListener("click", async function () {
@@ -6099,7 +6127,8 @@
       ragMergedDoc: app.ragMergedDoc,
       massFiles: app.massFiles,
       massMergedDoc: app.massMergedDoc,
-      massDomainDocs: app.massDomainDocs
+      massDomainDocs: app.massDomainDocs,
+      massDomainDocsMerged: app.massDomainDocsMerged
     };
   }
   function restoreSessionState(data) {
@@ -6143,6 +6172,7 @@
     if (Array.isArray(data.massFiles)) app.massFiles = data.massFiles;
     if (typeof data.massMergedDoc === "string") app.massMergedDoc = data.massMergedDoc;
     if (data.massDomainDocs && typeof data.massDomainDocs === "object") app.massDomainDocs = data.massDomainDocs;
+    if (typeof data.massDomainDocsMerged === "string") app.massDomainDocsMerged = data.massDomainDocsMerged;
     app.initialized = true;
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
@@ -6171,6 +6201,8 @@
     renderMassFiles();
     els.massMergeOutput.value = app.massMergedDoc;
     els.massMergeDownloadBtn.disabled = !app.massMergedDoc;
+    els.massMergeDomainDocsOutput.value = app.massDomainDocsMerged;
+    els.massMergeDomainDocsDownloadBtn.disabled = !app.massDomainDocsMerged;
     els.releaseMatchSummary.hidden = true;
     els.releaseMissingWrap.hidden = true;
     els.releaseKeysInput.value = "";
@@ -14354,6 +14386,66 @@
     var filename = safeFilename(massDomainMdCurrentDomain || "Ohne_Domaene") + ".md";
     var ok = await saveOrWarn(filename, els.massDomainMdTextarea.value);
     if (ok) showToast("Gespeichert", filename + " wurde heruntergeladen.");
+  });
+
+  // "Alle MD-Dateien zusammenführen" (am Ende von Punkt 2, nach der letzten
+  // Domänen-Gruppe): fasst je Domäne den bereits über "Kapitel als MD-Datei
+  // erstellen" GESPEICHERTEN Stand (massDomainDocs, inkl. manueller
+  // Nacharbeit) zu einem Gesamtdokument zusammen - Domänen ohne gespeicherten
+  // Stand werden dafür automatisch frisch erzeugt (massBuildDomainDoc), damit
+  // das Ergebnis immer alle vorhandenen Domänen abdeckt. Eigenstaendiges,
+  // auf massDomainDocs basierendes Gegenstueck zu massBuildMergedDoc()
+  // (Punkt 3, arbeitet immer direkt auf den rohen Textschnipseln).
+  function massDomainNamesInUse() {
+    var seen = {};
+    var names = [];
+    app.massFiles.forEach(function (e) {
+      var d = e.domain || "";
+      if (seen[d]) return;
+      seen[d] = true;
+      names.push(d);
+    });
+    var named = names.filter(function (d) { return d !== ""; }).sort();
+    if (seen[""]) named.push("");
+    return named;
+  }
+  function massBuildAllDomainDocsMerged() {
+    var domainNames = massDomainNamesInUse();
+    var savedCount = 0, freshCount = 0;
+    var parts = domainNames.map(function (d) {
+      var saved = app.massDomainDocs[d];
+      if (typeof saved === "string") { savedCount++; return saved; }
+      freshCount++;
+      return massBuildDomainDoc(d);
+    });
+    return { text: parts.join("\n\n"), domainCount: domainNames.length, savedCount: savedCount, freshCount: freshCount };
+  }
+  els.massMergeDomainDocsBtn.addEventListener("click", async function () {
+    if (!app.massFiles.length) { showToast("Nichts vorhanden", "Bitte zuerst mindestens eine MD-Datei hinzufügen (Punkt 1).", true); return; }
+    els.massMergeDomainDocsBtn.disabled = true;
+    els.massMergeDomainDocsSpinner.hidden = false;
+    await wait(20); // Sanduhr einmal rendern lassen, bevor der Aufbau beginnt
+    try {
+      var result = massBuildAllDomainDocsMerged();
+      app.massDomainDocsMerged = result.text;
+      els.massMergeDomainDocsOutput.value = result.text;
+      els.massMergeDomainDocsDownloadBtn.disabled = false;
+      els.massMergeDomainDocsStatusNote.textContent = result.domainCount + " Domäne(n) zusammengeführt" +
+        (result.savedCount ? " – " + result.savedCount + " davon aus gespeichertem Stand" : "") +
+        (result.freshCount ? (result.savedCount ? ", " : " – ") + result.freshCount + " automatisch neu erzeugt (noch nicht über \"Kapitel als MD-Datei erstellen\" gespeichert)" : "") + ".";
+      addLog("Massenverarbeitung: " + result.domainCount + " Domänen-MD-Datei(en) zu einem Gesamtdokument zusammengeführt.");
+    } finally {
+      els.massMergeDomainDocsBtn.disabled = false;
+      els.massMergeDomainDocsSpinner.hidden = true;
+    }
+  });
+  els.massMergeDomainDocsOutput.addEventListener("input", function () {
+    app.massDomainDocsMerged = els.massMergeDomainDocsOutput.value;
+    els.massMergeDomainDocsDownloadBtn.disabled = !els.massMergeDomainDocsOutput.value.trim();
+  });
+  els.massMergeDomainDocsDownloadBtn.addEventListener("click", async function () {
+    var ok = await saveOrWarn("Massenverarbeitung-Alle-Domaenen.md", els.massMergeDomainDocsOutput.value);
+    if (ok) showToast("Gespeichert", "Gesamtdokument heruntergeladen.");
   });
 
   /* ============ Teil 9c: Benutzerhandbuch - Kapitel-Generator (KI-Fließtext je Kapitel) ============

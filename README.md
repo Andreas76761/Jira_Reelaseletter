@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.48.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.49.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -752,7 +752,14 @@ zusammenzuführen.
   jede weitere Bearbeitung danach sperrt den Download wieder, bis erneut
   gespeichert wird. Der gespeicherte Stand bleibt je Domäne erhalten (auch
   beim erneuten Öffnen) und ist Teil der Sitzung (Speichern/Laden, "Alle
-  Daten löschen"). Domäne/Kapitel sind je Eintrag editierbar (volle
+  Daten löschen"). Am Ende der Domänen-Liste steht zusätzlich der Button
+  **"Alle MD-Dateien zusammenführen"**: fasst je Domäne den bereits über
+  "Kapitel als MD-Datei erstellen" gespeicherten Stand zu einem
+  Gesamtdokument zusammen (Domänen ohne gespeicherten Stand werden dafür
+  automatisch frisch erzeugt, damit immer alle Domänen abgedeckt sind).
+  Anders als beim einzelnen Domänen-Dialog ist der Download hier sofort
+  nach jeder Bearbeitung aktiv (kein separater Speichern-Schritt) – auch
+  dieser Gesamtstand ist Teil der Sitzung. Domäne/Kapitel sind je Eintrag editierbar (volle
   Gliederung zur Auswahl); bei hochgeladenen/eingelesenen Inhalten wird
   automatisch ein Vorschlag vorbelegt - **inhaltsbasiert**: durchsucht den
   GESAMTEN Text der Datei (nicht nur Dateiname/erste Überschriftzeile)

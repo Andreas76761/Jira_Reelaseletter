@@ -450,6 +450,36 @@ const xml = `<?xml version="1.0"?><rss><channel>
   fire(doc.getElementById("mass-domain-md-modal-close"), "click");
   check("(8a) Dialog auch über das X schließbar", domainMdOverlay.hidden === true);
 
+  // ===================== (8a2) "Alle MD-Dateien zusammenführen" (Domänen-Dateien) =====================
+  const domainCountAtThisPoint = doc.querySelectorAll(".mass-domain-md-btn").length;
+  const mergeAllBtn = doc.getElementById("mass-merge-domain-docs-btn");
+  const mergeAllSpinner = doc.getElementById("mass-merge-domain-docs-spinner");
+  const mergeAllOutput = doc.getElementById("mass-merge-domain-docs-output");
+  const mergeAllStatusNote = doc.getElementById("mass-merge-domain-docs-status-note");
+  const mergeAllDownloadBtn = doc.getElementById("mass-merge-domain-docs-download-btn");
+  check("(8a2) Button 'Alle MD-Dateien zusammenführen' vorhanden", !!mergeAllBtn);
+  check("(8a2) Sanduhr zunächst verborgen", mergeAllSpinner.hidden === true);
+  check("(8a2) Download-Button anfangs deaktiviert (noch nichts zusammengeführt)", mergeAllDownloadBtn.disabled === true);
+  fire(mergeAllBtn, "click");
+  await waitUntil(() => mergeAllOutput.value.trim().length > 0, 3000);
+  check("(8a2) Sanduhr nach Abschluss wieder verborgen", mergeAllSpinner.hidden === true);
+  check("(8a2) Button nach Abschluss wieder aktiv", mergeAllBtn.disabled === false);
+  check("(8a2) Gesamtdokument übernimmt den GESPEICHERTEN (bearbeiteten) Stand der Domäne 'Contract Management'",
+    mergeAllOutput.value.includes(domainMdEdited));
+  check("(8a2) Statuszeile nennt die korrekte Anzahl Domänen", mergeAllStatusNote.textContent.startsWith(domainCountAtThisPoint + " Domäne(n)"));
+  check("(8a2) Statuszeile weist auf den gespeicherten Anteil hin", mergeAllStatusNote.textContent.includes("aus gespeichertem Stand"));
+  check("(8a2) Download-Button nach Zusammenführen aktiv", mergeAllDownloadBtn.disabled === false);
+
+  const mergeAllEdited = mergeAllOutput.value + "\n\nManuelle Nacharbeit Gesamt.";
+  mergeAllOutput.value = mergeAllEdited;
+  fire(mergeAllOutput, "input");
+  check("(8a2) Download-Button bleibt nach Bearbeitung aktiv (kein separater Speichern-Schritt wie im Domänen-Dialog)", mergeAllDownloadBtn.disabled === false);
+  fire(mergeAllDownloadBtn, "click");
+  await wait(50);
+  const mergeAllSaved = savedFiles[savedFiles.length - 1];
+  check("(8a2) Download enthält den bearbeiteten Gesamttext", !!mergeAllSaved && mergeAllSaved.data === mergeAllEdited);
+  check("(8a2) Download-Dateiname endet auf 'Alle-Domaenen.md'", !!mergeAllSaved && /Alle-Domaenen\.md$/.test(mergeAllSaved.filename || ""));
+
   // ===================== (8b) Zusammenfassung je Kapitel (Merge zu einem Textfile) =====================
   const mergeBtn = doc.getElementById("mass-merge-btn");
   const mergeSpinner = doc.getElementById("mass-merge-spinner");
@@ -490,6 +520,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("(10) Export enthält massFiles mit 8 Einträgen", Array.isArray(exportedJson.massFiles) && exportedJson.massFiles.length === 8);
   check("(10) Export enthält das bearbeitete Zusammenfassung-Gesamtdokument", typeof exportedJson.massMergedDoc === "string" && exportedJson.massMergedDoc.includes("Manuelle Nacharbeit."));
   check("(10) Export enthält die gespeicherte Domänen-MD-Datei", exportedJson.massDomainDocs && exportedJson.massDomainDocs["Contract Management"] === domainMdEdited);
+  check("(10) Export enthält das bearbeitete Gesamtdokument aller Domänen-MD-Dateien", typeof exportedJson.massDomainDocsMerged === "string" && exportedJson.massDomainDocsMerged.includes("Manuelle Nacharbeit Gesamt."));
 
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
   await wait(100);
@@ -500,6 +531,8 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("(10) Nach 'Alle Daten löschen': Massenverarbeitung geleert", doc.getElementById("mass-empty").hidden === false);
   check("(10) Nach 'Alle Daten löschen': Zusammenfassung-Textfeld geleert", doc.getElementById("mass-merge-output").value === "");
   check("(10) Nach 'Alle Daten löschen': Download-Button der Zusammenfassung deaktiviert", doc.getElementById("mass-merge-download-btn").disabled === true);
+  check("(10) Nach 'Alle Daten löschen': Gesamtdokument aller Domänen-MD-Dateien geleert", doc.getElementById("mass-merge-domain-docs-output").value === "");
+  check("(10) Nach 'Alle Daten löschen': Download-Button dafür deaktiviert", doc.getElementById("mass-merge-domain-docs-download-btn").disabled === true);
 
   const sessionFile = new win.File([JSON.stringify(exportedJson)], "session.json", { type: "application/json" });
   const sessionInput = doc.getElementById("session-import-input");
@@ -511,6 +544,8 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("(10) Nach Laden: 8 Einträge wiederhergestellt", doc.querySelectorAll("#mass-groups tbody tr").length === 8);
   check("(10) Nach Laden: Zusammenfassung-Textfeld wiederhergestellt", doc.getElementById("mass-merge-output").value.includes("Manuelle Nacharbeit."));
   check("(10) Nach Laden: Download-Button der Zusammenfassung aktiv", doc.getElementById("mass-merge-download-btn").disabled === false);
+  check("(10) Nach Laden: Gesamtdokument aller Domänen-MD-Dateien wiederhergestellt", doc.getElementById("mass-merge-domain-docs-output").value.includes("Manuelle Nacharbeit Gesamt."));
+  check("(10) Nach Laden: Download-Button dafür aktiv", doc.getElementById("mass-merge-domain-docs-download-btn").disabled === false);
 
   const restoredDomainMdBtn = doc.querySelector('.mass-domain-md-btn[data-domain="Contract Management"]');
   fire(restoredDomainMdBtn, "click");
