@@ -118,6 +118,19 @@ const xml = `<?xml version="1.0"?><rss><channel>
   await wait(300);
   check("Vorbereitung: Referenz-Handbuch 'Kapitel 4' importiert", doc.getElementById("reference-manual-table-wrap").hidden === false);
 
+  // ===================== Vorbereitung: echte Gliederungs-Stichwörter für Kapitel 7 erzeugen (für Block 5c) =====================
+  doc.querySelector('.nav-item[data-view="gliederung"]').click();
+  await wait(100);
+  const glSubSelect = doc.getElementById("gl-subchapter-select");
+  const glSubOpt = Array.from(glSubSelect.options).find((o) => o.value.indexOf("Kapitel 7") !== -1 && o.value.indexOf("7.1 Änderungen") !== -1);
+  check("Vorbereitung: Unterkapitel '7.1 Änderungen' (Kapitel 7) in der Gliederung vorhanden", !!glSubOpt);
+  if (glSubOpt) glSubSelect.value = glSubOpt.value;
+  fire(doc.getElementById("gl-generate-btn"), "click");
+  await wait(50);
+  const glRealTermCards = Array.from(doc.querySelectorAll("#gl-keywords-list .manual-chapter-card")).filter((card) => !!card.querySelector(".dq-count-nonzero"));
+  const glRealTerms = glRealTermCards.map((card) => card.querySelector(".gl-term-input").value);
+  check("Vorbereitung: mindestens 2 echte (ticketbasierte) Gliederungs-Stichwörter erzeugt", glRealTerms.length >= 2);
+
   // ===================== (1) Navigation: neuer Punkt VOR 'Verarbeitung' =====================
   const navList = Array.from(doc.querySelectorAll(".nav-item[data-view]")).map((b) => b.getAttribute("data-view"));
   check("(1) Navigationspunkt 'massenverarbeitung' vorhanden", navList.includes("massenverarbeitung"));
@@ -206,13 +219,32 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("(5b) Kapitel wird aus dem Datei-INHALT erkannt ('Servicevertrag anlegen' im Fließtext, nicht im Dateinamen)",
     !!chapterContentSel && chapterContentSel.value.includes("Kapitel 4"));
 
+  // ===================== (5c) Konkretes Beispiel: bereits erzeugte Gliederungs-Stichwörter als Zuordnungssignal =====================
+  // Datei enthält weder die Kapitel-4-Phrase "Servicevertrag anlegen" noch
+  // "Verträge im Alltag verwalten" (Kapitel-7-Titel) noch einen Domänen-
+  // namen - nur die in der Vorbereitung ECHT (aus Tickets) erzeugten
+  // Gliederungs-Stichwörter für Kapitel 7. Nur ueber massChapterKeywordScore
+  // (app.chapterKeywords) kann das ueberhaupt zugeordnet werden.
+  const keywordText = "# Sonstige Notiz\n\nStichpunkte: " + glRealTerms.slice(0, 2).join(", ") + ".";
+  const keywordFile = new win.File([keywordText], "sonstige-notiz.md", { type: "text/markdown" });
+  Object.defineProperty(massImportInput, "files", { value: [keywordFile], configurable: true });
+  fire(massImportInput, "change");
+  const keywordDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 5, 2000);
+  check("(5c) Datei mit Gliederungs-Stichwörtern (ohne Titel-Phrase/Domänenname) hinzugefügt", keywordDone);
+  const keywordChapterSel = Array.from(doc.querySelectorAll(".mass-chapter-select")).find((s) => {
+    const row = s.closest("tr");
+    return row && row.textContent.includes("sonstige-notiz.md");
+  });
+  check("(5c) Kapitel wird allein über bereits erzeugte Gliederungs-Stichwörter erkannt (Kapitel 7)",
+    !!keywordChapterSel && keywordChapterSel.value.includes("Kapitel 7"));
+
   // ===================== (6) Datei-Upload (.md) mit PII - wird redigiert =====================
   const mdWithPii = "# Hochgeladener Test\n\nKontakt: pii.test@example.com";
   const mdFile = new win.File([mdWithPii], "Hochgeladen.md", { type: "text/markdown" });
   Object.defineProperty(massImportInput, "files", { value: [mdFile], configurable: true });
   fire(massImportInput, "change");
-  const uploadDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 5, 2000);
-  check("(6) Nach .md-Upload: 5 Zeilen insgesamt", uploadDone);
+  const uploadDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 6, 2000);
+  check("(6) Nach .md-Upload: 6 Zeilen insgesamt", uploadDone);
   check("(6) Hochgeladener Inhalt ist redigiert (keine echte E-Mail-Adresse)", !doc.getElementById("mass-groups").innerHTML.includes("pii.test@example.com"));
 
   // ===================== (7) ZIP-Upload mit 2 .md-Dateien =====================
@@ -223,8 +255,8 @@ const xml = `<?xml version="1.0"?><rss><channel>
   const zipFile = new win.File([zipBuf], "MassArchiv.zip", { type: "application/zip" });
   Object.defineProperty(massImportInput, "files", { value: [zipFile], configurable: true });
   fire(massImportInput, "change");
-  const zipDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 7, 2000);
-  check("(7) Nach ZIP-Upload (2 Dateien): 7 Zeilen insgesamt", zipDone);
+  const zipDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 8, 2000);
+  check("(7) Nach ZIP-Upload (2 Dateien): 8 Zeilen insgesamt", zipDone);
 
   // ===================== (7b) Textschnipsel anzeigen: Vorschau (gekürzt) + "Ganzen Text anzeigen" =====================
   const longTail = "Ende-des-langen-Textes-Markierung";
@@ -232,7 +264,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   const longFile = new win.File([longText], "Langer-Schnipsel.md", { type: "text/markdown" });
   Object.defineProperty(massImportInput, "files", { value: [longFile], configurable: true });
   fire(massImportInput, "change");
-  const longDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 8, 2000);
+  const longDone = await waitUntil(() => doc.querySelectorAll("#mass-groups tbody tr").length === 9, 2000);
   check("(7b) Langer Textschnipsel hinzugefügt", longDone);
   let groupsHtmlLong = doc.getElementById("mass-groups").innerHTML;
   check("(7b) Vorschau standardmäßig gekürzt (Text-Ende noch nicht sichtbar)", !groupsHtmlLong.includes(longTail));
@@ -255,6 +287,56 @@ const xml = `<?xml version="1.0"?><rss><channel>
   await wait(30);
   check("(7b) Erneuter Klick: wieder gekürzt (Text-Ende wieder verborgen)", !doc.getElementById("mass-groups").innerHTML.includes(longTail));
 
+  // ===================== (7c) KI-Zuordnung: Claude schlägt Domäne/Kapitel für unvollständige Einträge vor =====================
+  // Mock antwortet je nach Eintrag unterschiedlich, um drei Faelle konkret
+  // nachzuweisen: (a) gueltiger Vorschlag aus der Liste wird uebernommen,
+  // (b) ehrliches "keine"/"keines" laesst die Zuordnung leer statt zu raten,
+  // (c) eine erfundene, nicht in der Liste vorhandene Antwort wird
+  // verworfen (nie eine Option annehmen, die es nicht wirklich gibt).
+  const originalSampleImpl = sampleImpl;
+  sampleImpl = async (input, opts) => {
+    if (typeof input === "string" && input.indexOf("Textschnipsel (Bezeichnung:") !== -1) {
+      if (input.indexOf('"Teil-Mass-A.md"') !== -1) {
+        return { text: "Domäne: Contract Management\nKapitel: Kapitel 4: Servicevertrag anlegen", truncated: false, modelTierApplied: "default" };
+      }
+      if (input.indexOf('"Langer-Schnipsel.md"') !== -1) {
+        return { text: "Domäne: Erfundene Domäne\nKapitel: Erfundenes Kapitel", truncated: false, modelTierApplied: "default" };
+      }
+      return { text: "Domäne: keine\nKapitel: keines", truncated: false, modelTierApplied: "default" };
+    }
+    return originalSampleImpl(input, opts);
+  };
+  check("(7c) 'KI-Zuordnung'-Button vorhanden", !!doc.getElementById("mass-ai-assign-btn"));
+  fire(doc.getElementById("mass-ai-assign-btn"), "click");
+  const aiDone = await waitUntil(() => doc.getElementById("mass-ai-status-note").textContent.includes("per KI zugeordnet"), 4000);
+  check("(7c) KI-Zuordnung abgeschlossen (Statuszeile aktualisiert)", aiDone);
+
+  function massSelectForRow(cls, filenameFragment) {
+    return Array.from(doc.querySelectorAll(cls)).find((s) => {
+      const row = s.closest("tr");
+      return row && row.textContent.includes(filenameFragment);
+    });
+  }
+  const teilADomainSel = massSelectForRow(".mass-domain-select", "Teil-Mass-A.md");
+  check("(7c) Von Claude vorgeschlagene Domäne (wörtlich aus der Liste) übernommen", !!teilADomainSel && teilADomainSel.value === "Contract Management");
+  const teilAChapterSel = massSelectForRow(".mass-chapter-select", "Teil-Mass-A.md");
+  check("(7c) Von Claude vorgeschlagenes Kapitel (wörtlich aus der Liste) übernommen", !!teilAChapterSel && teilAChapterSel.value.includes("Kapitel 4"));
+
+  const teilBDomainSel = massSelectForRow(".mass-domain-select", "Teil-Mass-B.md");
+  check("(7c) Claude-Antwort 'keine' lässt Domäne ehrlich leer statt zu raten", !!teilBDomainSel && teilBDomainSel.value === "");
+
+  const langerDomainSel = massSelectForRow(".mass-domain-select", "Langer-Schnipsel.md");
+  check("(7c) Erfundene, nicht in der Liste vorhandene Domäne wird verworfen (nicht übernommen)", !!langerDomainSel && langerDomainSel.value === "");
+  const langerChapterSel = massSelectForRow(".mass-chapter-select", "Langer-Schnipsel.md");
+  check("(7c) Erfundenes, nicht in der Liste vorhandenes Kapitel wird verworfen (nicht übernommen)", !!langerChapterSel && langerChapterSel.value === "");
+
+  const refDomainSelAfterAi = massSelectForRow(".mass-domain-select", "Handbuch v1.0");
+  const refChapterSelAfterAi = massSelectForRow(".mass-chapter-select", "Handbuch v1.0");
+  check("(7c) Bereits vorhandene Zuordnung (Referenz-Handbuch) bleibt unverändert (Domäne)", !!refDomainSelAfterAi && refDomainSelAfterAi.value === "Contract Management");
+  check("(7c) Bereits vorhandene Zuordnung (Referenz-Handbuch) bleibt unverändert (Kapitel)", !!refChapterSelAfterAi && refChapterSelAfterAi.value.includes("Kapitel 4"));
+
+  sampleImpl = originalSampleImpl;
+
   // ===================== (8) Unabhängigkeit von der RAG-Bibliothek: keine gemeinsamen Daten =====================
   doc.querySelector('.nav-item[data-view="verarbeitung"]').click();
   doc.querySelector('.import-tab[data-vsub="rag"]').click();
@@ -274,20 +356,20 @@ const xml = `<?xml version="1.0"?><rss><channel>
 
   doc.querySelector('.nav-item[data-view="massenverarbeitung"]').click();
   await wait(50);
-  check("(8) Massenverarbeitung zeigt weiterhin nur ihre eigenen 8 Einträge (kein RAG-Bibliothek-Eintrag mit eingemischt)",
-    doc.querySelectorAll("#mass-groups tbody tr").length === 8);
+  check("(8) Massenverarbeitung zeigt weiterhin nur ihre eigenen 9 Einträge (kein RAG-Bibliothek-Eintrag mit eingemischt)",
+    doc.querySelectorAll("#mass-groups tbody tr").length === 9);
 
   // ===================== (9) Löschen eines Eintrags =====================
   const delBtn = doc.querySelector(".mass-delete-btn");
   fire(delBtn, "click");
   await confirmViaModal(doc);
-  check("(9) Nach Löschen: 7 Zeilen verbleiben", doc.querySelectorAll("#mass-groups tbody tr").length === 7);
+  check("(9) Nach Löschen: 8 Zeilen verbleiben", doc.querySelectorAll("#mass-groups tbody tr").length === 8);
 
   // ===================== (10) Sitzung speichern/laden sichert app.massFiles =====================
   fire(doc.getElementById("session-export-btn"), "click");
   await wait(200);
   const exportedJson = JSON.parse(savedFiles[savedFiles.length - 1].data);
-  check("(10) Export enthält massFiles mit 7 Einträgen", Array.isArray(exportedJson.massFiles) && exportedJson.massFiles.length === 7);
+  check("(10) Export enthält massFiles mit 8 Einträgen", Array.isArray(exportedJson.massFiles) && exportedJson.massFiles.length === 8);
 
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
   await wait(100);
@@ -304,7 +386,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   await wait(300);
   doc.querySelector('.nav-item[data-view="massenverarbeitung"]').click();
   await wait(50);
-  check("(10) Nach Laden: 7 Einträge wiederhergestellt", doc.querySelectorAll("#mass-groups tbody tr").length === 7);
+  check("(10) Nach Laden: 8 Einträge wiederhergestellt", doc.querySelectorAll("#mass-groups tbody tr").length === 8);
 
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }
   const failed = checks.filter((c) => !c[1]);

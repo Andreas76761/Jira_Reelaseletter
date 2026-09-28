@@ -1192,9 +1192,14 @@
 
         <section>
           <p class="section-label">2. Nach Domäne anzeigen &amp; nach Gliederungspunkt ordnen</p>
-          <p class="desc">Jede Domäne als eigener Abschnitt, Textschnipsel darin automatisch in der Reihenfolge der Gliederung sortiert ("Nicht zugeordnet" zuletzt). Domäne/Kapitel-Zuordnung ist editierbar &ndash; bei hochgeladenen/eingelesenen Inhalten wird anhand Bezeichnung/Überschrift automatisch ein Vorschlag gemacht (nur bei ausreichender Ähnlichkeit, sonst bewusst leer), bitte prüfen. Änderungen werden sofort übernommen und sortieren live neu ein.</p>
+          <p class="desc">Jede Domäne als eigener Abschnitt, Textschnipsel darin automatisch in der Reihenfolge der Gliederung sortiert ("Nicht zugeordnet" zuletzt). Domäne/Kapitel-Zuordnung ist editierbar &ndash; bei hochgeladenen/eingelesenen Inhalten wird zunächst anhand des Datei-INHALTS (Vorkommen von Domänennamen/Kapitelbegriffen im Text) automatisch ein Vorschlag gemacht, ersatzweise anhand Bezeichnung/Überschrift (nur bei ausreichender Ähnlichkeit, sonst bewusst leer), bitte prüfen. Änderungen werden sofort übernommen und sortieren live neu ein. Für Einträge ohne (vollständige) Zuordnung hilft zusätzlich die <b>KI-Zuordnung</b> unten: Claude liest den Textschnipsel und schlägt Domäne/Kapitel aus der vorhandenen Liste vor (nie erfunden, im Zweifel bleibt es leer).</p>
           <div class="empty-hint" id="mass-empty">Noch keine MD-Dateien hochgeladen oder eingelesen.</div>
           <div id="mass-groups-wrap" hidden>
+            <div class="job-export-row" id="mass-ai-assign-row">
+              <button class="btn ghost" id="mass-ai-assign-btn" type="button">KI-Zuordnung für unvollständige Einträge</button>
+              <button class="btn ghost" id="mass-ai-stop-btn" type="button" hidden>Stop</button>
+            </div>
+            <p class="step-note" id="mass-ai-status-note"></p>
             <div id="mass-groups"></div>
           </div>
         </section>
@@ -4172,7 +4177,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.44.0";
+  var APP_VERSION = "2.45.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5500,6 +5505,7 @@
     "gl-search-neighbors",
     "mass-import-btn", "mass-import-input", "mass-import-note", "mass-collect-btn",
     "mass-empty", "mass-groups-wrap", "mass-groups",
+    "mass-ai-assign-row", "mass-ai-assign-btn", "mass-ai-stop-btn", "mass-ai-status-note",
     "graph-multiselect-count", "graph-multiselect-name-input", "graph-multiselect-save-btn", "graph-multiselect-clear-btn",
     "graph-zoom-out-btn", "graph-zoom-in-btn", "graph-zoom-reset-btn", "graph-zoom-level",
     "graph-view-tabs", "graph-view-desc",
@@ -13965,6 +13971,78 @@
     addLog("Massenverarbeitung: Eintrag \"" + entry.label + "\" gelöscht.");
     showToast("Gelöscht", 'Eintrag „' + entry.label + '“ wurde entfernt.');
   });
+
+  // "KI-Zuordnung": fuer Eintraege, denen die heuristische Inhalts-/Titel-
+  // Zuordnung (s. o.) keine vollstaendige Domäne+Kapitel liefern konnte,
+  // liest Claude den Textschnipsel und waehlt (woertlich, aus der
+  // tatsaechlich vorhandenen Liste) die passende Domäne/das passende
+  // Kapitel - erfindet nie eine neue Option, bleibt im Zweifel leer
+  // ("ehrlich anzeigen statt raten", wie beim heuristischen Vorschlag).
+  // Ueberschreibt NIE eine bereits vorhandene Zuordnung (weder von Hand
+  // noch heuristisch gesetzt) - fuellt nur, was noch leer ist. Sequenziell
+  // (wie manualGenerateChapters) statt parallel, damit "Stop" jederzeit
+  // sauber zwischen zwei Eintraegen greift.
+  function massBuildAiAssignmentPrompt(entry, domains, chapters) {
+    return "Du ordnest einen Textschnipsel (Auszug aus einer Markdown-Datei fuer oneSCM, ein Fuhrpark-/Vertragsmanagement-System) einer passenden Domäne und einem passenden Gliederungskapitel zu.\n\n" +
+      "Verfügbare Domänen (wähle GENAU EINE davon wörtlich aus der Liste, oder \"keine\" falls nichts eindeutig passt):\n" +
+      domains.map(function (d) { return "- " + d; }).join("\n") + "\n\n" +
+      "Verfügbare Gliederungskapitel (wähle GENAU EINEN Titel davon wörtlich aus der Liste, oder \"keines\" falls nichts eindeutig passt):\n" +
+      chapters.map(function (c) { return "- " + c; }).join("\n") + "\n\n" +
+      "Textschnipsel (Bezeichnung: \"" + entry.label + "\"):\n" + truncate(entry.text, 4000) + "\n\n" +
+      "Antworte AUSSCHLIESSLICH in genau diesem Format, ohne weitere Erklärung, ohne Anführungszeichen:\n" +
+      "Domäne: <Name aus der Liste oder keine>\n" +
+      "Kapitel: <Titel aus der Liste oder keines>";
+  }
+  function massParseAiAssignment(responseText, domains, chapters) {
+    var domainMatch = /Dom[äa]ne:\s*(.+)/i.exec(responseText || "");
+    var chapterMatch = /Kapitel:\s*(.+)/i.exec(responseText || "");
+    var domain = domainMatch ? domainMatch[1].trim() : "";
+    var chapterTitle = chapterMatch ? chapterMatch[1].trim() : "";
+    if (domains.indexOf(domain) === -1) domain = "";
+    if (chapters.indexOf(chapterTitle) === -1) chapterTitle = "";
+    return { domain: domain, chapterTitle: chapterTitle };
+  }
+  var massAiAbortController = null;
+  async function massRunAiAssignment() {
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    var targets = app.massFiles.filter(function (e) { return !e.domain || !e.chapterTitle; });
+    if (!targets.length) { showToast("Nichts zu tun", "Alle Einträge haben bereits Domäne und Kapitel zugeordnet.", true); return; }
+    var domains = massDomainOptionsList();
+    var chapters = massChapterOptionsList();
+    els.massAiAssignBtn.disabled = true;
+    els.massAiStopBtn.hidden = false;
+    var ctl = new AbortController();
+    massAiAbortController = ctl;
+    var updated = 0, skippedErrors = 0, processed = 0, aborted = false;
+    for (; processed < targets.length; processed++) {
+      var entry = targets[processed];
+      els.massAiStatusNote.textContent = "KI-Zuordnung: Eintrag " + (processed + 1) + " von " + targets.length + " (\"" + entry.label + "\") …";
+      try {
+        var result = await sampleApi(massBuildAiAssignmentPrompt(entry, domains, chapters), { signal: ctl.signal, modelTier: "default", cache: false });
+        var suggestion = massParseAiAssignment(result.text, domains, chapters);
+        var changed = false;
+        if (suggestion.domain && !entry.domain) { entry.domain = suggestion.domain; changed = true; }
+        if (suggestion.chapterTitle && !entry.chapterTitle) { entry.chapterTitle = suggestion.chapterTitle; changed = true; }
+        if (changed) { updated++; renderMassFiles(); }
+      } catch (err) {
+        if (err && err.code === "cancelled") { aborted = true; break; }
+        skippedErrors++;
+      }
+    }
+    els.massAiStatusNote.textContent = aborted
+      ? "Abgebrochen nach " + processed + " von " + targets.length + " Einträgen (" + updated + " zugeordnet)."
+      : updated + " von " + targets.length + " Einträgen per KI zugeordnet." + (skippedErrors ? " (" + skippedErrors + " fehlgeschlagen.)" : "");
+    addLog("Massenverarbeitung: KI-Zuordnung " + (aborted ? "abgebrochen" : "abgeschlossen") + " - " + updated + " von " + targets.length + " Einträgen aktualisiert" + (skippedErrors ? ", " + skippedErrors + " fehlgeschlagen" : "") + ".");
+    els.massAiAssignBtn.disabled = false;
+    els.massAiStopBtn.hidden = true;
+    massAiAbortController = null;
+  }
+  els.massAiAssignBtn.addEventListener("click", massRunAiAssignment);
+  els.massAiStopBtn.addEventListener("click", function () { if (massAiAbortController) massAiAbortController.abort(); });
+
   renderMassFiles();
 
   /* ============ Teil 9c: Benutzerhandbuch - Kapitel-Generator (KI-Fließtext je Kapitel) ============

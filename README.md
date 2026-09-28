@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.44.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.45.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -762,7 +762,15 @@ zusammenzuführen.
   Freitext wird wie überall in der App durch `redactText()` geleitet
   (PII-Schutz). Jeder Eintrag zeigt eine gekürzte **Textschnipsel-Vorschau**
   direkt in der Tabelle sowie einen Umschalter **"Ganzen Text anzeigen"**,
-  der den vollständigen Text der jeweiligen Zeile einblendet.
+  der den vollständigen Text der jeweiligen Zeile einblendet. Für Einträge,
+  denen die heuristische Zuordnung keine vollständige Domäne+Kapitel
+  liefern konnte, gibt es zusätzlich den Button **"KI-Zuordnung"**: Claude
+  liest den Textschnipsel und wählt Domäne/Kapitel **wörtlich aus der
+  tatsächlich vorhandenen Liste** aus (nie eine erfundene Option, die es
+  nicht gibt) oder lässt die Zuordnung bewusst leer, wenn nichts eindeutig
+  passt; eine bereits vorhandene Zuordnung wird nie überschrieben. Läuft
+  sequenziell (mit Stop-Button) statt parallel über alle unvollständigen
+  Einträge, damit "Stop" jederzeit sauber zwischen zwei Einträgen greift.
 - **Verarbeitung** – sieben Jobs für wiederkehrende Arbeitsschritte rund
   um die geladenen Tickets, erreichbar über die Tab-Leiste oder das kompakte
   Burger-Menü (☰) daneben. Jeder Job zeigt oben seine **Prozessschritte**
