@@ -411,17 +411,45 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("(8) Massenverarbeitung zeigt weiterhin nur ihre eigenen 9 Einträge (kein RAG-Bibliothek-Eintrag mit eingemischt)",
     doc.querySelectorAll("#mass-groups tbody tr").length === 9);
 
+  // ===================== (8b) Zusammenfassung je Kapitel (Merge zu einem Textfile) =====================
+  const mergeBtn = doc.getElementById("mass-merge-btn");
+  const mergeSpinner = doc.getElementById("mass-merge-spinner");
+  const mergeOutput = doc.getElementById("mass-merge-output");
+  const mergeDownloadBtn = doc.getElementById("mass-merge-download-btn");
+  check("(8b) 'Zusammenfassung je Kapitel'-Button vorhanden", !!mergeBtn);
+  check("(8b) Sanduhr (Spinner) zunächst verborgen", mergeSpinner.hidden === true);
+  check("(8b) Download-Button anfangs deaktiviert (noch nichts zusammengeführt)", mergeDownloadBtn.disabled === true);
+  fire(mergeBtn, "click");
+  await waitUntil(() => mergeOutput.value.trim().length > 0, 3000);
+  check("(8b) Sanduhr nach Abschluss wieder verborgen", mergeSpinner.hidden === true);
+  check("(8b) Button nach Abschluss wieder aktiv", mergeBtn.disabled === false);
+  check("(8b) Gesamtdokument beginnt mit erwarteter Überschrift", mergeOutput.value.startsWith("# Massenverarbeitung - Zusammenfassung je Kapitel"));
+  check("(8b) Gesamtdokument enthält Domäne 'Contract Management' als Abschnitt", mergeOutput.value.includes("## Domäne: Contract Management"));
+  check("(8b) Gesamtdokument enthält Kapitel-Abschnitt", mergeOutput.value.includes("### Kapitel:"));
+  check("(8b) Statuszeile nennt Anzahl der zusammengeführten Textschnipsel", doc.getElementById("mass-merge-status-note").textContent.includes("9 Textschnipsel"));
+  check("(8b) Download-Button nach Zusammenführen aktiv", mergeDownloadBtn.disabled === false);
+
+  const mergeEdited = mergeOutput.value + "\n\nManuelle Nacharbeit.";
+  mergeOutput.value = mergeEdited;
+  fire(mergeOutput, "input");
+  fire(mergeDownloadBtn, "click");
+  await wait(50);
+  const mergeSaved = savedFiles[savedFiles.length - 1];
+  check("(8b) Manuelle Bearbeitung im Textfeld wird beim Download berücksichtigt", !!mergeSaved && mergeSaved.data === mergeEdited);
+  check("(8b) Download-Dateiname endet auf .txt", !!mergeSaved && /\.txt$/.test(mergeSaved.filename || ""));
+
   // ===================== (9) Löschen eines Eintrags =====================
   const delBtn = doc.querySelector(".mass-delete-btn");
   fire(delBtn, "click");
   await confirmViaModal(doc);
   check("(9) Nach Löschen: 8 Zeilen verbleiben", doc.querySelectorAll("#mass-groups tbody tr").length === 8);
 
-  // ===================== (10) Sitzung speichern/laden sichert app.massFiles =====================
+  // ===================== (10) Sitzung speichern/laden sichert app.massFiles + massMergedDoc =====================
   fire(doc.getElementById("session-export-btn"), "click");
   await wait(200);
   const exportedJson = JSON.parse(savedFiles[savedFiles.length - 1].data);
   check("(10) Export enthält massFiles mit 8 Einträgen", Array.isArray(exportedJson.massFiles) && exportedJson.massFiles.length === 8);
+  check("(10) Export enthält das bearbeitete Zusammenfassung-Gesamtdokument", typeof exportedJson.massMergedDoc === "string" && exportedJson.massMergedDoc.includes("Manuelle Nacharbeit."));
 
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
   await wait(100);
@@ -430,6 +458,8 @@ const xml = `<?xml version="1.0"?><rss><channel>
   doc.querySelector('.nav-item[data-view="massenverarbeitung"]').click();
   await wait(50);
   check("(10) Nach 'Alle Daten löschen': Massenverarbeitung geleert", doc.getElementById("mass-empty").hidden === false);
+  check("(10) Nach 'Alle Daten löschen': Zusammenfassung-Textfeld geleert", doc.getElementById("mass-merge-output").value === "");
+  check("(10) Nach 'Alle Daten löschen': Download-Button der Zusammenfassung deaktiviert", doc.getElementById("mass-merge-download-btn").disabled === true);
 
   const sessionFile = new win.File([JSON.stringify(exportedJson)], "session.json", { type: "application/json" });
   const sessionInput = doc.getElementById("session-import-input");
@@ -439,6 +469,8 @@ const xml = `<?xml version="1.0"?><rss><channel>
   doc.querySelector('.nav-item[data-view="massenverarbeitung"]').click();
   await wait(50);
   check("(10) Nach Laden: 8 Einträge wiederhergestellt", doc.querySelectorAll("#mass-groups tbody tr").length === 8);
+  check("(10) Nach Laden: Zusammenfassung-Textfeld wiederhergestellt", doc.getElementById("mass-merge-output").value.includes("Manuelle Nacharbeit."));
+  check("(10) Nach Laden: Download-Button der Zusammenfassung aktiv", doc.getElementById("mass-merge-download-btn").disabled === false);
 
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }
   const failed = checks.filter((c) => !c[1]);

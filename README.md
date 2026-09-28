@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.46.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.47.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -780,7 +780,17 @@ zusammenzuführen.
   vorsichtige heuristische/KI-Zuordnung (füllt nur leere Felder)
   überschreibt die Massenzuordnung bewusst auch eine bereits vorhandene
   Zuordnung – eine gezielte, manuelle Nutzeraktion auf einer selbst
-  gewählten Auswahl.
+  gewählten Auswahl. Sowohl **"KI-Zuordnung"** als auch **"Zusammenfassung
+  je Kapitel"** (s. u.) zeigen während der Verarbeitung eine kleine
+  drehende **Sanduhr** im Button, damit erkennbar bleibt, dass die App
+  gerade arbeitet. Als dritter Schritt lässt sich mit dem Button
+  **"Zusammenfassung je Kapitel erzeugen"** die gesamte Massenverarbeitung
+  zu **einem** Textfile zusammenführen (eigenständiges Gegenstück zu "Alle
+  zusammenführen" in der RAG-Bibliothek, s. u.): alle einzelnen
+  MD-Textschnipsel werden sortiert nach Domäne, darunter je Kapitel in
+  Gliederungsreihenfolge, aneinandergehängt. Das Ergebnis lässt sich direkt
+  im Textfeld nachbearbeiten und als Textdatei speichern; der bearbeitete
+  Stand ist Teil der Sitzung (Speichern/Laden, "Alle Daten löschen").
 - **Verarbeitung** – sieben Jobs für wiederkehrende Arbeitsschritte rund
   um die geladenen Tickets, erreichbar über die Tab-Leiste oder das kompakte
   Burger-Menü (☰) daneben. Jeder Job zeigt oben seine **Prozessschritte**

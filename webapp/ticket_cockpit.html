@@ -1210,11 +1210,30 @@
               <button class="btn primary btn-tiny" id="mass-bulk-assign-btn" type="button" disabled>Auf Auswahl anwenden</button>
             </div>
             <div class="job-export-row" id="mass-ai-assign-row">
-              <button class="btn ghost" id="mass-ai-assign-btn" type="button">KI-Zuordnung für unvollständige Einträge</button>
+              <button class="btn ghost" id="mass-ai-assign-btn" type="button">
+                <span class="btn-spinner" id="mass-ai-assign-spinner" hidden></span>
+                <span id="mass-ai-assign-label">KI-Zuordnung für unvollständige Einträge</span>
+              </button>
               <button class="btn ghost" id="mass-ai-stop-btn" type="button" hidden>Stop</button>
             </div>
             <p class="step-note" id="mass-ai-status-note"></p>
             <div id="mass-groups"></div>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">3. Zusammenfassung je Kapitel</p>
+          <p class="desc">Fasst alle einzelnen MD-Textschnipsel aus Punkt 1/2 zu einem Gesamttextfile zusammen &ndash; sortiert nach Domäne, darunter nach Kapitel (Gliederungsreihenfolge). Der zusammengeführte Text lässt sich direkt hier bearbeiten und als Textdatei speichern.</p>
+          <div class="job-export-row">
+            <button class="btn ghost" id="mass-merge-btn" type="button">
+              <span class="btn-spinner" id="mass-merge-spinner" hidden></span>
+              <span id="mass-merge-label">Zusammenfassung je Kapitel erzeugen</span>
+            </button>
+          </div>
+          <p class="step-note" id="mass-merge-status-note"></p>
+          <textarea class="text-input" id="mass-merge-output" rows="16" placeholder="Noch nichts zusammengeführt." style="width:100%; margin-top:8px; font-family:inherit;"></textarea>
+          <div class="job-export-row" style="margin-top:8px;">
+            <button class="btn ghost" id="mass-merge-download-btn" type="button" disabled>Als Textdatei speichern</button>
           </div>
         </section>
       </section>
@@ -4191,7 +4210,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.46.0";
+  var APP_VERSION = "2.47.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5519,9 +5538,10 @@
     "gl-search-neighbors",
     "mass-import-btn", "mass-import-input", "mass-import-note", "mass-collect-btn",
     "mass-empty", "mass-groups-wrap", "mass-groups",
-    "mass-ai-assign-row", "mass-ai-assign-btn", "mass-ai-stop-btn", "mass-ai-status-note",
+    "mass-ai-assign-row", "mass-ai-assign-btn", "mass-ai-assign-spinner", "mass-ai-assign-label", "mass-ai-stop-btn", "mass-ai-status-note",
     "mass-select-row", "mass-select-all-btn", "mass-select-clear-btn", "mass-select-pattern-input", "mass-select-pattern-btn", "mass-selection-count",
     "mass-bulk-assign-row", "mass-bulk-domain-select", "mass-bulk-chapter-select", "mass-bulk-assign-btn",
+    "mass-merge-btn", "mass-merge-spinner", "mass-merge-label", "mass-merge-status-note", "mass-merge-output", "mass-merge-download-btn",
     "graph-multiselect-count", "graph-multiselect-name-input", "graph-multiselect-save-btn", "graph-multiselect-clear-btn",
     "graph-zoom-out-btn", "graph-zoom-in-btn", "graph-zoom-reset-btn", "graph-zoom-level",
     "graph-view-tabs", "graph-view-desc",
@@ -5724,7 +5744,12 @@
     // erzeugten MD-Inhalten (Benutzerhandbuch-Kapitel, Referenz-Handbuch-
     // Kapitel). Sitzungsdatensatz wie ragLibrary (reset bei "Alle Daten
     // löschen"/"Sitzung zurücksetzen", Teil von Sitzung speichern/laden).
-    massFiles: []
+    massFiles: [],
+    // Zuletzt erzeugte "Zusammenfassung je Kapitel" (Massenverarbeitung
+    // Punkt 3) - eigenstaendiges Gegenstueck zu ragMergedDoc, bewusst als
+    // eigener, editierbarer Text gespeichert statt bei jedem Render neu
+    // zusammengebaut, damit manuelle Nacharbeiten nicht verloren gehen.
+    massMergedDoc: ""
   };
 
   function addLog(message) {
@@ -5908,6 +5933,10 @@
     app.massFiles = [];
     massSelectedIds = {};
     renderMassFiles();
+    app.massMergedDoc = "";
+    els.massMergeOutput.value = "";
+    els.massMergeDownloadBtn.disabled = true;
+    els.massMergeStatusNote.textContent = "";
   }
 
   // Admin-Funktion (Einstellungen): im Unterschied zu resetSession() werden
@@ -5959,6 +5988,10 @@
     app.massFiles = [];
     massSelectedIds = {};
     renderMassFiles();
+    app.massMergedDoc = "";
+    els.massMergeOutput.value = "";
+    els.massMergeDownloadBtn.disabled = true;
+    els.massMergeStatusNote.textContent = "";
     addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
   }
   els.deleteAllDataBtn.addEventListener("click", async function () {
@@ -6028,7 +6061,8 @@
       refCompareActiveManualId: app.refCompareActiveManualId,
       ragLibrary: app.ragLibrary,
       ragMergedDoc: app.ragMergedDoc,
-      massFiles: app.massFiles
+      massFiles: app.massFiles,
+      massMergedDoc: app.massMergedDoc
     };
   }
   function restoreSessionState(data) {
@@ -6070,6 +6104,7 @@
     if (Array.isArray(data.ragLibrary)) app.ragLibrary = data.ragLibrary;
     if (typeof data.ragMergedDoc === "string") app.ragMergedDoc = data.ragMergedDoc;
     if (Array.isArray(data.massFiles)) app.massFiles = data.massFiles;
+    if (typeof data.massMergedDoc === "string") app.massMergedDoc = data.massMergedDoc;
     app.initialized = true;
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
@@ -6095,6 +6130,8 @@
     els.ragMergeOutput.value = app.ragMergedDoc;
     els.ragMergeDownloadBtn.disabled = !app.ragMergedDoc;
     renderMassFiles();
+    els.massMergeOutput.value = app.massMergedDoc;
+    els.massMergeDownloadBtn.disabled = !app.massMergedDoc;
     els.releaseMatchSummary.hidden = true;
     els.releaseMissingWrap.hidden = true;
     els.releaseKeysInput.value = "";
@@ -14067,6 +14104,7 @@
     var domains = massDomainOptionsList();
     var chapters = massChapterOptionsList();
     els.massAiAssignBtn.disabled = true;
+    els.massAiAssignSpinner.hidden = false;
     els.massAiStopBtn.hidden = false;
     var ctl = new AbortController();
     massAiAbortController = ctl;
@@ -14091,6 +14129,7 @@
       : updated + " von " + targets.length + " Einträgen per KI zugeordnet." + (skippedErrors ? " (" + skippedErrors + " fehlgeschlagen.)" : "");
     addLog("Massenverarbeitung: KI-Zuordnung " + (aborted ? "abgebrochen" : "abgeschlossen") + " - " + updated + " von " + targets.length + " Einträgen aktualisiert" + (skippedErrors ? ", " + skippedErrors + " fehlgeschlagen" : "") + ".");
     els.massAiAssignBtn.disabled = false;
+    els.massAiAssignSpinner.hidden = true;
     els.massAiStopBtn.hidden = true;
     massAiAbortController = null;
   }
@@ -14150,6 +14189,66 @@
   });
 
   renderMassFiles();
+
+  // Zusammenfassung je Kapitel (Punkt 3): eigenstaendiges Gegenstueck zu
+  // ragBuildMergedDoc() - mappt alle einzelnen massFiles-Textschnipsel in
+  // EIN Textfile, gruppiert je Domäne (alphabetisch, "Ohne Domäne"
+  // zuletzt), darunter je Kapitel in Gliederungsreihenfolge (statt
+  // alphabetisch wie bei RAG), da Punkt 2 hier bereits nach Gliederung
+  // sortiert - macht die Reihenfolge im Gesamtdokument konsistent mit der
+  // Tabellenansicht darüber.
+  function massBuildMergedDoc() {
+    var groups = {};
+    app.massFiles.forEach(function (e) {
+      var d = e.domain || "";
+      var c = e.chapterTitle || "";
+      if (!groups[d]) groups[d] = {};
+      if (!groups[d][c]) groups[d][c] = [];
+      groups[d][c].push(e);
+    });
+    var domainNames = Object.keys(groups).filter(function (d) { return d !== ""; }).sort();
+    if (groups[""]) domainNames.push("");
+    var parts = ["# Massenverarbeitung - Zusammenfassung je Kapitel\n\n_Automatisch aus " + app.massFiles.length +
+      " Textschnipsel(n) der Massenverarbeitung zusammengeführt, sortiert nach Domäne und Gliederungsreihenfolge. Bitte redaktionell prüfen._"];
+    domainNames.forEach(function (d) {
+      parts.push("\n\n## Domäne: " + (d || "Ohne Domäne"));
+      var chapterNames = Object.keys(groups[d]).filter(function (c) { return c !== ""; });
+      chapterNames.sort(function (a, b) { return massChapterOrderIndex(a) - massChapterOrderIndex(b); });
+      if (groups[d][""]) chapterNames.push("");
+      chapterNames.forEach(function (c) {
+        parts.push("\n\n### Kapitel: " + (c || "Nicht zugeordnet"));
+        groups[d][c].forEach(function (e) { parts.push("\n\n" + e.text); });
+      });
+    });
+    return parts.join("");
+  }
+  els.massMergeBtn.addEventListener("click", async function () {
+    if (!app.massFiles.length) { showToast("Nichts vorhanden", "Bitte zuerst mindestens eine MD-Datei hinzufügen (Punkt 1).", true); return; }
+    els.massMergeBtn.disabled = true;
+    els.massMergeSpinner.hidden = false;
+    await wait(20); // Sanduhr einmal rendern lassen, bevor der Aufbau beginnt
+    try {
+      var merged = massBuildMergedDoc();
+      app.massMergedDoc = merged;
+      els.massMergeOutput.value = merged;
+      els.massMergeDownloadBtn.disabled = false;
+      var unassigned = app.massFiles.filter(function (e) { return !e.domain || !e.chapterTitle; }).length;
+      els.massMergeStatusNote.textContent = app.massFiles.length + " Textschnipsel zusammengeführt" +
+        (unassigned ? " – " + unassigned + " davon ohne vollständige Domäne-/Kapitel-Zuordnung (siehe Gruppen „Ohne Domäne“/„Nicht zugeordnet“ im Dokument)." : ".");
+      addLog("Massenverarbeitung: " + app.massFiles.length + " Textschnipsel zu einem Gesamtdokument (Zusammenfassung je Kapitel) zusammengeführt.");
+    } finally {
+      els.massMergeBtn.disabled = false;
+      els.massMergeSpinner.hidden = true;
+    }
+  });
+  els.massMergeOutput.addEventListener("input", function () {
+    app.massMergedDoc = els.massMergeOutput.value;
+    els.massMergeDownloadBtn.disabled = !els.massMergeOutput.value.trim();
+  });
+  els.massMergeDownloadBtn.addEventListener("click", async function () {
+    var ok = await saveOrWarn("Massenverarbeitung-Zusammenfassung.txt", els.massMergeOutput.value);
+    if (ok) showToast("Gespeichert", "Gesamtdokument heruntergeladen.");
+  });
 
   /* ============ Teil 9c: Benutzerhandbuch - Kapitel-Generator (KI-Fließtext je Kapitel) ============
      Analog zu RAG (Teil 9b): Domäne/Label-Themengebiet/Kapitel als Filter
