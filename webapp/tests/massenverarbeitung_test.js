@@ -337,6 +337,58 @@ const xml = `<?xml version="1.0"?><rss><channel>
 
   sampleImpl = originalSampleImpl;
 
+  // ===================== (7d) Mehrfachauswahl + Massenzuordnung Domäne/Kapitel =====================
+  check("(7d) Checkbox je Zeile vorhanden", doc.querySelectorAll(".mass-row-checkbox").length === 9);
+  check("(7d) 'Auf Auswahl anwenden' anfangs deaktiviert (nichts ausgewählt)", doc.getElementById("mass-bulk-assign-btn").disabled === true);
+
+  fire(doc.getElementById("mass-select-all-btn"), "click");
+  await wait(30);
+  check("(7d) 'Alle auswählen' markiert alle Checkboxen", Array.from(doc.querySelectorAll(".mass-row-checkbox")).every((cb) => cb.checked));
+  check("(7d) Auswahlzähler zeigt 9", doc.getElementById("mass-selection-count").textContent.startsWith("9"));
+  check("(7d) 'Auf Auswahl anwenden' jetzt aktiv", doc.getElementById("mass-bulk-assign-btn").disabled === false);
+
+  fire(doc.getElementById("mass-select-clear-btn"), "click");
+  await wait(30);
+  check("(7d) 'Auswahl aufheben' entfernt alle Markierungen", Array.from(doc.querySelectorAll(".mass-row-checkbox")).every((cb) => !cb.checked));
+  check("(7d) Auswahlzähler zeigt 0", doc.getElementById("mass-selection-count").textContent.startsWith("0"));
+
+  // Muster ohne Treffer: kein Absturz, keine Auswahl.
+  doc.getElementById("mass-select-pattern-input").value = "nichts-passt-*";
+  fire(doc.getElementById("mass-select-pattern-btn"), "click");
+  await wait(30);
+  check("(7d) Namensmuster ohne Treffer zeigt Hinweis statt Absturz", doc.getElementById("toast").textContent.includes("Keine Treffer"));
+  check("(7d) Namensmuster ohne Treffer wählt nichts aus", doc.getElementById("mass-selection-count").textContent.startsWith("0"));
+
+  // "Alle auswählen mit Name *": waehlt gezielt die beiden ZIP-Eintraege aus.
+  doc.getElementById("mass-select-pattern-input").value = "Teil-Mass-*";
+  fire(doc.getElementById("mass-select-pattern-btn"), "click");
+  await wait(30);
+  check("(7d) Namensmuster 'Teil-Mass-*' wählt genau 2 Einträge aus", doc.getElementById("mass-selection-count").textContent.startsWith("2"));
+  const teilACbChecked = Array.from(doc.querySelectorAll(".mass-row-checkbox")).find((cb) => cb.closest("tr").textContent.includes("Teil-Mass-A.md"));
+  const teilBCbChecked = Array.from(doc.querySelectorAll(".mass-row-checkbox")).find((cb) => cb.closest("tr").textContent.includes("Teil-Mass-B.md"));
+  check("(7d) Beide passenden Einträge tatsächlich markiert", teilACbChecked.checked && teilBCbChecked.checked);
+  const hochgeladenCbChecked = Array.from(doc.querySelectorAll(".mass-row-checkbox")).find((cb) => cb.closest("tr").textContent.includes("Hochgeladen.md"));
+  check("(7d) Nicht passender Eintrag bleibt unmarkiert", !hochgeladenCbChecked.checked);
+
+  // Massenzuordnung anwenden - ueberschreibt AUCH eine bereits (von der
+  // KI-Zuordnung) vorhandene Zuordnung, anders als die vorsichtige
+  // heuristische/KI-Zuordnung, die nur leere Felder fuellt.
+  doc.getElementById("mass-bulk-domain-select").value = "Contract Management";
+  const bulkChapterOpt = Array.from(doc.getElementById("mass-bulk-chapter-select").options).find((o) => o.value.includes("Kapitel 7"));
+  doc.getElementById("mass-bulk-chapter-select").value = bulkChapterOpt.value;
+  fire(doc.getElementById("mass-bulk-assign-btn"), "click");
+  await wait(30);
+  const teilADomainAfterBulk = Array.from(doc.querySelectorAll(".mass-domain-select")).find((s) => s.closest("tr").textContent.includes("Teil-Mass-A.md"));
+  const teilAChapterAfterBulk = Array.from(doc.querySelectorAll(".mass-chapter-select")).find((s) => s.closest("tr").textContent.includes("Teil-Mass-A.md"));
+  check("(7d) Massenzuordnung setzt Domäne bei Teil-Mass-A.md", teilADomainAfterBulk.value === "Contract Management");
+  check("(7d) Massenzuordnung überschreibt vorhandenes Kapitel bei Teil-Mass-A.md (Kapitel 4 -> Kapitel 7)", teilAChapterAfterBulk.value.includes("Kapitel 7"));
+  const teilBDomainAfterBulk = Array.from(doc.querySelectorAll(".mass-domain-select")).find((s) => s.closest("tr").textContent.includes("Teil-Mass-B.md"));
+  const teilBChapterAfterBulk = Array.from(doc.querySelectorAll(".mass-chapter-select")).find((s) => s.closest("tr").textContent.includes("Teil-Mass-B.md"));
+  check("(7d) Massenzuordnung setzt Domäne bei Teil-Mass-B.md", teilBDomainAfterBulk.value === "Contract Management");
+  check("(7d) Massenzuordnung setzt Kapitel bei Teil-Mass-B.md", teilBChapterAfterBulk.value.includes("Kapitel 7"));
+  const hochgeladenDomainAfterBulk = Array.from(doc.querySelectorAll(".mass-domain-select")).find((s) => s.closest("tr").textContent.includes("Hochgeladen.md"));
+  check("(7d) Nicht ausgewählter Eintrag bleibt von der Massenzuordnung unberührt", hochgeladenDomainAfterBulk.value === "");
+
   // ===================== (8) Unabhängigkeit von der RAG-Bibliothek: keine gemeinsamen Daten =====================
   doc.querySelector('.nav-item[data-view="verarbeitung"]').click();
   doc.querySelector('.import-tab[data-vsub="rag"]').click();

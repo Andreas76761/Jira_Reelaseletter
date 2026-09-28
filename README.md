@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.45.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.46.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -771,6 +771,16 @@ zusammenzuführen.
   passt; eine bereits vorhandene Zuordnung wird nie überschrieben. Läuft
   sequenziell (mit Stop-Button) statt parallel über alle unvollständigen
   Einträge, damit "Stop" jederzeit sauber zwischen zwei Einträgen greift.
+  Zusätzlich lässt sich jede Zeile per **Checkbox** auswählen – über
+  **"Alle auswählen"**, **"Auswahl aufheben"** oder **"Alle auswählen mit
+  Name \*"** (einfaches Namensmuster mit `*`/`?` als Platzhalter, z. B.
+  `Kapitel-*`, additiv zur bestehenden Auswahl) – und die Auswahl per
+  **Massenzuordnung** (Domäne-/Kapitel-Dropdown + "Auf Auswahl anwenden")
+  auf einen Schlag einer Domäne/einem Kapitel zuordnen. Anders als die
+  vorsichtige heuristische/KI-Zuordnung (füllt nur leere Felder)
+  überschreibt die Massenzuordnung bewusst auch eine bereits vorhandene
+  Zuordnung – eine gezielte, manuelle Nutzeraktion auf einer selbst
+  gewählten Auswahl.
 - **Verarbeitung** – sieben Jobs für wiederkehrende Arbeitsschritte rund
   um die geladenen Tickets, erreichbar über die Tab-Leiste oder das kompakte
   Burger-Menü (☰) daneben. Jeder Job zeigt oben seine **Prozessschritte**

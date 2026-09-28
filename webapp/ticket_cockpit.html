@@ -1192,9 +1192,23 @@
 
         <section>
           <p class="section-label">2. Nach Domäne anzeigen &amp; nach Gliederungspunkt ordnen</p>
-          <p class="desc">Jede Domäne als eigener Abschnitt, Textschnipsel darin automatisch in der Reihenfolge der Gliederung sortiert ("Nicht zugeordnet" zuletzt). Domäne/Kapitel-Zuordnung ist editierbar &ndash; bei hochgeladenen/eingelesenen Inhalten wird zunächst anhand des Datei-INHALTS (Vorkommen von Domänennamen/Kapitelbegriffen im Text) automatisch ein Vorschlag gemacht, ersatzweise anhand Bezeichnung/Überschrift (nur bei ausreichender Ähnlichkeit, sonst bewusst leer), bitte prüfen. Änderungen werden sofort übernommen und sortieren live neu ein. Für Einträge ohne (vollständige) Zuordnung hilft zusätzlich die <b>KI-Zuordnung</b> unten: Claude liest den Textschnipsel und schlägt Domäne/Kapitel aus der vorhandenen Liste vor (nie erfunden, im Zweifel bleibt es leer).</p>
+          <p class="desc">Jede Domäne als eigener Abschnitt, Textschnipsel darin automatisch in der Reihenfolge der Gliederung sortiert ("Nicht zugeordnet" zuletzt). Domäne/Kapitel-Zuordnung ist editierbar &ndash; bei hochgeladenen/eingelesenen Inhalten wird zunächst anhand des Datei-INHALTS (Vorkommen von Domänennamen/Kapitelbegriffen im Text) automatisch ein Vorschlag gemacht, ersatzweise anhand Bezeichnung/Überschrift (nur bei ausreichender Ähnlichkeit, sonst bewusst leer), bitte prüfen. Änderungen werden sofort übernommen und sortieren live neu ein. Über die Checkbox je Zeile lassen sich mehrere Einträge auswählen (auch per Namensmuster) und per <b>Massenzuordnung</b> auf einmal einer Domäne/einem Kapitel zuordnen. Für Einträge ohne (vollständige) Zuordnung hilft zusätzlich die <b>KI-Zuordnung</b> unten: Claude liest den Textschnipsel und schlägt Domäne/Kapitel aus der vorhandenen Liste vor (nie erfunden, im Zweifel bleibt es leer).</p>
           <div class="empty-hint" id="mass-empty">Noch keine MD-Dateien hochgeladen oder eingelesen.</div>
           <div id="mass-groups-wrap" hidden>
+            <div class="job-export-row" id="mass-select-row">
+              <button class="btn ghost btn-tiny" id="mass-select-all-btn" type="button">Alle auswählen</button>
+              <button class="btn ghost btn-tiny" id="mass-select-clear-btn" type="button">Auswahl aufheben</button>
+              <input type="text" class="text-input" id="mass-select-pattern-input" placeholder="Namensmuster, z. B. Kapitel-* oder *.md" style="max-width:240px;">
+              <button class="btn ghost btn-tiny" id="mass-select-pattern-btn" type="button">Alle auswählen mit Name *</button>
+              <span class="step-note" id="mass-selection-count" style="align-self:center;">0 ausgewählt</span>
+            </div>
+            <div class="job-export-row" id="mass-bulk-assign-row">
+              <label for="mass-bulk-domain-select" style="align-self:center;">Massenzuordnung Domäne:</label>
+              <select id="mass-bulk-domain-select"></select>
+              <label for="mass-bulk-chapter-select" style="align-self:center;">Kapitel:</label>
+              <select id="mass-bulk-chapter-select"></select>
+              <button class="btn primary btn-tiny" id="mass-bulk-assign-btn" type="button" disabled>Auf Auswahl anwenden</button>
+            </div>
             <div class="job-export-row" id="mass-ai-assign-row">
               <button class="btn ghost" id="mass-ai-assign-btn" type="button">KI-Zuordnung für unvollständige Einträge</button>
               <button class="btn ghost" id="mass-ai-stop-btn" type="button" hidden>Stop</button>
@@ -4177,7 +4191,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.45.0";
+  var APP_VERSION = "2.46.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5506,6 +5520,8 @@
     "mass-import-btn", "mass-import-input", "mass-import-note", "mass-collect-btn",
     "mass-empty", "mass-groups-wrap", "mass-groups",
     "mass-ai-assign-row", "mass-ai-assign-btn", "mass-ai-stop-btn", "mass-ai-status-note",
+    "mass-select-row", "mass-select-all-btn", "mass-select-clear-btn", "mass-select-pattern-input", "mass-select-pattern-btn", "mass-selection-count",
+    "mass-bulk-assign-row", "mass-bulk-domain-select", "mass-bulk-chapter-select", "mass-bulk-assign-btn",
     "graph-multiselect-count", "graph-multiselect-name-input", "graph-multiselect-save-btn", "graph-multiselect-clear-btn",
     "graph-zoom-out-btn", "graph-zoom-in-btn", "graph-zoom-reset-btn", "graph-zoom-level",
     "graph-view-tabs", "graph-view-desc",
@@ -5890,6 +5906,7 @@
     els.ragMergeDownloadBtn.disabled = true;
     els.ragMergeStatusNote.textContent = "";
     app.massFiles = [];
+    massSelectedIds = {};
     renderMassFiles();
   }
 
@@ -5940,6 +5957,7 @@
     els.ragMergeDownloadBtn.disabled = true;
     els.ragMergeStatusNote.textContent = "";
     app.massFiles = [];
+    massSelectedIds = {};
     renderMassFiles();
     addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
   }
@@ -13803,17 +13821,42 @@
       text: text, source: "upload"
     });
   }
-  // Ephemere UI-Aufklapp-Zustaende (wie expandedStepIds bei den Prozess-
-  // schritten) - bewusst NICHT Teil von app.massFiles/Sitzung speichern,
-  // reiner Anzeige-Zustand dieser Sitzung.
+  // Ephemere UI-Aufklapp-/Auswahl-Zustaende (wie expandedStepIds bei den
+  // Prozessschritten) - bewusst NICHT Teil von app.massFiles/Sitzung
+  // speichern, reiner Anzeige-Zustand dieser Sitzung. massSelectedIds
+  // traegt die ueber Checkboxen ausgewaehlten Eintraege fuer die
+  // Massenzuordnung (Domäne/Kapitel auf einmal auf mehrere Eintraege
+  // anwenden) - bleibt ueber Domäne-/Kapitel-Aenderungen (Neusortierung)
+  // hinweg erhalten, da nach Eintrags-id statt DOM-Position gefuehrt.
   var massExpandedIds = {};
+  var massSelectedIds = {};
+  function massSelectedCount() { return Object.keys(massSelectedIds).length; }
+  function massBulkSelectOptionsHtml(options, unassignedLabel) {
+    return '<option value="">(nicht ändern)</option>' +
+      '<option value="__unassigned__">' + unassignedLabel + "</option>" +
+      options.map(function (o) { return '<option value="' + escapeHtml(o) + '">' + escapeHtml(o) + "</option>"; }).join("");
+  }
+  function renderMassBulkAssignSelects() {
+    var prevDomain = els.massBulkDomainSelect.value;
+    var prevChapter = els.massBulkChapterSelect.value;
+    els.massBulkDomainSelect.innerHTML = massBulkSelectOptionsHtml(massDomainOptionsList(), "Ohne Domäne");
+    els.massBulkChapterSelect.innerHTML = massBulkSelectOptionsHtml(massChapterOptionsList(), "Nicht zugeordnet");
+    if (Array.prototype.some.call(els.massBulkDomainSelect.options, function (o) { return o.value === prevDomain; })) els.massBulkDomainSelect.value = prevDomain;
+    if (Array.prototype.some.call(els.massBulkChapterSelect.options, function (o) { return o.value === prevChapter; })) els.massBulkChapterSelect.value = prevChapter;
+  }
+  function massUpdateSelectionUI() {
+    var n = massSelectedCount();
+    els.massSelectionCount.textContent = n + (n === 1 ? " ausgewählt" : " ausgewählt");
+    els.massBulkAssignBtn.disabled = n === 0;
+  }
   function renderMassFiles() {
     var list = app.massFiles;
     els.massEmpty.hidden = list.length > 0;
     els.massGroupsWrap.hidden = list.length === 0;
-    if (!list.length) { els.massGroups.innerHTML = ""; return; }
+    if (!list.length) { els.massGroups.innerHTML = ""; massUpdateSelectionUI(); return; }
     var domainOptions = massDomainOptionsList();
     var chapterOptions = massChapterOptionsList();
+    renderMassBulkAssignSelects();
     var groups = {};
     list.forEach(function (e) {
       var d = e.domain || "";
@@ -13829,7 +13872,9 @@
         var textCell = isOpen
           ? '<div style="white-space:pre-wrap; max-height:260px; overflow:auto;">' + escapeHtml(e.text) + "</div>"
           : "<span>" + escapeHtml(truncate(e.text, 220)) + "</span>";
-        return "<tr><td>" + escapeHtml(e.label) + "</td>" +
+        return "<tr>" +
+          '<td><input type="checkbox" class="mass-row-checkbox" data-id="' + e.id + '" aria-label="' + escapeHtml(e.label) + ' auswählen"' + (massSelectedIds[e.id] ? " checked" : "") + "></td>" +
+          "<td>" + escapeHtml(e.label) + "</td>" +
           '<td><select class="mass-domain-select" data-id="' + e.id + '" aria-label="Domäne">' + ragLibraryOptionsHtml(domainOptions, e.domain, "Ohne Domäne") + "</select></td>" +
           '<td><select class="mass-chapter-select" data-id="' + e.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapterOptions, e.chapterTitle, "Nicht zugeordnet") + "</select></td>" +
           "<td>" + massSourceLabel(e.source) + "</td>" +
@@ -13842,9 +13887,10 @@
       return '<div class="panel" style="margin-bottom:14px; padding:12px;">' +
         '<p class="section-label">' + escapeHtml(d || "Ohne Domäne") + " (" + entries.length + ")</p>" +
         '<div class="table-wrap" style="max-height:400px; overflow:auto;"><table class="simple-table">' +
-        "<thead><tr><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Quelle</th><th>Tickets</th><th>Textschnipsel</th><th></th></tr></thead>" +
+        "<thead><tr><th></th><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Quelle</th><th>Tickets</th><th>Textschnipsel</th><th></th></tr></thead>" +
         "<tbody>" + rows + "</tbody></table></div></div>";
     }).join("");
+    massUpdateSelectionUI();
   }
   els.massImportBtn.addEventListener("click", function () { els.massImportInput.click(); });
   els.massImportInput.addEventListener("change", async function () {
@@ -13941,6 +13987,13 @@
   }
   els.massCollectBtn.addEventListener("click", massCollectExistingContent);
   els.massGroups.addEventListener("change", function (e) {
+    var rowCheckbox = e.target.closest(".mass-row-checkbox");
+    if (rowCheckbox) {
+      var rid = parseInt(rowCheckbox.getAttribute("data-id"), 10);
+      if (rowCheckbox.checked) massSelectedIds[rid] = true; else delete massSelectedIds[rid];
+      massUpdateSelectionUI();
+      return;
+    }
     var domainSel = e.target.closest(".mass-domain-select");
     var chapterSel = e.target.closest(".mass-chapter-select");
     if (!domainSel && !chapterSel) return;
@@ -13967,6 +14020,7 @@
     var ok = await confirmDialog('Eintrag „' + entry.label + '“ wirklich löschen?');
     if (!ok) return;
     app.massFiles = app.massFiles.filter(function (r) { return r.id !== id; });
+    delete massSelectedIds[id];
     renderMassFiles();
     addLog("Massenverarbeitung: Eintrag \"" + entry.label + "\" gelöscht.");
     showToast("Gelöscht", 'Eintrag „' + entry.label + '“ wurde entfernt.');
@@ -14042,6 +14096,58 @@
   }
   els.massAiAssignBtn.addEventListener("click", massRunAiAssignment);
   els.massAiStopBtn.addEventListener("click", function () { if (massAiAbortController) massAiAbortController.abort(); });
+
+  // Mehrfachauswahl (Checkbox je Zeile) + Massenzuordnung: "Alle auswählen"/
+  // "Auswahl aufheben" sowie "Alle auswählen mit Name *" (einfaches
+  // Namensmuster mit * als Platzhalter, wie bei einer Datei-Suche) fuellen
+  // massSelectedIds; additiv (bestehende Auswahl bleibt erhalten), damit
+  // sich mehrere Muster nacheinander kombinieren lassen. Die Massen-
+  // zuordnung selbst (Domäne/Kapitel-Dropdown + "Auf Auswahl anwenden")
+  // setzt IMMER direkt (anders als die vorsichtige, nur leere Felder
+  // fuellende KI-/heuristische Zuordnung) - eine bewusste, manuelle
+  // Nutzeraktion ueberschreibt auch eine bereits vorhandene Zuordnung.
+  els.massSelectAllBtn.addEventListener("click", function () {
+    app.massFiles.forEach(function (e) { massSelectedIds[e.id] = true; });
+    renderMassFiles();
+  });
+  els.massSelectClearBtn.addEventListener("click", function () {
+    massSelectedIds = {};
+    renderMassFiles();
+  });
+  function massWildcardToRegex(pattern) {
+    var escaped = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".");
+    return new RegExp("^" + escaped + "$", "i");
+  }
+  els.massSelectPatternBtn.addEventListener("click", function () {
+    var pattern = (els.massSelectPatternInput.value || "").trim();
+    if (!pattern) { showToast("Kein Muster", "Bitte ein Namensmuster eingeben, z. B. \"Kapitel-*\" oder \"*.md\".", true); return; }
+    var re = massWildcardToRegex(pattern);
+    var matched = 0;
+    app.massFiles.forEach(function (e) { if (re.test(e.label)) { massSelectedIds[e.id] = true; matched++; } });
+    renderMassFiles();
+    showToast(matched ? "Ausgewählt" : "Keine Treffer",
+      matched ? matched + " Eintrag/Einträge nach Muster „" + pattern + "“ zusätzlich ausgewählt." : "Kein Eintrag passt zum Muster „" + pattern + "“.",
+      !matched);
+  });
+  els.massBulkAssignBtn.addEventListener("click", function () {
+    var n = massSelectedCount();
+    if (!n) return;
+    var domainVal = els.massBulkDomainSelect.value;
+    var chapterVal = els.massBulkChapterSelect.value;
+    if (!domainVal && !chapterVal) { showToast("Nichts gewählt", "Bitte Domäne und/oder Kapitel für die Massenzuordnung auswählen.", true); return; }
+    var changed = 0;
+    app.massFiles.forEach(function (e) {
+      if (!massSelectedIds[e.id]) return;
+      if (domainVal) e.domain = domainVal === "__unassigned__" ? "" : domainVal;
+      if (chapterVal) e.chapterTitle = chapterVal === "__unassigned__" ? "" : chapterVal;
+      changed++;
+    });
+    renderMassFiles();
+    addLog("Massenverarbeitung: Massenzuordnung auf " + changed + " ausgewählte(n) Eintrag/Einträge angewendet" +
+      (domainVal ? " (Domäne: " + (domainVal === "__unassigned__" ? "Ohne Domäne" : domainVal) + ")" : "") +
+      (chapterVal ? " (Kapitel: " + (chapterVal === "__unassigned__" ? "Nicht zugeordnet" : chapterVal) + ")" : "") + ".");
+    showToast("Zugeordnet", "Domäne/Kapitel für " + changed + " ausgewählte(n) Eintrag/Einträge übernommen.");
+  });
 
   renderMassFiles();
 
