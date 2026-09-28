@@ -411,6 +411,45 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("(8) Massenverarbeitung zeigt weiterhin nur ihre eigenen 9 Einträge (kein RAG-Bibliothek-Eintrag mit eingemischt)",
     doc.querySelectorAll("#mass-groups tbody tr").length === 9);
 
+  // ===================== (8a) "Kapitel als MD-Datei erstellen" je Domäne =====================
+  const domainMdBtn = doc.querySelector('.mass-domain-md-btn[data-domain="Contract Management"]');
+  const domainMdOverlay = doc.getElementById("mass-domain-md-modal-overlay");
+  const domainMdKey = doc.getElementById("mass-domain-md-modal-key");
+  const domainMdTextarea = doc.getElementById("mass-domain-md-textarea");
+  const domainMdStatusNote = doc.getElementById("mass-domain-md-status-note");
+  const domainMdSaveBtn = doc.getElementById("mass-domain-md-save-btn");
+  const domainMdDownloadBtn = doc.getElementById("mass-domain-md-download-btn");
+  check("(8a) Button 'Kapitel als MD-Datei erstellen' hinter der Domäne 'Contract Management' vorhanden", !!domainMdBtn);
+  fire(domainMdBtn, "click");
+  check("(8a) Dialog öffnet sich", domainMdOverlay.hidden === false);
+  check("(8a) Dialog-Titel zeigt Domänenname", domainMdKey.textContent === "Contract Management");
+  check("(8a) Text wurde neu erzeugt (Überschrift enthält Domänenname)", domainMdTextarea.value.startsWith("# Contract Management - Kapitel als MD-Datei"));
+  check("(8a) Download-Button vor dem ersten Speichern deaktiviert", domainMdDownloadBtn.disabled === true);
+  check("(8a) Statuszeile weist auf 'neu erzeugt' hin", domainMdStatusNote.textContent.includes("Neu erzeugt"));
+
+  const domainMdEdited = domainMdTextarea.value + "\n\nManuelle Nacharbeit Domäne.";
+  domainMdTextarea.value = domainMdEdited;
+  fire(domainMdTextarea, "input");
+  check("(8a) Download-Button bleibt nach Bearbeitung ohne Speichern deaktiviert", domainMdDownloadBtn.disabled === true);
+  fire(domainMdSaveBtn, "click");
+  check("(8a) Download-Button nach 'Speichern' aktiv", domainMdDownloadBtn.disabled === false);
+  check("(8a) Statuszeile bestätigt Speicherung", domainMdStatusNote.textContent.includes("Gespeichert"));
+
+  fire(domainMdDownloadBtn, "click");
+  await wait(50);
+  const domainMdSaved = savedFiles[savedFiles.length - 1];
+  check("(8a) Download enthält den gespeicherten (bearbeiteten) Text", !!domainMdSaved && domainMdSaved.data === domainMdEdited);
+  check("(8a) Download-Dateiname endet auf .md und enthält Domänennamen", !!domainMdSaved && /Contract_Management\.md$/.test(domainMdSaved.filename || ""));
+
+  fire(doc.getElementById("mass-domain-md-modal-cancel-btn"), "click");
+  check("(8a) Dialog schließt sich", domainMdOverlay.hidden === true);
+
+  fire(domainMdBtn, "click");
+  check("(8a) Beim erneuten Öffnen: gespeicherter (bearbeiteter) Stand geladen statt neu erzeugt", domainMdTextarea.value === domainMdEdited);
+  check("(8a) Download-Button beim erneuten Öffnen bereits aktiv (gespeicherter Stand)", domainMdDownloadBtn.disabled === false);
+  fire(doc.getElementById("mass-domain-md-modal-close"), "click");
+  check("(8a) Dialog auch über das X schließbar", domainMdOverlay.hidden === true);
+
   // ===================== (8b) Zusammenfassung je Kapitel (Merge zu einem Textfile) =====================
   const mergeBtn = doc.getElementById("mass-merge-btn");
   const mergeSpinner = doc.getElementById("mass-merge-spinner");
@@ -450,6 +489,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   const exportedJson = JSON.parse(savedFiles[savedFiles.length - 1].data);
   check("(10) Export enthält massFiles mit 8 Einträgen", Array.isArray(exportedJson.massFiles) && exportedJson.massFiles.length === 8);
   check("(10) Export enthält das bearbeitete Zusammenfassung-Gesamtdokument", typeof exportedJson.massMergedDoc === "string" && exportedJson.massMergedDoc.includes("Manuelle Nacharbeit."));
+  check("(10) Export enthält die gespeicherte Domänen-MD-Datei", exportedJson.massDomainDocs && exportedJson.massDomainDocs["Contract Management"] === domainMdEdited);
 
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
   await wait(100);
@@ -471,6 +511,12 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("(10) Nach Laden: 8 Einträge wiederhergestellt", doc.querySelectorAll("#mass-groups tbody tr").length === 8);
   check("(10) Nach Laden: Zusammenfassung-Textfeld wiederhergestellt", doc.getElementById("mass-merge-output").value.includes("Manuelle Nacharbeit."));
   check("(10) Nach Laden: Download-Button der Zusammenfassung aktiv", doc.getElementById("mass-merge-download-btn").disabled === false);
+
+  const restoredDomainMdBtn = doc.querySelector('.mass-domain-md-btn[data-domain="Contract Management"]');
+  fire(restoredDomainMdBtn, "click");
+  check("(10) Nach Laden: gespeicherte Domänen-MD-Datei wiederhergestellt", doc.getElementById("mass-domain-md-textarea").value === domainMdEdited);
+  check("(10) Nach Laden: Download-Button der Domänen-MD-Datei aktiv", doc.getElementById("mass-domain-md-download-btn").disabled === false);
+  fire(doc.getElementById("mass-domain-md-modal-cancel-btn"), "click");
 
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }
   const failed = checks.filter((c) => !c[1]);

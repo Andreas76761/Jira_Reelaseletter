@@ -2272,6 +2272,28 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="mass-domain-md-modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mass-domain-md-modal-title">
+    <div class="modal-head">
+      <div>
+        <div class="key mono" id="mass-domain-md-modal-key">Massenverarbeitung</div>
+        <h2 id="mass-domain-md-modal-title">Kapitel als MD-Datei</h2>
+      </div>
+      <button class="modal-close" id="mass-domain-md-modal-close" type="button" aria-label="Schließen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p class="desc" style="margin:0 0 10px;">Alle Textschnipsel dieser Domäne, sortiert nach Gliederungsreihenfolge, als eine MD-Datei. Direkt hier ansehen und editieren. Erst nach <b>Speichern</b> lässt sich der aktuelle Stand als Markdown-Datei herunterladen.</p>
+    <textarea class="text-input" id="mass-domain-md-textarea" rows="16" style="width:100%; font-family:inherit;"></textarea>
+    <p class="step-note" id="mass-domain-md-status-note"></p>
+    <div class="modal-actions">
+      <button class="btn ghost" id="mass-domain-md-modal-cancel-btn" type="button">Schließen</button>
+      <button class="btn primary" id="mass-domain-md-save-btn" type="button">Speichern</button>
+      <button class="btn ghost" id="mass-domain-md-download-btn" type="button" disabled>Als Markdown herunterladen</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script id="initial-ticket-data" type="application/json">__TICKET_DATA__</script>
@@ -4210,7 +4232,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.47.0";
+  var APP_VERSION = "2.48.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5542,6 +5564,8 @@
     "mass-select-row", "mass-select-all-btn", "mass-select-clear-btn", "mass-select-pattern-input", "mass-select-pattern-btn", "mass-selection-count",
     "mass-bulk-assign-row", "mass-bulk-domain-select", "mass-bulk-chapter-select", "mass-bulk-assign-btn",
     "mass-merge-btn", "mass-merge-spinner", "mass-merge-label", "mass-merge-status-note", "mass-merge-output", "mass-merge-download-btn",
+    "mass-domain-md-modal-overlay", "mass-domain-md-modal-key", "mass-domain-md-textarea", "mass-domain-md-status-note",
+    "mass-domain-md-modal-close", "mass-domain-md-modal-cancel-btn", "mass-domain-md-save-btn", "mass-domain-md-download-btn",
     "graph-multiselect-count", "graph-multiselect-name-input", "graph-multiselect-save-btn", "graph-multiselect-clear-btn",
     "graph-zoom-out-btn", "graph-zoom-in-btn", "graph-zoom-reset-btn", "graph-zoom-level",
     "graph-view-tabs", "graph-view-desc",
@@ -5749,7 +5773,15 @@
     // Punkt 3) - eigenstaendiges Gegenstueck zu ragMergedDoc, bewusst als
     // eigener, editierbarer Text gespeichert statt bei jedem Render neu
     // zusammengebaut, damit manuelle Nacharbeiten nicht verloren gehen.
-    massMergedDoc: ""
+    massMergedDoc: "",
+    // Je Domäne der zuletzt GESPEICHERTE Stand der "Kapitel als MD-Datei
+    // erstellen"-Ansicht (Button hinter jedem Domänen-Gruppenkopf, Punkt 2)
+    // - Key ist der Domänenname ("" fuer "Ohne Domäne"). Wird beim Öffnen
+    // des Dialogs neu aus den aktuellen Textschnipseln vorbelegt, sofern
+    // noch nichts gespeichert wurde; ein Download ist erst nach "Speichern"
+    // moeglich, damit nie ein unbeabsichtigt bearbeiteter Zwischenstand
+    // heruntergeladen wird.
+    massDomainDocs: {}
   };
 
   function addLog(message) {
@@ -5937,6 +5969,8 @@
     els.massMergeOutput.value = "";
     els.massMergeDownloadBtn.disabled = true;
     els.massMergeStatusNote.textContent = "";
+    app.massDomainDocs = {};
+    if (!els.massDomainMdModalOverlay.hidden) closeMassDomainMdModal();
   }
 
   // Admin-Funktion (Einstellungen): im Unterschied zu resetSession() werden
@@ -5992,6 +6026,8 @@
     els.massMergeOutput.value = "";
     els.massMergeDownloadBtn.disabled = true;
     els.massMergeStatusNote.textContent = "";
+    app.massDomainDocs = {};
+    if (!els.massDomainMdModalOverlay.hidden) closeMassDomainMdModal();
     addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
   }
   els.deleteAllDataBtn.addEventListener("click", async function () {
@@ -6062,7 +6098,8 @@
       ragLibrary: app.ragLibrary,
       ragMergedDoc: app.ragMergedDoc,
       massFiles: app.massFiles,
-      massMergedDoc: app.massMergedDoc
+      massMergedDoc: app.massMergedDoc,
+      massDomainDocs: app.massDomainDocs
     };
   }
   function restoreSessionState(data) {
@@ -6105,10 +6142,12 @@
     if (typeof data.ragMergedDoc === "string") app.ragMergedDoc = data.ragMergedDoc;
     if (Array.isArray(data.massFiles)) app.massFiles = data.massFiles;
     if (typeof data.massMergedDoc === "string") app.massMergedDoc = data.massMergedDoc;
+    if (data.massDomainDocs && typeof data.massDomainDocs === "object") app.massDomainDocs = data.massDomainDocs;
     app.initialized = true;
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
     if (!els.compareModalOverlay.hidden) closeCompareModal();
+    if (!els.massDomainMdModalOverlay.hidden) closeMassDomainMdModal();
     refreshDashboard(false);
     renderImportsTable();
     renderChangesTable();
@@ -8035,6 +8074,7 @@
     if (e.key !== "Escape") return;
     if (!els.modalOverlay.hidden) closeModal();
     if (!els.compareModalOverlay.hidden) closeCompareModal();
+    if (!els.massDomainMdModalOverlay.hidden) closeMassDomainMdModal();
   });
 
   /* ============ Teil 4: Export (downloads-Capability) ============ */
@@ -13922,7 +13962,10 @@
           "</tr>";
       }).join("");
       return '<div class="panel" style="margin-bottom:14px; padding:12px;">' +
-        '<p class="section-label">' + escapeHtml(d || "Ohne Domäne") + " (" + entries.length + ")</p>" +
+        '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">' +
+        '<p class="section-label" style="margin:0;">' + escapeHtml(d || "Ohne Domäne") + " (" + entries.length + ")</p>" +
+        '<button type="button" class="btn ghost btn-tiny mass-domain-md-btn" data-domain="' + escapeHtml(d) + '">Kapitel als MD-Datei erstellen</button>' +
+        "</div>" +
         '<div class="table-wrap" style="max-height:400px; overflow:auto;"><table class="simple-table">' +
         "<thead><tr><th></th><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Quelle</th><th>Tickets</th><th>Textschnipsel</th><th></th></tr></thead>" +
         "<tbody>" + rows + "</tbody></table></div></div>";
@@ -14049,6 +14092,8 @@
       renderMassFiles();
       return;
     }
+    var domainMdBtn = e.target.closest(".mass-domain-md-btn");
+    if (domainMdBtn) { massOpenDomainMdModal(domainMdBtn.getAttribute("data-domain") || ""); return; }
     var delBtn = e.target.closest(".mass-delete-btn");
     if (!delBtn) return;
     var id = parseInt(delBtn.getAttribute("data-id"), 10);
@@ -14248,6 +14293,67 @@
   els.massMergeDownloadBtn.addEventListener("click", async function () {
     var ok = await saveOrWarn("Massenverarbeitung-Zusammenfassung.txt", els.massMergeOutput.value);
     if (ok) showToast("Gespeichert", "Gesamtdokument heruntergeladen.");
+  });
+
+  // "Kapitel als MD-Datei erstellen" (Button hinter jedem Domänen-Gruppenkopf,
+  // Punkt 2): eigenstaendiges, auf EINE Domäne eingeschränktes Gegenstueck zu
+  // massBuildMergedDoc() (Punkt 3, alle Domänen). Öffnet einen Dialog mit dem
+  // aus den aktuellen Textschnipseln dieser Domäne erzeugten MD-Text (nach
+  // Gliederungsreihenfolge sortiert), editierbar. Ein Download ist bewusst
+  // erst nach explizitem "Speichern" möglich (nicht wie beim Zusammenführen
+  // in Punkt 3 sofort bei jeder Eingabe) - jede weitere Änderung nach dem
+  // Speichern sperrt den Download wieder, bis erneut gespeichert wird, damit
+  // nie ein unbeabsichtigt bearbeiteter Zwischenstand heruntergeladen wird.
+  function massBuildDomainDoc(domain) {
+    var entries = app.massFiles.filter(function (e) { return (e.domain || "") === domain; });
+    var byChapter = {};
+    entries.forEach(function (e) {
+      var c = e.chapterTitle || "";
+      if (!byChapter[c]) byChapter[c] = [];
+      byChapter[c].push(e);
+    });
+    var chapterNames = Object.keys(byChapter).filter(function (c) { return c !== ""; });
+    chapterNames.sort(function (a, b) { return massChapterOrderIndex(a) - massChapterOrderIndex(b); });
+    if (byChapter[""]) chapterNames.push("");
+    var parts = ["# " + (domain || "Ohne Domäne") + " - Kapitel als MD-Datei\n\n_Automatisch aus " + entries.length +
+      " Textschnipsel(n) dieser Domäne zusammengeführt, sortiert nach Gliederungsreihenfolge. Bitte redaktionell prüfen._"];
+    chapterNames.forEach(function (c) {
+      parts.push("\n\n## Kapitel: " + (c || "Nicht zugeordnet"));
+      byChapter[c].forEach(function (e) { parts.push("\n\n" + e.text); });
+    });
+    return parts.join("");
+  }
+  var massDomainMdCurrentDomain = null;
+  function massOpenDomainMdModal(domain) {
+    massDomainMdCurrentDomain = domain;
+    els.massDomainMdModalKey.textContent = domain || "Ohne Domäne";
+    var saved = app.massDomainDocs[domain];
+    els.massDomainMdTextarea.value = typeof saved === "string" ? saved : massBuildDomainDoc(domain);
+    els.massDomainMdDownloadBtn.disabled = typeof saved !== "string";
+    els.massDomainMdStatusNote.textContent = typeof saved === "string" ? "Gespeicherter Stand geladen." : "Neu erzeugt - bitte prüfen, editieren und speichern.";
+    els.massDomainMdModalOverlay.hidden = false;
+    els.massDomainMdModalClose.focus();
+  }
+  function closeMassDomainMdModal() { els.massDomainMdModalOverlay.hidden = true; massDomainMdCurrentDomain = null; }
+  els.massDomainMdModalClose.addEventListener("click", closeMassDomainMdModal);
+  els.massDomainMdModalCancelBtn.addEventListener("click", closeMassDomainMdModal);
+  els.massDomainMdModalOverlay.addEventListener("click", function (e) { if (e.target === els.massDomainMdModalOverlay) closeMassDomainMdModal(); });
+  els.massDomainMdTextarea.addEventListener("input", function () {
+    els.massDomainMdDownloadBtn.disabled = true;
+  });
+  els.massDomainMdSaveBtn.addEventListener("click", function () {
+    if (massDomainMdCurrentDomain === null) return;
+    app.massDomainDocs[massDomainMdCurrentDomain] = els.massDomainMdTextarea.value;
+    els.massDomainMdDownloadBtn.disabled = false;
+    els.massDomainMdStatusNote.textContent = "Gespeichert - Download jetzt möglich.";
+    addLog("Massenverarbeitung: MD-Datei für Domäne \"" + (massDomainMdCurrentDomain || "Ohne Domäne") + "\" gespeichert.");
+    showToast("Gespeichert", "Stand für „" + (massDomainMdCurrentDomain || "Ohne Domäne") + "“ gespeichert.");
+  });
+  els.massDomainMdDownloadBtn.addEventListener("click", async function () {
+    if (massDomainMdCurrentDomain === null) return;
+    var filename = safeFilename(massDomainMdCurrentDomain || "Ohne_Domaene") + ".md";
+    var ok = await saveOrWarn(filename, els.massDomainMdTextarea.value);
+    if (ok) showToast("Gespeichert", filename + " wurde heruntergeladen.");
   });
 
   /* ============ Teil 9c: Benutzerhandbuch - Kapitel-Generator (KI-Fließtext je Kapitel) ============

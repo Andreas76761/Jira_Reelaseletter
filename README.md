@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.47.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.48.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -744,7 +744,15 @@ zusammenzuführen.
   vorkommende Domänen der geladenen Tickets) und sortiert **innerhalb
   jeder Domäne automatisch nach der Reihenfolge der Gliederung**
   (`app.outline`, nicht alphabetisch) – "Ohne Domäne"/"Nicht zugeordnet"
-  jeweils zuletzt. Domäne/Kapitel sind je Eintrag editierbar (volle
+  jeweils zuletzt. Hinter jedem Domänen-Gruppenkopf sitzt der Button
+  **"Kapitel als MD-Datei erstellen"**: öffnet einen Dialog mit allen
+  Textschnipseln dieser einen Domäne als eine MD-Datei (nach
+  Gliederungsreihenfolge sortiert), direkt darin ansehen und editieren.
+  Ein Download ist bewusst erst nach explizitem **"Speichern"** möglich –
+  jede weitere Bearbeitung danach sperrt den Download wieder, bis erneut
+  gespeichert wird. Der gespeicherte Stand bleibt je Domäne erhalten (auch
+  beim erneuten Öffnen) und ist Teil der Sitzung (Speichern/Laden, "Alle
+  Daten löschen"). Domäne/Kapitel sind je Eintrag editierbar (volle
   Gliederung zur Auswahl); bei hochgeladenen/eingelesenen Inhalten wird
   automatisch ein Vorschlag vorbelegt - **inhaltsbasiert**: durchsucht den
   GESAMTEN Text der Datei (nicht nur Dateiname/erste Überschriftzeile)
