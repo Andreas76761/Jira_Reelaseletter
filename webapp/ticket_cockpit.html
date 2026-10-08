@@ -6483,7 +6483,7 @@
     app.nextImportId = data.nextImportId || 1;
     if (data.view) app.view = data.view;
     if (data.priorityPoints) app.priorityPoints = data.priorityPoints;
-    if (data.labels) app.labels = data.labels;
+    if (data.labels) app.labels = migrateLabelCatalog(data.labels);
     if (data.synonyms) app.synonyms = data.synonyms;
     if (data.glossaryTranslations) app.glossaryTranslations = data.glossaryTranslations;
     if (data.abbrevTranslations) app.abbrevTranslations = data.abbrevTranslations;
@@ -6996,6 +6996,27 @@
       ["Sonderthemen", "Rollout", "Rollout"]
     ];
     return rows.map(function (r) { return { category: r[0], de: r[1], en: r[2] }; });
+  }
+
+  // Migration für aus einer ÄLTEREN Sitzung (Sitzungsdatei oder IndexedDB-
+  // Autosave, vor v2.59.0) geladene Labels-Stammdaten: data.labels ersetzt
+  // app.labels bislang komplett 1:1 - ein Bestandsnutzer, der eine vor der
+  // Sparte/Rolle/Sonderthemen-Erweiterung gespeicherte Sitzung wiederherstellt,
+  // würde dadurch nie die neuen Kategorien bekommen (die inhaltsbasierte
+  // Erkennung bliebe für ihn dauerhaft inaktiv). Fix: fehlt eine der
+  // Standard-Kategorien aus labelSeedData() KOMPLETT im wiederhergestellten
+  // Bestand, werden deren Zeilen ergänzt - vom Nutzer bereits bearbeitete/
+  // erweiterte Kategorien (auch Sparte/Rolle/Sonderthemen selbst, falls schon
+  // vorhanden) bleiben unverändert, es wird nichts überschrieben oder entfernt.
+  function migrateLabelCatalog(labels) {
+    if (!Array.isArray(labels)) return labelSeedData();
+    var existingCategories = {};
+    labels.forEach(function (l) { if (l && l.category) existingCategories[l.category] = true; });
+    var merged = labels.slice();
+    labelSeedData().forEach(function (seed) {
+      if (!existingCategories[seed.category]) merged.push(seed);
+    });
+    return merged;
   }
 
   // Standard-Gliederung (Einstellungen -> Benutzerhandbuch-Gliederung):
@@ -7891,17 +7912,39 @@
     var entry = app.priorityPoints.filter(function (p) { return p.type.trim().toLowerCase() === norm; })[0];
     return entry ? entry.points : null;
   }
+  // Kurze Begriffe (<=3 Zeichen, z.B. "MO", "HQ", "Van", "Pkw") nur als
+  // eigenstaendiges Wort matchen - sonst faelschliche Treffer als Substring
+  // in unverwandten Woertern ("Monitoring", "remote", "relevant"). Laengere
+  // Begriffe (auch deutsche Komposita) behalten den reinen Substring-
+  // Abgleich, da dort eine Wortgrenzen-Pruefung echte, gewollte Treffer in
+  // zusammengesetzten Woertern verhindern wuerde.
+  function labelTermMatchesText(haystack, term) {
+    if (!term) return false;
+    var t = term.toLowerCase();
+    if (t.length > 3) return haystack.indexOf(t) !== -1;
+    var escaped = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    var re = new RegExp("(^|[^a-z0-9äöüß])" + escaped + "($|[^a-z0-9äöüß])");
+    return re.test(haystack);
+  }
   // Labels: reiner Text-Abgleich (keine KI) der in Einstellungen gepflegten
   // Begriffsliste (je Themengebiet, Deutsch UND Englisch) gegen
-  // Zusammenfassung/Beschreibung/Domain des Tickets. matchedLabelEntries()
-  // liefert die vollen Label-Objekte (fuer Kategorie-Auswertung), die
-  // beiden duennen Wrapper darunter bleiben fuer bestehende Aufrufer mit
-  // reinen String-Arrays kompatibel.
+  // Zusammenfassung/Beschreibung/Domain des Tickets, ZUSAETZLICH (Vereinigung,
+  // kein Ersatz) ein woertlicher Abgleich gegen die rohen Jira-Labels
+  // (rawTicket.labels) - ein Ticket, das literal mit z.B. "Testing" oder
+  // "Pkw" getaggt ist, muss dieses Label auch dann fuehren, wenn der Begriff
+  // in Zusammenfassung/Beschreibung/Domain gar nicht vorkommt. Der rohe
+  // Label-Abgleich ist bewusst EXAKT (kein Substring), daher ohne das
+  // Kurzwort-Problem oben. matchedLabelEntries() liefert die vollen
+  // Label-Objekte (fuer Kategorie-Auswertung), die beiden duennen Wrapper
+  // darunter bleiben fuer bestehende Aufrufer mit reinen String-Arrays
+  // kompatibel.
   function matchedLabelEntries(rawTicket) {
     var haystack = [rawTicket.summary || "", rawTicket.description || "", (rawTicket.custom_fields && rawTicket.custom_fields.Domain) || ""]
       .join(" \n ").toLowerCase();
+    var rawLabels = (rawTicket.labels || []).map(function (l) { return ("" + (l || "")).trim().toLowerCase(); });
     return app.labels.filter(function (lbl) {
-      return (lbl.de && haystack.indexOf(lbl.de.toLowerCase()) !== -1) || (lbl.en && haystack.indexOf(lbl.en.toLowerCase()) !== -1);
+      if (rawLabels.length && ((lbl.de && rawLabels.indexOf(lbl.de.toLowerCase()) !== -1) || (lbl.en && rawLabels.indexOf(lbl.en.toLowerCase()) !== -1))) return true;
+      return labelTermMatchesText(haystack, lbl.de) || labelTermMatchesText(haystack, lbl.en);
     });
   }
   function dedupeStrings(arr) {
@@ -10492,6 +10535,18 @@
     app.labels.forEach(function (l) {
       if (l.de) existingTerms[l.de.toLowerCase()] = true;
       if (l.en) existingTerms[l.en.toLowerCase()] = true;
+    });
+    // Die automatischen Stammdaten-Werte (Status/Typ/Domäne/Anlagemonat, s.
+    // buildStammdatenLabels()) sind bereits bekannt und kein "neuer" Begriff,
+    // würden aber wegen der +2-Gewichtung in glExtractKeywords() (jeder
+    // Treffer in t.autoLabels zählt zusätzlich) sonst faelschlich als
+    // Kandidat erscheinen, sobald >=3 Tickets denselben Wert teilen (z.B.
+    // Status "Offen") - und damit echte unbekannte Begriffe aus den Top 30
+    // verdrängen.
+    tickets.forEach(function (t) {
+      [t.status, t.issueType, t.domain, anlagemonatJahrLabel(t.raw)].forEach(function (v) {
+        if (v) existingTerms[String(v).toLowerCase()] = true;
+      });
     });
     return glExtractKeywords(tickets)
       .filter(function (k) { return !existingTerms[k.term.toLowerCase()] && k.tickets.length >= LABEL_CANDIDATE_MIN_TICKETS; })

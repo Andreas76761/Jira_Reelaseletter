@@ -46,6 +46,9 @@ const xmlMassenupload = `<?xml version="1.0"?><rss><channel>
   <item><key>SD-4</key><summary>Flottenkarte beantragen</summary><description>Antrag fuer eine neue Flottenkarte.</description><status>Offen</status><type>Task</type></item>
   <item><key>SD-5</key><summary>Flottenkarte sperren</summary><description>Flottenkarte wurde verloren.</description><status>Offen</status><type>Task</type></item>
   <item><key>SD-6</key><summary>Flottenkarte abrechnen</summary><description>Monatliche Abrechnung der Flottenkarte.</description><status>Offen</status><type>Task</type></item>
+  <item><key>SD-7</key><summary>Monitoring der Systemverfuegbarkeit</summary><description>Diese Anpassung ist relevant fuer alle Nutzer, ohne Bezug zu Fahrzeugen oder Rollen.</description><status>Offen</status><type>Task</type></item>
+  <item><key>SD-8</key><summary>Allgemeine Wartungsarbeit</summary><description>Routinecheck ohne inhaltlichen Bezug.</description><status>Offen</status><type>Task</type>
+    <labels><label>Testing</label></labels></item>
 </channel></rss>`;
 
 
@@ -69,7 +72,7 @@ const xmlMassenupload = `<?xml version="1.0"?><rss><channel>
   Object.defineProperty(input, "files", { value: [new win.File([xmlMassenupload], "stammdaten.xml", { type: "application/xml" })], configurable: true });
   fire(input, "change");
   await wait(400);
-  check("(1) 6 Tickets aus Massenupload geladen", doc.getElementById("stat-tickets").textContent === "6");
+  check("(1) 8 Tickets aus Massenupload geladen", doc.getElementById("stat-tickets").textContent === "8");
 
   // ===================== (2) Jira-Einzelticket-Import: dasselbe Verfahren greift auch hier =====================
   // Nutzt denselben ingestTickets()/refreshDashboard()-Pfad wie Massenupload,
@@ -82,7 +85,7 @@ const xmlMassenupload = `<?xml version="1.0"?><rss><channel>
   Object.defineProperty(singleInput, "files", { value: [new win.File([singleHtml], "ONESCM-50123.html", { type: "text/html" })], configurable: true });
   fire(singleInput, "change");
   await wait(400);
-  check("(2) 7 Tickets nach Einzelticket-Import", doc.getElementById("stat-tickets").textContent === "7");
+  check("(2) 9 Tickets nach Einzelticket-Import", doc.getElementById("stat-tickets").textContent === "9");
 
   // ===================== (3) Einstellungen -> Labels: neue Stammdaten-Kategorien vorhanden =====================
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
@@ -115,6 +118,20 @@ const xmlMassenupload = `<?xml version="1.0"?><rss><channel>
   const onescm = rowFor("ONESCM-50123");
   check("(4) ONESCM-50123 (Einzelticket-Import): Typ 'Bug' als Stammdaten-Label sichtbar", !!onescm && onescm.children[6].textContent.includes("Bug"));
   check("(4) ONESCM-50123 (Einzelticket-Import): Status 'In Bearbeitung' als Stammdaten-Label sichtbar", !!onescm && onescm.children[6].textContent.includes("In Bearbeitung"));
+
+  // Regression: kurze Begriffe ("MO"/"Van", s. labelSeedData() Rolle/Sparte)
+  // duerfen NICHT als Substring in unverwandten Woertern treffen (SD-7 enthaelt
+  // "Monitoring" und "relevant", beide mit "mo"/"van" als Teilstring, aber
+  // ohne inhaltlichen Bezug zu Rolle MO oder Sparte Van).
+  const sd7 = rowFor("SD-7");
+  check("(4) SD-7: 'MO' NICHT faelschlich aus 'Monitoring' erkannt (Wortgrenzen-Fix)", !!sd7 && !sd7.children[6].textContent.split(/\s*,\s*/).includes("MO"));
+  check("(4) SD-7: 'Van' NICHT faelschlich aus 'relevant' erkannt (Wortgrenzen-Fix)", !!sd7 && !sd7.children[6].textContent.split(/\s*,\s*/).includes("Van"));
+
+  // Regression: woertliches Jira-Label fuer eine Sonderthemen-Kategorie muss
+  // auch dann als Label erscheinen, wenn der Begriff im Freitext gar nicht
+  // vorkommt (SD-8 hat das Label "Testing", aber keinen Text-Treffer).
+  const sd8 = rowFor("SD-8");
+  check("(4) SD-8: woertliches Jira-Label 'Testing' ohne Freitext-Treffer als Label sichtbar", !!sd8 && sd8.children[6].textContent.includes("Testing"));
 
   // ===================== (5) Dashboard-Label-Filter: neue Werte waehlbar =====================
   doc.querySelector('.nav-item[data-view="dashboard"]').click();
@@ -157,6 +174,10 @@ const xmlMassenupload = `<?xml version="1.0"?><rss><channel>
   const candidateTbodyText = doc.getElementById("label-candidate-tbody").textContent;
   check("(7) 'Flottenkarte' erscheint als Label-Kandidat (3 Tickets)", candidateTbodyText.includes("Flottenkarte"));
   check("(7) Bereits bekannte Begriffe (z.B. 'Pkw') erscheinen NICHT als Kandidat", !candidateTbodyText.includes("Pkw"));
+  // Regression: der automatische Stammdaten-Wert "Offen" (Status, teilen sich
+  // 7 der 9 Tickets) ist bereits bekannt und darf trotz der +2-Gewichtung in
+  // glExtractKeywords() NICHT als "neuer" Kandidat erscheinen.
+  check("(7) Stammdaten-Wert 'Offen' (Status) erscheint NICHT als Kandidat", !candidateTbodyText.includes("Offen"));
 
   const candidateRow = Array.from(doc.querySelectorAll("#label-candidate-tbody tr")).find((tr) => tr.textContent.includes("Flottenkarte"));
   check("(7) Kandidat zeigt Trefferanzahl 3", !!candidateRow && candidateRow.children[1].textContent.trim() === "3");
@@ -177,6 +198,35 @@ const xmlMassenupload = `<?xml version="1.0"?><rss><channel>
   await wait(50);
   const sd4 = rowFor("SD-4");
   check("(7) SD-4 zeigt das neu übernommene Label 'Flottenkarte' sofort (ohne Neuimport)", !!sd4 && sd4.children[6].textContent.includes("Flottenkarte"));
+
+  // ===================== (8) Migration: Sitzungsdatei aus einer AELTEREN Version
+  // (vor den Sparte/Rolle/Sonderthemen-Kategorien) laden - die neuen Kategorien
+  // muessen automatisch ergaenzt werden, eine vom Nutzer selbst angelegte
+  // eigene Kategorie bleibt dabei unverändert erhalten. =====================
+  doc.querySelector('.nav-item[data-view="einstellungen"]').click();
+  await wait(50);
+  fire(doc.getElementById("delete-all-data-btn"), "click");
+  await confirmViaModal(doc);
+  const oldSession = {
+    sessionFileFormat: 1, savedAt: new Date().toISOString(), appVersion: "2.50.0",
+    ticketStoreEntries: [], imports: [], changes: [], log: [],
+    labels: [
+      { category: "Fahrzeuge & Fahrzeugdaten", de: "Flotte", en: "Fleet" },
+      { category: "Eigene Kategorie", de: "MeinBegriff", en: "MyTerm" }
+    ]
+  };
+  const oldSessionInput = doc.getElementById("session-import-input");
+  Object.defineProperty(oldSessionInput, "files", {
+    value: [new win.File([JSON.stringify(oldSession)], "alte-sitzung.json", { type: "application/json" })],
+    configurable: true
+  });
+  fire(oldSessionInput, "change");
+  await wait(200);
+  check("(8) Alte Kategorie 'Fahrzeuge & Fahrzeugdaten'/'Flotte' bleibt erhalten", labelRows().some((r) => r.textContent.includes("Flotte")));
+  check("(8) Eigene, nicht-Standard-Kategorie 'Eigene Kategorie' bleibt erhalten", labelRows().some((r) => r.textContent.includes("Eigene Kategorie") && r.textContent.includes("MeinBegriff")));
+  check("(8) Fehlende Kategorie 'Sparte' wurde nachtraeglich ergaenzt (Migration)", labelRows().some((r) => r.textContent.includes("Sparte") && r.textContent.includes("Pkw")));
+  check("(8) Fehlende Kategorie 'Rolle' wurde nachtraeglich ergaenzt (Migration)", labelRows().some((r) => r.textContent.includes("Rolle") && r.textContent.includes("HQ")));
+  check("(8) Fehlende Kategorie 'Sonderthemen' wurde nachtraeglich ergaenzt (Migration)", labelRows().some((r) => r.textContent.includes("Sonderthemen") && r.textContent.includes("Reifen")));
 
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }
   const failed = checks.filter((c) => !c[1]);
