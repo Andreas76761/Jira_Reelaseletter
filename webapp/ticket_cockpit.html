@@ -4262,7 +4262,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.52.0";
+  var APP_VERSION = "2.53.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -14635,8 +14635,12 @@
   // dieses eine Kapitel enthalten (wichtig im "alle Kapitel einer
   // Domäne"-Modus, damit jedes Kapitel nur seine eigenen Tickets bekommt
   // statt des gesamten Domänen-Mixes).
-  function manualRowsForChapter(chapterTitle) {
-    return manualMatchedTickets().filter(function (t) { return (t.outlineChapters || []).indexOf(chapterTitle) !== -1; });
+  // matched (optional): bereits berechnete manualMatchedTickets()-Liste -
+  // vermeidet, bei JEDEM Kapitel/Label im Erzeugungs-Lauf (manualGenerate
+  // Chapters) erneut den kompletten Ticket-Datensatz zu filtern (sonst
+  // O(Gruppen * Tickets) statt O(Tickets) ueber den gesamten Lauf).
+  function manualRowsForChapter(chapterTitle, matched) {
+    return (matched || manualMatchedTickets()).filter(function (t) { return (t.outlineChapters || []).indexOf(chapterTitle) !== -1; });
   }
   // Gruppierung (Filterpanel "Gruppierung"): "chapter" (Standard, wie
   // bisher) oder "label" - dann ein eigener Text je Label-Themengebiet
@@ -14652,11 +14656,11 @@
     }
     return manualTargetChapters().map(function (c) { return { kind: "chapter", name: c }; });
   }
-  function manualRowsForGroup(group) {
+  function manualRowsForGroup(group, matched) {
     if (group.kind === "label") {
-      return manualMatchedTickets().filter(function (t) { return (t.autoLabelCategories || []).indexOf(group.name) !== -1; });
+      return (matched || manualMatchedTickets()).filter(function (t) { return (t.autoLabelCategories || []).indexOf(group.name) !== -1; });
     }
-    return manualRowsForChapter(group.name);
+    return manualRowsForChapter(group.name, matched);
   }
   // Speicher-Schluessel in app.manualChapters: Label-Gruppen werden mit
   // "Label: "-Praefix abgelegt, damit sie nie mit einem echten Kapiteltitel
@@ -14874,6 +14878,12 @@
   // Browser-App) - stattdessen als Liste im UI sichtbar (renderManualCheckpoints).
   var MANUAL_RUN_CHECKPOINT_INTERVAL = 50;
   var MANUAL_RUN_CHECKPOINT_LIMIT = 10;
+  // Voller Kartenneuaufbau (renderManualChapters()) waehrend eines Laufs
+  // (manualGenerateChapters) nur noch alle MANUAL_RERENDER_INTERVAL fertig-
+  // gestellte Kapitel/Labels, analog zu MASS_RERENDER_INTERVAL bei der
+  // Massenverarbeitung-KI-Zuordnung - vermeidet O(Kapitel^2) Kartenaufbau
+  // bei vielen in einem Lauf fertiggestellten Kapiteln/Labels.
+  var MANUAL_RERENDER_INTERVAL = 20;
   function manualSaveRunCheckpoint(afterCount) {
     var snapshot = JSON.parse(JSON.stringify(app.manualChapters));
     var chapterCount = Object.keys(snapshot).length;
@@ -14954,9 +14964,15 @@
       durchgangCount++;
       if (durchgangCount % MANUAL_RUN_CHECKPOINT_INTERVAL === 0) manualSaveRunCheckpoint(durchgangCount);
     }
+    // Einmal vor der Schleife berechnet statt bei JEDEM Kapitel/Label neu
+    // (manualRowsForGroup/manualRowsForChapter filtern sonst bei G Gruppen
+    // G-mal den kompletten, u. U. mehrere hundert Tickets umfassenden
+    // Datensatz - O(Gruppen * Tickets) statt O(Tickets) ueber den Lauf).
+    var matchedTickets = manualMatchedTickets();
+    var completedCount = 0;
     for (var i = 0; i < groups.length; i++) {
       var group = groups[i];
-      var rows = manualRowsForGroup(group);
+      var rows = manualRowsForGroup(group, matchedTickets);
       var kindLabel = group.kind === "label" ? "Label" : "Kapitel";
       if (!rows.length) {
         els.manualStatusNote.textContent = kindLabel + " \"" + group.name + "\" übersprungen (keine passenden Tickets).";
@@ -14969,7 +14985,15 @@
         }, bumpDurchgang);
         var key = manualStorageKey(group);
         manualStoreVersion(key, { de: text, en: "", generatedAt: new Date().toLocaleString("de-DE"), ticketCount: rows.length, role: role, groupKind: group.kind, groupName: group.name });
-        renderManualChapters();
+        completedCount++;
+        // Voller Kartenneuaufbau (renderManualChapters(), s. u.) nicht mehr
+        // bei JEDEM fertigen Kapitel, sondern nur noch periodisch (wie beim
+        // Massenverarbeitung-Performance-Fix) - bei vielen Kapiteln in
+        // einem Lauf sonst O(Kapitel^2) Kartenaufbauten statt O(Kapitel).
+        // Das gerade fertige Kapitel bekommt trotzdem sofort sichtbares
+        // Feedback ueber die Statuszeile; die Karte selbst erscheint beim
+        // naechsten periodischen/abschliessenden Render.
+        if (completedCount % MANUAL_RERENDER_INTERVAL === 0) renderManualChapters();
         addLog((group.kind === "label" ? "Benutzerhandbuch-Text (Label-Themengebiet) erzeugt: \"" : "Benutzerhandbuch-Kapitel erzeugt: \"") + group.name + "\" (" + rows.length + " Tickets, ~" + manualWordCount(text) + " Wörter" + (role !== "alle" ? ", Rolle " + role : "") + ").");
         checkpointItems.push({ name: group.name, kind: group.kind, words: manualWordCount(text), tickets: rows.length });
         if (checkpointItems.length === MANUAL_CHECKPOINT_SIZE) { manualLogCheckpoint(checkpointItems); checkpointItems = []; }
@@ -14979,6 +15003,7 @@
         showToast(kindLabel + " \"" + group.name + "\" fehlgeschlagen", msg, true);
       }
     }
+    renderManualChapters();
     els.manualStatusNote.textContent = aborted ? "Abgebrochen." : (groups.length > 1 ? "Fertig." : "");
     els.manualGenerateBtn.disabled = false;
     els.manualStopBtn.hidden = true;
@@ -15022,6 +15047,41 @@
   function manualBuildQualityCheckPrompt(title, text) {
     return ragPromptFor("manualQualityCheck") + "\n\nKapitel: " + title + "\n\n" + text;
   }
+  function manualQualityCheckResultHtml(qc) {
+    return qc ? '<div class="panel" style="margin-top:8px; padding:10px; white-space:pre-wrap; font-size:13px;">' +
+      '<div class="mono" style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">Geprüft am ' + escapeHtml(qc.generatedAt) + '</div>' +
+      escapeHtml(qc.analysisText) + "</div>" : "";
+  }
+  function manualFindChapterCard(chapterTitle) {
+    return Array.prototype.filter.call(els.manualChaptersList.querySelectorAll("[data-manual-chapter]"), function (c) {
+      return c.getAttribute("data-manual-chapter") === chapterTitle;
+    })[0] || null;
+  }
+  // Aktualisiert Spinner/Button-Beschriftung + Ergebnis-Panel EINER Karte
+  // direkt im DOM, ohne renderManualChapters() (kompletter Neuaufbau ALLER
+  // Karten) - bei "Alle prüfen" (s. u.) über N Kapitel sonst O(N) komplette
+  // Kartenaufbauten PRO Kapitel statt einmalig. Anders als bei
+  // manualGenerateChapters/massRunAiAssignment braucht es hier nicht
+  // einmal einen periodischen vollen Render: die Qualitätsprüfung ändert
+  // weder Reihenfolge noch Gruppierung der Karten, ein In-Place-Update
+  // bleibt also waehrend des gesamten Laufs korrekt.
+  function manualUpdateQualityCheckUiInPlace(chapterTitle) {
+    var card = manualFindChapterCard(chapterTitle);
+    if (!card) return;
+    var entry = app.manualChapters[chapterTitle];
+    var qc = entry && entry.qualityCheck;
+    var running = !!manualQualityCheckRunning[chapterTitle];
+    var btn = card.querySelector('[data-manual-action="quality-check"]');
+    if (btn) {
+      btn.disabled = running;
+      var spinner = btn.querySelector(".btn-spinner");
+      if (spinner) spinner.hidden = !running;
+      var label = btn.querySelector(".manual-qc-label");
+      if (label) label.textContent = running ? "Prüft …" : (qc ? "Qualitätsprüfung erneut ausführen" : "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)");
+    }
+    var resultWrap = card.querySelector(".manual-qc-result");
+    if (resultWrap) resultWrap.innerHTML = manualQualityCheckResultHtml(qc);
+  }
   // signal (optional): ermöglicht Abbruch über "Alle prüfen" (s. u.) - bei
   // Abbruch wird der cancelled-Fehler bewusst WEITERGEREICHT (throw), statt
   // wie jeder andere Fehler als Toast angezeigt zu werden, damit der
@@ -15035,7 +15095,7 @@
     if (!entry || !entry.de) return false;
     if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return false; }
     manualQualityCheckRunning[chapterTitle] = true;
-    renderManualChapters();
+    manualUpdateQualityCheckUiInPlace(chapterTitle);
     try {
       var result = await sampleApi(manualBuildQualityCheckPrompt(chapterTitle, entry.de), { signal: signal, modelTier: "default", cache: false });
       entry.qualityCheck = { generatedAt: new Date().toLocaleString("de-DE"), analysisText: result.text || "" };
@@ -15048,7 +15108,7 @@
       return false;
     } finally {
       delete manualQualityCheckRunning[chapterTitle];
-      renderManualChapters();
+      manualUpdateQualityCheckUiInPlace(chapterTitle);
     }
   }
   // "Alle prüfen": wie massRunAiAssignment (Massenverarbeitung) sequenziell
@@ -15276,14 +15336,12 @@
       var displayTitle = entry.groupKind === "label" ? entry.groupName + " (Label-Themengebiet)" : title;
       var qc = entry.qualityCheck;
       var qcRunning = !!manualQualityCheckRunning[title];
-      var qcHtml = '<div style="margin-top:10px;">' +
+      var qcHtml = '<div class="manual-qc-wrap" style="margin-top:10px;">' +
         '<button type="button" class="btn ghost btn-tiny" data-manual-action="quality-check"' + (qcRunning ? " disabled" : "") + '>' +
         '<span class="btn-spinner"' + (qcRunning ? "" : " hidden") + '></span> ' +
-        (qcRunning ? "Prüft …" : (qc ? "Qualitätsprüfung erneut ausführen" : "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)")) +
+        '<span class="manual-qc-label">' + (qcRunning ? "Prüft …" : (qc ? "Qualitätsprüfung erneut ausführen" : "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)")) + '</span>' +
         "</button>" +
-        (qc ? '<div class="panel" style="margin-top:8px; padding:10px; white-space:pre-wrap; font-size:13px;">' +
-          '<div class="mono" style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">Geprüft am ' + escapeHtml(qc.generatedAt) + '</div>' +
-          escapeHtml(qc.analysisText) + "</div>" : "") +
+        '<div class="manual-qc-result">' + manualQualityCheckResultHtml(qc) + "</div>" +
         "</div>";
       return '<div class="manual-chapter-card panel" data-manual-chapter="' + escapeHtml(title) + '" style="margin-bottom:16px; padding:14px;">' +
         '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;">' +

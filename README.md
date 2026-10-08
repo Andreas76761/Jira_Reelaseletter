@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.52.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.53.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1026,7 +1026,14 @@ zusammenzuführen.
   "[Nur PKW]"/"[Nur Van]"/"[Nur Markt]"-Scope-Tags werden als farbiges
   Icon-Badge statt als roher Text dargestellt – macht rollen-/
   fahrzeugspezifische Abschnitte auf einen Blick sichtbar, ohne den
-  bearbeitbaren Rohtext zu verändern.
+  bearbeitbaren Rohtext zu verändern. **Performance**: sowohl bei "Kapitel
+  erstellen" als auch bei "Alle prüfen" wird die Kapitel-Liste nicht mehr
+  bei jedem einzelnen Kapitel komplett neu aufgebaut – die Qualitätsprüfung
+  aktualisiert nur noch die betroffene Karte direkt, die Erstellung baut
+  die Liste nur noch periodisch (alle 20 Kapitel) sowie einmal abschließend
+  neu auf; zusätzlich wird die Ticket-Auswahl für den Lauf nur noch einmal
+  statt je Kapitel neu berechnet – bei vielen Kapiteln in einem Lauf
+  spürbar schneller.
 - **Referenz-Handbuch-Import + Handbuch-Änderung nach Kapitel** – Import →
   eigener Bereich "Referenz-Handbuch" zum Hochladen eines bereits
   bestehenden, veröffentlichten Word-Benutzerhandbuchs (z. B. eine ca.
