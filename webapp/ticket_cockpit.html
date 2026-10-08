@@ -4335,7 +4335,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.56.0";
+  var APP_VERSION = "2.56.1";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5185,7 +5185,15 @@
     var idx = 0;
     var headerMatch = /^#\s+(\S+)(?:\s+–\s+(.*))?$/.exec((lines[idx] || "").trim());
     if (!headerMatch) {
-      throw new Error("Keine gültige Ticket-Markdown-Datei - erste Zeile muss \"# TICKET-KEY\" oder \"# TICKET-KEY – Zusammenfassung\" sein.");
+      // Kein Fehler im eigentlichen Sinn, sondern ein Hinweis, dass diese
+      // Datei schlicht kein Ticket-Export ist (z. B. ein RAG-Batch-
+      // Teilschritt oder sonstiger Markdown-Text aus einem anderen Bereich
+      // der App) - notATicket markiert das fuer handleMdDateienImport()
+      // unten, damit es dort als "übersprungen" statt als harter Fehler
+      // gezaehlt/angezeigt wird.
+      var err = new Error("Kein Ticket-Export - erste Zeile ist keine Ticket-Überschrift (\"# TICKET-KEY\" oder \"# TICKET-KEY – Zusammenfassung\").");
+      err.notATicket = true;
+      throw err;
     }
     var ticket = { key: headerMatch[1] };
     if (headerMatch[2]) ticket.summary = headerMatch[2].trim();
@@ -9027,7 +9035,14 @@
     return out;
   }
   async function handleMdDateienImport(files, comment) {
-    var allTickets = [], errors = [], okCount = 0, totalEntries = 0;
+    // Zwei getrennte Kategorien fuer nicht uebernommene Eintraege:
+    // "skipped" = erkennbar KEIN Ticket-Export (z. B. ein RAG-Batch-
+    // Teilschritt oder anderer Markdown-Text aus einem anderen Bereich der
+    // App, s. parseMarkdownTicket()/err.notATicket) - kein eigentlicher
+    // Fehler, daher weder im Protokoll als "Import-Fehler" noch im Toast als
+    // rote Fehlermeldung dargestellt. "errors" bleibt echten Fehlern
+    // vorbehalten (ZIP nicht lesbar, unerwartete Ausnahme).
+    var allTickets = [], errors = [], skipped = [], okCount = 0, totalEntries = 0;
     for (var fi = 0; fi < files.length; fi++) {
       var file = files[fi];
       var entries;
@@ -9043,30 +9058,48 @@
           allTickets.push(parseMarkdownTicket(entries[ei].text, entries[ei].name));
           okCount++;
         } catch (e) {
-          errors.push(entries[ei].name + ": " + ((e && e.message) || "Unbekannter Fehler."));
-          addLog("Import-Fehler (MD-Dateien) → " + entries[ei].name + ": " + ((e && e.message) || "Unbekannter Fehler."));
+          if (e && e.notATicket) {
+            skipped.push(entries[ei].name);
+            addLog("MD-Dateien: „" + entries[ei].name + "“ ist kein Ticket-Export, übersprungen.");
+          } else {
+            errors.push(entries[ei].name + ": " + ((e && e.message) || "Unbekannter Fehler."));
+            addLog("Import-Fehler (MD-Dateien) → " + entries[ei].name + ": " + ((e && e.message) || "Unbekannter Fehler."));
+          }
         }
       }
     }
-    if (!allTickets.length) {
-      throw new Error(
-        "Keine Tickets aus den MD-Datei(en) übernommen" +
-        (errors.length ? " - " + errors.slice(0, 3).join(" / ") + (errors.length > 3 ? " …" : "") : "") + "."
-      );
-    }
     var sourceLabel = files.length === 1 ? files[0].name : files.length + " MD-Datei(en)";
+    if (!allTickets.length) {
+      if (errors.length) {
+        throw new Error(
+          "Keine Tickets aus den MD-Datei(en) übernommen - " +
+          errors.slice(0, 3).join(" / ") + (errors.length > 3 ? " …" : "") + "."
+        );
+      }
+      // Nur uebersprungene (nicht fehlgeschlagene) Dateien, aber gar kein
+      // Ticket darunter - kein Absturz/keine rote Fehlermeldung, sondern ein
+      // sachlicher Hinweis, da die Auswahl schlicht keine Ticket-Exporte
+      // enthielt (z. B. versehentlich RAG-Batch-Teilschritte ausgewählt).
+      showToast(
+        "Keine Ticket-Exporte gefunden",
+        sourceLabel + ": keine der " + totalEntries + " Datei(en) ist ein Ticket-Export (z. B. RAG-Batch-Teilschritte " +
+        "oder anderer Markdown-Text) - übersprungen, nichts importiert.",
+        false
+      );
+      return;
+    }
     var record = ingestTickets(allTickets, {
       source: sourceLabel, when: nowLabel(),
       format: "MD-Dateien (" + okCount + "/" + totalEntries + " Datei(en) gelesen)",
       comment: comment
     });
-    var errSuffix = errors.length
-      ? " – " + errors.length + " von " + totalEntries + " Datei(en) fehlgeschlagen (Details im Protokoll unter Verarbeitung)."
-      : "";
+    var suffix = "";
+    if (skipped.length) suffix += " " + skipped.length + " Datei(en) kein Ticket-Export, übersprungen.";
+    if (errors.length) suffix += " – " + errors.length + " von " + totalEntries + " Datei(en) fehlgeschlagen (Details im Protokoll unter Verarbeitung).";
     showToast(
       errors.length ? "Import teilweise erfolgreich" : "Import erfolgreich",
       sourceLabel + ": " + record.ticketCount + " Tickets aus " + okCount + "/" + totalEntries + " Datei(en) (" +
-      record.stats.neu + " neu, " + record.stats.geaendert + " geändert)." + errSuffix,
+      record.stats.neu + " neu, " + record.stats.geaendert + " geändert)." + suffix,
       errors.length > 0
     );
   }

@@ -190,17 +190,21 @@ Zweite Zeile der Beschreibung.</description>
   check("Genau EIN Import-Eintrag für das ZIP (nicht je Eintrag einer)", importRows2.length === 1);
   check("Import-Zeile nennt den ZIP-Dateinamen", importRows2[0] && importRows2[0].textContent.includes("mdrt_export.zip"));
 
-  // ===================== (3) Teilweiser Fehlschlag: ZIP mit einer kaputten MD-Datei =====================
+  // ===================== (3) Nicht-Ticket-MD (z. B. RAG-Batch-Teilschritt) wird übersprungen, NICHT als Fehler gezählt =====================
+  // Reproduziert echte RAG-Batch-Teilschritt-Dateien (s. buildMdBatchStepFile()
+  // unten) - erste Zeile ist KEINE Ticket-Überschrift ("# KEY" / "# KEY – Text"),
+  // da das Label mehrere Wörter vor dem " – "-Trenner enthalten kann.
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
   await wait(50);
   fire(doc.getElementById("delete-all-data-btn"), "click");
   await confirmViaModal(doc);
 
+  const ragBatchText = "# Contract Management Zusammenfassung (aus Auswahl) – Zusammenfassung, Teilschritt\n\n_Teilschritt 1 von 2._\n\nIrgendein RAG-Batch-Text, kein Ticket-Export.";
   const zip3 = new JSZipNode();
   zip3.file("MDRT-1.md", mdrt1Text);
-  zip3.file("kaputt.md", "Das ist keine gültige Ticket-Markdown-Datei ohne Überschrift.");
+  zip3.file("RAG-Batch-01-von-02.md", ragBatchText);
   const zipBuf3 = await zip3.generateAsync({ type: "nodebuffer" });
-  const zipFile3 = new win.File([zipBuf3], "teilweise_kaputt.zip", { type: "application/zip" });
+  const zipFile3 = new win.File([zipBuf3], "RAG-Batch-Teilschritte_2.zip", { type: "application/zip" });
 
   doc.querySelector('.nav-item[data-view="import"]').click();
   await wait(50);
@@ -212,11 +216,35 @@ Zweite Zeile der Beschreibung.</description>
   fire(mdInput3, "change");
   for (let waited = 0; waited < 5000 && doc.getElementById("toast").textContent === toastBefore3; waited += 100) await wait(100);
   const toast3 = doc.getElementById("toast");
-  check("Teilweiser Fehlschlag: Toast meldet 'teilweise erfolgreich'", toast3.textContent.includes("teilweise erfolgreich") || toast3.className.includes("error"));
-  check("Teilweiser Fehlschlag: 1/2 Datei(en) gelesen genannt", toast3.textContent.includes("1/2"));
+  check("Nicht-Ticket-MD übersprungen: Toast zeigt KEINEN Fehler (kein echter Fehlschlag)", !toast3.className.includes("error"));
+  check("Nicht-Ticket-MD übersprungen: Toast meldet 'Import erfolgreich' (nicht 'teilweise erfolgreich')", toast3.textContent.includes("Import erfolgreich") && !toast3.textContent.includes("teilweise"));
+  check("Nicht-Ticket-MD übersprungen: Toast nennt 1 Datei als übersprungen", toast3.textContent.includes("1 Datei(en) kein Ticket-Export, übersprungen"));
   doc.querySelector('.nav-item[data-view="verarbeitung"]').click();
   await wait(50);
-  check("Protokoll enthält Fehler-Eintrag für 'kaputt.md'", doc.body.textContent.includes("kaputt.md"));
+  check("Protokoll nennt die übersprungene Datei (ohne 'Import-Fehler'-Prefix)", doc.body.textContent.includes("RAG-Batch-01-von-02.md") && doc.body.textContent.includes("ist kein Ticket-Export, übersprungen"));
+
+  // ===================== (4) NUR Nicht-Ticket-MD ausgewählt -> informativer Hinweis statt Fehler, nichts importiert =====================
+  doc.querySelector('.nav-item[data-view="einstellungen"]').click();
+  await wait(50);
+  fire(doc.getElementById("delete-all-data-btn"), "click");
+  await confirmViaModal(doc);
+
+  const onlyBatchFile = new win.File([ragBatchText], "RAG-Batch-01-von-02.md", { type: "text/markdown" });
+  doc.querySelector('.nav-item[data-view="import"]').click();
+  await wait(50);
+  fire(doc.querySelector('.import-tab[data-mode="md-dateien"]'), "click");
+  await wait(50);
+  const mdInput4 = doc.getElementById("file-input");
+  Object.defineProperty(mdInput4, "files", { value: [onlyBatchFile], configurable: true });
+  const toastBefore4 = doc.getElementById("toast").textContent;
+  fire(mdInput4, "change");
+  for (let waited = 0; waited < 5000 && doc.getElementById("toast").textContent === toastBefore4; waited += 100) await wait(100);
+  const toast4 = doc.getElementById("toast");
+  check("Nur Nicht-Ticket-MD: Toast zeigt KEINEN Fehler", !toast4.className.includes("error"));
+  check("Nur Nicht-Ticket-MD: Toast erklärt 'Keine Ticket-Exporte gefunden'", toast4.textContent.includes("Keine Ticket-Exporte gefunden"));
+  doc.querySelector('.nav-item[data-view="dateiverwaltung"]').click();
+  await wait(50);
+  check("Nur Nicht-Ticket-MD: kein Import-Eintrag angelegt (nichts zum Importieren)", doc.querySelectorAll("#imports-tbody tr").length === 0);
 
   function setValue(el, v) { el.value = v; fire(el, "input"); }
 

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.56.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.56.1"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -634,13 +634,18 @@ zusammenzuführen.
     `.md`-Dateien hochladen – beides wird zu **einem** Import zusammengeführt
     statt je Datei einen eigenen anzulegen (anders als bei den übrigen
     Format-Tabs, bei denen jede ausgewählte Datei ein eigener Import wird).
-    Scheitert eine einzelne `.md`-Datei (z. B. fehlendes Format), werden die
-    übrigen trotzdem übernommen – der Fehler erscheint mit Dateiname im
-    Protokoll (Verarbeitung → 1. Jira Verarbeitung) sowie in der
-    Erfolgsmeldung. Erwartet exakt das von `renderMarkdown()` erzeugte
-    Format (Überschrift `# SCHLÜSSEL – Zusammenfassung`, Feld/Wert-Tabelle,
-    optionaler Abschnitt "## Beschreibung") – bei abweichendem Format wird
-    ehrlich ein Fehler gemeldet statt etwas zu erraten.
+    Erwartet exakt das von `renderMarkdown()` erzeugte Format (Überschrift
+    `# SCHLÜSSEL – Zusammenfassung`, Feld/Wert-Tabelle, optionaler Abschnitt
+    "## Beschreibung"). Eine Datei, deren erste Zeile dieses Schema klar
+    nicht erfüllt (z. B. ein RAG-Batch-Teilschritt-Export mit mehrwortigem
+    Titel statt Ticket-Schlüssel), wird als "kein Ticket-Export" erkannt und
+    übersprungen statt als Fehler gezählt – mit Dateiname im Protokoll
+    (Verarbeitung → 1. Jira Verarbeitung) und in der Erfolgsmeldung
+    vermerkt. Sind in der Auswahl ausschließlich solche Nicht-Ticket-Dateien
+    enthalten, wird kein Import angelegt und stattdessen eine Hinweismeldung
+    ("Keine Ticket-Exporte gefunden") angezeigt. Ein echter Fehler (z. B.
+    ein nicht lesbares ZIP) wird weiterhin als Fehler mit Dateiname
+    gemeldet; die übrigen Dateien werden trotzdem übernommen.
   - **Dateiansicht** (am Ende des Import-Bereichs) – eine bereits
     importierte Datei auswählen und ihre daraus geladenen Tickets in einem
     lesbaren, XML-ähnlichen Format ansehen, unabhängig vom
