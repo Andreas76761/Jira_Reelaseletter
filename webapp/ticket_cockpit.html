@@ -14418,7 +14418,14 @@
         finalText = synthResult.text;
         if (synthResult.truncated) truncatedAny = true;
       }
-      finalText += ticketSourcesFooter(ragExtractedRows);
+      // Nicht ragExtractedRows (das waehrend eines laufenden/pausierten
+      // Laufs ueber die weiterhin aktiven Extraktions-Bedienelemente bereits
+      // durch eine NEUE Auswahl ersetzt worden sein kann) - sondern die
+      // tatsaechlich fuer DIESEN Lauf an Claude gesendeten Tickets (run.
+      // batches), sonst wuerde die Quellen-Fussnote den erzeugten Text
+      // faelschlich der neuen, nicht der tatsaechlich verarbeiteten Auswahl
+      // zuschreiben.
+      finalText += ticketSourcesFooter([].concat.apply([], run.batches));
       els.ragOutput.textContent = finalText;
       els.ragDownloadBtn.disabled = false;
       els.ragLibrarySaveBtn.disabled = false;
@@ -16958,8 +16965,13 @@
     var cacheKey = ticketKey + "||" + (domain || "") + "||" + (chapterTitle || "") + "||" + (subTitle || "");
     if (app.ticketRefIds[cacheKey]) return app.ticketRefIds[cacheKey];
     var bucketKey = abbr + "-" + chapNr + "." + subNr + "-" + year;
-    app.ticketRefSeq[bucketKey] = (app.ticketRefSeq[bucketKey] || 0) + 1;
-    var id = bucketKey + "-" + ("00" + app.ticketRefSeq[bucketKey]).slice(-3);
+    var seq = (app.ticketRefSeq[bucketKey] || 0) + 1;
+    app.ticketRefSeq[bucketKey] = seq;
+    // slice(-3) wuerde ab Sequenz 1000 die FUEHRENDEN Ziffern abschneiden
+    // (1001 -> "001", Kollision mit Sequenz 1 im selben Bucket) - nur
+    // auffuellen, wenn die Zahl tatsaechlich kuerzer als 3 Stellen ist.
+    var seqStr = seq < 1000 ? ("00" + seq).slice(-3) : String(seq);
+    var id = bucketKey + "-" + seqStr;
     app.ticketRefIds[cacheKey] = id;
     return id;
   }
@@ -16987,19 +16999,20 @@
   // Textschnipsel-Unterkapitel gibt es hier bewusst nicht (das ist nur fuer
   // manuell kuratierte Massenverarbeitung-/RAG-Bibliothek-Einträge gedacht,
   // s. subchapterOptionsForChapter()), daher immer Unterkapitelnummer "00".
-  var TICKET_SOURCES_FOOTER_MAX = 60;
+  // Absichtlich OHNE Obergrenze: RAG erlaubt Laeufe bis RAG_MAX_TICKETS
+  // (10.000) Tickets - eine gekappte Quellenliste wuerde fuer Tickets
+  // jenseits der Kappung genau die Rueckverfolgbarkeit wieder zunichtemachen,
+  // die diese Fussnote eigentlich herstellen soll.
   function ticketSourcesFooter(rows) {
     if (!rows || !rows.length) return "";
-    var shown = rows.slice(0, TICKET_SOURCES_FOOTER_MAX);
-    var lines = shown.map(function (r) {
+    var lines = rows.map(function (r) {
       var t = ticketByKey(r.key);
       var chapterTitle = (t && t.outlineChapters && t.outlineChapters[0]) || "";
       var domain = (t && t.domain) || r.domain || "";
       var ref = ticketReferenceId(r.key, domain, chapterTitle, "");
       return (ref ? ref + " " : "") + "(" + r.key + ")";
     });
-    var extra = rows.length - shown.length;
-    return "\n\n---\n**Quellen:** " + lines.join(", ") + (extra > 0 ? " … (+" + extra + " weitere)" : "");
+    return "\n\n---\n**Quellen:** " + lines.join(", ");
   }
 
   var glExpanded = {};
