@@ -85,7 +85,9 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   const pl3Row = rowFor("PL-3", "releaseversion-tbody");
   check("PL-3 zeigt Typ 'Sonderfall-XYZ'", !!pl3Row && pl3Row.children[2].textContent.trim() === "Sonderfall-XYZ");
   check("PL-3 (unbekannter Typ) zeigt ehrlich 'Unbekannt' statt geraten", !!pl3Row && pl3Row.children[5].textContent.trim() === "Unbekannt");
-  check("PL-3 ohne Label-Treffer zeigt '–'", !!pl3Row && pl3Row.children[6].textContent.trim() === "–");
+  check("PL-3 ohne Glossar-Treffer zeigt dennoch die Stammdaten-Labels Status/Typ (kein erfundener Themengebiet-Treffer)",
+    !!pl3Row && pl3Row.children[6].textContent.includes("Offen") && pl3Row.children[6].textContent.includes("Sonderfall-XYZ") &&
+    !pl3Row.children[6].textContent.includes("Fahrzeugverwaltung") && !pl3Row.children[6].textContent.includes("IBAN"));
 
   // ===================== Job 5 + Job 6 haben ebenfalls die neuen Spalten =====================
   doc.querySelector('.import-tab[data-vsub="jira-liste"]').click();

@@ -1373,6 +1373,17 @@
               </div>
             </section>
           </div>
+          <section style="margin-top:16px;">
+            <p class="section-label">Label-Kandidaten – "Suche weitere Labels" (<span id="label-candidate-count">0</span>)</p>
+            <p class="desc">Wiederkehrende Begriffe aus den geladenen Tickets, die noch in keiner Stammdaten-Kategorie (Einstellungen → Labels) erfasst sind – dieselbe Stichwort-Erkennung wie bei der Gliederung, erfundene Begriffe gibt es nicht. Je Begriff eine Kategorie wählen (bestehende Kategorien wie "Sparte"/"Rolle"/"Sonderthemen" oder eine eigene) und mit "In Stammdaten übernehmen" dauerhaft hinzufügen – danach jederzeit in Einstellungen → Labels bearbeitbar.</p>
+            <div class="panel table-wrap" style="max-height:360px; overflow:auto;">
+              <table class="simple-table" id="label-candidate-table">
+                <thead><tr><th>Begriff</th><th>Tickets</th><th>Kategorie</th><th></th></tr></thead>
+                <tbody id="label-candidate-tbody"></tbody>
+              </table>
+              <div class="empty-hint" id="label-candidate-empty">Noch nicht extrahiert.</div>
+            </div>
+          </section>
         </div>
 
         <!-- 4) Releaseversion -->
@@ -4355,7 +4366,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.58.0";
+  var APP_VERSION = "2.59.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5765,6 +5776,7 @@
     "verarbeitung-burger-wrap", "verarbeitung-burger-btn", "verarbeitung-burger-menu",
     "extract-glossary-btn", "abbrev-count", "abbrev-tbody", "abbrev-empty",
     "glossary-candidate-count", "glossary-candidate-tbody", "glossary-candidate-empty",
+    "label-candidate-count", "label-candidate-tbody", "label-candidate-empty",
     "glossary-candidate-tbody-register", "glossary-candidate-empty-register",
     "abbrev-tbody-register", "abbrev-empty-register",
     "releaseversion-total", "releaseversion-tbody",
@@ -5885,7 +5897,7 @@
     // NUR die Vorschau der bereits per Dashboard-Checkbox getroffenen Auswahl -
     // keine neue Master-Tabelle, siehe renderListenauswahlPreview()).
     listPreviewFilter: { issueType: "", excludeTypes: {} },
-    extracted: { abbreviations: [], glossaryCandidates: [], ran: false },
+    extracted: { abbreviations: [], glossaryCandidates: [], labelCandidates: [], ran: false },
     // Zusatzstatus je Job fuer die Prozessschritt-Anzeige, der sich nicht
     // direkt aus den obigen Datenstrukturen ableiten laesst (z. B. ob eine
     // Aktion bereits ausgefuehrt wurde oder dabei ein Fehler auftrat).
@@ -6232,7 +6244,7 @@
     ticketDerivedCache.clear();
     app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
     app.generatedImages = []; app.uploadedImages = []; app.initialized = false; app.nextImportId = 1;
-    app.extracted = { abbreviations: [], glossaryCandidates: [], ran: false };
+    app.extracted = { abbreviations: [], glossaryCandidates: [], labelCandidates: [], ran: false };
     app.jobState = {
       glossarExtrakt: { error: null },
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
@@ -6252,6 +6264,7 @@
     renderGallery();
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
+    renderExtractedLabelCandidates();
     els.releaseMatchSummary.hidden = true;
     els.releaseMissingWrap.hidden = true;
     els.releaseKeysInput.value = "";
@@ -6298,7 +6311,7 @@
     ticketDerivedCache.clear();
     app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
     app.generatedImages = []; app.uploadedImages = []; app.initialized = false; app.nextImportId = 1;
-    app.extracted = { abbreviations: [], glossaryCandidates: [], ran: false };
+    app.extracted = { abbreviations: [], glossaryCandidates: [], labelCandidates: [], ran: false };
     app.jobState = {
       glossarExtrakt: { error: null },
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
@@ -6319,6 +6332,7 @@
     renderGallery();
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
+    renderExtractedLabelCandidates();
     els.releaseMatchSummary.hidden = true;
     els.releaseMissingWrap.hidden = true;
     els.releaseKeysInput.value = "";
@@ -6454,7 +6468,8 @@
     app.savedLists = data.savedLists || [];
     app.nextSavedListId = data.nextSavedListId || 1;
     app.listPreviewFilter = data.listPreviewFilter || { issueType: "", excludeTypes: {} };
-    app.extracted = data.extracted || { abbreviations: [], glossaryCandidates: [], ran: false };
+    app.extracted = data.extracted || { abbreviations: [], glossaryCandidates: [], labelCandidates: [], ran: false };
+    if (!Array.isArray(app.extracted.labelCandidates)) app.extracted.labelCandidates = [];
     app.jobState = data.jobState || {
       glossarExtrakt: { error: null },
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
@@ -6468,7 +6483,7 @@
     app.nextImportId = data.nextImportId || 1;
     if (data.view) app.view = data.view;
     if (data.priorityPoints) app.priorityPoints = data.priorityPoints;
-    if (data.labels) app.labels = data.labels;
+    if (data.labels) app.labels = migrateLabelCatalog(data.labels);
     if (data.synonyms) app.synonyms = data.synonyms;
     if (data.glossaryTranslations) app.glossaryTranslations = data.glossaryTranslations;
     if (data.abbrevTranslations) app.abbrevTranslations = data.abbrevTranslations;
@@ -6504,6 +6519,7 @@
     renderGallery();
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
+    renderExtractedLabelCandidates();
     renderPointsTable();
     renderLabelsList();
     Object.keys(TERMINOLOGY_LISTS).forEach(renderTerminologyList);
@@ -6957,9 +6973,50 @@
       ["Governance & Blueprint", "Marktorganisation", "Market organization"],
       ["System, Rollen & Zugang", "Vorlagenverwaltung", "Template management"],
       ["System, Rollen & Zugang", "Administrationsbereich", "Admin section"],
-      ["System, Rollen & Zugang", "International Workshop", "International workshop"]
+      ["System, Rollen & Zugang", "International Workshop", "International workshop"],
+      // Sparte/Rolle/Sonderthemen (Stammdaten-Erweiterung): dieselben
+      // woertlichen Werte wie beim Sparte-/Rollen-Filter (SPARTE_FILTER_VALUES/
+      // ROLE_FILTER_VALUES, s. Teil 8b) - ueber die normale, inhaltsbasierte
+      // Label-Erkennung (matchedLabelEntries) treffen sie zusaetzlich zur
+      // woertlichen Jira-Label-Pruefung zu, wenn der Begriff im Ticket-Text
+      // (Zusammenfassung/Beschreibung/Domäne) vorkommt.
+      ["Sparte", "Pkw", "Pkw"],
+      ["Sparte", "Van", "Van"],
+      ["Sparte", "Markt", "Markt"],
+      ["Rolle", "Retail", "Retail"],
+      ["Rolle", "Markt", "Markt"],
+      ["Rolle", "MO", "MO"],
+      ["Rolle", "HQ", "HQ"],
+      ["Sonderthemen", "Reifen", "Tires"],
+      ["Sonderthemen", "Reporting", "Reporting"],
+      ["Sonderthemen", "Testing", "Testing"],
+      ["Sonderthemen", "Schnittstellen", "Interfaces"],
+      ["Sonderthemen", "Templates", "Templates"],
+      ["Sonderthemen", "Migration", "Migration"],
+      ["Sonderthemen", "Rollout", "Rollout"]
     ];
     return rows.map(function (r) { return { category: r[0], de: r[1], en: r[2] }; });
+  }
+
+  // Migration für aus einer ÄLTEREN Sitzung (Sitzungsdatei oder IndexedDB-
+  // Autosave, vor v2.59.0) geladene Labels-Stammdaten: data.labels ersetzt
+  // app.labels bislang komplett 1:1 - ein Bestandsnutzer, der eine vor der
+  // Sparte/Rolle/Sonderthemen-Erweiterung gespeicherte Sitzung wiederherstellt,
+  // würde dadurch nie die neuen Kategorien bekommen (die inhaltsbasierte
+  // Erkennung bliebe für ihn dauerhaft inaktiv). Fix: fehlt eine der
+  // Standard-Kategorien aus labelSeedData() KOMPLETT im wiederhergestellten
+  // Bestand, werden deren Zeilen ergänzt - vom Nutzer bereits bearbeitete/
+  // erweiterte Kategorien (auch Sparte/Rolle/Sonderthemen selbst, falls schon
+  // vorhanden) bleiben unverändert, es wird nichts überschrieben oder entfernt.
+  function migrateLabelCatalog(labels) {
+    if (!Array.isArray(labels)) return labelSeedData();
+    var existingCategories = {};
+    labels.forEach(function (l) { if (l && l.category) existingCategories[l.category] = true; });
+    var merged = labels.slice();
+    labelSeedData().forEach(function (seed) {
+      if (!existingCategories[seed.category]) merged.push(seed);
+    });
+    return merged;
   }
 
   // Standard-Gliederung (Einstellungen -> Benutzerhandbuch-Gliederung):
@@ -7855,23 +7912,84 @@
     var entry = app.priorityPoints.filter(function (p) { return p.type.trim().toLowerCase() === norm; })[0];
     return entry ? entry.points : null;
   }
+  // Kurze Begriffe (<=3 Zeichen, z.B. "MO", "HQ", "Van", "Pkw") nur als
+  // eigenstaendiges Wort matchen - sonst faelschliche Treffer als Substring
+  // in unverwandten Woertern ("Monitoring", "remote", "relevant"). Laengere
+  // Begriffe (auch deutsche Komposita) behalten den reinen Substring-
+  // Abgleich, da dort eine Wortgrenzen-Pruefung echte, gewollte Treffer in
+  // zusammengesetzten Woertern verhindern wuerde.
+  function labelTermMatchesText(haystack, term) {
+    if (!term) return false;
+    var t = term.toLowerCase();
+    if (t.length > 3) return haystack.indexOf(t) !== -1;
+    var escaped = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    var re = new RegExp("(^|[^a-z0-9äöüß])" + escaped + "($|[^a-z0-9äöüß])");
+    return re.test(haystack);
+  }
   // Labels: reiner Text-Abgleich (keine KI) der in Einstellungen gepflegten
   // Begriffsliste (je Themengebiet, Deutsch UND Englisch) gegen
-  // Zusammenfassung/Beschreibung/Domain des Tickets. matchedLabelEntries()
-  // liefert die vollen Label-Objekte (fuer Kategorie-Auswertung), die
-  // beiden duennen Wrapper darunter bleiben fuer bestehende Aufrufer mit
-  // reinen String-Arrays kompatibel.
+  // Zusammenfassung/Beschreibung/Domain des Tickets, ZUSAETZLICH (Vereinigung,
+  // kein Ersatz) ein woertlicher Abgleich gegen die rohen Jira-Labels
+  // (rawTicket.labels) - ein Ticket, das literal mit z.B. "Testing" oder
+  // "Pkw" getaggt ist, muss dieses Label auch dann fuehren, wenn der Begriff
+  // in Zusammenfassung/Beschreibung/Domain gar nicht vorkommt. Der rohe
+  // Label-Abgleich ist bewusst EXAKT (kein Substring), daher ohne das
+  // Kurzwort-Problem oben. matchedLabelEntries() liefert die vollen
+  // Label-Objekte (fuer Kategorie-Auswertung), die beiden duennen Wrapper
+  // darunter bleiben fuer bestehende Aufrufer mit reinen String-Arrays
+  // kompatibel.
   function matchedLabelEntries(rawTicket) {
     var haystack = [rawTicket.summary || "", rawTicket.description || "", (rawTicket.custom_fields && rawTicket.custom_fields.Domain) || ""]
       .join(" \n ").toLowerCase();
+    var rawLabels = (rawTicket.labels || []).map(function (l) { return ("" + (l || "")).trim().toLowerCase(); });
     return app.labels.filter(function (lbl) {
-      return (lbl.de && haystack.indexOf(lbl.de.toLowerCase()) !== -1) || (lbl.en && haystack.indexOf(lbl.en.toLowerCase()) !== -1);
+      if (rawLabels.length && ((lbl.de && rawLabels.indexOf(lbl.de.toLowerCase()) !== -1) || (lbl.en && rawLabels.indexOf(lbl.en.toLowerCase()) !== -1))) return true;
+      return labelTermMatchesText(haystack, lbl.de) || labelTermMatchesText(haystack, lbl.en);
     });
   }
   function dedupeStrings(arr) {
     var seen = {}, out = [];
     arr.forEach(function (v) { if (v && !seen[v]) { seen[v] = true; out.push(v); } });
     return out;
+  }
+  // Stammdaten-Labels (Status/Typ/Domäne/Anlagemonat+Jahr): deterministisch
+  // aus Ticket-Feldern abgeleitet statt per Text-Abgleich (matchedLabelEntries
+  // oben) - daher BEWUSST NICHT ueber den Performance-Cache in
+  // ticketDerivedData() gefuehrt (dessen Content-Signatur haengt nicht von
+  // Status/Erstellt-Datum ab, s. ticketContentSignature(), wuerde also bei
+  // reinen Statusaenderungen veraltete Werte liefern), sondern direkt in
+  // refreshDashboard() berechnet und mit den inhaltsbasierten Labels
+  // vereinigt. Erscheinen dadurch automatisch im bestehenden Label-Filter/
+  // der Suche, ohne eigene UI.
+  var MONTH_NAMES_DE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+  function anlagemonatJahrLabel(rawTicket) {
+    if (!rawTicket || !rawTicket.created) return null;
+    var ts = parseJiraDate(rawTicket.created);
+    if (!ts) return null;
+    var d = new Date(ts);
+    return MONTH_NAMES_DE[d.getMonth()] + " " + d.getFullYear();
+  }
+  // Diese 4 Kategorien liegen praktisch auf JEDEM Ticket vor (nahezu jedes
+  // hat Status/Typ/Domäne/Anlagemonat) - fuer Suche/Filterung (Dashboard-
+  // Label-Filter, RAG-Filter) ist das gewollt, aber die "Jira Zuordnung"-
+  // Themenuebersicht (assignmentGroupsByLabelCategory) gruppiert bewusst nach
+  // fachlichem Themengebiet mit ehrlichem "Ohne Zuordnung" fuer Tickets ohne
+  // Treffer - dort muessen diese Universal-Kategorien ausgeschlossen werden,
+  // sonst gäbe es nie wieder ein "Ohne Zuordnung" und die Gruppen wären
+  // reine Rohfeld-Dumps statt Themen.
+  var STAMMDATEN_META_CATEGORIES = ["Status", "Typ", "Domäne", "Anlagemonat"];
+  function buildStammdatenLabels(rawTicket, domain) {
+    var labels = [], categories = [];
+    function add(category, value) {
+      if (!value) return;
+      labels.push(value);
+      categories.push(category);
+    }
+    add("Status", rawTicket && rawTicket.status);
+    add("Typ", rawTicket && rawTicket.issue_type);
+    add("Domäne", domain);
+    add("Anlagemonat", anlagemonatJahrLabel(rawTicket));
+    return { labels: labels, categories: dedupeStrings(categories) };
   }
   function computeAutoLabels(rawTicket) {
     return matchedLabelEntries(rawTicket).map(function (lbl) { return lbl.de; });
@@ -8012,6 +8130,7 @@
       var changed = entry.sources.length > 1 && app.changes.some(function (c) { return c.key === t.key; });
       var domain = (t.custom_fields && t.custom_fields.Domain) || "";
       var derived = ticketDerivedData(t, domain, labelsSig, outlineSig, importFormatsSig);
+      var stammdaten = buildStammdatenLabels(t, domain);
       return {
         raw: t, key: t.key, summary: t.summary || "", status: t.status || "–",
         bucket: bucketFor(t.status), domain: domain,
@@ -8020,8 +8139,8 @@
         createdSort: parseJiraDate(t.created), updatedSort: parseJiraDate(t.updated),
         changed: changed,
         points: pointsForIssueType(t.issue_type),
-        autoLabels: derived.autoLabels,
-        autoLabelCategories: derived.autoLabelCategories,
+        autoLabels: derived.autoLabels.concat(stammdaten.labels),
+        autoLabelCategories: dedupeStrings(derived.autoLabelCategories.concat(stammdaten.categories)),
         outlineChapters: derived.outlineChapters,
         // Importformat (Einstellungen -> Importformat): welchem der 5
         // Vorgangstypen dieses Ticket zugeordnet ist (s.
@@ -8261,7 +8380,8 @@
   function assignmentGroupsByLabelCategory() {
     var byCategory = {};
     app.tickets.forEach(function (t) {
-      var cats = (t.autoLabelCategories && t.autoLabelCategories.length) ? t.autoLabelCategories : ["Ohne Zuordnung"];
+      var cats = (t.autoLabelCategories || []).filter(function (c) { return STAMMDATEN_META_CATEGORIES.indexOf(c) === -1; });
+      if (!cats.length) cats = ["Ohne Zuordnung"];
       cats.forEach(function (c) { (byCategory[c] = byCategory[c] || []).push(t); });
     });
     var names = Object.keys(byCategory).filter(function (c) { return c !== "Ohne Zuordnung"; }).sort(function (a, b) { return a.localeCompare(b, "de"); });
@@ -10398,6 +10518,42 @@
       .sort(function (a, b) { return b.count - a.count; });
   }
 
+  // Label-Kandidaten ("Suche weitere Labels"): nutzt dieselbe Stichwort-
+  // Extraktion wie die Gliederung (glExtractKeywords() - Wortabdeckung je
+  // Ticket statt reiner Worthaeufigkeit, inkl. Stoppwort-Filter, s. Teil 9d),
+  // gefiltert auf Begriffe, die NOCH NICHT in den Labels-Stammdaten
+  // (Einstellungen -> Labels) vorkommen, und auf eine Mindest-Ticketzahl
+  // (>= LABEL_CANDIDATE_MIN_TICKETS) begrenzt, damit nur wirklich
+  // wiederkehrende Begriffe als Vorschlag erscheinen statt Zufallstreffer.
+  // Erwartet NORMALISIERTE Tickets (app.tickets-Form, nicht .raw), da
+  // glExtractKeywords() auf deren Feldern (summary/description/domain/
+  // issueType/autoLabels/key) aufbaut.
+  var LABEL_CANDIDATE_MIN_TICKETS = 3;
+  var LABEL_CANDIDATE_MAX = 30;
+  function extractLabelCandidates(tickets) {
+    var existingTerms = {};
+    app.labels.forEach(function (l) {
+      if (l.de) existingTerms[l.de.toLowerCase()] = true;
+      if (l.en) existingTerms[l.en.toLowerCase()] = true;
+    });
+    // Die automatischen Stammdaten-Werte (Status/Typ/Domäne/Anlagemonat, s.
+    // buildStammdatenLabels()) sind bereits bekannt und kein "neuer" Begriff,
+    // würden aber wegen der +2-Gewichtung in glExtractKeywords() (jeder
+    // Treffer in t.autoLabels zählt zusätzlich) sonst faelschlich als
+    // Kandidat erscheinen, sobald >=3 Tickets denselben Wert teilen (z.B.
+    // Status "Offen") - und damit echte unbekannte Begriffe aus den Top 30
+    // verdrängen.
+    tickets.forEach(function (t) {
+      [t.status, t.issueType, t.domain, anlagemonatJahrLabel(t.raw)].forEach(function (v) {
+        if (v) existingTerms[String(v).toLowerCase()] = true;
+      });
+    });
+    return glExtractKeywords(tickets)
+      .filter(function (k) { return !existingTerms[k.term.toLowerCase()] && k.tickets.length >= LABEL_CANDIDATE_MIN_TICKETS; })
+      .slice(0, LABEL_CANDIDATE_MAX)
+      .map(function (k) { return { term: k.term, count: k.tickets.length }; });
+  }
+
   function renderExtractedAbbreviations() {
     var list = app.extracted.abbreviations;
     var html = list.map(function (r) {
@@ -10426,23 +10582,76 @@
     });
   }
 
+  // Label-Kandidaten: eigene Kategorie-Auswahl je Zeile (Standard: erste
+  // bereits vorhandene Kategorie) + "In Stammdaten übernehmen"-Button, der
+  // den Begriff als neuen Eintrag (de = en = Begriff, frei nachtraeglich in
+  // Einstellungen -> Labels anpassbar) in app.labels einfuegt - genau die
+  // vom Nutzer gewuenschte Erweiterbarkeit ("ich kann weitere Labels
+  // hinzufuegen"). Eine Zeile verschwindet nach Uebernahme aus der
+  // Kandidatenliste (steht ab sofort selbst als erkanntes Label zur
+  // Verfuegung, waere sonst ein Duplikat).
+  function labelCandidateCategoryOptionsHtml() {
+    var categories = dedupeStrings(app.labels.map(function (l) { return l.category; })).sort(function (a, b) { return a.localeCompare(b, "de"); });
+    return categories.map(function (c) { return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + "</option>"; }).join("");
+  }
+  function renderExtractedLabelCandidates() {
+    var list = app.extracted.labelCandidates;
+    var categoryOptions = labelCandidateCategoryOptionsHtml();
+    var html = list.map(function (r) {
+      return "<tr>" +
+        "<td>" + escapeHtml(r.term) + "</td>" +
+        "<td class=\"mono\">" + r.count + "</td>" +
+        '<td><select class="label-candidate-category-select" data-term="' + escapeHtml(r.term) + '">' + categoryOptions + "</select></td>" +
+        '<td><button type="button" class="btn ghost btn-tiny label-candidate-add-btn" data-term="' + escapeHtml(r.term) + '">In Stammdaten übernehmen</button></td>' +
+        "</tr>";
+    }).join("");
+    els.labelCandidateCount.textContent = list.length;
+    els.labelCandidateTbody.innerHTML = html;
+    els.labelCandidateEmpty.hidden = list.length > 0;
+    if (app.extracted.ran && !list.length) els.labelCandidateEmpty.textContent = "Keine neuen Label-Kandidaten gefunden.";
+  }
+  els.labelCandidateTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest(".label-candidate-add-btn");
+    if (!btn) return;
+    var term = btn.getAttribute("data-term");
+    var select = els.labelCandidateTbody.querySelector('.label-candidate-category-select[data-term="' + term.replace(/"/g, "") + '"]');
+    var category = (select && select.value) || "Sonstiges";
+    if (app.labels.some(function (l) { return l.category.toLowerCase() === category.toLowerCase() && l.de.toLowerCase() === term.toLowerCase(); })) {
+      showToast("Bereits vorhanden", "„" + term + "“ ist in dieser Kategorie bereits als Label gepflegt.", true);
+      return;
+    }
+    app.labels.push({ category: category, de: term, en: term });
+    app.extracted.labelCandidates = app.extracted.labelCandidates.filter(function (r) { return r.term !== term; });
+    renderExtractedLabelCandidates();
+    renderLabelsList();
+    refreshDashboard(false);
+    render();
+    addLog("Label „" + term + "“ aus Label-Kandidaten in die Stammdaten (Kategorie „" + category + "“) übernommen.");
+    showToast("Übernommen", "„" + term + "“ wurde als neues Label gespeichert.");
+  });
+
   els.extractGlossaryBtn.addEventListener("click", function () {
     try {
-      var tickets = scopedTickets().map(function (t) { return t.raw; });
+      var scopedNow = scopedTickets();
+      var tickets = scopedNow.map(function (t) { return t.raw; });
       app.extracted.abbreviations = extractAbbreviations(tickets);
       app.extracted.glossaryCandidates = extractGlossaryCandidates(tickets);
+      app.extracted.labelCandidates = extractLabelCandidates(scopedNow);
       app.extracted.ran = true;
       app.jobState.glossarExtrakt.error = null;
       renderExtractedAbbreviations();
       renderExtractedGlossaryCandidates();
+      renderExtractedLabelCandidates();
       addLog(
         "Glossar-/Abkürzungs-Extraktion: " + app.extracted.abbreviations.length + " Abkürzungen, " +
-        app.extracted.glossaryCandidates.length + " Glossar-Kandidaten über " + tickets.length + " Tickets."
+        app.extracted.glossaryCandidates.length + " Glossar-Kandidaten, " +
+        app.extracted.labelCandidates.length + " Label-Kandidaten über " + tickets.length + " Tickets."
       );
       showToast(
         "Extraktion abgeschlossen",
-        app.extracted.abbreviations.length + " Abkürzungen und " + app.extracted.glossaryCandidates.length +
-        " Glossar-Kandidaten gefunden – auch in den Registern Glossar und Abkürzungen sichtbar."
+        app.extracted.abbreviations.length + " Abkürzungen, " + app.extracted.glossaryCandidates.length +
+        " Glossar-Kandidaten und " + app.extracted.labelCandidates.length +
+        " Label-Kandidaten gefunden – auch in den Registern Glossar und Abkürzungen sichtbar."
       );
     } catch (err) {
       app.jobState.glossarExtrakt.error = (err && err.message) || "Unbekannter Fehler bei der Extraktion.";
@@ -10465,8 +10674,12 @@
   // den rohen Jira-Labels (t.raw.labels) abgeleitet, case-insensitiv
   // verglichen gegen die bekannten Auspraegungen - "Markt" ist bewusst in
   // beiden Listen enthalten (wie an anderer Stelle der App, s.
-  // MANUAL_SCOPE_TAGS/manualRoleSelect). Kein erfundenes Mapping: ein
-  // Ticket ohne passendes Label liefert jeweils ein leeres Array.
+  // MANUAL_SCOPE_TAGS/manualRoleSelect). ZUSAETZLICH (Fallback) inhaltsbasiert
+  // ueber t.autoLabels - die gleichnamigen Sparte-/Rolle-Stammdaten-Kategorien
+  // (s. labelSeedData()) matchen denselben Wert, wenn er im Ticket-Text
+  // (Zusammenfassung/Beschreibung/Domäne) vorkommt, auch ohne woertliches
+  // Jira-Label. Vereinigung beider Quellen - kein erfundenes Mapping: ein
+  // Ticket ohne Treffer in beiden liefert weiterhin ein leeres Array.
   var SPARTE_FILTER_VALUES = ["Pkw", "Van", "Markt"];
   var ROLE_FILTER_VALUES = ["Retail", "Markt", "MO", "HQ"];
   function ticketRawLabels(t) {
@@ -10474,7 +10687,11 @@
   }
   function ticketTagsFromValues(t, values) {
     var raw = ticketRawLabels(t).map(function (l) { return ("" + (l || "")).trim().toLowerCase(); });
-    return values.filter(function (v) { return raw.indexOf(v.toLowerCase()) !== -1; });
+    var auto = ((t && t.autoLabels) || []).map(function (l) { return ("" + (l || "")).trim().toLowerCase(); });
+    return values.filter(function (v) {
+      var needle = v.toLowerCase();
+      return raw.indexOf(needle) !== -1 || auto.indexOf(needle) !== -1;
+    });
   }
   function ticketSparteTags(t) { return ticketTagsFromValues(t, SPARTE_FILTER_VALUES); }
   function ticketRoleTags(t) { return ticketTagsFromValues(t, ROLE_FILTER_VALUES); }
@@ -11963,10 +12180,11 @@
   // selbst zu loeschen, damit sich die Verarbeitung mit einer geänderten
   // Datei-/Listen-Auswahl (s.o.) sauber neu starten laesst.
   function resetIntermediateJobResults() {
-    app.extracted = { abbreviations: [], glossaryCandidates: [], ran: false };
+    app.extracted = { abbreviations: [], glossaryCandidates: [], labelCandidates: [], ran: false };
     app.jobState.glossarExtrakt.error = null;
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
+    renderExtractedLabelCandidates();
 
     app.jobState.releaseversion = { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null };
     els.releaseMatchSummary.hidden = true;
