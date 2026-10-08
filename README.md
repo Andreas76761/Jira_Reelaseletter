@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.53.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.54.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -970,8 +970,8 @@ zusammenzuführen.
   ausschließlich für PKW/Van/einen Marktumfang gelten, werden mit den
   Tags "[Nur PKW]"/"[Nur Van]"/"[Nur Markt]" gekennzeichnet; wo sich die
   Bedienung je Rolle unterscheidet, gliedert der Text mit eigenen
-  Zwischenüberschriften "Dealer"/"Markt"/"HQ"/"Sparte"/"MO" (Market
-  Operation) und weist explizit auf Features hin, die dem Dealer nicht
+  Zwischenüberschriften "Retail"/"Markt"/"HQ"/"Sparte"/"MO" (Market
+  Operation) und weist explizit auf Features hin, die dem Retail nicht
   zur Verfügung stehen. Die Anweisung selbst ist unter Einstellungen →
   RAG-Prompts editierbar ("Benutzerhandbuch-Kapitel erstellen"). Ergebnis
   je Kapitel: editierbares Textfeld (im Browser gespeichert, übersteht
@@ -1022,7 +1022,7 @@ zusammenzuführen.
   anstoßen zu müssen. Ein dritter Ansichts-Umschalter
   **"Vorschau (Icons)"** (neben "Deutsch"/"English") rendert denselben Text
   schreibgeschützt mit Icons: die Rollen-Zwischenüberschriften
-  "Dealer"/"Markt"/"HQ"/"Sparte"/"MO" bekommen ein Rollen-Icon, die
+  "Retail"/"Markt"/"HQ"/"Sparte"/"MO" bekommen ein Rollen-Icon, die
   "[Nur PKW]"/"[Nur Van]"/"[Nur Markt]"-Scope-Tags werden als farbiges
   Icon-Badge statt als roher Text dargestellt – macht rollen-/
   fahrzeugspezifische Abschnitte auf einen Blick sichtbar, ohne den
@@ -1076,10 +1076,10 @@ zusammenzuführen.
 - **Rollen-Navigation (oneSCM)** – Einstellungen → eigener Bereich
   "Rollen-Navigation": aus einer vom Nutzer hochgeladenen Navigationsvorlage
   (Bildschirmaufnahmen + Beschriftungen der oneSCM-Menüstruktur) abgeleitete,
-  je Rolle **eigenständige** Menü-/Modulliste für **Dealer**, **Markt**,
+  je Rolle **eigenständige** Menü-/Modulliste für **Retail**, **Markt**,
   **MO** (Market Operation) und **HQ** (Headquarters) – reine
   Referenzanzeige, nicht editierbar. "Markt" ist in der Quellvorlage am
-  vollständigsten dokumentiert und dient als Basis; für "Dealer" ist nur
+  vollständigsten dokumentiert und dient als Basis; für "Retail" ist nur
   eine explizite Einschränkung belegt, für "MO" nur ein einzelner
   Prüfschritt (MO-Check in der Vertragsanlage) und für "HQ" **keine einzige**
   Bildschirmaufnahme. Nicht bzw. nicht vollständig belegte Bereiche sind

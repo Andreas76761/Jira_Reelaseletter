@@ -1,6 +1,6 @@
 // Rollen-Navigation (oneSCM): aus der hochgeladenen Navigationsvorlage
 // (Navigation_oneSCM_Version3.docx) abgeleitete Menüstruktur je Rolle
-// (Dealer/Markt/MO/HQ), s. roleNavigationSeedData(). Reine Referenzanzeige
+// (Retail/Markt/MO/HQ), s. roleNavigationSeedData(). Reine Referenzanzeige
 // in Einstellungen + Grundlage für den Rollen-Filter bei Benutzerhandbuch-
 // Kapitel-Generator und Releaseletter.
 const fs = require("fs");
@@ -63,7 +63,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   const roleNavList = doc.getElementById("role-nav-list");
   check("Rollen-Navigation-Bereich vorhanden", !!roleNavList);
   const roleNavHtml = roleNavList.innerHTML;
-  check("Zeigt Rolle 'Dealer'", roleNavHtml.includes("Dealer"));
+  check("Zeigt Rolle 'Retail'", roleNavHtml.includes("Retail"));
   check("Zeigt Rolle 'Markt'", roleNavHtml.includes("Markt"));
   check("Zeigt Rolle 'MO (Market Operation)'", roleNavHtml.includes("MO (Market Operation)"));
   check("Zeigt Rolle 'HQ (Headquarters)'", roleNavHtml.includes("HQ (Headquarters)"));
@@ -79,7 +79,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   // ===================== Kapitel-Generator: Rollen-Select vorhanden, wirkt auf den Prompt =====================
   const roleSelect = doc.getElementById("manual-role-select");
   check("Rollen-Select im Kapitel-Generator vorhanden", !!roleSelect);
-  check("Rollen-Select hat 5 Optionen (Alle/Dealer/Markt/MO/HQ)", roleSelect.options.length === 5);
+  check("Rollen-Select hat 5 Optionen (Alle/Retail/Markt/MO/HQ)", roleSelect.options.length === 5);
   doc.querySelector('.nav-item[data-view="benutzerhandbuch"]').click();
   await wait(50);
   roleSelect.value = "dealer";
@@ -91,10 +91,10 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   sampleCalls = [];
   fire(doc.getElementById("manual-generate-btn"), "click");
   await wait(200);
-  check("sample() wurde für die Rolle 'Dealer' mit Rollenanweisung aufgerufen", sampleCalls.length > 0 && sampleCalls[0].input.includes("Zielrolle: Dealer"));
-  check("Prompt weist auf Dokumentationslücke für Dealer hin (nicht verschwiegen)", sampleCalls[0].input.includes("Dealer Role vorhanden"));
+  check("sample() wurde für die Rolle 'Retail' mit Rollenanweisung aufgerufen", sampleCalls.length > 0 && sampleCalls[0].input.includes("Zielrolle: Retail"));
+  check("Prompt weist auf Dokumentationslücke hin (zitiert Quellvorlage 'Dealer Role', nicht verschwiegen)", sampleCalls[0].input.includes("Dealer Role vorhanden"));
   const cards = doc.getElementById("manual-chapters-list").innerHTML;
-  check("Kapitel-Karte zeigt Rollen-Badge 'Rolle: Dealer'", cards.includes("Rolle: Dealer"));
+  check("Kapitel-Karte zeigt Rollen-Badge 'Rolle: Retail'", cards.includes("Rolle: Retail"));
 
   // ===================== Releaseletter: Rollenhinweis-Select + Abschnitt in der Vorschau =====================
   const rlRoleSelect = doc.getElementById("releaseletter-role-select");

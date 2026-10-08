@@ -2,7 +2,7 @@
 // Analog zu RAG (Verarbeitung), aber mit Domäne/Label-Themengebiet/Kapitel
 // als Filter, editierbarem/persistiertem Ergebnis je Kapitel, Übersetzung
 // und PDF/DOCX-Export mit einfacher "Icon"-Kennzeichnung ([Nur PKW]/[Nur
-// Van]/[Nur Markt]) sowie Rollentrennung (## Dealer/Markt/HQ/Sparte/MO).
+// Van]/[Nur Markt]) sowie Rollentrennung (## Retail/Markt/HQ/Sparte/MO).
 const fs = require("fs");
 const path = require("path");
 const BUILD_HTML = path.join(__dirname, "..", "ticket_cockpit.build.html");
@@ -21,12 +21,12 @@ let sampleImpl = async (input, opts) => {
   sampleCalls.push({ input, opts });
   if (input.indexOf("Lektor/Qualitätsprüfer") !== -1) {
     return {
-      text: "### Grammatikfehler\n- \"Der Dealer legt\" sollte besser \"Der Dealer trägt ein\" lauten.\n\n### Lücken\n- Es fehlt eine Beschreibung des Freigabeprozesses für Van.\n\n### Verbesserungsvorschläge\n- Ein Beispiel-Screenshot würde die Beschreibung verständlicher machen.",
+      text: "### Grammatikfehler\n- \"Der Retail legt\" sollte besser \"Der Retail trägt ein\" lauten.\n\n### Lücken\n- Es fehlt eine Beschreibung des Freigabeprozesses für Van.\n\n### Verbesserungsvorschläge\n- Ein Beispiel-Screenshot würde die Beschreibung verständlicher machen.",
       truncated: false, modelTierApplied: "default",
     };
   }
   return {
-    text: "Dieses Kapitel führt in den Prozess ein.\n\n## Dealer\nDer Dealer legt den Servicevertrag an. [Nur PKW] Für PKW gilt eine Sonderregel.\n\n## HQ\nDas HQ prüft die Freigabe. Dieses Feature steht dem Dealer nicht zur Verfügung.",
+    text: "Dieses Kapitel führt in den Prozess ein.\n\n## Retail\nDer Retail legt den Servicevertrag an. [Nur PKW] Für PKW gilt eine Sonderregel.\n\n## HQ\nDas HQ prüft die Freigabe. Dieses Feature steht dem Retail nicht zur Verfügung.",
     truncated: false, modelTierApplied: "default",
   };
 };
@@ -139,10 +139,10 @@ const xml = `<?xml version="1.0"?><rss><channel>
   if (card) {
     const textarea = card.querySelector(".manual-chapter-textarea");
     check("Generierter Text im Textfeld sichtbar", textarea.value.includes("führt in den Prozess ein"));
-    check("Rollentrennung '## Dealer' im Text enthalten", textarea.value.includes("## Dealer"));
+    check("Rollentrennung '## Retail' im Text enthalten", textarea.value.includes("## Retail"));
     check("Rollentrennung '## HQ' im Text enthalten", textarea.value.includes("## HQ"));
     check("Scope-Tag '[Nur PKW]' im Text enthalten", textarea.value.includes("[Nur PKW]"));
-    check("Hinweis auf fehlendes Dealer-Feature im Text enthalten", textarea.value.includes("nicht zur Verfügung"));
+    check("Hinweis auf fehlendes Retail-Feature im Text enthalten", textarea.value.includes("nicht zur Verfügung"));
 
     // ===================== Text ist editierbar und wird persistiert (app.manualChapters) =====================
     textarea.value = textarea.value + "\n\nManuell ergänzter Satz.";
@@ -166,7 +166,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("'Vorschau (Icons)'-Button nach Klick aktiv", cardAfterPreview.querySelector('[data-manual-lang="preview"]').classList.contains("active"));
   check("Im Vorschau-Modus kein editierbares Textfeld mehr sichtbar", !cardAfterPreview.querySelector(".manual-chapter-textarea"));
   const previewHtml = cardAfterPreview.innerHTML;
-  check("Vorschau zeigt Rollen-Icon vor 'Dealer'-Überschrift", previewHtml.includes("🚗 Dealer</h4>"));
+  check("Vorschau zeigt Rollen-Icon vor 'Retail'-Überschrift", previewHtml.includes("🚗 Retail</h4>"));
   check("Vorschau zeigt Rollen-Icon vor 'HQ'-Überschrift", previewHtml.includes("🏢 HQ</h4>"));
   check("Vorschau zeigt Icon-Badge statt rohem '[Nur PKW]'-Text", previewHtml.includes("🚗 Nur PKW"));
   check("Vorschau enthält den rohen Tag '[Nur PKW]' nicht mehr unverändert im Fließtext", !previewHtml.includes("[Nur PKW] Für PKW"));
@@ -222,7 +222,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
     check("Exportiertes DOCX enthält word/document.xml", !!zip.file("word/document.xml"));
     const xml2 = await zip.file("word/document.xml").async("string");
     check("DOCX enthält den Kapiteltitel", xml2.includes("Kapitel 7"));
-    check("DOCX enthält die Rollentrennung 'Dealer' als Überschrift", xml2.includes("Dealer"));
+    check("DOCX enthält die Rollentrennung 'Retail' als Überschrift", xml2.includes("Retail"));
     check("DOCX hebt den Scope-Tag '[Nur PKW]' farbig/fett hervor", xml2.includes("[Nur PKW]") && xml2.includes("C0392B"));
   }
   const pdfSaved = savedFiles.find((f) => f.filename.endsWith(".pdf"));

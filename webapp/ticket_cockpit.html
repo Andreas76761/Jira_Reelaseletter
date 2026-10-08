@@ -1594,7 +1594,7 @@
             <label for="releaseletter-role-select">Rollenhinweis (oneSCM, optional)</label>
             <select id="releaseletter-role-select">
               <option value="alle">Kein Rollenhinweis</option>
-              <option value="dealer">Dealer</option>
+              <option value="dealer">Retail</option>
               <option value="markt">Markt</option>
               <option value="mo">MO (Market Operation)</option>
               <option value="hq">HQ (Headquarters)</option>
@@ -1730,7 +1730,7 @@
               <label for="manual-role-select">Rolle (oneSCM)</label>
               <select id="manual-role-select" aria-label="Rolle (oneSCM)">
                 <option value="alle">Alle Rollen</option>
-                <option value="dealer">Dealer</option>
+                <option value="dealer">Retail</option>
                 <option value="markt">Markt</option>
                 <option value="mo">MO (Market Operation)</option>
                 <option value="hq">HQ (Headquarters)</option>
@@ -2127,7 +2127,7 @@
           <p class="section-label">Rollen-Navigation (oneSCM)</p>
           <div class="callout">
             Aus der hochgeladenen Navigationsvorlage (<code>Navigation_oneSCM_Version3.docx</code>, Bildschirmaufnahmen +
-            Beschriftungen der oneSCM-Menüstruktur) abgeleitete Menü-/Modulliste je Rolle &ndash; <b>Dealer</b>, <b>Markt</b>,
+            Beschriftungen der oneSCM-Menüstruktur) abgeleitete Menü-/Modulliste je Rolle &ndash; <b>Retail</b>, <b>Markt</b>,
             <b>MO</b> (Market Operation) und <b>HQ</b>. Reine Referenzanzeige (nicht editierbar). Grau/orange markierte
             Bereiche (<span class="dq-count-warn">Lücke</span>) sind in der Vorlage nicht bzw. nicht vollständig
             dokumentiert oder nur abgeleitet &ndash; bitte fachlich prüfen. Dient als Grundlage für den Rollen-Filter bei
@@ -4262,7 +4262,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.53.0";
+  var APP_VERSION = "2.54.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5725,7 +5725,7 @@
     // Ebenfalls Konfiguration, kein Sitzungsdatensatz.
     outline: outlineSeedData(),
     // Rollen-Navigation (Einstellungen): aus der oneSCM-Navigationsvorlage
-    // abgeleitete Menüstruktur je Rolle (Dealer/Markt/MO/HQ), s.
+    // abgeleitete Menüstruktur je Rolle (Retail/Markt/MO/HQ), s.
     // roleNavigationSeedData(). Reine Referenzanzeige (nicht editierbar wie
     // Punkte-System/Labels/Gliederung), daher auch nicht Teil von Sitzung
     // speichern/laden - Grundlage für den Rollen-Filter bei RAG/
@@ -6791,7 +6791,7 @@
   function roleNavigationSeedData() {
     return [
       {
-        key: "dealer", label: "Dealer",
+        key: "dealer", label: "Retail",
         source: "Navigation_oneSCM_Version3.docx – Abschnitt „Acess Mainpage – Dealer Role“",
         modules: [
           { title: "Startseite (Access Mainpage – Dealer Role)", items: [], gap: false, gapNote: "" },
@@ -13191,8 +13191,8 @@
     summarySynthesis: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Die folgenden Teiltexte sind Zusammenfassungen unterschiedlicher Ausschnitte derselben Jira-Ticket-Rohdaten (aus technischen Gründen in mehreren Durchläufen erzeugt). Verschmelze sie zu EINER einzigen, prägnanten, endnutzergerechten Gesamt-Zusammenfassung auf Deutsch (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen, ohne Hinweise auf 'Teiltexte' oder 'Batches'). Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
     fliesstextSynthesis: "Du bist Technischer Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Die folgenden Teiltexte sind Fließtext-Abschnitte unterschiedlicher Ausschnitte derselben Jira-Ticket-Rohdaten (aus technischen Gründen in mehreren Durchläufen erzeugt). Verschmelze sie zu EINEM einzigen, zusammenhängenden, gut lesbaren Fließtext für ein Benutzerhandbuch auf Deutsch (mehrere Absätze erlaubt, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen, ohne Hinweise auf 'Teiltexte' oder 'Batches'). Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
     translation: "Übersetze den folgenden deutschen Text sinngemäß ins Englische, ohne Inhalte hinzuzufügen oder wegzulassen und ohne zusätzliche Erklärungen oder Anmerkungen. Gib ausschließlich den übersetzten Text aus:",
-    manualChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender (erfahrene Nutzer im operativen Tagesgeschäft). Schreibe für das unten genannte Kapitel einen sachlichen, professionellen Fließtext im Stil eines Softwarehandbuchs auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform - z. B. \"Der Nutzer öffnet die Maske und trägt die Daten ein\", NICHT Präteritum/Futur wie \"öffnete\"/\"wird öffnen\"), mindestens 3, idealerweise bis zu 12 DIN-A4-Seiten Umfang (ca. 500-600 Wörter je Seite). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen (roter Faden), gefolgt von zusammenhängenden Abschnitten statt einer reinen Aufzählung. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, deutlich mit den Tags \"[Nur PKW]\", \"[Nur Van]\" bzw. \"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Dealer\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\" (Market Operation) und weise explizit darauf hin, wenn ein Feature dem Dealer NICHT zur Verfügung steht. Nutze ausschließlich Informationen aus den Ticket-Rohdaten unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text.",
-    manualChapterSynthesis: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender. Die folgenden Teiltexte sind Abschnitte desselben Kapitels, aus technischen Gründen in mehreren Durchläufen aus unterschiedlichen Ausschnitten derselben Ticket-Rohdaten erzeugt. Verschmelze sie zu EINEM einzigen, zusammenhängenden Kapiteltext auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform, auch wenn ein Teiltext abweicht - dann beim Verschmelzen ins Präsens korrigieren) (roter Faden, mindestens 3 DIN-A4-Seiten, sachlicher Softwarehandbuch-Stil), ohne Hinweise auf \"Teiltexte\" oder \"Batches\". Erhalte dabei die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\" sowie die Zwischenüberschriften \"## Dealer\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" aus den Teiltexten. Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
+    manualChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender (erfahrene Nutzer im operativen Tagesgeschäft). Schreibe für das unten genannte Kapitel einen sachlichen, professionellen Fließtext im Stil eines Softwarehandbuchs auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform - z. B. \"Der Nutzer öffnet die Maske und trägt die Daten ein\", NICHT Präteritum/Futur wie \"öffnete\"/\"wird öffnen\"), mindestens 3, idealerweise bis zu 12 DIN-A4-Seiten Umfang (ca. 500-600 Wörter je Seite). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen (roter Faden), gefolgt von zusammenhängenden Abschnitten statt einer reinen Aufzählung. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, deutlich mit den Tags \"[Nur PKW]\", \"[Nur Van]\" bzw. \"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Retail\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\" (Market Operation) und weise explizit darauf hin, wenn ein Feature dem Retail NICHT zur Verfügung steht. Nutze ausschließlich Informationen aus den Ticket-Rohdaten unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text.",
+    manualChapterSynthesis: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender. Die folgenden Teiltexte sind Abschnitte desselben Kapitels, aus technischen Gründen in mehreren Durchläufen aus unterschiedlichen Ausschnitten derselben Ticket-Rohdaten erzeugt. Verschmelze sie zu EINEM einzigen, zusammenhängenden Kapiteltext auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform, auch wenn ein Teiltext abweicht - dann beim Verschmelzen ins Präsens korrigieren) (roter Faden, mindestens 3 DIN-A4-Seiten, sachlicher Softwarehandbuch-Stil), ohne Hinweise auf \"Teiltexte\" oder \"Batches\". Erhalte dabei die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\" sowie die Zwischenüberschriften \"## Retail\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" aus den Teiltexten. Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
     refCompare: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen zwei Fassungen desselben Kapitels: der ALTE STAND (aus einem bestehenden, bereits veröffentlichten Word-Handbuch) und der NEUE STAND (frisch aus aktuellen Jira-Tickets erzeugter Text). Vergleiche beide Fassungen inhaltlich und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Features\n- (ein Stichpunkt je im neuen Stand beschriebenem Inhalt, der im alten Stand fehlt oder dort erkennbar anders/noch nicht vorhanden war)\n\n### Widersprüche\n- (ein Stichpunkt je Aussage im alten Stand, die dem neuen Stand inhaltlich widerspricht oder durch ihn überholt/ungültig wird)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den beiden Texten unten, erfinde nichts hinzu:",
     manualQualityCheck: "Du bist Lektor/Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Prüfe den folgenden Kapiteltext und gib AUSSCHLIESSLICH die folgenden drei Abschnitte aus, in genau diesem Format:\n\n### Grammatikfehler\n- (ein Stichpunkt je Grammatik-/Rechtschreib-/Zeitform-Fehler - insbesondere Abweichungen vom geforderten Präsens -, mit kurzem Zitat der betroffenen Stelle)\n\n### Lücken\n- (ein Stichpunkt je inhaltlicher Lücke, unklarer oder unvollständiger Stelle)\n\n### Verbesserungsvorschläge\n- (ein Stichpunkt je Vorschlag zur Verständlichkeit/Lesbarkeit/Struktur)\n\nIst eine der drei Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:"
   };
@@ -15150,7 +15150,7 @@
   els.manualQualityCheckAllStopBtn.addEventListener("click", function () { if (manualQualityCheckAllAbortController) manualQualityCheckAllAbortController.abort(); });
 
   // Export: einfache Konventionen aus dem generierten/bearbeiteten Text
-  // erkannt - Zeilen "## Dealer"/"## Markt"/"## HQ"/"## Sparte"/"## MO"
+  // erkannt - Zeilen "## Retail"/"## Markt"/"## HQ"/"## Sparte"/"## MO"
   // werden zu Zwischenüberschriften, Zeilen mit "[Nur PKW]"/"[Nur Van]"/
   // "[Nur Markt]" am Anfang werden hervorgehoben (fett/farbig) statt
   // echter Bild-Icons - robust in PDF UND DOCX ohne Font-/Glyph-Risiko
@@ -15162,7 +15162,7 @@
   // Zwischenueberschriften, KEINE neue Datenstruktur/kein neuer Filter -
   // Claude erzeugt diese Tags/Ueberschriften bereits selbst im Fliesstext.
   var MANUAL_SCOPE_TAG_ICONS = { "[Nur PKW]": "🚗", "[Nur Van]": "🚐", "[Nur Markt]": "🏬" };
-  var MANUAL_ROLE_HEADING_ICONS = { "Dealer": "🚗", "Markt": "🏬", "HQ": "🏢", "Sparte": "🧩", "MO": "⚙️" };
+  var MANUAL_ROLE_HEADING_ICONS = { "Retail": "🚗", "Markt": "🏬", "HQ": "🏢", "Sparte": "🧩", "MO": "⚙️" };
   function manualParseParagraphs(text) {
     return (text || "").split(/\n+/).map(function (line) { return line.trim(); }).filter(Boolean);
   }
@@ -15179,7 +15179,7 @@
   // Lese-Vorschau mit Icons (Umschalter "Vorschau" neben Deutsch/English,
   // s. renderManualChapters): rein read-only HTML-Rendering derselben
   // Zeilen-Konventionen wie beim DOCX-Export (manualChapterDocumentXml) -
-  // Rollen-Zwischenüberschriften ("## Dealer" usw.) bekommen ein Rollen-
+  // Rollen-Zwischenüberschriften ("## Retail" usw.) bekommen ein Rollen-
   // Icon, Pkw/Van/Markt-Scope-Tags werden als farbiges Icon-Badge statt
   // als rohe "[Nur PKW]"-Textmarke dargestellt. Macht auf einen Blick
   // sichtbar, welche Abschnitte rollen-/fahrzeugspezifisch sind, ohne den
