@@ -1196,6 +1196,13 @@
             <button class="btn ghost" id="mass-collect-btn" type="button">Vorhandene Inhalte einlesen (Benutzerhandbuch/Referenz-Handbuch)</button>
           </div>
           <p class="step-note" id="mass-import-note"></p>
+          <p class="section-label" style="margin-top:14px;">Grundlage: Tickets aus Import übernehmen</p>
+          <p class="desc">Importierte Jira-Tickets (alle Formate inkl. MD-Dateien-Reimport, s. Import-Register) direkt als Textschnipsel (Überschrift + Beschreibung) übernehmen &ndash; dieselbe Datei-/Listen-Auswahl und derselbe Sparte-/Rollen-Filter wie in der Verarbeitung (Register Verarbeitung, Schritt 1), gemeinsamer Zustand für beide Register.</p>
+          <div class="step-sub" id="mass-ticket-source-wrap"></div>
+          <div class="job-export-row" style="margin-top:8px;">
+            <button class="btn ghost" id="mass-collect-tickets-btn" type="button">Tickets übernehmen</button>
+          </div>
+          <p class="step-note" id="mass-ticket-source-note"></p>
         </section>
 
         <section>
@@ -2253,6 +2260,18 @@
             </table>
             <div class="empty-hint" id="statuscolors-empty" hidden>Keine Status in den aktuell geladenen Tickets.</div>
           </div>
+        </section>
+
+        <section>
+          <p class="section-label">Sprachstil (KI-Texterzeugung)</p>
+          <div class="callout">
+            Globale Stilvorgabe für die von Claude erzeugten Fließtexte (Verarbeitung → 7. RAG: Zusammenfassung
+            &amp; Fließtext, Benutzerhandbuch-Kapitel-Generator). Wirkt sich auf den nächsten Klick auf
+            "Generieren"/"Übersetzen" aus, nicht rückwirkend auf bereits erzeugte Texte. Übersetzung,
+            Handbuch-Vergleich und Qualitätsprüfung behalten bewusst ihr festes Ausgabeformat und bleiben
+            unverändert.
+          </div>
+          <select id="language-style-select"></select>
         </section>
 
         <section>
@@ -4335,7 +4354,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.56.1";
+  var APP_VERSION = "2.57.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5729,6 +5748,7 @@
     "gl-chat-input", "gl-chat-send-btn", "gl-grill-panel", "gl-grill-output", "gl-search-input", "gl-search-summary",
     "gl-search-neighbors",
     "mass-import-btn", "mass-import-input", "mass-import-note", "mass-collect-btn",
+    "mass-ticket-source-wrap", "mass-collect-tickets-btn", "mass-ticket-source-note",
     "mass-empty", "mass-groups-wrap", "mass-groups",
     "mass-ai-assign-row", "mass-ai-assign-btn", "mass-ai-assign-spinner", "mass-ai-assign-label", "mass-ai-stop-btn", "mass-ai-status-note",
     "mass-checkpoints-wrap", "mass-checkpoints-list",
@@ -5756,6 +5776,7 @@
     "autosave-enabled-cb", "autosave-status", "autosave-delete-btn",
     "points-tbody", "points-new-type", "points-new-value", "points-add-btn",
     "domaincolors-tbody", "domaincolors-empty", "statuscolors-tbody", "statuscolors-empty", "ragprompts-list",
+    "language-style-select",
     "labels-tbody", "labels-new-category", "labels-new-de", "labels-new-en", "labels-add-btn", "label-category-datalist",
     "synonyms-tbody", "synonyms-empty", "synonyms-new-term", "synonyms-new-synonyms", "synonyms-new-en",
     "synonyms-new-sk", "synonyms-new-hi", "synonyms-new-fr", "synonyms-add-btn",
@@ -5831,6 +5852,17 @@
     // Listen (Listenauswahl), auf die die Job-Tabellen eingeschraenkt werden.
     activeImportIds: {},
     activeListIds: {},
+    // Sparte-/Rollen-Filter (Labels): zusaetzliche, ebenfalls globale
+    // Einschraenkung von scopedTickets() (wie activeImportIds/activeListIds
+    // oben) auf Basis der Jira-Labels "Pkw"/"Van"/"Markt" (Sparte) bzw.
+    // "Retail"/"Markt"/"MO"/"HQ" (Rolle) am Ticket - s. ticketSparteTags()/
+    // ticketRoleTags(). Leer = keine Einschraenkung (Standard), sonst
+    // Mehrfachauswahl (ein Ticket reicht aus, wenn es MINDESTENS eine der
+    // ausgewaehlten Auspraegungen traegt). Wirkt in Verarbeitung (alle Jobs,
+    // die scopedTickets() nutzen) UND in der Massenverarbeitung (Grundlage
+    // "Tickets aus Import uebernehmen").
+    activeSparteFilter: [],
+    activeRoleFilter: [],
     // Dateiverwaltung: persistenter Aktiv/Inaktiv-Status je Import (NICHT zu
     // verwechseln mit activeImportIds/activeListIds oben, der nur die
     // temporaere "Datei auswaehlen"-Einschraenkung EINES Verarbeitung-Jobs
@@ -5909,6 +5941,12 @@
     // Prompt-Schluessel (leer = Standardtext, s. Teil 9b). Ebenfalls
     // Konfiguration, kein Sitzungsdatensatz.
     ragPrompts: {},
+    // Sprachstil (Einstellungen): globale Stilvorgabe fuer alle KI-
+    // Fliesstext-Generatoren (RAG Zusammenfassung/Fliesstext, Benutzerhandbuch-
+    // Kapitel-Generator), s. LANGUAGE_STYLES/languageStyleSuffix(). "neutral"
+    // (Standard) haengt keine Zusatzanweisung an - unveraendertes Verhalten.
+    // Ebenfalls Konfiguration, kein Sitzungsdatensatz.
+    languageStyle: "neutral",
     // Benutzerhandbuch-Kapitel-Generator: je Kapiteltitel der erzeugte
     // Text (Deutsch/Englisch) + Metadaten. Im Unterschied zu ragPrompts
     // ist das erzeugter INHALT (wie RAG-Ausgabe/Bilder-Galerie), also
@@ -6146,6 +6184,7 @@
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     };
     app.activeImportIds = {}; app.activeListIds = {};
+    app.activeSparteFilter = []; app.activeRoleFilter = [];
     app.inactiveImportIds = {}; app.appliedInactiveImportIds = {};
     app.selectedKeys = {}; app.savedLists = []; app.nextSavedListId = 1;
     app.listPreviewFilter = { issueType: "", excludeTypes: {} };
@@ -6183,6 +6222,7 @@
     app.massFiles = [];
     massSelectedIds = {};
     renderMassFiles();
+    renderMassTicketSourceWrap();
     app.massMergedDoc = "";
     els.massMergeOutput.value = "";
     els.massMergeDownloadBtn.disabled = true;
@@ -6210,6 +6250,7 @@
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     };
     app.activeImportIds = {}; app.activeListIds = {};
+    app.activeSparteFilter = []; app.activeRoleFilter = [];
     app.inactiveImportIds = {}; app.appliedInactiveImportIds = {};
     app.selectedKeys = {}; app.savedLists = []; app.nextSavedListId = 1;
     app.listPreviewFilter = { issueType: "", excludeTypes: {} };
@@ -6248,6 +6289,7 @@
     app.massFiles = [];
     massSelectedIds = {};
     renderMassFiles();
+    renderMassTicketSourceWrap();
     app.massMergedDoc = "";
     els.massMergeOutput.value = "";
     els.massMergeDownloadBtn.disabled = true;
@@ -6312,6 +6354,8 @@
       jobState: app.jobState,
       activeImportIds: app.activeImportIds,
       activeListIds: app.activeListIds,
+      activeSparteFilter: app.activeSparteFilter,
+      activeRoleFilter: app.activeRoleFilter,
       inactiveImportIds: app.inactiveImportIds,
       appliedInactiveImportIds: app.appliedInactiveImportIds,
       nextImportId: app.nextImportId,
@@ -6325,6 +6369,7 @@
       domainColors: app.domainColors,
       statusColors: app.statusColors,
       ragPrompts: app.ragPrompts,
+      languageStyle: app.languageStyle,
       manualChapters: app.manualChapters,
       manualCheckpoints: app.manualCheckpoints,
       chapterKeywords: app.chapterKeywords,
@@ -6361,6 +6406,8 @@
     };
     app.activeImportIds = data.activeImportIds || {};
     app.activeListIds = data.activeListIds || {};
+    app.activeSparteFilter = Array.isArray(data.activeSparteFilter) ? data.activeSparteFilter : [];
+    app.activeRoleFilter = Array.isArray(data.activeRoleFilter) ? data.activeRoleFilter : [];
     app.inactiveImportIds = data.inactiveImportIds || {};
     app.appliedInactiveImportIds = data.appliedInactiveImportIds || {};
     app.nextImportId = data.nextImportId || 1;
@@ -6374,6 +6421,7 @@
     if (data.domainColors) app.domainColors = data.domainColors;
     if (data.statusColors) app.statusColors = data.statusColors;
     if (data.ragPrompts) app.ragPrompts = data.ragPrompts;
+    if (typeof data.languageStyle === "string") app.languageStyle = data.languageStyle;
     if (data.manualChapters) app.manualChapters = data.manualChapters;
     if (Array.isArray(data.manualCheckpoints)) app.manualCheckpoints = data.manualCheckpoints;
     if (data.chapterKeywords) app.chapterKeywords = data.chapterKeywords;
@@ -6405,6 +6453,7 @@
     Object.keys(TERMINOLOGY_LISTS).forEach(renderTerminologyList);
     renderOutlineList();
     renderRagPromptsList();
+    renderLanguageStyleSelect();
     renderManualChapters();
     renderManualCheckpoints();
     renderGliederung();
@@ -6415,6 +6464,7 @@
     els.ragMergeOutput.value = app.ragMergedDoc;
     els.ragMergeDownloadBtn.disabled = !app.ragMergedDoc;
     renderMassFiles();
+    renderMassTicketSourceWrap();
     els.massMergeOutput.value = app.massMergedDoc;
     els.massMergeDownloadBtn.disabled = !app.massMergedDoc;
     els.massMergeDomainDocsOutput.value = app.massDomainDocsMerged;
@@ -10317,17 +10367,47 @@
   function hasActiveScope() {
     return Object.keys(app.activeImportIds).length > 0 || Object.keys(app.activeListIds).length > 0;
   }
+  // Sparte (Pkw/Van/Markt) und Rolle (Retail/Markt/MO/HQ) eines Tickets: aus
+  // den rohen Jira-Labels (t.raw.labels) abgeleitet, case-insensitiv
+  // verglichen gegen die bekannten Auspraegungen - "Markt" ist bewusst in
+  // beiden Listen enthalten (wie an anderer Stelle der App, s.
+  // MANUAL_SCOPE_TAGS/manualRoleSelect). Kein erfundenes Mapping: ein
+  // Ticket ohne passendes Label liefert jeweils ein leeres Array.
+  var SPARTE_FILTER_VALUES = ["Pkw", "Van", "Markt"];
+  var ROLE_FILTER_VALUES = ["Retail", "Markt", "MO", "HQ"];
+  function ticketRawLabels(t) {
+    return (t && t.raw && t.raw.labels) || [];
+  }
+  function ticketTagsFromValues(t, values) {
+    var raw = ticketRawLabels(t).map(function (l) { return ("" + (l || "")).trim().toLowerCase(); });
+    return values.filter(function (v) { return raw.indexOf(v.toLowerCase()) !== -1; });
+  }
+  function ticketSparteTags(t) { return ticketTagsFromValues(t, SPARTE_FILTER_VALUES); }
+  function ticketRoleTags(t) { return ticketTagsFromValues(t, ROLE_FILTER_VALUES); }
+  function ticketMatchesSparteFilter(t) {
+    return !app.activeSparteFilter.length || ticketSparteTags(t).some(function (v) { return app.activeSparteFilter.indexOf(v) !== -1; });
+  }
+  function ticketMatchesRoleFilter(t) {
+    return !app.activeRoleFilter.length || ticketRoleTags(t).some(function (v) { return app.activeRoleFilter.indexOf(v) !== -1; });
+  }
+  function hasActiveScopeFilter() {
+    return hasActiveScope() || app.activeSparteFilter.length > 0 || app.activeRoleFilter.length > 0;
+  }
   function scopedTickets() {
-    if (!hasActiveScope()) return app.tickets;
-    var keys = {};
-    app.tickets.forEach(function (t) {
-      var entry = app.ticketStore.get(t.key);
-      if (entry && entry.sources.some(function (s) { return app.activeImportIds[s.importId]; })) keys[t.key] = true;
-    });
-    app.savedLists.forEach(function (list) {
-      if (app.activeListIds[list.id]) list.keys.forEach(function (k) { keys[k] = true; });
-    });
-    return app.tickets.filter(function (t) { return keys[t.key]; });
+    var base = app.tickets;
+    if (hasActiveScope()) {
+      var keys = {};
+      app.tickets.forEach(function (t) {
+        var entry = app.ticketStore.get(t.key);
+        if (entry && entry.sources.some(function (s) { return app.activeImportIds[s.importId]; })) keys[t.key] = true;
+      });
+      app.savedLists.forEach(function (list) {
+        if (app.activeListIds[list.id]) list.keys.forEach(function (k) { keys[k] = true; });
+      });
+      base = app.tickets.filter(function (t) { return keys[t.key]; });
+    }
+    if (!app.activeSparteFilter.length && !app.activeRoleFilter.length) return base;
+    return base.filter(function (t) { return ticketMatchesSparteFilter(t) && ticketMatchesRoleFilter(t); });
   }
 
   /* ============ Ticket-Index: gemeinsame Filter-Bausteine ============
@@ -11646,22 +11726,7 @@
     Array.prototype.forEach.call(el.querySelectorAll(".step-refresh-btn"), function (btn) {
       btn.addEventListener("click", handleStepRefresh);
     });
-    Array.prototype.forEach.call(el.querySelectorAll('input[name^="active-import-choice-"]'), function (checkbox) {
-      checkbox.addEventListener("change", function () {
-        var val = checkbox.value;
-        if (val === "") {
-          app.activeImportIds = {};
-          app.activeListIds = {};
-        } else if (val.indexOf("import:") === 0) {
-          var importId = parseInt(val.slice("import:".length), 10);
-          if (checkbox.checked) app.activeImportIds[importId] = true; else delete app.activeImportIds[importId];
-        } else if (val.indexOf("list:") === 0) {
-          var listId = parseInt(val.slice("list:".length), 10);
-          if (checkbox.checked) app.activeListIds[listId] = true; else delete app.activeListIds[listId];
-        }
-        onActiveImportChanged();
-      });
-    });
+    wireScopeCheckboxes(el);
   }
 
   // Unteraktivitaet des Schritts "Datei(en) ausgewählt/importiert": Liste
@@ -11701,13 +11766,40 @@
         );
       });
     }
+    rows.push(scopeFilterListHtml(scopeSuffix));
     return rows.join("");
   }
+  // Sparte-/Rollen-Filter (Labels, Mehrfachauswahl) - zusaetzlich zur
+  // Datei-/Listen-Auswahl oben, schraenkt scopedTickets() weiter ein (s.
+  // ticketMatchesSparteFilter/ticketMatchesRoleFilter). Gleicher
+  // Checkbox-Gruppen-Mechanismus wie oben (je Job/Panel ein eigener,
+  // eindeutiger Gruppenname ueber scopeSuffix), aber EIN gemeinsamer,
+  // globaler Filterzustand (app.activeSparteFilter/activeRoleFilter) -
+  // Aenderung an einer Stelle (z. B. Massenverarbeitung) wirkt ueberall.
+  function scopeFilterListHtml(scopeSuffix) {
+    var groupName = "active-scope-filter-" + scopeSuffix;
+    function optionsRow(label, values, selected) {
+      return '<div class="step-file-option-row" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:4px;">' +
+        '<span style="font-weight:600;">' + escapeHtml(label) + ':</span>' +
+        values.map(function (v) {
+          return '<label class="step-file-option" style="display:inline-flex; align-items:center; gap:4px;">' +
+            '<input type="checkbox" name="' + groupName + '" value="' + v.kind + ':' + v.value + '"' +
+            (selected.indexOf(v.value) !== -1 ? " checked" : "") + '><span>' + escapeHtml(v.value) + "</span></label>";
+        }).join("") +
+        "</div>";
+    }
+    return '<p class="step-sub-label" style="margin-top:8px;">Sparte-/Rollen-Filter (Labels, Mehrfachauswahl, leer = alle Tickets)</p>' +
+      optionsRow("Sparte", SPARTE_FILTER_VALUES.map(function (v) { return { kind: "sparte", value: v }; }), app.activeSparteFilter) +
+      optionsRow("Rolle", ROLE_FILTER_VALUES.map(function (v) { return { kind: "role", value: v }; }), app.activeRoleFilter);
+  }
   function activeScopeLabel() {
-    if (!hasActiveScope()) return null;
+    if (!hasActiveScopeFilter()) return null;
     var parts = [];
     app.imports.forEach(function (imp) { if (app.activeImportIds[imp.id]) parts.push("📄 " + imp.source); });
     app.savedLists.forEach(function (list) { if (app.activeListIds[list.id]) parts.push("📋 „" + list.name + "“"); });
+    if (!parts.length) parts.push("Alle Importe (zusammengeführt)");
+    if (app.activeSparteFilter.length) parts.push("Sparte: " + app.activeSparteFilter.join("/"));
+    if (app.activeRoleFilter.length) parts.push("Rolle: " + app.activeRoleFilter.join("/"));
     return parts.join(", ");
   }
   function onActiveImportChanged() {
@@ -11717,8 +11809,47 @@
     ragPopulateSelects();
     ragClearExtraction();
     renderAllJobSteps();
+    if (typeof renderMassTicketSourceWrap === "function") renderMassTicketSourceWrap();
     var label = activeScopeLabel();
     addLog("Aktive Datei-/Listen-Auswahl für Verarbeitung: " + (label ? label : "Alle Importe (zusammengeführt)") + ".");
+  }
+  // Gemeinsame Checkbox-Verdrahtung fuer Datei-/Listen-Auswahl UND Sparte-/
+  // Rollen-Filter (s. fileChoiceListHtml/scopeFilterListHtml) - wird sowohl
+  // von renderProcessSteps() (Verarbeitung, Jobs 1-7) als auch von
+  // renderMassTicketSourceWrap() (Massenverarbeitung, Grundlage "Tickets
+  // aus Import uebernehmen") auf ihren jeweiligen Container angewendet, da
+  // beide denselben globalen Auswahl-/Filterzustand teilen - eine Aenderung
+  // in einem der beiden Container zieht ueber onActiveImportChanged() (das
+  // bereits renderMassTicketSourceWrap() mitaufruft, s. o.) automatisch auch
+  // im jeweils anderen Container nach.
+  function wireScopeCheckboxes(el) {
+    Array.prototype.forEach.call(el.querySelectorAll('input[name^="active-import-choice-"]'), function (checkbox) {
+      checkbox.addEventListener("change", function () {
+        var val = checkbox.value;
+        if (val === "") {
+          app.activeImportIds = {};
+          app.activeListIds = {};
+        } else if (val.indexOf("import:") === 0) {
+          var importId = parseInt(val.slice("import:".length), 10);
+          if (checkbox.checked) app.activeImportIds[importId] = true; else delete app.activeImportIds[importId];
+        } else if (val.indexOf("list:") === 0) {
+          var listId = parseInt(val.slice("list:".length), 10);
+          if (checkbox.checked) app.activeListIds[listId] = true; else delete app.activeListIds[listId];
+        }
+        onActiveImportChanged();
+      });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('input[name^="active-scope-filter-"]'), function (checkbox) {
+      checkbox.addEventListener("change", function () {
+        var val = checkbox.value;
+        var sep = val.indexOf(":");
+        var kind = val.slice(0, sep), v = val.slice(sep + 1);
+        var arr = kind === "sparte" ? app.activeSparteFilter : app.activeRoleFilter;
+        var idx = arr.indexOf(v);
+        if (checkbox.checked) { if (idx === -1) arr.push(v); } else if (idx !== -1) { arr.splice(idx, 1); }
+        onActiveImportChanged();
+      });
+    });
   }
 
   // "Aktualisieren"-Button in Schritt 1 (Prozessschritte, alle Jobs): löscht
@@ -13614,6 +13745,37 @@
     var override = app.ragPrompts[promptKey];
     return (override !== undefined && override !== null) ? override : RAG_PROMPT_DEFAULTS[promptKey];
   }
+  // Sprachstil (Einstellungen): globale Zusatzanweisung, die den eigentlichen
+  // Prompt-Text (ragPromptFor(), s. o.) bei den tatsaechlichen FLIESSTEXT-
+  // Generatoren ergaenzt - RAG Zusammenfassung/Fliesstext (+ Batch-
+  // Zusammenfuehrung) und Benutzerhandbuch-Kapitel-Generator (+ dessen
+  // Batch-Zusammenfuehrung). BEWUSST NICHT bei Uebersetzung (Wortgetreue
+  // waere gefaehrdet), Handbuch-Vergleich/Qualitaetspruefung (festes
+  // Stichpunkt-Ausgabeformat) oder der Massenverarbeitung-KI-Zuordnung
+  // (liefert nur "Domäne: .../Kapitel: ...", keine Prosa) - diese Prompts
+  // bleiben unveraendert. "neutral" (Standard) haengt keine Zusatzanweisung
+  // an, daher unveraendertes Verhalten bei unveraenderter Einstellung.
+  var LANGUAGE_STYLES = [
+    { id: "neutral", label: "Sachlich (Handbuch) – Standard", instruction: "" },
+    { id: "freundlich", label: "Freundlich/Locker", instruction: "Schreibe zusätzlich in einem freundlichen, zugänglichen Ton mit einfacher, direkter Sprache." },
+    { id: "formell", label: "Formell/Zurückhaltend", instruction: "Schreibe zusätzlich formell, präzise und sachlich-distanziert." },
+    { id: "knapp", label: "Knapp/Stichpunktartig", instruction: "Fasse dich zusätzlich so knapp wie möglich, mit kurzen, prägnanten Sätzen." }
+  ];
+  function languageStyleSuffix() {
+    var style = LANGUAGE_STYLES.filter(function (s) { return s.id === app.languageStyle; })[0];
+    return (style && style.instruction) ? "\n\n" + style.instruction : "";
+  }
+  function renderLanguageStyleSelect() {
+    if (!els.languageStyleSelect) return;
+    els.languageStyleSelect.innerHTML = LANGUAGE_STYLES.map(function (s) {
+      return '<option value="' + s.id + '">' + escapeHtml(s.label) + "</option>";
+    }).join("");
+    els.languageStyleSelect.value = app.languageStyle;
+  }
+  els.languageStyleSelect && els.languageStyleSelect.addEventListener("change", function () {
+    app.languageStyle = els.languageStyleSelect.value;
+    addLog("Sprachstil (KI-Texterzeugung) geändert: " + (LANGUAGE_STYLES.filter(function (s) { return s.id === app.languageStyle; })[0] || {}).label + ".");
+  });
   function renderRagPromptsList() {
     els.ragpromptsList.innerHTML = Object.keys(RAG_PROMPT_DEFAULTS).map(function (key) {
       var isOverridden = app.ragPrompts[key] !== undefined && app.ragPrompts[key] !== RAG_PROMPT_DEFAULTS[key];
@@ -13646,6 +13808,7 @@
     renderRagPromptsList();
   });
   renderRagPromptsList();
+  renderLanguageStyleSelect();
 
   function ragBuildPrompt(kind, rows) {
     var body = rows.map(function (r) {
@@ -13654,7 +13817,7 @@
       if (r.description) parts.push("Beschreibung: " + r.description);
       return "- " + parts.join(" | ");
     }).join("\n");
-    var instruction = ragPromptFor(kind === "summary" ? "summary" : "fliesstext");
+    var instruction = ragPromptFor(kind === "summary" ? "summary" : "fliesstext") + languageStyleSuffix();
     return instruction + "\n\n" + body;
   }
 
@@ -13663,7 +13826,7 @@
   // Einzeldurchlauf, ohne Hinweise auf die technische Batch-Aufteilung.
   function ragBuildSynthesisPrompt(kind, partialTexts) {
     var body = partialTexts.map(function (t, i) { return "Teiltext " + (i + 1) + ":\n" + t; }).join("\n\n");
-    var instruction = ragPromptFor(kind === "summary" ? "summarySynthesis" : "fliesstextSynthesis");
+    var instruction = ragPromptFor(kind === "summary" ? "summarySynthesis" : "fliesstextSynthesis") + languageStyleSuffix();
     return instruction + "\n\n" + body;
   }
 
@@ -14275,7 +14438,8 @@
     return idx === -1 ? app.outline.length : idx;
   }
   function massSourceLabel(source) {
-    return source === "manualChapter" ? "Benutzerhandbuch-Kapitel" : source === "referenceManual" ? "Referenz-Handbuch" : "Hochgeladen";
+    return source === "manualChapter" ? "Benutzerhandbuch-Kapitel" : source === "referenceManual" ? "Referenz-Handbuch" :
+      source === "ticket" ? "Jira-Ticket (Import)" : "Hochgeladen";
   }
   // Dieselbe wortbasierte Titel-Ähnlichkeit wie bei der RAG-Bibliothek/
   // Referenz-Handbuch-Kapitel-Zuordnung (chapterTitleSimilarity/
@@ -14374,7 +14538,13 @@
       source: fields.source,
       sourceKey: fields.sourceKey || null,
       ticketCount: fields.ticketCount != null ? fields.ticketCount : null,
-      savedAt: fields.savedAt || nowLabel()
+      savedAt: fields.savedAt || nowLabel(),
+      // Sparte (Pkw/Van/Markt) / Rolle (Retail/Markt/MO/HQ): nur bei
+      // ticketbasierten Eintraegen (source "ticket") gefuellt, s.
+      // ticketSparteTags()/ticketRoleTags() und massCollectTicketContent() -
+      // bei anderen Quellen bewusst leere Arrays (kein erfundenes Mapping).
+      sparte: fields.sparte || [],
+      role: fields.role || []
     };
     app.massFiles.push(entry);
     return entry;
@@ -14387,6 +14557,59 @@
       text: text, source: "upload"
     });
   }
+  // Grundlage "Tickets aus Import uebernehmen" (Massenverarbeitung, Punkt 1):
+  // nutzt denselben globalen Datei-/Listen- und Sparte-/Rollen-Filter wie
+  // die Verarbeitung (scopedTickets(), s. Teil 8b) - jedes gescopte Ticket
+  // wird wie ein eigener MD-Textschnipsel behandelt (Ueberschrift +
+  // Beschreibung), dedupliziert ueber sourceKey "ticket:<Jira-Nummer>" wie
+  // bei "Vorhandene Inhalte einlesen". Domäne wird bevorzugt vom Ticket
+  // selbst (t.domain) uebernommen, sonst wie ueberall inhaltsbasiert
+  // vorgeschlagen.
+  function massCollectTicketContent() {
+    var existingKeys = {};
+    app.massFiles.forEach(function (e) { if (e.sourceKey) existingKeys[e.sourceKey] = true; });
+    var tickets = scopedTickets();
+    var added = 0;
+    tickets.forEach(function (t) {
+      var key = "ticket:" + t.key;
+      if (existingKeys[key]) return;
+      var text = (t.summary || "") + (t.raw && t.raw.description ? "\n\n" + t.raw.description : "");
+      if (!text.trim()) return;
+      var suggestion = massSuggestDomainAndChapter([t.summary || ""], text);
+      massAddDirectEntry({
+        label: t.key + (t.summary ? " – " + t.summary : ""),
+        domain: t.domain || suggestion.domain,
+        chapterTitle: suggestion.chapterTitle,
+        text: text, source: "ticket", sourceKey: key,
+        ticketCount: 1, savedAt: nowLabel(),
+        sparte: ticketSparteTags(t), role: ticketRoleTags(t)
+      });
+      added++;
+    });
+    renderMassFiles();
+    renderMassTicketSourceWrap();
+    if (added) {
+      addLog("Massenverarbeitung: " + added + " Ticket(s) aus Import als Textschnipsel übernommen (" +
+        (activeScopeLabel() || "Alle Importe (zusammengeführt)") + ").");
+      showToast("Tickets übernommen", added + " Ticket(s) wurden als Textschnipsel hinzugefügt.");
+    } else {
+      showToast("Nichts Neues", "Keine neuen Tickets im aktuellen Auswahl-/Filterbereich gefunden (bereits übernommen oder kein Treffer).", true);
+    }
+  }
+  // Rendert die geteilte Datei-/Listen- + Sparte-/Rollen-Auswahl (s.
+  // fileChoiceListHtml/scopeFilterListHtml, Teil 8c) in der
+  // Massenverarbeitung und zeigt die aktuell damit gescopte Ticketzahl -
+  // derselbe globale Zustand wie in der Verarbeitung, daher eigener Render-
+  // Aufruf statt renderAllJobSteps() (dort waere u. a. kein Ziel-Container
+  // fuer "Massenverarbeitung" vorhanden).
+  function renderMassTicketSourceWrap() {
+    if (!els.massTicketSourceWrap) return;
+    els.massTicketSourceWrap.innerHTML = fileChoiceListHtml("mass");
+    wireScopeCheckboxes(els.massTicketSourceWrap);
+    var count = scopedTickets().length;
+    els.massTicketSourceNote.textContent = count + " Ticket(s) im aktuellen Auswahl-/Filterbereich.";
+  }
+  els.massCollectTicketsBtn.addEventListener("click", massCollectTicketContent);
   // Ephemere UI-Aufklapp-/Auswahl-Zustaende (wie expandedStepIds bei den
   // Prozessschritten) - bewusst NICHT Teil von app.massFiles/Sitzung
   // speichern, reiner Anzeige-Zustand dieser Sitzung. massSelectedIds
@@ -14438,12 +14661,16 @@
         var textCell = isOpen
           ? '<div style="white-space:pre-wrap; max-height:260px; overflow:auto;">' + escapeHtml(e.text) + "</div>"
           : "<span>" + escapeHtml(truncate(e.text, 220)) + "</span>";
+        var scopeTags = [].concat(e.sparte || [], e.role || []);
+        var scopeBadges = scopeTags.length
+          ? '<div style="margin-top:2px;">' + scopeTags.map(function (t) { return '<span class="override-badge" style="margin-right:3px;">' + escapeHtml(t) + "</span>"; }).join("") + "</div>"
+          : "";
         return "<tr>" +
           '<td><input type="checkbox" class="mass-row-checkbox" data-id="' + e.id + '" aria-label="' + escapeHtml(e.label) + ' auswählen"' + (massSelectedIds[e.id] ? " checked" : "") + "></td>" +
           "<td>" + escapeHtml(e.label) + "</td>" +
           '<td><select class="mass-domain-select" data-id="' + e.id + '" aria-label="Domäne">' + ragLibraryOptionsHtml(domainOptions, e.domain, "Ohne Domäne") + "</select></td>" +
           '<td><select class="mass-chapter-select" data-id="' + e.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapterOptions, e.chapterTitle, "Nicht zugeordnet") + "</select></td>" +
-          "<td>" + massSourceLabel(e.source) + "</td>" +
+          "<td>" + massSourceLabel(e.source) + scopeBadges + "</td>" +
           "<td class=\"mono\">" + (e.ticketCount != null ? e.ticketCount : "&ndash;") + "</td>" +
           "<td style=\"max-width:360px;\">" + textCell +
           '<div><button type="button" class="btn ghost btn-tiny mass-toggle-btn" data-id="' + e.id + '">' + (isOpen ? "Weniger anzeigen" : "Ganzen Text anzeigen") + "</button></div></td>" +
@@ -14796,6 +15023,7 @@
   });
 
   renderMassFiles();
+  renderMassTicketSourceWrap();
 
   // Zusammenfassung je Kapitel (Punkt 3): eigenstaendiges Gegenstueck zu
   // ragBuildMergedDoc() - mappt alle einzelnen massFiles-Textschnipsel in
@@ -15099,11 +15327,11 @@
   }
   function manualBuildPrompt(groupDescriptor, rows, role) {
     var body = rows.map(manualTicketBlock).join("\n");
-    return ragPromptFor("manualChapter") + "\n\n" + groupDescriptor + manualRoleInstruction(role) + "\n\nTicket-Rohdaten:\n" + body;
+    return ragPromptFor("manualChapter") + languageStyleSuffix() + "\n\n" + groupDescriptor + manualRoleInstruction(role) + "\n\nTicket-Rohdaten:\n" + body;
   }
   function manualBuildSynthesisPrompt(groupDescriptor, partialTexts, role) {
     var body = partialTexts.map(function (t, i) { return "Teiltext " + (i + 1) + ":\n" + t; }).join("\n\n");
-    return ragPromptFor("manualChapterSynthesis") + "\n\n" + groupDescriptor + manualRoleInstruction(role) + "\n\n" + body;
+    return ragPromptFor("manualChapterSynthesis") + languageStyleSuffix() + "\n\n" + groupDescriptor + manualRoleInstruction(role) + "\n\n" + body;
   }
 
   var manualAbortController = null;

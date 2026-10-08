@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.56.1"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.57.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -761,7 +761,17 @@ zusammenzuführen.
   anderer Stelle der App erzeugten MD-Inhalte (Benutzerhandbuch-Kapitel,
   Referenz-Handbuch-Kapitel) auf einen Klick – über einen internen
   Herkunfts-Schlüssel dedupliziert, ein erneuter Klick fügt also nichts
-  doppelt hinzu. Die Anzeige gruppiert **je Domäne** (tatsächlich
+  doppelt hinzu. Als dritte Quelle steht **"Tickets aus Import
+  übernehmen"** zur Verfügung: dieselbe Datei-/Listen-Auswahl sowie
+  derselbe **Sparte-/Rollen-Filter** (Labels Pkw/Van/Markt bzw.
+  Retail/Markt/MO/HQ) wie im Register Verarbeitung (geteilter, globaler
+  Zustand – eine Änderung an einer Stelle wirkt sofort auch an der
+  anderen) grenzt ein, welche importierten Jira-Tickets als Textschnipsel
+  (Überschrift + Beschreibung) übernommen werden; auch hier über
+  `ticket:<Jira-Nummer>` dedupliziert. Der Sparte-/Rollen-Filter wirkt
+  zusätzlich in der Verarbeitung selbst (alle Jobs 1-7, die auf
+  `scopedTickets()` aufbauen) als weitere Einschränkung neben der
+  bestehenden Datei-/Listen-Auswahl. Die Anzeige gruppiert **je Domäne** (tatsächlich
   vorkommende Domänen der geladenen Tickets) und sortiert **innerhalb
   jeder Domäne automatisch nach der Reihenfolge der Gliederung**
   (`app.outline`, nicht alphabetisch) – "Ohne Domäne"/"Nicht zugeordnet"
@@ -1334,6 +1344,19 @@ zusammenzuführen.
     Graph, Dashboard (Domänen-Verteilungs-Balken + farbiger Punkt vor der
     Domäne in der Ticket-Tabelle) und Dateiverwaltung (Domänen-Übersicht,
     farbiger Punkt je Gruppen-Kopfzeile).
+  - *Sprachstil (KI-Texterzeugung)* – eine globale Stilvorgabe (Sachlich/
+    Handbuch – Standard, Freundlich/Locker, Formell/Zurückhaltend,
+    Knapp/Stichpunktartig), die als Zusatzanweisung an die eigentlichen
+    Fließtext-Prompts angehängt wird: RAG Zusammenfassung/Fließtext
+    (Verarbeitung → 7. RAG, inkl. Batch-Zusammenführung) und
+    Benutzerhandbuch-Kapitel-Generator (inkl. dessen
+    Batch-Zusammenführung). Übersetzung, Handbuch-Vergleich,
+    Qualitätsprüfung und die Massenverarbeitung-KI-Zuordnung bleiben
+    bewusst unverändert (festes Ausgabeformat bzw. keine Prosa). Wirkt
+    sich erst auf den nächsten Klick auf "Generieren" aus, nicht
+    rückwirkend. Konfiguration (kein Sitzungsdatensatz) – bleibt auch bei
+    "Sitzung zurücksetzen"/"Alle Daten löschen" erhalten, wird über
+    Sitzung speichern/laden mit exportiert.
   - *RAG-Prompts (KI-Texterzeugung)* – die 5 Anweisungstexte, mit denen
     Claude aus den RAG-Rohdaten (Verarbeitung → 7. RAG) einen Text erzeugt
     (Zusammenfassung, Fließtext), mehrere Teiltexte bei sehr vielen Tickets
