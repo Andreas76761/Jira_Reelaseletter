@@ -716,6 +716,7 @@
                   <th data-key="status">Status <span class="arrow">&darr;</span></th>
                   <th title="Anteil der für das erkannte Importformat aktiven Spalten, die am Ticket befüllt sind (Einstellungen → Importformat)">Datenprofil</th>
                   <th data-key="domain">Domain <span class="arrow">&darr;</span></th>
+                  <th data-key="classification" title="Genehmigt/In Prüfung fließen in Handbuch/Releaseletter/RAG-Chat ein, Intern/Background sind ausgeschlossen (Background liefert zusätzliches Wissen für die Lücken-Analyse)">Klassifizierung <span class="arrow">&darr;</span></th>
                   <th data-key="issueType">Typ <span class="arrow">&darr;</span></th>
                   <th data-key="created">Erstellt <span class="arrow">&darr;</span></th>
                   <th data-key="updated">Aktualisiert <span class="arrow">&darr;</span></th>
@@ -4354,7 +4355,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.57.0";
+  var APP_VERSION = "2.58.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5589,6 +5590,52 @@
     return "backlog";
   }
 
+  /* ============ Klassifizierung (genehmigt/in Prüfung/intern/Background) ============
+     Vierte, von Sparte/Rolle (s. o.) unabhaengige Achse: steuert, OB ein
+     Ticket/Textschnipsel ueberhaupt in Handbuch/Releaseletter/RAG-Chat
+     einfliesst. "genehmigt"/"in_pruefung" duerfen dort hinein (s.
+     ticketMatchesClassification(), genutzt in queryTickets() sowie
+     resolveGeneratorTickets()); "intern" ist komplett ausgeschlossen (dient
+     nur internen Zwecken); "background" ebenfalls ausgeschlossen, liefert
+     aber zusaetzliches Wissen fuer die Luecken-Analyse (s. "Grill me",
+     Gliederung). Automatischer Vorschlag aus vorhandenen Jira-Labels
+     ("Intern"/"Background"/"Hintergrund"/"Recherche", woertlich wie beim
+     Sparte-/Rollen-Filter) bzw. ersatzweise aus dem Status-Bucket (erledigte
+     Tickets gelten als inhaltlich abgeschlossen -> "genehmigt"), manuell je
+     Ticket ueberschreibbar (app.ticketClassificationOverrides, wie
+     app.domainColors Konfiguration statt Sitzungsdatensatz - bleibt bei
+     "Sitzung zuruecksetzen"/"Alle Daten loeschen" erhalten, da an die
+     stabile Jira-Nummer gebunden). */
+  var CLASSIFICATION_VALUES = [
+    { id: "genehmigt", label: "Genehmigt" },
+    { id: "in_pruefung", label: "In Prüfung" },
+    { id: "intern", label: "Intern" },
+    { id: "background", label: "Background" }
+  ];
+  var CLASSIFICATION_LABELS = {};
+  CLASSIFICATION_VALUES.forEach(function (c) { CLASSIFICATION_LABELS[c.id] = c.label; });
+  var CLASSIFICATION_INTERN_LABELS = ["intern", "internal"];
+  var CLASSIFICATION_BACKGROUND_LABELS = ["background", "hintergrund", "recherche"];
+  function suggestTicketClassification(rawTicket) {
+    var raw = ((rawTicket && rawTicket.labels) || []).map(function (l) { return ("" + (l || "")).trim().toLowerCase(); });
+    function hasAny(list) { return list.some(function (v) { return raw.indexOf(v) !== -1; }); }
+    if (hasAny(CLASSIFICATION_INTERN_LABELS)) return "intern";
+    if (hasAny(CLASSIFICATION_BACKGROUND_LABELS)) return "background";
+    if (bucketFor(rawTicket && rawTicket.status) === "done") return "genehmigt";
+    return "in_pruefung";
+  }
+  function ticketClassificationFor(key, rawTicket) {
+    return app.ticketClassificationOverrides[key] || suggestTicketClassification(rawTicket);
+  }
+  function ticketMatchesClassification(t) {
+    return t.classification === "genehmigt" || t.classification === "in_pruefung";
+  }
+  function classificationOptionsHtml(selected) {
+    return CLASSIFICATION_VALUES.map(function (c) {
+      return '<option value="' + c.id + '"' + (c.id === selected ? " selected" : "") + '>' + escapeHtml(c.label) + "</option>";
+    }).join("");
+  }
+
   /* ============ App-weites Farbschema: Domänen-Farben + Status-Ampel ============
      Zwei unabhaengige Achsen, beide in Einstellungen editierbar
      (app.domainColors/app.statusColors, s. Teil "Einstellungen: Farbschema"):
@@ -5937,6 +5984,13 @@
     // löschen" erhalten.
     domainColors: {},
     statusColors: {},
+    // Klassifizierung (genehmigt/in Prüfung/intern/Background), s.
+    // ticketClassificationFor()/suggestTicketClassification() weiter oben:
+    // manuelle Uebersteuerung je Ticket-Schluessel (leer = automatischer
+    // Vorschlag). Konfiguration (wie domainColors) - an die stabile
+    // Jira-Nummer gebunden, bleibt daher auch bei "Sitzung zurücksetzen"/
+    // "Alle Daten löschen" erhalten.
+    ticketClassificationOverrides: {},
     // RAG-Prompts (Einstellungen): Abweichungen von RAG_PROMPT_DEFAULTS je
     // Prompt-Schluessel (leer = Standardtext, s. Teil 9b). Ebenfalls
     // Konfiguration, kein Sitzungsdatensatz.
@@ -6367,6 +6421,7 @@
       abbrevTranslations: app.abbrevTranslations,
       outline: app.outline,
       domainColors: app.domainColors,
+      ticketClassificationOverrides: app.ticketClassificationOverrides,
       statusColors: app.statusColors,
       ragPrompts: app.ragPrompts,
       languageStyle: app.languageStyle,
@@ -6419,6 +6474,7 @@
     if (data.abbrevTranslations) app.abbrevTranslations = data.abbrevTranslations;
     if (data.outline) app.outline = data.outline;
     if (data.domainColors) app.domainColors = data.domainColors;
+    if (data.ticketClassificationOverrides) app.ticketClassificationOverrides = data.ticketClassificationOverrides;
     if (data.statusColors) app.statusColors = data.statusColors;
     if (data.ragPrompts) app.ragPrompts = data.ragPrompts;
     if (typeof data.languageStyle === "string") app.languageStyle = data.languageStyle;
@@ -7975,7 +8031,8 @@
         // geladene Tickets (ohne importFormatKey-Feld) sofort ein
         // Typ-Icon/Datenprofil bekommen.
         importFormatKey: t.importFormatKey || resolveImportFormatKey(t.issue_type),
-        dataProfile: derived.dataProfile
+        dataProfile: derived.dataProfile,
+        classification: ticketClassificationFor(t.key, t)
       };
     });
     if (resetFilters) {
@@ -8320,10 +8377,27 @@
       if (checkT) setSelected(checkT.key, checkbox.checked);
       return;
     }
+    if (e.target.closest && e.target.closest("select.classification-select")) return;
     var tr = e.target.closest ? e.target.closest("tr[data-idx]") : null;
     if (!tr) return;
     var t = lastRenderedFiltered[parseInt(tr.getAttribute("data-idx"), 10)];
     if (t) openModal(t);
+  });
+  // Klassifizierungs-Dropdown je Zeile (Dashboard): schreibt in
+  // app.ticketClassificationOverrides (manuelle Uebersteuerung des
+  // automatischen Vorschlags, s. ticketClassificationFor()) und baut die
+  // Tabelle neu auf, damit Generator-relevante Folgeanzeigen (z. B. Anzahl
+  // Treffer in Benutzerhandbuch/RAG) sofort den neuen Stand zeigen.
+  els.tableBody.addEventListener("change", function (e) {
+    var select = e.target.closest ? e.target.closest("select.classification-select") : null;
+    if (!select) return;
+    var key = select.getAttribute("data-key");
+    var auto = suggestTicketClassification((app.ticketStore.get(key) || {}).current);
+    if (select.value === auto) delete app.ticketClassificationOverrides[key];
+    else app.ticketClassificationOverrides[key] = select.value;
+    refreshDashboard(false);
+    render();
+    addLog("Klassifizierung von " + key + " geändert: " + (CLASSIFICATION_LABELS[select.value] || select.value) + ".");
   });
 
   // Dashboard-Checkbox-Auswahl (fuer Listenauswahl/Selektions-Export) - bleibt
@@ -8417,6 +8491,7 @@
         "<td>" + pillHtml(t) + "</td>" +
         dataProfileHtml(t) +
         '<td class="domain">' + (t.domain ? '<span class="domain-dot" style="background:' + colorForDomain(t.domain) + '"></span>' + escapeHtml(t.domain) : "&ndash;") + "</td>" +
+        '<td><select class="classification-select" data-key="' + escapeHtml(t.key) + '" aria-label="Klassifizierung">' + classificationOptionsHtml(t.classification) + "</select></td>" +
         issueTypeCellHtml(t) +
         '<td class="date">' + escapeHtml(dateOnly(t.created)) + "</td>" +
         '<td class="date">' + escapeHtml(dateOnly(t.updated)) + "</td></tr>";
@@ -8475,7 +8550,9 @@
     });
     Object.keys(customFields).forEach(function (k) { if (k !== "Domain") rows += fieldRowHtml(k, customFields[k], false); });
 
-    els.modalFields.innerHTML = rows;
+    var classificationRow = '<tr class="meta-row"><th>Klassifizierung</th><td>' +
+      '<select id="modal-classification-select" aria-label="Klassifizierung">' + classificationOptionsHtml(t.classification) + "</select></td></tr>";
+    els.modalFields.innerHTML = classificationRow + rows;
     els.modalDescWrap.hidden = false;
     els.modalDesc.textContent = raw.description || NOT_IN_EXPORT;
     els.modalDesc.className = raw.description ? "" : "placeholder";
@@ -8484,6 +8561,23 @@
     els.modalDownloadPdfBtn.onclick = function () { downloadSinglePdf(raw); };
     els.modalClose.focus();
   }
+  // Klassifizierungs-Dropdown im Ticket-Detail-Modal - gleiche Logik wie
+  // die Dashboard-Tabellenspalte (s. o.), zusaetzlich bleibt das Modal
+  // geoeffnet und zeigt den neuen Stand direkt (kein Schliessen/Reopen
+  // noetig).
+  els.modalFields.addEventListener("change", function (e) {
+    var select = e.target.closest ? e.target.closest("#modal-classification-select") : null;
+    if (!select || !currentModalTicket) return;
+    var key = currentModalTicket.key;
+    var auto = suggestTicketClassification((app.ticketStore.get(key) || {}).current);
+    if (select.value === auto) delete app.ticketClassificationOverrides[key];
+    else app.ticketClassificationOverrides[key] = select.value;
+    refreshDashboard(false);
+    render();
+    addLog("Klassifizierung von " + key + " geändert: " + (CLASSIFICATION_LABELS[select.value] || select.value) + ".");
+    var updated = app.tickets.filter(function (t) { return t.key === key; })[0];
+    if (updated) currentModalTicket = updated;
+  });
   function closeModal() { els.modalOverlay.hidden = true; if (lastFocused) lastFocused.focus(); }
   els.modalClose.addEventListener("click", closeModal);
   els.modalCancelBtn.addEventListener("click", closeModal);
@@ -10450,13 +10544,24 @@
   }
   // criteria: { domains?, statuses?, categories?, chapters? } - je leer/
   // weggelassen = dieses Kriterium wird nicht eingeschränkt (s. o.).
+  // ticketMatchesClassification() ist dagegen KEIN optionales Kriterium,
+  // sondern ein fester Pflichtfilter (s. Kommentar bei
+  // ticketMatchesClassification weiter oben) - queryTickets() ist genau der
+  // gemeinsame Baustein von RAG-Extraktion, Kapitel-Generator
+  // (manualMatchedTickets) und Gliederung (glMatchedTickets, Grundlage von
+  // Chat/"Grill me"), nicht aber von scopedTickets() selbst oder den
+  // Verarbeitung-Jobs 3-6 (Glossar-Extraktion/Releaseversion/Jira-
+  // Liste/Domänen-Übersicht) - dort bleiben weiterhin ALLE Tickets
+  // (unabhängig von der Klassifizierung) sichtbar, bewusst eine reine
+  // Audit-/Übersichtsfunktion ohne Generator-Bezug.
   function queryTickets(list, criteria) {
     var domains = (criteria && criteria.domains) || [];
     var statuses = (criteria && criteria.statuses) || [];
     var categories = (criteria && criteria.categories) || [];
     var chapters = (criteria && criteria.chapters) || [];
     return list.filter(function (t) {
-      return ticketMatchesDomains(t, domains) &&
+      return ticketMatchesClassification(t) &&
+        ticketMatchesDomains(t, domains) &&
         ticketMatchesStatuses(t, statuses) &&
         ticketMatchesLabelCategories(t, categories) &&
         ticketMatchesOutlineChapters(t, chapters);
@@ -12107,15 +12212,25 @@
 
   /* ============ Teil 9: Phase-3-Generatoren ============ */
 
+  // Umgeht bewusst scopedTickets()/app.tickets (s. Kommentar weiter oben) -
+  // der Klassifizierungs-Pflichtfilter (s. ticketMatchesClassification)
+  // muss hier daher SEPARAT angewendet werden, statt sich wie bei
+  // queryTickets() automatisch mitzuziehen: Zweig 1 filtert die bereits
+  // klassifizierten app.tickets-Objekte VOR dem Zugriff auf .raw, Zweig 2
+  // berechnet die Klassifizierung je Schlüssel neu (dieselbe Override-oder-
+  // Vorschlag-Logik wie refreshDashboard(), s. ticketClassificationFor()),
+  // da rohe ticketStore-Eintraege kein .classification-Feld tragen.
   function resolveGeneratorTickets(kind) {
     var useFiltered = document.getElementById(kind + "-use-filtered").checked;
-    if (useFiltered) return currentFiltered().map(function (t) { return t.raw; });
+    if (useFiltered) return currentFiltered().filter(ticketMatchesClassification).map(function (t) { return t.raw; });
     var keysText = document.getElementById(kind + "-keys").value;
     var keys = keysText.split("\n").map(function (k) { return k.trim(); }).filter(Boolean);
     var tickets = [];
     keys.forEach(function (k) {
       var entry = app.ticketStore.get(k.toUpperCase()) || app.ticketStore.get(k);
-      if (entry) tickets.push(entry.current);
+      if (!entry) return;
+      var cls = ticketClassificationFor(entry.current.key, entry.current);
+      if (cls === "genehmigt" || cls === "in_pruefung") tickets.push(entry.current);
     });
     return tickets;
   }
@@ -14544,7 +14659,14 @@
       // ticketSparteTags()/ticketRoleTags() und massCollectTicketContent() -
       // bei anderen Quellen bewusst leere Arrays (kein erfundenes Mapping).
       sparte: fields.sparte || [],
-      role: fields.role || []
+      role: fields.role || [],
+      // Klassifizierung (genehmigt/in Prüfung/intern/Background, s.
+      // CLASSIFICATION_VALUES weiter oben): bei ticketbasierten Einträgen
+      // vom Ticket übernommen (massCollectTicketContent), sonst Standard
+      // "in Prüfung" (manuell hochgeladene/eingelesene Inhalte haben kein
+      // Jira-Statusfeld, aus dem sich sinnvoll etwas ableiten ließe) -
+      // manuell je Zeile überschreibbar (s. renderMassFiles()).
+      classification: fields.classification || "in_pruefung"
     };
     app.massFiles.push(entry);
     return entry;
@@ -14582,7 +14704,8 @@
         chapterTitle: suggestion.chapterTitle,
         text: text, source: "ticket", sourceKey: key,
         ticketCount: 1, savedAt: nowLabel(),
-        sparte: ticketSparteTags(t), role: ticketRoleTags(t)
+        sparte: ticketSparteTags(t), role: ticketRoleTags(t),
+        classification: t.classification
       });
       added++;
     });
@@ -14670,6 +14793,7 @@
           "<td>" + escapeHtml(e.label) + "</td>" +
           '<td><select class="mass-domain-select" data-id="' + e.id + '" aria-label="Domäne">' + ragLibraryOptionsHtml(domainOptions, e.domain, "Ohne Domäne") + "</select></td>" +
           '<td><select class="mass-chapter-select" data-id="' + e.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapterOptions, e.chapterTitle, "Nicht zugeordnet") + "</select></td>" +
+          '<td><select class="mass-classification-select" data-id="' + e.id + '" aria-label="Klassifizierung">' + classificationOptionsHtml(e.classification) + "</select></td>" +
           "<td>" + massSourceLabel(e.source) + scopeBadges + "</td>" +
           "<td class=\"mono\">" + (e.ticketCount != null ? e.ticketCount : "&ndash;") + "</td>" +
           "<td style=\"max-width:360px;\">" + textCell +
@@ -14683,7 +14807,7 @@
         '<button type="button" class="btn ghost btn-tiny mass-domain-md-btn" data-domain="' + escapeHtml(d) + '">Kapitel als MD-Datei erstellen</button>' +
         "</div>" +
         '<div class="table-wrap" style="max-height:400px; overflow:auto;"><table class="simple-table">' +
-        "<thead><tr><th></th><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Quelle</th><th>Tickets</th><th>Textschnipsel</th><th></th></tr></thead>" +
+        "<thead><tr><th></th><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Klassifizierung</th><th>Quelle</th><th>Tickets</th><th>Textschnipsel</th><th></th></tr></thead>" +
         "<tbody>" + rows + "</tbody></table></div></div>";
     }).join("");
     massUpdateSelectionUI();
@@ -14792,12 +14916,14 @@
     }
     var domainSel = e.target.closest(".mass-domain-select");
     var chapterSel = e.target.closest(".mass-chapter-select");
-    if (!domainSel && !chapterSel) return;
-    var id = parseInt((domainSel || chapterSel).getAttribute("data-id"), 10);
+    var classSel = e.target.closest(".mass-classification-select");
+    if (!domainSel && !chapterSel && !classSel) return;
+    var id = parseInt((domainSel || chapterSel || classSel).getAttribute("data-id"), 10);
     var entry = app.massFiles.filter(function (r) { return r.id === id; })[0];
     if (!entry) return;
     if (domainSel) entry.domain = domainSel.value;
     if (chapterSel) entry.chapterTitle = chapterSel.value;
+    if (classSel) entry.classification = classSel.value;
     renderMassFiles();
   });
   els.massGroups.addEventListener("click", async function (e) {
@@ -15032,9 +15158,18 @@
   // alphabetisch wie bei RAG), da Punkt 2 hier bereits nach Gliederung
   // sortiert - macht die Reihenfolge im Gesamtdokument konsistent mit der
   // Tabellenansicht darüber.
+  // Wie ticketMatchesClassification() (s. Teil 8b): nur "genehmigt"/
+  // "in Prüfung" duerfen in die eigentlichen Massenverarbeitung-Ausgaben
+  // (Zusammenfassung je Kapitel, Kapitel als MD-Datei je Domäne)
+  // einfliessen - "intern" bleibt aussen vor, "background" ebenfalls
+  // (dient stattdessen der Luecken-Analyse, s. Gliederung -> "Grill me").
+  function massFileMatchesClassification(e) {
+    return e.classification === "genehmigt" || e.classification === "in_pruefung";
+  }
   function massBuildMergedDoc() {
+    var included = app.massFiles.filter(massFileMatchesClassification);
     var groups = {};
-    app.massFiles.forEach(function (e) {
+    included.forEach(function (e) {
       var d = e.domain || "";
       var c = e.chapterTitle || "";
       if (!groups[d]) groups[d] = {};
@@ -15043,8 +15178,11 @@
     });
     var domainNames = Object.keys(groups).filter(function (d) { return d !== ""; }).sort();
     if (groups[""]) domainNames.push("");
-    var parts = ["# Massenverarbeitung - Zusammenfassung je Kapitel\n\n_Automatisch aus " + app.massFiles.length +
-      " Textschnipsel(n) der Massenverarbeitung zusammengeführt, sortiert nach Domäne und Gliederungsreihenfolge. Bitte redaktionell prüfen._"];
+    var excludedCount = app.massFiles.length - included.length;
+    var parts = ["# Massenverarbeitung - Zusammenfassung je Kapitel\n\n_Automatisch aus " + included.length +
+      " Textschnipsel(n) der Massenverarbeitung zusammengeführt, sortiert nach Domäne und Gliederungsreihenfolge" +
+      (excludedCount ? " (" + excludedCount + " als Intern/Background klassifizierte(r) Textschnipsel bewusst ausgeschlossen)" : "") +
+      ". Bitte redaktionell prüfen._"];
     domainNames.forEach(function (d) {
       parts.push("\n\n## Domäne: " + (d || "Ohne Domäne"));
       var chapterNames = Object.keys(groups[d]).filter(function (c) { return c !== ""; });
@@ -15067,10 +15205,16 @@
       app.massMergedDoc = merged;
       els.massMergeOutput.value = merged;
       els.massMergeDownloadBtn.disabled = false;
-      var unassigned = app.massFiles.filter(function (e) { return !e.domain || !e.chapterTitle; }).length;
-      els.massMergeStatusNote.textContent = app.massFiles.length + " Textschnipsel zusammengeführt" +
-        (unassigned ? " – " + unassigned + " davon ohne vollständige Domäne-/Kapitel-Zuordnung (siehe Gruppen „Ohne Domäne“/„Nicht zugeordnet“ im Dokument)." : ".");
-      addLog("Massenverarbeitung: " + app.massFiles.length + " Textschnipsel zu einem Gesamtdokument (Zusammenfassung je Kapitel) zusammengeführt.");
+      var included = app.massFiles.filter(massFileMatchesClassification);
+      var excluded = app.massFiles.length - included.length;
+      var unassigned = included.filter(function (e) { return !e.domain || !e.chapterTitle; }).length;
+      var noteExtras = [];
+      if (unassigned) noteExtras.push(unassigned + " davon ohne vollständige Domäne-/Kapitel-Zuordnung (siehe Gruppen „Ohne Domäne“/„Nicht zugeordnet“ im Dokument)");
+      if (excluded) noteExtras.push(excluded + " als Intern/Background klassifizierte(r) Textschnipsel ausgeschlossen");
+      els.massMergeStatusNote.textContent = included.length + " Textschnipsel zusammengeführt" +
+        (noteExtras.length ? " – " + noteExtras.join(", ") + "." : ".");
+      addLog("Massenverarbeitung: " + included.length + " Textschnipsel zu einem Gesamtdokument (Zusammenfassung je Kapitel) zusammengeführt" +
+        (excluded ? " (" + excluded + " Intern/Background ausgeschlossen)" : "") + ".");
     } finally {
       els.massMergeBtn.disabled = false;
       els.massMergeSpinner.hidden = true;
@@ -15095,7 +15239,9 @@
   // Speichern sperrt den Download wieder, bis erneut gespeichert wird, damit
   // nie ein unbeabsichtigt bearbeiteter Zwischenstand heruntergeladen wird.
   function massBuildDomainDoc(domain) {
-    var entries = app.massFiles.filter(function (e) { return (e.domain || "") === domain; });
+    var allEntries = app.massFiles.filter(function (e) { return (e.domain || "") === domain; });
+    var entries = allEntries.filter(massFileMatchesClassification);
+    var excludedCount = allEntries.length - entries.length;
     var byChapter = {};
     entries.forEach(function (e) {
       var c = e.chapterTitle || "";
@@ -15106,7 +15252,9 @@
     chapterNames.sort(function (a, b) { return massChapterOrderIndex(a) - massChapterOrderIndex(b); });
     if (byChapter[""]) chapterNames.push("");
     var parts = ["# " + (domain || "Ohne Domäne") + " - Kapitel als MD-Datei\n\n_Automatisch aus " + entries.length +
-      " Textschnipsel(n) dieser Domäne zusammengeführt, sortiert nach Gliederungsreihenfolge. Bitte redaktionell prüfen._"];
+      " Textschnipsel(n) dieser Domäne zusammengeführt, sortiert nach Gliederungsreihenfolge" +
+      (excludedCount ? " (" + excludedCount + " als Intern/Background klassifizierte(r) Textschnipsel bewusst ausgeschlossen)" : "") +
+      ". Bitte redaktionell prüfen._"];
     chapterNames.forEach(function (c) {
       parts.push("\n\n## Kapitel: " + (c || "Nicht zugeordnet"));
       byChapter[c].forEach(function (e) { parts.push("\n\n" + e.text); });
@@ -16565,6 +16713,38 @@
   // Claude (sample-Capability), Kontext = aktuelle Auswahl (Kapitel/
   // Unterkapitel/Label) + Stichwortliste + Ticket-Rohdaten.
   var glChatHistory = [];
+  // Background-Wissen (Klassifizierung "background", s. Teil 8b) fuer
+  // "Grill me": eigenstaendig von glContextBlock() (Chat nutzt bewusst NUR
+  // den regulaeren, bereits ueber queryTickets() auf genehmigt/in Prüfung
+  // eingeschraenkten Kontext) - liefert zusaetzliches Wissen SPEZIFISCH zum
+  // aktuellen Unterkapitel (gleiches Kapitel/Label-Themengebiet wie group),
+  // damit Claude damit gezielt Luecken im obigen Haupt-Kontext erkennen
+  // kann, statt es als Quelle fuer den eigentlichen Handbuchtext zu
+  // verwenden. Nur fuer echte Gliederungs-Gruppen (chapterTitle gesetzt) -
+  // im Auswahl-Modus (Dashboard-Checkbox-Auswahl) gibt es keinen sinnvollen
+  // thematischen Bezug, daher dort bewusst leer.
+  function glBackgroundMatchedTickets(chapterTitle, labelCategory) {
+    if (!chapterTitle) return [];
+    var categories = (labelCategory && labelCategory !== "alle") ? [labelCategory] : [];
+    return scopedTickets().filter(function (t) {
+      return t.classification === "background" &&
+        ticketMatchesOutlineChapters(t, [chapterTitle]) &&
+        ticketMatchesLabelCategories(t, categories);
+    });
+  }
+  function glBackgroundMassFiles(chapterTitle) {
+    if (!chapterTitle) return [];
+    return app.massFiles.filter(function (e) { return e.classification === "background" && e.chapterTitle === chapterTitle; });
+  }
+  function glBackgroundContextBlock(group) {
+    var bgTickets = glBackgroundMatchedTickets(group.chapterTitle, group.labelCategory);
+    var bgFiles = glBackgroundMassFiles(group.chapterTitle);
+    if (!bgTickets.length && !bgFiles.length) return "";
+    var lines = ["\n\nZusätzliches Hintergrundwissen (als \"Background\" klassifiziert - dient NICHT als Quelle für den eigentlichen Handbuchtext, sondern ausschließlich dazu, fehlende Themen/Lücken im obigen Inhalt zu erkennen):"];
+    bgTickets.forEach(function (t) { lines.push("- " + t.key + ": " + (t.summary || "") + (t.description ? " | " + truncate(t.description, 200) : "")); });
+    bgFiles.forEach(function (e) { lines.push("- " + e.label + ": " + truncate(e.text, 200)); });
+    return lines.join("\n");
+  }
   function glContextBlock(group) {
     var lines = [group.chapterTitle ? "Unterkapitel: " + group.subTitle + " (Kapitel: " + group.chapterTitle + ")" : "Datenquelle: " + group.subTitle];
     if (group.labelCategory !== "alle") lines.push("Label-Themengebiet: " + group.labelCategory);
@@ -16622,10 +16802,12 @@
     if (els.glChatPanel) els.glChatPanel.hidden = true;
     els.glGrillPanel.hidden = false;
     els.glGrillOutput.textContent = "Analysiere …";
+    var backgroundBlock = glBackgroundContextBlock(group);
     var prompt = "Prüfe kritisch die folgenden Stichwörter und Ticket-Rohdaten eines oneSCM-Benutzerhandbuch-Unterkapitels:\n\n" +
-      glContextBlock(group) +
+      glContextBlock(group) + backgroundBlock +
       "\n\nAntworte strukturiert mit genau diesen drei Überschriften:\n## Offene Themen\n## Widersprüche\n## Verbesserungen\n" +
-      "Nenne unter jeder Überschrift stichpunktartig konkrete Beobachtungen - falls es zu einer Überschrift nichts zu berichten gibt, schreibe \"Keine Auffälligkeiten.\".";
+      "Nenne unter jeder Überschrift stichpunktartig konkrete Beobachtungen - falls es zu einer Überschrift nichts zu berichten gibt, schreibe \"Keine Auffälligkeiten.\"." +
+      (backgroundBlock ? " Nutze das zusätzliche Hintergrundwissen gezielt, um unter \"Offene Themen\" auch Themen zu nennen, die dort vorkommen, im obigen Haupt-Kontext aber fehlen." : "");
     try {
       var result = await sampleApi(prompt, { modelTier: "default", cache: false });
       els.glGrillOutput.textContent = result.text || "";

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.57.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.58.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -306,12 +306,27 @@ zusammenzuführen.
   Balken, der anzeigt, wie viele der für den erkannten Vorgangstyp
   erwarteten (aktiven) Spalten am jeweiligen Ticket tatsächlich befüllt
   sind – "–" wenn der Typ keinem der 5 Importformate zugeordnet werden
-  konnte oder für den Typ noch keine Spaltenliste hinterlegt ist. Erstellt-/
+  konnte oder für den Typ noch keine Spaltenliste hinterlegt ist. Direkt
+  daneben die Spalte **Klassifizierung** (Dropdown je Zeile, genehmigt/in
+  Prüfung/intern/Background): ein automatischer Vorschlag aus den
+  Jira-Labels "Intern"/"Background"/"Hintergrund"/"Recherche" (wörtlich,
+  wie beim Sparte-/Rollen-Filter) bzw. ersatzweise aus dem Status
+  (erledigte Tickets gelten als inhaltlich abgeschlossen → "genehmigt"),
+  manuell überschreibbar – sowohl hier als auch im Ticket-Detail (s. u.).
+  "Genehmigt"/"In Prüfung" dürfen in Benutzerhandbuch-Kapitel-Generator,
+  Releaseletter und RAG/Chat einfließen, "Intern" ist dort komplett
+  ausgeschlossen (dient nur internen Zwecken), "Background" ebenfalls
+  ausgeschlossen, liefert aber zusätzliches Wissen für "Grill me" (s. u.),
+  um Lücken im Haupt-Kontext zu erkennen. Übersteuerungen sind an die
+  Jira-Nummer gebunden (Konfiguration, kein Sitzungsdatensatz) – bleiben
+  daher auch bei "Sitzung zurücksetzen"/"Alle Daten löschen" erhalten,
+  werden über Sitzung speichern/laden mit exportiert. Erstellt-/
   Aktualisiert-Spalten **ohne Uhrzeit** (nur das Datum, z. B. "20/Dez/24"
   statt "20/Dez/24 4:41 PM" – sortiert wird weiterhin nach dem vollen
   Zeitstempel, nur die Anzeige ist gekürzt), Ticket-Detailansicht (18
   Standardfelder, fehlende klar als "Nicht im Export enthalten" markiert
-  statt erfunden). Jede Zeile hat zusätzlich eine **Checkbox** ("Alle
+  statt erfunden, plus dieselbe Klassifizierungs-Auswahl wie in der
+  Tabellenspalte oben an erster Stelle). Jede Zeile hat zusätzlich eine **Checkbox** ("Alle
   sichtbaren auswählen" im Tabellenkopf) – die Auswahl bleibt beim Ändern
   eines Filters erhalten und lässt sich gezielt exportieren: entweder
   **nur die Jira-Nummern** (.txt, eine je Zeile) oder der **Gesamtinhalt**
@@ -746,7 +761,13 @@ zusammenzuführen.
   **Chat** (mehrstufiger Dialog mit den Stichwörtern/Ticket-Rohdaten als
   Kontext) sowie **"Grill me"** (einmaliger Kritik-Durchlauf, liefert
   strukturiert offene Themen, Widersprüche und Verbesserungsvorschläge).
-  Eine **erweiterte Suche** durchsucht Zusammenfassung/Beschreibung/Labels/
+  "Grill me" bezieht zusätzlich als **"Background" klassifizierte**
+  Tickets/Massenverarbeitung-Textschnipsel desselben Kapitels als
+  Zusatzkontext ein (s. Klassifizierung oben) – dient dort NICHT als
+  Quelle für Handbuchtext, sondern ausschließlich dazu, unter "Offene
+  Themen" auch Lücken zu benennen, die im Hintergrundwissen vorkommen,
+  aber im regulären (genehmigt/in Prüfung) Kontext fehlen; der Chat nutzt
+  bewusst nur den regulären Kontext. Eine **erweiterte Suche** durchsucht Zusammenfassung/Beschreibung/Labels/
   Domäne aller aktuell geladenen Tickets, zeigt die Trefferanzahl sowie
   **benachbarte Themenfelder** – bereits erzeugte Stichwörter aus
   beliebigen anderen Unterkapiteln, deren Ticket-Zuordnung sich mit den
@@ -775,7 +796,14 @@ zusammenzuführen.
   vorkommende Domänen der geladenen Tickets) und sortiert **innerhalb
   jeder Domäne automatisch nach der Reihenfolge der Gliederung**
   (`app.outline`, nicht alphabetisch) – "Ohne Domäne"/"Nicht zugeordnet"
-  jeweils zuletzt. Hinter jedem Domänen-Gruppenkopf sitzt der Button
+  jeweils zuletzt. Jeder Eintrag trägt außerdem eine **Klassifizierung**
+  (genehmigt/in Prüfung/intern/Background, dieselben vier Werte wie im
+  Dashboard) – bei über "Tickets aus Import übernehmen" erzeugten
+  Einträgen vom Ticket übernommen, sonst Standard "in Prüfung", manuell je
+  Zeile änderbar. "Zusammenfassung je Kapitel" und "Kapitel als MD-Datei
+  erstellen" (s. u.) schließen als "Intern"/"Background" klassifizierte
+  Einträge bewusst aus (mit Hinweis auf die ausgeschlossene Anzahl in der
+  Statuszeile bzw. im erzeugten Dokument). Hinter jedem Domänen-Gruppenkopf sitzt der Button
   **"Kapitel als MD-Datei erstellen"**: öffnet einen Dialog mit allen
   Textschnipseln dieser einen Domäne als eine MD-Datei (nach
   Gliederungsreihenfolge sortiert), direkt darin ansehen und editieren.
