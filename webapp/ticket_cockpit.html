@@ -894,12 +894,19 @@
           <button class="import-tab" data-mode="zip" type="button">ZIP-Archiv</button>
           <button class="import-tab" data-mode="andere" type="button">Andere Importe</button>
           <button class="import-tab" data-mode="ticketsplitt" type="button">Ticket-Splitt</button>
+          <button class="import-tab" data-mode="md-dateien" type="button">MD-Dateien</button>
         </div>
         <div class="callout" id="ticketsplitt-callout" hidden style="margin-bottom:12px;">
           Diese Word-Datei wird wie ein normaler Import gespeichert (erscheint in Dateiverwaltung/Dashboard) UND zusätzlich
           zerlegt: für jedes enthaltene Jira-Ticket wird eine eigene .docx-Datei im selben Ticket-Layout erzeugt (Feld/Wert-Tabelle
           + Beschreibung, bereinigt wie überall in der App), Dateiname = Jira-Nummer. Alle Einzeldateien werden gebündelt als
           ZIP heruntergeladen.
+        </div>
+        <div class="callout" id="md-dateien-callout" hidden style="margin-bottom:12px;">
+          Liest zuvor als Markdown exportierte Einzelticket-Dateien (z. B. aus "Output MD Tickets" oder Ticket-Splitt)
+          wieder ein und fügt sie wie ein normaler Import zu den geladenen Tickets hinzu (erscheint in Dashboard,
+          Verarbeitung und Dateiverwaltung). Mehrere einzelne .md-Dateien auf einmal ODER ein .zip-Archiv mit mehreren
+          .md-Dateien werden dabei zu EINEM Import zusammengeführt.
         </div>
 
         <div class="import-comment-row">
@@ -4328,7 +4335,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.55.1";
+  var APP_VERSION = "2.56.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5052,6 +5059,12 @@
     resolved: "Gelöst am", due: "Fällig am",
     labels: "Labels", components: "Komponenten", fix_versions: "Fix-Version(en)"
   };
+  // Umkehrung von DISPLAY_LABELS_DE (DE-Label -> Feldname) fuer den MD-Dateien-
+  // Reimport (parseMarkdownTicket() unten) - liest exakt das Format zurueck,
+  // das renderMarkdown() erzeugt.
+  var REVERSE_DISPLAY_LABELS_DE = {};
+  Object.keys(DISPLAY_LABELS_DE).forEach(function (f) { REVERSE_DISPLAY_LABELS_DE[DISPLAY_LABELS_DE[f]] = f; });
+  var MD_ARRAY_FIELDS = { labels: true, components: true, fix_versions: true };
 
   var MODAL_FIELD_LIST = [
     { key: "summary", label: "Zusammenfassung", kind: "field" },
@@ -5160,6 +5173,56 @@
     lines.push("");
     if (t.description) { lines.push("## Beschreibung"); lines.push(""); lines.push(t.description); lines.push(""); }
     return lines.join("\n");
+  }
+
+  // Kehrt renderMarkdown() um: liest eine zuvor von dieser App exportierte
+  // Einzelticket-MD-Datei (Output MD Tickets / Ticket-Splitt) wieder in ein
+  // rohes Ticket-Objekt ein, fuer den MD-Dateien-Reimport (Import ->
+  // "MD-Dateien"). Erwartet GENAU das von renderMarkdown() erzeugte Format;
+  // bei abweichendem Format wird ehrlich ein Fehler geworfen statt zu raten.
+  function parseMarkdownTicket(text, filename) {
+    var lines = String(text || "").replace(/\r\n/g, "\n").split("\n");
+    var idx = 0;
+    var headerMatch = /^#\s+(\S+)(?:\s+–\s+(.*))?$/.exec((lines[idx] || "").trim());
+    if (!headerMatch) {
+      throw new Error("Keine gültige Ticket-Markdown-Datei - erste Zeile muss \"# TICKET-KEY\" oder \"# TICKET-KEY – Zusammenfassung\" sein.");
+    }
+    var ticket = { key: headerMatch[1] };
+    if (headerMatch[2]) ticket.summary = headerMatch[2].trim();
+    idx++;
+
+    var customFields = {};
+    var sawTableHeader = false;
+    for (; idx < lines.length; idx++) {
+      var line = lines[idx].trim();
+      // Vor der Tabellenueberschrift (z. B. die Leerzeile direkt nach der
+      // "# KEY – Summary"-Zeile) wird alles ignoriert statt die Schleife
+      // schon hier zu beenden - erst eine Leerzeile NACH Tabellenbeginn
+      // markiert das Ende der Feld/Wert-Zeilen.
+      if (!sawTableHeader) { if (line === "| Feld | Wert |") sawTableHeader = true; continue; }
+      if (!line) { idx++; break; }
+      if (/^\|\s*---\s*\|\s*---\s*\|$/.test(line)) continue;
+      var rowMatch = /^\|(.*)\|(.*)\|$/.exec(line);
+      if (!rowMatch) break;
+      var label = rowMatch[1].trim();
+      var value = rowMatch[2].trim();
+      var fieldKey = REVERSE_DISPLAY_LABELS_DE[label];
+      if (fieldKey) {
+        ticket[fieldKey] = MD_ARRAY_FIELDS[fieldKey]
+          ? (value ? value.split(",").map(function (s) { return s.trim(); }).filter(Boolean) : [])
+          : value;
+      } else if (label) {
+        customFields[label] = value;
+      }
+    }
+    if (Object.keys(customFields).length) ticket.custom_fields = customFields;
+
+    var rest = lines.slice(idx).join("\n");
+    var descMatch = /^\s*##\s*Beschreibung\s*\n+([\s\S]*)$/.exec(rest);
+    if (descMatch) ticket.description = descMatch[1].replace(/\n+$/, "");
+
+    if (!ticket.key) throw new Error("Keine Ticket-Nummer in „" + filename + "“ gefunden.");
+    return ticket;
   }
 
   var PDF_MARGIN = 15, PDF_LABEL_WIDTH = 45, PDF_PAGE_W = 210, PDF_PAGE_H_LIMIT = 280;
@@ -5616,7 +5679,7 @@
     "listenauswahl-preview-count", "listenauswahl-preview-total", "listenauswahl-preview-tbody", "listenauswahl-preview-empty",
     "listenauswahl-count", "listenauswahl-tbody", "listenauswahl-empty",
     "dropzone", "dropzone-title", "dropzone-hint", "dropzone-icon", "dropzone-spinner", "file-input", "reset-session-btn", "format-callout", "import-tabs",
-    "import-comment-input", "ticketsplitt-callout",
+    "import-comment-input", "ticketsplitt-callout", "md-dateien-callout",
     "reference-manual-dropzone", "reference-manual-spinner", "reference-manual-file-input", "reference-manual-version-input",
     "reference-manual-table-wrap", "reference-manual-tbody", "reference-manual-empty",
     "paste-textarea", "paste-from-clipboard-btn", "paste-process-btn", "paste-spinner", "paste-process-label",
@@ -8933,6 +8996,81 @@
     );
   }
 
+  // Import-Modus "MD-Dateien": liest zuvor von dieser App exportierte
+  // Einzelticket-MD-Dateien (Output MD Tickets/Ticket-Splitt) wieder ein -
+  // entweder mehrere einzeln ausgewählte .md-Dateien ODER ein .zip-Archiv
+  // mit mehreren .md-Dateien (auch gemischt in einer Auswahl). Anders als
+  // der generische Datei-Import-Loop in handleFiles() (der jede ausgewaehlte
+  // Datei als EIGENEN Import behandelt) werden hier ALLE eingelesenen
+  // Tickets ueber ALLE ausgewaehlten Dateien/ZIP-Eintraege hinweg zu EINEM
+  // einzigen ingestTickets()-Aufruf zusammengefuehrt, analog zu
+  // handleZipImport() oben, nur eben Dateiauswahl-uebergreifend statt nur
+  // innerhalb eines einzelnen ZIPs.
+  async function parseMdEntriesFromZip(file) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek (JSZip) nicht geladen - Archiv kann nicht gelesen werden.");
+    var buf = await readFileAsArrayBuffer(file);
+    var zip;
+    try { zip = await JSZip.loadAsync(buf); }
+    catch (e) { throw new Error("Datei konnte nicht als ZIP-Archiv gelesen werden - ist es wirklich ein .zip? (" + (e && e.message) + ")"); }
+    var entryNames = Object.keys(zip.files).filter(function (n) {
+      var entry = zip.files[n];
+      if (entry.dir) return false;
+      if (n.indexOf("__MACOSX/") === 0 || n.indexOf("/__MACOSX/") !== -1) return false;
+      var base = n.split("/").pop();
+      return base && base.charAt(0) !== "." && /\.md$/i.test(base);
+    }).sort();
+    if (!entryNames.length) throw new Error("Keine .md-Dateien im ZIP-Archiv „" + file.name + "“ gefunden.");
+    var out = [];
+    for (var i = 0; i < entryNames.length; i++) {
+      out.push({ name: file.name + " → " + entryNames[i], text: await zip.files[entryNames[i]].async("string") });
+    }
+    return out;
+  }
+  async function handleMdDateienImport(files, comment) {
+    var allTickets = [], errors = [], okCount = 0, totalEntries = 0;
+    for (var fi = 0; fi < files.length; fi++) {
+      var file = files[fi];
+      var entries;
+      if (file.name.toLowerCase().slice(-4) === ".zip") {
+        try { entries = await parseMdEntriesFromZip(file); }
+        catch (e) { errors.push((e && e.message) || "Unbekannter Fehler."); continue; }
+      } else {
+        entries = [{ name: file.name, text: await readFileAsText(file) }];
+      }
+      for (var ei = 0; ei < entries.length; ei++) {
+        totalEntries++;
+        try {
+          allTickets.push(parseMarkdownTicket(entries[ei].text, entries[ei].name));
+          okCount++;
+        } catch (e) {
+          errors.push(entries[ei].name + ": " + ((e && e.message) || "Unbekannter Fehler."));
+          addLog("Import-Fehler (MD-Dateien) → " + entries[ei].name + ": " + ((e && e.message) || "Unbekannter Fehler."));
+        }
+      }
+    }
+    if (!allTickets.length) {
+      throw new Error(
+        "Keine Tickets aus den MD-Datei(en) übernommen" +
+        (errors.length ? " - " + errors.slice(0, 3).join(" / ") + (errors.length > 3 ? " …" : "") : "") + "."
+      );
+    }
+    var sourceLabel = files.length === 1 ? files[0].name : files.length + " MD-Datei(en)";
+    var record = ingestTickets(allTickets, {
+      source: sourceLabel, when: nowLabel(),
+      format: "MD-Dateien (" + okCount + "/" + totalEntries + " Datei(en) gelesen)",
+      comment: comment
+    });
+    var errSuffix = errors.length
+      ? " – " + errors.length + " von " + totalEntries + " Datei(en) fehlgeschlagen (Details im Protokoll unter Verarbeitung)."
+      : "";
+    showToast(
+      errors.length ? "Import teilweise erfolgreich" : "Import erfolgreich",
+      sourceLabel + ": " + record.ticketCount + " Tickets aus " + okCount + "/" + totalEntries + " Datei(en) (" +
+      record.stats.neu + " neu, " + record.stats.geaendert + " geändert)." + errSuffix,
+      errors.length > 0
+    );
+  }
+
   var IMPORT_MODE_INFO = {
     massenupload: {
       title: "Jira-HTML- oder XML-Export(e) hier ablegen",
@@ -8968,6 +9106,11 @@
       title: "Word-Datei mit mehreren Jira-Tickets hier ablegen",
       hint: "oder klicken zum Auswählen · wird importiert UND zusätzlich je Ticket als eigene .docx-Datei (ZIP) bereitgestellt",
       accept: ".docx,.doc"
+    },
+    "md-dateien": {
+      title: "Zuvor exportierte Ticket-MD-Datei(en) hier ablegen",
+      hint: "oder klicken zum Auswählen (Mehrfachauswahl möglich) · einzelne .md-Dateien ODER ein .zip-Archiv mit mehreren .md-Dateien, erzeugt aus \"Output MD Tickets\" bzw. Ticket-Splitt",
+      accept: ".md,.zip"
     }
   };
   var importMode = "massenupload";
@@ -8982,6 +9125,7 @@
       btn.classList.toggle("active", btn.getAttribute("data-mode") === mode);
     });
     if (els.ticketsplittCallout) els.ticketsplittCallout.hidden = mode !== "ticketsplitt";
+    if (els.mdDateienCallout) els.mdDateienCallout.hidden = mode !== "md-dateien";
   }
   Array.prototype.forEach.call(els.importTabs.querySelectorAll(".import-tab"), function (btn) {
     btn.addEventListener("click", function () { setImportMode(btn.getAttribute("data-mode")); });
@@ -9003,6 +9147,19 @@
     await wait(30); // UI (Sanduhr) einmal rendern lassen, bevor die (ggf. langsame) Verarbeitung startet
 
     try {
+      // "MD-Dateien" fasst ALLE ausgewaehlten Dateien (einzelne .md und/oder
+      // ZIP-Archive mit mehreren .md) zu EINEM Import zusammen, statt wie der
+      // generische Loop unten jede ausgewaehlte Datei als eigenen Import zu
+      // behandeln - siehe Kommentar bei handleMdDateienImport() oben.
+      if (importMode === "md-dateien") {
+        try { await handleMdDateienImport(files, comment); }
+        catch (err) {
+          showToast("Import fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+          addLog("Import fehlgeschlagen (MD-Dateien): " + ((err && err.message) || "Unbekannter Fehler."));
+        }
+        if (comment) els.importCommentInput.value = "";
+        return;
+      }
       for (var i = 0; i < files.length; i++) {
         var file = files[i];
         if (files.length > 1) els.dropzoneHint.textContent = "Datei " + (i + 1) + " von " + files.length + " wird verarbeitet (" + file.name + ") …";
