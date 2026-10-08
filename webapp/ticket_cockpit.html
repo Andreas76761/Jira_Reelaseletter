@@ -625,6 +625,7 @@
       <li class="nav-sep">Hilfe</li>
       <li><button class="nav-item" data-view="infobox" type="button">Infobox</button></li>
       <li><button class="nav-item" data-view="glossar" type="button">Glossar</button></li>
+      <li><button class="nav-item" data-view="synonyme" type="button">Synonyme</button></li>
       <li><button class="nav-item" data-view="abkuerzungen" type="button">Abkürzungen</button></li>
       <li class="nav-sep">Einstellungen</li>
       <li><button class="nav-item" data-view="einstellungen" type="button">Einstellungen</button></li>
@@ -1990,6 +1991,49 @@
             <div class="empty-hint" id="glossary-candidate-empty-register">Noch nicht extrahiert.</div>
           </div>
         </section>
+
+        <section>
+          <p class="section-label">Manuell gepflegte Übersetzungen</p>
+          <div class="callout">
+            Eigene Glossar-Einträge mit eindeutiger Übersetzung in Englisch, Slowakisch, Hindi und Französisch. Mit <b>Fixieren</b> markierst du einen Begriff als redaktionell geprüft/final (Felder werden dann gegen versehentliches Ändern gesperrt, über "Entsperren" wieder editierbar).
+          </div>
+          <div class="panel table-wrap" id="glossary-translations-wrap">
+            <table class="simple-table" id="glossary-translations-table">
+              <thead><tr><th>Begriff (DE)</th><th>Englisch</th><th>Slowakisch</th><th>Hindi</th><th>Französisch</th><th>Aktion</th></tr></thead>
+              <tbody id="glossary-translations-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="glossary-translations-empty">Noch keine manuellen Übersetzungen angelegt.</div>
+          </div>
+          <div class="paste-actions" style="margin-top:10px; align-items:center;">
+            <input type="text" class="text-input" id="glossary-translations-new-term" placeholder="Begriff (DE)" style="max-width:160px;">
+            <input type="text" class="text-input" id="glossary-translations-new-en" placeholder="Englisch" style="max-width:140px;">
+            <input type="text" class="text-input" id="glossary-translations-new-sk" placeholder="Slowakisch" style="max-width:140px;">
+            <input type="text" class="text-input" id="glossary-translations-new-hi" placeholder="Hindi" style="max-width:140px;">
+            <input type="text" class="text-input" id="glossary-translations-new-fr" placeholder="Französisch" style="max-width:140px;">
+            <button class="btn primary" id="glossary-translations-add-btn" type="button">Hinzufügen</button>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= Synonyme ================= -->
+      <section class="view-panel" data-view-panel="synonyme" hidden>
+        <div class="view-head"><h2>Synonyme</h2><p class="desc">Mehrere deutsche Begriffe mit derselben Bedeutung bekommen hier EINE verbindliche Übersetzung je Sprache &ndash; damit Generatoren/Handbuch nicht je nach verwendetem Synonym unterschiedliche Übersetzungen erzeugen. Mit <b>Fixieren</b> markierst du einen Eintrag als redaktionell geprüft/final.</p></div>
+        <div class="panel table-wrap" id="synonyms-wrap">
+          <table class="simple-table" id="synonyms-table">
+            <thead><tr><th>Hauptbegriff (DE)</th><th>Synonyme (DE)</th><th>Englisch</th><th>Slowakisch</th><th>Hindi</th><th>Französisch</th><th>Aktion</th></tr></thead>
+            <tbody id="synonyms-tbody"></tbody>
+          </table>
+          <div class="empty-hint" id="synonyms-empty">Noch keine Synonyme angelegt.</div>
+        </div>
+        <div class="paste-actions" style="margin-top:10px; align-items:center;">
+          <input type="text" class="text-input" id="synonyms-new-term" placeholder="Hauptbegriff (DE)" style="max-width:150px;">
+          <input type="text" class="text-input" id="synonyms-new-synonyms" placeholder="Synonyme (DE, kommagetrennt)" style="max-width:190px;">
+          <input type="text" class="text-input" id="synonyms-new-en" placeholder="Englisch" style="max-width:130px;">
+          <input type="text" class="text-input" id="synonyms-new-sk" placeholder="Slowakisch" style="max-width:130px;">
+          <input type="text" class="text-input" id="synonyms-new-hi" placeholder="Hindi" style="max-width:130px;">
+          <input type="text" class="text-input" id="synonyms-new-fr" placeholder="Französisch" style="max-width:130px;">
+          <button class="btn primary" id="synonyms-add-btn" type="button">Hinzufügen</button>
+        </div>
       </section>
 
       <!-- ================= Abkürzungen ================= -->
@@ -2002,6 +2046,28 @@
           </table>
           <div class="empty-hint" id="abbrev-empty-register">Noch nicht extrahiert. Unter Verarbeitung → 3. Glossar &amp; Abkürzungen extrahieren einmal ausführen.</div>
         </div>
+
+        <section style="margin-top:20px;">
+          <p class="section-label">Manuell gepflegte Übersetzungen</p>
+          <div class="callout">
+            Eigene Abkürzungs-Einträge mit eindeutiger Übersetzung in Englisch, Slowakisch, Hindi und Französisch &ndash; unabhängig von den automatischen Vorschlägen oben. Mit <b>Fixieren</b> markierst du eine Abkürzung als redaktionell geprüft/final.
+          </div>
+          <div class="panel table-wrap" id="abbrev-translations-wrap">
+            <table class="simple-table" id="abbrev-translations-table">
+              <thead><tr><th>Kürzel/Begriff (DE)</th><th>Englisch</th><th>Slowakisch</th><th>Hindi</th><th>Französisch</th><th>Aktion</th></tr></thead>
+              <tbody id="abbrev-translations-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="abbrev-translations-empty">Noch keine manuellen Übersetzungen angelegt.</div>
+          </div>
+          <div class="paste-actions" style="margin-top:10px; align-items:center;">
+            <input type="text" class="text-input" id="abbrev-translations-new-term" placeholder="Kürzel/Begriff (DE)" style="max-width:160px;">
+            <input type="text" class="text-input" id="abbrev-translations-new-en" placeholder="Englisch" style="max-width:140px;">
+            <input type="text" class="text-input" id="abbrev-translations-new-sk" placeholder="Slowakisch" style="max-width:140px;">
+            <input type="text" class="text-input" id="abbrev-translations-new-hi" placeholder="Hindi" style="max-width:140px;">
+            <input type="text" class="text-input" id="abbrev-translations-new-fr" placeholder="Französisch" style="max-width:140px;">
+            <button class="btn primary" id="abbrev-translations-add-btn" type="button">Hinzufügen</button>
+          </div>
+        </section>
       </section>
 
       <!-- ================= Einstellungen ================= -->
@@ -4262,7 +4328,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.54.0";
+  var APP_VERSION = "2.55.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5620,6 +5686,14 @@
     "points-tbody", "points-new-type", "points-new-value", "points-add-btn",
     "domaincolors-tbody", "domaincolors-empty", "statuscolors-tbody", "statuscolors-empty", "ragprompts-list",
     "labels-tbody", "labels-new-category", "labels-new-de", "labels-new-en", "labels-add-btn", "label-category-datalist",
+    "synonyms-tbody", "synonyms-empty", "synonyms-new-term", "synonyms-new-synonyms", "synonyms-new-en",
+    "synonyms-new-sk", "synonyms-new-hi", "synonyms-new-fr", "synonyms-add-btn",
+    "glossary-translations-tbody", "glossary-translations-empty", "glossary-translations-new-term",
+    "glossary-translations-new-en", "glossary-translations-new-sk", "glossary-translations-new-hi",
+    "glossary-translations-new-fr", "glossary-translations-add-btn",
+    "abbrev-translations-tbody", "abbrev-translations-empty", "abbrev-translations-new-term",
+    "abbrev-translations-new-en", "abbrev-translations-new-sk", "abbrev-translations-new-hi",
+    "abbrev-translations-new-fr", "abbrev-translations-add-btn",
     "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn", "outline-domain-datalist",
     "role-nav-list", "importformat-list",
     "test-results-date", "test-results-suites", "test-results-files-passed", "test-results-total", "test-results-passed",
@@ -5719,6 +5793,19 @@
     // Sitzungsdatensatz - siehe labelSeedData() (Funktionsdeklaration, daher
     // trotz spaeterer Position im Code hier bereits nutzbar/gehoisted).
     labels: labelSeedData(),
+    // Terminologie (Register Synonyme + manuelle Zusatztabellen in Glossar/
+    // Abkürzungen): frei editierbare Begriffslisten mit eindeutiger
+    // Übersetzung je Begriff in Englisch/Slowakisch/Hindi/Französisch sowie
+    // einem "fixiert"-Status (redaktionell geprüft/final, Felder dann gegen
+    // versehentliches Ändern gesperrt). Jeweils { term, en, sk, hi, fr,
+    // fixed }, bei Synonymen zusätzlich { synonyms } (freier DE-Text,
+    // kommagetrennte alternative Begriffe). Ebenfalls Konfiguration, kein
+    // Sitzungsdatensatz - leer vorbelegt (anders als Labels/Punkte-System
+    // ohne fachliche Startbefüllung, da uneindeutige Übersetzungen sonst
+    // erfunden werden müssten statt sie vom Nutzer pflegen zu lassen).
+    synonyms: [],
+    glossaryTranslations: [],
+    abbrevTranslations: [],
     // Benutzerhandbuch-Gliederung (Einstellungen): Kapitel/Unterkapitel,
     // wird beim Verarbeiten per Text-Abgleich (wie Labels) automatisch
     // Tickets zugeordnet - siehe outlineSeedData()/computeAutoOutline().
@@ -6160,6 +6247,9 @@
       view: app.view,
       priorityPoints: app.priorityPoints,
       labels: app.labels,
+      synonyms: app.synonyms,
+      glossaryTranslations: app.glossaryTranslations,
+      abbrevTranslations: app.abbrevTranslations,
       outline: app.outline,
       domainColors: app.domainColors,
       statusColors: app.statusColors,
@@ -6206,6 +6296,9 @@
     if (data.view) app.view = data.view;
     if (data.priorityPoints) app.priorityPoints = data.priorityPoints;
     if (data.labels) app.labels = data.labels;
+    if (data.synonyms) app.synonyms = data.synonyms;
+    if (data.glossaryTranslations) app.glossaryTranslations = data.glossaryTranslations;
+    if (data.abbrevTranslations) app.abbrevTranslations = data.abbrevTranslations;
     if (data.outline) app.outline = data.outline;
     if (data.domainColors) app.domainColors = data.domainColors;
     if (data.statusColors) app.statusColors = data.statusColors;
@@ -6238,6 +6331,7 @@
     renderExtractedGlossaryCandidates();
     renderPointsTable();
     renderLabelsList();
+    Object.keys(TERMINOLOGY_LISTS).forEach(renderTerminologyList);
     renderOutlineList();
     renderRagPromptsList();
     renderManualChapters();
@@ -7159,6 +7253,125 @@
   [els.labelsNewCategory, els.labelsNewDe, els.labelsNewEn].forEach(function (input) {
     input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); els.labelsAddBtn.click(); } });
   });
+
+  // Terminologie (Register Synonyme + manuelle Zusatztabellen in Glossar/
+  // Abkürzungen, s. app.synonyms/app.glossaryTranslations/
+  // app.abbrevTranslations oben): drei strukturell identische Listen
+  // (deutscher Begriff + Übersetzung Englisch/Slowakisch/Hindi/Französisch
+  // + "fixiert"-Status, bei Synonymen zusätzlich ein Freitext-Feld für
+  // alternative deutsche Begriffe). EIN generischer Satz Render-/
+  // Event-Handler bedient alle drei (statt dieselbe Hinzufügen/Löschen/
+  // Fixieren-Logik dreimal zu duplizieren) - Unterschiede stecken rein in
+  // der TERMINOLOGY_LISTS-Konfiguration (Feldnamen/IDs/Texte).
+  var TERMINOLOGY_LISTS = {
+    synonyms: {
+      stateKey: "synonyms", hasSynonymsField: true,
+      tbody: "synonymsTbody", empty: "synonymsEmpty",
+      newTerm: "synonymsNewTerm", newSynonyms: "synonymsNewSynonyms",
+      newEn: "synonymsNewEn", newSk: "synonymsNewSk", newHi: "synonymsNewHi", newFr: "synonymsNewFr",
+      addBtn: "synonymsAddBtn", logLabel: "Synonym-Eintrag"
+    },
+    glossaryTranslations: {
+      stateKey: "glossaryTranslations", hasSynonymsField: false,
+      tbody: "glossaryTranslationsTbody", empty: "glossaryTranslationsEmpty",
+      newTerm: "glossaryTranslationsNewTerm",
+      newEn: "glossaryTranslationsNewEn", newSk: "glossaryTranslationsNewSk",
+      newHi: "glossaryTranslationsNewHi", newFr: "glossaryTranslationsNewFr",
+      addBtn: "glossaryTranslationsAddBtn", logLabel: "Glossar-Übersetzung"
+    },
+    abbrevTranslations: {
+      stateKey: "abbrevTranslations", hasSynonymsField: false,
+      tbody: "abbrevTranslationsTbody", empty: "abbrevTranslationsEmpty",
+      newTerm: "abbrevTranslationsNewTerm",
+      newEn: "abbrevTranslationsNewEn", newSk: "abbrevTranslationsNewSk",
+      newHi: "abbrevTranslationsNewHi", newFr: "abbrevTranslationsNewFr",
+      addBtn: "abbrevTranslationsAddBtn", logLabel: "Abkürzungs-Übersetzung"
+    }
+  };
+  function terminologyRowHtml(cfg, entry, idx) {
+    var cells = ["term", "en", "sk", "hi", "fr"].map(function (f) {
+      var val = entry.fixed
+        ? escapeHtml(entry[f] || "")
+        : '<input type="text" class="text-input terminology-field-input" data-field="' + f + '" value="' + escapeHtml(entry[f] || "") + '">';
+      var html = "<td>" + val + (f === "term" && entry.fixed ? ' <span class="pill done">Fixiert</span>' : "") + "</td>";
+      if (f === "term" && cfg.hasSynonymsField) {
+        html += entry.fixed
+          ? "<td>" + escapeHtml(entry.synonyms || "") + "</td>"
+          : '<td><input type="text" class="text-input terminology-field-input" data-field="synonyms" value="' + escapeHtml(entry.synonyms || "") + '"></td>';
+      }
+      return html;
+    }).join("");
+    var actions = (entry.fixed
+      ? '<button type="button" class="btn ghost btn-tiny" data-action="unfix">Entsperren</button>'
+      : '<button type="button" class="btn ghost btn-tiny" data-action="fix">Fixieren</button>') +
+      ' <button type="button" class="btn danger btn-tiny" data-action="delete">Löschen</button>';
+    return '<tr data-idx="' + idx + '">' + cells + "<td>" + actions + "</td></tr>";
+  }
+  function renderTerminologyList(key) {
+    var cfg = TERMINOLOGY_LISTS[key];
+    var list = app[cfg.stateKey];
+    els[cfg.tbody].innerHTML = list.map(function (entry, idx) { return terminologyRowHtml(cfg, entry, idx); }).join("");
+    if (els[cfg.empty]) els[cfg.empty].hidden = list.length > 0;
+  }
+  function bindTerminologyList(key) {
+    var cfg = TERMINOLOGY_LISTS[key];
+    els[cfg.tbody].addEventListener("click", function (e) {
+      var row = e.target.closest("tr[data-idx]");
+      if (!row) return;
+      var idx = parseInt(row.getAttribute("data-idx"), 10);
+      var entry = app[cfg.stateKey][idx];
+      if (!entry) return;
+      if (e.target.closest('button[data-action="delete"]')) {
+        app[cfg.stateKey].splice(idx, 1);
+        addLog(cfg.logLabel + " „" + entry.term + "“ entfernt.");
+        renderTerminologyList(key);
+      } else if (e.target.closest('button[data-action="fix"]')) {
+        entry.fixed = true;
+        addLog(cfg.logLabel + " „" + entry.term + "“ fixiert.");
+        renderTerminologyList(key);
+      } else if (e.target.closest('button[data-action="unfix"]')) {
+        entry.fixed = false;
+        addLog(cfg.logLabel + " „" + entry.term + "“ entsperrt.");
+        renderTerminologyList(key);
+      }
+    });
+    els[cfg.tbody].addEventListener("change", function (e) {
+      var input = e.target.closest(".terminology-field-input");
+      if (!input) return;
+      var row = input.closest("tr[data-idx]");
+      var idx = parseInt(row.getAttribute("data-idx"), 10);
+      var entry = app[cfg.stateKey][idx];
+      if (!entry) return;
+      entry[input.getAttribute("data-field")] = input.value.trim();
+    });
+    els[cfg.addBtn].addEventListener("click", function () {
+      var term = (els[cfg.newTerm].value || "").trim();
+      var en = (els[cfg.newEn].value || "").trim();
+      var sk = (els[cfg.newSk].value || "").trim();
+      var hi = (els[cfg.newHi].value || "").trim();
+      var fr = (els[cfg.newFr].value || "").trim();
+      var synonyms = cfg.hasSynonymsField ? (els[cfg.newSynonyms].value || "").trim() : "";
+      if (!term) { showToast("Kein Begriff", "Bitte einen deutschen Begriff eingeben.", true); return; }
+      if (!en && !sk && !hi && !fr) { showToast("Keine Übersetzung", "Bitte mindestens eine Übersetzung eingeben.", true); return; }
+      if (app[cfg.stateKey].some(function (r) { return r.term.toLowerCase() === term.toLowerCase(); })) {
+        showToast("Begriff existiert bereits", "Dieser Begriff ist schon in der Liste.", true);
+        return;
+      }
+      var entry = { term: term, en: en, sk: sk, hi: hi, fr: fr, fixed: false };
+      if (cfg.hasSynonymsField) entry.synonyms = synonyms;
+      app[cfg.stateKey].push(entry);
+      addLog(cfg.logLabel + " „" + term + "“ angelegt.");
+      els[cfg.newTerm].value = ""; els[cfg.newEn].value = ""; els[cfg.newSk].value = ""; els[cfg.newHi].value = ""; els[cfg.newFr].value = "";
+      if (cfg.hasSynonymsField) els[cfg.newSynonyms].value = "";
+      renderTerminologyList(key);
+    });
+    var newInputs = [els[cfg.newTerm], els[cfg.newEn], els[cfg.newSk], els[cfg.newHi], els[cfg.newFr]];
+    if (cfg.hasSynonymsField) newInputs.push(els[cfg.newSynonyms]);
+    newInputs.forEach(function (input) {
+      input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); els[cfg.addBtn].click(); } });
+    });
+  }
+  Object.keys(TERMINOLOGY_LISTS).forEach(bindTerminologyList);
 
   // Domänen-Vorschlagsliste (Datalist) fuer die Gliederungs-Zuordnung:
   // tatsaechlich vorkommende Domänen der aktuell geladenen Tickets, damit
@@ -16071,6 +16284,7 @@
   renderDomainAliases();
   renderPointsTable();
   renderLabelsList();
+  Object.keys(TERMINOLOGY_LISTS).forEach(renderTerminologyList);
   renderOutlineList();
   renderRoleNavigationList();
   renderImportFormats();

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.54.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.55.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1201,6 +1201,24 @@ zusammenzuführen.
   erzeugt.
 - **Infobox / Glossar / Abkürzungen** – Kurzerklärung der App, Begriffsliste
   bzw. extrahierte Abkürzungen (siehe Verarbeitung → 3.).
+- **Terminologie: Synonyme + manuell gepflegte Übersetzungen (Glossar/
+  Abkürzungen)** – ergänzend zur automatischen Extraktion (s. o.) lassen
+  sich eigene, redaktionell gepflegte Begriffslisten mit einer
+  **eindeutigen Übersetzung je Begriff** in Englisch, Slowakisch, Hindi und
+  Französisch anlegen: ein neues Register **"Synonyme"** (eigener
+  Navigationspunkt neben Glossar/Abkürzungen – mehrere deutsche Begriffe
+  mit derselben Bedeutung, z. B. "Vertrag"/"Kontrakt"/"Abschluss", bekommen
+  so EINE verbindliche Übersetzung je Sprache, statt dass Generatoren je
+  nach verwendetem Synonym unterschiedlich übersetzen) sowie je ein neuer
+  Abschnitt **"Manuell gepflegte Übersetzungen"** am Ende von Glossar und
+  Abkürzungen (unabhängig von den automatischen Vorschlägen dort). Jeder
+  Eintrag lässt sich über **"Fixieren"** als redaktionell geprüft/final
+  markieren – die Felder werden dann gegen versehentliches Ändern gesperrt
+  (Begriff/Übersetzungen erscheinen nur noch als Text statt als
+  Eingabefeld) und über **"Entsperren"** wieder editierbar. Wie Labels/
+  Punkte-System reine Konfiguration (kein Sitzungsdatensatz, bleibt bei
+  "Alle Daten löschen"/"Sitzung zurücksetzen" erhalten), aber Teil von
+  "Sitzung speichern/laden".
 - **Einstellungen**
   - *Sitzung speichern/laden* – da es keinen Server gibt und mit dem
     Schließen der Seite alles verloren geht, lässt sich der komplette
