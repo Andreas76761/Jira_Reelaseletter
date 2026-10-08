@@ -148,7 +148,10 @@ async function waitUntil(fn, timeoutMs) {
   const marker0Calls = sampleCalls.filter((c) => c.includes("Marker-0")).length;
   check("Batch 1 (Marker-0) wurde nach 'Fortsetzen' NICHT erneut abgefragt (weiterhin genau 1x)", marker0Calls === 1);
   check("Nach 'Fortsetzen' kamen genau 2 weitere Aufrufe hinzu (Batch-2-Retry + Zusammenführung)", sampleCalls.length === callsBeforeResume + 2);
-  check("Finaler Output zeigt die zusammengeführte Antwort", doc.getElementById("rag-output").textContent === "Finale zusammengeführte Zusammenfassung.");
+  // Seit der Referenz-Nummern-Erweiterung haengt eine "Quellen"-Fussnote am
+  // finalen Text (s. ticketSourcesFooter()) - startsWith statt exakter
+  // Gleichheit.
+  check("Finaler Output zeigt die zusammengeführte Antwort", doc.getElementById("rag-output").textContent.startsWith("Finale zusammengeführte Zusammenfassung."));
   check("Statushinweis nennt Batch-Zusammenführung", doc.getElementById("rag-status-note").textContent.includes("2 Batches zusammengeführt"));
   check("'Fortsetzen'-Button nach Abschluss wieder versteckt", doc.getElementById("rag-resume-btn").hidden);
 

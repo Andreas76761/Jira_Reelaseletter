@@ -101,7 +101,10 @@ const xml = `<?xml version="1.0"?><rss><channel>
   fire(doc.getElementById("manual-generate-btn"), "click");
   const manualDone = await waitUntil(() => {
     const ta = doc.querySelector(".manual-chapter-textarea[data-lang='de']");
-    return !!ta && ta.value === "Kapitel-Fließtext für Massenverarbeitung-Test.";
+    // Seit der Referenz-Nummern-Erweiterung haengt eine "Quellen"-Fussnote am
+    // generierten Text (s. ticketSourcesFooter()) - startsWith statt exakter
+    // Gleichheit, damit diese neue, gewollte Ergaenzung den Test nicht bricht.
+    return !!ta && ta.value.startsWith("Kapitel-Fließtext für Massenverarbeitung-Test.");
   }, 3000);
   check("Vorbereitung: Benutzerhandbuch-Kapitel 'Kapitel 7' erzeugt", manualDone);
 

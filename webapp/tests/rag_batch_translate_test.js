@@ -85,7 +85,10 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("Batch 2 enthält Marker-15, aber nicht Marker-0", sampleCalls[1] && sampleCalls[1].includes("Marker-15") && !sampleCalls[1].includes("Marker-0"));
   check("Zusammenführungs-Prompt referenziert 'Teiltext 1' und 'Teiltext 2'", sampleCalls[2].includes("Teiltext 1:") && sampleCalls[2].includes("Teiltext 2:"));
   check("Zusammenführungs-Prompt enthält beide Batch-Antworten", sampleCalls[2].includes("Teiltext-Antwort Nr 1") && sampleCalls[2].includes("Teiltext-Antwort Nr 2"));
-  check("Finaler Output zeigt die zusammengeführte Antwort (nicht nur einen Teiltext)", doc.getElementById("rag-output").textContent === "Finale zusammengeführte Zusammenfassung.");
+  // Seit der Referenz-Nummern-Erweiterung haengt eine "Quellen"-Fussnote am
+  // finalen Text (s. ticketSourcesFooter()) - startsWith statt exakter
+  // Gleichheit.
+  check("Finaler Output zeigt die zusammengeführte Antwort (nicht nur einen Teiltext)", doc.getElementById("rag-output").textContent.startsWith("Finale zusammengeführte Zusammenfassung."));
   check("Statushinweis nennt Batch-Zusammenführung", doc.getElementById("rag-status-note").textContent.includes("2 Batches zusammengeführt"));
   check("Protokoll vermerkt Batches", doc.getElementById("log-list").textContent.includes("2 Batches"));
 
@@ -103,7 +106,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   fire(doc.getElementById("rag-translate-btn"), "click");
   await wait(100);
   check("Zurückschalten löst KEINEN weiteren Claude-Aufruf aus (weiterhin genau 1)", sampleCalls.length === 1);
-  check("Ausgabe zeigt wieder den deutschen Originaltext", doc.getElementById("rag-output").textContent === "Finale zusammengeführte Zusammenfassung.");
+  check("Ausgabe zeigt wieder den deutschen Originaltext", doc.getElementById("rag-output").textContent.startsWith("Finale zusammengeführte Zusammenfassung."));
   check("Button-Beschriftung wieder 'Übersetzen (Englisch)'", doc.getElementById("rag-translate-btn").textContent === "Übersetzen (Englisch)");
 
   // ===================== Download-Dateiname/Inhalt beruecksichtigt Sprache =====================

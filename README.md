@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.59.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.60.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -858,6 +858,31 @@ zusammenzuführen.
   Domänen-Gruppierung) erfolgt nur noch periodisch (alle 20 Treffer) sowie
   einmal abschließend – bei vielen hundert Einträgen spürbar schneller als
   zuvor (linearer statt quadratischer Gesamtaufwand über den Lauf).
+  Neben Domäne/Kapitel lässt sich je Zeile zusätzlich ein **Unterkapitel**
+  wählen (Liste hängt vom gewählten Kapitel ab, Standard "– keine –";
+  ändert sich das Kapitel, wird die Unterkapitel-Auswahl zurückgesetzt) –
+  dient als Grundlage der neuen Spalte **"Ref.-Nr."**: eine automatisch
+  erzeugte, stabile Referenz-Nummer im Format
+  "`<Domänen-Kürzel>-<Kapitelnr>.<Unterkapitelnr>-<Jahr>-<laufende Nummer>`"
+  (z. B. "CM-04.01-2024-003"), mit der sich aus einem fertigen Text wieder
+  auf das ursprüngliche Jira-Ticket zurückschließen lässt. Nur bei
+  **ticketbasierten** Einträgen (über "Tickets übernehmen" hinzugefügt)
+  ermittelbar – hochgeladene/eingelesene Inhalte ohne 1:1-Ticketbezug
+  zeigen ehrlich "–" statt eine erfundene Nummer. Das Domänen-Kürzel kommt
+  aus einer neuen Stammdaten-Tabelle (Einstellungen → Domänen-Kürzel,
+  automatischer Vorschlag aus den Wortanfängen der Domäne, z. B. "Contract
+  Management" → "CM", frei überschreibbar bei Kollisionen). Eine einmal
+  vergebene Nummer bleibt stabil (auch nach erneutem Zuordnen derselben
+  Kombination oder einem Sitzung-speichern/laden-Zyklus) und wird
+  automatisch an jeden Textschnipsel im Domänen-MD-Export sowie im
+  Gesamtdokument ("Zusammenfassung je Kapitel") als Zeile "_Referenz: ...
+  (Jira: ...)_" angehängt. Dieselbe Referenz-Nummer-Logik liefert außerdem
+  die **"Quellen"-Fußzeile**, die der Benutzerhandbuch-Kapitel-Generator
+  und die RAG-Zusammenfassung/der Fließtext (Verarbeitung → 7. RAG) an
+  ihren erzeugten Text anhängen: dort fließen pro Kapitel/Lauf mehrere
+  Tickets in EINEN KI-Fließtext ein (keine 1:1-Zuordnung je Satz), daher
+  eine gesammelte Liste aller Quell-Tickets mit Referenz-Nummer am Textende
+  statt einer Nummer je Absatz.
   Zusätzlich lässt sich jede Zeile per **Checkbox** auswählen – über
   **"Alle auswählen"**, **"Auswahl aufheben"** oder **"Alle auswählen mit
   Name \*"** (einfaches Namensmuster mit `*`/`?` als Platzhalter, z. B.

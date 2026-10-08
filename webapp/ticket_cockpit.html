@@ -1584,7 +1584,7 @@
             <div class="empty-hint" id="rag-library-empty">Noch keine Ergebnisse in der Bibliothek gespeichert oder importiert.</div>
             <div class="panel table-wrap" id="rag-library-table-wrap" style="max-height:360px; overflow:auto;" hidden>
               <table class="simple-table" id="rag-library-table">
-                <thead><tr><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Tickets</th><th>Quelle</th><th>Gespeichert am</th><th></th></tr></thead>
+                <thead><tr><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Unterkapitel</th><th>Tickets</th><th>Quelle</th><th>Gespeichert am</th><th></th></tr></thead>
                 <tbody id="rag-library-tbody"></tbody>
               </table>
             </div>
@@ -2271,6 +2271,26 @@
               <tbody id="statuscolors-tbody"></tbody>
             </table>
             <div class="empty-hint" id="statuscolors-empty" hidden>Keine Status in den aktuell geladenen Tickets.</div>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">Domänen-Kürzel (Referenz-Nummern)</p>
+          <div class="callout">
+            Kurzes Kürzel je Domäne, Grundlage der Referenz-Nummer, die Massenverarbeitung/Benutzerhandbuch-
+            Kapitel-Generator/RAG-Ausgaben jedem Ticket-Textschnipsel mitgeben (Format
+            "Kürzel-Kapitel.Unterkapitel-Jahr-laufende Nummer", z. B. "CM-04.01-2024-003") – damit sich aus dem
+            fertigen Text wieder auf das ursprüngliche Jira-Ticket zurückschließen lässt. Automatisch aus den
+            Wortanfängen der Domäne vorgeschlagen (z. B. "Contract Management" → "CM"), bei Kollisionen zweier
+            Domänen mit demselben Vorschlag hier manuell anpassen. Gelistet werden nur Domänen aus den aktuell
+            geladenen Tickets.
+          </div>
+          <div class="panel table-wrap" id="domainabbr-wrap" style="max-height:360px; overflow:auto;">
+            <table class="simple-table" id="domainabbr-table">
+              <thead><tr><th>Domäne</th><th>Kürzel</th><th>Aktion</th></tr></thead>
+              <tbody id="domainabbr-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="domainabbr-empty" hidden>Keine Domänen in den aktuell geladenen Tickets.</div>
           </div>
         </section>
 
@@ -4366,7 +4386,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.59.0";
+  var APP_VERSION = "2.60.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5683,6 +5703,25 @@
   }
   function statusAmpelHex(status) { return AMPEL_HEX[statusAmpelCategory(status)]; }
 
+  // Domänen-Kürzel (Einstellungen -> Farbschema-Block): Grundlage der
+  // Referenz-Nummer (s. ticketReferenceId() weiter unten). Vorschlag aus den
+  // Wortanfängen der Domäne (z. B. "Contract Management" -> "CM", einzelnes
+  // Wort -> erste 3 Buchstaben, z. B. "DevOps" -> "DEV") - rein mechanisch,
+  // keine erfundene Bedeutung. Kollisionen zwischen zwei Domänen mit
+  // gleichem Vorschlag löst bewusst NICHT die App automatisch auf, sondern
+  // der Nutzer per Override (dafür ist die Tabelle editierbar).
+  function suggestDomainAbbr(domain) {
+    var words = (domain || "").split(/[^A-Za-zÄÖÜäöüß0-9]+/).filter(Boolean);
+    if (!words.length) return "";
+    if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
+    return words.map(function (w) { return w[0]; }).join("").toUpperCase().slice(0, 4);
+  }
+  function domainAbbrFor(domain) {
+    var d = domain || "";
+    if (!d) return "";
+    return app.domainAbbreviations[d] || suggestDomainAbbr(d);
+  }
+
   function parseJiraDate(s) {
     if (!s) return 0;
     var m = /(\d{2})\/(\w{3})\/(\d{2})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?/.exec(s);
@@ -5834,7 +5873,8 @@
     "session-export-btn", "session-import-btn", "session-import-input",
     "autosave-enabled-cb", "autosave-status", "autosave-delete-btn",
     "points-tbody", "points-new-type", "points-new-value", "points-add-btn",
-    "domaincolors-tbody", "domaincolors-empty", "statuscolors-tbody", "statuscolors-empty", "ragprompts-list",
+    "domaincolors-tbody", "domaincolors-empty", "statuscolors-tbody", "statuscolors-empty",
+    "domainabbr-tbody", "domainabbr-empty", "ragprompts-list",
     "language-style-select",
     "labels-tbody", "labels-new-category", "labels-new-de", "labels-new-en", "labels-add-btn", "label-category-datalist",
     "synonyms-tbody", "synonyms-empty", "synonyms-new-term", "synonyms-new-synonyms", "synonyms-new-en",
@@ -5996,6 +6036,30 @@
     // löschen" erhalten.
     domainColors: {},
     statusColors: {},
+    // Domänen-Kürzel (Einstellungen): je Domäne ein kurzes Kürzel (z. B.
+    // "CM" für "Contract Management"), Grundlage für die Referenz-Nummer
+    // (s. ticketReferenceId() weiter unten) - leer = automatisch aus den
+    // Wortanfängen der Domäne vorgeschlagen (s. suggestDomainAbbr()), vom
+    // Nutzer frei überschreibbar (z. B. bei Kollisionen zweier Domänen mit
+    // gleichem Vorschlag). Konfiguration wie domainColors - bleibt auch bei
+    // "Sitzung zurücksetzen"/"Alle Daten löschen" erhalten.
+    domainAbbreviations: {},
+    // Referenz-Nummern je Textschnipsel/Ticket-Zitat (Massenverarbeitung,
+    // Benutzerhandbuch-Kapitel-Generator, RAG-Zusammenfassung/Fließtext):
+    // einmal vergebene Nummern bleiben stabil, auch wenn später weitere
+    // Tickets hinzukommen/entfernt werden oder dieselbe Stelle erneut
+    // generiert wird - s. ticketReferenceId(). ticketRefSeq zählt den
+    // laufenden Nummernkreis je Dömäne+Kapitel+Unterkapitel+Jahr hoch,
+    // ticketRefIds cacht die einmal vergebene Nummer je Ticket+Kapitel+
+    // Unterkapitel-Kombination, damit ein erneuter Aufruf (z. B. erneutes
+    // Generieren desselben Kapitels) dieselbe Nummer liefert statt eine neue
+    // zu ziehen. An die stabile Jira-Nummer gebunden wie
+    // ticketClassificationOverrides - bleibt daher ebenfalls auch bei
+    // "Sitzung zurücksetzen"/"Alle Daten löschen" erhalten (sonst würden
+    // bereits in exportierten Dokumenten zitierte Referenz-Nummern bei
+    // einem Reset ihre Bedeutung verlieren).
+    ticketRefSeq: {},
+    ticketRefIds: {},
     // Klassifizierung (genehmigt/in Prüfung/intern/Background), s.
     // ticketClassificationFor()/suggestTicketClassification() weiter oben:
     // manuelle Uebersteuerung je Ticket-Schluessel (leer = automatischer
@@ -6435,6 +6499,9 @@
       abbrevTranslations: app.abbrevTranslations,
       outline: app.outline,
       domainColors: app.domainColors,
+      domainAbbreviations: app.domainAbbreviations,
+      ticketRefSeq: app.ticketRefSeq,
+      ticketRefIds: app.ticketRefIds,
       ticketClassificationOverrides: app.ticketClassificationOverrides,
       statusColors: app.statusColors,
       ragPrompts: app.ragPrompts,
@@ -6489,6 +6556,9 @@
     if (data.abbrevTranslations) app.abbrevTranslations = data.abbrevTranslations;
     if (data.outline) app.outline = data.outline;
     if (data.domainColors) app.domainColors = data.domainColors;
+    if (data.domainAbbreviations) app.domainAbbreviations = data.domainAbbreviations;
+    if (data.ticketRefSeq) app.ticketRefSeq = data.ticketRefSeq;
+    if (data.ticketRefIds) app.ticketRefIds = data.ticketRefIds;
     if (data.ticketClassificationOverrides) app.ticketClassificationOverrides = data.ticketClassificationOverrides;
     if (data.statusColors) app.statusColors = data.statusColors;
     if (data.ragPrompts) app.ragPrompts = data.ragPrompts;
@@ -7443,6 +7513,37 @@
     }
   });
 
+  function domainAbbrRowHtml(d) {
+    var hasOverride = !!app.domainAbbreviations[d];
+    return "<tr><td>" + escapeHtml(d) + "</td><td><input type=\"text\" class=\"text-input domainabbr-input\" maxlength=\"8\" style=\"width:90px;\" data-domain=\"" +
+      escapeHtml(d) + "\" value=\"" + escapeHtml(domainAbbrFor(d)) + "\" aria-label=\"Kürzel für Domäne " + escapeHtml(d) + "\">" +
+      '<span class="override-badge">' + (hasOverride ? "angepasst" : "automatisch") + "</span></td><td>" +
+      (hasOverride ? '<button type="button" class="btn ghost btn-tiny" data-action="reset-domainabbr" data-domain="' + escapeHtml(d) + '">Zurücksetzen</button>' : "") +
+      "</td></tr>";
+  }
+  function renderDomainAbbrTable() {
+    var domains = app.domainList || [];
+    els.domainabbrTbody.innerHTML = domains.map(domainAbbrRowHtml).join("");
+    els.domainabbrEmpty.hidden = domains.length > 0;
+  }
+  els.domainabbrTbody.addEventListener("change", function (e) {
+    var input = e.target.closest(".domainabbr-input");
+    if (!input) return;
+    var d = input.getAttribute("data-domain");
+    var val = input.value.trim().toUpperCase();
+    if (val) { app.domainAbbreviations[d] = val; addLog("Domänen-Kürzel: „" + d + "“ auf „" + val + "“ gesetzt."); }
+    else { delete app.domainAbbreviations[d]; addLog("Domänen-Kürzel: „" + d + "“ zurückgesetzt (automatisch)."); }
+    renderDomainAbbrTable();
+  });
+  els.domainabbrTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest('button[data-action="reset-domainabbr"]');
+    if (!btn) return;
+    var d = btn.getAttribute("data-domain");
+    delete app.domainAbbreviations[d];
+    addLog("Domänen-Kürzel: „" + d + "“ zurückgesetzt (automatisch).");
+    renderDomainAbbrTable();
+  });
+
   // Labels-Tabelle (Kategorie/Deutsch/Englisch) - jede Zeile einzeln
   // löschbar über ihren Index (wie zuvor bei der flachen Liste); das
   // Kategorie-Datalist wird bei jedem Render frisch aus app.labels
@@ -8208,6 +8309,7 @@
     renderImportStatsSelect();
     renderDomainColorsTable();
     renderStatusColorsTable();
+    renderDomainAbbrTable();
   }
 
   function buildFormatCallout() {
@@ -14316,6 +14418,7 @@
         finalText = synthResult.text;
         if (synthResult.truncated) truncatedAny = true;
       }
+      finalText += ticketSourcesFooter(ragExtractedRows);
       els.ragOutput.textContent = finalText;
       els.ragDownloadBtn.disabled = false;
       els.ragLibrarySaveBtn.disabled = false;
@@ -14432,6 +14535,16 @@
     return '<option value=""' + (current ? "" : " selected") + ">" + unassignedLabel + "</option>" +
       options.map(function (o) { return '<option value="' + escapeHtml(o) + '"' + (current === o ? " selected" : "") + ">" + escapeHtml(o) + "</option>"; }).join("");
   }
+  // Unterkapitel-Auswahl (Massenverarbeitung/RAG-Bibliothek): anders als bei
+  // Tickets selbst (die nur auf Kapitel-Ebene automatisch zugeordnet werden,
+  // s. computeAutoOutline()) lässt sich ein manuell kuratierter Textschnipsel
+  // hier zusätzlich einem konkreten Unterkapitel zuordnen - Grundlage für die
+  // vollständige Referenz-Nummer (s. ticketReferenceId()). Rein optional
+  // (Default "– keine –"), die Liste hängt vom jeweils gewählten Kapitel ab.
+  function subchapterOptionsForChapter(chapterTitle) {
+    var chapter = (app.outline || []).filter(function (c) { return c.title === chapterTitle; })[0];
+    return chapter ? chapter.subs.map(function (s) { return s.title; }) : [];
+  }
   function renderRagLibrary() {
     var list = app.ragLibrary;
     els.ragLibraryEmpty.hidden = list.length > 0;
@@ -14446,6 +14559,8 @@
         ragLibraryOptionsHtml(domainOptions, e.domain, "Ohne Domäne") + "</select></td>" +
         '<td><select class="rag-library-chapter-select" data-id="' + e.id + '" aria-label="Kapitel">' +
         ragLibraryOptionsHtml(chapterOptions, e.chapterTitle, "Nicht zugeordnet") + "</select></td>" +
+        '<td><select class="rag-library-subchapter-select" data-id="' + e.id + '" aria-label="Unterkapitel">' +
+        ragLibraryOptionsHtml(subchapterOptionsForChapter(e.chapterTitle), e.subTitle || "", "– keine –") + "</select></td>" +
         "<td class=\"mono\">" + (e.ticketCount != null ? e.ticketCount : "&ndash;") + "</td>" +
         "<td>" + (e.source === "imported" ? "Importiert" : "Generiert") + "</td>" +
         "<td class=\"mono\">" + escapeHtml(e.savedAt) + "</td>" +
@@ -14579,12 +14694,15 @@
   els.ragLibraryTbody.addEventListener("change", function (e) {
     var domainSel = e.target.closest(".rag-library-domain-select");
     var chapterSel = e.target.closest(".rag-library-chapter-select");
-    if (!domainSel && !chapterSel) return;
-    var id = parseInt((domainSel || chapterSel).getAttribute("data-id"), 10);
+    var subSel = e.target.closest(".rag-library-subchapter-select");
+    if (!domainSel && !chapterSel && !subSel) return;
+    var id = parseInt((domainSel || chapterSel || subSel).getAttribute("data-id"), 10);
     var entry = app.ragLibrary.filter(function (r) { return r.id === id; })[0];
     if (!entry) return;
     if (domainSel) entry.domain = domainSel.value;
-    if (chapterSel) entry.chapterTitle = chapterSel.value;
+    if (chapterSel) { entry.chapterTitle = chapterSel.value; entry.subTitle = ""; }
+    if (subSel) entry.subTitle = subSel.value;
+    if (chapterSel) renderRagLibrary();
   });
   els.ragLibraryTbody.addEventListener("click", async function (e) {
     var delBtn = e.target.closest(".rag-library-delete-btn");
@@ -15011,6 +15129,8 @@
           "<td>" + escapeHtml(e.label) + "</td>" +
           '<td><select class="mass-domain-select" data-id="' + e.id + '" aria-label="Domäne">' + ragLibraryOptionsHtml(domainOptions, e.domain, "Ohne Domäne") + "</select></td>" +
           '<td><select class="mass-chapter-select" data-id="' + e.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapterOptions, e.chapterTitle, "Nicht zugeordnet") + "</select></td>" +
+          '<td><select class="mass-subchapter-select" data-id="' + e.id + '" aria-label="Unterkapitel">' + ragLibraryOptionsHtml(subchapterOptionsForChapter(e.chapterTitle), e.subTitle || "", "– keine –") + "</select></td>" +
+          "<td class=\"mono\">" + (ticketReferenceIdForEntry(e) || "&ndash;") + "</td>" +
           '<td><select class="mass-classification-select" data-id="' + e.id + '" aria-label="Klassifizierung">' + classificationOptionsHtml(e.classification) + "</select></td>" +
           "<td>" + massSourceLabel(e.source) + scopeBadges + "</td>" +
           "<td class=\"mono\">" + (e.ticketCount != null ? e.ticketCount : "&ndash;") + "</td>" +
@@ -15025,7 +15145,7 @@
         '<button type="button" class="btn ghost btn-tiny mass-domain-md-btn" data-domain="' + escapeHtml(d) + '">Kapitel als MD-Datei erstellen</button>' +
         "</div>" +
         '<div class="table-wrap" style="max-height:400px; overflow:auto;"><table class="simple-table">' +
-        "<thead><tr><th></th><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Klassifizierung</th><th>Quelle</th><th>Tickets</th><th>Textschnipsel</th><th></th></tr></thead>" +
+        "<thead><tr><th></th><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Unterkapitel</th><th>Ref.-Nr.</th><th>Klassifizierung</th><th>Quelle</th><th>Tickets</th><th>Textschnipsel</th><th></th></tr></thead>" +
         "<tbody>" + rows + "</tbody></table></div></div>";
     }).join("");
     massUpdateSelectionUI();
@@ -15134,13 +15254,15 @@
     }
     var domainSel = e.target.closest(".mass-domain-select");
     var chapterSel = e.target.closest(".mass-chapter-select");
+    var subSel = e.target.closest(".mass-subchapter-select");
     var classSel = e.target.closest(".mass-classification-select");
-    if (!domainSel && !chapterSel && !classSel) return;
-    var id = parseInt((domainSel || chapterSel || classSel).getAttribute("data-id"), 10);
+    if (!domainSel && !chapterSel && !subSel && !classSel) return;
+    var id = parseInt((domainSel || chapterSel || subSel || classSel).getAttribute("data-id"), 10);
     var entry = app.massFiles.filter(function (r) { return r.id === id; })[0];
     if (!entry) return;
     if (domainSel) entry.domain = domainSel.value;
-    if (chapterSel) entry.chapterTitle = chapterSel.value;
+    if (chapterSel) { entry.chapterTitle = chapterSel.value; entry.subTitle = ""; }
+    if (subSel) entry.subTitle = subSel.value;
     if (classSel) entry.classification = classSel.value;
     renderMassFiles();
   });
@@ -15384,6 +15506,16 @@
   function massFileMatchesClassification(e) {
     return e.classification === "genehmigt" || e.classification === "in_pruefung";
   }
+  // Haengt die Referenz-Nummer (s. ticketReferenceId()) als kleine kursive
+  // Zeile an den Textschnipsel an, wenn eine ermittelbar ist (nur bei
+  // ticketbasierten Eintraegen mit Jahr und Domänen-Kürzel, s.
+  // ticketReferenceIdForEntry()) - sonst bleibt der Text unveraendert statt
+  // eine unvollstaendige/erfundene Referenz anzuzeigen.
+  function massEntryTextWithRef(e) {
+    var ref = ticketReferenceIdForEntry(e);
+    if (!ref) return e.text;
+    return e.text + "\n\n_Referenz: " + ref + (e.sourceKey && e.sourceKey.indexOf("ticket:") === 0 ? " (Jira: " + e.sourceKey.slice(7) + ")" : "") + "_";
+  }
   function massBuildMergedDoc() {
     var included = app.massFiles.filter(massFileMatchesClassification);
     var groups = {};
@@ -15408,7 +15540,7 @@
       if (groups[d][""]) chapterNames.push("");
       chapterNames.forEach(function (c) {
         parts.push("\n\n### Kapitel: " + (c || "Nicht zugeordnet"));
-        groups[d][c].forEach(function (e) { parts.push("\n\n" + e.text); });
+        groups[d][c].forEach(function (e) { parts.push("\n\n" + massEntryTextWithRef(e)); });
       });
     });
     return parts.join("");
@@ -15475,7 +15607,7 @@
       ". Bitte redaktionell prüfen._"];
     chapterNames.forEach(function (c) {
       parts.push("\n\n## Kapitel: " + (c || "Nicht zugeordnet"));
-      byChapter[c].forEach(function (e) { parts.push("\n\n" + e.text); });
+      byChapter[c].forEach(function (e) { parts.push("\n\n" + massEntryTextWithRef(e)); });
     });
     return parts.join("");
   }
@@ -15980,6 +16112,7 @@
         var text = await manualGenerateOneChapter(manualGroupDescriptor(group), rows, role, ctl.signal, function (note) {
           els.manualStatusNote.textContent = "\"" + group.name + "\": " + note;
         }, bumpDurchgang);
+        text += ticketSourcesFooter(rows);
         var key = manualStorageKey(group);
         manualStoreVersion(key, { de: text, en: "", generatedAt: new Date().toLocaleString("de-DE"), ticketCount: rows.length, role: role, groupKind: group.kind, groupName: group.name });
         completedCount++;
@@ -16778,6 +16911,95 @@
   function ticketByKey(key) {
     var found = app.tickets.filter(function (t) { return t.key === key; });
     return found[0] || null;
+  }
+
+  // Referenz-Nummer je Ticket-Textschnipsel (Massenverarbeitung/Benutzer-
+  // handbuch-Kapitel-Generator/RAG-Zusammenfassung & Fließtext): Format
+  // "<Domänen-Kürzel>-<Kapitelnr>.<Unterkapitelnr>-<Jahr>-<laufende Nummer>"
+  // (z. B. "CM-04.01-2024-003"), damit sich aus einem fertigen Text wieder
+  // auf das ursprüngliche Jira-Ticket zurückschließen lässt (s.
+  // domainAbbrFor() weiter oben). Kapitelnummer kommt aus dem Gliederungs-
+  // Kapiteltitel ("Kapitel 4: ..." -> "04"), Unterkapitelnummer aus dem
+  // Unterkapiteltitel ("4.1 ..." -> "01") - beide "00" wenn nicht aus dem
+  // Titel ablesbar (z. B. Front-/Backmatter-Kapitel ohne Nummer, oder kein
+  // Unterkapitel zugeordnet). Jahr ist das Anlagejahr des Tickets
+  // (t.createdSort, wie bei anlagemonatJahrLabel()).
+  function chapterNumberFromTitle(title) {
+    var m = /^Kapitel\s+(\d+)/i.exec(title || "");
+    return m ? ("0" + m[1]).slice(-2) : "00";
+  }
+  function subchapterNumberFromTitle(subTitle) {
+    var m = /^(\d+)\.(\d+)/.exec(subTitle || "");
+    return m ? ("0" + m[2]).slice(-2) : "00";
+  }
+  // Einmal vergebene Nummern bleiben stabil (gecacht in app.ticketRefIds je
+  // Ticket+Kapitel+Unterkapitel-Kombination) - ein erneuter Aufruf fuer
+  // dieselbe Kombination (z. B. erneutes Generieren desselben Kapitels)
+  // liefert dieselbe Nummer statt eine neue zu ziehen; der laufende
+  // Nummernkreis (app.ticketRefSeq, je Kürzel+Kapitelnr+Unterkapitelnr+Jahr)
+  // zaehlt dabei nur beim erstmaligen Vergeben hoch. Liefert null, wenn kein
+  // Jahr (kein/ungueltiges "created"-Datum) oder kein Domänen-Kürzel
+  // ermittelbar ist - ehrlich nichts anzeigen statt eine unvollstaendige
+  // Nummer zu erfinden.
+  // domain wird bewusst als eigener Parameter uebergeben (statt immer aus
+  // dem Ticket selbst gelesen): bei Massenverarbeitung-Textschnipseln kann
+  // die Domäne der Zeile manuell auf einen anderen Wert als die rohe Jira-
+  // Domäne des Tickets gesetzt sein (freie Neuzuordnung, s. mass-domain-
+  // select) - die Referenz-Nummer soll dann dieser (sichtbaren, vom Nutzer
+  // gewaehlten) Zuordnung folgen statt der stillen Original-Domäne.
+  function ticketReferenceId(ticketKey, domain, chapterTitle, subTitle) {
+    var t = ticketByKey(ticketKey);
+    if (!t || !t.createdSort) return null;
+    var year = new Date(t.createdSort).getFullYear();
+    var abbr = domainAbbrFor(domain);
+    if (!abbr) return null;
+    var chapNr = chapterNumberFromTitle(chapterTitle);
+    var subNr = subchapterNumberFromTitle(subTitle);
+    var cacheKey = ticketKey + "||" + (domain || "") + "||" + (chapterTitle || "") + "||" + (subTitle || "");
+    if (app.ticketRefIds[cacheKey]) return app.ticketRefIds[cacheKey];
+    var bucketKey = abbr + "-" + chapNr + "." + subNr + "-" + year;
+    app.ticketRefSeq[bucketKey] = (app.ticketRefSeq[bucketKey] || 0) + 1;
+    var id = bucketKey + "-" + ("00" + app.ticketRefSeq[bucketKey]).slice(-3);
+    app.ticketRefIds[cacheKey] = id;
+    return id;
+  }
+  // Massenverarbeitung-Textschnipsel: nur bei direkt aus einem Ticket
+  // übernommenen Einträgen (source "ticket", s. massAddDirectEntry()) gibt es
+  // ein konkretes Jira-Ticket, auf das verwiesen werden kann - bei
+  // hochgeladenen/manuell erzeugten Inhalten (upload/manualChapter/
+  // referenceManual) ehrlich keine Nummer statt eine zu erfinden.
+  function ticketReferenceIdForEntry(e) {
+    if (!e || e.source !== "ticket" || !e.sourceKey) return null;
+    // sourceKey traegt bei ticketbasierten Eintraegen das Praefix "ticket:"
+    // vor dem eigentlichen Jira-Schluessel (s. massCollectTicketContent()) -
+    // nur als Dedupe-Schluessel gedacht, hier auf den reinen Jira-Key kuerzen.
+    var ticketKey = e.sourceKey.indexOf("ticket:") === 0 ? e.sourceKey.slice(7) : e.sourceKey;
+    return ticketReferenceId(ticketKey, e.domain, e.chapterTitle, e.subTitle);
+  }
+  // "Quellen"-Fussnote (Benutzerhandbuch-Kapitel-Generator/RAG-Zusammenfassung
+  // & Fließtext): anders als bei Massenverarbeitung-Textschnipseln (1 Eintrag
+  // = 1 Ticket) wird hier aus MEHREREN Tickets EIN KI-Fließtext erzeugt - eine
+  // Referenz-Nummer je Satz/Absatz ist nicht nachvollziehbar zuordenbar, daher
+  // stattdessen EINE Liste aller Quell-Tickets am Textende (wie die bereits
+  // bestehenden "Bitte redaktionell prüfen"-Hinweise direkt in den generierten
+  // Text eingebettet, s. ragBuildFinalSummaryMd() etc.). Nutzt je Ticket dessen
+  // ERSTES zugeordnetes Gliederungskapitel (t.outlineChapters[0]) - ein
+  // Textschnipsel-Unterkapitel gibt es hier bewusst nicht (das ist nur fuer
+  // manuell kuratierte Massenverarbeitung-/RAG-Bibliothek-Einträge gedacht,
+  // s. subchapterOptionsForChapter()), daher immer Unterkapitelnummer "00".
+  var TICKET_SOURCES_FOOTER_MAX = 60;
+  function ticketSourcesFooter(rows) {
+    if (!rows || !rows.length) return "";
+    var shown = rows.slice(0, TICKET_SOURCES_FOOTER_MAX);
+    var lines = shown.map(function (r) {
+      var t = ticketByKey(r.key);
+      var chapterTitle = (t && t.outlineChapters && t.outlineChapters[0]) || "";
+      var domain = (t && t.domain) || r.domain || "";
+      var ref = ticketReferenceId(r.key, domain, chapterTitle, "");
+      return (ref ? ref + " " : "") + "(" + r.key + ")";
+    });
+    var extra = rows.length - shown.length;
+    return "\n\n---\n**Quellen:** " + lines.join(", ") + (extra > 0 ? " … (+" + extra + " weitere)" : "");
   }
 
   var glExpanded = {};
