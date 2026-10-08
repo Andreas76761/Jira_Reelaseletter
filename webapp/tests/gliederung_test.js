@@ -241,7 +241,12 @@ async function confirmViaModal(doc) {
   await wait(300);
   check("Suchzusammenfassung zeigt Trefferanzahl", /\d+ Treffer/.test(doc.getElementById("gl-search-summary").textContent));
   check("Suche findet mindestens 1 Treffer (GL-1/GL-2 enthalten 'Preismatrix')", doc.getElementById("gl-search-summary").textContent.indexOf("0 Treffer") === -1);
-  check("Benachbarte Themenfelder werden angezeigt (z. B. 'API', da gleiche Tickets)", doc.getElementById("gl-search-neighbors").textContent.indexOf("API") !== -1);
+  // "API" (Ueberschneidung=1, nur GL-1) rutscht seit der Stammdaten-Label-
+  // Erweiterung (Status/Typ/Domäne als zusaetzliche, mit GL-1/GL-2 jeweils
+  // geteilte oder eigene Stichwoerter) aus den Top 12 - "Indien"/"Blueprint"
+  // (Ueberschneidung=2, da in BEIDEN Tickets erwaehnt) bleiben dagegen
+  // zuverlaessig an der Spitze.
+  check("Benachbarte Themenfelder werden angezeigt (z. B. 'Indien', da in beiden Tickets erwähnt)", doc.getElementById("gl-search-neighbors").textContent.indexOf("Indien") !== -1);
 
   // ===================== XSS-Schutz: Stichwort mit HTML-Sonderzeichen =====================
   setValue(doc.getElementById("gl-new-term-input"), '</div><img src=x onerror="window.__xss_gl=true">');

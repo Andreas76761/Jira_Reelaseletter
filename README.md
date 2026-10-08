@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.58.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.59.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -352,7 +352,9 @@ zusammenzuführen.
   landen ehrlich in einer Gruppe "Ohne Zuordnung" statt irgendwo
   hineingeraten zu werden; ein Ticket kann mehrere Gruppen treffen und
   erscheint dann mehrfach (wie schon die Labels-Spalte selbst mehrwertig
-  ist).
+  ist). Die automatischen Status-/Typ-/Domäne-/Anlagemonat-Labels (s.
+  Einstellungen → Labels) zählen hier bewusst nicht als Themengebiet, da
+  sie auf praktisch jedem Ticket vorhanden sind.
 - **Ticket Graph** (neu, direkt unter Dashboard) – Wissensgraph der
   Abhängigkeiten zwischen Tickets (Jira "Issue Links": Vorgänger,
   Nachfolger, Testtickets, sonstige Verknüpfungen wie "relates to", sowie
@@ -1330,7 +1332,26 @@ zusammenzuführen.
     u. v. m.), Zeilen hinzufügen/löschen. Wird beim Verarbeiten per reinem
     Text-Abgleich (keine KI) gegen Zusammenfassung/Beschreibung/Domäne
     jedes Tickets automatisch zugeordnet – ein Treffer auf den deutschen
-    ODER englischen Begriff genügt.
+    ODER englischen Begriff genügt. Darunter die Themengebiete **Sparte**
+    (Pkw/Van/Markt), **Rolle** (Retail/Markt/MO/HQ) und **Sonderthemen**
+    (Reifen/Reporting/Testing/Schnittstellen/Templates/Migration/Rollout) –
+    dieselbe Tabelle, nur zusätzlich vorbefüllt; ein Treffer zählt sowohl
+    bei einem wörtlichen Jira-Label als auch, falls keines vorhanden ist,
+    inhaltsbasiert über Zusammenfassung/Beschreibung (derselbe Text-Abgleich
+    wie bei den übrigen Themengebieten – kein zweiter Mechanismus). Jedes
+    importierte Ticket (Jira-Einzelticket wie Massenupload) erhält außerdem
+    automatisch 4 weitere, immer vorhandene Labels **Status**, **Typ**,
+    **Domäne** und **Anlagemonat** (z. B. "März 2024", aus dem Erstellt-
+    Datum) – erscheinen wie alle anderen Labels im Dashboard-Labels-Filter
+    und in den RAG-/Verarbeitungs-Filtern, zählen aber (weil auf praktisch
+    jedem Ticket vorhanden) bewusst NICHT als Themengebiet in der "Jira
+    Zuordnung"-Übersicht (sonst gäbe es dort nie mehr ein "Ohne Zuordnung").
+    Über **Verarbeitung → 3. Glossar-/Abkürzungs-Extraktion** hinaus zeigt
+    ein neuer Bereich **"Label-Kandidaten"** wiederkehrende Begriffe aus
+    Zusammenfassung/Beschreibung, die noch in keinem Themengebiet erfasst
+    sind (mind. 3 Tickets, Top 30) – je ein Übernehmen-Button legt den
+    Begriff direkt im gewählten Themengebiet in den Labels-Stammdaten ab,
+    ohne erneuten Import.
   - *Benutzerhandbuch-Gliederung* – editierbare Kapitel-/Unterkapitel-Liste
     des Benutzerhandbuchs, standardmäßig mit der oneSCM-Schulungsgliederung
     vorbefüllt (Kapitel hinzufügen/löschen, je Kapitel Unterkapitel
