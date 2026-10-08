@@ -1755,6 +1755,16 @@
             <p class="step-note" style="font-weight:600;">Automatisch gespeicherte Zwischenversionen (alle 50 Durchgänge im Hintergrund gespeichert &ndash; kein echter Ordner, da die App rein im Browser läuft; hier als Liste sichtbar)</p>
             <div id="manual-checkpoints-list"></div>
           </div>
+          <div id="manual-quality-check-all-wrap" hidden style="margin-bottom:12px;">
+            <div class="job-export-row" id="manual-quality-check-all-row">
+              <button class="btn ghost" id="manual-quality-check-all-btn" type="button">
+                <span class="btn-spinner" id="manual-quality-check-all-spinner" hidden></span>
+                <span id="manual-quality-check-all-label">Alle prüfen (Qualitätsprüfung)</span>
+              </button>
+              <button class="btn ghost" id="manual-quality-check-all-stop-btn" type="button" hidden>Stop</button>
+            </div>
+            <p class="step-note" id="manual-quality-check-all-status-note"></p>
+          </div>
           <div id="manual-chapters-list"></div>
           <div class="empty-hint" id="manual-chapters-empty">Noch keine Kapitel erzeugt.</div>
         </section>
@@ -4252,7 +4262,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.50.0";
+  var APP_VERSION = "2.51.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5568,6 +5578,8 @@
     "manual-domain-select", "manual-label-select", "manual-chapter-select", "manual-role-select", "manual-group-select", "manual-match-count",
     "manual-generate-btn", "manual-stop-btn", "manual-status-note", "manual-chapters-list", "manual-chapters-empty",
     "manual-checkpoints-wrap", "manual-checkpoints-list",
+    "manual-quality-check-all-wrap", "manual-quality-check-all-btn", "manual-quality-check-all-spinner",
+    "manual-quality-check-all-label", "manual-quality-check-all-stop-btn", "manual-quality-check-all-status-note",
     "refcompare-controls", "refcompare-manual-select", "refcompare-mapping-wrap", "refcompare-mapping-tbody", "refcompare-empty",
     "refcompare-result", "refcompare-result-status", "refcompare-old-title", "refcompare-old-text",
     "refcompare-new-title", "refcompare-new-text", "refcompare-analysis-output",
@@ -14988,25 +15000,72 @@
   function manualBuildQualityCheckPrompt(title, text) {
     return ragPromptFor("manualQualityCheck") + "\n\nKapitel: " + title + "\n\n" + text;
   }
+  // signal (optional): ermöglicht Abbruch über "Alle prüfen" (s. u.) - bei
+  // Abbruch wird der cancelled-Fehler bewusst WEITERGEREICHT (throw), statt
+  // wie jeder andere Fehler als Toast angezeigt zu werden, damit der
+  // Sammel-Lauf ihn von einem echten Fehlschlag unterscheiden und die
+  // Schleife sauber abbrechen kann. Rueckgabewert (true/false) erlaubt dem
+  // Sammel-Lauf eine Erfolgs-/Fehlschlag-Zaehlung ohne den Toast zu
+  // duplizieren (der bleibt hier, einmal pro fehlgeschlagenem Kapitel).
   var manualQualityCheckRunning = {};
-  async function manualRunQualityCheck(chapterTitle) {
+  async function manualRunQualityCheck(chapterTitle, signal) {
     var entry = app.manualChapters[chapterTitle];
-    if (!entry || !entry.de) return;
-    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
+    if (!entry || !entry.de) return false;
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return false; }
     manualQualityCheckRunning[chapterTitle] = true;
     renderManualChapters();
     try {
-      var result = await sampleApi(manualBuildQualityCheckPrompt(chapterTitle, entry.de), { modelTier: "default", cache: false });
+      var result = await sampleApi(manualBuildQualityCheckPrompt(chapterTitle, entry.de), { signal: signal, modelTier: "default", cache: false });
       entry.qualityCheck = { generatedAt: new Date().toLocaleString("de-DE"), analysisText: result.text || "" };
       addLog("Benutzerhandbuch-Kapitel \"" + chapterTitle + "\": Qualitätsprüfung (Grammatik/Lücken/Verbesserungen) erzeugt.");
+      return true;
     } catch (err) {
+      if (err && err.code === "cancelled") throw err;
       var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
       showToast("Qualitätsprüfung fehlgeschlagen", msg, true);
+      return false;
     } finally {
       delete manualQualityCheckRunning[chapterTitle];
       renderManualChapters();
     }
   }
+  // "Alle prüfen": wie massRunAiAssignment (Massenverarbeitung) sequenziell
+  // (mit Stop) statt parallel über ALLE vorhandenen Kapitel/Labels, damit
+  // "Stop" jederzeit sauber zwischen zwei Kapiteln greift und nicht alle
+  // Claude-Aufrufe gleichzeitig losgeschickt werden.
+  var manualQualityCheckAllAbortController = null;
+  async function manualRunQualityCheckAll() {
+    var titles = Object.keys(app.manualChapters).filter(function (t) { return app.manualChapters[t].de; });
+    if (!titles.length) { showToast("Keine Kapitel", "Es sind noch keine Kapitel vorhanden.", true); return; }
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
+    els.manualQualityCheckAllBtn.disabled = true;
+    els.manualQualityCheckAllSpinner.hidden = false;
+    els.manualQualityCheckAllStopBtn.hidden = false;
+    var ctl = new AbortController();
+    manualQualityCheckAllAbortController = ctl;
+    var succeeded = 0, failed = 0, processed = 0, aborted = false;
+    for (; processed < titles.length; processed++) {
+      var title = titles[processed];
+      els.manualQualityCheckAllStatusNote.textContent = "Qualitätsprüfung: Kapitel " + (processed + 1) + " von " + titles.length + " (\"" + title + "\") …";
+      try {
+        var ok = await manualRunQualityCheck(title, ctl.signal);
+        if (ok) succeeded++; else failed++;
+      } catch (err) {
+        if (err && err.code === "cancelled") { aborted = true; break; }
+        failed++;
+      }
+    }
+    els.manualQualityCheckAllStatusNote.textContent = aborted
+      ? "Abgebrochen nach " + processed + " von " + titles.length + " Kapiteln (" + succeeded + " geprüft)."
+      : succeeded + " von " + titles.length + " Kapiteln geprüft." + (failed ? " (" + failed + " fehlgeschlagen.)" : "");
+    addLog("Benutzerhandbuch: Qualitätsprüfung für alle Kapitel " + (aborted ? "abgebrochen" : "abgeschlossen") + " - " + succeeded + " von " + titles.length + " Kapiteln geprüft" + (failed ? ", " + failed + " fehlgeschlagen" : "") + ".");
+    els.manualQualityCheckAllBtn.disabled = false;
+    els.manualQualityCheckAllSpinner.hidden = true;
+    els.manualQualityCheckAllStopBtn.hidden = true;
+    manualQualityCheckAllAbortController = null;
+  }
+  els.manualQualityCheckAllBtn.addEventListener("click", manualRunQualityCheckAll);
+  els.manualQualityCheckAllStopBtn.addEventListener("click", function () { if (manualQualityCheckAllAbortController) manualQualityCheckAllAbortController.abort(); });
 
   // Export: einfache Konventionen aus dem generierten/bearbeiteten Text
   // erkannt - Zeilen "## Dealer"/"## Markt"/"## HQ"/"## Sparte"/"## MO"
@@ -15185,6 +15244,7 @@
   function renderManualChapters() {
     var titles = Object.keys(app.manualChapters);
     els.manualChaptersEmpty.hidden = titles.length > 0;
+    els.manualQualityCheckAllWrap.hidden = titles.length === 0;
     els.manualChaptersList.innerHTML = titles.map(function (title) {
       var entry = app.manualChapters[title];
       var lang = manualChapterLangView[title] || "de";

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.50.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.51.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1009,7 +1009,11 @@ zusammenzuführen.
   ein separater, gezielt (auch wiederholt) auslösbarer KI-Durchgang NACH der
   Texterstellung, der den fertigen Text auf Grammatikfehler, inhaltliche
   Lücken und Verbesserungsvorschläge prüft und als dreigeteiltes Ergebnis
-  unter dem Kapitel anzeigt. Ein dritter Ansichts-Umschalter
+  unter dem Kapitel anzeigt. Oberhalb der Kapitel-Liste führt der Button
+  **"Alle prüfen (Qualitätsprüfung)"** dieselbe Prüfung sequenziell (mit
+  Stop-Button, analog zur KI-Zuordnung in der Massenverarbeitung) über
+  **alle** vorhandenen Kapitel/Labels auf einmal aus, statt sie einzeln
+  anstoßen zu müssen. Ein dritter Ansichts-Umschalter
   **"Vorschau (Icons)"** (neben "Deutsch"/"English") rendert denselben Text
   schreibgeschützt mit Icons: die Rollen-Zwischenüberschriften
   "Dealer"/"Markt"/"HQ"/"Sparte"/"MO" bekommen ein Rollen-Icon, die

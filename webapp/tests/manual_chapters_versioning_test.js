@@ -235,6 +235,34 @@ async function confirmViaModal(doc) {
     check("Zwischenversion-ZIP enthält mindestens eine .md-Datei", Object.keys(cpZip.files).some((n) => n.toLowerCase().endsWith(".md")));
   }
 
+  // ===================== "Alle prüfen" (Qualitätsprüfung für alle 50 Kapitel) =====================
+  const qcAllWrap = doc.getElementById("manual-quality-check-all-wrap");
+  check("'Alle prüfen'-Bereich sichtbar (mindestens 1 Kapitel vorhanden)", qcAllWrap.hidden === false);
+  const qcAllBtn = doc.getElementById("manual-quality-check-all-btn");
+  const qcAllSpinner = doc.getElementById("manual-quality-check-all-spinner");
+  const qcAllStopBtn = doc.getElementById("manual-quality-check-all-stop-btn");
+  const qcAllStatusNote = doc.getElementById("manual-quality-check-all-status-note");
+  check("'Alle prüfen'-Button vorhanden", !!qcAllBtn);
+  check("Sanduhr zunächst verborgen", qcAllSpinner.hidden === true);
+  check("Stop-Button zunächst verborgen", qcAllStopBtn.hidden === true);
+  const totalChaptersAtThisPoint = doc.querySelectorAll("#manual-chapters-list [data-manual-chapter]").length;
+  sampleCallCount = 0;
+  fire(qcAllBtn, "click");
+  for (let waited = 0; waited < 15000 && qcAllBtn.disabled; waited += 50) await wait(50);
+  check("'Alle prüfen' über alle vorhandenen Kapitel abgeschlossen (Button wieder aktiv)", qcAllBtn.disabled === false);
+  check("Sanduhr nach Abschluss wieder verborgen", qcAllSpinner.hidden === true);
+  check("Stop-Button nach Abschluss wieder verborgen", qcAllStopBtn.hidden === true);
+  check("Statuszeile meldet alle Kapitel geprüft", qcAllStatusNote.textContent.startsWith(totalChaptersAtThisPoint + " von " + totalChaptersAtThisPoint + " Kapiteln geprüft"));
+  const firstQcCard = chapterCard(doc, "ZZZ-Test-Kapitel 1");
+  check("Erstes Kapitel zeigt ein Qualitätsprüfungs-Ergebnis", firstQcCard && firstQcCard.textContent.includes("Geprüft am"));
+  const lastQcCard = chapterCard(doc, "ZZZ-Test-Kapitel 50");
+  check("Letztes Kapitel zeigt ebenfalls ein Qualitätsprüfungs-Ergebnis", lastQcCard && lastQcCard.textContent.includes("Geprüft am"));
+
+  doc.querySelector('.nav-item[data-view="verarbeitung"]').click();
+  await wait(50);
+  const protokollTextAfterQcAll = (doc.getElementById("log-list") || doc.body).textContent;
+  check("Protokoll vermerkt den abgeschlossenen Sammel-Lauf", protokollTextAfterQcAll.includes("Qualitätsprüfung für alle Kapitel abgeschlossen - " + totalChaptersAtThisPoint + " von " + totalChaptersAtThisPoint + " Kapiteln geprüft"));
+
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }
   const failed = checks.filter((c) => !c[1]);
   console.log("\n" + (checks.length - failed.length) + "/" + checks.length + " bestanden");
