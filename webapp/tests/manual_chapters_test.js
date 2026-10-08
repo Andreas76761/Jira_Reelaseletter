@@ -19,6 +19,12 @@ vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract
 let sampleCalls = [];
 let sampleImpl = async (input, opts) => {
   sampleCalls.push({ input, opts });
+  if (input.indexOf("Lektor/Qualitätsprüfer") !== -1) {
+    return {
+      text: "### Grammatikfehler\n- \"Der Dealer legt\" sollte besser \"Der Dealer trägt ein\" lauten.\n\n### Lücken\n- Es fehlt eine Beschreibung des Freigabeprozesses für Van.\n\n### Verbesserungsvorschläge\n- Ein Beispiel-Screenshot würde die Beschreibung verständlicher machen.",
+      truncated: false, modelTierApplied: "default",
+    };
+  }
   return {
     text: "Dieses Kapitel führt in den Prozess ein.\n\n## Dealer\nDer Dealer legt den Servicevertrag an. [Nur PKW] Für PKW gilt eine Sonderregel.\n\n## HQ\nDas HQ prüft die Freigabe. Dieses Feature steht dem Dealer nicht zur Verfügung.",
     truncated: false, modelTierApplied: "default",
@@ -150,6 +156,40 @@ const xml = `<?xml version="1.0"?><rss><channel>
     check("Bearbeiteter Text bleibt nach Navigation erhalten (persistiert in app.manualChapters)",
       cardAfterNav.querySelector(".manual-chapter-textarea").value.includes("Manuell ergänzter Satz."));
   }
+
+  // ===================== Vorschau (Icons) für Pkw/Van/Markt + rollenspezifische Überschriften =====================
+  const cardForPreview = doc.querySelector('[data-manual-chapter="Kapitel 7: Verträge im Alltag verwalten"]');
+  const previewBtn = cardForPreview.querySelector('[data-manual-lang="preview"]');
+  check("'Vorschau (Icons)'-Umschalter vorhanden", !!previewBtn);
+  fire(previewBtn, "click");
+  const cardAfterPreview = doc.querySelector('[data-manual-chapter="Kapitel 7: Verträge im Alltag verwalten"]');
+  check("'Vorschau (Icons)'-Button nach Klick aktiv", cardAfterPreview.querySelector('[data-manual-lang="preview"]').classList.contains("active"));
+  check("Im Vorschau-Modus kein editierbares Textfeld mehr sichtbar", !cardAfterPreview.querySelector(".manual-chapter-textarea"));
+  const previewHtml = cardAfterPreview.innerHTML;
+  check("Vorschau zeigt Rollen-Icon vor 'Dealer'-Überschrift", previewHtml.includes("🚗 Dealer</h4>"));
+  check("Vorschau zeigt Rollen-Icon vor 'HQ'-Überschrift", previewHtml.includes("🏢 HQ</h4>"));
+  check("Vorschau zeigt Icon-Badge statt rohem '[Nur PKW]'-Text", previewHtml.includes("🚗 Nur PKW"));
+  check("Vorschau enthält den rohen Tag '[Nur PKW]' nicht mehr unverändert im Fließtext", !previewHtml.includes("[Nur PKW] Für PKW"));
+  // Zurück zu Deutsch fuer die restlichen Pruefungen (Textfeld wieder benoetigt).
+  fire(doc.querySelector('[data-manual-chapter="Kapitel 7: Verträge im Alltag verwalten"] [data-manual-lang="de"]'), "click");
+
+  // ===================== Qualitätsprüfung (Grammatik/Lücken/Verbesserungen) =====================
+  sampleCalls = [];
+  const qualityBtn = doc.getElementById("manual-chapters-list").querySelector('[data-manual-action="quality-check"]');
+  check("'Qualitätsprüfung'-Button vorhanden", !!qualityBtn);
+  fire(qualityBtn, "click");
+  for (let waited = 0; waited < 5000; waited += 100) {
+    const resultPanel = doc.getElementById("manual-chapters-list").querySelector('[data-manual-action="quality-check"]')
+      .closest("div").querySelector(".panel");
+    if (resultPanel) break;
+    await wait(100);
+  }
+  check("Qualitätsprüfungs-Prompt wurde mit dem Kapiteltext aufgerufen", sampleCalls.length === 1 && sampleCalls[0].input.includes("Lektor/Qualitätsprüfer"));
+  const qualityResultHtml = doc.getElementById("manual-chapters-list").innerHTML;
+  check("Ergebnis nennt Grammatikfehler-Abschnitt", qualityResultHtml.includes("Grammatikfehler"));
+  check("Ergebnis nennt Lücken-Abschnitt", qualityResultHtml.includes("Lücken"));
+  check("Ergebnis nennt Verbesserungsvorschläge-Abschnitt", qualityResultHtml.includes("Verbesserungsvorschläge"));
+  check("Ergebnis zeigt den Prüfzeitpunkt", /Geprüft am/.test(qualityResultHtml));
 
   // ===================== Übersetzung =====================
   sampleCalls = [];

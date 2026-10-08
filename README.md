@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.49.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.50.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -786,6 +786,11 @@ zusammenzuführen.
   passt; eine bereits vorhandene Zuordnung wird nie überschrieben. Läuft
   sequenziell (mit Stop-Button) statt parallel über alle unvollständigen
   Einträge, damit "Stop" jederzeit sauber zwischen zwei Einträgen greift.
+  Analog zum Kapitel-Generator (s. o.) speichert die App dabei automatisch
+  **im Hintergrund alle 50 verarbeitete Einträge eine Zwischenversion** von
+  `app.massFiles` (als Liste sichtbar, kein echter Ordner) – mit
+  **"Wiederherstellen"**, falls ein langer Lauf abbricht oder unerwünschte
+  Zwischenstände übernommen wurden.
   Zusätzlich lässt sich jede Zeile per **Checkbox** auswählen – über
   **"Alle auswählen"**, **"Auswahl aufheben"** oder **"Alle auswählen mit
   Name \*"** (einfaches Namensmuster mit `*`/`?` als Platzhalter, z. B.
@@ -987,7 +992,31 @@ zusammenzuführen.
   Version einsehbar ("Text anzeigen", schreibgeschützt zum Vergleich mit der
   aktuellen Fassung) und einzeln **wiederherstellbar** (die bis dahin aktuelle
   Fassung wird dabei selbst zur neuen Version, kein Datenverlust). Begrenzt
-  auf die letzten 20 Versionen je Kapitel/Label.
+  auf die letzten 20 Versionen je Kapitel/Label. Der Fließtext wird
+  durchgängig im **Präsens** verlangt (Gegenwartsform statt Präteritum/
+  Futur). Zusätzlich zur normalen Versionierung speichert die App bei sehr
+  langen Läufen (viele hundert Teil-Durchläufe bei einem einzelnen großen
+  Kapitel, s. o.) automatisch **im Hintergrund alle 50 Durchgänge eine
+  Zwischenversion** – ein vollständiger Schnappschuss aller bis dahin
+  erzeugten Kapitel/Labels, damit bei einem Absturz/Abbruch nicht der
+  gesamte Fortschritt verloren geht. Da die App rein im Browser läuft, gibt
+  es **keinen echten Ordner**: die Zwischenversionen erscheinen stattdessen
+  als Liste direkt unter dem Statustext, mit **"Wiederherstellen"** (ersetzt
+  den aktuellen Entwurfsstand) und **"Als ZIP herunterladen"** (ein .md je
+  Kapitel) je Eintrag; Teil der Sitzung (Speichern/Laden, "Alle Daten
+  löschen"). Je Kapitel steht außerdem der Button
+  **"Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)"** zur Verfügung:
+  ein separater, gezielt (auch wiederholt) auslösbarer KI-Durchgang NACH der
+  Texterstellung, der den fertigen Text auf Grammatikfehler, inhaltliche
+  Lücken und Verbesserungsvorschläge prüft und als dreigeteiltes Ergebnis
+  unter dem Kapitel anzeigt. Ein dritter Ansichts-Umschalter
+  **"Vorschau (Icons)"** (neben "Deutsch"/"English") rendert denselben Text
+  schreibgeschützt mit Icons: die Rollen-Zwischenüberschriften
+  "Dealer"/"Markt"/"HQ"/"Sparte"/"MO" bekommen ein Rollen-Icon, die
+  "[Nur PKW]"/"[Nur Van]"/"[Nur Markt]"-Scope-Tags werden als farbiges
+  Icon-Badge statt als roher Text dargestellt – macht rollen-/
+  fahrzeugspezifische Abschnitte auf einen Blick sichtbar, ohne den
+  bearbeitbaren Rohtext zu verändern.
 - **Referenz-Handbuch-Import + Handbuch-Änderung nach Kapitel** – Import →
   eigener Bereich "Referenz-Handbuch" zum Hochladen eines bereits
   bestehenden, veröffentlichten Word-Benutzerhandbuchs (z. B. eine ca.

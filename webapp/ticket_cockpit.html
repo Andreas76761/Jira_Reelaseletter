@@ -1217,6 +1217,10 @@
               <button class="btn ghost" id="mass-ai-stop-btn" type="button" hidden>Stop</button>
             </div>
             <p class="step-note" id="mass-ai-status-note"></p>
+            <div id="mass-checkpoints-wrap" hidden style="margin-bottom:12px;">
+              <p class="step-note" style="font-weight:600;">Automatisch gespeicherte Zwischenversionen (alle 50 verarbeitete Einträge im Hintergrund gespeichert &ndash; sichtbar als Liste, kein echter Ordner)</p>
+              <div id="mass-checkpoints-list"></div>
+            </div>
             <div id="mass-groups"></div>
             <p class="desc" style="margin-top:14px;">Fügt die MD-Dateien aller Domänen zu einer Datei zusammen &ndash; je Domäne wird der bereits gespeicherte Stand aus "Kapitel als MD-Datei erstellen" verwendet (falls vorhanden), sonst automatisch neu erzeugt. Ergebnis direkt hier ansehen, bearbeiten, speichern und herunterladen.</p>
             <div class="job-export-row" id="mass-merge-domain-docs-row">
@@ -1747,6 +1751,10 @@
             <button class="btn ghost" id="manual-stop-btn" type="button" hidden>Abbrechen</button>
           </div>
           <p id="manual-status-note" class="step-note"></p>
+          <div id="manual-checkpoints-wrap" hidden style="margin-bottom:12px;">
+            <p class="step-note" style="font-weight:600;">Automatisch gespeicherte Zwischenversionen (alle 50 Durchgänge im Hintergrund gespeichert &ndash; kein echter Ordner, da die App rein im Browser läuft; hier als Liste sichtbar)</p>
+            <div id="manual-checkpoints-list"></div>
+          </div>
           <div id="manual-chapters-list"></div>
           <div class="empty-hint" id="manual-chapters-empty">Noch keine Kapitel erzeugt.</div>
         </section>
@@ -4244,7 +4252,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.49.0";
+  var APP_VERSION = "2.50.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5559,6 +5567,7 @@
     "dq-tickets-total", "dq-tickets-affected", "dq-findings-total", "dq-empty-state", "dq-wrap", "dq-tbody",
     "manual-domain-select", "manual-label-select", "manual-chapter-select", "manual-role-select", "manual-group-select", "manual-match-count",
     "manual-generate-btn", "manual-stop-btn", "manual-status-note", "manual-chapters-list", "manual-chapters-empty",
+    "manual-checkpoints-wrap", "manual-checkpoints-list",
     "refcompare-controls", "refcompare-manual-select", "refcompare-mapping-wrap", "refcompare-mapping-tbody", "refcompare-empty",
     "refcompare-result", "refcompare-result-status", "refcompare-old-title", "refcompare-old-text",
     "refcompare-new-title", "refcompare-new-text", "refcompare-analysis-output",
@@ -5573,6 +5582,7 @@
     "mass-import-btn", "mass-import-input", "mass-import-note", "mass-collect-btn",
     "mass-empty", "mass-groups-wrap", "mass-groups",
     "mass-ai-assign-row", "mass-ai-assign-btn", "mass-ai-assign-spinner", "mass-ai-assign-label", "mass-ai-stop-btn", "mass-ai-status-note",
+    "mass-checkpoints-wrap", "mass-checkpoints-list",
     "mass-select-row", "mass-select-all-btn", "mass-select-clear-btn", "mass-select-pattern-input", "mass-select-pattern-btn", "mass-selection-count",
     "mass-bulk-assign-row", "mass-bulk-domain-select", "mass-bulk-chapter-select", "mass-bulk-assign-btn",
     "mass-merge-btn", "mass-merge-spinner", "mass-merge-label", "mass-merge-status-note", "mass-merge-output", "mass-merge-download-btn",
@@ -5735,6 +5745,18 @@
     // Sitzungsdatensatz - wird bei "Sitzung zurücksetzen"/"Alle Daten
     // löschen" geleert, aber über Sitzung speichern/laden mit exportiert.
     manualChapters: {},
+    // Automatisch im Hintergrund gespeicherte Zwischenversionen WÄHREND
+    // eines Kapitel-Generator-Laufs (alle MANUAL_RUN_CHECKPOINT_INTERVAL
+    // Durchgänge - ein "Durchgang" ist ein fertiggestellter Teil-Batch bzw.
+    // ein fertiggestelltes kleines Kapitel ohne Batch-Aufteilung), damit bei
+    // sehr langen Läufen (viele hundert Teile, s. manualGenerateOneChapter)
+    // ein Absturz/Abbruch nicht den gesamten bisherigen Fortschritt kostet.
+    // Jeder Eintrag ist ein vollstaendiger Schnappschuss von manualChapters
+    // zum jeweiligen Zeitpunkt - absichtlich KEIN echter Datei-/Ordnerpfad
+    // (die App läuft rein im Browser), sondern als Liste im UI sichtbar und
+    // ueber "Wiederherstellen" nutzbar. Begrenzt auf die letzten
+    // MANUAL_RUN_CHECKPOINT_LIMIT Stand, Sitzungsdatensatz wie manualChapters.
+    manualCheckpoints: [],
     // Gliederung (Navigation, oberhalb Verarbeitung): je Unterkapitel +
     // optionalem Label-Themengebiet eine editierbare Stichwortliste, s.
     // Teil 9d. Key: chapterTitle + "||" + subTitle + "||" + (labelCategory
@@ -5801,7 +5823,11 @@
     // (Fallback: frisch erzeugt für Domänen ohne gespeicherten Stand) zu
     // EINEM Gesamtdokument. Eigenstaendiger Text wie massMergedDoc, damit
     // manuelle Nacharbeiten nicht verloren gehen.
-    massDomainDocsMerged: ""
+    massDomainDocsMerged: "",
+    // Automatisch im Hintergrund gespeicherte Zwischenversionen WÄHREND der
+    // KI-Zuordnung (alle MASS_RUN_CHECKPOINT_INTERVAL verarbeitete
+    // Einträge) - Schnappschuss von massFiles, analog zu manualCheckpoints.
+    massCheckpoints: []
   };
 
   function addLog(message) {
@@ -5970,7 +5996,9 @@
     els.evaluateTableWrap.hidden = true;
     ragResetOutput();
     app.manualChapters = {};
+    app.manualCheckpoints = [];
     renderManualChapters();
+    renderManualCheckpoints();
     app.chapterKeywords = {};
     renderGliederung();
     app.referenceManuals = [];
@@ -5995,6 +6023,8 @@
     els.massMergeDomainDocsOutput.value = "";
     els.massMergeDomainDocsDownloadBtn.disabled = true;
     els.massMergeDomainDocsStatusNote.textContent = "";
+    app.massCheckpoints = [];
+    renderMassCheckpoints();
   }
 
   // Admin-Funktion (Einstellungen): im Unterschied zu resetSession() werden
@@ -6031,7 +6061,9 @@
     els.evaluateTableWrap.hidden = true;
     ragResetOutput();
     app.manualChapters = {};
+    app.manualCheckpoints = [];
     renderManualChapters();
+    renderManualCheckpoints();
     app.chapterKeywords = {};
     renderGliederung();
     app.referenceManuals = [];
@@ -6056,6 +6088,8 @@
     els.massMergeDomainDocsOutput.value = "";
     els.massMergeDomainDocsDownloadBtn.disabled = true;
     els.massMergeDomainDocsStatusNote.textContent = "";
+    app.massCheckpoints = [];
+    renderMassCheckpoints();
     addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
   }
   els.deleteAllDataBtn.addEventListener("click", async function () {
@@ -6119,6 +6153,7 @@
       statusColors: app.statusColors,
       ragPrompts: app.ragPrompts,
       manualChapters: app.manualChapters,
+      manualCheckpoints: app.manualCheckpoints,
       chapterKeywords: app.chapterKeywords,
       importFormats: app.importFormats,
       referenceManuals: app.referenceManuals,
@@ -6128,7 +6163,8 @@
       massFiles: app.massFiles,
       massMergedDoc: app.massMergedDoc,
       massDomainDocs: app.massDomainDocs,
-      massDomainDocsMerged: app.massDomainDocsMerged
+      massDomainDocsMerged: app.massDomainDocsMerged,
+      massCheckpoints: app.massCheckpoints
     };
   }
   function restoreSessionState(data) {
@@ -6163,6 +6199,7 @@
     if (data.statusColors) app.statusColors = data.statusColors;
     if (data.ragPrompts) app.ragPrompts = data.ragPrompts;
     if (data.manualChapters) app.manualChapters = data.manualChapters;
+    if (Array.isArray(data.manualCheckpoints)) app.manualCheckpoints = data.manualCheckpoints;
     if (data.chapterKeywords) app.chapterKeywords = data.chapterKeywords;
     if (data.importFormats) app.importFormats = data.importFormats;
     if (Array.isArray(data.referenceManuals)) app.referenceManuals = data.referenceManuals;
@@ -6173,6 +6210,7 @@
     if (typeof data.massMergedDoc === "string") app.massMergedDoc = data.massMergedDoc;
     if (data.massDomainDocs && typeof data.massDomainDocs === "object") app.massDomainDocs = data.massDomainDocs;
     if (typeof data.massDomainDocsMerged === "string") app.massDomainDocsMerged = data.massDomainDocsMerged;
+    if (Array.isArray(data.massCheckpoints)) app.massCheckpoints = data.massCheckpoints;
     app.initialized = true;
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
@@ -6191,6 +6229,7 @@
     renderOutlineList();
     renderRagPromptsList();
     renderManualChapters();
+    renderManualCheckpoints();
     renderGliederung();
     renderImportFormats();
     renderReferenceManuals();
@@ -6203,6 +6242,7 @@
     els.massMergeDownloadBtn.disabled = !app.massMergedDoc;
     els.massMergeDomainDocsOutput.value = app.massDomainDocsMerged;
     els.massMergeDomainDocsDownloadBtn.disabled = !app.massDomainDocsMerged;
+    renderMassCheckpoints();
     els.releaseMatchSummary.hidden = true;
     els.releaseMissingWrap.hidden = true;
     els.releaseKeysInput.value = "";
@@ -13139,9 +13179,10 @@
     summarySynthesis: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Die folgenden Teiltexte sind Zusammenfassungen unterschiedlicher Ausschnitte derselben Jira-Ticket-Rohdaten (aus technischen Gründen in mehreren Durchläufen erzeugt). Verschmelze sie zu EINER einzigen, prägnanten, endnutzergerechten Gesamt-Zusammenfassung auf Deutsch (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen, ohne Hinweise auf 'Teiltexte' oder 'Batches'). Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
     fliesstextSynthesis: "Du bist Technischer Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Die folgenden Teiltexte sind Fließtext-Abschnitte unterschiedlicher Ausschnitte derselben Jira-Ticket-Rohdaten (aus technischen Gründen in mehreren Durchläufen erzeugt). Verschmelze sie zu EINEM einzigen, zusammenhängenden, gut lesbaren Fließtext für ein Benutzerhandbuch auf Deutsch (mehrere Absätze erlaubt, ohne Aufzählungszeichen, ohne Ticket-Schlüssel/-Referenzen, ohne Hinweise auf 'Teiltexte' oder 'Batches'). Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
     translation: "Übersetze den folgenden deutschen Text sinngemäß ins Englische, ohne Inhalte hinzuzufügen oder wegzulassen und ohne zusätzliche Erklärungen oder Anmerkungen. Gib ausschließlich den übersetzten Text aus:",
-    manualChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender (erfahrene Nutzer im operativen Tagesgeschäft). Schreibe für das unten genannte Kapitel einen sachlichen, professionellen Fließtext im Stil eines Softwarehandbuchs auf Deutsch, mindestens 3, idealerweise bis zu 12 DIN-A4-Seiten Umfang (ca. 500-600 Wörter je Seite). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen (roter Faden), gefolgt von zusammenhängenden Abschnitten statt einer reinen Aufzählung. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, deutlich mit den Tags \"[Nur PKW]\", \"[Nur Van]\" bzw. \"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Dealer\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\" (Market Operation) und weise explizit darauf hin, wenn ein Feature dem Dealer NICHT zur Verfügung steht. Nutze ausschließlich Informationen aus den Ticket-Rohdaten unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text.",
-    manualChapterSynthesis: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender. Die folgenden Teiltexte sind Abschnitte desselben Kapitels, aus technischen Gründen in mehreren Durchläufen aus unterschiedlichen Ausschnitten derselben Ticket-Rohdaten erzeugt. Verschmelze sie zu EINEM einzigen, zusammenhängenden Kapiteltext auf Deutsch (roter Faden, mindestens 3 DIN-A4-Seiten, sachlicher Softwarehandbuch-Stil), ohne Hinweise auf \"Teiltexte\" oder \"Batches\". Erhalte dabei die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\" sowie die Zwischenüberschriften \"## Dealer\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" aus den Teiltexten. Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
-    refCompare: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen zwei Fassungen desselben Kapitels: der ALTE STAND (aus einem bestehenden, bereits veröffentlichten Word-Handbuch) und der NEUE STAND (frisch aus aktuellen Jira-Tickets erzeugter Text). Vergleiche beide Fassungen inhaltlich und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Features\n- (ein Stichpunkt je im neuen Stand beschriebenem Inhalt, der im alten Stand fehlt oder dort erkennbar anders/noch nicht vorhanden war)\n\n### Widersprüche\n- (ein Stichpunkt je Aussage im alten Stand, die dem neuen Stand inhaltlich widerspricht oder durch ihn überholt/ungültig wird)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den beiden Texten unten, erfinde nichts hinzu:"
+    manualChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender (erfahrene Nutzer im operativen Tagesgeschäft). Schreibe für das unten genannte Kapitel einen sachlichen, professionellen Fließtext im Stil eines Softwarehandbuchs auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform - z. B. \"Der Nutzer öffnet die Maske und trägt die Daten ein\", NICHT Präteritum/Futur wie \"öffnete\"/\"wird öffnen\"), mindestens 3, idealerweise bis zu 12 DIN-A4-Seiten Umfang (ca. 500-600 Wörter je Seite). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen (roter Faden), gefolgt von zusammenhängenden Abschnitten statt einer reinen Aufzählung. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, deutlich mit den Tags \"[Nur PKW]\", \"[Nur Van]\" bzw. \"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Dealer\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\" (Market Operation) und weise explizit darauf hin, wenn ein Feature dem Dealer NICHT zur Verfügung steht. Nutze ausschließlich Informationen aus den Ticket-Rohdaten unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text.",
+    manualChapterSynthesis: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender. Die folgenden Teiltexte sind Abschnitte desselben Kapitels, aus technischen Gründen in mehreren Durchläufen aus unterschiedlichen Ausschnitten derselben Ticket-Rohdaten erzeugt. Verschmelze sie zu EINEM einzigen, zusammenhängenden Kapiteltext auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform, auch wenn ein Teiltext abweicht - dann beim Verschmelzen ins Präsens korrigieren) (roter Faden, mindestens 3 DIN-A4-Seiten, sachlicher Softwarehandbuch-Stil), ohne Hinweise auf \"Teiltexte\" oder \"Batches\". Erhalte dabei die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\" sowie die Zwischenüberschriften \"## Dealer\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" aus den Teiltexten. Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
+    refCompare: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen zwei Fassungen desselben Kapitels: der ALTE STAND (aus einem bestehenden, bereits veröffentlichten Word-Handbuch) und der NEUE STAND (frisch aus aktuellen Jira-Tickets erzeugter Text). Vergleiche beide Fassungen inhaltlich und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Features\n- (ein Stichpunkt je im neuen Stand beschriebenem Inhalt, der im alten Stand fehlt oder dort erkennbar anders/noch nicht vorhanden war)\n\n### Widersprüche\n- (ein Stichpunkt je Aussage im alten Stand, die dem neuen Stand inhaltlich widerspricht oder durch ihn überholt/ungültig wird)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den beiden Texten unten, erfinde nichts hinzu:",
+    manualQualityCheck: "Du bist Lektor/Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Prüfe den folgenden Kapiteltext und gib AUSSCHLIESSLICH die folgenden drei Abschnitte aus, in genau diesem Format:\n\n### Grammatikfehler\n- (ein Stichpunkt je Grammatik-/Rechtschreib-/Zeitform-Fehler - insbesondere Abweichungen vom geforderten Präsens -, mit kurzem Zitat der betroffenen Stelle)\n\n### Lücken\n- (ein Stichpunkt je inhaltlicher Lücke, unklarer oder unvollständiger Stelle)\n\n### Verbesserungsvorschläge\n- (ein Stichpunkt je Vorschlag zur Verständlichkeit/Lesbarkeit/Struktur)\n\nIst eine der drei Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:"
   };
   var RAG_PROMPT_LABELS = {
     summary: "Zusammenfassung erzeugen",
@@ -13151,7 +13192,8 @@
     translation: "Übersetzen (DE → EN)",
     manualChapter: "Benutzerhandbuch-Kapitel erstellen",
     manualChapterSynthesis: "Benutzerhandbuch-Kapitel zusammenführen (Batch-Modus)",
-    refCompare: "Handbuch-Änderung nach Kapitel (Vergleich mit Referenz-Handbuch)"
+    refCompare: "Handbuch-Änderung nach Kapitel (Vergleich mit Referenz-Handbuch)",
+    manualQualityCheck: "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)"
   };
   function ragPromptFor(promptKey) {
     var override = app.ragPrompts[promptKey];
@@ -14171,6 +14213,56 @@
     return { domain: domain, chapterTitle: chapterTitle };
   }
   var massAiAbortController = null;
+  // Automatische Zwischenversion im Hintergrund alle MASS_RUN_CHECKPOINT_
+  // INTERVAL verarbeitete Eintraege waehrend der KI-Zuordnung - Schnappschuss
+  // von app.massFiles, analog zu manualSaveRunCheckpoint. Bewusst nur
+  // "Wiederherstellen" (kein separater ZIP-Download): nach dem Wieder-
+  // herstellen stehen die bestehenden Download-Buttons (Punkt 2/3) zur
+  // Verfügung, ein zweiter Download-Weg waere redundant.
+  var MASS_RUN_CHECKPOINT_INTERVAL = 50;
+  var MASS_RUN_CHECKPOINT_LIMIT = 10;
+  function massSaveRunCheckpoint(afterCount) {
+    var snapshot = JSON.parse(JSON.stringify(app.massFiles));
+    if (!snapshot.length) return;
+    app.massCheckpoints.push({
+      id: "mascp-" + Date.now() + "-" + afterCount,
+      at: new Date().toLocaleString("de-DE"),
+      afterCount: afterCount,
+      entryCount: snapshot.length,
+      snapshot: snapshot
+    });
+    if (app.massCheckpoints.length > MASS_RUN_CHECKPOINT_LIMIT) {
+      app.massCheckpoints = app.massCheckpoints.slice(app.massCheckpoints.length - MASS_RUN_CHECKPOINT_LIMIT);
+    }
+    renderMassCheckpoints();
+    addLog("Massenverarbeitung: Zwischenversion im Hintergrund gespeichert (nach " + afterCount + " Durchgängen, " + snapshot.length + " Einträge).");
+  }
+  function renderMassCheckpoints() {
+    var list = app.massCheckpoints || [];
+    els.massCheckpointsWrap.hidden = list.length === 0;
+    if (!list.length) { els.massCheckpointsList.innerHTML = ""; return; }
+    els.massCheckpointsList.innerHTML = list.slice().reverse().map(function (cp) {
+      return '<div class="job-export-row" data-mass-checkpoint="' + cp.id + '" style="align-items:center;">' +
+        '<span class="step-note" style="margin:0;">Nach ' + cp.afterCount + ' Durchgängen · ' + cp.entryCount + ' Einträge · ' + escapeHtml(cp.at) + '</span>' +
+        '<button type="button" class="btn ghost btn-tiny" data-mass-checkpoint-restore="' + cp.id + '">Wiederherstellen</button>' +
+        "</div>";
+    }).join("");
+  }
+  els.massCheckpointsList.addEventListener("click", async function (e) {
+    var restoreBtn = e.target.closest("[data-mass-checkpoint-restore]");
+    if (!restoreBtn) return;
+    var restoreId = restoreBtn.getAttribute("data-mass-checkpoint-restore");
+    var cpToRestore = app.massCheckpoints.filter(function (c) { return c.id === restoreId; })[0];
+    if (!cpToRestore) return;
+    var ok = await confirmDialog("Zwischenversion vom " + cpToRestore.at + " (" + cpToRestore.entryCount + " Einträge) wiederherstellen? Der aktuelle Stand wird dadurch ersetzt.");
+    if (!ok) return;
+    app.massFiles = JSON.parse(JSON.stringify(cpToRestore.snapshot));
+    massSelectedIds = {};
+    renderMassFiles();
+    addLog("Massenverarbeitung: Zwischenversion vom " + cpToRestore.at + " wiederhergestellt (" + cpToRestore.entryCount + " Einträge).");
+    showToast("Wiederhergestellt", "Zwischenversion vom " + cpToRestore.at + " übernommen.");
+  });
+
   async function massRunAiAssignment() {
     if (!sampleApi) {
       showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
@@ -14200,6 +14292,7 @@
         if (err && err.code === "cancelled") { aborted = true; break; }
         skippedErrors++;
       }
+      if ((processed + 1) % MASS_RUN_CHECKPOINT_INTERVAL === 0) massSaveRunCheckpoint(processed + 1);
     }
     els.massAiStatusNote.textContent = aborted
       ? "Abgebrochen nach " + processed + " von " + targets.length + " Einträgen (" + updated + " zugeordnet)."
@@ -14675,11 +14768,18 @@
   // muesste fuer Parallelisierung erst grundlegend umgebaut werden
   // (separater, groesserer Schritt).
   var MANUAL_BATCH_CONCURRENCY = 3;
-  async function manualGenerateOneChapter(groupDescriptor, rows, role, signal, onProgress) {
+  // onDurchgang (optional): wird nach JEDEM abgeschlossenen Teil-Batch
+  // aufgerufen (bzw. einmal fuer ein Kapitel ohne Batch-Aufteilung) - treibt
+  // die Zwischenversionierung alle 50 Durchgaenge (s. manualGenerateChapters/
+  // manualSaveRunCheckpoint), damit auch EIN einzelnes, sehr grosses Kapitel
+  // (viele hundert Teile) regelmaessig zwischengesichert wird, nicht nur
+  // zwischen fertiggestellten Kapiteln.
+  async function manualGenerateOneChapter(groupDescriptor, rows, role, signal, onProgress, onDurchgang) {
     var batches = chunkRagRows(rows, RAG_BATCH_CHAR_BUDGET);
     if (batches.length <= 1) {
       var prompt = manualBuildPrompt(groupDescriptor, rows, role);
       var result = await sampleWithRateLimitRetry(prompt, { signal: signal, modelTier: "default", cache: false });
+      if (onDurchgang) onDurchgang();
       return result.text || "";
     }
     var completedCount = 0;
@@ -14688,6 +14788,7 @@
         .then(function (batchResult) {
           completedCount++;
           if (onProgress) onProgress(completedCount + " von " + batches.length + " Teilen fertig …");
+          if (onDurchgang) onDurchgang();
           return batchResult.text || "";
         });
     });
@@ -14731,6 +14832,78 @@
       "\" fertig (im Schnitt " + avgWords + " Wörter, " + avgTickets + " Tickets).");
   }
 
+  // Automatische Zwischenversion im Hintergrund alle MANUAL_RUN_CHECKPOINT_
+  // INTERVAL Durchgaenge (s. manualGenerateOneChapter/onDurchgang) - ein
+  // vollstaendiger Schnappschuss von app.manualChapters, damit bei einem
+  // Absturz/Abbruch waehrend eines sehr langen Laufs nicht der gesamte
+  // bisherige Fortschritt verloren geht. KEIN echter Ordner (reine
+  // Browser-App) - stattdessen als Liste im UI sichtbar (renderManualCheckpoints).
+  var MANUAL_RUN_CHECKPOINT_INTERVAL = 50;
+  var MANUAL_RUN_CHECKPOINT_LIMIT = 10;
+  function manualSaveRunCheckpoint(afterCount) {
+    var snapshot = JSON.parse(JSON.stringify(app.manualChapters));
+    var chapterCount = Object.keys(snapshot).length;
+    if (!chapterCount) return;
+    app.manualCheckpoints.push({
+      id: "mcp-" + Date.now() + "-" + afterCount,
+      at: new Date().toLocaleString("de-DE"),
+      afterCount: afterCount,
+      chapterCount: chapterCount,
+      snapshot: snapshot
+    });
+    if (app.manualCheckpoints.length > MANUAL_RUN_CHECKPOINT_LIMIT) {
+      app.manualCheckpoints = app.manualCheckpoints.slice(app.manualCheckpoints.length - MANUAL_RUN_CHECKPOINT_LIMIT);
+    }
+    renderManualCheckpoints();
+    addLog("Zwischenversion im Hintergrund gespeichert (nach " + afterCount + " Durchgängen, " + chapterCount + " Kapitel/Label aktuell im Entwurf).");
+  }
+  function renderManualCheckpoints() {
+    var list = app.manualCheckpoints || [];
+    els.manualCheckpointsWrap.hidden = list.length === 0;
+    if (!list.length) { els.manualCheckpointsList.innerHTML = ""; return; }
+    els.manualCheckpointsList.innerHTML = list.slice().reverse().map(function (cp) {
+      return '<div class="job-export-row" data-manual-checkpoint="' + cp.id + '" style="align-items:center;">' +
+        '<span class="step-note" style="margin:0;">Nach ' + cp.afterCount + ' Durchgängen · ' + cp.chapterCount + ' Kapitel/Label · ' + escapeHtml(cp.at) + '</span>' +
+        '<button type="button" class="btn ghost btn-tiny" data-manual-checkpoint-restore="' + cp.id + '">Wiederherstellen</button>' +
+        '<button type="button" class="btn ghost btn-tiny" data-manual-checkpoint-download="' + cp.id + '">Als ZIP herunterladen</button>' +
+        "</div>";
+    }).join("");
+  }
+  els.manualCheckpointsList.addEventListener("click", async function (e) {
+    var restoreBtn = e.target.closest("[data-manual-checkpoint-restore]");
+    if (restoreBtn) {
+      var restoreId = restoreBtn.getAttribute("data-manual-checkpoint-restore");
+      var cpToRestore = app.manualCheckpoints.filter(function (c) { return c.id === restoreId; })[0];
+      if (!cpToRestore) return;
+      var ok = await confirmDialog("Zwischenversion vom " + cpToRestore.at + " (" + cpToRestore.chapterCount + " Kapitel/Label) wiederherstellen? Der aktuelle Entwurfsstand wird dadurch ersetzt.");
+      if (!ok) return;
+      app.manualChapters = JSON.parse(JSON.stringify(cpToRestore.snapshot));
+      renderManualChapters();
+      addLog("Zwischenversion vom " + cpToRestore.at + " wiederhergestellt (" + cpToRestore.chapterCount + " Kapitel/Label).");
+      showToast("Wiederhergestellt", "Zwischenversion vom " + cpToRestore.at + " übernommen.");
+      return;
+    }
+    var downloadBtn = e.target.closest("[data-manual-checkpoint-download]");
+    if (downloadBtn) {
+      var downloadId = downloadBtn.getAttribute("data-manual-checkpoint-download");
+      var cpToDownload = app.manualCheckpoints.filter(function (c) { return c.id === downloadId; })[0];
+      if (!cpToDownload) return;
+      if (typeof JSZip === "undefined") { showToast("Fehlgeschlagen", "ZIP-Bibliothek konnte nicht geladen werden.", true); return; }
+      try {
+        var zip = new JSZip();
+        Object.keys(cpToDownload.snapshot).forEach(function (title) {
+          var entry = cpToDownload.snapshot[title];
+          zip.file(safeFilename(title) + ".md", entry.de || "");
+        });
+        var blob = await zip.generateAsync({ type: "blob" });
+        var ok2 = await saveOrWarn("Zwischenversion-" + cpToDownload.afterCount + "-Durchgaenge.zip", blob);
+        if (ok2) showToast("Gespeichert", "ZIP heruntergeladen.");
+      } catch (err) {
+        showToast("Fehlgeschlagen", (err && err.message) || "ZIP konnte nicht erzeugt werden.", true);
+      }
+    }
+  });
+
   async function manualGenerateChapters() {
     var groups = manualTargetGroups();
     if (!groups.length) { showToast("Keine Auswahl", "Bitte mindestens ein Kapitel/Label-Themengebiet oder eine Domäne auswählen.", true); return; }
@@ -14742,6 +14915,11 @@
     manualAbortController = ctl;
     var aborted = false;
     var checkpointItems = [];
+    var durchgangCount = 0;
+    function bumpDurchgang() {
+      durchgangCount++;
+      if (durchgangCount % MANUAL_RUN_CHECKPOINT_INTERVAL === 0) manualSaveRunCheckpoint(durchgangCount);
+    }
     for (var i = 0; i < groups.length; i++) {
       var group = groups[i];
       var rows = manualRowsForGroup(group);
@@ -14754,7 +14932,7 @@
       try {
         var text = await manualGenerateOneChapter(manualGroupDescriptor(group), rows, role, ctl.signal, function (note) {
           els.manualStatusNote.textContent = "\"" + group.name + "\": " + note;
-        });
+        }, bumpDurchgang);
         var key = manualStorageKey(group);
         manualStoreVersion(key, { de: text, en: "", generatedAt: new Date().toLocaleString("de-DE"), ticketCount: rows.length, role: role, groupKind: group.kind, groupName: group.name });
         renderManualChapters();
@@ -14798,6 +14976,38 @@
     }
   }
 
+  // Qualitätsprüfung (separater KI-Durchgang NACH der Texterstellung, s.
+  // RAG_PROMPT_DEFAULTS.manualQualityCheck): prüft den fertigen Kapiteltext
+  // auf Grammatikfehler, inhaltliche Lücken und Verbesserungsvorschläge -
+  // bewusst ein ZUSÄTZLICHER Aufruf statt in den Erstellungs-Prompt
+  // integriert, damit die Pruefung bei Bedarf gezielt erneut (z. B. nach
+  // manueller Bearbeitung im Textfeld) ausgeloest werden kann, ohne das
+  // ganze Kapitel neu erzeugen zu muessen. Ergebnis wird wie beim
+  // Handbuch-Vergleich (Teil 9c-3, chapter.compareResult) als Rohtext
+  // gespeichert, nicht weiter geparst.
+  function manualBuildQualityCheckPrompt(title, text) {
+    return ragPromptFor("manualQualityCheck") + "\n\nKapitel: " + title + "\n\n" + text;
+  }
+  var manualQualityCheckRunning = {};
+  async function manualRunQualityCheck(chapterTitle) {
+    var entry = app.manualChapters[chapterTitle];
+    if (!entry || !entry.de) return;
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
+    manualQualityCheckRunning[chapterTitle] = true;
+    renderManualChapters();
+    try {
+      var result = await sampleApi(manualBuildQualityCheckPrompt(chapterTitle, entry.de), { modelTier: "default", cache: false });
+      entry.qualityCheck = { generatedAt: new Date().toLocaleString("de-DE"), analysisText: result.text || "" };
+      addLog("Benutzerhandbuch-Kapitel \"" + chapterTitle + "\": Qualitätsprüfung (Grammatik/Lücken/Verbesserungen) erzeugt.");
+    } catch (err) {
+      var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
+      showToast("Qualitätsprüfung fehlgeschlagen", msg, true);
+    } finally {
+      delete manualQualityCheckRunning[chapterTitle];
+      renderManualChapters();
+    }
+  }
+
   // Export: einfache Konventionen aus dem generierten/bearbeiteten Text
   // erkannt - Zeilen "## Dealer"/"## Markt"/"## HQ"/"## Sparte"/"## MO"
   // werden zu Zwischenüberschriften, Zeilen mit "[Nur PKW]"/"[Nur Van]"/
@@ -14805,6 +15015,13 @@
   // echter Bild-Icons - robust in PDF UND DOCX ohne Font-/Glyph-Risiko
   // (Emoji werden von jsPDFs Kernschriftart nicht zuverlässig unterstützt).
   var MANUAL_SCOPE_TAGS = ["[Nur PKW]", "[Nur Van]", "[Nur Markt]"];
+  // Icons fuer die Lese-Vorschau (s. manualRenderPreviewHtml/"Vorschau"-
+  // Umschalter unten) - rein visuelle Kennzeichnung der bereits im Prompt
+  // (RAG_PROMPT_DEFAULTS.manualChapter) vorgegebenen Scope-Tags/Rollen-
+  // Zwischenueberschriften, KEINE neue Datenstruktur/kein neuer Filter -
+  // Claude erzeugt diese Tags/Ueberschriften bereits selbst im Fliesstext.
+  var MANUAL_SCOPE_TAG_ICONS = { "[Nur PKW]": "🚗", "[Nur Van]": "🚐", "[Nur Markt]": "🏬" };
+  var MANUAL_ROLE_HEADING_ICONS = { "Dealer": "🚗", "Markt": "🏬", "HQ": "🏢", "Sparte": "🧩", "MO": "⚙️" };
   function manualParseParagraphs(text) {
     return (text || "").split(/\n+/).map(function (line) { return line.trim(); }).filter(Boolean);
   }
@@ -14817,6 +15034,32 @@
   // strikte Positionsprüfung.
   function manualScopeTagOf(line) {
     return MANUAL_SCOPE_TAGS.filter(function (tag) { return line.indexOf(tag) !== -1; })[0] || null;
+  }
+  // Lese-Vorschau mit Icons (Umschalter "Vorschau" neben Deutsch/English,
+  // s. renderManualChapters): rein read-only HTML-Rendering derselben
+  // Zeilen-Konventionen wie beim DOCX-Export (manualChapterDocumentXml) -
+  // Rollen-Zwischenüberschriften ("## Dealer" usw.) bekommen ein Rollen-
+  // Icon, Pkw/Van/Markt-Scope-Tags werden als farbiges Icon-Badge statt
+  // als rohe "[Nur PKW]"-Textmarke dargestellt. Macht auf einen Blick
+  // sichtbar, welche Abschnitte rollen-/fahrzeugspezifisch sind, ohne den
+  // Text selbst zu verändern (Bearbeitung bleibt über Deutsch/English-
+  // Ansicht als Rohtext möglich).
+  function manualRenderPreviewHtml(text) {
+    return manualParseParagraphs(text).map(function (line) {
+      if (manualIsHeading(line)) {
+        var headingText = manualHeadingText(line);
+        var headingIcon = MANUAL_ROLE_HEADING_ICONS[headingText] || "";
+        return '<h4 style="margin:14px 0 6px;">' + (headingIcon ? headingIcon + " " : "") + escapeHtml(headingText) + "</h4>";
+      }
+      var tag = manualScopeTagOf(line);
+      if (tag) {
+        var icon = MANUAL_SCOPE_TAG_ICONS[tag] || "🏷️";
+        var rest = line.split(tag).join("").trim();
+        return '<p style="margin:0 0 8px;"><span class="override-badge" style="background:var(--danger-bg,#fde8e8); color:var(--danger,#c0392b);">' +
+          icon + " " + escapeHtml(tag.replace(/^\[|\]$/g, "")) + "</span> " + escapeHtml(rest) + "</p>";
+      }
+      return '<p style="margin:0 0 8px;">' + escapeHtml(line) + "</p>";
+    }).join("");
   }
 
   function manualChapterDocumentXml(title, text) {
@@ -14949,6 +15192,17 @@
       var hasEn = !!entry.en;
       var roleSuffix = entry.role && entry.role !== "alle" ? " · Rolle: " + escapeHtml(roleNavLabel(entry.role)) : "";
       var displayTitle = entry.groupKind === "label" ? entry.groupName + " (Label-Themengebiet)" : title;
+      var qc = entry.qualityCheck;
+      var qcRunning = !!manualQualityCheckRunning[title];
+      var qcHtml = '<div style="margin-top:10px;">' +
+        '<button type="button" class="btn ghost btn-tiny" data-manual-action="quality-check"' + (qcRunning ? " disabled" : "") + '>' +
+        '<span class="btn-spinner"' + (qcRunning ? "" : " hidden") + '></span> ' +
+        (qcRunning ? "Prüft …" : (qc ? "Qualitätsprüfung erneut ausführen" : "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)")) +
+        "</button>" +
+        (qc ? '<div class="panel" style="margin-top:8px; padding:10px; white-space:pre-wrap; font-size:13px;">' +
+          '<div class="mono" style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">Geprüft am ' + escapeHtml(qc.generatedAt) + '</div>' +
+          escapeHtml(qc.analysisText) + "</div>" : "") +
+        "</div>";
       return '<div class="manual-chapter-card panel" data-manual-chapter="' + escapeHtml(title) + '" style="margin-bottom:16px; padding:14px;">' +
         '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;">' +
         "<h3 style=\"margin:0;\">" + escapeHtml(displayTitle) + "</h3>" +
@@ -14957,15 +15211,21 @@
         '<div class="preview-toggle" style="margin:8px 0;">' +
         '<button type="button" class="preview-toggle-btn' + (lang === "de" ? " active" : "") + '" data-manual-lang="de">Deutsch</button>' +
         '<button type="button" class="preview-toggle-btn' + (lang === "en" ? " active" : "") + '" data-manual-lang="en"' + (hasEn ? "" : " disabled") +
-        ">English" + (hasEn ? "" : " (noch nicht übersetzt)") + "</button></div>" +
-        '<textarea class="text-input manual-chapter-textarea" data-manual-text data-lang="' + lang + '" rows="16" style="width:100%; font-family:inherit;">' +
-        escapeHtml(text) + "</textarea>" +
+        ">English" + (hasEn ? "" : " (noch nicht übersetzt)") + "</button>" +
+        '<button type="button" class="preview-toggle-btn' + (lang === "preview" ? " active" : "") + '" data-manual-lang="preview">Vorschau (Icons)</button>' +
+        "</div>" +
+        (lang === "preview"
+          ? '<div class="panel" style="padding:12px; max-height:420px; overflow:auto;">' + manualRenderPreviewHtml(entry.de) + "</div>" +
+            '<p class="step-note">Nur Lesevorschau mit Icons für Pkw/Van/Markt-Kennzeichnung und rollenspezifische Zwischenüberschriften – zum Bearbeiten zu "Deutsch"/"English" wechseln.</p>'
+          : '<textarea class="text-input manual-chapter-textarea" data-manual-text data-lang="' + lang + '" rows="16" style="width:100%; font-family:inherit;">' +
+            escapeHtml(text) + "</textarea>") +
         '<div class="controls" style="margin-top:8px;">' +
         '<button type="button" class="btn ghost btn-tiny" data-manual-action="translate">Ins Englische übersetzen</button>' +
         '<button type="button" class="btn ghost btn-tiny" data-manual-action="export-pdf">Als PDF</button>' +
         '<button type="button" class="btn ghost btn-tiny" data-manual-action="export-docx">Als Word</button>' +
         '<span class="spacer"></span>' +
         '<button type="button" class="btn ghost btn-tiny" data-manual-action="delete">Kapitel löschen</button></div>' +
+        qcHtml +
         manualHistoryHtml(title, entry) + "</div>";
     }).join("");
   }
@@ -15017,10 +15277,12 @@
     if (action === "translate") manualTranslateChapter(title);
     else if (action === "export-pdf") manualExportChapterPdf(title);
     else if (action === "export-docx") manualExportChapterDocx(title);
+    else if (action === "quality-check") manualRunQualityCheck(title);
     else if (action === "delete") {
       delete app.manualChapters[title];
       delete manualChapterLangView[title];
       delete manualHistoryExpanded[title];
+      delete manualQualityCheckRunning[title];
       renderManualChapters();
       addLog("Benutzerhandbuch-Kapitel \"" + title + "\" gelöscht.");
     }

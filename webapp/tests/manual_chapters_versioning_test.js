@@ -9,6 +9,7 @@ const fs = require("fs");
 const path = require("path");
 const BUILD_HTML = path.join(__dirname, "..", "ticket_cockpit.build.html");
 const { JSDOM, VirtualConsole } = require("jsdom");
+const JSZipNode = require("jszip");
 
 const fragment = fs.readFileSync(BUILD_HTML, "utf-8");
 const full = `<!doctype html><html><head><meta charset="utf-8"></head><body>${fragment}</body></html>`;
@@ -21,15 +22,16 @@ let sampleImpl = async () => {
   sampleCallCount++;
   return { text: "Generierter Text Nr. " + sampleCallCount + ".", truncated: false, modelTierApplied: "default" };
 };
+const savedFiles = [];
 const dom = new JSDOM(full, {
   runScripts: "dangerously", resources: "usable", pretendToBeVisual: true, url: "https://example.com/t", virtualConsole: vc,
   beforeParse(window) {
-    window.JSZip = function () {};
+    window.JSZip = JSZipNode;
     window.jspdf = { jsPDF: function () {} };
     window.claude = {
       use: function (name) {
         if (name === "sample") return Promise.resolve(function (input, opts) { return sampleImpl(input, opts); });
-        if (name === "downloads") return Promise.resolve({ save: function () { return Promise.resolve({ status: "saved" }); } });
+        if (name === "downloads") return Promise.resolve({ save: function (req) { savedFiles.push(req); return Promise.resolve({ status: "saved" }); } });
         return Promise.resolve(null);
       },
     };
@@ -149,6 +151,9 @@ async function confirmViaModal(doc) {
   check("Der vorherige aktuelle Text (zweite Generierung) landet dabei selbst in der Versionsliste (kein Datenverlust)", afterRestoreCard.textContent.includes("Versionen (1)"));
 
   // ===================== Zwischenstand im Protokoll nach 20 fertiggestellten Kapiteln =====================
+  // (50 statt 20 Kapitel, damit im selben Durchlauf zusaetzlich die neue
+  // automatische ZwischenVERSION alle 50 Durchgaenge mitgetestet wird, s.
+  // unten "Automatische Zwischenversion".)
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
   await wait(50);
   function outlineChapterIdByTitle(title) {
@@ -157,7 +162,7 @@ async function confirmViaModal(doc) {
     const delBtn = row ? row.querySelector('[data-action="delete-chapter"]') : null;
     return delBtn ? delBtn.getAttribute("data-chapter-id") : null;
   }
-  for (let i = 1; i <= 20; i++) {
+  for (let i = 1; i <= 50; i++) {
     const title = "ZZZ-Test-Kapitel " + i;
     setValue(doc.getElementById("outline-new-chapter-input"), title);
     fire(doc.getElementById("outline-add-chapter-btn"), "click");
@@ -168,7 +173,7 @@ async function confirmViaModal(doc) {
     fire(doc.querySelector('[data-action="add-domain"][data-chapter-id="' + chapterId + '"]'), "click");
     await wait(10);
   }
-  check("20 Test-Kapitel für den Zwischenstand-Test angelegt", doc.querySelectorAll(".outline-chapter-row").length >= 20);
+  check("50 Test-Kapitel für den Zwischenstand-Test angelegt", doc.querySelectorAll(".outline-chapter-row").length >= 50);
 
   const xmlCheckpoint = `<?xml version="1.0"?><rss><channel>
     <item><key>MV-2</key><summary>Checkpoint-Ticket</summary>
@@ -196,12 +201,39 @@ async function confirmViaModal(doc) {
   check("Match-Anzahl-Basis: Domäne 'ZZZ-Checkpoint-Domain' auswählbar", Array.from(domainSelect2.options).some((o) => o.value === "ZZZ-Checkpoint-Domain" && o.selected));
 
   fire(doc.getElementById("manual-generate-btn"), "click");
-  await wait(1500);
+  for (let waited = 0; waited < 8000 && doc.getElementById("manual-generate-btn").disabled; waited += 50) await wait(50);
   doc.querySelector('.nav-item[data-view="verarbeitung"]').click();
   await wait(50);
   const protokollText = (doc.getElementById("log-list") || doc.body).textContent;
   check("Protokoll enthält einen Zwischenstand-Eintrag nach 20 fertiggestellten Kapiteln", protokollText.includes("Zwischenstand nach 20 Kapiteln"));
   check("Zwischenstand nennt erstes und letztes Kapitel des 20er-Blocks", protokollText.includes("ZZZ-Test-Kapitel 1") && protokollText.includes("ZZZ-Test-Kapitel 20"));
+
+  // ===================== Automatische Zwischenversion alle 50 Durchgänge (im Hintergrund) =====================
+  // 50 Kapitel oben = 50 "Durchgänge" (je ein Kapitel ohne Batch-Aufteilung
+  // zaehlt als genau 1 Durchgang, s. manualGenerateOneChapter/onDurchgang) -
+  // triggert GENAU EINEN automatischen Checkpoint.
+  check("Protokoll enthält einen Zwischenversion-Eintrag nach 50 Durchgängen", protokollText.includes("Zwischenversion im Hintergrund gespeichert (nach 50 Durchgängen"));
+  doc.querySelector('.nav-item[data-view="benutzerhandbuch"]').click();
+  await wait(50);
+  const checkpointsWrap = doc.getElementById("manual-checkpoints-wrap");
+  check("Zwischenversionen-Liste sichtbar (kein echter Ordner, aber im UI auffindbar)", checkpointsWrap.hidden === false);
+  const checkpointsText = doc.getElementById("manual-checkpoints-list").textContent;
+  check("Zwischenversionen-Liste nennt 'Nach 50 Durchgängen'", checkpointsText.includes("Nach 50 Durchgängen"));
+  const checkpointRestoreBtn = doc.getElementById("manual-checkpoints-list").querySelector("[data-manual-checkpoint-restore]");
+  const checkpointDownloadBtn = doc.getElementById("manual-checkpoints-list").querySelector("[data-manual-checkpoint-download]");
+  check("'Wiederherstellen'-Button für die Zwischenversion vorhanden", !!checkpointRestoreBtn);
+  check("'Als ZIP herunterladen'-Button für die Zwischenversion vorhanden", !!checkpointDownloadBtn);
+
+  const savedBeforeCheckpointDownload = savedFiles.length;
+  fire(checkpointDownloadBtn, "click");
+  for (let waited = 0; waited < 3000 && savedFiles.length === savedBeforeCheckpointDownload; waited += 50) await wait(50);
+  check("Download der Zwischenversion als ZIP ausgelöst", savedFiles.length === savedBeforeCheckpointDownload + 1);
+  const cpZipSaved = savedFiles[savedFiles.length - 1];
+  check("Zwischenversion-ZIP-Dateiname nennt die Durchgangszahl", !!cpZipSaved && cpZipSaved.filename.includes("50"));
+  if (cpZipSaved) {
+    const cpZip = await JSZipNode.loadAsync(cpZipSaved.data);
+    check("Zwischenversion-ZIP enthält mindestens eine .md-Datei", Object.keys(cpZip.files).some((n) => n.toLowerCase().endsWith(".md")));
+  }
 
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }
   const failed = checks.filter((c) => !c[1]);
