@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.51.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.52.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -790,7 +790,13 @@ zusammenzuführen.
   **im Hintergrund alle 50 verarbeitete Einträge eine Zwischenversion** von
   `app.massFiles` (als Liste sichtbar, kein echter Ordner) – mit
   **"Wiederherstellen"**, falls ein langer Lauf abbricht oder unerwünschte
-  Zwischenstände übernommen wurden.
+  Zwischenstände übernommen wurden. **Performance**: während des Laufs wird
+  bei einem Treffer nicht mehr die komplette Tabelle neu aufgebaut, sondern
+  nur die beiden betroffenen Auswahlfelder der jeweiligen Zeile direkt
+  aktualisiert; ein vollständiger Neuaufbau (inkl. korrekter
+  Domänen-Gruppierung) erfolgt nur noch periodisch (alle 20 Treffer) sowie
+  einmal abschließend – bei vielen hundert Einträgen spürbar schneller als
+  zuvor (linearer statt quadratischer Gesamtaufwand über den Lauf).
   Zusätzlich lässt sich jede Zeile per **Checkbox** auswählen – über
   **"Alle auswählen"**, **"Auswahl aufheben"** oder **"Alle auswählen mit
   Name \*"** (einfaches Namensmuster mit `*`/`?` als Platzhalter, z. B.

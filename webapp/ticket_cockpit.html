@@ -4262,7 +4262,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.51.0";
+  var APP_VERSION = "2.52.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -14275,6 +14275,26 @@
     showToast("Wiederhergestellt", "Zwischenversion vom " + cpToRestore.at + " übernommen.");
   });
 
+  // Aktualisiert nur die beiden <select>-Elemente EINER Zeile direkt im DOM
+  // (ohne renderMassFiles()) - die Optionslisten selbst aendern sich waehrend
+  // des Laufs nicht (domains/chapters werden einmal vor der Schleife
+  // bestimmt und massParseAiAssignment laesst ohnehin nur Werte aus genau
+  // dieser Liste zu), daher reicht .value setzen. Vermeidet den teuren
+  // kompletten HTML-Neuaufbau aller Zeilen/Gruppen (inkl. aller
+  // Select-Optionen jeder anderen Zeile) bei JEDEM einzelnen Treffer, der
+  // sonst bei vielen hundert Eintraegen die KI-Zuordnung spuerbar
+  // verlangsamt (quadratischer statt linearer Aufwand ueber den Lauf).
+  // Gruppierung/Sortierung (haengt von domain/chapterTitle ab) wird dadurch
+  // zwischenzeitlich nicht nachgefuehrt - dafuer sorgt der periodische volle
+  // Render unten (alle MASS_RERENDER_INTERVAL Treffer) sowie der
+  // abschliessende renderMassFiles() nach der Schleife.
+  function massUpdateRowSelectsInPlace(entry) {
+    var domainSel = els.massGroups.querySelector('.mass-domain-select[data-id="' + entry.id + '"]');
+    var chapterSel = els.massGroups.querySelector('.mass-chapter-select[data-id="' + entry.id + '"]');
+    if (domainSel) domainSel.value = entry.domain;
+    if (chapterSel) chapterSel.value = entry.chapterTitle;
+  }
+  var MASS_RERENDER_INTERVAL = 20;
   async function massRunAiAssignment() {
     if (!sampleApi) {
       showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
@@ -14299,13 +14319,15 @@
         var changed = false;
         if (suggestion.domain && !entry.domain) { entry.domain = suggestion.domain; changed = true; }
         if (suggestion.chapterTitle && !entry.chapterTitle) { entry.chapterTitle = suggestion.chapterTitle; changed = true; }
-        if (changed) { updated++; renderMassFiles(); }
+        if (changed) { updated++; massUpdateRowSelectsInPlace(entry); }
       } catch (err) {
         if (err && err.code === "cancelled") { aborted = true; break; }
         skippedErrors++;
       }
       if ((processed + 1) % MASS_RUN_CHECKPOINT_INTERVAL === 0) massSaveRunCheckpoint(processed + 1);
+      if ((processed + 1) % MASS_RERENDER_INTERVAL === 0) renderMassFiles();
     }
+    renderMassFiles();
     els.massAiStatusNote.textContent = aborted
       ? "Abgebrochen nach " + processed + " von " + targets.length + " Einträgen (" + updated + " zugeordnet)."
       : updated + " von " + targets.length + " Einträgen per KI zugeordnet." + (skippedErrors ? " (" + skippedErrors + " fehlgeschlagen.)" : "");
