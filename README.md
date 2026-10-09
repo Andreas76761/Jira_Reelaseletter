@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.60.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.61.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1091,12 +1091,27 @@ zusammenzuführen.
   Kapitel, s. o.) automatisch **im Hintergrund alle 50 Durchgänge eine
   Zwischenversion** – ein vollständiger Schnappschuss aller bis dahin
   erzeugten Kapitel/Labels, damit bei einem Absturz/Abbruch nicht der
-  gesamte Fortschritt verloren geht. Da die App rein im Browser läuft, gibt
-  es **keinen echten Ordner**: die Zwischenversionen erscheinen stattdessen
-  als Liste direkt unter dem Statustext, mit **"Wiederherstellen"** (ersetzt
-  den aktuellen Entwurfsstand) und **"Als ZIP herunterladen"** (ein .md je
-  Kapitel) je Eintrag; Teil der Sitzung (Speichern/Laden, "Alle Daten
-  löschen"). Je Kapitel steht außerdem der Button
+  gesamte Fortschritt verloren geht. Ohne gewählten Zielordner (s. u.) gibt
+  es dafür **keinen echten Ordner**, da die App rein im Browser läuft: die
+  Zwischenversionen erscheinen stattdessen als Liste direkt unter dem
+  Statustext, mit **"Wiederherstellen"** (ersetzt den aktuellen
+  Entwurfsstand) und **"Als ZIP herunterladen"** (ein .md je Kapitel) je
+  Eintrag; Teil der Sitzung (Speichern/Laden, "Alle Daten löschen").
+  **Zielordner wählen (optional)**: außerhalb der Claude-Artifact-Vorschau
+  (z. B. direkt in Chrome/Edge geöffnet) lässt sich über die File System
+  Access API ein lokaler Ordner auswählen – danach wird **jedes fertige
+  Kapitel sofort** als eigene .md-Datei dort abgelegt (Dateiname wie die
+  Kapitel-/Label-Bezeichnung, z. B. "Kapitel_4_Servicevertrag_anlegen.md"),
+  ohne auf das Ende des gesamten Laufs zu warten. Der Ordner-Handle ist
+  bewusst kein Sitzungsdatensatz (nicht serialisierbar, Browser-Berechtigung
+  gilt ohnehin nur für die aktuelle Seite) und wird bei "Sitzung
+  zurücksetzen"/"Alle Daten löschen" vergessen. Unabhängig davon lässt sich
+  jederzeit über **"Alle Kapitel zusammenführen"** (unterhalb der
+  Kapitel-Liste) der komplette bisherige Entwurfsstand zu einem
+  Gesamtdokument in Gliederungsreihenfolge zusammensetzen – editierbar, als
+  Datei herunterladbar und bei gewähltem Zielordner zusätzlich automatisch
+  als "Gesamtdokument.md" dort gespeichert. Je Kapitel steht außerdem der
+  Button
   **"Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)"** zur Verfügung:
   ein separater, gezielt (auch wiederholt) auslösbarer KI-Durchgang NACH der
   Texterstellung, der den fertigen Text auf Grammatikfehler, inhaltliche

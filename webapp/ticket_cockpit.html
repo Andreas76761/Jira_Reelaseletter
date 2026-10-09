@@ -1726,7 +1726,11 @@
             aufbewahrt und lässt sich später einsehen oder wiederherstellen. Nutzt Claude über die sample-Capability
             (nur innerhalb der Claude-Artifact-Laufzeit verfügbar) – erfindet keine Fakten, nur vorhandene
             Ticket-Daten. Die Anweisung selbst ist unter Einstellungen → RAG-Prompts ("Benutzerhandbuch-Kapitel
-            erstellen") editierbar.
+            erstellen") editierbar. Optional lässt sich ein lokaler <b>Zielordner wählen</b>
+            (File System Access API) – jedes fertige Kapitel wird dann sofort als eigene .md-Datei dort abgelegt
+            (nur außerhalb der Claude-Artifact-Vorschau verfügbar, z.&nbsp;B. direkt in Chrome/Edge geöffnet). Über
+            <b>"Alle Kapitel zusammenführen"</b> lassen sich alle bisher erzeugten Texte jederzeit zu einem
+            Gesamtdokument in Gliederungsreihenfolge zusammensetzen.
           </div>
           <div class="controls">
             <div class="graph-filter-col">
@@ -1777,6 +1781,10 @@
             <button class="btn primary" id="manual-generate-btn" type="button">Kapitel erstellen</button>
             <button class="btn ghost" id="manual-stop-btn" type="button" hidden>Abbrechen</button>
           </div>
+          <div class="controls">
+            <button class="btn ghost" id="manual-choose-dir-btn" type="button">Zielordner wählen (optional)</button>
+            <span class="step-note" id="manual-dir-status-note">Kein Zielordner gewählt – jedes fertige Kapitel bleibt im Browser (unten als Gesamtdokument zusammenführbar). Funktioniert nur außerhalb der Claude-Artifact-Vorschau, z.&nbsp;B. direkt in Chrome/Edge geöffnet.</span>
+          </div>
           <p id="manual-status-note" class="step-note"></p>
           <div id="manual-checkpoints-wrap" hidden style="margin-bottom:12px;">
             <p class="step-note" style="font-weight:600;">Automatisch gespeicherte Zwischenversionen (alle 50 Durchgänge im Hintergrund gespeichert &ndash; kein echter Ordner, da die App rein im Browser läuft; hier als Liste sichtbar)</p>
@@ -1794,6 +1802,14 @@
           </div>
           <div id="manual-chapters-list"></div>
           <div class="empty-hint" id="manual-chapters-empty">Noch keine Kapitel erzeugt.</div>
+          <div id="manual-merge-wrap" style="margin-top:16px;">
+            <div class="job-export-row">
+              <button class="btn ghost" id="manual-merge-btn" type="button">Alle Kapitel zusammenführen</button>
+              <button class="btn ghost" id="manual-merge-download-btn" type="button" disabled>Gesamtdokument herunterladen</button>
+            </div>
+            <p class="step-note" id="manual-merge-status-note"></p>
+            <textarea id="manual-merge-output" class="gen-preview" style="min-height:160px;width:100%;" placeholder="Noch kein Gesamtdokument erzeugt."></textarea>
+          </div>
         </section>
 
         <section>
@@ -4386,7 +4402,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.60.0";
+  var APP_VERSION = "2.61.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5831,6 +5847,8 @@
     "dq-tickets-total", "dq-tickets-affected", "dq-findings-total", "dq-empty-state", "dq-wrap", "dq-tbody",
     "manual-domain-select", "manual-label-select", "manual-chapter-select", "manual-role-select", "manual-group-select", "manual-match-count",
     "manual-generate-btn", "manual-stop-btn", "manual-status-note", "manual-chapters-list", "manual-chapters-empty",
+    "manual-choose-dir-btn", "manual-dir-status-note",
+    "manual-merge-btn", "manual-merge-download-btn", "manual-merge-status-note", "manual-merge-output",
     "manual-checkpoints-wrap", "manual-checkpoints-list",
     "manual-quality-check-all-wrap", "manual-quality-check-all-btn", "manual-quality-check-all-spinner",
     "manual-quality-check-all-label", "manual-quality-check-all-stop-btn", "manual-quality-check-all-status-note",
@@ -6095,6 +6113,21 @@
     // ueber "Wiederherstellen" nutzbar. Begrenzt auf die letzten
     // MANUAL_RUN_CHECKPOINT_LIMIT Stand, Sitzungsdatensatz wie manualChapters.
     manualCheckpoints: [],
+    // Zuletzt erzeugtes "Alle Kapitel zusammenführen"-Gesamtdokument des
+    // Kapitel-Generators - eigenstaendiger, editierbarer Text wie
+    // massMergedDoc/ragMergedDoc, sortiert in Gliederungsreihenfolge (echte
+    // Gliederungskapitel vor Label-Themengebieten). Sitzungsdatensatz wie
+    // manualChapters.
+    manualMergedDoc: "",
+    // Vom Nutzer gewaehlter lokaler Zielordner (File System Access API,
+    // showDirectoryPicker) fuer die automatische Ablage JEDES fertigen
+    // Kapitel-Generator-Kapitels als eigene .md-Datei waehrend eines Laufs.
+    // Bewusst KEIN Sitzungsdatensatz: ein Verzeichnis-Handle ist nicht
+    // serialisierbar und die Browser-Berechtigung dafuer gilt ohnehin nur
+    // fuer die aktuelle Seite/Sitzung, unabhaengig von den Ticket-Daten. Nur
+    // verfuegbar ausserhalb der sandboxed Claude-Artifact-Laufzeit (z. B.
+    // direkt in Chrome/Edge geoeffnet).
+    manualExportDirHandle: null,
     // Gliederung (Navigation, oberhalb Verarbeitung): je Unterkapitel +
     // optionalem Label-Themengebiet eine editierbare Stichwortliste, s.
     // Teil 9d. Key: chapterTitle + "||" + subTitle + "||" + (labelCategory
@@ -6337,8 +6370,14 @@
     ragResetOutput();
     app.manualChapters = {};
     app.manualCheckpoints = [];
+    app.manualMergedDoc = "";
+    app.manualExportDirHandle = null;
     renderManualChapters();
     renderManualCheckpoints();
+    els.manualMergeOutput.value = "";
+    els.manualMergeDownloadBtn.disabled = true;
+    els.manualMergeStatusNote.textContent = "";
+    els.manualDirStatusNote.textContent = "Kein Zielordner gewählt – jedes fertige Kapitel bleibt im Browser (unten als Gesamtdokument zusammenführbar). Funktioniert nur außerhalb der Claude-Artifact-Vorschau, z. B. direkt in Chrome/Edge geöffnet.";
     app.chapterKeywords = {};
     renderGliederung();
     app.referenceManuals = [];
@@ -6405,8 +6444,14 @@
     ragResetOutput();
     app.manualChapters = {};
     app.manualCheckpoints = [];
+    app.manualMergedDoc = "";
+    app.manualExportDirHandle = null;
     renderManualChapters();
     renderManualCheckpoints();
+    els.manualMergeOutput.value = "";
+    els.manualMergeDownloadBtn.disabled = true;
+    els.manualMergeStatusNote.textContent = "";
+    els.manualDirStatusNote.textContent = "Kein Zielordner gewählt – jedes fertige Kapitel bleibt im Browser (unten als Gesamtdokument zusammenführbar). Funktioniert nur außerhalb der Claude-Artifact-Vorschau, z. B. direkt in Chrome/Edge geöffnet.";
     app.chapterKeywords = {};
     renderGliederung();
     app.referenceManuals = [];
@@ -6508,6 +6553,7 @@
       languageStyle: app.languageStyle,
       manualChapters: app.manualChapters,
       manualCheckpoints: app.manualCheckpoints,
+      manualMergedDoc: app.manualMergedDoc,
       chapterKeywords: app.chapterKeywords,
       importFormats: app.importFormats,
       referenceManuals: app.referenceManuals,
@@ -6565,6 +6611,7 @@
     if (typeof data.languageStyle === "string") app.languageStyle = data.languageStyle;
     if (data.manualChapters) app.manualChapters = data.manualChapters;
     if (Array.isArray(data.manualCheckpoints)) app.manualCheckpoints = data.manualCheckpoints;
+    if (typeof data.manualMergedDoc === "string") app.manualMergedDoc = data.manualMergedDoc;
     if (data.chapterKeywords) app.chapterKeywords = data.chapterKeywords;
     if (data.importFormats) app.importFormats = data.importFormats;
     if (Array.isArray(data.referenceManuals)) app.referenceManuals = data.referenceManuals;
@@ -6598,6 +6645,8 @@
     renderLanguageStyleSelect();
     renderManualChapters();
     renderManualCheckpoints();
+    els.manualMergeOutput.value = app.manualMergedDoc;
+    els.manualMergeDownloadBtn.disabled = !app.manualMergedDoc;
     renderGliederung();
     renderImportFormats();
     renderReferenceManuals();
@@ -16084,6 +16133,42 @@
     }
   });
 
+  // Schreibt eine fertige Datei (ein Kapitel ODER das Gesamtdokument) sofort
+  // in den vom Nutzer gewaehlten lokalen Ordner (File System Access API,
+  // s. app.manualExportDirHandle) - no-op (false), wenn kein Ordner gewaehlt
+  // ist. Ein einzelner Schreibfehler wird nur geloggt statt per Toast zu
+  // unterbrechen, damit er bei einem laufenden Mehrkapitel-Lauf nicht den
+  // gesamten weiteren Durchlauf stoppt.
+  async function manualWriteFileToExportDir(filename, text) {
+    if (!app.manualExportDirHandle) return false;
+    try {
+      var fileHandle = await app.manualExportDirHandle.getFileHandle(filename, { create: true });
+      var writable = await fileHandle.createWritable();
+      await writable.write(text);
+      await writable.close();
+      return true;
+    } catch (err) {
+      addLog("Datei \"" + filename + "\" konnte nicht im gewählten Ordner gespeichert werden: " + ((err && err.message) || "Unbekannter Fehler") + ".");
+      return false;
+    }
+  }
+  if (!window.showDirectoryPicker) {
+    els.manualChooseDirBtn.disabled = true;
+    els.manualChooseDirBtn.title = "Nicht verfügbar in dieser Ansicht (nur außerhalb der Claude-Artifact-Vorschau, z. B. direkt in Chrome/Edge geöffnet).";
+  }
+  els.manualChooseDirBtn.addEventListener("click", async function () {
+    if (!window.showDirectoryPicker) { showToast("Nicht verfügbar", "Diese Ansicht unterstützt keine Ordnerauswahl.", true); return; }
+    try {
+      var handle = await window.showDirectoryPicker({ mode: "readwrite" });
+      app.manualExportDirHandle = handle;
+      els.manualDirStatusNote.textContent = "Zielordner: \"" + handle.name + "\" – jedes fertige Kapitel wird automatisch dort als .md-Datei abgelegt.";
+      addLog("Benutzerhandbuch-Kapitel-Generator: Zielordner \"" + handle.name + "\" für automatische Ablage gewählt.");
+    } catch (err) {
+      if (err && err.name === "AbortError") return;
+      showToast("Fehlgeschlagen", "Ordner konnte nicht ausgewählt werden.", true);
+    }
+  });
+
   async function manualGenerateChapters() {
     var groups = manualTargetGroups();
     if (!groups.length) { showToast("Keine Auswahl", "Bitte mindestens ein Kapitel/Label-Themengebiet oder eine Domäne auswählen.", true); return; }
@@ -16106,6 +16191,7 @@
     // Datensatz - O(Gruppen * Tickets) statt O(Tickets) ueber den Lauf).
     var matchedTickets = manualMatchedTickets();
     var completedCount = 0;
+    var savedToFolderCount = 0;
     for (var i = 0; i < groups.length; i++) {
       var group = groups[i];
       var rows = manualRowsForGroup(group, matchedTickets);
@@ -16123,6 +16209,7 @@
         var key = manualStorageKey(group);
         manualStoreVersion(key, { de: text, en: "", generatedAt: new Date().toLocaleString("de-DE"), ticketCount: rows.length, role: role, groupKind: group.kind, groupName: group.name });
         completedCount++;
+        if (await manualWriteFileToExportDir(safeFilename(key) + ".md", text)) savedToFolderCount++;
         // Voller Kartenneuaufbau (renderManualChapters(), s. u.) nicht mehr
         // bei JEDEM fertigen Kapitel, sondern nur noch periodisch (wie beim
         // Massenverarbeitung-Performance-Fix) - bei vielen Kapiteln in
@@ -16141,13 +16228,66 @@
       }
     }
     renderManualChapters();
-    els.manualStatusNote.textContent = aborted ? "Abgebrochen." : (groups.length > 1 ? "Fertig." : "");
+    var finalNote = aborted ? "Abgebrochen." : (groups.length > 1 ? "Fertig." : "");
+    if (app.manualExportDirHandle && savedToFolderCount) {
+      finalNote = (finalNote ? finalNote + " " : "") + savedToFolderCount + " Kapitel automatisch im gewählten Ordner gespeichert.";
+    }
+    els.manualStatusNote.textContent = finalNote;
     els.manualGenerateBtn.disabled = false;
     els.manualStopBtn.hidden = true;
     manualAbortController = null;
   }
   els.manualGenerateBtn.addEventListener("click", manualGenerateChapters);
   els.manualStopBtn.addEventListener("click", function () { if (manualAbortController) manualAbortController.abort(); });
+
+  // Sortierreihenfolge fuer "Alle Kapitel zusammenführen": echte
+  // Gliederungskapitel in Gliederungsreihenfolge (wie massChapterOrderIndex,
+  // dieselbe Reihenfolge wie app.outline), Label-Themengebiete danach (keine
+  // feste Position in der Gliederung, daher alphabetisch ausreichend).
+  function manualMergeOrderIndex(key, entry) {
+    if (entry && entry.groupKind === "label") return app.outline.length + 1;
+    return massChapterOrderIndex((entry && entry.groupName) || key);
+  }
+  function manualBuildMergedDoc() {
+    var keys = Object.keys(app.manualChapters).filter(function (k) { return app.manualChapters[k] && app.manualChapters[k].de; });
+    keys.sort(function (a, b) {
+      var ea = app.manualChapters[a], eb = app.manualChapters[b];
+      var ia = manualMergeOrderIndex(a, ea), ib = manualMergeOrderIndex(b, eb);
+      if (ia !== ib) return ia - ib;
+      return (ea.groupName || a).localeCompare(eb.groupName || b);
+    });
+    var parts = ["# Benutzerhandbuch - Zusammengeführte Kapitel\n\n_Automatisch aus " + keys.length +
+      " im Kapitel-Generator erzeugten Texten zusammengeführt, in Gliederungsreihenfolge (Label-Themengebiete danach). Bitte redaktionell prüfen._"];
+    keys.forEach(function (key) {
+      var entry = app.manualChapters[key];
+      parts.push("\n\n## " + (entry.groupName || key) + "\n\n" + entry.de);
+    });
+    return parts.join("");
+  }
+  els.manualMergeBtn.addEventListener("click", async function () {
+    var keys = Object.keys(app.manualChapters).filter(function (k) { return app.manualChapters[k] && app.manualChapters[k].de; });
+    if (!keys.length) { showToast("Nichts vorhanden", "Bitte zuerst mindestens ein Kapitel erzeugen.", true); return; }
+    var merged = manualBuildMergedDoc();
+    app.manualMergedDoc = merged;
+    els.manualMergeOutput.value = merged;
+    els.manualMergeDownloadBtn.disabled = false;
+    var note = keys.length + " Kapitel zusammengeführt.";
+    if (app.manualExportDirHandle) {
+      if (await manualWriteFileToExportDir("Gesamtdokument.md", merged)) {
+        note += " Zusätzlich als \"Gesamtdokument.md\" im gewählten Ordner gespeichert.";
+      }
+    }
+    els.manualMergeStatusNote.textContent = note;
+    addLog("Benutzerhandbuch-Kapitel-Generator: " + keys.length + " Kapitel zu einem Gesamtdokument zusammengeführt.");
+  });
+  els.manualMergeOutput.addEventListener("input", function () {
+    app.manualMergedDoc = els.manualMergeOutput.value;
+    els.manualMergeDownloadBtn.disabled = !els.manualMergeOutput.value.trim();
+  });
+  els.manualMergeDownloadBtn.addEventListener("click", async function () {
+    var ok = await saveOrWarn("Benutzerhandbuch-Kapitel-Gesamtdokument.md", els.manualMergeOutput.value);
+    if (ok) showToast("Gespeichert", "Gesamtdokument heruntergeladen.");
+  });
 
   async function manualTranslateChapter(chapterTitle) {
     var entry = app.manualChapters[chapterTitle];
