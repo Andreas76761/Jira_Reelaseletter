@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.61.3"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.62.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -742,6 +742,28 @@ zusammenzuführen.
     welches Feld (Bearbeiter/Ersteller) einen Namen enthält. Bei einer
     Datei mit vielen Tickets werden aus Performance-Gründen maximal 100
     angezeigt (mit Hinweis, die Auswahl einzugrenzen).
+  - **Dateiansicht-FastTrack** (drei gelbe Buttons rechts von
+    "Dateiansicht", erst nach Klick auf "Dateiansicht" aktiv) – drei
+    schnelle KI-gestützte Aktionen auf der aktuell gezeigten (bereinigten)
+    Datei:
+    - **Übersetzen (Deutsch)** – übersetzt den gesamten angezeigten
+      Dateiinhalt (z. B. englischsprachige Jira-Tickets) ins Deutsche;
+      ersetzt danach automatisch die Ansicht, ein Original/Übersetzung-
+      Umschalter erscheint, damit jederzeit zwischen beiden gewechselt
+      werden kann, ohne erneut zu übersetzen.
+    - **Als Word exportieren** – exportiert die aktuell angezeigte Ansicht
+      (Original oder Übersetzung, je nach Umschalter) als `.docx`-Datei.
+    - **Datei zusammenfassen** – öffnet ein neues Fenster mit einer
+      prägnanten KI-Zusammenfassung der Datei, wahlweise auf Deutsch oder
+      English (Umschalter im Fenster, beide Sprachen werden je einmal
+      erzeugt und danach gecacht).
+
+    Übersetzen und Zusammenfassen arbeiten auf denselben bereinigten
+    Ticket-Rohdaten wie die Dateiansicht selbst (max. 100 Tickets) und
+    nutzen dieselbe budget-chunkende, reaktiv gegen "zu viele Rohdaten für
+    einen Durchlauf" bisektierende Architektur wie der Benutzerhandbuch-
+    Kapitel-Generator (s. u.), damit auch Dateien mit vielen/langen Tickets
+    nicht an diesem Limit scheitern.
   - **Import-Statistik** (am Ende des Import-Bereichs, letzter Abschnitt) –
     erscheint automatisch nach jedem Import (ohne Klick, neuester Import
     vorausgewählt; über die Auswahlbox auch für ältere Imports abrufbar)

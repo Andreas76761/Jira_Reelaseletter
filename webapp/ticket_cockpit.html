@@ -283,6 +283,8 @@
   .btn.ghost:hover { color: var(--text); background: var(--surface-2); }
   .btn.danger { background: var(--blocked); border-color: var(--blocked); color: #fff; }
   .btn.danger:hover { filter: brightness(0.92); }
+  .btn.fasttrack { background: #f2c200; border-color: #d4a600; color: #332700; }
+  .btn.fasttrack:hover { background: #ffd43b; border-color: #d4a600; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn[hidden] { display: none; }
   .btn-tiny { font-size: 11.5px; padding: 4px 9px; }
@@ -488,6 +490,7 @@
   }
   .gen-preview-wrap { display: flex; flex-direction: column; gap: 8px; }
   .preview-toggle { display: flex; gap: 6px; }
+  .preview-toggle[hidden] { display: none; }
   .preview-toggle-btn {
     border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); border-radius: 8px;
     padding: 6px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer;
@@ -988,10 +991,18 @@
           <div class="controls">
             <select id="fileview-import-select"><option value="">Datei auswählen …</option></select>
             <button class="btn primary" id="fileview-show-btn" type="button" disabled>Dateiansicht</button>
+            <button class="btn fasttrack" id="fileview-translate-btn" type="button" disabled>Übersetzen (Deutsch)</button>
+            <button class="btn fasttrack" id="fileview-export-docx-btn" type="button" disabled>Als Word exportieren</button>
+            <button class="btn fasttrack" id="fileview-summarize-btn" type="button" disabled>Datei zusammenfassen</button>
           </div>
           <div class="panel fileview-wrap" id="fileview-wrap" hidden>
+            <div class="preview-toggle" id="fileview-original-toggle-wrap" hidden style="margin:0 0 10px;">
+              <button type="button" class="preview-toggle-btn active" id="fileview-view-original-btn">Original</button>
+              <button type="button" class="preview-toggle-btn" id="fileview-view-translated-btn">Übersetzung (Deutsch)</button>
+            </div>
             <p class="step-note" id="fileview-summary"></p>
             <div id="fileview-content"></div>
+            <p class="step-note" id="fileview-fasttrack-status-note"></p>
           </div>
         </section>
 
@@ -2460,6 +2471,33 @@
       <button class="btn ghost" id="mass-domain-md-modal-cancel-btn" type="button">Schließen</button>
       <button class="btn primary" id="mass-domain-md-save-btn" type="button">Speichern</button>
       <button class="btn ghost" id="mass-domain-md-download-btn" type="button" disabled>Als Markdown herunterladen</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="fileview-summary-modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="fileview-summary-modal-title">
+    <div class="modal-head">
+      <div>
+        <div class="key mono" id="fileview-summary-modal-key">Dateiansicht</div>
+        <h2 id="fileview-summary-modal-title">Datei zusammenfassen</h2>
+      </div>
+      <button class="modal-close" id="fileview-summary-modal-close" type="button" aria-label="Schließen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p class="desc" style="margin:0 0 10px;">KI-generierte Zusammenfassung der ausgewählten Datei (bereinigte Ticket-Rohdaten), maschinell erzeugt – bitte redaktionell prüfen.</p>
+    <div class="preview-toggle" style="margin:0 0 10px;">
+      <button type="button" class="preview-toggle-btn active" id="fileview-summary-lang-de-btn">Deutsch</button>
+      <button type="button" class="preview-toggle-btn" id="fileview-summary-lang-en-btn">English</button>
+    </div>
+    <div class="panel" id="fileview-summary-output-wrap" style="padding:12px; min-height:120px; white-space:pre-wrap;">
+      <p class="empty-hint" id="fileview-summary-loading">Erzeuge Zusammenfassung …</p>
+      <div id="fileview-summary-output"></div>
+    </div>
+    <p class="step-note" id="fileview-summary-status-note"></p>
+    <div class="modal-actions">
+      <button class="btn ghost" id="fileview-summary-modal-cancel-btn" type="button">Schließen</button>
     </div>
   </div>
 </div>
@@ -4402,7 +4440,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.61.3";
+  var APP_VERSION = "2.62.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5824,6 +5862,11 @@
     "reference-manual-table-wrap", "reference-manual-tbody", "reference-manual-empty",
     "paste-textarea", "paste-from-clipboard-btn", "paste-process-btn", "paste-spinner", "paste-process-label",
     "fileview-import-select", "fileview-show-btn", "fileview-wrap", "fileview-summary", "fileview-content",
+    "fileview-translate-btn", "fileview-export-docx-btn", "fileview-summarize-btn", "fileview-fasttrack-status-note",
+    "fileview-original-toggle-wrap", "fileview-view-original-btn", "fileview-view-translated-btn",
+    "fileview-summary-modal-overlay", "fileview-summary-modal-key", "fileview-summary-modal-close", "fileview-summary-modal-cancel-btn",
+    "fileview-summary-lang-de-btn", "fileview-summary-lang-en-btn", "fileview-summary-output-wrap", "fileview-summary-loading",
+    "fileview-summary-output", "fileview-summary-status-note",
     "importstats-import-select", "importstats-wrap", "importstats-summary", "importstats-tbody", "importstats-empty",
     "imports-tbody", "imports-refresh-btn", "imports-refresh-pending-hint", "changes-tbody", "changes-empty", "domain-aliases-tbody",
     "log-list", "log-empty",
@@ -6198,7 +6241,15 @@
     // Automatisch im Hintergrund gespeicherte Zwischenversionen WÄHREND der
     // KI-Zuordnung (alle MASS_RUN_CHECKPOINT_INTERVAL verarbeitete
     // Einträge) - Schnappschuss von massFiles, analog zu manualCheckpoints.
-    massCheckpoints: []
+    massCheckpoints: [],
+    // Dateiansicht-FastTrack (Import, Job "Dateiansicht"): je Import-ID die
+    // zuletzt erzeugte KI-Übersetzung ins Deutsche (ganze Datei) bzw. die
+    // Zusammenfassungen je Sprache - gecacht, damit wiederholtes Ansehen/
+    // Sprachwechsel nicht jedes Mal erneut kostenpflichtig erzeugt werden
+    // muss. Sitzungsdatensatz wie manualChapters (reset bei "Alle Daten
+    // löschen"/"Sitzung zurücksetzen", Teil von Sitzung speichern/laden).
+    fileviewTranslations: {},
+    fileviewSummaries: {}
   };
 
   function addLog(message) {
@@ -6405,6 +6456,9 @@
     els.massMergeDomainDocsStatusNote.textContent = "";
     app.massCheckpoints = [];
     renderMassCheckpoints();
+    app.fileviewTranslations = {};
+    app.fileviewSummaries = {};
+    fileviewResetView();
   }
 
   // Admin-Funktion (Einstellungen): im Unterschied zu resetSession() werden
@@ -6479,6 +6533,9 @@
     els.massMergeDomainDocsStatusNote.textContent = "";
     app.massCheckpoints = [];
     renderMassCheckpoints();
+    app.fileviewTranslations = {};
+    app.fileviewSummaries = {};
+    fileviewResetView();
     addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
   }
   els.deleteAllDataBtn.addEventListener("click", async function () {
@@ -6564,7 +6621,9 @@
       massMergedDoc: app.massMergedDoc,
       massDomainDocs: app.massDomainDocs,
       massDomainDocsMerged: app.massDomainDocsMerged,
-      massCheckpoints: app.massCheckpoints
+      massCheckpoints: app.massCheckpoints,
+      fileviewTranslations: app.fileviewTranslations,
+      fileviewSummaries: app.fileviewSummaries
     };
   }
   function restoreSessionState(data) {
@@ -6623,11 +6682,14 @@
     if (data.massDomainDocs && typeof data.massDomainDocs === "object") app.massDomainDocs = data.massDomainDocs;
     if (typeof data.massDomainDocsMerged === "string") app.massDomainDocsMerged = data.massDomainDocsMerged;
     if (Array.isArray(data.massCheckpoints)) app.massCheckpoints = data.massCheckpoints;
+    if (data.fileviewTranslations && typeof data.fileviewTranslations === "object") app.fileviewTranslations = data.fileviewTranslations;
+    if (data.fileviewSummaries && typeof data.fileviewSummaries === "object") app.fileviewSummaries = data.fileviewSummaries;
     app.initialized = true;
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
     if (!els.compareModalOverlay.hidden) closeCompareModal();
     if (!els.massDomainMdModalOverlay.hidden) closeMassDomainMdModal();
+    fileviewResetView();
     refreshDashboard(false);
     renderImportsTable();
     renderChangesTable();
@@ -8858,6 +8920,7 @@
     if (!els.modalOverlay.hidden) closeModal();
     if (!els.compareModalOverlay.hidden) closeCompareModal();
     if (!els.massDomainMdModalOverlay.hidden) closeMassDomainMdModal();
+    if (!els.fileviewSummaryModalOverlay.hidden) closeFileviewSummaryModal();
   });
 
   /* ============ Teil 4: Export (downloads-Capability) ============ */
@@ -9965,6 +10028,29 @@
     lines.push("</item>");
     return lines.join("\n");
   }
+  // Unescaped Variante von ticketToReadableXml() - fuer KI-Prompts
+  // (Übersetzen/Zusammenfassen) und den Word-Export der Dateiansicht
+  // (FastTrack-Buttons unten), wo HTML-Tags/Spans nicht gewünscht sind.
+  function ticketToReadablePlainText(raw) {
+    var lines = ["<item>"];
+    function tag(name, value) {
+      if (value == null || value === "") return;
+      lines.push("  <" + name + ">" + value + "</" + name + ">");
+    }
+    tag("key", raw.key);
+    tag("summary", raw.summary);
+    FIELD_DISPLAY_ORDER.forEach(function (f) {
+      if (!(f in raw)) return;
+      var v = raw[f];
+      if (Array.isArray(v)) { if (!v.length) return; v = v.join(", "); }
+      tag(f, v);
+    });
+    Object.keys(raw.custom_fields || {}).forEach(function (k) { tag("customfield name=\"" + k + "\"", raw.custom_fields[k]); });
+    (raw.issuelinks || []).forEach(function (l) { tag("issuelink category=\"" + l.category + "\"", l.key); });
+    if (raw.description) tag("description", raw.description);
+    lines.push("</item>");
+    return lines.join("\n");
+  }
   function ticketsForImport(importId) {
     var out = [];
     app.tickets.forEach(function (t) {
@@ -9984,22 +10070,292 @@
   }
   els.fileviewImportSelect.addEventListener("change", function () {
     els.fileviewShowBtn.disabled = !els.fileviewImportSelect.value;
+    els.fileviewTranslateBtn.disabled = true;
+    els.fileviewExportDocxBtn.disabled = true;
+    els.fileviewSummarizeBtn.disabled = true;
   });
+  // fileviewCurrentImportId/fileviewShowView: welche Datei aktuell in der
+  // Dateiansicht gezeigt wird und ob Original oder KI-Übersetzung (s.
+  // FastTrack-Buttons unten) - bewusst Modul-Scope-Variablen statt
+  // Sitzungsdatensatz (reine UI-Ansichtswahl, wie manualChapterLangView).
+  var fileviewCurrentImportId = null;
+  var fileviewShowView = "original"; // "original" | "translated"
+  function fileviewResetView() {
+    fileviewCurrentImportId = null;
+    fileviewShowView = "original";
+    els.fileviewWrap.hidden = true;
+    els.fileviewOriginalToggleWrap.hidden = true;
+    els.fileviewTranslateBtn.disabled = true;
+    els.fileviewExportDocxBtn.disabled = true;
+    els.fileviewSummarizeBtn.disabled = true;
+    els.fileviewFasttrackStatusNote.textContent = "";
+    if (!els.fileviewSummaryModalOverlay.hidden) closeFileviewSummaryModal();
+  }
+  function renderFileviewCurrentView() {
+    var importId = fileviewCurrentImportId;
+    var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
+    if (!imp) return;
+    var tickets = ticketsForImport(importId);
+    var shown = tickets.slice(0, FILEVIEW_MAX_TICKETS);
+    var hasTranslation = !!app.fileviewTranslations[importId];
+    els.fileviewOriginalToggleWrap.hidden = !hasTranslation;
+    els.fileviewViewOriginalBtn.classList.toggle("active", fileviewShowView === "original");
+    els.fileviewViewTranslatedBtn.classList.toggle("active", fileviewShowView === "translated");
+    if (fileviewShowView === "translated" && hasTranslation) {
+      els.fileviewSummary.textContent = "„" + imp.source + "“ (" + imp.format + ") – KI-Übersetzung ins Deutsche (" + tickets.length + " Ticket(s) aus dieser Datei" +
+        (tickets.length > shown.length ? ", erste " + shown.length + " übersetzt" : "") +
+        ") – maschinell erzeugt, bitte redaktionell prüfen.";
+      els.fileviewContent.innerHTML = '<div class="fileview-ticket"><pre>' + escapeHtml(app.fileviewTranslations[importId]) + "</pre></div>";
+    } else {
+      els.fileviewSummary.textContent = "„" + imp.source + "“ (" + imp.format + ") – " + tickets.length + " Ticket(s) aus dieser Datei" +
+        (tickets.length > shown.length ? ", zeige die ersten " + shown.length + " (Auswahl eingrenzen für mehr)" : "") +
+        " – bereinigte Ansicht (Namen pseudonymisiert, E-Mail/VIN/Adresse entfernt), nicht die Originaldatei.";
+      els.fileviewContent.innerHTML = shown.length
+        ? shown.map(function (t) { return '<div class="fileview-ticket"><pre>' + ticketToReadableXml(t.raw) + "</pre></div>"; }).join("")
+        : '<p class="empty-hint">Keine Tickets (mehr) aus dieser Datei im aktuellen Bestand.</p>';
+    }
+  }
   els.fileviewShowBtn.addEventListener("click", function () {
     var importId = parseInt(els.fileviewImportSelect.value, 10);
     var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
     if (!imp) return;
-    var tickets = ticketsForImport(importId);
+    fileviewCurrentImportId = importId;
+    fileviewShowView = "original";
     els.fileviewWrap.hidden = false;
-    var shown = tickets.slice(0, FILEVIEW_MAX_TICKETS);
-    els.fileviewSummary.textContent = "„" + imp.source + "“ (" + imp.format + ") – " + tickets.length + " Ticket(s) aus dieser Datei" +
-      (tickets.length > shown.length ? ", zeige die ersten " + shown.length + " (Auswahl eingrenzen für mehr)" : "") +
-      " – bereinigte Ansicht (Namen pseudonymisiert, E-Mail/VIN/Adresse entfernt), nicht die Originaldatei.";
-    els.fileviewContent.innerHTML = shown.length
-      ? shown.map(function (t) { return '<div class="fileview-ticket"><pre>' + ticketToReadableXml(t.raw) + "</pre></div>"; }).join("")
-      : '<p class="empty-hint">Keine Tickets (mehr) aus dieser Datei im aktuellen Bestand.</p>';
-    addLog("Dateiansicht geöffnet: „" + imp.source + "“ (" + tickets.length + " Tickets, bereinigte Anzeige).");
+    els.fileviewTranslateBtn.disabled = false;
+    els.fileviewExportDocxBtn.disabled = false;
+    els.fileviewSummarizeBtn.disabled = false;
+    els.fileviewFasttrackStatusNote.textContent = "";
+    renderFileviewCurrentView();
+    addLog("Dateiansicht geöffnet: „" + imp.source + "“ (" + ticketsForImport(importId).length + " Tickets, bereinigte Anzeige).");
   });
+  els.fileviewViewOriginalBtn.addEventListener("click", function () { fileviewShowView = "original"; renderFileviewCurrentView(); });
+  els.fileviewViewTranslatedBtn.addEventListener("click", function () { fileviewShowView = "translated"; renderFileviewCurrentView(); });
+
+  /* ============ Dateiansicht-FastTrack: Übersetzen/Word-Export/
+     Zusammenfassen (gelbe Buttons rechts von "Dateiansicht") ============
+     Arbeitet auf denselben bereinigten Ticket-Rohdaten wie die Dateiansicht
+     selbst (ticketToReadablePlainText je Ticket, auf FILEVIEW_MAX_TICKETS
+     begrenzt). Uebersetzen/Zusammenfassen koennen bei vielen Tickets groessere
+     Textmengen ergeben - beide Pfade nutzen daher dieselbe bewaehrte,
+     budget-chunkende + reaktiv gegen "prompt_too_large" bisektierende
+     Architektur wie der Benutzerhandbuch-Kapitel-Generator (chunkTextsByBudget/
+     manualGenerateBatchAdaptive/manualSynthesizePartials, s. dort) statt
+     eigener, weniger erprobter Logik. */
+  function fileviewTicketPlainTextBlocks(importId) {
+    var tickets = ticketsForImport(importId).slice(0, FILEVIEW_MAX_TICKETS);
+    return tickets.map(function (t) { return ticketToReadablePlainText(t.raw); });
+  }
+  // --- Übersetzen (→ Deutsch): reine Textübersetzung, kein KI-Merge noetig
+  // (uebersetzte Zeichen-Budget-Gruppen werden einfach in Reihenfolge
+  // aneinandergehaengt statt wie bei Zusammenfassungen zu EINEM Text
+  // verschmolzen). ---
+  async function fileviewTranslateBatchAdaptive(blocks, signal) {
+    var joined = blocks.join("\n\n");
+    try {
+      var r = await sampleWithRateLimitRetry(ragPromptFor("fileviewTranslateToDe") + "\n\n" + joined, { signal: signal, modelTier: "default", cache: false });
+      return [r.text || ""];
+    } catch (err) {
+      if (!err || err.code !== "prompt_too_large" || blocks.length <= 1) throw err;
+      var mid = Math.ceil(blocks.length / 2);
+      var halves = await Promise.all([
+        fileviewTranslateBatchAdaptive(blocks.slice(0, mid), signal),
+        fileviewTranslateBatchAdaptive(blocks.slice(mid), signal)
+      ]);
+      return halves[0].concat(halves[1]);
+    }
+  }
+  async function fileviewGenerateTranslation(importId, signal, onProgress) {
+    var blocks = fileviewTicketPlainTextBlocks(importId);
+    if (!blocks.length) return "";
+    var rawBatches = chunkTextsByBudget(blocks, RAG_BATCH_CHAR_BUDGET);
+    var completed = 0;
+    var translatedNested = await mapWithConcurrency(rawBatches, MANUAL_BATCH_CONCURRENCY, function (batch) {
+      return fileviewTranslateBatchAdaptive(batch, signal).then(function (texts) {
+        completed++;
+        if (onProgress) onProgress(completed + " von " + rawBatches.length + " Teilen übersetzt …");
+        return texts;
+      });
+    });
+    var translated = [].concat.apply([], translatedNested);
+    return translated.join("\n\n");
+  }
+  var fileviewTranslateAbortController = null;
+  els.fileviewTranslateBtn.addEventListener("click", async function () {
+    var importId = fileviewCurrentImportId;
+    var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
+    if (!imp) return;
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
+    els.fileviewTranslateBtn.disabled = true;
+    var ctl = new AbortController();
+    fileviewTranslateAbortController = ctl;
+    els.fileviewFasttrackStatusNote.textContent = "Übersetze „" + imp.source + "“ …";
+    try {
+      var text = await fileviewGenerateTranslation(importId, ctl.signal, function (note) { els.fileviewFasttrackStatusNote.textContent = note; });
+      app.fileviewTranslations[importId] = text;
+      fileviewShowView = "translated";
+      renderFileviewCurrentView();
+      els.fileviewFasttrackStatusNote.textContent = "";
+      addLog("Dateiansicht: „" + imp.source + "“ ins Deutsche übersetzt.");
+    } catch (err) {
+      var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
+      showToast("Übersetzung fehlgeschlagen", msg, true);
+      els.fileviewFasttrackStatusNote.textContent = "";
+    } finally {
+      els.fileviewTranslateBtn.disabled = false;
+      fileviewTranslateAbortController = null;
+    }
+  });
+  // --- Als Word exportieren: exportiert die aktuell angezeigte Ansicht
+  // (Original oder Übersetzung, je nach Toggle) als .docx. ---
+  els.fileviewExportDocxBtn.addEventListener("click", async function () {
+    var importId = fileviewCurrentImportId;
+    var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
+    if (!imp) return;
+    var translated = fileviewShowView === "translated" && app.fileviewTranslations[importId];
+    var text = translated ? app.fileviewTranslations[importId] : fileviewTicketPlainTextBlocks(importId).join("\n\n");
+    var title = imp.source + (translated ? " (Übersetzung Deutsch)" : "");
+    try {
+      var blob = await buildMarkdownDocxBlob(title, "# " + title + "\n\n" + text);
+      var ok = await saveOrWarn(safeFilename(imp.source) + (translated ? "-uebersetzt" : "") + ".docx", blob);
+      if (ok) { showToast("Gespeichert", "Als Word-Dokument heruntergeladen."); addLog("Dateiansicht: „" + imp.source + "“ als Word-Dokument exportiert" + (translated ? " (Übersetzung)" : "") + "."); }
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Word-Export fehlgeschlagen.", true);
+    }
+  });
+  // --- Datei zusammenfassen: KI-Zusammenfassung in neuem Fenster (Modal),
+  // Deutsch/English wählbar - zweistufig wie der Kapitel-Generator (erst je
+  // Zeichen-Budget-Batch eine Teil-Zusammenfassung, dann bei Bedarf in
+  // mehreren Runden zu EINER finalen Zusammenfassung verschmolzen), beides
+  // reaktiv gegen "prompt_too_large" bisektiert. Je Sprache gecacht
+  // (app.fileviewSummaries), damit Hin-/Herschalten nicht erneut kostet. ---
+  async function fileviewSummarizeBatchAdaptive(blocks, lang, signal) {
+    var joined = blocks.join("\n\n");
+    var promptKey = lang === "en" ? "fileviewSummaryEn" : "fileviewSummaryDe";
+    try {
+      var r = await sampleWithRateLimitRetry(ragPromptFor(promptKey) + "\n\n" + joined, { signal: signal, modelTier: "default", cache: false });
+      return [r.text || ""];
+    } catch (err) {
+      if (!err || err.code !== "prompt_too_large") throw err;
+      if (blocks.length <= 1) throw err;
+      var mid = Math.ceil(blocks.length / 2);
+      var halves = await Promise.all([
+        fileviewSummarizeBatchAdaptive(blocks.slice(0, mid), lang, signal),
+        fileviewSummarizeBatchAdaptive(blocks.slice(mid), lang, signal)
+      ]);
+      return halves[0].concat(halves[1]);
+    }
+  }
+  async function fileviewSynthesizeSummaryGroup(texts, lang, signal) {
+    var promptKey = lang === "en" ? "fileviewSummarySynthesisEn" : "fileviewSummarySynthesisDe";
+    try {
+      var prompt = ragPromptFor(promptKey) + "\n\n" + texts.map(function (t, i) { return "Teiltext " + (i + 1) + ":\n" + t; }).join("\n\n");
+      var r = await sampleWithRateLimitRetry(prompt, { signal: signal, modelTier: "default", cache: false });
+      return r.text || "";
+    } catch (err) {
+      if (!err || err.code !== "prompt_too_large" || texts.length <= 1) throw err;
+      var mid = Math.ceil(texts.length / 2);
+      var halves = await Promise.all([
+        fileviewSynthesizeSummaryGroup(texts.slice(0, mid), lang, signal),
+        fileviewSynthesizeSummaryGroup(texts.slice(mid), lang, signal)
+      ]);
+      return await fileviewSynthesizeSummaryGroup(halves, lang, signal);
+    }
+  }
+  async function fileviewSynthesizeSummaryPartials(partials, lang, signal, onProgress) {
+    var current = partials;
+    var round = 1;
+    while (current.length > 1) {
+      var totalLen = current.reduce(function (s, t) { return s + (t || "").length; }, 0);
+      if (totalLen <= RAG_BATCH_CHAR_BUDGET) break;
+      var groups = chunkTextsByBudget(current, RAG_BATCH_CHAR_BUDGET);
+      if (onProgress) onProgress("Verdichte " + current.length + " Teile in " + groups.length + " Zwischenschritte (Runde " + round + ") …");
+      current = await mapWithConcurrency(groups, MANUAL_BATCH_CONCURRENCY, function (group) {
+        if (group.length === 1) return Promise.resolve(group[0]);
+        return fileviewSynthesizeSummaryGroup(group, lang, signal);
+      });
+      round++;
+    }
+    if (current.length === 1) return current[0];
+    return await fileviewSynthesizeSummaryGroup(current, lang, signal);
+  }
+  async function fileviewGenerateSummary(importId, lang, signal, onProgress) {
+    var blocks = fileviewTicketPlainTextBlocks(importId);
+    if (!blocks.length) return "Keine Tickets aus dieser Datei im aktuellen Bestand.";
+    var rawBatches = chunkTextsByBudget(blocks, RAG_BATCH_CHAR_BUDGET);
+    if (onProgress) onProgress(rawBatches.length > 1 ? ("Erzeuge Teil-Zusammenfassungen (" + rawBatches.length + " Teile) …") : "Erzeuge Zusammenfassung …");
+    var partialsNested = await mapWithConcurrency(rawBatches, MANUAL_BATCH_CONCURRENCY, function (batch) {
+      return fileviewSummarizeBatchAdaptive(batch, lang, signal);
+    });
+    var partials = [].concat.apply([], partialsNested);
+    if (partials.length === 1) return partials[0];
+    if (onProgress) onProgress("Führe " + partials.length + " Teile zusammen …");
+    return await fileviewSynthesizeSummaryPartials(partials, lang, signal, onProgress);
+  }
+  var fileviewSummaryAbortController = null;
+  var fileviewSummaryModalImportId = null;
+  function closeFileviewSummaryModal() {
+    els.fileviewSummaryModalOverlay.hidden = true;
+    if (fileviewSummaryAbortController) { fileviewSummaryAbortController.abort(); fileviewSummaryAbortController = null; }
+    fileviewSummaryModalImportId = null;
+  }
+  async function fileviewLoadSummaryLang(lang) {
+    var importId = fileviewSummaryModalImportId;
+    if (importId == null) return;
+    if (!app.fileviewSummaries[importId]) app.fileviewSummaries[importId] = {};
+    var cache = app.fileviewSummaries[importId];
+    els.fileviewSummaryLangDeBtn.classList.toggle("active", lang === "de");
+    els.fileviewSummaryLangEnBtn.classList.toggle("active", lang === "en");
+    if (cache[lang]) {
+      els.fileviewSummaryLoading.hidden = true;
+      els.fileviewSummaryOutput.textContent = cache[lang];
+      els.fileviewSummaryStatusNote.textContent = "";
+      return;
+    }
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
+    els.fileviewSummaryLoading.hidden = false;
+    els.fileviewSummaryOutput.textContent = "";
+    var ctl = new AbortController();
+    fileviewSummaryAbortController = ctl;
+    try {
+      var text = await fileviewGenerateSummary(importId, lang, ctl.signal, function (note) { els.fileviewSummaryStatusNote.textContent = note; });
+      cache[lang] = text;
+      els.fileviewSummaryLoading.hidden = true;
+      els.fileviewSummaryOutput.textContent = text;
+      els.fileviewSummaryStatusNote.textContent = "";
+      var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
+      addLog("Dateiansicht: Zusammenfassung von „" + (imp ? imp.source : importId) + "“ (" + (lang === "en" ? "Englisch" : "Deutsch") + ") erzeugt.");
+    } catch (err) {
+      if (err && err.code === "cancelled") return;
+      var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
+      els.fileviewSummaryLoading.hidden = true;
+      els.fileviewSummaryStatusNote.textContent = "";
+      showToast("Zusammenfassung fehlgeschlagen", msg, true);
+    } finally {
+      fileviewSummaryAbortController = null;
+    }
+  }
+  function openFileviewSummaryModal(importId, source) {
+    fileviewSummaryModalImportId = importId;
+    els.fileviewSummaryModalKey.textContent = source;
+    els.fileviewSummaryLoading.hidden = false;
+    els.fileviewSummaryOutput.textContent = "";
+    els.fileviewSummaryStatusNote.textContent = "";
+    els.fileviewSummaryModalOverlay.hidden = false;
+    els.fileviewSummaryModalClose.focus();
+    fileviewLoadSummaryLang("de");
+  }
+  els.fileviewSummarizeBtn.addEventListener("click", function () {
+    var importId = fileviewCurrentImportId;
+    var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
+    if (!imp) return;
+    openFileviewSummaryModal(importId, imp.source);
+  });
+  els.fileviewSummaryLangDeBtn.addEventListener("click", function () { fileviewLoadSummaryLang("de"); });
+  els.fileviewSummaryLangEnBtn.addEventListener("click", function () { fileviewLoadSummaryLang("en"); });
+  els.fileviewSummaryModalClose.addEventListener("click", closeFileviewSummaryModal);
+  els.fileviewSummaryModalCancelBtn.addEventListener("click", closeFileviewSummaryModal);
+  els.fileviewSummaryModalOverlay.addEventListener("click", function (e) { if (e.target === els.fileviewSummaryModalOverlay) closeFileviewSummaryModal(); });
 
   /* ============ Import-Statistik (Teil 2c/Import): Feldabdeckung je
      Import - s. computeImportFieldStats() fuer die Berechnung. Wird nach
@@ -14212,7 +14568,12 @@
     manualChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender (erfahrene Nutzer im operativen Tagesgeschäft). Schreibe für das unten genannte Kapitel einen sachlichen, professionellen Fließtext im Stil eines Softwarehandbuchs auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform - z. B. \"Der Nutzer öffnet die Maske und trägt die Daten ein\", NICHT Präteritum/Futur wie \"öffnete\"/\"wird öffnen\"), mindestens 3, idealerweise bis zu 12 DIN-A4-Seiten Umfang (ca. 500-600 Wörter je Seite). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen (roter Faden), gefolgt von zusammenhängenden Abschnitten statt einer reinen Aufzählung. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, deutlich mit den Tags \"[Nur PKW]\", \"[Nur Van]\" bzw. \"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Retail\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\" (Market Operation) und weise explizit darauf hin, wenn ein Feature dem Retail NICHT zur Verfügung steht. Nutze ausschließlich Informationen aus den Ticket-Rohdaten unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text.",
     manualChapterSynthesis: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender. Die folgenden Teiltexte sind Abschnitte desselben Kapitels, aus technischen Gründen in mehreren Durchläufen aus unterschiedlichen Ausschnitten derselben Ticket-Rohdaten erzeugt. Verschmelze sie zu EINEM einzigen, zusammenhängenden Kapiteltext auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform, auch wenn ein Teiltext abweicht - dann beim Verschmelzen ins Präsens korrigieren) (roter Faden, mindestens 3 DIN-A4-Seiten, sachlicher Softwarehandbuch-Stil), ohne Hinweise auf \"Teiltexte\" oder \"Batches\". Erhalte dabei die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\" sowie die Zwischenüberschriften \"## Retail\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" aus den Teiltexten. Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
     refCompare: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen zwei Fassungen desselben Kapitels: der ALTE STAND (aus einem bestehenden, bereits veröffentlichten Word-Handbuch) und der NEUE STAND (frisch aus aktuellen Jira-Tickets erzeugter Text). Vergleiche beide Fassungen inhaltlich und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Features\n- (ein Stichpunkt je im neuen Stand beschriebenem Inhalt, der im alten Stand fehlt oder dort erkennbar anders/noch nicht vorhanden war)\n\n### Widersprüche\n- (ein Stichpunkt je Aussage im alten Stand, die dem neuen Stand inhaltlich widerspricht oder durch ihn überholt/ungültig wird)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den beiden Texten unten, erfinde nichts hinzu:",
-    manualQualityCheck: "Du bist Lektor/Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Prüfe den folgenden Kapiteltext und gib AUSSCHLIESSLICH die folgenden drei Abschnitte aus, in genau diesem Format:\n\n### Grammatikfehler\n- (ein Stichpunkt je Grammatik-/Rechtschreib-/Zeitform-Fehler - insbesondere Abweichungen vom geforderten Präsens -, mit kurzem Zitat der betroffenen Stelle)\n\n### Lücken\n- (ein Stichpunkt je inhaltlicher Lücke, unklarer oder unvollständiger Stelle)\n\n### Verbesserungsvorschläge\n- (ein Stichpunkt je Vorschlag zur Verständlichkeit/Lesbarkeit/Struktur)\n\nIst eine der drei Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:"
+    manualQualityCheck: "Du bist Lektor/Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Prüfe den folgenden Kapiteltext und gib AUSSCHLIESSLICH die folgenden drei Abschnitte aus, in genau diesem Format:\n\n### Grammatikfehler\n- (ein Stichpunkt je Grammatik-/Rechtschreib-/Zeitform-Fehler - insbesondere Abweichungen vom geforderten Präsens -, mit kurzem Zitat der betroffenen Stelle)\n\n### Lücken\n- (ein Stichpunkt je inhaltlicher Lücke, unklarer oder unvollständiger Stelle)\n\n### Verbesserungsvorschläge\n- (ein Stichpunkt je Vorschlag zur Verständlichkeit/Lesbarkeit/Struktur)\n\nIst eine der drei Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
+    fileviewTranslateToDe: "Übersetze den folgenden Text sinngemäß ins Deutsche, ohne Inhalte hinzuzufügen oder wegzulassen und ohne zusätzliche Erklärungen oder Anmerkungen. Gib ausschließlich den übersetzten Text aus:",
+    fileviewSummaryDe: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Fasse den folgenden Dateiinhalt (bereinigte Ticket-Rohdaten aus einem Jira-Export) in einer prägnanten, verständlichen Zusammenfassung auf Deutsch zusammen (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen). Nutze ausschließlich Informationen aus dem Text unten, erfinde nichts hinzu:",
+    fileviewSummaryEn: "You are an editor for an IT release team at a fleet/contract management system (oneSCM). Summarize the following file content (sanitized Jira ticket raw data) in a concise, understandable summary in English (approx. 150-300 words, factual, no bullet points). Use only information from the text below, do not invent anything:",
+    fileviewSummarySynthesisDe: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Die folgenden Teiltexte sind Zusammenfassungen unterschiedlicher Ausschnitte derselben Datei (aus technischen Gründen in mehreren Durchläufen erzeugt). Verschmelze sie zu EINER einzigen, prägnanten Gesamt-Zusammenfassung auf Deutsch (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen, ohne Hinweise auf 'Teiltexte'). Entferne Redundanzen, erfinde nichts hinzu:",
+    fileviewSummarySynthesisEn: "You are an editor for an IT release team at a fleet/contract management system (oneSCM). The following partial texts are summaries of different excerpts of the same file (generated in multiple passes for technical reasons). Merge them into ONE single, concise overall summary in English (approx. 150-300 words, factual, no bullet points, no references to 'partial texts'). Remove redundancy, do not invent anything:"
   };
   var RAG_PROMPT_LABELS = {
     summary: "Zusammenfassung erzeugen",
@@ -14223,7 +14584,12 @@
     manualChapter: "Benutzerhandbuch-Kapitel erstellen",
     manualChapterSynthesis: "Benutzerhandbuch-Kapitel zusammenführen (Batch-Modus)",
     refCompare: "Handbuch-Änderung nach Kapitel (Vergleich mit Referenz-Handbuch)",
-    manualQualityCheck: "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)"
+    manualQualityCheck: "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)",
+    fileviewTranslateToDe: "Dateiansicht: Übersetzen (→ DE)",
+    fileviewSummaryDe: "Dateiansicht: Zusammenfassung (Deutsch)",
+    fileviewSummaryEn: "Dateiansicht: Zusammenfassung (Englisch)",
+    fileviewSummarySynthesisDe: "Dateiansicht: Zusammenfassung zusammenführen (Deutsch, Batch-Modus)",
+    fileviewSummarySynthesisEn: "Dateiansicht: Zusammenfassung zusammenführen (Englisch, Batch-Modus)"
   };
   function ragPromptFor(promptKey) {
     var override = app.ragPrompts[promptKey];
