@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.61.1"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.61.2"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -244,6 +244,29 @@ Tickets braucht dadurch z. B. 2 statt 1 Zusammenführungsrunden, scheitert
 aber nicht mehr am Limit. Performance-Messung (simulierte Antwortzeit):
 150 Tickets ≈ 19 Claude-Aufrufe gesamt, 400 Tickets ≈ 46 – lineares, nicht
 explodierendes Wachstum.
+
+**Bugfix 2 (adaptive Bisektion gegen denselben Fehler bereits bei der
+Rohdaten-Erzeugung):** Die Zusammenführungs-Absicherung oben (Bugfix 1) hat
+den Fehler bei genau dieser Stelle behoben, er trat in der Praxis aber auch
+bereits BEIM ERZEUGEN der einzelnen Roh-Batches selbst wieder auf – obwohl
+`chunkRagRows()` die reinen Ticket-Rohdaten korrekt auf
+`RAG_BATCH_CHAR_BUDGET` begrenzt, zählt der tatsächlich an Claude gesendete
+Prompt zusätzlich Anweisungstext und Rollenhinweis dazu, und ein einzelnes
+ungewöhnlich langes Ticket bildet laut Kommentar in `chunkRagRows()` ohnehin
+einen bewusst UNGEDECKELTEN eigenen Batch. `manualGenerateBatchAdaptive()`
+fängt `prompt_too_large` jetzt auch an dieser Stelle ab und bisektiert die
+betroffenen Tickets rekursiv (Hälfte/Hälfte), bis einzelne Tickets übrig
+bleiben; ist selbst ein einzelnes Ticket noch zu groß, wird dessen
+Beschreibung gekürzt (mit sichtbarem `[…Text gekürzt]`-Hinweis) und einmal
+erneut versucht; scheitert auch das (seltener Randfall), wird genau dieses
+eine Ticket ehrlich als `[OFFEN: Ticket <Key> konnte … nicht automatisch
+verarbeitet werden.]` markiert, statt den gesamten Kapitel-Lauf abzubrechen.
+Dieselbe reaktive Bisektion sichert zusätzlich jeden einzelnen
+Zusammenführungs-Aufruf aus Bugfix 1 ab (`manualSynthesizeGroup()`), falls
+die vorausschauende Zeichen-Budget-Schätzung dort im Einzelfall doch nicht
+ausreicht – beide Mechanismen zusammen verlassen sich damit nicht mehr auf
+einen geschätzten, sondern reagieren direkt auf die tatsächliche
+Prompt-Größengrenze der Claude-Artifact-Laufzeit.
 
 **Wartbarkeit (vereinheitlichter Ticket-Index):** RAG (Verarbeitung → 7.
 RAG), der Benutzerhandbuch-Kapitel-Generator und Gliederung filterten

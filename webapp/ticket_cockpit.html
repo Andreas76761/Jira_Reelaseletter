@@ -4402,7 +4402,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.61.1";
+  var APP_VERSION = "2.61.2";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -15887,6 +15887,53 @@
     var body = partialTexts.map(function (t, i) { return "Teiltext " + (i + 1) + ":\n" + t; }).join("\n\n");
     return ragPromptFor("manualChapterSynthesis") + languageStyleSuffix() + "\n\n" + groupDescriptor + manualRoleInstruction(role) + "\n\n" + body;
   }
+  // Grobe, bewusst sehr konservative Kuerzung fuer EIN einzelnes Ticket, das
+  // selbst nach vollstaendigem Bisektieren (s. manualGenerateBatchAdaptive)
+  // noch allein zu gross fuer einen KI-Aufruf ist (sehr lange Beschreibung).
+  var MANUAL_SINGLE_TICKET_TRUNCATE_CHARS = 1500;
+  // Erzeugt den/die Teiltext(e) fuer EINE Gruppe von Ticket-ROHDATEN (rows).
+  // Im Normalfall genau EIN KI-Aufruf -> EIN Teiltext. Wirft die Claude-
+  // Artifact-Laufzeit "prompt_too_large" (z. B. weil chunkRagRows() zwar die
+  // reinen Ticket-Rohdaten auf RAG_BATCH_CHAR_BUDGET begrenzt, der tatsaech-
+  // liche Gesamt-Prompt inkl. Anweisungstext/Rollenhinweis aber trotzdem ueber
+  // der von der Laufzeit tatsaechlich durchgesetzten Grenze liegt, ODER weil
+  // ein einzelnes, ungewoehnlich langes Ticket laut chunkRagRows()-Kommentar
+  // bewusst einen eigenen, UNGEDECKELTEN Batch bildet), wird NICHT sofort
+  // aufgegeben: die Rows werden bisektiert (Haelfte/Haelfte) und JEDE Haelfte
+  // rekursiv erneut versucht - das macht die Erstellung robust gegen die
+  // tatsaechliche, nicht exakt bekannte Prompt-Groessengrenze der Laufzeit,
+  // statt sich allein auf den geschaetzten Zeichen-Budget-Wert zu verlassen.
+  // Bleibt am Ende genau EIN Ticket uebrig und ist AUCH DAS allein noch zu
+  // gross, wird dessen Beschreibung gekuerzt (mit sichtbarem Hinweis) und
+  // genau ein weiteres Mal versucht, statt den gesamten Kapitel-Lauf wegen
+  // eines einzelnen Ausreisser-Tickets abzubrechen; schlaegt selbst das fehl,
+  // wird dieses eine Ticket ehrlich als nicht verarbeitbar markiert (bleibt
+  // in der Quellen-Fussnote sichtbar, statt stillschweigend zu verschwinden).
+  async function manualGenerateBatchAdaptive(groupDescriptor, rows, role, signal) {
+    try {
+      var result = await sampleWithRateLimitRetry(manualBuildPrompt(groupDescriptor, rows, role), { signal: signal, modelTier: "default", cache: false });
+      return [result.text || ""];
+    } catch (err) {
+      if (!err || err.code !== "prompt_too_large") throw err;
+      if (rows.length > 1) {
+        var mid = Math.ceil(rows.length / 2);
+        var leftTexts = await manualGenerateBatchAdaptive(groupDescriptor, rows.slice(0, mid), role, signal);
+        var rightTexts = await manualGenerateBatchAdaptive(groupDescriptor, rows.slice(mid), role, signal);
+        return leftTexts.concat(rightTexts);
+      }
+      var t = rows[0];
+      var truncatedRow = Object.assign({}, t, {
+        description: (t.description || "").slice(0, MANUAL_SINGLE_TICKET_TRUNCATE_CHARS) + " […Text gekürzt, Original zu lang für einen KI-Durchlauf]"
+      });
+      try {
+        var result2 = await sampleWithRateLimitRetry(manualBuildPrompt(groupDescriptor, [truncatedRow], role), { signal: signal, modelTier: "default", cache: false });
+        return [result2.text || ""];
+      } catch (err2) {
+        if (!err2 || err2.code !== "prompt_too_large") throw err2;
+        return ["[OFFEN: Ticket " + (t.key || "?") + " konnte wegen seiner Textlänge nicht automatisch verarbeitet werden.]"];
+      }
+    }
+  }
   // Wie chunkRagRows(), aber auf bereits erzeugten TEXTEN (nicht
   // Ticket-Rohdaten) statt rows - fuer die mehrstufige Zusammenfuehrung in
   // manualSynthesizePartials() unten. Ein einzelner, ungewoehnlich langer
@@ -15908,6 +15955,28 @@
     if (current.length) groups.push(current);
     return groups;
   }
+  // Fuehrt eine Gruppe von Teiltexten zu EINEM Text zusammen - wie
+  // manualGenerateBatchAdaptive() oben, aber fuer bereits erzeugte Teiltexte
+  // statt Ticket-Rohdaten: wirft der Aufruf "prompt_too_large" (die
+  // zeichen-budgetierte Vorab-Gruppierung in manualSynthesizePartials() war
+  // trotzdem noch zu grosszuegig), wird NICHT aufgegeben, sondern die Gruppe
+  // bisektiert und in zwei Teil-Zusammenfuehrungen aufgeteilt, deren
+  // Ergebnisse anschliessend selbst wieder zusammengefuehrt werden
+  // (rekursiv) - reaktive Absicherung zusaetzlich zur vorausschauenden
+  // Budget-Pruefung, falls die tatsaechliche Grenze der Laufzeit vom
+  // geschaetzten Budget abweicht.
+  async function manualSynthesizeGroup(groupDescriptor, texts, role, signal) {
+    try {
+      var r = await sampleWithRateLimitRetry(manualBuildSynthesisPrompt(groupDescriptor, texts, role), { signal: signal, modelTier: "default", cache: false });
+      return r.text || "";
+    } catch (err) {
+      if (!err || err.code !== "prompt_too_large" || texts.length <= 1) throw err;
+      var mid = Math.ceil(texts.length / 2);
+      var leftText = await manualSynthesizeGroup(groupDescriptor, texts.slice(0, mid), role, signal);
+      var rightText = await manualSynthesizeGroup(groupDescriptor, texts.slice(mid), role, signal);
+      return await manualSynthesizeGroup(groupDescriptor, [leftText, rightText], role, signal);
+    }
+  }
   // Fuehrt beliebig viele Teiltexte zu EINEM finalen Text zusammen, ohne
   // dabei selbst auf "prompt_too_large" zu laufen: manualGenerateOneChapter()
   // teilt die TICKET-ROHDATEN zwar bereits ueber chunkRagRows() in
@@ -15918,10 +15987,12 @@
   // Aufruf selbst wieder zu gross werden. Loesung: so lange in mehreren
   // Zusammenfuehrungs-RUNDEN verdichten (Baum statt ein einzelner flacher
   // Merge), bis die verbleibenden Teiltexte zusammen in einen einzelnen
-  // finalen Aufruf passen. Bricht die Verdichtung ab, sobald eine Runde
-  // keinen Fortschritt mehr bringt (jeder Teiltext für sich bereits über dem
-  // Budget) - der letzte, noch so grosse Stand wird dann trotzdem final
-  // zusammengefuehrt, statt endlos weiterzuverdichten.
+  // finalen Aufruf passen. Bricht die vorausschauende Verdichtung ab, sobald
+  // eine Runde keinen Fortschritt mehr bringt (jeder Teiltext für sich
+  // bereits über dem Budget) - jeder einzelne Zusammenfuehrungs-Aufruf ist
+  // zusaetzlich ueber manualSynthesizeGroup() reaktiv gegen "prompt_too_large"
+  // abgesichert, falls die tatsaechliche Laufzeit-Grenze vom geschaetzten
+  // Budget abweicht.
   async function manualSynthesizePartials(groupDescriptor, partials, role, signal, onProgress) {
     var current = partials;
     var round = 1;
@@ -15933,14 +16004,12 @@
       if (onProgress) onProgress("Verdichte " + current.length + " Teiltexte in " + groups.length + " Zwischenschritte (Zusammenführungsrunde " + round + ") …");
       current = await mapWithConcurrency(groups, MANUAL_BATCH_CONCURRENCY, function (group) {
         if (group.length === 1) return Promise.resolve(group[0]);
-        return sampleWithRateLimitRetry(manualBuildSynthesisPrompt(groupDescriptor, group, role), { signal: signal, modelTier: "default", cache: false })
-          .then(function (r) { return r.text || ""; });
+        return manualSynthesizeGroup(groupDescriptor, group, role, signal);
       });
       round++;
     }
     if (current.length === 1) return current[0];
-    var finalResult = await sampleWithRateLimitRetry(manualBuildSynthesisPrompt(groupDescriptor, current, role), { signal: signal, modelTier: "default", cache: false });
-    return finalResult.text || "";
+    return await manualSynthesizeGroup(groupDescriptor, current, role, signal);
   }
 
   var manualAbortController = null;
@@ -16055,22 +16124,28 @@
   async function manualGenerateOneChapter(groupDescriptor, rows, role, signal, onProgress, onDurchgang) {
     var batches = chunkRagRows(rows, RAG_BATCH_CHAR_BUDGET);
     if (batches.length <= 1) {
-      var prompt = manualBuildPrompt(groupDescriptor, rows, role);
-      var result = await sampleWithRateLimitRetry(prompt, { signal: signal, modelTier: "default", cache: false });
+      var texts0 = await manualGenerateBatchAdaptive(groupDescriptor, rows, role, signal);
       if (onDurchgang) onDurchgang();
-      return result.text || "";
+      if (texts0.length === 1) return texts0[0];
+      // Selbst dieser EINE Batch war laut Budget-Schaetzung klein genug, ist
+      // aber trotzdem auf "prompt_too_large" gelaufen und wurde deshalb
+      // bisektiert (s. manualGenerateBatchAdaptive) - die so entstandenen
+      // Teiltexte trotzdem zu einem zusammenhaengenden Kapitel verschmelzen
+      // statt sie unverbunden aneinanderzuhaengen.
+      return await manualSynthesizePartials(groupDescriptor, texts0, role, signal, onProgress);
     }
     var completedCount = 0;
-    var partials = await mapWithConcurrency(batches, MANUAL_BATCH_CONCURRENCY, function (batchRows) {
-      return sampleWithRateLimitRetry(manualBuildPrompt(groupDescriptor, batchRows, role), { signal: signal, modelTier: "default", cache: false })
-        .then(function (batchResult) {
+    var partialsNested = await mapWithConcurrency(batches, MANUAL_BATCH_CONCURRENCY, function (batchRows) {
+      return manualGenerateBatchAdaptive(groupDescriptor, batchRows, role, signal)
+        .then(function (texts) {
           completedCount++;
           if (onProgress) onProgress(completedCount + " von " + batches.length + " Teilen fertig …");
           if (onDurchgang) onDurchgang();
-          return batchResult.text || "";
+          return texts;
         });
     });
-    if (onProgress) onProgress("Führe " + batches.length + " Teile zusammen …");
+    var partials = [].concat.apply([], partialsNested);
+    if (onProgress) onProgress("Führe " + partials.length + " Teile zusammen …");
     return await manualSynthesizePartials(groupDescriptor, partials, role, signal, onProgress);
   }
   function manualWordCount(text) {
