@@ -4402,7 +4402,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.61.2";
+  var APP_VERSION = "2.61.3";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -15953,7 +15953,31 @@
       currentLen += len;
     });
     if (current.length) groups.push(current);
-    return groups;
+    // Garantierter Fortschritt: ein Text, der bereits für sich allein das
+    // Budget sprengt, bildet oben IMMER seine eigene Einzel-Gruppe und wird
+    // nie mit einem Nachbarn kombiniert. Bei vielen solcher Texte (z. B. ein
+    // Kapitel mit hunderten Tickets, dessen Teiltexte im Schnitt nahe am
+    // Budget liegen) stagniert die Verdichtung dann Runde für Runde fast
+    // ohne Reduktion und manualSynthesizePartials() bricht vorzeitig ab -
+    // der Rest läuft anschliessend über den rein sequenziellen (nicht
+    // parallelisierten) Bisektions-Fallback in manualSynthesizeGroup(), was
+    // bei vielen Texten extrem lange dauert (genau das beobachtete
+    // "Kapitel wird nie fertig" bei grossen Ticketmengen). Direkt
+    // benachbarte Einzel-Gruppen werden daher zusaetzlich paarweise
+    // zusammengefasst (das Budget wird dabei bewusst ueberschritten -
+    // manualSynthesizeGroup() bisektiert eine zu grosse Gruppe ohnehin
+    // reaktiv wieder zurueck) - das garantiert jede Runde mindestens eine
+    // Halbierung der verbleibenden Singleton-Texte statt Stillstand.
+    var merged = [];
+    for (var i = 0; i < groups.length; i++) {
+      if (groups[i].length === 1 && i + 1 < groups.length && groups[i + 1].length === 1) {
+        merged.push(groups[i].concat(groups[i + 1]));
+        i++;
+      } else {
+        merged.push(groups[i]);
+      }
+    }
+    return merged;
   }
   // Fuehrt eine Gruppe von Teiltexten zu EINEM Text zusammen - wie
   // manualGenerateBatchAdaptive() oben, aber fuer bereits erzeugte Teiltexte
@@ -15972,9 +15996,16 @@
     } catch (err) {
       if (!err || err.code !== "prompt_too_large" || texts.length <= 1) throw err;
       var mid = Math.ceil(texts.length / 2);
-      var leftText = await manualSynthesizeGroup(groupDescriptor, texts.slice(0, mid), role, signal);
-      var rightText = await manualSynthesizeGroup(groupDescriptor, texts.slice(mid), role, signal);
-      return await manualSynthesizeGroup(groupDescriptor, [leftText, rightText], role, signal);
+      // Beide Haelften NEBENLAEUFIG statt nacheinander abwarten - bei vielen
+      // Texten (Fallback nach Stagnation in manualSynthesizePartials, s. o.)
+      // sonst ein rein sequenzieller Aufruf-nach-Aufruf-Baum ohne jede
+      // Parallelitaet, was die Gesamtlaufzeit bei grossen Kapiteln
+      // unnoetig vervielfacht.
+      var halves = await Promise.all([
+        manualSynthesizeGroup(groupDescriptor, texts.slice(0, mid), role, signal),
+        manualSynthesizeGroup(groupDescriptor, texts.slice(mid), role, signal)
+      ]);
+      return await manualSynthesizeGroup(groupDescriptor, halves, role, signal);
     }
   }
   // Fuehrt beliebig viele Teiltexte zu EINEM finalen Text zusammen, ohne
@@ -16294,7 +16325,21 @@
       addLog("Benutzerhandbuch-Kapitel-Generator: Zielordner \"" + handle.name + "\" für automatische Ablage gewählt.");
     } catch (err) {
       if (err && err.name === "AbortError") return;
-      showToast("Fehlgeschlagen", "Ordner konnte nicht ausgewählt werden.", true);
+      // In der eingebetteten Claude-Artifact-Vorschau existiert
+      // window.showDirectoryPicker als Funktion (daher kein false im obigen
+      // Feature-Check), der eigentliche Aufruf wird aber vom Browser selbst
+      // per Permissions-Policy im sandboxed iframe blockiert
+      // (SecurityError/NotAllowedError) - das laesst sich von hier aus nicht
+      // umgehen. Klarere Meldung statt des generischen "fehlgeschlagen",
+      // damit es nicht wie ein zufaelliger Bug wirkt.
+      var sandboxed = err && (err.name === "SecurityError" || err.name === "NotAllowedError");
+      showToast(
+        "Fehlgeschlagen",
+        sandboxed
+          ? "In der Claude-Artifact-Vorschau vom Browser blockiert (Sandbox-Beschränkung). Bitte die App direkt in Chrome/Edge öffnen (nicht als eingebettete Vorschau), dann funktioniert die Ordnerauswahl."
+          : "Ordner konnte nicht ausgewählt werden.",
+        true
+      );
     }
   });
 

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.61.2"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.61.3"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -267,6 +267,30 @@ die vorausschauende Zeichen-Budget-Schätzung dort im Einzelfall doch nicht
 ausreicht – beide Mechanismen zusammen verlassen sich damit nicht mehr auf
 einen geschätzten, sondern reagieren direkt auf die tatsächliche
 Prompt-Größengrenze der Claude-Artifact-Laufzeit.
+
+**Bugfix 3 (garantierter Fortschritt der Zusammenführungs-Runden bei sehr
+vielen Tickets):** Bei einem Kapitel mit sehr vielen Tickets (hunderte bis
+tausende) konnte die Statuszeile dauerhaft bei "Verdichte X Teiltexte in Y
+Zwischenschritte (Zusammenführungsrunde 1) …" hängen bleiben, ohne dass das
+Kapitel je fertig wurde. Ursache: `chunkTextsByBudget()` packte einen
+Teiltext, der bereits für sich allein das Zusammenführungs-Budget sprengt,
+IMMER in eine eigene Einzel-Gruppe, die nie mit einem Nachbarn kombiniert
+wurde. Bei vielen solcher Texte reduzierte eine Verdichtungsrunde die Anzahl
+kaum, bis `manualSynthesizePartials()` nach einer Runde ganz ohne Reduktion
+komplett abbrach und auf den rein SEQUENZIELLEN (nicht parallelisierten)
+rekursiven Bisektions-Fallback in `manualSynthesizeGroup()` auswich – bei
+hunderten Texten praktisch eine Hängepartie. Behoben durch zwei Änderungen:
+(1) `chunkTextsByBudget()` fasst direkt benachbarte "zu groß für sich
+allein"-Einzel-Gruppen jetzt zusätzlich paarweise zusammen (das Budget wird
+dabei bewusst überschritten – `manualSynthesizeGroup()` bisektiert eine zu
+große Gruppe ohnehin reaktiv zurück), was jede Runde mindestens eine
+spürbare Reduktion statt Stillstand garantiert; (2) `manualSynthesizeGroup()`
+verarbeitet seine beiden Bisektions-Hälften jetzt nebenläufig (`Promise.all`)
+statt nacheinander. Zusätzlich zeigt die Ordnerauswahl ("Zielordner wählen")
+jetzt eine klarere Fehlermeldung, wenn der Browser sie innerhalb der
+eingebetteten Claude-Artifact-Vorschau per Sandbox-Regel blockiert (reine
+Browser-Beschränkung, nicht umgehbar – App direkt in Chrome/Edge öffnen statt
+in der Vorschau).
 
 **Wartbarkeit (vereinheitlichter Ticket-Index):** RAG (Verarbeitung → 7.
 RAG), der Benutzerhandbuch-Kapitel-Generator und Gliederung filterten
