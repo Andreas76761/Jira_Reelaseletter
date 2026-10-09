@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.61.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.61.1"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -209,7 +209,7 @@ voneinander (jeder bekommt eine eigene Ticket-Teilmenge) und werden daher
 **parallel statt nacheinander** an Claude geschickt – bei z. B. 3
 Teil-Batches etwa um den Faktor 3 kürzere Wartezeit für diesen Schritt, da
 die Antwortzeit des KI-Aufrufs dominiert, nicht lokale Rechenarbeit. Die
-Reihenfolge der Teiltexte im abschließenden Zusammenführungs-Aufruf bleibt
+Reihenfolge der Teiltexte in den Zusammenführungs-Aufrufen (s. u.) bleibt
 dabei unabhängig von der tatsächlichen Fertigstellungsreihenfolge korrekt
 erhalten. Höchstens **3 Teil-Batches gleichzeitig** (statt unbegrenzt viele
 auf einmal) – bei Kapiteln mit sehr vielen Tickets (z. B. 100+, entsprechend
@@ -226,6 +226,24 @@ weil er als fortsetzbarer Lauf mit Live-Streaming-Vorschau und
 batch-genauem Stop/Resume gebaut ist (`ragBatchRun.index`) – das setzt
 echte Sequenzialität voraus und müsste für eine Parallelisierung erst
 grundlegend umgebaut werden.
+
+**Bugfix (mehrstufige Zusammenführung bei sehr vielen Teil-Batches):** Die
+Ticket-Rohdaten werden zwar bereits über `chunkRagRows()` in
+zeichen-budgetierte Teil-Batches aufgeteilt (s. o.), der anschließende
+Zusammenführungs-Schritt fasste bisher aber IMMER alle daraus entstandenen
+Teiltexte in einem einzigen Aufruf zusammen – bei einem häufig verwendeten
+Kapitel mit hunderten Tickets (entsprechend vielen Teiltexten) konnte
+dieser Zusammenführungs-Aufruf selbst wieder zu groß werden und mit
+"Zu viele Rohdaten für einen Durchlauf" fehlschlagen, obwohl die
+Aufteilung der Rohdaten selbst korrekt funktionierte. `manualSynthesizePartials()`
+verdichtet die Teiltexte jetzt bei Bedarf in mehreren
+Zusammenführungs-**Runden** (ebenfalls zeichen-budgetiert, mit derselben
+Nebenläufigkeitsgrenze von 3 gleichzeitigen Aufrufen je Runde), bis sie
+zusammen in einen einzelnen finalen Aufruf passen – ein Kapitel mit 150
+Tickets braucht dadurch z. B. 2 statt 1 Zusammenführungsrunden, scheitert
+aber nicht mehr am Limit. Performance-Messung (simulierte Antwortzeit):
+150 Tickets ≈ 19 Claude-Aufrufe gesamt, 400 Tickets ≈ 46 – lineares, nicht
+explodierendes Wachstum.
 
 **Wartbarkeit (vereinheitlichter Ticket-Index):** RAG (Verarbeitung → 7.
 RAG), der Benutzerhandbuch-Kapitel-Generator und Gliederung filterten

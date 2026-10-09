@@ -4402,7 +4402,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.61.0";
+  var APP_VERSION = "2.61.1";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -15887,6 +15887,61 @@
     var body = partialTexts.map(function (t, i) { return "Teiltext " + (i + 1) + ":\n" + t; }).join("\n\n");
     return ragPromptFor("manualChapterSynthesis") + languageStyleSuffix() + "\n\n" + groupDescriptor + manualRoleInstruction(role) + "\n\n" + body;
   }
+  // Wie chunkRagRows(), aber auf bereits erzeugten TEXTEN (nicht
+  // Ticket-Rohdaten) statt rows - fuer die mehrstufige Zusammenfuehrung in
+  // manualSynthesizePartials() unten. Ein einzelner, ungewoehnlich langer
+  // Teiltext bildet notfalls selbst eine eigene Gruppe.
+  function chunkTextsByBudget(texts, budget) {
+    var groups = [];
+    var current = [];
+    var currentLen = 0;
+    texts.forEach(function (t) {
+      var len = (t || "").length;
+      if (current.length && currentLen + len > budget) {
+        groups.push(current);
+        current = [];
+        currentLen = 0;
+      }
+      current.push(t);
+      currentLen += len;
+    });
+    if (current.length) groups.push(current);
+    return groups;
+  }
+  // Fuehrt beliebig viele Teiltexte zu EINEM finalen Text zusammen, ohne
+  // dabei selbst auf "prompt_too_large" zu laufen: manualGenerateOneChapter()
+  // teilt die TICKET-ROHDATEN zwar bereits ueber chunkRagRows() in
+  // zeichen-budgetierte Batches auf, aber bei sehr vielen Tickets je Kapitel
+  // (z. B. ein haeufig verwendetes Kapitel mit hunderten echten Tickets)
+  // entstehen dadurch entsprechend viele Teiltexte - werden ALLE davon roh in
+  // EINEN einzigen Zusammenfuehrungs-Aufruf gepackt (wie zuvor), kann dieser
+  // Aufruf selbst wieder zu gross werden. Loesung: so lange in mehreren
+  // Zusammenfuehrungs-RUNDEN verdichten (Baum statt ein einzelner flacher
+  // Merge), bis die verbleibenden Teiltexte zusammen in einen einzelnen
+  // finalen Aufruf passen. Bricht die Verdichtung ab, sobald eine Runde
+  // keinen Fortschritt mehr bringt (jeder Teiltext für sich bereits über dem
+  // Budget) - der letzte, noch so grosse Stand wird dann trotzdem final
+  // zusammengefuehrt, statt endlos weiterzuverdichten.
+  async function manualSynthesizePartials(groupDescriptor, partials, role, signal, onProgress) {
+    var current = partials;
+    var round = 1;
+    while (current.length > 1) {
+      var totalLen = current.reduce(function (s, t) { return s + (t || "").length; }, 0);
+      if (totalLen <= RAG_BATCH_CHAR_BUDGET) break;
+      var groups = chunkTextsByBudget(current, RAG_BATCH_CHAR_BUDGET);
+      if (groups.length === current.length) break;
+      if (onProgress) onProgress("Verdichte " + current.length + " Teiltexte in " + groups.length + " Zwischenschritte (Zusammenführungsrunde " + round + ") …");
+      current = await mapWithConcurrency(groups, MANUAL_BATCH_CONCURRENCY, function (group) {
+        if (group.length === 1) return Promise.resolve(group[0]);
+        return sampleWithRateLimitRetry(manualBuildSynthesisPrompt(groupDescriptor, group, role), { signal: signal, modelTier: "default", cache: false })
+          .then(function (r) { return r.text || ""; });
+      });
+      round++;
+    }
+    if (current.length === 1) return current[0];
+    var finalResult = await sampleWithRateLimitRetry(manualBuildSynthesisPrompt(groupDescriptor, current, role), { signal: signal, modelTier: "default", cache: false });
+    return finalResult.text || "";
+  }
 
   var manualAbortController = null;
   // Wie waitOrAbort() weiter unten, aber als eigenstaendiger Fehler mit
@@ -16016,8 +16071,7 @@
         });
     });
     if (onProgress) onProgress("Führe " + batches.length + " Teile zusammen …");
-    var synthResult = await sampleWithRateLimitRetry(manualBuildSynthesisPrompt(groupDescriptor, partials, role), { signal: signal, modelTier: "default", cache: false });
-    return synthResult.text || "";
+    return await manualSynthesizePartials(groupDescriptor, partials, role, signal, onProgress);
   }
   function manualWordCount(text) {
     var trimmed = (text || "").trim();
