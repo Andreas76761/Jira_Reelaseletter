@@ -65,6 +65,17 @@
   * { box-sizing: border-box; }
   body { background: var(--bg); color: var(--text); font-family: "Manrope", system-ui, sans-serif; margin: 0; }
   .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  /* Globale Sicherheitsnetz-Regel: ein Element mit dem hidden-Attribut
+     MUSS immer unsichtbar sein - unabhaengig davon, welche Klasse(n) es
+     sonst traegt. Ohne das hier verliert das hidden-Attribut (Spezifitaet
+     0,1,0) gegen jede spaeter im Stylesheet definierte Klassenregel mit
+     eigenem display: ... (ebenfalls 0,1,0) - genau dieser Bug ist bereits
+     mehrfach aufgetreten (.preview-toggle, .stat-line, .job-export-row,
+     .controls), wenn eine Klasse display setzt, ohne eine eigene
+     .klasse[hidden]-Ausnahme zu definieren. Die bestehenden einzelnen
+     .klasse[hidden]-Regeln weiter unten bleiben als Dokumentation stehen,
+     sind durch diese Regel aber nicht mehr sicherheitskritisch. */
+  [hidden] { display: none !important; }
 
   /* ---- App-Shell / Sidebar ---- */
   .app-shell { display: flex; align-items: stretch; min-height: 100dvh; }
@@ -4452,7 +4463,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.64.0";
+  var APP_VERSION = "2.65.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.64.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.65.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1451,6 +1451,16 @@ zusammenzuführen.
     unwiderruflich, mit Sicherheitsabfrage. Anders als "Sitzung
     zurücksetzen" im Import-Bereich werden dabei **nicht** wieder die
     eingebetteten Ausgangsdaten geladen, sondern alles auf 0 Tickets geleert.
+    Betrifft auch die in Verarbeitung/Massenverarbeitung generierten
+    Zwischenergebnisse (Glossar-/Abkürzungs-Extraktion, Release-Abgleich/
+    -Bewertung, RAG-Rohdaten/-Text, hochgeladene Massenverarbeitung-Dateien).
+    Bugfix: mehrere dieser Bereiche (u. a. die Bewertungs-Zusammenfassung in
+    Job 4 und die Extraktions-Übersicht in Job 7) blieben trotz korrekt
+    gesetztem `hidden`-Attribut weiterhin sichtbar, weil eine eigene
+    `display`-Regel der jeweiligen CSS-Klasse das `hidden`-Attribut
+    überstimmte (ohne eigene `.klasse[hidden]`-Ausnahme) – behoben durch eine
+    globale `[hidden] { display: none !important; }`-Regel, die diese
+    Bug-Klasse unabhängig von der jeweiligen Klasse ausschließt.
   - *Punkte-System (nach Tickettyp)* – editierbare Liste Tickettyp → Punkte
     (Standard: Epic 5, Bug 1, Feature 3, Change Request 3, Reporting 2),
     Einträge hinzufügen/bearbeiten/löschen. Wird beim Verarbeiten jedem
