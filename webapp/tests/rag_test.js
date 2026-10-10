@@ -159,6 +159,31 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   // Fuer den Rest des Tests erneut extrahieren
   fire(doc.getElementById("rag-extract-btn"), "click");
 
+  // ===================== "Löschen" neben Zusammenfassung/Fließtext - loescht
+  // NUR den generierten Text (Schritt 2), die Rohdaten-Extraktion (Schritt 1)
+  // bleibt erhalten (anders als "RAG-Daten löschen" oben) =====================
+  sampleCalls = [];
+  fire(doc.getElementById("rag-generate-summary-btn"), "click");
+  await wait(150);
+  check("Vor 'Löschen': generierter Text vorhanden", doc.getElementById("rag-output").textContent.includes("generierter End-Nutzer-Text"));
+  const statTicketsBeforeGeneratedClear = doc.getElementById("stat-tickets").textContent;
+  fire(doc.getElementById("rag-generated-clear-btn"), "click");
+  await wait(30);
+  fire(doc.getElementById("confirm-modal-ok-btn"), "click");
+  await wait(300); // Bestaetigungs-Dialog hat eine bewusste 200ms-Sanduhr, bevor er schliesst
+  check("Nach 'Löschen': generierter Text zurueckgesetzt", doc.getElementById("rag-output").textContent.includes("Noch kein Text generiert"));
+  check("Nach 'Löschen': Statushinweis geleert", doc.getElementById("rag-status-note").textContent === "");
+  check("Nach 'Löschen': 'Als Markdown speichern' wieder deaktiviert", doc.getElementById("rag-download-btn").disabled);
+  check("Nach 'Löschen': Rohdaten-Tabelle bleibt erhalten (nicht versteckt)", !doc.getElementById("rag-extract-wrap").hidden);
+  check("Nach 'Löschen': Rohdaten-Tabelle zeigt weiterhin RAG-1", doc.getElementById("rag-extract-tbody").textContent.includes("RAG-1"));
+  check("'Löschen' ruehrt Tickets/Imports NICHT an", doc.getElementById("stat-tickets").textContent === statTicketsBeforeGeneratedClear);
+
+  // Erneutes Klicken ohne generierten Text: Hinweis statt Bestaetigungsdialog
+  fire(doc.getElementById("rag-generated-clear-btn"), "click");
+  await wait(50);
+  check("Ohne generierten Text: Hinweistoast statt Bestaetigungsdialog", doc.getElementById("confirm-modal-overlay").hidden &&
+    doc.getElementById("toast").textContent.includes("Nichts zu löschen"));
+
   // ===================== Fehlerfall: not_granted =====================
   sampleImpl = async () => { const e = { code: "not_granted", message: "not granted" }; throw e; };
   fire(doc.getElementById("rag-generate-summary-btn"), "click");

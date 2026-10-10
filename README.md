@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.66.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.67.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1094,7 +1094,11 @@ zusammenzuführen.
      generieren" bzw. "Fließtext generieren" schickt die App die
      extrahierten Rohdaten über die `sample`-Laufzeit-Capability an Claude
      und lässt daraus einen endnutzergerechten Text schreiben (Live-Streaming
-     der Antwort, Stop-Button, danach als Markdown speicherbar). Diese
+     der Antwort, Stop-Button, danach als Markdown speicherbar). Direkt
+     daneben löscht der Button **"Löschen"** (mit Sicherheitsabfrage) nur
+     den generierten Text/die Übersetzung – die extrahierte Rohdaten-Tabelle
+     aus Schritt 1 bleibt dabei erhalten (anders als "RAG-Daten löschen",
+     das beides gemeinsam löscht). Diese
      Funktion ist die einzige Stelle in der App, die echte KI-Textgenerierung
      nutzt (sonst ausschließlich deterministische Logik) – sie ist nur
      innerhalb der veröffentlichten Claude-Artifact-Version verfügbar (nicht

@@ -1582,6 +1582,7 @@
               <button class="btn ghost" id="rag-generate-fliesstext-btn" type="button" disabled>Fließtext generieren</button>
               <button class="btn ghost" id="rag-stop-btn" type="button" hidden>Stop</button>
               <button class="btn ghost" id="rag-resume-btn" type="button" hidden>Fortsetzen</button>
+              <button class="btn danger" id="rag-generated-clear-btn" type="button" style="margin-left:auto;">Löschen</button>
             </div>
             <p class="step-note" id="rag-status-note"></p>
             <div class="panel table-wrap" id="rag-batch-list-wrap" style="max-height:220px; overflow:auto; margin-top:8px;" hidden>
@@ -4467,7 +4468,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.66.0";
+  var APP_VERSION = "2.67.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5970,7 +5971,7 @@
     "graph-legend", "graph-svg-container", "graph-empty-state", "graph-selection-tbody", "graph-selection-empty",
     "rag-domain-select", "rag-status-select", "rag-label-category-select", "rag-outline-select", "rag-date-from", "rag-date-to", "rag-extract-btn", "rag-clear-btn",
     "rag-extract-summary", "rag-extract-count", "rag-extract-wrap", "rag-extract-tbody", "rag-export-row",
-    "rag-generate-summary-btn", "rag-generate-fliesstext-btn", "rag-stop-btn", "rag-resume-btn", "rag-status-note",
+    "rag-generate-summary-btn", "rag-generate-fliesstext-btn", "rag-stop-btn", "rag-resume-btn", "rag-generated-clear-btn", "rag-status-note",
     "rag-batch-list-wrap", "rag-batch-tbody", "rag-output", "rag-token-usage", "rag-download-btn", "rag-batch-zip-btn",
     "rag-translate-btn",
     "rag-library-save-btn", "rag-library-import-btn", "rag-library-import-input", "rag-library-import-note",
@@ -14654,8 +14655,7 @@
     els.ragTranslateBtn.textContent = "Übersetzen (Englisch)";
   }
 
-  function ragResetOutput() {
-    ragClearExtraction();
+  function ragClearGeneratedText() {
     ragHasGenerated = false;
     ragBatchRun = null;
     els.ragDownloadBtn.disabled = true;
@@ -14668,6 +14668,11 @@
     els.ragBatchZipBtn.hidden = true;
     els.ragResumeBtn.hidden = true;
     ragResetTranslation();
+  }
+
+  function ragResetOutput() {
+    ragClearExtraction();
+    ragClearGeneratedText();
   }
 
   function ragExtract() {
@@ -14735,6 +14740,25 @@
     renderAllJobSteps();
     addLog("RAG-Daten gelöscht (Rohdaten-Extraktion und generierter Text, Admin-Aktion).");
     showToast("RAG-Daten gelöscht", "Extrahierte Rohdaten und generierter Text wurden gelöscht.");
+  });
+
+  // Leert NUR den generierten Text/Übersetzung (Schritt 2) - die extrahierten
+  // Rohdaten (Schritt 1) bleiben erhalten, anders als beim Button
+  // "RAG-Daten löschen" weiter oben.
+  els.ragGeneratedClearBtn.addEventListener("click", async function () {
+    if (!ragHasGenerated && !ragBatchRun) {
+      showToast("Nichts zu löschen", "Es ist aktuell kein generierter Text vorhanden.", true);
+      return;
+    }
+    var ok = await confirmDialog(
+      "Generierten Text (Zusammenfassung/Fließtext, RAG) dieser Sitzung wirklich unwiderruflich löschen? " +
+      "Die extrahierten Rohdaten sowie Tickets, Imports und alle übrigen Verarbeitungsergebnisse bleiben davon unberührt."
+    );
+    if (!ok) return;
+    ragClearGeneratedText();
+    renderAllJobSteps();
+    addLog("Generierter RAG-Text gelöscht (Admin-Aktion).");
+    showToast("Text gelöscht", "Der generierte Text wurde gelöscht.");
   });
 
   /* ============ Einstellungen: RAG-Prompts (editierbare KI-Anweisungen) ============
