@@ -89,6 +89,17 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   const statusOptions = Array.from(doc.getElementById("rag-status-select").options).map((o) => o.value);
   check("Status-Auswahl enthält 'Offen' und 'Geschlossen'", statusOptions.includes("Offen") && statusOptions.includes("Geschlossen"));
 
+  // ===================== Gliederungskapitel-Auswahl zeigt ALLE Kapitel der
+  // Gliederung (Einstellungen), nicht nur die, denen aktuell per Domäne
+  // Tickets zugeordnet sind - keines der 3 Test-Tickets (Domäne 'Contract
+  // Management'/'Finance') ist "Kapitel 1" zugeordnet (dessen Domänen-Liste
+  // ist in outlineSeedData() bewusst leer), trotzdem muss es waehlbar sein. =====================
+  const outlineOptions = Array.from(doc.getElementById("rag-outline-select").options).map((o) => o.value);
+  check("Gliederungskapitel-Auswahl enthält auch Kapitel ohne aktuell zugeordnete Tickets ('Kapitel 1')",
+    outlineOptions.some((v) => v.includes("Kapitel 1:")));
+  check("Gliederungskapitel-Auswahl enthält das Kapitel mit zugeordnetem Ticket ('Kapitel 7')",
+    outlineOptions.some((v) => v.includes("Kapitel 7:")));
+
   // ===================== Extraktion ohne Filter =====================
   fire(doc.getElementById("rag-extract-btn"), "click");
   check("Extraktion zeigt 3 Tickets (kein Filter)", doc.getElementById("rag-extract-count").textContent === "3");

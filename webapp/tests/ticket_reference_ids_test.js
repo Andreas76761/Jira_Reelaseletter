@@ -185,9 +185,14 @@ const xmlFixture = `<?xml version="1.0"?><rss><channel>
   Array.from(manualDomainSelect.options).forEach((o) => { o.selected = o.value === "Contract Management"; });
   fire(manualDomainSelect, "change");
   await wait(30);
+  // Kapitel 7 ist das einzige Gliederungskapitel, das laut Stammdaten der
+  // Domäne "Contract Management" zugeordnet ist (s. outlineSeedData()) -
+  // RID-1/RID-2 (Domäne Contract Management) landen darüber automatisch in
+  // dessen outlineChapters, unabhängig von der rein manuellen Massenver-
+  // arbeitung-Kapitel-4-Zuordnung oben (die nur die Ref.-Nr. bestimmt).
   const manualChapterSelect = doc.getElementById("manual-chapter-select");
-  const kap4Opt = Array.from(manualChapterSelect.options).find((o) => o.value.includes("Kapitel 4"));
-  if (kap4Opt) kap4Opt.selected = true;
+  const kap7Opt = Array.from(manualChapterSelect.options).find((o) => o.value.includes("Kapitel 7"));
+  if (kap7Opt) kap7Opt.selected = true;
   fire(manualChapterSelect, "change");
   await wait(30);
   fire(doc.getElementById("manual-generate-btn"), "click");

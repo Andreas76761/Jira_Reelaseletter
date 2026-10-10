@@ -1556,7 +1556,7 @@
               <div style="flex:1;"><label for="rag-date-to">bis</label><input type="date" id="rag-date-to"></div>
             </div>
             <button class="btn primary" id="rag-extract-btn" type="button" style="margin-top:10px;">Rohdaten extrahieren</button>
-            <p class="step-note">Die Generierung verarbeitet bis zu 10000 Tickets automatisch in mehreren Batches (Claude-Anfragen je Zeichen-Budget, anschließend zu einem Text zusammengeführt); darüber Auswahl (Domäne/Status/Zeitraum) weiter eingrenzen.</p>
+            <p class="step-note">Die Generierung verarbeitet bis zu 50000 Tickets automatisch in mehreren Batches (Claude-Anfragen je Zeichen-Budget, anschließend zu einem Text zusammengeführt); darüber Auswahl (Domäne/Status/Zeitraum) weiter eingrenzen.</p>
             <div class="stat-line" id="rag-extract-summary" style="margin-top:10px;" hidden>
               <div class="chip"><b class="mono" id="rag-extract-count">0</b> Tickets extrahiert</div>
             </div>
@@ -4468,7 +4468,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.67.0";
+  var APP_VERSION = "2.68.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5870,13 +5870,12 @@
     list.forEach(function (t) { (t[field] || []).forEach(function (v) { if (v && !seen[v]) { seen[v] = true; out.push(v); } }); });
     return out.sort(function (a, b) { return a.localeCompare(b, "de"); });
   }
-  // Gliederungskapitel, die unter den uebergebenen Tickets mindestens
-  // einmal getroffen wurden - in Buch-Reihenfolge (app.outline), nicht
-  // alphabetisch, damit die Auswahl der Gliederung selbst entspricht.
-  function distinctOutlineChaptersPresent(list) {
-    var present = {};
-    list.forEach(function (t) { (t.outlineChapters || []).forEach(function (c) { present[c] = true; }); });
-    return app.outline.map(function (c) { return c.title; }).filter(function (title) { return present[title]; });
+  // ALLE Gliederungskapitel aus der Benutzerhandbuch-Gliederung (Einstellungen),
+  // in Buch-Reihenfolge - unabhaengig davon, ob ihnen aktuell schon Tickets
+  // zugeordnet sind, damit sich jedes Kapitel der Gliederung auswaehlen laesst
+  // (z. B. um gezielt "keine Tickets zu diesem Kapitel" festzustellen).
+  function allOutlineChapterTitles() {
+    return app.outline.map(function (c) { return c.title; });
   }
   function debounce(fn, delay) {
     var timer = null;
@@ -14553,7 +14552,7 @@
   // mehreren Batches verarbeitet (s. chunkRagRows/ragRunBatches), statt wie
   // zuvor immer alle Rohdaten in einem einzigen Claude-Aufruf zu senden, was
   // bei vielen Tickets mit "prompt_too_large" fehlschlug.
-  var RAG_MAX_TICKETS = 10000;
+  var RAG_MAX_TICKETS = 50000;
   var RAG_BATCH_CHAR_BUDGET = 9000;
   // Grobe, zeichenbasierte Tokenschaetzung (Daumenregel ~4 Zeichen/Token).
   // Die sample()-Schnittstelle liefert KEINE echte Token-/Nutzungszahl
@@ -14618,7 +14617,7 @@
     var domains = distinctFieldValues(list, "domain");
     var statuses = distinctFieldValues(list, "status");
     var categories = distinctArrayFieldValues(list, "autoLabelCategories");
-    var chapters = distinctOutlineChaptersPresent(list);
+    var chapters = allOutlineChapterTitles();
     els.ragDomainSelect.innerHTML = domains.map(function (d) {
       return '<option value="' + escapeHtml(d) + '"' + (domainSel.indexOf(d) !== -1 ? " selected" : "") + ">" + escapeHtml(d) + "</option>";
     }).join("");
@@ -16352,7 +16351,7 @@
     var chapterSel = selectedValues(els.manualChapterSelect);
     var domains = distinctFieldValues(list, "domain");
     var categories = distinctArrayFieldValues(list, "autoLabelCategories");
-    var chapters = distinctOutlineChaptersPresent(list);
+    var chapters = allOutlineChapterTitles();
     els.manualDomainSelect.innerHTML = domains.map(function (d) {
       return '<option value="' + escapeHtml(d) + '"' + (domainSel.indexOf(d) !== -1 ? " selected" : "") + ">" + escapeHtml(d) + "</option>";
     }).join("");
@@ -17890,7 +17889,7 @@
   // manuell kuratierte Massenverarbeitung-/RAG-Bibliothek-Einträge gedacht,
   // s. subchapterOptionsForChapter()), daher immer Unterkapitelnummer "00".
   // Absichtlich OHNE Obergrenze: RAG erlaubt Laeufe bis RAG_MAX_TICKETS
-  // (10.000) Tickets - eine gekappte Quellenliste wuerde fuer Tickets
+  // (50.000) Tickets - eine gekappte Quellenliste wuerde fuer Tickets
   // jenseits der Kappung genau die Rueckverfolgbarkeit wieder zunichtemachen,
   // die diese Fussnote eigentlich herstellen soll.
   function ticketSourcesFooter(rows) {

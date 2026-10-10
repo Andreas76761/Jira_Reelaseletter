@@ -102,6 +102,12 @@ const xml = `<?xml version="1.0"?><rss><channel>
     Array.from(doc.getElementById("manual-domain-select").options).map((o) => o.value).sort().join(",") === "Contract Management,Revenue Management");
   check("Kapitel-Auswahl listet 'Kapitel 7: Verträge im Alltag verwalten' (Contract Management)",
     Array.from(doc.getElementById("manual-chapter-select").options).some((o) => o.value.includes("Kapitel 7")));
+  // Alle Gliederungskapitel müssen waehlbar sein, nicht nur die, denen
+  // aktuell per Domäne Tickets zugeordnet sind - "Kapitel 1" hat in
+  // outlineSeedData() bewusst keine Domänen-Zuordnung und damit auch kein
+  // zugeordnetes Ticket in dieser Testfixture.
+  check("Kapitel-Auswahl listet auch 'Kapitel 1' (kein Ticket zugeordnet)",
+    Array.from(doc.getElementById("manual-chapter-select").options).some((o) => o.value.includes("Kapitel 1:")));
 
   // ===================== "Alle auswählen"/"Auswahl aufheben" (generischer Mechanismus) =====================
   const selectAllBtn = doc.querySelector('[data-select-all="manual-domain-select"]');

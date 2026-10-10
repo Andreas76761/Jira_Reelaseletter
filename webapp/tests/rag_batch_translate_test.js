@@ -122,24 +122,24 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("Nach neuer Generierung: Ausgabe wieder auf Deutsch (kein Alt-Zustand der Übersetzung)", doc.getElementById("rag-output").textContent !== "This is the translated text.");
   check("Nach neuer Generierung: 'Übersetzen'-Button-Text zurückgesetzt", doc.getElementById("rag-translate-btn").textContent === "Übersetzen (Englisch)");
 
-  // ===================== Obergrenze: > 10000 Tickets werden clientseitig abgelehnt (kein API-Call) =====================
+  // ===================== Obergrenze: > 50000 Tickets werden clientseitig abgelehnt (kein API-Call) =====================
   // Die App startet bewusst mit 0 eingebetteten Demo-Tickets (s.
   // data/tickets.json), darum muessen die 16 Batch-Tickets von oben + diese
-  // Cap-Tickets allein ueber die 10000er-Grenze kommen (vorher trugen die
+  // Cap-Tickets allein ueber die 50000er-Grenze kommen (vorher trugen die
   // 663 Demo-Tickets dazu bei).
   let capItems = "";
-  for (let i = 0; i < 10050; i++) {
+  for (let i = 0; i < 50050; i++) {
     capItems += `<item><key>CAP-${i}</key><summary>Cap-Ticket ${i}</summary><description>Kurz ${i}</description><status>Offen</status><type>Task</type></item>`;
   }
   const xmlCap = `<?xml version="1.0"?><rss><channel>${capItems}</channel></rss>`;
   doc.querySelector('.nav-item[data-view="import"]').click();
   doc.querySelector('.import-tab[data-mode="massenupload"]').click();
-  Object.defineProperty(input, "files", { value: [new win.File([xmlCap], "cap10050.xml", { type: "application/xml" })], configurable: true });
+  Object.defineProperty(input, "files", { value: [new win.File([xmlCap], "cap50050.xml", { type: "application/xml" })], configurable: true });
   fire(input, "change");
-  // Grosszuegige Wartezeit: das Einlesen/Aufbereiten von ~10050 zusaetzlichen
-  // Tickets (insgesamt >10000 mit den Batch-Tickets) braucht spuerbar
+  // Grosszuegige Wartezeit: das Einlesen/Aufbereiten von ~50050 zusaetzlichen
+  // Tickets (insgesamt >50000 mit den Batch-Tickets) braucht spuerbar
   // laenger als die kleinen Fixtures anderswo in dieser Datei.
-  await wait(6000);
+  await wait(25000);
 
   doc.querySelector('.nav-item[data-view="verarbeitung"]').click();
   doc.querySelector('.import-tab[data-vsub="rag"]').click();
@@ -147,16 +147,16 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   Array.from(doc.getElementById("rag-domain-select").options).forEach((o) => { o.selected = false; });
   Array.from(doc.getElementById("rag-status-select").options).forEach((o) => { o.selected = false; });
   fire(doc.getElementById("rag-extract-btn"), "click");
-  await wait(300);
+  await wait(1000);
   const extractedTotal = parseInt(doc.getElementById("rag-extract-count").textContent, 10);
-  check("Gesamtauswahl liegt jetzt über der 10000er-Grenze (16 Batch + 10050 Cap)", extractedTotal > 10000);
-  check("Extraktion selbst zeigt bereits proaktiv den Hinweis auf die 10000er-Grenze", doc.getElementById("rag-status-note").textContent.includes("maximal 10000 Tickets"));
+  check("Gesamtauswahl liegt jetzt über der 50000er-Grenze (16 Batch + 50050 Cap)", extractedTotal > 50000);
+  check("Extraktion selbst zeigt bereits proaktiv den Hinweis auf die 50000er-Grenze", doc.getElementById("rag-status-note").textContent.includes("maximal 50000 Tickets"));
 
   sampleCalls = [];
   fire(doc.getElementById("rag-generate-summary-btn"), "click");
   await wait(150);
-  check("Über 10000 Tickets: Generierung wird clientseitig abgelehnt, KEIN Claude-Aufruf", sampleCalls.length === 0);
-  check("Fehlermeldung nennt die 10000er-Grenze", doc.getElementById("rag-status-note").textContent.includes("Maximal 10000"));
+  check("Über 50000 Tickets: Generierung wird clientseitig abgelehnt, KEIN Claude-Aufruf", sampleCalls.length === 0);
+  check("Fehlermeldung nennt die 50000er-Grenze", doc.getElementById("rag-status-note").textContent.includes("Maximal 50000"));
   check("Buttons nach Ablehnung weiterhin nutzbar (kein Deadlock)", !doc.getElementById("rag-generate-summary-btn").disabled);
 
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }

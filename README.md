@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.67.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.68.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1081,6 +1081,10 @@ zusammenzuführen.
      Beschreibung) der aktuell ausgewählten Datei nach Domäne, Status,
      **Label-Themengebiet** und **Gliederungskapitel** (Benutzerhandbuch)
      filtern (alle Mehrfachauswahl, kombinierbar) und als Tabelle anzeigen –
+     die Gliederungskapitel-Auswahl listet dabei IMMER alle Kapitel der
+     Benutzerhandbuch-Gliederung (Einstellungen), auch solche, denen aktuell
+     noch kein Ticket zugeordnet ist (z. B. um das gezielt festzustellen),
+     statt sich auf bereits "getroffene" Kapitel zu beschränken –
      Label-Themengebiet/Gliederungskapitel sorgen dafür, dass sich die
      Generierung gezielt auf ein Thema bzw. ein Kapitel eingrenzen lässt,
      statt Text aus allen Tickets zu vermischen; zeigt
@@ -1106,14 +1110,14 @@ zusammenzuführen.
      kostet die Nutzung des Viewer-Kontos und liefert bei Fehlern
      (Ablehnung, Rate-Limit, keine Rohdaten, …) eine verständliche
      Meldung statt eines Absturzes. Ergebnis ist klar als KI-generiert
-     gekennzeichnet und redaktionell zu prüfen. Verarbeitet bis zu **10000
+     gekennzeichnet und redaktionell zu prüfen. Verarbeitet bis zu **50000
      Tickets pro Durchlauf**: passen die Rohdaten in ein Zeichen-Budget,
      läuft wie zuvor ein einzelner Claude-Aufruf; sonst teilt die App sie
      automatisch in mehrere Batches auf ("Batch 1 von N", "Batch 2 von N"
      usw., aus der aktuellen Auswahl/Extraktion), lässt Claude je Batch
      einen Teiltext schreiben und führt diese am Ende in einem letzten
      Aufruf zu einem einzigen, redundanzbereinigten Endtext zusammen
-     (Map-Reduce) – darüber (mehr als 10000 Tickets) lehnt die App die
+     (Map-Reduce) – darüber (mehr als 50000 Tickets) lehnt die App die
      Generierung mit einer verständlichen Meldung ab, statt einen zu großen
      Prompt an Claude zu schicken. RAG als Herzstück der Verarbeitung: bei
      mehreren Batches wird jeder fertige Teilschritt intern als eigene
@@ -1149,7 +1153,10 @@ zusammenzuführen.
   – zusätzlich zum Rohgerüst oben: analog zu RAG (Verarbeitung → 7. RAG),
   aber mit **Domäne/Label-Themengebiet/Gliederungskapitel** als Filter
   (Datei-Scope kommt von der bestehenden globalen "Datei(en)/Liste(n)
-  auswählen"-Einschränkung, Verarbeitung Prozessschritt 1). Ein Klick auf
+  auswählen"-Einschränkung, Verarbeitung Prozessschritt 1) – die
+  Gliederungskapitel-Auswahl listet dabei IMMER alle Kapitel der
+  Benutzerhandbuch-Gliederung (Einstellungen), auch solche ohne aktuell
+  zugeordnete Tickets. Ein Klick auf
   **"Kapitel erstellen"** generiert je ausgewähltem Kapitel (oder, ist kein
   Kapitel aber eine Domäne gewählt, für **alle** Kapitel dieser Domäne)
   über Claude (sample-Capability) einen sachlichen, professionellen
