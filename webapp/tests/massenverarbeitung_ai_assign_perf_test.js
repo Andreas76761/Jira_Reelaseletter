@@ -66,6 +66,22 @@ async function waitUntil(fn, timeoutMs) {
   function check(l, ok) { checks.push([l, ok]); console.log((ok ? "OK  " : "FAIL") + " - " + l); }
 
   // ===================== Vorbereitung: eine Domäne/ein Kapitel müssen bereits existieren =====================
+  // Die Domänen-Auswahlliste in der Massenverarbeitung speist sich AUSSCHLIESSLICH
+  // aus den Domänen importierter Tickets (massDomainOptionsList() -> distinctFieldValues
+  // (app.tickets, "domain")) - die App startet aber bewusst mit 0 eingebetteten
+  // Tickets (s. data/tickets.json), darum zuerst ein eigenes Ticket mit Domäne
+  // "Contract Management" importieren, bevor die Domäne überhaupt auswählbar ist.
+  doc.querySelector('.nav-item[data-view="import"]').click();
+  doc.querySelector('.import-tab[data-mode="massenupload"]').click();
+  const baseXml = `<?xml version="1.0"?><rss><channel>
+    <item><key>ONESCM-90010</key><summary>Basis Contract Management</summary><status>Offen</status>
+      <customfields><customfield><customfieldname>Domain</customfieldname><customfieldvalues><customfieldvalue>Contract Management</customfieldvalue></customfieldvalues></customfield></customfields></item>
+  </channel></rss>`;
+  const fileInput = doc.getElementById("file-input");
+  Object.defineProperty(fileInput, "files", { value: [new win.File([baseXml], "basis.xml", { type: "application/xml" })], configurable: true });
+  fire(fileInput, "change");
+  await wait(300);
+
   // Die KI-Zuordnung darf nur aus TATSÄCHLICH vorhandenen Domänen/Kapiteln
   // wählen (massParseAiAssignment verwirft alles andere) - ein erster
   // Eintrag MIT Domäne/Kapitel sorgt dafür, dass "Contract Management" und

@@ -38,6 +38,22 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
     return txt;
   }
 
+  // ===================== Basis-Import: ONESCM-8282 mit Domain anlegen
+  // (die App startet bewusst mit 0 eingebetteten Tickets, s.
+  // data/tickets.json - macht diesen Test unabhängig von einem
+  // Ausgangsbestand) =====================
+  doc.querySelector('.nav-item[data-view="import"]').click();
+  doc.querySelector('.import-tab[data-mode="massenupload"]').click();
+  const baseXml = `<?xml version="1.0"?><rss><channel>
+    <item><key>ONESCM-8282</key><summary>Testfeld</summary><status>Geschlossen</status>
+      <created>01/Jan/24 12:07 PM</created><updated>01/Jan/24 12:07 PM</updated>
+      <customfields><customfield><customfieldname>Domain</customfieldname><customfieldvalues><customfieldvalue>Documents &amp; Communications</customfieldvalue></customfieldvalues></customfield></customfields></item>
+  </channel></rss>`;
+  const inputBase = doc.getElementById("file-input");
+  Object.defineProperty(inputBase, "files", { value: [new win.File([baseXml], "basis.xml", { type: "application/xml" })], configurable: true });
+  fire(inputBase, "change");
+  await wait(300);
+
   // ===================== Teil A: Teil-Import behaelt fehlende Felder =====================
   const before = await openTicketFields("ONESCM-8282");
   check("ONESCM-8282 vor Import gefunden", !!before);

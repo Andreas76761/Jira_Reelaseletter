@@ -72,6 +72,23 @@ async function blobToBuffer(blob) {
   fire(doc.getElementById("stat-tickets"), "click");
   check("Klick ausserhalb schliesst das Burger-Menü", burgerMenu.hidden === true);
 
+  // Basis-Import: die App startet bewusst mit 0 eingebetteten Tickets (s.
+  // data/tickets.json) - der "Vergleich"-Test unten braucht ONESCM-8282
+  // bereits VOR dem Teil-Import (nachtrag_demo.xml), sonst erscheint dessen
+  // Status-/Zusammenfassungs-Aenderung nicht als echte Aenderung, sondern
+  // als brandneues Ticket.
+  doc.querySelector('.nav-item[data-view="import"]').click();
+  doc.querySelector('.import-tab[data-mode="massenupload"]').click();
+  const baseXml = `<?xml version="1.0"?><rss><channel>
+    <item><key>ONESCM-8282</key><summary>Testfeld</summary><status>Geschlossen</status>
+      <created>01/Jan/24 12:07 PM</created><updated>01/Jan/24 12:07 PM</updated>
+      <customfields><customfield><customfieldname>Domain</customfieldname><customfieldvalues><customfieldvalue>Documents &amp; Communications</customfieldvalue></customfieldvalues></customfield></customfields></item>
+  </channel></rss>`;
+  const baseInput = doc.getElementById("file-input");
+  Object.defineProperty(baseInput, "files", { value: [new win.File([baseXml], "basis.xml", { type: "application/xml" })], configurable: true });
+  fire(baseInput, "change");
+  await wait(300);
+
   // Datengrundlage fuer aussagekraeftige Exports schaffen: Releaseinfo + Teil-Import
   doc.querySelector('.nav-item[data-view="import"]').click();
   doc.querySelector('.import-tab[data-mode="releaseinfo"]').click();

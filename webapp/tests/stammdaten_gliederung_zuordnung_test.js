@@ -110,6 +110,28 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   fire(doc.querySelector('button[data-action="add-domain"][data-chapter-id="' + kap9Id + '"]'), "click");
   check("Domäne 'ZUW-Kapitel9-Domain' erneut zugeordnet", outlineText().includes("ZUW-Kapitel9-Domain"));
 
+  // ===================== Basis-Import: "echte Masse" fuer Kapitel 8 =====================
+  // Die App startet bewusst mit 0 eingebetteten Demo-Tickets (s.
+  // data/tickets.json) - fuer den Normalisierungs-Regressionstest unten
+  // (Kapitel 8 muss ueber die normalisierte Domäne deutlich mehr als 1
+  // Ticket treffen) braucht es eine eigene, groessere Ticket-Menge mit der
+  // UNNORMALISIERTEN Rohschreibweise "Customer and Partner Management".
+  // Eigener Import (nicht Teil von zuordnung.xml), damit die spaetere
+  // RAG-Scoping-Pruefung auf "zuordnung.xml" davon unberuehrt bleibt.
+  let kap8Items = "";
+  for (let i = 0; i < 32; i++) {
+    kap8Items += `<item><key>KAP8-${i}</key><summary>Geschaeftskunden-Vorgang ${i}</summary>` +
+      `<description>Allgemeiner Vorgang ohne Fahrzeug- oder Zahlungsbezug.</description><status>Offen</status><type>Task</type>` +
+      `<customfields><customfield><customfieldname>Domain</customfieldname><customfieldvalues><customfieldvalue>Customer and Partner Management</customfieldvalue></customfieldvalues></customfield></customfields></item>`;
+  }
+  const xmlKap8 = `<?xml version="1.0"?><rss><channel>${kap8Items}</channel></rss>`;
+  doc.querySelector('.nav-item[data-view="import"]').click();
+  doc.querySelector('.import-tab[data-mode="massenupload"]').click();
+  const kap8Input = doc.getElementById("file-input");
+  Object.defineProperty(kap8Input, "files", { value: [new win.File([xmlKap8], "kap8_basis.xml", { type: "application/xml" })], configurable: true });
+  fire(kap8Input, "change");
+  await wait(400);
+
   // ===================== Tickets importieren: 1 Treffer über die Standard-Domäne (Kapitel 4, ohne manuelle Zuordnung),
   // 1 Treffer über die eben manuell zugeordnete Domäne (Kapitel 9), 1 ohne Treffer =====================
   const xml = `<?xml version="1.0"?><rss><channel>
@@ -164,11 +186,11 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("'Nach Gliederung'-Tab aktiv markiert", doc.querySelector('#assignment-mode-tabs button[data-assignment-mode="outline"]').className.includes("active"));
   check("Zuordnung (Gliederung) zeigt 'Kapitel 4: Servicevertrag anlegen'", assignmentText().includes("Kapitel 4: Servicevertrag anlegen"));
   check("Zuordnung (Gliederung) zeigt 'Kapitel 9: Troubleshooting und Support'", assignmentText().includes("Kapitel 9: Troubleshooting und Support"));
-  // Regression (s. Kommentar oben zu normalizeDomain()): Kapitel 8 muss die echten,
-  // bereits im eingebetteten Demo-Datensatz vorhandenen 'Customer & Partner Management'-
-  // Tickets treffen (~38 Stück), nicht nur die 1 exakt gleich geschriebene 'Customer
-  // Account Center'-Domäne - sonst waere die Zuordnung an der Normalisierung vorbeigelaufen.
-  check("Kapitel 8 trifft deutlich mehr als nur 1 Ticket (echte Demo-Daten via normalisierte Domäne)", (() => {
+  // Regression (s. Kommentar oben zu normalizeDomain()): Kapitel 8 muss die oben importierten
+  // 32 'Customer and Partner Management'-Tickets (Rohschreibweise ohne '&') treffen, nicht nur
+  // die 1 exakt gleich geschriebene 'Customer Account Center'-Domäne - sonst waere die
+  // Zuordnung an der Normalisierung vorbeigelaufen.
+  check("Kapitel 8 trifft deutlich mehr als nur 1 Ticket (eigene Basis-Tickets via normalisierte Domäne)", (() => {
     const header = Array.from(doc.querySelectorAll("#assignment-tbody tr.domain-group-row")).find((r) => r.textContent.includes("Kapitel 8: Geschäftskunden, Kampagnen, Sonderfälle"));
     if (!header) return false;
     const m = header.textContent.match(/\((\d+)\s*Ticket/);

@@ -127,7 +127,10 @@ function makeDom(sharedIndexedDb) {
   check("Tab 3: Bestätigungsdialog erscheint erneut (Datensatz noch vorhanden)", dialogShown3);
   fire(win3, doc3.getElementById("confirm-modal-cancel-btn"), "click");
   await wait(300);
-  check("Tab 3: Nach Ablehnen sind die Ausgangsdaten (Demo-Tickets) geladen", parseInt(doc3.getElementById("stat-tickets").textContent, 10) > 0);
+  // Ausgangsdaten sind jetzt bewusst leer (s. data/tickets.json) - "geladen"
+  // zeigt sich hier daran, dass der Ticketstand ueberhaupt initialisiert
+  // ist (Zahl statt leer/undefined), nicht an einer Demo-Anzahl > 0.
+  check("Tab 3: Nach Ablehnen sind die Ausgangsdaten geladen (0 Tickets, kein Fehlerzustand)", doc3.getElementById("stat-tickets").textContent === "0");
   check("Tab 3: Kein 'wiederhergestellt'-Log-Eintrag (da abgelehnt)", !doc3.getElementById("log-list").textContent.includes("wiederhergestellt"));
 
   if (errors3.length) { console.error("\nJS-Fehler (Tab 3):", errors3); checks.push(["keine Fehler (Tab 3)", false]); }

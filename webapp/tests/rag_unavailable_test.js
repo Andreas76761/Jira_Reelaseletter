@@ -27,6 +27,20 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   const checks = [];
   function check(l, ok) { checks.push([l, ok]); console.log((ok ? "OK  " : "FAIL") + " - " + l); }
 
+  // Basis-Import: die App startet bewusst mit 0 eingebetteten Tickets
+  // (s. data/tickets.json) - fuer eine sinnvolle Extraktion braucht es
+  // mindestens 1 echtes Ticket.
+  doc.querySelector('.nav-item[data-view="import"]').click();
+  doc.querySelector('.import-tab[data-mode="massenupload"]').click();
+  const baseXml = `<?xml version="1.0"?><rss><channel>
+    <item><key>ONESCM-8282</key><summary>Testfeld</summary><status>Geschlossen</status>
+      <created>01/Jan/24 12:07 PM</created><updated>01/Jan/24 12:07 PM</updated></item>
+  </channel></rss>`;
+  const inputBase = doc.getElementById("file-input");
+  Object.defineProperty(inputBase, "files", { value: [new dom.window.File([baseXml], "basis.xml", { type: "application/xml" })], configurable: true });
+  fire(inputBase, "change");
+  await wait(300);
+
   doc.querySelector('.nav-item[data-view="verarbeitung"]').click();
   doc.querySelector('.import-tab[data-vsub="rag"]').click();
   fire(doc.getElementById("rag-extract-btn"), "click");

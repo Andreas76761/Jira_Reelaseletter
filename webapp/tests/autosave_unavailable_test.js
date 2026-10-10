@@ -43,7 +43,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
 
   check("window.indexedDB in dieser Umgebung tatsächlich nicht vorhanden (Testvoraussetzung)", !dom.window.indexedDB);
 
-  check("App bootet trotzdem normal (Ausgangsdaten geladen)", parseInt(doc.getElementById("stat-tickets").textContent, 10) > 0);
+  check("App bootet trotzdem normal (Ausgangsdaten geladen, 0 Tickets)", doc.getElementById("stat-tickets").textContent === "0");
   check("Kein Bestätigungsdialog beim Start (nichts zum Wiederherstellen, kein Hänger)", doc.getElementById("confirm-modal-overlay").hidden === true);
 
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();

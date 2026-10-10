@@ -36,7 +36,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   }
 
   const startTotal = parseInt(doc.getElementById("stat-tickets").textContent, 10);
-  check("Ausgangs-Tickets geladen (Demo-Daten)", startTotal > 0);
+  check("Ausgangsbestand initialisiert (0 Tickets, keine eingebetteten Demo-Daten)", startTotal === 0);
 
   // ===================== 2 separate Importe mit unterschiedlichen Domains =====================
   const xmlA = `<?xml version="1.0"?><rss><channel>

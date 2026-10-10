@@ -43,6 +43,21 @@ function isWellFormedXml(xml) {
   const checks = [];
   function check(l, ok) { checks.push([l, ok]); console.log((ok ? "OK  " : "FAIL") + " - " + l); }
 
+  // Basis-Import: die App startet bewusst mit 0 eingebetteten Tickets (s.
+  // data/tickets.json) - der folgende Test nutzt den festen Key
+  // "ONESCM-8282" ueber das "Oder Ticket-Keys"-Feld, dafuer muss das Ticket
+  // existieren.
+  doc.querySelector('.nav-item[data-view="import"]').click();
+  doc.querySelector('.import-tab[data-mode="massenupload"]').click();
+  const baseXml = `<?xml version="1.0"?><rss><channel>
+    <item><key>ONESCM-8282</key><summary>Testfeld</summary><status>Geschlossen</status>
+      <created>01/Jan/24 12:07 PM</created><updated>01/Jan/24 12:07 PM</updated></item>
+  </channel></rss>`;
+  const baseInput = doc.getElementById("file-input");
+  Object.defineProperty(baseInput, "files", { value: [new dom.window.File([baseXml], "basis.xml", { type: "application/xml" })], configurable: true });
+  fire(baseInput, "change");
+  await wait(300);
+
   doc.querySelector('.nav-item[data-view="prozessbild"]').click();
 
   // ===================== Selects korrekt befuellt =====================

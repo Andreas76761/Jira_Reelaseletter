@@ -70,12 +70,12 @@ Das Ticket betrifft die Vertragsverlängerung.</description>
   check("Normaler Satzinhalt bleibt vollständig erhalten", descText2.includes("Rufe das Vertragsmodul auf"));
   fire(doc.getElementById("modal-close"), "click");
 
-  // ===================== Redaktion gilt fuer ALLE 663 eingebetteten Demo-Tickets (keine Regression) =====================
+  // ===================== Reset funktioniert weiterhin fehlerfrei nach PII-Erweiterung =====================
+  // (die App startet bewusst mit 0 eingebetteten Demo-Tickets, s. data/tickets.json)
   doc.querySelector('.nav-item[data-view="import"]').click();
   fire(doc.getElementById("reset-session-btn"), "click");
   await wait(300);
-  const allDescText = Array.from(doc.querySelectorAll("#table-body tr")).length;
-  check("Demo-Daten laden weiterhin fehlerfrei nach PII-Erweiterung (663 Tickets)", doc.getElementById("stat-tickets").textContent === "663");
+  check("Reset laedt weiterhin fehlerfrei die Ausgangsdaten (0 Tickets, kein Fehlerzustand)", doc.getElementById("stat-tickets").textContent === "0");
 
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }
   const failed = checks.filter((c) => !c[1]);

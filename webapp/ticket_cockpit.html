@@ -283,6 +283,8 @@
   .btn.ghost:hover { color: var(--text); background: var(--surface-2); }
   .btn.danger { background: var(--blocked); border-color: var(--blocked); color: #fff; }
   .btn.danger:hover { filter: brightness(0.92); }
+  .btn.fasttrack { background: #f2c200; border-color: #d4a600; color: #332700; }
+  .btn.fasttrack:hover { background: #ffd43b; border-color: #d4a600; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn[hidden] { display: none; }
   .btn-tiny { font-size: 11.5px; padding: 4px 9px; }
@@ -488,6 +490,7 @@
   }
   .gen-preview-wrap { display: flex; flex-direction: column; gap: 8px; }
   .preview-toggle { display: flex; gap: 6px; }
+  .preview-toggle[hidden] { display: none; }
   .preview-toggle-btn {
     border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); border-radius: 8px;
     padding: 6px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer;
@@ -988,10 +991,18 @@
           <div class="controls">
             <select id="fileview-import-select"><option value="">Datei auswählen …</option></select>
             <button class="btn primary" id="fileview-show-btn" type="button" disabled>Dateiansicht</button>
+            <button class="btn fasttrack" id="fileview-translate-btn" type="button" disabled>Übersetzen (Deutsch)</button>
+            <button class="btn fasttrack" id="fileview-export-docx-btn" type="button" disabled>Als Word exportieren</button>
+            <button class="btn fasttrack" id="fileview-summarize-btn" type="button" disabled>Datei zusammenfassen</button>
           </div>
           <div class="panel fileview-wrap" id="fileview-wrap" hidden>
+            <div class="preview-toggle" id="fileview-original-toggle-wrap" hidden style="margin:0 0 10px;">
+              <button type="button" class="preview-toggle-btn active" id="fileview-view-original-btn">Original</button>
+              <button type="button" class="preview-toggle-btn" id="fileview-view-translated-btn">Übersetzung (Deutsch)</button>
+            </div>
             <p class="step-note" id="fileview-summary"></p>
             <div id="fileview-content"></div>
+            <p class="step-note" id="fileview-fasttrack-status-note"></p>
           </div>
         </section>
 
@@ -1584,7 +1595,7 @@
             <div class="empty-hint" id="rag-library-empty">Noch keine Ergebnisse in der Bibliothek gespeichert oder importiert.</div>
             <div class="panel table-wrap" id="rag-library-table-wrap" style="max-height:360px; overflow:auto;" hidden>
               <table class="simple-table" id="rag-library-table">
-                <thead><tr><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Tickets</th><th>Quelle</th><th>Gespeichert am</th><th></th></tr></thead>
+                <thead><tr><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Unterkapitel</th><th>Tickets</th><th>Quelle</th><th>Gespeichert am</th><th></th></tr></thead>
                 <tbody id="rag-library-tbody"></tbody>
               </table>
             </div>
@@ -1726,7 +1737,11 @@
             aufbewahrt und lässt sich später einsehen oder wiederherstellen. Nutzt Claude über die sample-Capability
             (nur innerhalb der Claude-Artifact-Laufzeit verfügbar) – erfindet keine Fakten, nur vorhandene
             Ticket-Daten. Die Anweisung selbst ist unter Einstellungen → RAG-Prompts ("Benutzerhandbuch-Kapitel
-            erstellen") editierbar.
+            erstellen") editierbar. Optional lässt sich ein lokaler <b>Zielordner wählen</b>
+            (File System Access API) – jedes fertige Kapitel wird dann sofort als eigene .md-Datei dort abgelegt
+            (nur außerhalb der Claude-Artifact-Vorschau verfügbar, z.&nbsp;B. direkt in Chrome/Edge geöffnet). Über
+            <b>"Alle Kapitel zusammenführen"</b> lassen sich alle bisher erzeugten Texte jederzeit zu einem
+            Gesamtdokument in Gliederungsreihenfolge zusammensetzen.
           </div>
           <div class="controls">
             <div class="graph-filter-col">
@@ -1777,6 +1792,10 @@
             <button class="btn primary" id="manual-generate-btn" type="button">Kapitel erstellen</button>
             <button class="btn ghost" id="manual-stop-btn" type="button" hidden>Abbrechen</button>
           </div>
+          <div class="controls">
+            <button class="btn ghost" id="manual-choose-dir-btn" type="button">Zielordner wählen (optional)</button>
+            <span class="step-note" id="manual-dir-status-note">Kein Zielordner gewählt – jedes fertige Kapitel bleibt im Browser (unten als Gesamtdokument zusammenführbar). Funktioniert nur außerhalb der Claude-Artifact-Vorschau, z.&nbsp;B. direkt in Chrome/Edge geöffnet.</span>
+          </div>
           <p id="manual-status-note" class="step-note"></p>
           <div id="manual-checkpoints-wrap" hidden style="margin-bottom:12px;">
             <p class="step-note" style="font-weight:600;">Automatisch gespeicherte Zwischenversionen (alle 50 Durchgänge im Hintergrund gespeichert &ndash; kein echter Ordner, da die App rein im Browser läuft; hier als Liste sichtbar)</p>
@@ -1794,6 +1813,14 @@
           </div>
           <div id="manual-chapters-list"></div>
           <div class="empty-hint" id="manual-chapters-empty">Noch keine Kapitel erzeugt.</div>
+          <div id="manual-merge-wrap" style="margin-top:16px;">
+            <div class="job-export-row">
+              <button class="btn ghost" id="manual-merge-btn" type="button">Alle Kapitel zusammenführen</button>
+              <button class="btn ghost" id="manual-merge-download-btn" type="button" disabled>Gesamtdokument herunterladen</button>
+            </div>
+            <p class="step-note" id="manual-merge-status-note"></p>
+            <textarea id="manual-merge-output" class="gen-preview" style="min-height:160px;width:100%;" placeholder="Noch kein Gesamtdokument erzeugt."></textarea>
+          </div>
         </section>
 
         <section>
@@ -2275,6 +2302,26 @@
         </section>
 
         <section>
+          <p class="section-label">Domänen-Kürzel (Referenz-Nummern)</p>
+          <div class="callout">
+            Kurzes Kürzel je Domäne, Grundlage der Referenz-Nummer, die Massenverarbeitung/Benutzerhandbuch-
+            Kapitel-Generator/RAG-Ausgaben jedem Ticket-Textschnipsel mitgeben (Format
+            "Kürzel-Kapitel.Unterkapitel-Jahr-laufende Nummer", z. B. "CM-04.01-2024-003") – damit sich aus dem
+            fertigen Text wieder auf das ursprüngliche Jira-Ticket zurückschließen lässt. Automatisch aus den
+            Wortanfängen der Domäne vorgeschlagen (z. B. "Contract Management" → "CM"), bei Kollisionen zweier
+            Domänen mit demselben Vorschlag hier manuell anpassen. Gelistet werden nur Domänen aus den aktuell
+            geladenen Tickets.
+          </div>
+          <div class="panel table-wrap" id="domainabbr-wrap" style="max-height:360px; overflow:auto;">
+            <table class="simple-table" id="domainabbr-table">
+              <thead><tr><th>Domäne</th><th>Kürzel</th><th>Aktion</th></tr></thead>
+              <tbody id="domainabbr-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="domainabbr-empty" hidden>Keine Domänen in den aktuell geladenen Tickets.</div>
+          </div>
+        </section>
+
+        <section>
           <p class="section-label">Sprachstil (KI-Texterzeugung)</p>
           <div class="callout">
             Globale Stilvorgabe für die von Claude erzeugten Fließtexte (Verarbeitung → 7. RAG: Zusammenfassung
@@ -2424,6 +2471,33 @@
       <button class="btn ghost" id="mass-domain-md-modal-cancel-btn" type="button">Schließen</button>
       <button class="btn primary" id="mass-domain-md-save-btn" type="button">Speichern</button>
       <button class="btn ghost" id="mass-domain-md-download-btn" type="button" disabled>Als Markdown herunterladen</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="fileview-summary-modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="fileview-summary-modal-title">
+    <div class="modal-head">
+      <div>
+        <div class="key mono" id="fileview-summary-modal-key">Dateiansicht</div>
+        <h2 id="fileview-summary-modal-title">Datei zusammenfassen</h2>
+      </div>
+      <button class="modal-close" id="fileview-summary-modal-close" type="button" aria-label="Schließen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p class="desc" style="margin:0 0 10px;">KI-generierte Zusammenfassung der ausgewählten Datei (bereinigte Ticket-Rohdaten), maschinell erzeugt – bitte redaktionell prüfen.</p>
+    <div class="preview-toggle" style="margin:0 0 10px;">
+      <button type="button" class="preview-toggle-btn active" id="fileview-summary-lang-de-btn">Deutsch</button>
+      <button type="button" class="preview-toggle-btn" id="fileview-summary-lang-en-btn">English</button>
+    </div>
+    <div class="panel" id="fileview-summary-output-wrap" style="padding:12px; min-height:120px; white-space:pre-wrap;">
+      <p class="empty-hint" id="fileview-summary-loading">Erzeuge Zusammenfassung …</p>
+      <div id="fileview-summary-output"></div>
+    </div>
+    <p class="step-note" id="fileview-summary-status-note"></p>
+    <div class="modal-actions">
+      <button class="btn ghost" id="fileview-summary-modal-cancel-btn" type="button">Schließen</button>
     </div>
   </div>
 </div>
@@ -4366,7 +4440,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.59.0";
+  var APP_VERSION = "2.63.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5683,6 +5757,25 @@
   }
   function statusAmpelHex(status) { return AMPEL_HEX[statusAmpelCategory(status)]; }
 
+  // Domänen-Kürzel (Einstellungen -> Farbschema-Block): Grundlage der
+  // Referenz-Nummer (s. ticketReferenceId() weiter unten). Vorschlag aus den
+  // Wortanfängen der Domäne (z. B. "Contract Management" -> "CM", einzelnes
+  // Wort -> erste 3 Buchstaben, z. B. "DevOps" -> "DEV") - rein mechanisch,
+  // keine erfundene Bedeutung. Kollisionen zwischen zwei Domänen mit
+  // gleichem Vorschlag löst bewusst NICHT die App automatisch auf, sondern
+  // der Nutzer per Override (dafür ist die Tabelle editierbar).
+  function suggestDomainAbbr(domain) {
+    var words = (domain || "").split(/[^A-Za-zÄÖÜäöüß0-9]+/).filter(Boolean);
+    if (!words.length) return "";
+    if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
+    return words.map(function (w) { return w[0]; }).join("").toUpperCase().slice(0, 4);
+  }
+  function domainAbbrFor(domain) {
+    var d = domain || "";
+    if (!d) return "";
+    return app.domainAbbreviations[d] || suggestDomainAbbr(d);
+  }
+
   function parseJiraDate(s) {
     if (!s) return 0;
     var m = /(\d{2})\/(\w{3})\/(\d{2})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?/.exec(s);
@@ -5769,6 +5862,11 @@
     "reference-manual-table-wrap", "reference-manual-tbody", "reference-manual-empty",
     "paste-textarea", "paste-from-clipboard-btn", "paste-process-btn", "paste-spinner", "paste-process-label",
     "fileview-import-select", "fileview-show-btn", "fileview-wrap", "fileview-summary", "fileview-content",
+    "fileview-translate-btn", "fileview-export-docx-btn", "fileview-summarize-btn", "fileview-fasttrack-status-note",
+    "fileview-original-toggle-wrap", "fileview-view-original-btn", "fileview-view-translated-btn",
+    "fileview-summary-modal-overlay", "fileview-summary-modal-key", "fileview-summary-modal-close", "fileview-summary-modal-cancel-btn",
+    "fileview-summary-lang-de-btn", "fileview-summary-lang-en-btn", "fileview-summary-output-wrap", "fileview-summary-loading",
+    "fileview-summary-output", "fileview-summary-status-note",
     "importstats-import-select", "importstats-wrap", "importstats-summary", "importstats-tbody", "importstats-empty",
     "imports-tbody", "imports-refresh-btn", "imports-refresh-pending-hint", "changes-tbody", "changes-empty", "domain-aliases-tbody",
     "log-list", "log-empty",
@@ -5792,6 +5890,8 @@
     "dq-tickets-total", "dq-tickets-affected", "dq-findings-total", "dq-empty-state", "dq-wrap", "dq-tbody",
     "manual-domain-select", "manual-label-select", "manual-chapter-select", "manual-role-select", "manual-group-select", "manual-match-count",
     "manual-generate-btn", "manual-stop-btn", "manual-status-note", "manual-chapters-list", "manual-chapters-empty",
+    "manual-choose-dir-btn", "manual-dir-status-note",
+    "manual-merge-btn", "manual-merge-download-btn", "manual-merge-status-note", "manual-merge-output",
     "manual-checkpoints-wrap", "manual-checkpoints-list",
     "manual-quality-check-all-wrap", "manual-quality-check-all-btn", "manual-quality-check-all-spinner",
     "manual-quality-check-all-label", "manual-quality-check-all-stop-btn", "manual-quality-check-all-status-note",
@@ -5834,7 +5934,8 @@
     "session-export-btn", "session-import-btn", "session-import-input",
     "autosave-enabled-cb", "autosave-status", "autosave-delete-btn",
     "points-tbody", "points-new-type", "points-new-value", "points-add-btn",
-    "domaincolors-tbody", "domaincolors-empty", "statuscolors-tbody", "statuscolors-empty", "ragprompts-list",
+    "domaincolors-tbody", "domaincolors-empty", "statuscolors-tbody", "statuscolors-empty",
+    "domainabbr-tbody", "domainabbr-empty", "ragprompts-list",
     "language-style-select",
     "labels-tbody", "labels-new-category", "labels-new-de", "labels-new-en", "labels-add-btn", "label-category-datalist",
     "synonyms-tbody", "synonyms-empty", "synonyms-new-term", "synonyms-new-synonyms", "synonyms-new-en",
@@ -5996,6 +6097,30 @@
     // löschen" erhalten.
     domainColors: {},
     statusColors: {},
+    // Domänen-Kürzel (Einstellungen): je Domäne ein kurzes Kürzel (z. B.
+    // "CM" für "Contract Management"), Grundlage für die Referenz-Nummer
+    // (s. ticketReferenceId() weiter unten) - leer = automatisch aus den
+    // Wortanfängen der Domäne vorgeschlagen (s. suggestDomainAbbr()), vom
+    // Nutzer frei überschreibbar (z. B. bei Kollisionen zweier Domänen mit
+    // gleichem Vorschlag). Konfiguration wie domainColors - bleibt auch bei
+    // "Sitzung zurücksetzen"/"Alle Daten löschen" erhalten.
+    domainAbbreviations: {},
+    // Referenz-Nummern je Textschnipsel/Ticket-Zitat (Massenverarbeitung,
+    // Benutzerhandbuch-Kapitel-Generator, RAG-Zusammenfassung/Fließtext):
+    // einmal vergebene Nummern bleiben stabil, auch wenn später weitere
+    // Tickets hinzukommen/entfernt werden oder dieselbe Stelle erneut
+    // generiert wird - s. ticketReferenceId(). ticketRefSeq zählt den
+    // laufenden Nummernkreis je Dömäne+Kapitel+Unterkapitel+Jahr hoch,
+    // ticketRefIds cacht die einmal vergebene Nummer je Ticket+Kapitel+
+    // Unterkapitel-Kombination, damit ein erneuter Aufruf (z. B. erneutes
+    // Generieren desselben Kapitels) dieselbe Nummer liefert statt eine neue
+    // zu ziehen. An die stabile Jira-Nummer gebunden wie
+    // ticketClassificationOverrides - bleibt daher ebenfalls auch bei
+    // "Sitzung zurücksetzen"/"Alle Daten löschen" erhalten (sonst würden
+    // bereits in exportierten Dokumenten zitierte Referenz-Nummern bei
+    // einem Reset ihre Bedeutung verlieren).
+    ticketRefSeq: {},
+    ticketRefIds: {},
     // Klassifizierung (genehmigt/in Prüfung/intern/Background), s.
     // ticketClassificationFor()/suggestTicketClassification() weiter oben:
     // manuelle Uebersteuerung je Ticket-Schluessel (leer = automatischer
@@ -6031,6 +6156,21 @@
     // ueber "Wiederherstellen" nutzbar. Begrenzt auf die letzten
     // MANUAL_RUN_CHECKPOINT_LIMIT Stand, Sitzungsdatensatz wie manualChapters.
     manualCheckpoints: [],
+    // Zuletzt erzeugtes "Alle Kapitel zusammenführen"-Gesamtdokument des
+    // Kapitel-Generators - eigenstaendiger, editierbarer Text wie
+    // massMergedDoc/ragMergedDoc, sortiert in Gliederungsreihenfolge (echte
+    // Gliederungskapitel vor Label-Themengebieten). Sitzungsdatensatz wie
+    // manualChapters.
+    manualMergedDoc: "",
+    // Vom Nutzer gewaehlter lokaler Zielordner (File System Access API,
+    // showDirectoryPicker) fuer die automatische Ablage JEDES fertigen
+    // Kapitel-Generator-Kapitels als eigene .md-Datei waehrend eines Laufs.
+    // Bewusst KEIN Sitzungsdatensatz: ein Verzeichnis-Handle ist nicht
+    // serialisierbar und die Browser-Berechtigung dafuer gilt ohnehin nur
+    // fuer die aktuelle Seite/Sitzung, unabhaengig von den Ticket-Daten. Nur
+    // verfuegbar ausserhalb der sandboxed Claude-Artifact-Laufzeit (z. B.
+    // direkt in Chrome/Edge geoeffnet).
+    manualExportDirHandle: null,
     // Gliederung (Navigation, oberhalb Verarbeitung): je Unterkapitel +
     // optionalem Label-Themengebiet eine editierbare Stichwortliste, s.
     // Teil 9d. Key: chapterTitle + "||" + subTitle + "||" + (labelCategory
@@ -6101,7 +6241,15 @@
     // Automatisch im Hintergrund gespeicherte Zwischenversionen WÄHREND der
     // KI-Zuordnung (alle MASS_RUN_CHECKPOINT_INTERVAL verarbeitete
     // Einträge) - Schnappschuss von massFiles, analog zu manualCheckpoints.
-    massCheckpoints: []
+    massCheckpoints: [],
+    // Dateiansicht-FastTrack (Import, Job "Dateiansicht"): je Import-ID die
+    // zuletzt erzeugte KI-Übersetzung ins Deutsche (ganze Datei) bzw. die
+    // Zusammenfassungen je Sprache - gecacht, damit wiederholtes Ansehen/
+    // Sprachwechsel nicht jedes Mal erneut kostenpflichtig erzeugt werden
+    // muss. Sitzungsdatensatz wie manualChapters (reset bei "Alle Daten
+    // löschen"/"Sitzung zurücksetzen", Teil von Sitzung speichern/laden).
+    fileviewTranslations: {},
+    fileviewSummaries: {}
   };
 
   function addLog(message) {
@@ -6273,8 +6421,14 @@
     ragResetOutput();
     app.manualChapters = {};
     app.manualCheckpoints = [];
+    app.manualMergedDoc = "";
+    app.manualExportDirHandle = null;
     renderManualChapters();
     renderManualCheckpoints();
+    els.manualMergeOutput.value = "";
+    els.manualMergeDownloadBtn.disabled = true;
+    els.manualMergeStatusNote.textContent = "";
+    els.manualDirStatusNote.textContent = "Kein Zielordner gewählt – jedes fertige Kapitel bleibt im Browser (unten als Gesamtdokument zusammenführbar). Funktioniert nur außerhalb der Claude-Artifact-Vorschau, z. B. direkt in Chrome/Edge geöffnet.";
     app.chapterKeywords = {};
     renderGliederung();
     app.referenceManuals = [];
@@ -6302,6 +6456,9 @@
     els.massMergeDomainDocsStatusNote.textContent = "";
     app.massCheckpoints = [];
     renderMassCheckpoints();
+    app.fileviewTranslations = {};
+    app.fileviewSummaries = {};
+    fileviewResetView();
   }
 
   // Admin-Funktion (Einstellungen): im Unterschied zu resetSession() werden
@@ -6341,8 +6498,14 @@
     ragResetOutput();
     app.manualChapters = {};
     app.manualCheckpoints = [];
+    app.manualMergedDoc = "";
+    app.manualExportDirHandle = null;
     renderManualChapters();
     renderManualCheckpoints();
+    els.manualMergeOutput.value = "";
+    els.manualMergeDownloadBtn.disabled = true;
+    els.manualMergeStatusNote.textContent = "";
+    els.manualDirStatusNote.textContent = "Kein Zielordner gewählt – jedes fertige Kapitel bleibt im Browser (unten als Gesamtdokument zusammenführbar). Funktioniert nur außerhalb der Claude-Artifact-Vorschau, z. B. direkt in Chrome/Edge geöffnet.";
     app.chapterKeywords = {};
     renderGliederung();
     app.referenceManuals = [];
@@ -6370,6 +6533,9 @@
     els.massMergeDomainDocsStatusNote.textContent = "";
     app.massCheckpoints = [];
     renderMassCheckpoints();
+    app.fileviewTranslations = {};
+    app.fileviewSummaries = {};
+    fileviewResetView();
     addLog("Alle geladenen Daten gelöscht (Admin-Aktion in Einstellungen).");
   }
   els.deleteAllDataBtn.addEventListener("click", async function () {
@@ -6435,12 +6601,16 @@
       abbrevTranslations: app.abbrevTranslations,
       outline: app.outline,
       domainColors: app.domainColors,
+      domainAbbreviations: app.domainAbbreviations,
+      ticketRefSeq: app.ticketRefSeq,
+      ticketRefIds: app.ticketRefIds,
       ticketClassificationOverrides: app.ticketClassificationOverrides,
       statusColors: app.statusColors,
       ragPrompts: app.ragPrompts,
       languageStyle: app.languageStyle,
       manualChapters: app.manualChapters,
       manualCheckpoints: app.manualCheckpoints,
+      manualMergedDoc: app.manualMergedDoc,
       chapterKeywords: app.chapterKeywords,
       importFormats: app.importFormats,
       referenceManuals: app.referenceManuals,
@@ -6451,7 +6621,9 @@
       massMergedDoc: app.massMergedDoc,
       massDomainDocs: app.massDomainDocs,
       massDomainDocsMerged: app.massDomainDocsMerged,
-      massCheckpoints: app.massCheckpoints
+      massCheckpoints: app.massCheckpoints,
+      fileviewTranslations: app.fileviewTranslations,
+      fileviewSummaries: app.fileviewSummaries
     };
   }
   function restoreSessionState(data) {
@@ -6489,12 +6661,16 @@
     if (data.abbrevTranslations) app.abbrevTranslations = data.abbrevTranslations;
     if (data.outline) app.outline = data.outline;
     if (data.domainColors) app.domainColors = data.domainColors;
+    if (data.domainAbbreviations) app.domainAbbreviations = data.domainAbbreviations;
+    if (data.ticketRefSeq) app.ticketRefSeq = data.ticketRefSeq;
+    if (data.ticketRefIds) app.ticketRefIds = data.ticketRefIds;
     if (data.ticketClassificationOverrides) app.ticketClassificationOverrides = data.ticketClassificationOverrides;
     if (data.statusColors) app.statusColors = data.statusColors;
     if (data.ragPrompts) app.ragPrompts = data.ragPrompts;
     if (typeof data.languageStyle === "string") app.languageStyle = data.languageStyle;
     if (data.manualChapters) app.manualChapters = data.manualChapters;
     if (Array.isArray(data.manualCheckpoints)) app.manualCheckpoints = data.manualCheckpoints;
+    if (typeof data.manualMergedDoc === "string") app.manualMergedDoc = data.manualMergedDoc;
     if (data.chapterKeywords) app.chapterKeywords = data.chapterKeywords;
     if (data.importFormats) app.importFormats = data.importFormats;
     if (Array.isArray(data.referenceManuals)) app.referenceManuals = data.referenceManuals;
@@ -6506,11 +6682,14 @@
     if (data.massDomainDocs && typeof data.massDomainDocs === "object") app.massDomainDocs = data.massDomainDocs;
     if (typeof data.massDomainDocsMerged === "string") app.massDomainDocsMerged = data.massDomainDocsMerged;
     if (Array.isArray(data.massCheckpoints)) app.massCheckpoints = data.massCheckpoints;
+    if (data.fileviewTranslations && typeof data.fileviewTranslations === "object") app.fileviewTranslations = data.fileviewTranslations;
+    if (data.fileviewSummaries && typeof data.fileviewSummaries === "object") app.fileviewSummaries = data.fileviewSummaries;
     app.initialized = true;
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
     if (!els.compareModalOverlay.hidden) closeCompareModal();
     if (!els.massDomainMdModalOverlay.hidden) closeMassDomainMdModal();
+    fileviewResetView();
     refreshDashboard(false);
     renderImportsTable();
     renderChangesTable();
@@ -6528,6 +6707,8 @@
     renderLanguageStyleSelect();
     renderManualChapters();
     renderManualCheckpoints();
+    els.manualMergeOutput.value = app.manualMergedDoc;
+    els.manualMergeDownloadBtn.disabled = !app.manualMergedDoc;
     renderGliederung();
     renderImportFormats();
     renderReferenceManuals();
@@ -7443,6 +7624,37 @@
     }
   });
 
+  function domainAbbrRowHtml(d) {
+    var hasOverride = !!app.domainAbbreviations[d];
+    return "<tr><td>" + escapeHtml(d) + "</td><td><input type=\"text\" class=\"text-input domainabbr-input\" maxlength=\"8\" style=\"width:90px;\" data-domain=\"" +
+      escapeHtml(d) + "\" value=\"" + escapeHtml(domainAbbrFor(d)) + "\" aria-label=\"Kürzel für Domäne " + escapeHtml(d) + "\">" +
+      '<span class="override-badge">' + (hasOverride ? "angepasst" : "automatisch") + "</span></td><td>" +
+      (hasOverride ? '<button type="button" class="btn ghost btn-tiny" data-action="reset-domainabbr" data-domain="' + escapeHtml(d) + '">Zurücksetzen</button>' : "") +
+      "</td></tr>";
+  }
+  function renderDomainAbbrTable() {
+    var domains = app.domainList || [];
+    els.domainabbrTbody.innerHTML = domains.map(domainAbbrRowHtml).join("");
+    els.domainabbrEmpty.hidden = domains.length > 0;
+  }
+  els.domainabbrTbody.addEventListener("change", function (e) {
+    var input = e.target.closest(".domainabbr-input");
+    if (!input) return;
+    var d = input.getAttribute("data-domain");
+    var val = input.value.trim().toUpperCase();
+    if (val) { app.domainAbbreviations[d] = val; addLog("Domänen-Kürzel: „" + d + "“ auf „" + val + "“ gesetzt."); }
+    else { delete app.domainAbbreviations[d]; addLog("Domänen-Kürzel: „" + d + "“ zurückgesetzt (automatisch)."); }
+    renderDomainAbbrTable();
+  });
+  els.domainabbrTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest('button[data-action="reset-domainabbr"]');
+    if (!btn) return;
+    var d = btn.getAttribute("data-domain");
+    delete app.domainAbbreviations[d];
+    addLog("Domänen-Kürzel: „" + d + "“ zurückgesetzt (automatisch).");
+    renderDomainAbbrTable();
+  });
+
   // Labels-Tabelle (Kategorie/Deutsch/Englisch) - jede Zeile einzeln
   // löschbar über ihren Index (wie zuvor bei der flachen Liste); das
   // Kategorie-Datalist wird bei jedem Render frisch aus app.labels
@@ -8208,6 +8420,7 @@
     renderImportStatsSelect();
     renderDomainColorsTable();
     renderStatusColorsTable();
+    renderDomainAbbrTable();
   }
 
   function buildFormatCallout() {
@@ -8707,6 +8920,7 @@
     if (!els.modalOverlay.hidden) closeModal();
     if (!els.compareModalOverlay.hidden) closeCompareModal();
     if (!els.massDomainMdModalOverlay.hidden) closeMassDomainMdModal();
+    if (!els.fileviewSummaryModalOverlay.hidden) closeFileviewSummaryModal();
   });
 
   /* ============ Teil 4: Export (downloads-Capability) ============ */
@@ -9814,6 +10028,29 @@
     lines.push("</item>");
     return lines.join("\n");
   }
+  // Unescaped Variante von ticketToReadableXml() - fuer KI-Prompts
+  // (Übersetzen/Zusammenfassen) und den Word-Export der Dateiansicht
+  // (FastTrack-Buttons unten), wo HTML-Tags/Spans nicht gewünscht sind.
+  function ticketToReadablePlainText(raw) {
+    var lines = ["<item>"];
+    function tag(name, value) {
+      if (value == null || value === "") return;
+      lines.push("  <" + name + ">" + value + "</" + name + ">");
+    }
+    tag("key", raw.key);
+    tag("summary", raw.summary);
+    FIELD_DISPLAY_ORDER.forEach(function (f) {
+      if (!(f in raw)) return;
+      var v = raw[f];
+      if (Array.isArray(v)) { if (!v.length) return; v = v.join(", "); }
+      tag(f, v);
+    });
+    Object.keys(raw.custom_fields || {}).forEach(function (k) { tag("customfield name=\"" + k + "\"", raw.custom_fields[k]); });
+    (raw.issuelinks || []).forEach(function (l) { tag("issuelink category=\"" + l.category + "\"", l.key); });
+    if (raw.description) tag("description", raw.description);
+    lines.push("</item>");
+    return lines.join("\n");
+  }
   function ticketsForImport(importId) {
     var out = [];
     app.tickets.forEach(function (t) {
@@ -9833,22 +10070,292 @@
   }
   els.fileviewImportSelect.addEventListener("change", function () {
     els.fileviewShowBtn.disabled = !els.fileviewImportSelect.value;
+    els.fileviewTranslateBtn.disabled = true;
+    els.fileviewExportDocxBtn.disabled = true;
+    els.fileviewSummarizeBtn.disabled = true;
   });
+  // fileviewCurrentImportId/fileviewShowView: welche Datei aktuell in der
+  // Dateiansicht gezeigt wird und ob Original oder KI-Übersetzung (s.
+  // FastTrack-Buttons unten) - bewusst Modul-Scope-Variablen statt
+  // Sitzungsdatensatz (reine UI-Ansichtswahl, wie manualChapterLangView).
+  var fileviewCurrentImportId = null;
+  var fileviewShowView = "original"; // "original" | "translated"
+  function fileviewResetView() {
+    fileviewCurrentImportId = null;
+    fileviewShowView = "original";
+    els.fileviewWrap.hidden = true;
+    els.fileviewOriginalToggleWrap.hidden = true;
+    els.fileviewTranslateBtn.disabled = true;
+    els.fileviewExportDocxBtn.disabled = true;
+    els.fileviewSummarizeBtn.disabled = true;
+    els.fileviewFasttrackStatusNote.textContent = "";
+    if (!els.fileviewSummaryModalOverlay.hidden) closeFileviewSummaryModal();
+  }
+  function renderFileviewCurrentView() {
+    var importId = fileviewCurrentImportId;
+    var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
+    if (!imp) return;
+    var tickets = ticketsForImport(importId);
+    var shown = tickets.slice(0, FILEVIEW_MAX_TICKETS);
+    var hasTranslation = !!app.fileviewTranslations[importId];
+    els.fileviewOriginalToggleWrap.hidden = !hasTranslation;
+    els.fileviewViewOriginalBtn.classList.toggle("active", fileviewShowView === "original");
+    els.fileviewViewTranslatedBtn.classList.toggle("active", fileviewShowView === "translated");
+    if (fileviewShowView === "translated" && hasTranslation) {
+      els.fileviewSummary.textContent = "„" + imp.source + "“ (" + imp.format + ") – KI-Übersetzung ins Deutsche (" + tickets.length + " Ticket(s) aus dieser Datei" +
+        (tickets.length > shown.length ? ", erste " + shown.length + " übersetzt" : "") +
+        ") – maschinell erzeugt, bitte redaktionell prüfen.";
+      els.fileviewContent.innerHTML = '<div class="fileview-ticket"><pre>' + escapeHtml(app.fileviewTranslations[importId]) + "</pre></div>";
+    } else {
+      els.fileviewSummary.textContent = "„" + imp.source + "“ (" + imp.format + ") – " + tickets.length + " Ticket(s) aus dieser Datei" +
+        (tickets.length > shown.length ? ", zeige die ersten " + shown.length + " (Auswahl eingrenzen für mehr)" : "") +
+        " – bereinigte Ansicht (Namen pseudonymisiert, E-Mail/VIN/Adresse entfernt), nicht die Originaldatei.";
+      els.fileviewContent.innerHTML = shown.length
+        ? shown.map(function (t) { return '<div class="fileview-ticket"><pre>' + ticketToReadableXml(t.raw) + "</pre></div>"; }).join("")
+        : '<p class="empty-hint">Keine Tickets (mehr) aus dieser Datei im aktuellen Bestand.</p>';
+    }
+  }
   els.fileviewShowBtn.addEventListener("click", function () {
     var importId = parseInt(els.fileviewImportSelect.value, 10);
     var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
     if (!imp) return;
-    var tickets = ticketsForImport(importId);
+    fileviewCurrentImportId = importId;
+    fileviewShowView = "original";
     els.fileviewWrap.hidden = false;
-    var shown = tickets.slice(0, FILEVIEW_MAX_TICKETS);
-    els.fileviewSummary.textContent = "„" + imp.source + "“ (" + imp.format + ") – " + tickets.length + " Ticket(s) aus dieser Datei" +
-      (tickets.length > shown.length ? ", zeige die ersten " + shown.length + " (Auswahl eingrenzen für mehr)" : "") +
-      " – bereinigte Ansicht (Namen pseudonymisiert, E-Mail/VIN/Adresse entfernt), nicht die Originaldatei.";
-    els.fileviewContent.innerHTML = shown.length
-      ? shown.map(function (t) { return '<div class="fileview-ticket"><pre>' + ticketToReadableXml(t.raw) + "</pre></div>"; }).join("")
-      : '<p class="empty-hint">Keine Tickets (mehr) aus dieser Datei im aktuellen Bestand.</p>';
-    addLog("Dateiansicht geöffnet: „" + imp.source + "“ (" + tickets.length + " Tickets, bereinigte Anzeige).");
+    els.fileviewTranslateBtn.disabled = false;
+    els.fileviewExportDocxBtn.disabled = false;
+    els.fileviewSummarizeBtn.disabled = false;
+    els.fileviewFasttrackStatusNote.textContent = "";
+    renderFileviewCurrentView();
+    addLog("Dateiansicht geöffnet: „" + imp.source + "“ (" + ticketsForImport(importId).length + " Tickets, bereinigte Anzeige).");
   });
+  els.fileviewViewOriginalBtn.addEventListener("click", function () { fileviewShowView = "original"; renderFileviewCurrentView(); });
+  els.fileviewViewTranslatedBtn.addEventListener("click", function () { fileviewShowView = "translated"; renderFileviewCurrentView(); });
+
+  /* ============ Dateiansicht-FastTrack: Übersetzen/Word-Export/
+     Zusammenfassen (gelbe Buttons rechts von "Dateiansicht") ============
+     Arbeitet auf denselben bereinigten Ticket-Rohdaten wie die Dateiansicht
+     selbst (ticketToReadablePlainText je Ticket, auf FILEVIEW_MAX_TICKETS
+     begrenzt). Uebersetzen/Zusammenfassen koennen bei vielen Tickets groessere
+     Textmengen ergeben - beide Pfade nutzen daher dieselbe bewaehrte,
+     budget-chunkende + reaktiv gegen "prompt_too_large" bisektierende
+     Architektur wie der Benutzerhandbuch-Kapitel-Generator (chunkTextsByBudget/
+     manualGenerateBatchAdaptive/manualSynthesizePartials, s. dort) statt
+     eigener, weniger erprobter Logik. */
+  function fileviewTicketPlainTextBlocks(importId) {
+    var tickets = ticketsForImport(importId).slice(0, FILEVIEW_MAX_TICKETS);
+    return tickets.map(function (t) { return ticketToReadablePlainText(t.raw); });
+  }
+  // --- Übersetzen (→ Deutsch): reine Textübersetzung, kein KI-Merge noetig
+  // (uebersetzte Zeichen-Budget-Gruppen werden einfach in Reihenfolge
+  // aneinandergehaengt statt wie bei Zusammenfassungen zu EINEM Text
+  // verschmolzen). ---
+  async function fileviewTranslateBatchAdaptive(blocks, signal) {
+    var joined = blocks.join("\n\n");
+    try {
+      var r = await sampleWithRateLimitRetry(ragPromptFor("fileviewTranslateToDe") + "\n\n" + joined, { signal: signal, modelTier: "default", cache: false });
+      return [r.text || ""];
+    } catch (err) {
+      if (!err || err.code !== "prompt_too_large" || blocks.length <= 1) throw err;
+      var mid = Math.ceil(blocks.length / 2);
+      var halves = await Promise.all([
+        fileviewTranslateBatchAdaptive(blocks.slice(0, mid), signal),
+        fileviewTranslateBatchAdaptive(blocks.slice(mid), signal)
+      ]);
+      return halves[0].concat(halves[1]);
+    }
+  }
+  async function fileviewGenerateTranslation(importId, signal, onProgress) {
+    var blocks = fileviewTicketPlainTextBlocks(importId);
+    if (!blocks.length) return "";
+    var rawBatches = chunkTextsByBudget(blocks, RAG_BATCH_CHAR_BUDGET);
+    var completed = 0;
+    var translatedNested = await mapWithConcurrency(rawBatches, MANUAL_BATCH_CONCURRENCY, function (batch) {
+      return fileviewTranslateBatchAdaptive(batch, signal).then(function (texts) {
+        completed++;
+        if (onProgress) onProgress(completed + " von " + rawBatches.length + " Teilen übersetzt …");
+        return texts;
+      });
+    });
+    var translated = [].concat.apply([], translatedNested);
+    return translated.join("\n\n");
+  }
+  var fileviewTranslateAbortController = null;
+  els.fileviewTranslateBtn.addEventListener("click", async function () {
+    var importId = fileviewCurrentImportId;
+    var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
+    if (!imp) return;
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
+    els.fileviewTranslateBtn.disabled = true;
+    var ctl = new AbortController();
+    fileviewTranslateAbortController = ctl;
+    els.fileviewFasttrackStatusNote.textContent = "Übersetze „" + imp.source + "“ …";
+    try {
+      var text = await fileviewGenerateTranslation(importId, ctl.signal, function (note) { els.fileviewFasttrackStatusNote.textContent = note; });
+      app.fileviewTranslations[importId] = text;
+      fileviewShowView = "translated";
+      renderFileviewCurrentView();
+      els.fileviewFasttrackStatusNote.textContent = "";
+      addLog("Dateiansicht: „" + imp.source + "“ ins Deutsche übersetzt.");
+    } catch (err) {
+      var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
+      showToast("Übersetzung fehlgeschlagen", msg, true);
+      els.fileviewFasttrackStatusNote.textContent = "";
+    } finally {
+      els.fileviewTranslateBtn.disabled = false;
+      fileviewTranslateAbortController = null;
+    }
+  });
+  // --- Als Word exportieren: exportiert die aktuell angezeigte Ansicht
+  // (Original oder Übersetzung, je nach Toggle) als .docx. ---
+  els.fileviewExportDocxBtn.addEventListener("click", async function () {
+    var importId = fileviewCurrentImportId;
+    var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
+    if (!imp) return;
+    var translated = fileviewShowView === "translated" && app.fileviewTranslations[importId];
+    var text = translated ? app.fileviewTranslations[importId] : fileviewTicketPlainTextBlocks(importId).join("\n\n");
+    var title = imp.source + (translated ? " (Übersetzung Deutsch)" : "");
+    try {
+      var blob = await buildMarkdownDocxBlob(title, "# " + title + "\n\n" + text);
+      var ok = await saveOrWarn(safeFilename(imp.source) + (translated ? "-uebersetzt" : "") + ".docx", blob);
+      if (ok) { showToast("Gespeichert", "Als Word-Dokument heruntergeladen."); addLog("Dateiansicht: „" + imp.source + "“ als Word-Dokument exportiert" + (translated ? " (Übersetzung)" : "") + "."); }
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Word-Export fehlgeschlagen.", true);
+    }
+  });
+  // --- Datei zusammenfassen: KI-Zusammenfassung in neuem Fenster (Modal),
+  // Deutsch/English wählbar - zweistufig wie der Kapitel-Generator (erst je
+  // Zeichen-Budget-Batch eine Teil-Zusammenfassung, dann bei Bedarf in
+  // mehreren Runden zu EINER finalen Zusammenfassung verschmolzen), beides
+  // reaktiv gegen "prompt_too_large" bisektiert. Je Sprache gecacht
+  // (app.fileviewSummaries), damit Hin-/Herschalten nicht erneut kostet. ---
+  async function fileviewSummarizeBatchAdaptive(blocks, lang, signal) {
+    var joined = blocks.join("\n\n");
+    var promptKey = lang === "en" ? "fileviewSummaryEn" : "fileviewSummaryDe";
+    try {
+      var r = await sampleWithRateLimitRetry(ragPromptFor(promptKey) + "\n\n" + joined, { signal: signal, modelTier: "default", cache: false });
+      return [r.text || ""];
+    } catch (err) {
+      if (!err || err.code !== "prompt_too_large") throw err;
+      if (blocks.length <= 1) throw err;
+      var mid = Math.ceil(blocks.length / 2);
+      var halves = await Promise.all([
+        fileviewSummarizeBatchAdaptive(blocks.slice(0, mid), lang, signal),
+        fileviewSummarizeBatchAdaptive(blocks.slice(mid), lang, signal)
+      ]);
+      return halves[0].concat(halves[1]);
+    }
+  }
+  async function fileviewSynthesizeSummaryGroup(texts, lang, signal) {
+    var promptKey = lang === "en" ? "fileviewSummarySynthesisEn" : "fileviewSummarySynthesisDe";
+    try {
+      var prompt = ragPromptFor(promptKey) + "\n\n" + texts.map(function (t, i) { return "Teiltext " + (i + 1) + ":\n" + t; }).join("\n\n");
+      var r = await sampleWithRateLimitRetry(prompt, { signal: signal, modelTier: "default", cache: false });
+      return r.text || "";
+    } catch (err) {
+      if (!err || err.code !== "prompt_too_large" || texts.length <= 1) throw err;
+      var mid = Math.ceil(texts.length / 2);
+      var halves = await Promise.all([
+        fileviewSynthesizeSummaryGroup(texts.slice(0, mid), lang, signal),
+        fileviewSynthesizeSummaryGroup(texts.slice(mid), lang, signal)
+      ]);
+      return await fileviewSynthesizeSummaryGroup(halves, lang, signal);
+    }
+  }
+  async function fileviewSynthesizeSummaryPartials(partials, lang, signal, onProgress) {
+    var current = partials;
+    var round = 1;
+    while (current.length > 1) {
+      var totalLen = current.reduce(function (s, t) { return s + (t || "").length; }, 0);
+      if (totalLen <= RAG_BATCH_CHAR_BUDGET) break;
+      var groups = chunkTextsByBudget(current, RAG_BATCH_CHAR_BUDGET);
+      if (onProgress) onProgress("Verdichte " + current.length + " Teile in " + groups.length + " Zwischenschritte (Runde " + round + ") …");
+      current = await mapWithConcurrency(groups, MANUAL_BATCH_CONCURRENCY, function (group) {
+        if (group.length === 1) return Promise.resolve(group[0]);
+        return fileviewSynthesizeSummaryGroup(group, lang, signal);
+      });
+      round++;
+    }
+    if (current.length === 1) return current[0];
+    return await fileviewSynthesizeSummaryGroup(current, lang, signal);
+  }
+  async function fileviewGenerateSummary(importId, lang, signal, onProgress) {
+    var blocks = fileviewTicketPlainTextBlocks(importId);
+    if (!blocks.length) return "Keine Tickets aus dieser Datei im aktuellen Bestand.";
+    var rawBatches = chunkTextsByBudget(blocks, RAG_BATCH_CHAR_BUDGET);
+    if (onProgress) onProgress(rawBatches.length > 1 ? ("Erzeuge Teil-Zusammenfassungen (" + rawBatches.length + " Teile) …") : "Erzeuge Zusammenfassung …");
+    var partialsNested = await mapWithConcurrency(rawBatches, MANUAL_BATCH_CONCURRENCY, function (batch) {
+      return fileviewSummarizeBatchAdaptive(batch, lang, signal);
+    });
+    var partials = [].concat.apply([], partialsNested);
+    if (partials.length === 1) return partials[0];
+    if (onProgress) onProgress("Führe " + partials.length + " Teile zusammen …");
+    return await fileviewSynthesizeSummaryPartials(partials, lang, signal, onProgress);
+  }
+  var fileviewSummaryAbortController = null;
+  var fileviewSummaryModalImportId = null;
+  function closeFileviewSummaryModal() {
+    els.fileviewSummaryModalOverlay.hidden = true;
+    if (fileviewSummaryAbortController) { fileviewSummaryAbortController.abort(); fileviewSummaryAbortController = null; }
+    fileviewSummaryModalImportId = null;
+  }
+  async function fileviewLoadSummaryLang(lang) {
+    var importId = fileviewSummaryModalImportId;
+    if (importId == null) return;
+    if (!app.fileviewSummaries[importId]) app.fileviewSummaries[importId] = {};
+    var cache = app.fileviewSummaries[importId];
+    els.fileviewSummaryLangDeBtn.classList.toggle("active", lang === "de");
+    els.fileviewSummaryLangEnBtn.classList.toggle("active", lang === "en");
+    if (cache[lang]) {
+      els.fileviewSummaryLoading.hidden = true;
+      els.fileviewSummaryOutput.textContent = cache[lang];
+      els.fileviewSummaryStatusNote.textContent = "";
+      return;
+    }
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
+    els.fileviewSummaryLoading.hidden = false;
+    els.fileviewSummaryOutput.textContent = "";
+    var ctl = new AbortController();
+    fileviewSummaryAbortController = ctl;
+    try {
+      var text = await fileviewGenerateSummary(importId, lang, ctl.signal, function (note) { els.fileviewSummaryStatusNote.textContent = note; });
+      cache[lang] = text;
+      els.fileviewSummaryLoading.hidden = true;
+      els.fileviewSummaryOutput.textContent = text;
+      els.fileviewSummaryStatusNote.textContent = "";
+      var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
+      addLog("Dateiansicht: Zusammenfassung von „" + (imp ? imp.source : importId) + "“ (" + (lang === "en" ? "Englisch" : "Deutsch") + ") erzeugt.");
+    } catch (err) {
+      if (err && err.code === "cancelled") return;
+      var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
+      els.fileviewSummaryLoading.hidden = true;
+      els.fileviewSummaryStatusNote.textContent = "";
+      showToast("Zusammenfassung fehlgeschlagen", msg, true);
+    } finally {
+      fileviewSummaryAbortController = null;
+    }
+  }
+  function openFileviewSummaryModal(importId, source) {
+    fileviewSummaryModalImportId = importId;
+    els.fileviewSummaryModalKey.textContent = source;
+    els.fileviewSummaryLoading.hidden = false;
+    els.fileviewSummaryOutput.textContent = "";
+    els.fileviewSummaryStatusNote.textContent = "";
+    els.fileviewSummaryModalOverlay.hidden = false;
+    els.fileviewSummaryModalClose.focus();
+    fileviewLoadSummaryLang("de");
+  }
+  els.fileviewSummarizeBtn.addEventListener("click", function () {
+    var importId = fileviewCurrentImportId;
+    var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
+    if (!imp) return;
+    openFileviewSummaryModal(importId, imp.source);
+  });
+  els.fileviewSummaryLangDeBtn.addEventListener("click", function () { fileviewLoadSummaryLang("de"); });
+  els.fileviewSummaryLangEnBtn.addEventListener("click", function () { fileviewLoadSummaryLang("en"); });
+  els.fileviewSummaryModalClose.addEventListener("click", closeFileviewSummaryModal);
+  els.fileviewSummaryModalCancelBtn.addEventListener("click", closeFileviewSummaryModal);
+  els.fileviewSummaryModalOverlay.addEventListener("click", function (e) { if (e.target === els.fileviewSummaryModalOverlay) closeFileviewSummaryModal(); });
 
   /* ============ Import-Statistik (Teil 2c/Import): Feldabdeckung je
      Import - s. computeImportFieldStats() fuer die Berechnung. Wird nach
@@ -14061,7 +14568,12 @@
     manualChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender (erfahrene Nutzer im operativen Tagesgeschäft). Schreibe für das unten genannte Kapitel einen sachlichen, professionellen Fließtext im Stil eines Softwarehandbuchs auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform - z. B. \"Der Nutzer öffnet die Maske und trägt die Daten ein\", NICHT Präteritum/Futur wie \"öffnete\"/\"wird öffnen\"), mindestens 3, idealerweise bis zu 12 DIN-A4-Seiten Umfang (ca. 500-600 Wörter je Seite). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen (roter Faden), gefolgt von zusammenhängenden Abschnitten statt einer reinen Aufzählung. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, deutlich mit den Tags \"[Nur PKW]\", \"[Nur Van]\" bzw. \"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Retail\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\" (Market Operation) und weise explizit darauf hin, wenn ein Feature dem Retail NICHT zur Verfügung steht. Nutze ausschließlich Informationen aus den Ticket-Rohdaten unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text.",
     manualChapterSynthesis: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender. Die folgenden Teiltexte sind Abschnitte desselben Kapitels, aus technischen Gründen in mehreren Durchläufen aus unterschiedlichen Ausschnitten derselben Ticket-Rohdaten erzeugt. Verschmelze sie zu EINEM einzigen, zusammenhängenden Kapiteltext auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform, auch wenn ein Teiltext abweicht - dann beim Verschmelzen ins Präsens korrigieren) (roter Faden, mindestens 3 DIN-A4-Seiten, sachlicher Softwarehandbuch-Stil), ohne Hinweise auf \"Teiltexte\" oder \"Batches\". Erhalte dabei die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\" sowie die Zwischenüberschriften \"## Retail\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" aus den Teiltexten. Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
     refCompare: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen zwei Fassungen desselben Kapitels: der ALTE STAND (aus einem bestehenden, bereits veröffentlichten Word-Handbuch) und der NEUE STAND (frisch aus aktuellen Jira-Tickets erzeugter Text). Vergleiche beide Fassungen inhaltlich und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Features\n- (ein Stichpunkt je im neuen Stand beschriebenem Inhalt, der im alten Stand fehlt oder dort erkennbar anders/noch nicht vorhanden war)\n\n### Widersprüche\n- (ein Stichpunkt je Aussage im alten Stand, die dem neuen Stand inhaltlich widerspricht oder durch ihn überholt/ungültig wird)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den beiden Texten unten, erfinde nichts hinzu:",
-    manualQualityCheck: "Du bist Lektor/Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Prüfe den folgenden Kapiteltext und gib AUSSCHLIESSLICH die folgenden drei Abschnitte aus, in genau diesem Format:\n\n### Grammatikfehler\n- (ein Stichpunkt je Grammatik-/Rechtschreib-/Zeitform-Fehler - insbesondere Abweichungen vom geforderten Präsens -, mit kurzem Zitat der betroffenen Stelle)\n\n### Lücken\n- (ein Stichpunkt je inhaltlicher Lücke, unklarer oder unvollständiger Stelle)\n\n### Verbesserungsvorschläge\n- (ein Stichpunkt je Vorschlag zur Verständlichkeit/Lesbarkeit/Struktur)\n\nIst eine der drei Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:"
+    manualQualityCheck: "Du bist Lektor/Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Prüfe den folgenden Kapiteltext und gib AUSSCHLIESSLICH die folgenden drei Abschnitte aus, in genau diesem Format:\n\n### Grammatikfehler\n- (ein Stichpunkt je Grammatik-/Rechtschreib-/Zeitform-Fehler - insbesondere Abweichungen vom geforderten Präsens -, mit kurzem Zitat der betroffenen Stelle)\n\n### Lücken\n- (ein Stichpunkt je inhaltlicher Lücke, unklarer oder unvollständiger Stelle)\n\n### Verbesserungsvorschläge\n- (ein Stichpunkt je Vorschlag zur Verständlichkeit/Lesbarkeit/Struktur)\n\nIst eine der drei Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
+    fileviewTranslateToDe: "Übersetze den folgenden Text sinngemäß ins Deutsche, ohne Inhalte hinzuzufügen oder wegzulassen und ohne zusätzliche Erklärungen oder Anmerkungen. Gib ausschließlich den übersetzten Text aus:",
+    fileviewSummaryDe: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Fasse den folgenden Dateiinhalt (bereinigte Ticket-Rohdaten aus einem Jira-Export) in einer prägnanten, verständlichen Zusammenfassung auf Deutsch zusammen (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen). Nutze ausschließlich Informationen aus dem Text unten, erfinde nichts hinzu:",
+    fileviewSummaryEn: "You are an editor for an IT release team at a fleet/contract management system (oneSCM). Summarize the following file content (sanitized Jira ticket raw data) in a concise, understandable summary in English (approx. 150-300 words, factual, no bullet points). Use only information from the text below, do not invent anything:",
+    fileviewSummarySynthesisDe: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Die folgenden Teiltexte sind Zusammenfassungen unterschiedlicher Ausschnitte derselben Datei (aus technischen Gründen in mehreren Durchläufen erzeugt). Verschmelze sie zu EINER einzigen, prägnanten Gesamt-Zusammenfassung auf Deutsch (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen, ohne Hinweise auf 'Teiltexte'). Entferne Redundanzen, erfinde nichts hinzu:",
+    fileviewSummarySynthesisEn: "You are an editor for an IT release team at a fleet/contract management system (oneSCM). The following partial texts are summaries of different excerpts of the same file (generated in multiple passes for technical reasons). Merge them into ONE single, concise overall summary in English (approx. 150-300 words, factual, no bullet points, no references to 'partial texts'). Remove redundancy, do not invent anything:"
   };
   var RAG_PROMPT_LABELS = {
     summary: "Zusammenfassung erzeugen",
@@ -14072,7 +14584,12 @@
     manualChapter: "Benutzerhandbuch-Kapitel erstellen",
     manualChapterSynthesis: "Benutzerhandbuch-Kapitel zusammenführen (Batch-Modus)",
     refCompare: "Handbuch-Änderung nach Kapitel (Vergleich mit Referenz-Handbuch)",
-    manualQualityCheck: "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)"
+    manualQualityCheck: "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)",
+    fileviewTranslateToDe: "Dateiansicht: Übersetzen (→ DE)",
+    fileviewSummaryDe: "Dateiansicht: Zusammenfassung (Deutsch)",
+    fileviewSummaryEn: "Dateiansicht: Zusammenfassung (Englisch)",
+    fileviewSummarySynthesisDe: "Dateiansicht: Zusammenfassung zusammenführen (Deutsch, Batch-Modus)",
+    fileviewSummarySynthesisEn: "Dateiansicht: Zusammenfassung zusammenführen (Englisch, Batch-Modus)"
   };
   function ragPromptFor(promptKey) {
     var override = app.ragPrompts[promptKey];
@@ -14316,6 +14833,14 @@
         finalText = synthResult.text;
         if (synthResult.truncated) truncatedAny = true;
       }
+      // Nicht ragExtractedRows (das waehrend eines laufenden/pausierten
+      // Laufs ueber die weiterhin aktiven Extraktions-Bedienelemente bereits
+      // durch eine NEUE Auswahl ersetzt worden sein kann) - sondern die
+      // tatsaechlich fuer DIESEN Lauf an Claude gesendeten Tickets (run.
+      // batches), sonst wuerde die Quellen-Fussnote den erzeugten Text
+      // faelschlich der neuen, nicht der tatsaechlich verarbeiteten Auswahl
+      // zuschreiben.
+      finalText += ticketSourcesFooter([].concat.apply([], run.batches));
       els.ragOutput.textContent = finalText;
       els.ragDownloadBtn.disabled = false;
       els.ragLibrarySaveBtn.disabled = false;
@@ -14432,6 +14957,16 @@
     return '<option value=""' + (current ? "" : " selected") + ">" + unassignedLabel + "</option>" +
       options.map(function (o) { return '<option value="' + escapeHtml(o) + '"' + (current === o ? " selected" : "") + ">" + escapeHtml(o) + "</option>"; }).join("");
   }
+  // Unterkapitel-Auswahl (Massenverarbeitung/RAG-Bibliothek): anders als bei
+  // Tickets selbst (die nur auf Kapitel-Ebene automatisch zugeordnet werden,
+  // s. computeAutoOutline()) lässt sich ein manuell kuratierter Textschnipsel
+  // hier zusätzlich einem konkreten Unterkapitel zuordnen - Grundlage für die
+  // vollständige Referenz-Nummer (s. ticketReferenceId()). Rein optional
+  // (Default "– keine –"), die Liste hängt vom jeweils gewählten Kapitel ab.
+  function subchapterOptionsForChapter(chapterTitle) {
+    var chapter = (app.outline || []).filter(function (c) { return c.title === chapterTitle; })[0];
+    return chapter ? chapter.subs.map(function (s) { return s.title; }) : [];
+  }
   function renderRagLibrary() {
     var list = app.ragLibrary;
     els.ragLibraryEmpty.hidden = list.length > 0;
@@ -14446,6 +14981,8 @@
         ragLibraryOptionsHtml(domainOptions, e.domain, "Ohne Domäne") + "</select></td>" +
         '<td><select class="rag-library-chapter-select" data-id="' + e.id + '" aria-label="Kapitel">' +
         ragLibraryOptionsHtml(chapterOptions, e.chapterTitle, "Nicht zugeordnet") + "</select></td>" +
+        '<td><select class="rag-library-subchapter-select" data-id="' + e.id + '" aria-label="Unterkapitel">' +
+        ragLibraryOptionsHtml(subchapterOptionsForChapter(e.chapterTitle), e.subTitle || "", "– keine –") + "</select></td>" +
         "<td class=\"mono\">" + (e.ticketCount != null ? e.ticketCount : "&ndash;") + "</td>" +
         "<td>" + (e.source === "imported" ? "Importiert" : "Generiert") + "</td>" +
         "<td class=\"mono\">" + escapeHtml(e.savedAt) + "</td>" +
@@ -14579,12 +15116,15 @@
   els.ragLibraryTbody.addEventListener("change", function (e) {
     var domainSel = e.target.closest(".rag-library-domain-select");
     var chapterSel = e.target.closest(".rag-library-chapter-select");
-    if (!domainSel && !chapterSel) return;
-    var id = parseInt((domainSel || chapterSel).getAttribute("data-id"), 10);
+    var subSel = e.target.closest(".rag-library-subchapter-select");
+    if (!domainSel && !chapterSel && !subSel) return;
+    var id = parseInt((domainSel || chapterSel || subSel).getAttribute("data-id"), 10);
     var entry = app.ragLibrary.filter(function (r) { return r.id === id; })[0];
     if (!entry) return;
     if (domainSel) entry.domain = domainSel.value;
-    if (chapterSel) entry.chapterTitle = chapterSel.value;
+    if (chapterSel) { entry.chapterTitle = chapterSel.value; entry.subTitle = ""; }
+    if (subSel) entry.subTitle = subSel.value;
+    if (chapterSel) renderRagLibrary();
   });
   els.ragLibraryTbody.addEventListener("click", async function (e) {
     var delBtn = e.target.closest(".rag-library-delete-btn");
@@ -15011,6 +15551,8 @@
           "<td>" + escapeHtml(e.label) + "</td>" +
           '<td><select class="mass-domain-select" data-id="' + e.id + '" aria-label="Domäne">' + ragLibraryOptionsHtml(domainOptions, e.domain, "Ohne Domäne") + "</select></td>" +
           '<td><select class="mass-chapter-select" data-id="' + e.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapterOptions, e.chapterTitle, "Nicht zugeordnet") + "</select></td>" +
+          '<td><select class="mass-subchapter-select" data-id="' + e.id + '" aria-label="Unterkapitel">' + ragLibraryOptionsHtml(subchapterOptionsForChapter(e.chapterTitle), e.subTitle || "", "– keine –") + "</select></td>" +
+          "<td class=\"mono\">" + (ticketReferenceIdForEntry(e) || "&ndash;") + "</td>" +
           '<td><select class="mass-classification-select" data-id="' + e.id + '" aria-label="Klassifizierung">' + classificationOptionsHtml(e.classification) + "</select></td>" +
           "<td>" + massSourceLabel(e.source) + scopeBadges + "</td>" +
           "<td class=\"mono\">" + (e.ticketCount != null ? e.ticketCount : "&ndash;") + "</td>" +
@@ -15025,7 +15567,7 @@
         '<button type="button" class="btn ghost btn-tiny mass-domain-md-btn" data-domain="' + escapeHtml(d) + '">Kapitel als MD-Datei erstellen</button>' +
         "</div>" +
         '<div class="table-wrap" style="max-height:400px; overflow:auto;"><table class="simple-table">' +
-        "<thead><tr><th></th><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Klassifizierung</th><th>Quelle</th><th>Tickets</th><th>Textschnipsel</th><th></th></tr></thead>" +
+        "<thead><tr><th></th><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Unterkapitel</th><th>Ref.-Nr.</th><th>Klassifizierung</th><th>Quelle</th><th>Tickets</th><th>Textschnipsel</th><th></th></tr></thead>" +
         "<tbody>" + rows + "</tbody></table></div></div>";
     }).join("");
     massUpdateSelectionUI();
@@ -15134,13 +15676,15 @@
     }
     var domainSel = e.target.closest(".mass-domain-select");
     var chapterSel = e.target.closest(".mass-chapter-select");
+    var subSel = e.target.closest(".mass-subchapter-select");
     var classSel = e.target.closest(".mass-classification-select");
-    if (!domainSel && !chapterSel && !classSel) return;
-    var id = parseInt((domainSel || chapterSel || classSel).getAttribute("data-id"), 10);
+    if (!domainSel && !chapterSel && !subSel && !classSel) return;
+    var id = parseInt((domainSel || chapterSel || subSel || classSel).getAttribute("data-id"), 10);
     var entry = app.massFiles.filter(function (r) { return r.id === id; })[0];
     if (!entry) return;
     if (domainSel) entry.domain = domainSel.value;
-    if (chapterSel) entry.chapterTitle = chapterSel.value;
+    if (chapterSel) { entry.chapterTitle = chapterSel.value; entry.subTitle = ""; }
+    if (subSel) entry.subTitle = subSel.value;
     if (classSel) entry.classification = classSel.value;
     renderMassFiles();
   });
@@ -15384,6 +15928,16 @@
   function massFileMatchesClassification(e) {
     return e.classification === "genehmigt" || e.classification === "in_pruefung";
   }
+  // Haengt die Referenz-Nummer (s. ticketReferenceId()) als kleine kursive
+  // Zeile an den Textschnipsel an, wenn eine ermittelbar ist (nur bei
+  // ticketbasierten Eintraegen mit Jahr und Domänen-Kürzel, s.
+  // ticketReferenceIdForEntry()) - sonst bleibt der Text unveraendert statt
+  // eine unvollstaendige/erfundene Referenz anzuzeigen.
+  function massEntryTextWithRef(e) {
+    var ref = ticketReferenceIdForEntry(e);
+    if (!ref) return e.text;
+    return e.text + "\n\n_Referenz: " + ref + (e.sourceKey && e.sourceKey.indexOf("ticket:") === 0 ? " (Jira: " + e.sourceKey.slice(7) + ")" : "") + "_";
+  }
   function massBuildMergedDoc() {
     var included = app.massFiles.filter(massFileMatchesClassification);
     var groups = {};
@@ -15408,7 +15962,7 @@
       if (groups[d][""]) chapterNames.push("");
       chapterNames.forEach(function (c) {
         parts.push("\n\n### Kapitel: " + (c || "Nicht zugeordnet"));
-        groups[d][c].forEach(function (e) { parts.push("\n\n" + e.text); });
+        groups[d][c].forEach(function (e) { parts.push("\n\n" + massEntryTextWithRef(e)); });
       });
     });
     return parts.join("");
@@ -15475,7 +16029,7 @@
       ". Bitte redaktionell prüfen._"];
     chapterNames.forEach(function (c) {
       parts.push("\n\n## Kapitel: " + (c || "Nicht zugeordnet"));
-      byChapter[c].forEach(function (e) { parts.push("\n\n" + e.text); });
+      byChapter[c].forEach(function (e) { parts.push("\n\n" + massEntryTextWithRef(e)); });
     });
     return parts.join("");
   }
@@ -15699,6 +16253,161 @@
     var body = partialTexts.map(function (t, i) { return "Teiltext " + (i + 1) + ":\n" + t; }).join("\n\n");
     return ragPromptFor("manualChapterSynthesis") + languageStyleSuffix() + "\n\n" + groupDescriptor + manualRoleInstruction(role) + "\n\n" + body;
   }
+  // Grobe, bewusst sehr konservative Kuerzung fuer EIN einzelnes Ticket, das
+  // selbst nach vollstaendigem Bisektieren (s. manualGenerateBatchAdaptive)
+  // noch allein zu gross fuer einen KI-Aufruf ist (sehr lange Beschreibung).
+  var MANUAL_SINGLE_TICKET_TRUNCATE_CHARS = 1500;
+  // Erzeugt den/die Teiltext(e) fuer EINE Gruppe von Ticket-ROHDATEN (rows).
+  // Im Normalfall genau EIN KI-Aufruf -> EIN Teiltext. Wirft die Claude-
+  // Artifact-Laufzeit "prompt_too_large" (z. B. weil chunkRagRows() zwar die
+  // reinen Ticket-Rohdaten auf RAG_BATCH_CHAR_BUDGET begrenzt, der tatsaech-
+  // liche Gesamt-Prompt inkl. Anweisungstext/Rollenhinweis aber trotzdem ueber
+  // der von der Laufzeit tatsaechlich durchgesetzten Grenze liegt, ODER weil
+  // ein einzelnes, ungewoehnlich langes Ticket laut chunkRagRows()-Kommentar
+  // bewusst einen eigenen, UNGEDECKELTEN Batch bildet), wird NICHT sofort
+  // aufgegeben: die Rows werden bisektiert (Haelfte/Haelfte) und JEDE Haelfte
+  // rekursiv erneut versucht - das macht die Erstellung robust gegen die
+  // tatsaechliche, nicht exakt bekannte Prompt-Groessengrenze der Laufzeit,
+  // statt sich allein auf den geschaetzten Zeichen-Budget-Wert zu verlassen.
+  // Bleibt am Ende genau EIN Ticket uebrig und ist AUCH DAS allein noch zu
+  // gross, wird dessen Beschreibung gekuerzt (mit sichtbarem Hinweis) und
+  // genau ein weiteres Mal versucht, statt den gesamten Kapitel-Lauf wegen
+  // eines einzelnen Ausreisser-Tickets abzubrechen; schlaegt selbst das fehl,
+  // wird dieses eine Ticket ehrlich als nicht verarbeitbar markiert (bleibt
+  // in der Quellen-Fussnote sichtbar, statt stillschweigend zu verschwinden).
+  async function manualGenerateBatchAdaptive(groupDescriptor, rows, role, signal) {
+    try {
+      var result = await sampleWithRateLimitRetry(manualBuildPrompt(groupDescriptor, rows, role), { signal: signal, modelTier: "default", cache: false });
+      return [result.text || ""];
+    } catch (err) {
+      if (!err || err.code !== "prompt_too_large") throw err;
+      if (rows.length > 1) {
+        var mid = Math.ceil(rows.length / 2);
+        var leftTexts = await manualGenerateBatchAdaptive(groupDescriptor, rows.slice(0, mid), role, signal);
+        var rightTexts = await manualGenerateBatchAdaptive(groupDescriptor, rows.slice(mid), role, signal);
+        return leftTexts.concat(rightTexts);
+      }
+      var t = rows[0];
+      var truncatedRow = Object.assign({}, t, {
+        description: (t.description || "").slice(0, MANUAL_SINGLE_TICKET_TRUNCATE_CHARS) + " […Text gekürzt, Original zu lang für einen KI-Durchlauf]"
+      });
+      try {
+        var result2 = await sampleWithRateLimitRetry(manualBuildPrompt(groupDescriptor, [truncatedRow], role), { signal: signal, modelTier: "default", cache: false });
+        return [result2.text || ""];
+      } catch (err2) {
+        if (!err2 || err2.code !== "prompt_too_large") throw err2;
+        return ["[OFFEN: Ticket " + (t.key || "?") + " konnte wegen seiner Textlänge nicht automatisch verarbeitet werden.]"];
+      }
+    }
+  }
+  // Wie chunkRagRows(), aber auf bereits erzeugten TEXTEN (nicht
+  // Ticket-Rohdaten) statt rows - fuer die mehrstufige Zusammenfuehrung in
+  // manualSynthesizePartials() unten. Ein einzelner, ungewoehnlich langer
+  // Teiltext bildet notfalls selbst eine eigene Gruppe.
+  function chunkTextsByBudget(texts, budget) {
+    var groups = [];
+    var current = [];
+    var currentLen = 0;
+    texts.forEach(function (t) {
+      var len = (t || "").length;
+      if (current.length && currentLen + len > budget) {
+        groups.push(current);
+        current = [];
+        currentLen = 0;
+      }
+      current.push(t);
+      currentLen += len;
+    });
+    if (current.length) groups.push(current);
+    // Garantierter Fortschritt: ein Text, der bereits für sich allein das
+    // Budget sprengt, bildet oben IMMER seine eigene Einzel-Gruppe und wird
+    // nie mit einem Nachbarn kombiniert. Bei vielen solcher Texte (z. B. ein
+    // Kapitel mit hunderten Tickets, dessen Teiltexte im Schnitt nahe am
+    // Budget liegen) stagniert die Verdichtung dann Runde für Runde fast
+    // ohne Reduktion und manualSynthesizePartials() bricht vorzeitig ab -
+    // der Rest läuft anschliessend über den rein sequenziellen (nicht
+    // parallelisierten) Bisektions-Fallback in manualSynthesizeGroup(), was
+    // bei vielen Texten extrem lange dauert (genau das beobachtete
+    // "Kapitel wird nie fertig" bei grossen Ticketmengen). Direkt
+    // benachbarte Einzel-Gruppen werden daher zusaetzlich paarweise
+    // zusammengefasst (das Budget wird dabei bewusst ueberschritten -
+    // manualSynthesizeGroup() bisektiert eine zu grosse Gruppe ohnehin
+    // reaktiv wieder zurueck) - das garantiert jede Runde mindestens eine
+    // Halbierung der verbleibenden Singleton-Texte statt Stillstand.
+    var merged = [];
+    for (var i = 0; i < groups.length; i++) {
+      if (groups[i].length === 1 && i + 1 < groups.length && groups[i + 1].length === 1) {
+        merged.push(groups[i].concat(groups[i + 1]));
+        i++;
+      } else {
+        merged.push(groups[i]);
+      }
+    }
+    return merged;
+  }
+  // Fuehrt eine Gruppe von Teiltexten zu EINEM Text zusammen - wie
+  // manualGenerateBatchAdaptive() oben, aber fuer bereits erzeugte Teiltexte
+  // statt Ticket-Rohdaten: wirft der Aufruf "prompt_too_large" (die
+  // zeichen-budgetierte Vorab-Gruppierung in manualSynthesizePartials() war
+  // trotzdem noch zu grosszuegig), wird NICHT aufgegeben, sondern die Gruppe
+  // bisektiert und in zwei Teil-Zusammenfuehrungen aufgeteilt, deren
+  // Ergebnisse anschliessend selbst wieder zusammengefuehrt werden
+  // (rekursiv) - reaktive Absicherung zusaetzlich zur vorausschauenden
+  // Budget-Pruefung, falls die tatsaechliche Grenze der Laufzeit vom
+  // geschaetzten Budget abweicht.
+  async function manualSynthesizeGroup(groupDescriptor, texts, role, signal) {
+    try {
+      var r = await sampleWithRateLimitRetry(manualBuildSynthesisPrompt(groupDescriptor, texts, role), { signal: signal, modelTier: "default", cache: false });
+      return r.text || "";
+    } catch (err) {
+      if (!err || err.code !== "prompt_too_large" || texts.length <= 1) throw err;
+      var mid = Math.ceil(texts.length / 2);
+      // Beide Haelften NEBENLAEUFIG statt nacheinander abwarten - bei vielen
+      // Texten (Fallback nach Stagnation in manualSynthesizePartials, s. o.)
+      // sonst ein rein sequenzieller Aufruf-nach-Aufruf-Baum ohne jede
+      // Parallelitaet, was die Gesamtlaufzeit bei grossen Kapiteln
+      // unnoetig vervielfacht.
+      var halves = await Promise.all([
+        manualSynthesizeGroup(groupDescriptor, texts.slice(0, mid), role, signal),
+        manualSynthesizeGroup(groupDescriptor, texts.slice(mid), role, signal)
+      ]);
+      return await manualSynthesizeGroup(groupDescriptor, halves, role, signal);
+    }
+  }
+  // Fuehrt beliebig viele Teiltexte zu EINEM finalen Text zusammen, ohne
+  // dabei selbst auf "prompt_too_large" zu laufen: manualGenerateOneChapter()
+  // teilt die TICKET-ROHDATEN zwar bereits ueber chunkRagRows() in
+  // zeichen-budgetierte Batches auf, aber bei sehr vielen Tickets je Kapitel
+  // (z. B. ein haeufig verwendetes Kapitel mit hunderten echten Tickets)
+  // entstehen dadurch entsprechend viele Teiltexte - werden ALLE davon roh in
+  // EINEN einzigen Zusammenfuehrungs-Aufruf gepackt (wie zuvor), kann dieser
+  // Aufruf selbst wieder zu gross werden. Loesung: so lange in mehreren
+  // Zusammenfuehrungs-RUNDEN verdichten (Baum statt ein einzelner flacher
+  // Merge), bis die verbleibenden Teiltexte zusammen in einen einzelnen
+  // finalen Aufruf passen. Bricht die vorausschauende Verdichtung ab, sobald
+  // eine Runde keinen Fortschritt mehr bringt (jeder Teiltext für sich
+  // bereits über dem Budget) - jeder einzelne Zusammenfuehrungs-Aufruf ist
+  // zusaetzlich ueber manualSynthesizeGroup() reaktiv gegen "prompt_too_large"
+  // abgesichert, falls die tatsaechliche Laufzeit-Grenze vom geschaetzten
+  // Budget abweicht.
+  async function manualSynthesizePartials(groupDescriptor, partials, role, signal, onProgress) {
+    var current = partials;
+    var round = 1;
+    while (current.length > 1) {
+      var totalLen = current.reduce(function (s, t) { return s + (t || "").length; }, 0);
+      if (totalLen <= RAG_BATCH_CHAR_BUDGET) break;
+      var groups = chunkTextsByBudget(current, RAG_BATCH_CHAR_BUDGET);
+      if (groups.length === current.length) break;
+      if (onProgress) onProgress("Verdichte " + current.length + " Teiltexte in " + groups.length + " Zwischenschritte (Zusammenführungsrunde " + round + ") …");
+      current = await mapWithConcurrency(groups, MANUAL_BATCH_CONCURRENCY, function (group) {
+        if (group.length === 1) return Promise.resolve(group[0]);
+        return manualSynthesizeGroup(groupDescriptor, group, role, signal);
+      });
+      round++;
+    }
+    if (current.length === 1) return current[0];
+    return await manualSynthesizeGroup(groupDescriptor, current, role, signal);
+  }
 
   var manualAbortController = null;
   // Wie waitOrAbort() weiter unten, aber als eigenstaendiger Fehler mit
@@ -15812,24 +16521,29 @@
   async function manualGenerateOneChapter(groupDescriptor, rows, role, signal, onProgress, onDurchgang) {
     var batches = chunkRagRows(rows, RAG_BATCH_CHAR_BUDGET);
     if (batches.length <= 1) {
-      var prompt = manualBuildPrompt(groupDescriptor, rows, role);
-      var result = await sampleWithRateLimitRetry(prompt, { signal: signal, modelTier: "default", cache: false });
+      var texts0 = await manualGenerateBatchAdaptive(groupDescriptor, rows, role, signal);
       if (onDurchgang) onDurchgang();
-      return result.text || "";
+      if (texts0.length === 1) return texts0[0];
+      // Selbst dieser EINE Batch war laut Budget-Schaetzung klein genug, ist
+      // aber trotzdem auf "prompt_too_large" gelaufen und wurde deshalb
+      // bisektiert (s. manualGenerateBatchAdaptive) - die so entstandenen
+      // Teiltexte trotzdem zu einem zusammenhaengenden Kapitel verschmelzen
+      // statt sie unverbunden aneinanderzuhaengen.
+      return await manualSynthesizePartials(groupDescriptor, texts0, role, signal, onProgress);
     }
     var completedCount = 0;
-    var partials = await mapWithConcurrency(batches, MANUAL_BATCH_CONCURRENCY, function (batchRows) {
-      return sampleWithRateLimitRetry(manualBuildPrompt(groupDescriptor, batchRows, role), { signal: signal, modelTier: "default", cache: false })
-        .then(function (batchResult) {
+    var partialsNested = await mapWithConcurrency(batches, MANUAL_BATCH_CONCURRENCY, function (batchRows) {
+      return manualGenerateBatchAdaptive(groupDescriptor, batchRows, role, signal)
+        .then(function (texts) {
           completedCount++;
           if (onProgress) onProgress(completedCount + " von " + batches.length + " Teilen fertig …");
           if (onDurchgang) onDurchgang();
-          return batchResult.text || "";
+          return texts;
         });
     });
-    if (onProgress) onProgress("Führe " + batches.length + " Teile zusammen …");
-    var synthResult = await sampleWithRateLimitRetry(manualBuildSynthesisPrompt(groupDescriptor, partials, role), { signal: signal, modelTier: "default", cache: false });
-    return synthResult.text || "";
+    var partials = [].concat.apply([], partialsNested);
+    if (onProgress) onProgress("Führe " + partials.length + " Teile zusammen …");
+    return await manualSynthesizePartials(groupDescriptor, partials, role, signal, onProgress);
   }
   function manualWordCount(text) {
     var trimmed = (text || "").trim();
@@ -15945,6 +16659,56 @@
     }
   });
 
+  // Schreibt eine fertige Datei (ein Kapitel ODER das Gesamtdokument) sofort
+  // in den vom Nutzer gewaehlten lokalen Ordner (File System Access API,
+  // s. app.manualExportDirHandle) - no-op (false), wenn kein Ordner gewaehlt
+  // ist. Ein einzelner Schreibfehler wird nur geloggt statt per Toast zu
+  // unterbrechen, damit er bei einem laufenden Mehrkapitel-Lauf nicht den
+  // gesamten weiteren Durchlauf stoppt.
+  async function manualWriteFileToExportDir(filename, text) {
+    if (!app.manualExportDirHandle) return false;
+    try {
+      var fileHandle = await app.manualExportDirHandle.getFileHandle(filename, { create: true });
+      var writable = await fileHandle.createWritable();
+      await writable.write(text);
+      await writable.close();
+      return true;
+    } catch (err) {
+      addLog("Datei \"" + filename + "\" konnte nicht im gewählten Ordner gespeichert werden: " + ((err && err.message) || "Unbekannter Fehler") + ".");
+      return false;
+    }
+  }
+  if (!window.showDirectoryPicker) {
+    els.manualChooseDirBtn.disabled = true;
+    els.manualChooseDirBtn.title = "Nicht verfügbar in dieser Ansicht (nur außerhalb der Claude-Artifact-Vorschau, z. B. direkt in Chrome/Edge geöffnet).";
+  }
+  els.manualChooseDirBtn.addEventListener("click", async function () {
+    if (!window.showDirectoryPicker) { showToast("Nicht verfügbar", "Diese Ansicht unterstützt keine Ordnerauswahl.", true); return; }
+    try {
+      var handle = await window.showDirectoryPicker({ mode: "readwrite" });
+      app.manualExportDirHandle = handle;
+      els.manualDirStatusNote.textContent = "Zielordner: \"" + handle.name + "\" – jedes fertige Kapitel wird automatisch dort als .md-Datei abgelegt.";
+      addLog("Benutzerhandbuch-Kapitel-Generator: Zielordner \"" + handle.name + "\" für automatische Ablage gewählt.");
+    } catch (err) {
+      if (err && err.name === "AbortError") return;
+      // In der eingebetteten Claude-Artifact-Vorschau existiert
+      // window.showDirectoryPicker als Funktion (daher kein false im obigen
+      // Feature-Check), der eigentliche Aufruf wird aber vom Browser selbst
+      // per Permissions-Policy im sandboxed iframe blockiert
+      // (SecurityError/NotAllowedError) - das laesst sich von hier aus nicht
+      // umgehen. Klarere Meldung statt des generischen "fehlgeschlagen",
+      // damit es nicht wie ein zufaelliger Bug wirkt.
+      var sandboxed = err && (err.name === "SecurityError" || err.name === "NotAllowedError");
+      showToast(
+        "Fehlgeschlagen",
+        sandboxed
+          ? "In der Claude-Artifact-Vorschau vom Browser blockiert (Sandbox-Beschränkung). Bitte die App direkt in Chrome/Edge öffnen (nicht als eingebettete Vorschau), dann funktioniert die Ordnerauswahl."
+          : "Ordner konnte nicht ausgewählt werden.",
+        true
+      );
+    }
+  });
+
   async function manualGenerateChapters() {
     var groups = manualTargetGroups();
     if (!groups.length) { showToast("Keine Auswahl", "Bitte mindestens ein Kapitel/Label-Themengebiet oder eine Domäne auswählen.", true); return; }
@@ -15967,6 +16731,7 @@
     // Datensatz - O(Gruppen * Tickets) statt O(Tickets) ueber den Lauf).
     var matchedTickets = manualMatchedTickets();
     var completedCount = 0;
+    var savedToFolderCount = 0;
     for (var i = 0; i < groups.length; i++) {
       var group = groups[i];
       var rows = manualRowsForGroup(group, matchedTickets);
@@ -15980,9 +16745,11 @@
         var text = await manualGenerateOneChapter(manualGroupDescriptor(group), rows, role, ctl.signal, function (note) {
           els.manualStatusNote.textContent = "\"" + group.name + "\": " + note;
         }, bumpDurchgang);
+        text += ticketSourcesFooter(rows);
         var key = manualStorageKey(group);
         manualStoreVersion(key, { de: text, en: "", generatedAt: new Date().toLocaleString("de-DE"), ticketCount: rows.length, role: role, groupKind: group.kind, groupName: group.name });
         completedCount++;
+        if (await manualWriteFileToExportDir(safeFilename(key) + ".md", text)) savedToFolderCount++;
         // Voller Kartenneuaufbau (renderManualChapters(), s. u.) nicht mehr
         // bei JEDEM fertigen Kapitel, sondern nur noch periodisch (wie beim
         // Massenverarbeitung-Performance-Fix) - bei vielen Kapiteln in
@@ -16001,13 +16768,66 @@
       }
     }
     renderManualChapters();
-    els.manualStatusNote.textContent = aborted ? "Abgebrochen." : (groups.length > 1 ? "Fertig." : "");
+    var finalNote = aborted ? "Abgebrochen." : (groups.length > 1 ? "Fertig." : "");
+    if (app.manualExportDirHandle && savedToFolderCount) {
+      finalNote = (finalNote ? finalNote + " " : "") + savedToFolderCount + " Kapitel automatisch im gewählten Ordner gespeichert.";
+    }
+    els.manualStatusNote.textContent = finalNote;
     els.manualGenerateBtn.disabled = false;
     els.manualStopBtn.hidden = true;
     manualAbortController = null;
   }
   els.manualGenerateBtn.addEventListener("click", manualGenerateChapters);
   els.manualStopBtn.addEventListener("click", function () { if (manualAbortController) manualAbortController.abort(); });
+
+  // Sortierreihenfolge fuer "Alle Kapitel zusammenführen": echte
+  // Gliederungskapitel in Gliederungsreihenfolge (wie massChapterOrderIndex,
+  // dieselbe Reihenfolge wie app.outline), Label-Themengebiete danach (keine
+  // feste Position in der Gliederung, daher alphabetisch ausreichend).
+  function manualMergeOrderIndex(key, entry) {
+    if (entry && entry.groupKind === "label") return app.outline.length + 1;
+    return massChapterOrderIndex((entry && entry.groupName) || key);
+  }
+  function manualBuildMergedDoc() {
+    var keys = Object.keys(app.manualChapters).filter(function (k) { return app.manualChapters[k] && app.manualChapters[k].de; });
+    keys.sort(function (a, b) {
+      var ea = app.manualChapters[a], eb = app.manualChapters[b];
+      var ia = manualMergeOrderIndex(a, ea), ib = manualMergeOrderIndex(b, eb);
+      if (ia !== ib) return ia - ib;
+      return (ea.groupName || a).localeCompare(eb.groupName || b);
+    });
+    var parts = ["# Benutzerhandbuch - Zusammengeführte Kapitel\n\n_Automatisch aus " + keys.length +
+      " im Kapitel-Generator erzeugten Texten zusammengeführt, in Gliederungsreihenfolge (Label-Themengebiete danach). Bitte redaktionell prüfen._"];
+    keys.forEach(function (key) {
+      var entry = app.manualChapters[key];
+      parts.push("\n\n## " + (entry.groupName || key) + "\n\n" + entry.de);
+    });
+    return parts.join("");
+  }
+  els.manualMergeBtn.addEventListener("click", async function () {
+    var keys = Object.keys(app.manualChapters).filter(function (k) { return app.manualChapters[k] && app.manualChapters[k].de; });
+    if (!keys.length) { showToast("Nichts vorhanden", "Bitte zuerst mindestens ein Kapitel erzeugen.", true); return; }
+    var merged = manualBuildMergedDoc();
+    app.manualMergedDoc = merged;
+    els.manualMergeOutput.value = merged;
+    els.manualMergeDownloadBtn.disabled = false;
+    var note = keys.length + " Kapitel zusammengeführt.";
+    if (app.manualExportDirHandle) {
+      if (await manualWriteFileToExportDir("Gesamtdokument.md", merged)) {
+        note += " Zusätzlich als \"Gesamtdokument.md\" im gewählten Ordner gespeichert.";
+      }
+    }
+    els.manualMergeStatusNote.textContent = note;
+    addLog("Benutzerhandbuch-Kapitel-Generator: " + keys.length + " Kapitel zu einem Gesamtdokument zusammengeführt.");
+  });
+  els.manualMergeOutput.addEventListener("input", function () {
+    app.manualMergedDoc = els.manualMergeOutput.value;
+    els.manualMergeDownloadBtn.disabled = !els.manualMergeOutput.value.trim();
+  });
+  els.manualMergeDownloadBtn.addEventListener("click", async function () {
+    var ok = await saveOrWarn("Benutzerhandbuch-Kapitel-Gesamtdokument.md", els.manualMergeOutput.value);
+    if (ok) showToast("Gespeichert", "Gesamtdokument heruntergeladen.");
+  });
 
   async function manualTranslateChapter(chapterTitle) {
     var entry = app.manualChapters[chapterTitle];
@@ -16778,6 +17598,101 @@
   function ticketByKey(key) {
     var found = app.tickets.filter(function (t) { return t.key === key; });
     return found[0] || null;
+  }
+
+  // Referenz-Nummer je Ticket-Textschnipsel (Massenverarbeitung/Benutzer-
+  // handbuch-Kapitel-Generator/RAG-Zusammenfassung & Fließtext): Format
+  // "<Domänen-Kürzel>-<Kapitelnr>.<Unterkapitelnr>-<Jahr>-<laufende Nummer>"
+  // (z. B. "CM-04.01-2024-003"), damit sich aus einem fertigen Text wieder
+  // auf das ursprüngliche Jira-Ticket zurückschließen lässt (s.
+  // domainAbbrFor() weiter oben). Kapitelnummer kommt aus dem Gliederungs-
+  // Kapiteltitel ("Kapitel 4: ..." -> "04"), Unterkapitelnummer aus dem
+  // Unterkapiteltitel ("4.1 ..." -> "01") - beide "00" wenn nicht aus dem
+  // Titel ablesbar (z. B. Front-/Backmatter-Kapitel ohne Nummer, oder kein
+  // Unterkapitel zugeordnet). Jahr ist das Anlagejahr des Tickets
+  // (t.createdSort, wie bei anlagemonatJahrLabel()).
+  function chapterNumberFromTitle(title) {
+    var m = /^Kapitel\s+(\d+)/i.exec(title || "");
+    return m ? ("0" + m[1]).slice(-2) : "00";
+  }
+  function subchapterNumberFromTitle(subTitle) {
+    var m = /^(\d+)\.(\d+)/.exec(subTitle || "");
+    return m ? ("0" + m[2]).slice(-2) : "00";
+  }
+  // Einmal vergebene Nummern bleiben stabil (gecacht in app.ticketRefIds je
+  // Ticket+Kapitel+Unterkapitel-Kombination) - ein erneuter Aufruf fuer
+  // dieselbe Kombination (z. B. erneutes Generieren desselben Kapitels)
+  // liefert dieselbe Nummer statt eine neue zu ziehen; der laufende
+  // Nummernkreis (app.ticketRefSeq, je Kürzel+Kapitelnr+Unterkapitelnr+Jahr)
+  // zaehlt dabei nur beim erstmaligen Vergeben hoch. Liefert null, wenn kein
+  // Jahr (kein/ungueltiges "created"-Datum) oder kein Domänen-Kürzel
+  // ermittelbar ist - ehrlich nichts anzeigen statt eine unvollstaendige
+  // Nummer zu erfinden.
+  // domain wird bewusst als eigener Parameter uebergeben (statt immer aus
+  // dem Ticket selbst gelesen): bei Massenverarbeitung-Textschnipseln kann
+  // die Domäne der Zeile manuell auf einen anderen Wert als die rohe Jira-
+  // Domäne des Tickets gesetzt sein (freie Neuzuordnung, s. mass-domain-
+  // select) - die Referenz-Nummer soll dann dieser (sichtbaren, vom Nutzer
+  // gewaehlten) Zuordnung folgen statt der stillen Original-Domäne.
+  function ticketReferenceId(ticketKey, domain, chapterTitle, subTitle) {
+    var t = ticketByKey(ticketKey);
+    if (!t || !t.createdSort) return null;
+    var year = new Date(t.createdSort).getFullYear();
+    var abbr = domainAbbrFor(domain);
+    if (!abbr) return null;
+    var chapNr = chapterNumberFromTitle(chapterTitle);
+    var subNr = subchapterNumberFromTitle(subTitle);
+    var cacheKey = ticketKey + "||" + (domain || "") + "||" + (chapterTitle || "") + "||" + (subTitle || "");
+    if (app.ticketRefIds[cacheKey]) return app.ticketRefIds[cacheKey];
+    var bucketKey = abbr + "-" + chapNr + "." + subNr + "-" + year;
+    var seq = (app.ticketRefSeq[bucketKey] || 0) + 1;
+    app.ticketRefSeq[bucketKey] = seq;
+    // slice(-3) wuerde ab Sequenz 1000 die FUEHRENDEN Ziffern abschneiden
+    // (1001 -> "001", Kollision mit Sequenz 1 im selben Bucket) - nur
+    // auffuellen, wenn die Zahl tatsaechlich kuerzer als 3 Stellen ist.
+    var seqStr = seq < 1000 ? ("00" + seq).slice(-3) : String(seq);
+    var id = bucketKey + "-" + seqStr;
+    app.ticketRefIds[cacheKey] = id;
+    return id;
+  }
+  // Massenverarbeitung-Textschnipsel: nur bei direkt aus einem Ticket
+  // übernommenen Einträgen (source "ticket", s. massAddDirectEntry()) gibt es
+  // ein konkretes Jira-Ticket, auf das verwiesen werden kann - bei
+  // hochgeladenen/manuell erzeugten Inhalten (upload/manualChapter/
+  // referenceManual) ehrlich keine Nummer statt eine zu erfinden.
+  function ticketReferenceIdForEntry(e) {
+    if (!e || e.source !== "ticket" || !e.sourceKey) return null;
+    // sourceKey traegt bei ticketbasierten Eintraegen das Praefix "ticket:"
+    // vor dem eigentlichen Jira-Schluessel (s. massCollectTicketContent()) -
+    // nur als Dedupe-Schluessel gedacht, hier auf den reinen Jira-Key kuerzen.
+    var ticketKey = e.sourceKey.indexOf("ticket:") === 0 ? e.sourceKey.slice(7) : e.sourceKey;
+    return ticketReferenceId(ticketKey, e.domain, e.chapterTitle, e.subTitle);
+  }
+  // "Quellen"-Fussnote (Benutzerhandbuch-Kapitel-Generator/RAG-Zusammenfassung
+  // & Fließtext): anders als bei Massenverarbeitung-Textschnipseln (1 Eintrag
+  // = 1 Ticket) wird hier aus MEHREREN Tickets EIN KI-Fließtext erzeugt - eine
+  // Referenz-Nummer je Satz/Absatz ist nicht nachvollziehbar zuordenbar, daher
+  // stattdessen EINE Liste aller Quell-Tickets am Textende (wie die bereits
+  // bestehenden "Bitte redaktionell prüfen"-Hinweise direkt in den generierten
+  // Text eingebettet, s. ragBuildFinalSummaryMd() etc.). Nutzt je Ticket dessen
+  // ERSTES zugeordnetes Gliederungskapitel (t.outlineChapters[0]) - ein
+  // Textschnipsel-Unterkapitel gibt es hier bewusst nicht (das ist nur fuer
+  // manuell kuratierte Massenverarbeitung-/RAG-Bibliothek-Einträge gedacht,
+  // s. subchapterOptionsForChapter()), daher immer Unterkapitelnummer "00".
+  // Absichtlich OHNE Obergrenze: RAG erlaubt Laeufe bis RAG_MAX_TICKETS
+  // (10.000) Tickets - eine gekappte Quellenliste wuerde fuer Tickets
+  // jenseits der Kappung genau die Rueckverfolgbarkeit wieder zunichtemachen,
+  // die diese Fussnote eigentlich herstellen soll.
+  function ticketSourcesFooter(rows) {
+    if (!rows || !rows.length) return "";
+    var lines = rows.map(function (r) {
+      var t = ticketByKey(r.key);
+      var chapterTitle = (t && t.outlineChapters && t.outlineChapters[0]) || "";
+      var domain = (t && t.domain) || r.domain || "";
+      var ref = ticketReferenceId(r.key, domain, chapterTitle, "");
+      return (ref ? ref + " " : "") + "(" + r.key + ")";
+    });
+    return "\n\n---\n**Quellen:** " + lines.join(", ");
   }
 
   var glExpanded = {};

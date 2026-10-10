@@ -33,6 +33,23 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
     return counts;
   }
 
+  // Basis-Import: die App startet bewusst mit 0 eingebetteten Tickets (s.
+  // data/tickets.json). Fuer den "bleiben getrennt"-Test unten braucht es
+  // eigene Tickets mit den zweideutigen, bewusst NICHT gemergten Domains.
+  doc.querySelector('.nav-item[data-view="import"]').click();
+  doc.querySelector('.import-tab[data-mode="massenupload"]').click();
+  const baseXml = `<?xml version="1.0"?><rss><channel>
+    <item><key>ONESCM-90001</key><summary>Basis Revenue Management</summary><status>Offen</status>
+      <customfields><customfield><customfieldname>Domain</customfieldname><customfieldvalues><customfieldvalue>Revenue Management</customfieldvalue></customfieldvalues></customfield></customfields></item>
+    <item><key>ONESCM-90002</key><summary>Basis Contract Management</summary><status>Offen</status>
+      <customfields><customfield><customfieldname>Domain</customfieldname><customfieldvalues><customfieldvalue>Contract Management</customfieldvalue></customfieldvalues></customfield></customfields></item>
+  </channel></rss>`;
+  const inputBase = doc.getElementById("file-input");
+  Object.defineProperty(inputBase, "files", { value: [new dom.window.File([baseXml], "basis.xml", { type: "application/xml" })], configurable: true });
+  fire(inputBase, "change");
+  await wait(300);
+  doc.querySelector('.nav-item[data-view="dashboard"]').click();
+
   const before = domainCounts();
   console.log("Vorher 'Documents & Communications':", before["Documents & Communications"]);
   check("'Documents and Communication' NICHT als eigene Domain vorhanden (vorher)", !("Documents and Communication" in before));
@@ -57,7 +74,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("KEINE separate Domain 'Customer and Partner Management' mehr", !("Customer and Partner Management" in after));
   check("KEINE fehlerhafte Domain 'Customer&Partner Management' (ohne Leerzeichen) mehr", !("Customer&Partner Management" in after));
   check("'Customer & Partner Management' (mit Leerzeichen) vorhanden", "Customer & Partner Management" in after);
-  check("Summe Customer & Partner Management = alt(38) + releaseinfo(13)", after["Customer & Partner Management"] === 38 + 13);
+  check("Summe Customer & Partner Management = alt + releaseinfo(13)", after["Customer & Partner Management"] === (before["Customer & Partner Management"] || 0) + 13);
 
   // Absichtlich NICHT gemergte, zweideutige Domains bleiben getrennt
   check("'Revenue Management' und 'Revenue and Cost Management' bleiben getrennt", ("Revenue Management" in after) && ("Revenue and Cost Management" in after));

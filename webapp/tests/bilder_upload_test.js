@@ -119,6 +119,20 @@ const redSquareDataUrl = fs.readFileSync(path.join(FIXTURES, "red_square_dataurl
   win.Tesseract = { recognize: function () { return Promise.resolve({ data: { text: "erneut erkannt" } }); } };
 
   // ===================== Zusammen mit generierten Prozessbildern in derselben Galerie =====================
+  // Basis-Import: die App startet bewusst mit 0 eingebetteten Tickets (s.
+  // data/tickets.json) - fuer die Prozessbild-Generierung braucht es
+  // mindestens 1 echtes Ticket.
+  doc.querySelector('.nav-item[data-view="import"]').click();
+  doc.querySelector('.import-tab[data-mode="massenupload"]').click();
+  const baseXml = `<?xml version="1.0"?><rss><channel>
+    <item><key>ONESCM-8282</key><summary>Testfeld</summary><status>Geschlossen</status>
+      <created>01/Jan/24 12:07 PM</created><updated>01/Jan/24 12:07 PM</updated></item>
+  </channel></rss>`;
+  const inputBase = doc.getElementById("file-input");
+  Object.defineProperty(inputBase, "files", { value: [new win.File([baseXml], "basis.xml", { type: "application/xml" })], configurable: true });
+  fire(inputBase, "change");
+  await wait(300);
+
   doc.querySelector('.nav-item[data-view="prozessbild"]').click();
   doc.getElementById("prozessbild-use-filtered").checked = true;
   fire(doc.getElementById("prozessbild-generate-btn"), "click");

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.59.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.62.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -209,7 +209,7 @@ voneinander (jeder bekommt eine eigene Ticket-Teilmenge) und werden daher
 **parallel statt nacheinander** an Claude geschickt – bei z. B. 3
 Teil-Batches etwa um den Faktor 3 kürzere Wartezeit für diesen Schritt, da
 die Antwortzeit des KI-Aufrufs dominiert, nicht lokale Rechenarbeit. Die
-Reihenfolge der Teiltexte im abschließenden Zusammenführungs-Aufruf bleibt
+Reihenfolge der Teiltexte in den Zusammenführungs-Aufrufen (s. u.) bleibt
 dabei unabhängig von der tatsächlichen Fertigstellungsreihenfolge korrekt
 erhalten. Höchstens **3 Teil-Batches gleichzeitig** (statt unbegrenzt viele
 auf einmal) – bei Kapiteln mit sehr vielen Tickets (z. B. 100+, entsprechend
@@ -226,6 +226,71 @@ weil er als fortsetzbarer Lauf mit Live-Streaming-Vorschau und
 batch-genauem Stop/Resume gebaut ist (`ragBatchRun.index`) – das setzt
 echte Sequenzialität voraus und müsste für eine Parallelisierung erst
 grundlegend umgebaut werden.
+
+**Bugfix (mehrstufige Zusammenführung bei sehr vielen Teil-Batches):** Die
+Ticket-Rohdaten werden zwar bereits über `chunkRagRows()` in
+zeichen-budgetierte Teil-Batches aufgeteilt (s. o.), der anschließende
+Zusammenführungs-Schritt fasste bisher aber IMMER alle daraus entstandenen
+Teiltexte in einem einzigen Aufruf zusammen – bei einem häufig verwendeten
+Kapitel mit hunderten Tickets (entsprechend vielen Teiltexten) konnte
+dieser Zusammenführungs-Aufruf selbst wieder zu groß werden und mit
+"Zu viele Rohdaten für einen Durchlauf" fehlschlagen, obwohl die
+Aufteilung der Rohdaten selbst korrekt funktionierte. `manualSynthesizePartials()`
+verdichtet die Teiltexte jetzt bei Bedarf in mehreren
+Zusammenführungs-**Runden** (ebenfalls zeichen-budgetiert, mit derselben
+Nebenläufigkeitsgrenze von 3 gleichzeitigen Aufrufen je Runde), bis sie
+zusammen in einen einzelnen finalen Aufruf passen – ein Kapitel mit 150
+Tickets braucht dadurch z. B. 2 statt 1 Zusammenführungsrunden, scheitert
+aber nicht mehr am Limit. Performance-Messung (simulierte Antwortzeit):
+150 Tickets ≈ 19 Claude-Aufrufe gesamt, 400 Tickets ≈ 46 – lineares, nicht
+explodierendes Wachstum.
+
+**Bugfix 2 (adaptive Bisektion gegen denselben Fehler bereits bei der
+Rohdaten-Erzeugung):** Die Zusammenführungs-Absicherung oben (Bugfix 1) hat
+den Fehler bei genau dieser Stelle behoben, er trat in der Praxis aber auch
+bereits BEIM ERZEUGEN der einzelnen Roh-Batches selbst wieder auf – obwohl
+`chunkRagRows()` die reinen Ticket-Rohdaten korrekt auf
+`RAG_BATCH_CHAR_BUDGET` begrenzt, zählt der tatsächlich an Claude gesendete
+Prompt zusätzlich Anweisungstext und Rollenhinweis dazu, und ein einzelnes
+ungewöhnlich langes Ticket bildet laut Kommentar in `chunkRagRows()` ohnehin
+einen bewusst UNGEDECKELTEN eigenen Batch. `manualGenerateBatchAdaptive()`
+fängt `prompt_too_large` jetzt auch an dieser Stelle ab und bisektiert die
+betroffenen Tickets rekursiv (Hälfte/Hälfte), bis einzelne Tickets übrig
+bleiben; ist selbst ein einzelnes Ticket noch zu groß, wird dessen
+Beschreibung gekürzt (mit sichtbarem `[…Text gekürzt]`-Hinweis) und einmal
+erneut versucht; scheitert auch das (seltener Randfall), wird genau dieses
+eine Ticket ehrlich als `[OFFEN: Ticket <Key> konnte … nicht automatisch
+verarbeitet werden.]` markiert, statt den gesamten Kapitel-Lauf abzubrechen.
+Dieselbe reaktive Bisektion sichert zusätzlich jeden einzelnen
+Zusammenführungs-Aufruf aus Bugfix 1 ab (`manualSynthesizeGroup()`), falls
+die vorausschauende Zeichen-Budget-Schätzung dort im Einzelfall doch nicht
+ausreicht – beide Mechanismen zusammen verlassen sich damit nicht mehr auf
+einen geschätzten, sondern reagieren direkt auf die tatsächliche
+Prompt-Größengrenze der Claude-Artifact-Laufzeit.
+
+**Bugfix 3 (garantierter Fortschritt der Zusammenführungs-Runden bei sehr
+vielen Tickets):** Bei einem Kapitel mit sehr vielen Tickets (hunderte bis
+tausende) konnte die Statuszeile dauerhaft bei "Verdichte X Teiltexte in Y
+Zwischenschritte (Zusammenführungsrunde 1) …" hängen bleiben, ohne dass das
+Kapitel je fertig wurde. Ursache: `chunkTextsByBudget()` packte einen
+Teiltext, der bereits für sich allein das Zusammenführungs-Budget sprengt,
+IMMER in eine eigene Einzel-Gruppe, die nie mit einem Nachbarn kombiniert
+wurde. Bei vielen solcher Texte reduzierte eine Verdichtungsrunde die Anzahl
+kaum, bis `manualSynthesizePartials()` nach einer Runde ganz ohne Reduktion
+komplett abbrach und auf den rein SEQUENZIELLEN (nicht parallelisierten)
+rekursiven Bisektions-Fallback in `manualSynthesizeGroup()` auswich – bei
+hunderten Texten praktisch eine Hängepartie. Behoben durch zwei Änderungen:
+(1) `chunkTextsByBudget()` fasst direkt benachbarte "zu groß für sich
+allein"-Einzel-Gruppen jetzt zusätzlich paarweise zusammen (das Budget wird
+dabei bewusst überschritten – `manualSynthesizeGroup()` bisektiert eine zu
+große Gruppe ohnehin reaktiv zurück), was jede Runde mindestens eine
+spürbare Reduktion statt Stillstand garantiert; (2) `manualSynthesizeGroup()`
+verarbeitet seine beiden Bisektions-Hälften jetzt nebenläufig (`Promise.all`)
+statt nacheinander. Zusätzlich zeigt die Ordnerauswahl ("Zielordner wählen")
+jetzt eine klarere Fehlermeldung, wenn der Browser sie innerhalb der
+eingebetteten Claude-Artifact-Vorschau per Sandbox-Regel blockiert (reine
+Browser-Beschränkung, nicht umgehbar – App direkt in Chrome/Edge öffnen statt
+in der Vorschau).
 
 **Wartbarkeit (vereinheitlichter Ticket-Index):** RAG (Verarbeitung → 7.
 RAG), der Benutzerhandbuch-Kapitel-Generator und Gliederung filterten
@@ -677,6 +742,28 @@ zusammenzuführen.
     welches Feld (Bearbeiter/Ersteller) einen Namen enthält. Bei einer
     Datei mit vielen Tickets werden aus Performance-Gründen maximal 100
     angezeigt (mit Hinweis, die Auswahl einzugrenzen).
+  - **Dateiansicht-FastTrack** (drei gelbe Buttons rechts von
+    "Dateiansicht", erst nach Klick auf "Dateiansicht" aktiv) – drei
+    schnelle KI-gestützte Aktionen auf der aktuell gezeigten (bereinigten)
+    Datei:
+    - **Übersetzen (Deutsch)** – übersetzt den gesamten angezeigten
+      Dateiinhalt (z. B. englischsprachige Jira-Tickets) ins Deutsche;
+      ersetzt danach automatisch die Ansicht, ein Original/Übersetzung-
+      Umschalter erscheint, damit jederzeit zwischen beiden gewechselt
+      werden kann, ohne erneut zu übersetzen.
+    - **Als Word exportieren** – exportiert die aktuell angezeigte Ansicht
+      (Original oder Übersetzung, je nach Umschalter) als `.docx`-Datei.
+    - **Datei zusammenfassen** – öffnet ein neues Fenster mit einer
+      prägnanten KI-Zusammenfassung der Datei, wahlweise auf Deutsch oder
+      English (Umschalter im Fenster, beide Sprachen werden je einmal
+      erzeugt und danach gecacht).
+
+    Übersetzen und Zusammenfassen arbeiten auf denselben bereinigten
+    Ticket-Rohdaten wie die Dateiansicht selbst (max. 100 Tickets) und
+    nutzen dieselbe budget-chunkende, reaktiv gegen "zu viele Rohdaten für
+    einen Durchlauf" bisektierende Architektur wie der Benutzerhandbuch-
+    Kapitel-Generator (s. u.), damit auch Dateien mit vielen/langen Tickets
+    nicht an diesem Limit scheitern.
   - **Import-Statistik** (am Ende des Import-Bereichs, letzter Abschnitt) –
     erscheint automatisch nach jedem Import (ohne Klick, neuester Import
     vorausgewählt; über die Auswahlbox auch für ältere Imports abrufbar)
@@ -858,6 +945,31 @@ zusammenzuführen.
   Domänen-Gruppierung) erfolgt nur noch periodisch (alle 20 Treffer) sowie
   einmal abschließend – bei vielen hundert Einträgen spürbar schneller als
   zuvor (linearer statt quadratischer Gesamtaufwand über den Lauf).
+  Neben Domäne/Kapitel lässt sich je Zeile zusätzlich ein **Unterkapitel**
+  wählen (Liste hängt vom gewählten Kapitel ab, Standard "– keine –";
+  ändert sich das Kapitel, wird die Unterkapitel-Auswahl zurückgesetzt) –
+  dient als Grundlage der neuen Spalte **"Ref.-Nr."**: eine automatisch
+  erzeugte, stabile Referenz-Nummer im Format
+  "`<Domänen-Kürzel>-<Kapitelnr>.<Unterkapitelnr>-<Jahr>-<laufende Nummer>`"
+  (z. B. "CM-04.01-2024-003"), mit der sich aus einem fertigen Text wieder
+  auf das ursprüngliche Jira-Ticket zurückschließen lässt. Nur bei
+  **ticketbasierten** Einträgen (über "Tickets übernehmen" hinzugefügt)
+  ermittelbar – hochgeladene/eingelesene Inhalte ohne 1:1-Ticketbezug
+  zeigen ehrlich "–" statt eine erfundene Nummer. Das Domänen-Kürzel kommt
+  aus einer neuen Stammdaten-Tabelle (Einstellungen → Domänen-Kürzel,
+  automatischer Vorschlag aus den Wortanfängen der Domäne, z. B. "Contract
+  Management" → "CM", frei überschreibbar bei Kollisionen). Eine einmal
+  vergebene Nummer bleibt stabil (auch nach erneutem Zuordnen derselben
+  Kombination oder einem Sitzung-speichern/laden-Zyklus) und wird
+  automatisch an jeden Textschnipsel im Domänen-MD-Export sowie im
+  Gesamtdokument ("Zusammenfassung je Kapitel") als Zeile "_Referenz: ...
+  (Jira: ...)_" angehängt. Dieselbe Referenz-Nummer-Logik liefert außerdem
+  die **"Quellen"-Fußzeile**, die der Benutzerhandbuch-Kapitel-Generator
+  und die RAG-Zusammenfassung/der Fließtext (Verarbeitung → 7. RAG) an
+  ihren erzeugten Text anhängen: dort fließen pro Kapitel/Lauf mehrere
+  Tickets in EINEN KI-Fließtext ein (keine 1:1-Zuordnung je Satz), daher
+  eine gesammelte Liste aller Quell-Tickets mit Referenz-Nummer am Textende
+  statt einer Nummer je Absatz.
   Zusätzlich lässt sich jede Zeile per **Checkbox** auswählen – über
   **"Alle auswählen"**, **"Auswahl aufheben"** oder **"Alle auswählen mit
   Name \*"** (einfaches Namensmuster mit `*`/`?` als Platzhalter, z. B.
@@ -1066,12 +1178,27 @@ zusammenzuführen.
   Kapitel, s. o.) automatisch **im Hintergrund alle 50 Durchgänge eine
   Zwischenversion** – ein vollständiger Schnappschuss aller bis dahin
   erzeugten Kapitel/Labels, damit bei einem Absturz/Abbruch nicht der
-  gesamte Fortschritt verloren geht. Da die App rein im Browser läuft, gibt
-  es **keinen echten Ordner**: die Zwischenversionen erscheinen stattdessen
-  als Liste direkt unter dem Statustext, mit **"Wiederherstellen"** (ersetzt
-  den aktuellen Entwurfsstand) und **"Als ZIP herunterladen"** (ein .md je
-  Kapitel) je Eintrag; Teil der Sitzung (Speichern/Laden, "Alle Daten
-  löschen"). Je Kapitel steht außerdem der Button
+  gesamte Fortschritt verloren geht. Ohne gewählten Zielordner (s. u.) gibt
+  es dafür **keinen echten Ordner**, da die App rein im Browser läuft: die
+  Zwischenversionen erscheinen stattdessen als Liste direkt unter dem
+  Statustext, mit **"Wiederherstellen"** (ersetzt den aktuellen
+  Entwurfsstand) und **"Als ZIP herunterladen"** (ein .md je Kapitel) je
+  Eintrag; Teil der Sitzung (Speichern/Laden, "Alle Daten löschen").
+  **Zielordner wählen (optional)**: außerhalb der Claude-Artifact-Vorschau
+  (z. B. direkt in Chrome/Edge geöffnet) lässt sich über die File System
+  Access API ein lokaler Ordner auswählen – danach wird **jedes fertige
+  Kapitel sofort** als eigene .md-Datei dort abgelegt (Dateiname wie die
+  Kapitel-/Label-Bezeichnung, z. B. "Kapitel_4_Servicevertrag_anlegen.md"),
+  ohne auf das Ende des gesamten Laufs zu warten. Der Ordner-Handle ist
+  bewusst kein Sitzungsdatensatz (nicht serialisierbar, Browser-Berechtigung
+  gilt ohnehin nur für die aktuelle Seite) und wird bei "Sitzung
+  zurücksetzen"/"Alle Daten löschen" vergessen. Unabhängig davon lässt sich
+  jederzeit über **"Alle Kapitel zusammenführen"** (unterhalb der
+  Kapitel-Liste) der komplette bisherige Entwurfsstand zu einem
+  Gesamtdokument in Gliederungsreihenfolge zusammensetzen – editierbar, als
+  Datei herunterladbar und bei gewähltem Zielordner zusätzlich automatisch
+  als "Gesamtdokument.md" dort gespeichert. Je Kapitel steht außerdem der
+  Button
   **"Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)"** zur Verfügung:
   ein separater, gezielt (auch wiederholt) auslösbarer KI-Durchgang NACH der
   Texterstellung, der den fertigen Text auf Grammatikfehler, inhaltliche
@@ -1454,6 +1581,17 @@ funktionieren Ansicht/Suche/Filter; der Datei-Download (ZIP/Markdown)
 benötigt die Claude-Artifact-Laufzeit (`window.claude`-API) und
 funktioniert nur, wenn die Datei über Claude als Artifact veröffentlicht
 wurde – lokal geöffnet zeigt der Button eine entsprechende Meldung.
+
+**Eingebettete Ausgangsdaten:** `data/tickets.json` ist bewusst leer
+(`[]`) – die veröffentlichte App startet mit **0 eingebetteten
+Jira-Tickets** statt der früheren Demo-/Testdaten, auch nach "Sitzung
+zurücksetzen" im Import-Bereich. Unberührt davon bleiben
+Benutzerhandbuch-Gliederung, Labels, Punkte-System und
+Farbschema-Overrides (Konfiguration, kein Ticket-Datensatz, s. o.) –
+eine neue Installation zeigt also sofort die vollständige Struktur,
+aber ohne Beispiel-Tickets, bis eigene Jira-Exporte importiert werden.
+Für lokale Tests mit realistischen Datenmengen eigene Exporte unter
+`Input/` ablegen und `jira-releaseletter build-webapp` erneut ausführen.
 
 ## Unterstützte Exportformate (Phase 1)
 

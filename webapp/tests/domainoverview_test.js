@@ -71,7 +71,9 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("Innerhalb Domain chronologisch sortiert (ältestes zuerst: DOV-2 vor DOV-1)", dov2Idx >= 0 && dov1Idx >= 0 && dov2Idx < dov1Idx);
 
   const domainCount = parseInt(doc.getElementById("domainoverview-domain-count").textContent, 10);
-  check("Domain-Anzahl-Chip zeigt mind. 3 Gruppen (Alpha, Beta, Ohne Domain + Domains aus Demodaten)", domainCount >= 3);
+  check("Domain-Anzahl-Chip zeigt mind. 3 Gruppen (Alpha, Beta, Ohne Domain)", domainCount >= 3);
+
+  const totalTicketCount = parseInt(doc.getElementById("stat-tickets").textContent, 10);
 
   // ===================== Scoping über "Datei auswählen" wirkt auch auf Job 6 =====================
   const importRows = doc.querySelectorAll("#steps-job-6 .step-toggle");
@@ -83,14 +85,14 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   fire(specificImportRadio, "change");
   await wait(20);
   const scopedTicketCount = parseInt(doc.getElementById("domainoverview-ticket-count").textContent, 10);
-  check("Nach Datei-Auswahl: Domänen-Übersicht auf gewählten Import eingeschränkt", scopedTicketCount < 667);
+  check("Nach Datei-Auswahl: Domänen-Übersicht auf gewählten Import eingeschränkt", scopedTicketCount < totalTicketCount);
 
   // Zurück auf "Alle Importe"
   const allRadio = Array.from(doc.querySelectorAll('input[name^="active-import-choice-6"]')).find((r) => r.value === "");
   allRadio.checked = true;
   fire(allRadio, "change");
   await wait(20);
-  check("Zurück auf 'Alle Importe': wieder alle Tickets in der Domänen-Übersicht", parseInt(doc.getElementById("domainoverview-ticket-count").textContent, 10) >= 667);
+  check("Zurück auf 'Alle Importe': wieder alle Tickets in der Domänen-Übersicht", parseInt(doc.getElementById("domainoverview-ticket-count").textContent, 10) === totalTicketCount);
 
   // ===================== XSS-Schutz: Domain-Name und Zusammenfassung werden escaped =====================
   check("Domain-/Zusammenfassungs-Zellen enthalten kein rohes <script> oder <img onerror>", !tbody.innerHTML.includes("<script") && !tbody.innerHTML.includes("onerror="));

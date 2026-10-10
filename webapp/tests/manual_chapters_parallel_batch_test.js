@@ -130,7 +130,10 @@ async function waitUntil(fn, timeoutMs) {
   fire(doc.getElementById("manual-generate-btn"), "click");
   const ready = await waitUntil(() => {
     const ta = doc.querySelector(".manual-chapter-textarea[data-lang='de']");
-    return !!ta && ta.value === "SyntheseText";
+    // Seit der Referenz-Nummern-Erweiterung haengt eine "Quellen"-Fussnote
+    // am generierten Text (s. ticketSourcesFooter()) - startsWith statt
+    // exakter Gleichheit.
+    return !!ta && ta.value.startsWith("SyntheseText");
   }, 3000);
   const elapsedMs = Date.now() - t0;
 

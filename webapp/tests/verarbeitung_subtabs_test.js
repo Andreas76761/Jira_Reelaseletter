@@ -42,8 +42,23 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("Panel 'protokoll' jetzt versteckt", doc.querySelector('[data-vsub-panel="protokoll"]').hidden);
   check("Vergleichstabelle in Verarbeitung anfangs leer (Hinweistext sichtbar)", !doc.getElementById("changes-empty-verarbeitung").hidden);
 
-  // Teil-Import auslösen (ONESCM-8282), dann prüfen ob Vergleich hier UND in Dateiverwaltung gleich ist
+  // Basis-Import: ONESCM-8282 anlegen (die App startet bewusst mit 0
+  // eingebetteten Tickets, s. data/tickets.json - macht diesen Test
+  // unabhängig von einem Ausgangsbestand), danach Teil-Import auslösen
+  // (ONESCM-8282), dann pruefen ob Vergleich hier UND in Dateiverwaltung
+  // gleich ist
   doc.querySelector('.nav-item[data-view="import"]').click();
+  doc.querySelector('.import-tab[data-mode="massenupload"]').click();
+  const baseXml = `<?xml version="1.0"?><rss><channel>
+    <item><key>ONESCM-8282</key><summary>Testfeld</summary><status>Geschlossen</status>
+      <created>01/Jan/24 12:07 PM</created><updated>01/Jan/24 12:07 PM</updated>
+      <customfields><customfield><customfieldname>Domain</customfieldname><customfieldvalues><customfieldvalue>Documents &amp; Communications</customfieldvalue></customfieldvalues></customfield></customfields></item>
+  </channel></rss>`;
+  const inputBase = doc.getElementById("file-input");
+  Object.defineProperty(inputBase, "files", { value: [new win.File([baseXml], "basis.xml", { type: "application/xml" })], configurable: true });
+  fire(inputBase, "change");
+  await wait(300);
+
   doc.querySelector('.import-tab[data-mode="massenupload"]').click();
   const xmlText = fs.readFileSync(path.join(FIXTURES, "nachtrag_demo.xml"), "utf-8");
   const input = doc.getElementById("file-input");

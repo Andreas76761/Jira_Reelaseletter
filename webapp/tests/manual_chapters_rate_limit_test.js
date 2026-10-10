@@ -119,7 +119,7 @@ async function setupChapter(doc, win, n, prefix) {
   fire(doc.getElementById("manual-generate-btn"), "click");
   const doneA = await waitUntil(() => {
     const ta = doc.querySelector(".manual-chapter-textarea[data-lang='de']");
-    return !!ta && ta.value === "SyntheseText-A";
+    return !!ta && ta.value.startsWith("SyntheseText-A");
   }, 5000);
   check("(A) Generierung mit 5 Teil-Batches erfolgreich abgeschlossen", doneA);
   check("(A) Nie mehr als 3 Batches gleichzeitig in Bearbeitung (Obergrenze eingehalten)", maxInFlight <= 3);
@@ -139,7 +139,10 @@ async function setupChapter(doc, win, n, prefix) {
   fire(doc.getElementById("manual-generate-btn"), "click");
   const doneB = await waitUntil(() => {
     const ta = doc.querySelector(".manual-chapter-textarea[data-lang='de']");
-    return !!ta && ta.value === "ErfolgNachRetry";
+    // Seit der Referenz-Nummern-Erweiterung haengt eine "Quellen"-Fussnote
+    // am generierten Text (s. ticketSourcesFooter()) - startsWith statt
+    // exakter Gleichheit.
+    return !!ta && ta.value.startsWith("ErfolgNachRetry");
   }, 5000);
   check("(B) Nach einem einzelnen transienten rate_limited-Fehler trotzdem erfolgreich (automatischer Retry)", doneB);
   check("(B) Genau 2 Versuche für diesen einen Batch (1 fehlgeschlagen + 1 erfolgreicher Retry)", rl1Attempts === 2);
