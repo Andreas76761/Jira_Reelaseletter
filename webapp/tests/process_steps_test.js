@@ -33,13 +33,16 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
 
   doc.querySelector('.nav-item[data-view="verarbeitung"]').click();
 
-  // ===================== Zustand direkt nach dem initialen Beispiel-Import =====================
+  // ===================== Boot-Zustand (0 eingebettete Tickets - s.
+  // data/tickets.json - aber der Boot-Vorgang selbst registriert bereits
+  // einen (leeren) Import-Eintrag, s. ingestTickets()) =====================
   check("Job 1 hat 4 Prozessschritte", doc.querySelectorAll("#steps-job-1 .process-step").length === 4);
-  check("Job 1: Schritte 1+2 (Datei/Verarbeitet) sind 'done' nach initialem Import", stepStates(1)[0] === "done" && stepStates(1)[1] === "done");
+  check("Job 1: Schritt 1 (Datei importiert) ist 'done' (Boot registriert einen Import-Eintrag)", stepStates(1)[0] === "done");
+  check("Job 1: Schritt 2 (Verarbeitet) ist 'pending' (noch 0 Tickets)", stepStates(1)[1] === "pending");
   check("Job 1: Protokoll-Schritt 'done' (Import selbst erzeugt Log-Eintrag)", stepStates(1)[2] === "done");
 
   check("Job 2 hat 4 Prozessschritte", doc.querySelectorAll("#steps-job-2 .process-step").length === 4);
-  check("Job 2: 'mind. 2 Importe' ist 'pending' (nur 1 Import bisher)", stepStates(2)[0] === "pending");
+  check("Job 2: 'mind. 2 Importe' ist 'pending' (nur 1 Import bisher - der Boot-Eintrag)", stepStates(2)[0] === "pending");
 
   check("Job 3: Extraktion ist 'pending' vor dem ersten Lauf", stepStates(3)[2] === "pending");
 
@@ -48,12 +51,34 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("Job 4: Bewertungs-Schritt (6) ist 'pending' vor erster Bewertung", stepStates(4)[5] === "pending");
 
   check("Job 5 hat 4 Prozessschritte", doc.querySelectorAll("#steps-job-5 .process-step").length === 4);
-  check("Job 5: alle Schritte 'done' (Tickets bereits geladen)", stepStates(5).every((s) => s === "done"));
+  check("Job 5: noch nicht alle Schritte 'done' (0 Tickets)", !stepStates(5).every((s) => s === "done"));
 
   check("Job 6 (Domänen-Übersicht) hat 4 Prozessschritte", doc.querySelectorAll("#steps-job-6 .process-step").length === 4);
-  check("Job 6: alle Schritte 'done' (Tickets bereits geladen)", stepStates(6).every((s) => s === "done"));
+  check("Job 6: noch nicht alle Schritte 'done' (0 Tickets)", !stepStates(6).every((s) => s === "done"));
 
-  // ===================== Zweiter Import: Job 2 wird 'done' =====================
+  // ===================== Erster expliziter Import: Basis-Ticket (macht
+  // Job 1/5/6 ticket-content-abhängige Schritte 'done'; zählt zusammen mit
+  // dem Boot-Eintrag bereits als 2. Import, OHNE eine echte Änderung
+  // auszulösen - ONESCM-8282 tritt hier zum ersten Mal auf) =====================
+  doc.querySelector('.nav-item[data-view="import"]').click();
+  doc.querySelector('.import-tab[data-mode="massenupload"]').click();
+  const baseXml = `<?xml version="1.0"?><rss><channel>
+    <item><key>ONESCM-8282</key><summary>Testfeld</summary><status>Geschlossen</status>
+      <created>01/Jan/24 12:07 PM</created><updated>01/Jan/24 12:07 PM</updated></item>
+  </channel></rss>`;
+  const inputBase = doc.getElementById("file-input");
+  Object.defineProperty(inputBase, "files", { value: [new win.File([baseXml], "basis.xml", { type: "application/xml" })], configurable: true });
+  fire(inputBase, "change");
+  await wait(300);
+  doc.querySelector('.nav-item[data-view="verarbeitung"]').click();
+  check("Job 1: Schritt 2 (Verarbeitet) jetzt 'done' (1 Ticket vorhanden)", stepStates(1)[1] === "done");
+  check("Job 5: jetzt alle Schritte 'done' (Tickets vorhanden)", stepStates(5).every((s) => s === "done"));
+  check("Job 6: jetzt alle Schritte 'done' (Tickets vorhanden)", stepStates(6).every((s) => s === "done"));
+  check("Job 2: 'mind. 2 Importe' jetzt 'done' (Boot-Eintrag + Basis-Import)", stepStates(2)[0] === "done");
+  check("Job 2: 'Änderungen erkannt' noch 'pending' (ONESCM-8282 tritt hier erstmals auf, keine Änderung)", stepStates(2)[3] === "pending");
+
+  // ===================== Zweiter expliziter Import: Job 2 'Änderungen
+  // erkannt' wird 'done' (ONESCM-8282 bekommt jetzt einen neuen Status) =====================
   doc.querySelector('.nav-item[data-view="import"]').click();
   doc.querySelector('.import-tab[data-mode="massenupload"]').click();
   const input = doc.getElementById("file-input");
@@ -62,7 +87,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   fire(input, "change");
   await wait(400);
   doc.querySelector('.nav-item[data-view="verarbeitung"]').click();
-  check("Job 2: nach 2. Import alle Schritte 'done' (Aenderung gefunden)", stepStates(2).every((s) => s === "done"));
+  check("Job 2: nach 3. Import alle Schritte 'done' (Aenderung gefunden)", stepStates(2).every((s) => s === "done"));
 
   // ===================== Job 3: Extraktion ausfuehren -> Schritte werden 'done' =====================
   doc.querySelector('.import-tab[data-vsub="glossar-extrakt"]').click();

@@ -1582,6 +1582,17 @@ benötigt die Claude-Artifact-Laufzeit (`window.claude`-API) und
 funktioniert nur, wenn die Datei über Claude als Artifact veröffentlicht
 wurde – lokal geöffnet zeigt der Button eine entsprechende Meldung.
 
+**Eingebettete Ausgangsdaten:** `data/tickets.json` ist bewusst leer
+(`[]`) – die veröffentlichte App startet mit **0 eingebetteten
+Jira-Tickets** statt der früheren Demo-/Testdaten, auch nach "Sitzung
+zurücksetzen" im Import-Bereich. Unberührt davon bleiben
+Benutzerhandbuch-Gliederung, Labels, Punkte-System und
+Farbschema-Overrides (Konfiguration, kein Ticket-Datensatz, s. o.) –
+eine neue Installation zeigt also sofort die vollständige Struktur,
+aber ohne Beispiel-Tickets, bis eigene Jira-Exporte importiert werden.
+Für lokale Tests mit realistischen Datenmengen eigene Exporte unter
+`Input/` ablegen und `jira-releaseletter build-webapp` erneut ausführen.
+
 ## Unterstützte Exportformate (Phase 1)
 
 - **XML** (`.xml`): klassischer Jira-Export ("Issue-Navigator > XML

@@ -36,12 +36,15 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("Standard-Tab 'massenupload' aktiv", doc.querySelector('.import-tab[data-mode="massenupload"]').classList.contains("active"));
 
   // --- 1. Jira Einzelticket ---
+  // Die App startet bewusst mit 0 eingebetteten Tickets (s. data/tickets.json).
+  const startTotal = parseInt(doc.getElementById("stat-tickets").textContent, 10);
   doc.querySelector('.import-tab[data-mode="einzelticket"]').click();
   check("Dropzone-Hinweis wechselt auf Einzelticket", doc.getElementById("dropzone-title").textContent.includes("Einzelticket") || doc.getElementById("dropzone-title").textContent.includes("Detailseite"));
   const singleHtml = fs.readFileSync(path.join(FIXTURES, "single_ticket_sample.html"), "utf-8");
   upload(new dom.window.File([singleHtml], "ONESCM-50123.html", { type: "text/html" }));
   await wait(300);
-  check("Einzelticket importiert: 664 Tickets gesamt", doc.getElementById("stat-tickets").textContent === "664");
+  const totalAfterSingleTicket = parseInt(doc.getElementById("stat-tickets").textContent, 10);
+  check("Einzelticket importiert: 1 Ticket mehr als zuvor", totalAfterSingleTicket === startTotal + 1);
 
   doc.querySelector('.nav-item[data-view="dashboard"]').click();
   doc.getElementById("search-input").value = "ONESCM-50123";
@@ -65,7 +68,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   upload(new dom.window.File([releaseinfoText], "release_notes_sep2026.txt", { type: "text/plain" }));
   await wait(400);
   const totalAfterReleaseinfo = parseInt(doc.getElementById("stat-tickets").textContent, 10);
-  check("Releaseinfo importiert: Tickets-Zahl deutlich gestiegen (>700)", totalAfterReleaseinfo > 700);
+  check("Releaseinfo importiert: Tickets-Zahl deutlich gestiegen (>100 neue Tickets aus der Fixture-Datei)", totalAfterReleaseinfo > totalAfterSingleTicket + 100);
   console.log("  (Ticket-Gesamtzahl nach Releaseinfo-Import:", totalAfterReleaseinfo, ")");
 
   doc.querySelector('.nav-item[data-view="dashboard"]').click();

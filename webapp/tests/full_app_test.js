@@ -43,12 +43,33 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   const checks = [];
   function check(label, ok) { checks.push([label, ok]); console.log((ok ? "OK  " : "FAIL") + " - " + label); }
 
-  // --- 1. Initialzustand ---
-  check("Initial: 663 Tickets geladen", doc.getElementById("stat-tickets").textContent === "663");
-  check("Initial: 1 Import", doc.getElementById("stat-imports").textContent === "1");
-  check("Initial: 0 Änderungen", doc.getElementById("stat-changes").textContent === "0");
+  // --- 1. Initialzustand (Boot-Zustand, 0 eingebettete Tickets - s.
+  // data/tickets.json) ---
+  check("Initial: 0 Tickets geladen (keine eingebetteten Demo-Tickets)", doc.getElementById("stat-tickets").textContent === "0");
   check("Dashboard-Panel initial sichtbar", !doc.querySelector('[data-view-panel="dashboard"]').hidden);
   check("Import-Panel initial versteckt", doc.querySelector('[data-view-panel="import"]').hidden);
+
+  // --- 1b. Basis-Ticket importieren (macht den Rest dieses Tests
+  // unabhängig von einem eingebetteten Ausgangsbestand) - legt ONESCM-8282
+  // mit bekanntem Status an, das weiter unten (Punkt 4) mit geändertem
+  // Status erneut importiert wird, um die Änderungserkennung zu testen. ---
+  doc.querySelector('.nav-item[data-view="import"]').click();
+  const baseXml = `<?xml version="1.0"?><rss><channel>
+    <item><key>ONESCM-8282</key><summary>Testfeld</summary><status>Geschlossen</status>
+      <created>01/Jan/24 12:07 PM</created><updated>01/Jan/24 12:07 PM</updated></item>
+  </channel></rss>`;
+  const file1 = new dom.window.File([baseXml], "basis.xml", { type: "application/xml" });
+  const input0 = doc.getElementById("file-input");
+  Object.defineProperty(input0, "files", { value: [file1], configurable: true });
+  fire(input0, "change");
+  await wait(300);
+  check("Nach Basis-Import: 1 Ticket geladen", doc.getElementById("stat-tickets").textContent === "1");
+  // 2 statt 1: der Boot-Vorgang registriert selbst schon einen (leeren)
+  // Import-Eintrag fuer die (jetzt leeren) eingebetteten Ausgangsdaten -
+  // derselbe Mechanismus wie zuvor mit 663 eingebetteten Demo-Tickets,
+  // nur jetzt mit 0 Tickets im ersten Eintrag.
+  check("Nach Basis-Import: 2 Imports (Boot-Eintrag + Basis-Import)", doc.getElementById("stat-imports").textContent === "2");
+  check("Nach Basis-Import: 0 Änderungen", doc.getElementById("stat-changes").textContent === "0");
 
   // --- 2. Navigation ---
   ["import", "dateiverwaltung", "verarbeitung", "releaseletter", "benutzerhandbuch", "prozessbild",
@@ -78,15 +99,15 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   fire(input, "change");
   await wait(300);
 
-  check("Nach 2. Import: 664 Tickets (663 + 1 neu)", doc.getElementById("stat-tickets").textContent === "664");
-  check("Nach 2. Import: 2 Imports", doc.getElementById("stat-imports").textContent === "2");
+  check("Nach 2. Import: 2 Tickets (1 + 1 neu)", doc.getElementById("stat-tickets").textContent === "2");
+  check("Nach 2. Import: 3 Imports (Boot-Eintrag + Basis + Nachtrag)", doc.getElementById("stat-imports").textContent === "3");
   check("Nach 2. Import: 1 Änderung erkannt (ONESCM-8282)", doc.getElementById("stat-changes").textContent === "1");
   check("Nav-Badge zeigt 1 Änderung", !doc.getElementById("nav-badge-changes").hidden && doc.getElementById("nav-badge-changes").textContent === "1");
 
   // Dateiverwaltung prüfen
   doc.querySelector('.nav-item[data-view="dateiverwaltung"]').click();
   const importRows = doc.querySelectorAll("#imports-tbody tr");
-  check("2 Zeilen in Imports-Tabelle", importRows.length === 2);
+  check("3 Zeilen in Imports-Tabelle", importRows.length === 3);
   const changeRows = doc.querySelectorAll("#changes-tbody tr");
   const changesText = doc.getElementById("changes-tbody").textContent;
   check("Änderungstabelle enthält ONESCM-8282", changesText.includes("ONESCM-8282"));
@@ -97,7 +118,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   // Verarbeitung / Log prüfen
   doc.querySelector('.nav-item[data-view="verarbeitung"]').click();
   const logText = doc.getElementById("log-list").textContent;
-  check("Log enthält 2 Import-Einträge", (logText.match(/Import „/g) || []).length === 2);
+  check("Log enthält 3 Import-Einträge", (logText.match(/Import „/g) || []).length === 3);
   check("Log enthält 'geändert' Hinweis", logText.includes("1 geändert"));
 
   // Dashboard: geändertes Ticket markiert
@@ -142,7 +163,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   fire(doc.getElementById("search-input"), "input");
   await wait(200); // Suchfeld ist debounced (150ms) - siehe ticket_cockpit.html
   doc.querySelector('.nav-item[data-view="output-md"]').click();
-  check("Output-MD zeigt 1 von 664 Tickets (gefiltert)", doc.getElementById("output-md-count").textContent === "1" && doc.getElementById("output-md-total").textContent === "664");
+  check("Output-MD zeigt 1 von 2 Tickets (gefiltert)", doc.getElementById("output-md-count").textContent === "1" && doc.getElementById("output-md-total").textContent === "2");
   fire(doc.getElementById("output-md-export-btn"), "click");
   await wait(500);
 
@@ -201,7 +222,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   doc.querySelector('.nav-item[data-view="import"]').click();
   fire(doc.getElementById("reset-session-btn"), "click");
   await wait(200);
-  check("Nach Reset: wieder 663 Tickets", doc.getElementById("stat-tickets").textContent === "663");
+  check("Nach Reset: wieder 0 Tickets (keine eingebetteten Demo-Tickets)", doc.getElementById("stat-tickets").textContent === "0");
   check("Nach Reset: 1 Import", doc.getElementById("stat-imports").textContent === "1");
   check("Nach Reset: 0 Änderungen", doc.getElementById("stat-changes").textContent === "0");
 

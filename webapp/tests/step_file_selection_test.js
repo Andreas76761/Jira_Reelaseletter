@@ -113,7 +113,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   doc.querySelector('.import-tab[data-vsub="releaseversion"]').click();
   const radiosAfterReset = doc.querySelectorAll('#steps-job-4 input[name^="active-import-choice-"]');
   check("Nach Reset: 'Alle Importe' wieder ausgewählt", radiosAfterReset[0].checked === true);
-  check("Nach Reset: Job-4-Tabelle zeigt wieder alle (663) Tickets", doc.getElementById("releaseversion-total").textContent === "663");
+  check("Nach Reset: Job-4-Tabelle zeigt wieder alle (0) Tickets", doc.getElementById("releaseversion-total").textContent === "0");
 
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }
   const failed = checks.filter((c) => !c[1]);

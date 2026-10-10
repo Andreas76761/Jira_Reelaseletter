@@ -26,6 +26,28 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   const checks = [];
   function check(l, ok) { checks.push([l, ok]); console.log((ok ? "OK  " : "FAIL") + " - " + l); }
 
+  // ===================== Basis-Import: die App startet bewusst mit 0 =====
+  // eingebetteten Tickets (s. data/tickets.json) - fuer Dashboard-/Such-/
+  // Prozessbild-Tests unten braucht es eine kleine eigene Ticket-Menge
+  // (inkl. ONESCM-8282, auf das sich mehrere Checks beziehen).
+  doc.querySelector('.nav-item[data-view="import"]').click();
+  doc.querySelector('.import-tab[data-mode="massenupload"]').click();
+  const baseXml = `<?xml version="1.0"?><rss><channel>
+    <item><key>ONESCM-8282</key><summary>Testfeld</summary><status>Geschlossen</status>
+      <created>01/Jan/24 12:07 PM</created><updated>01/Jan/24 12:07 PM</updated></item>
+    <item><key>ONESCM-8283</key><summary>Zweites Testticket</summary><status>Offen</status>
+      <created>02/Jan/24 12:07 PM</created><updated>02/Jan/24 12:07 PM</updated></item>
+    <item><key>ONESCM-8284</key><summary>Drittes Testticket</summary><status>Fertig</status>
+      <created>03/Jan/24 12:07 PM</created><updated>03/Jan/24 12:07 PM</updated>
+      <customfields><customfield><customfieldname>Domain</customfieldname><customfieldvalues><customfieldvalue>Contract Management</customfieldvalue></customfieldvalues></customfield></customfields></item>
+  </channel></rss>`;
+  const baseInput = doc.getElementById("file-input");
+  Object.defineProperty(baseInput, "files", { value: [new win.File([baseXml], "basis.xml", { type: "application/xml" })], configurable: true });
+  fire(baseInput, "change");
+  await wait(300);
+  doc.querySelector('.nav-item[data-view="dashboard"]').click();
+  await wait(50);
+
   // ===================== Fix #4: Event-Delegation auf #table-body =====================
   const firstRow = doc.querySelector("#table-body tr");
   check("Zeilen haben KEINEN eigenen Klick-Listener mehr direkt am <tr> (Delegation statt pro Zeile)", true); // strukturell nicht direkt pruefbar, siehe funktionaler Test unten
