@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.62.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.64.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -756,14 +756,20 @@ zusammenzuführen.
     - **Datei zusammenfassen** – öffnet ein neues Fenster mit einer
       prägnanten KI-Zusammenfassung der Datei, wahlweise auf Deutsch oder
       English (Umschalter im Fenster, beide Sprachen werden je einmal
-      erzeugt und danach gecacht).
+      erzeugt und danach gecacht). Die fertige Zusammenfassung lässt sich
+      zusätzlich als CSV, Word (`.docx`) oder PDF herunterladen (eigene
+      Export-Buttons im Fenster, erst nach erfolgreicher Erzeugung aktiv).
 
     Übersetzen und Zusammenfassen arbeiten auf denselben bereinigten
     Ticket-Rohdaten wie die Dateiansicht selbst (max. 100 Tickets) und
     nutzen dieselbe budget-chunkende, reaktiv gegen "zu viele Rohdaten für
     einen Durchlauf" bisektierende Architektur wie der Benutzerhandbuch-
     Kapitel-Generator (s. u.), damit auch Dateien mit vielen/langen Tickets
-    nicht an diesem Limit scheitern.
+    nicht an diesem Limit scheitern. Während der Erzeugung zeigen alle drei
+    Aktionen durchgängig eine Sanduhr (wie an anderen Verarbeitungsstellen
+    in der App); ohne `window.claude`-Laufzeit (z. B. beim lokalen Öffnen
+    der Datei) erscheint statt eines dauerhaft hängenden Ladezustands ein
+    klarer Hinweis, dass die KI-Funktion hier nicht verfügbar ist.
   - **Import-Statistik** (am Ende des Import-Bereichs, letzter Abschnitt) –
     erscheint automatisch nach jedem Import (ohne Klick, neuester Import
     vorausgewählt; über die Auswahlbox auch für ältere Imports abrufbar)

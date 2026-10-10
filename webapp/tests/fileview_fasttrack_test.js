@@ -9,6 +9,7 @@ const fs = require("fs");
 const path = require("path");
 const BUILD_HTML = path.join(__dirname, "..", "ticket_cockpit.build.html");
 const { JSDOM, VirtualConsole } = require("jsdom");
+const { jsPDF } = require("jspdf");
 
 const fragment = fs.readFileSync(BUILD_HTML, "utf-8");
 const full = `<!doctype html><html><head><meta charset="utf-8"></head><body>${fragment}</body></html>`;
@@ -31,15 +32,16 @@ let sampleImpl = async (input) => {
   return { text: "UNBEKANNT", truncated: false, modelTierApplied: "default" };
 };
 
+const savedFiles = [];
 const dom = new JSDOM(full, {
   runScripts: "dangerously", resources: "usable", pretendToBeVisual: true, url: "https://example.com/t", virtualConsole: vc,
   beforeParse(window) {
     window.JSZip = require("jszip");
-    window.jspdf = { jsPDF: function () {} };
+    window.jspdf = { jsPDF: jsPDF };
     window.claude = {
       use: function (name) {
         if (name === "sample") return Promise.resolve(function (input, opts) { return sampleImpl(input, opts); });
-        if (name === "downloads") return Promise.resolve({ save: function () { return Promise.resolve({ status: "saved" }); } });
+        if (name === "downloads") return Promise.resolve({ save: function (req) { savedFiles.push(req); return Promise.resolve({ status: "saved" }); } });
         return Promise.resolve(null);
       },
     };
@@ -135,11 +137,40 @@ const xmlFixture = `<?xml version="1.0"?><rss><channel>
   const summaryModal = doc.getElementById("fileview-summary-modal-overlay");
   check("Zusammenfassungs-Modal initial versteckt", summaryModal.hidden === true);
   fire(summarizeBtn, "click");
-  await wait(50);
   check("Zusammenfassungs-Modal öffnet sich (neues Fenster)", summaryModal.hidden === false);
+  check("Sanduhr (Spinner) sofort nach Klick sichtbar (waehrend der Erzeugung)", doc.getElementById("fileview-summary-spinner").hidden === false);
+  check("Export-Buttons waehrend des Ladens noch deaktiviert", doc.getElementById("fileview-summary-export-csv-btn").disabled &&
+    doc.getElementById("fileview-summary-export-docx-btn").disabled && doc.getElementById("fileview-summary-export-pdf-btn").disabled);
+  await wait(50);
   const summaryLoaded = await waitUntil(() => doc.getElementById("fileview-summary-output").textContent === "ZUSAMMENFASSUNG-DE", 10000);
   check("Deutsche Zusammenfassung wird automatisch geladen (Standard)", summaryLoaded);
   check("'Deutsch'-Tab initial aktiv", doc.getElementById("fileview-summary-lang-de-btn").className.indexOf("active") !== -1);
+  check("Sanduhr nach Abschluss wieder versteckt", doc.getElementById("fileview-summary-spinner").hidden === true);
+  check("Export-Buttons nach erfolgreicher Erzeugung aktiviert", !doc.getElementById("fileview-summary-export-csv-btn").disabled &&
+    !doc.getElementById("fileview-summary-export-docx-btn").disabled && !doc.getElementById("fileview-summary-export-pdf-btn").disabled);
+
+  // ===================== 3b) Export der Zusammenfassung als CSV/Word/PDF =====================
+  // Regression: diese Export-Buttons teilen sich optisch die .job-export-btn-
+  // Klasse mit den Verarbeitung-Job-Exports, duerfen aber NICHT vom dortigen
+  // generischen data-job-Handler abgefangen werden (sonst erscheint
+  // faelschlich "Noch nicht verfügbar" statt des echten Exports).
+  savedFiles.length = 0;
+  fire(doc.getElementById("fileview-summary-export-csv-btn"), "click");
+  await wait(100);
+  check("CSV-Export der Zusammenfassung ausgeloest", savedFiles.length === 1 && savedFiles[0].filename.endsWith(".csv"));
+  check("CSV-Export zeigt KEINEN 'Noch nicht verfügbar'-Fehltoast (Regression)", doc.getElementById("toast").textContent.indexOf("Noch nicht verfügbar") === -1);
+
+  savedFiles.length = 0;
+  fire(doc.getElementById("fileview-summary-export-docx-btn"), "click");
+  await wait(100);
+  check("Word-Export der Zusammenfassung ausgeloest", savedFiles.length === 1 && savedFiles[0].filename.endsWith(".docx"));
+  check("Word-Export der Zusammenfassung zeigt KEINEN 'Noch nicht verfügbar'-Fehltoast (Regression)", doc.getElementById("toast").textContent.indexOf("Noch nicht verfügbar") === -1);
+
+  savedFiles.length = 0;
+  fire(doc.getElementById("fileview-summary-export-pdf-btn"), "click");
+  await wait(100);
+  check("PDF-Export der Zusammenfassung ausgeloest", savedFiles.length === 1 && savedFiles[0].filename.endsWith(".pdf"));
+  check("PDF-Export der Zusammenfassung zeigt KEINEN 'Noch nicht verfügbar'-Fehltoast (Regression)", doc.getElementById("toast").textContent.indexOf("Noch nicht verfügbar") === -1);
 
   const enBtn = doc.getElementById("fileview-summary-lang-en-btn");
   fire(enBtn, "click");

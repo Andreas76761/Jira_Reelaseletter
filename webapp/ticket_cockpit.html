@@ -991,8 +991,14 @@
           <div class="controls">
             <select id="fileview-import-select"><option value="">Datei auswählen …</option></select>
             <button class="btn primary" id="fileview-show-btn" type="button" disabled>Dateiansicht</button>
-            <button class="btn fasttrack" id="fileview-translate-btn" type="button" disabled>Übersetzen (Deutsch)</button>
-            <button class="btn fasttrack" id="fileview-export-docx-btn" type="button" disabled>Als Word exportieren</button>
+            <button class="btn fasttrack" id="fileview-translate-btn" type="button" disabled>
+              <span class="btn-spinner" id="fileview-translate-spinner" hidden></span>
+              <span id="fileview-translate-label">Übersetzen (Deutsch)</span>
+            </button>
+            <button class="btn fasttrack" id="fileview-export-docx-btn" type="button" disabled>
+              <span class="btn-spinner" id="fileview-export-docx-spinner" hidden></span>
+              <span id="fileview-export-docx-label">Als Word exportieren</span>
+            </button>
             <button class="btn fasttrack" id="fileview-summarize-btn" type="button" disabled>Datei zusammenfassen</button>
           </div>
           <div class="panel fileview-wrap" id="fileview-wrap" hidden>
@@ -2492,10 +2498,16 @@
       <button type="button" class="preview-toggle-btn" id="fileview-summary-lang-en-btn">English</button>
     </div>
     <div class="panel" id="fileview-summary-output-wrap" style="padding:12px; min-height:120px; white-space:pre-wrap;">
-      <p class="empty-hint" id="fileview-summary-loading">Erzeuge Zusammenfassung …</p>
+      <p class="empty-hint" id="fileview-summary-loading"><span class="btn-spinner" id="fileview-summary-spinner" style="margin-right:8px; vertical-align:-2px;"></span>Erzeuge Zusammenfassung …</p>
       <div id="fileview-summary-output"></div>
     </div>
     <p class="step-note" id="fileview-summary-status-note"></p>
+    <div class="job-export-row" id="fileview-summary-export-row" style="margin:4px 0 0;">
+      <span class="job-export-label">Exportieren:</span>
+      <button class="btn ghost job-export-btn" id="fileview-summary-export-csv-btn" type="button" disabled>CSV</button>
+      <button class="btn ghost job-export-btn" id="fileview-summary-export-docx-btn" type="button" disabled>Word</button>
+      <button class="btn ghost job-export-btn" id="fileview-summary-export-pdf-btn" type="button" disabled>PDF</button>
+    </div>
     <div class="modal-actions">
       <button class="btn ghost" id="fileview-summary-modal-cancel-btn" type="button">Schließen</button>
     </div>
@@ -4440,7 +4452,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.63.0";
+  var APP_VERSION = "2.64.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5650,6 +5662,22 @@
     return doc.output("blob");
   }
 
+  // RFC4180-tauglicher CSV-Writer (Gegenstueck zu parseCsvRows() oben): ein
+  // Feld wird nur dann in Anfuehrungszeichen gesetzt, wenn es das
+  // Trennzeichen, Anfuehrungszeichen oder einen Zeilenumbruch enthaelt;
+  // enthaltene Anfuehrungszeichen werden verdoppelt. UTF-8-BOM voran, damit
+  // Excel Umlaute korrekt erkennt statt sie als falsches Encoding zu lesen.
+  function csvEscapeField(value) {
+    var s = value === null || value === undefined ? "" : String(value);
+    if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+  function buildCsvBlob(headers, rows) {
+    var lines = [headers.map(csvEscapeField).join(",")];
+    rows.forEach(function (row) { lines.push(row.map(csvEscapeField).join(",")); });
+    return new Blob(["﻿" + lines.join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8" });
+  }
+
   /* ============ Teil 2: App-Status ============ */
 
   var BUCKET_OF_STATUS = {
@@ -5862,11 +5890,14 @@
     "reference-manual-table-wrap", "reference-manual-tbody", "reference-manual-empty",
     "paste-textarea", "paste-from-clipboard-btn", "paste-process-btn", "paste-spinner", "paste-process-label",
     "fileview-import-select", "fileview-show-btn", "fileview-wrap", "fileview-summary", "fileview-content",
-    "fileview-translate-btn", "fileview-export-docx-btn", "fileview-summarize-btn", "fileview-fasttrack-status-note",
+    "fileview-translate-btn", "fileview-translate-spinner", "fileview-translate-label",
+    "fileview-export-docx-btn", "fileview-export-docx-spinner", "fileview-export-docx-label",
+    "fileview-summarize-btn", "fileview-fasttrack-status-note",
     "fileview-original-toggle-wrap", "fileview-view-original-btn", "fileview-view-translated-btn",
     "fileview-summary-modal-overlay", "fileview-summary-modal-key", "fileview-summary-modal-close", "fileview-summary-modal-cancel-btn",
     "fileview-summary-lang-de-btn", "fileview-summary-lang-en-btn", "fileview-summary-output-wrap", "fileview-summary-loading",
-    "fileview-summary-output", "fileview-summary-status-note",
+    "fileview-summary-spinner", "fileview-summary-output", "fileview-summary-status-note",
+    "fileview-summary-export-csv-btn", "fileview-summary-export-docx-btn", "fileview-summary-export-pdf-btn",
     "importstats-import-select", "importstats-wrap", "importstats-summary", "importstats-tbody", "importstats-empty",
     "imports-tbody", "imports-refresh-btn", "imports-refresh-pending-hint", "changes-tbody", "changes-empty", "domain-aliases-tbody",
     "log-list", "log-empty",
@@ -10187,9 +10218,11 @@
     if (!imp) return;
     if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
     els.fileviewTranslateBtn.disabled = true;
+    els.fileviewTranslateSpinner.hidden = false;
     var ctl = new AbortController();
     fileviewTranslateAbortController = ctl;
     els.fileviewFasttrackStatusNote.textContent = "Übersetze „" + imp.source + "“ …";
+    await wait(20); // Sanduhr einmal rendern lassen, bevor die Verarbeitung startet
     try {
       var text = await fileviewGenerateTranslation(importId, ctl.signal, function (note) { els.fileviewFasttrackStatusNote.textContent = note; });
       app.fileviewTranslations[importId] = text;
@@ -10203,6 +10236,7 @@
       els.fileviewFasttrackStatusNote.textContent = "";
     } finally {
       els.fileviewTranslateBtn.disabled = false;
+      els.fileviewTranslateSpinner.hidden = true;
       fileviewTranslateAbortController = null;
     }
   });
@@ -10215,12 +10249,18 @@
     var translated = fileviewShowView === "translated" && app.fileviewTranslations[importId];
     var text = translated ? app.fileviewTranslations[importId] : fileviewTicketPlainTextBlocks(importId).join("\n\n");
     var title = imp.source + (translated ? " (Übersetzung Deutsch)" : "");
+    els.fileviewExportDocxBtn.disabled = true;
+    els.fileviewExportDocxSpinner.hidden = false;
+    await wait(20); // Sanduhr einmal rendern lassen, bevor der Aufbau beginnt
     try {
       var blob = await buildMarkdownDocxBlob(title, "# " + title + "\n\n" + text);
       var ok = await saveOrWarn(safeFilename(imp.source) + (translated ? "-uebersetzt" : "") + ".docx", blob);
       if (ok) { showToast("Gespeichert", "Als Word-Dokument heruntergeladen."); addLog("Dateiansicht: „" + imp.source + "“ als Word-Dokument exportiert" + (translated ? " (Übersetzung)" : "") + "."); }
     } catch (err) {
       showToast("Fehlgeschlagen", (err && err.message) || "Word-Export fehlgeschlagen.", true);
+    } finally {
+      els.fileviewExportDocxBtn.disabled = false;
+      els.fileviewExportDocxSpinner.hidden = true;
     }
   });
   // --- Datei zusammenfassen: KI-Zusammenfassung in neuem Fenster (Modal),
@@ -10294,42 +10334,75 @@
   }
   var fileviewSummaryAbortController = null;
   var fileviewSummaryModalImportId = null;
+  var fileviewSummaryCurrentLang = "de";
   function closeFileviewSummaryModal() {
     els.fileviewSummaryModalOverlay.hidden = true;
     if (fileviewSummaryAbortController) { fileviewSummaryAbortController.abort(); fileviewSummaryAbortController = null; }
     fileviewSummaryModalImportId = null;
+  }
+  // Export-Buttons duerfen nur dann nutzbar sein, wenn im Ausgabebereich
+  // GERADE eine echte (gecachte) Zusammenfassung angezeigt wird - nicht
+  // waehrend des Ladens und nicht, wenn stattdessen ein Hinweis-/
+  // Fehlertext steht (sonst wuerde dieser Platzhaltertext exportiert).
+  function updateFileviewSummaryExportButtons() {
+    var importId = fileviewSummaryModalImportId;
+    var hasText = importId != null && app.fileviewSummaries[importId] && !!app.fileviewSummaries[importId][fileviewSummaryCurrentLang];
+    els.fileviewSummaryExportCsvBtn.disabled = !hasText;
+    els.fileviewSummaryExportDocxBtn.disabled = !hasText;
+    els.fileviewSummaryExportPdfBtn.disabled = !hasText;
   }
   async function fileviewLoadSummaryLang(lang) {
     var importId = fileviewSummaryModalImportId;
     if (importId == null) return;
     if (!app.fileviewSummaries[importId]) app.fileviewSummaries[importId] = {};
     var cache = app.fileviewSummaries[importId];
+    fileviewSummaryCurrentLang = lang;
     els.fileviewSummaryLangDeBtn.classList.toggle("active", lang === "de");
     els.fileviewSummaryLangEnBtn.classList.toggle("active", lang === "en");
     if (cache[lang]) {
       els.fileviewSummaryLoading.hidden = true;
+      els.fileviewSummarySpinner.hidden = true;
       els.fileviewSummaryOutput.textContent = cache[lang];
       els.fileviewSummaryStatusNote.textContent = "";
+      updateFileviewSummaryExportButtons();
       return;
     }
-    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return; }
+    // Wichtig: VOR dem Anzeigen des Lade-Zustands pruefen - sonst bleibt
+    // das Modal bei fehlender KI-Funktion dauerhaft auf "Erzeuge
+    // Zusammenfassung ..." haengen, weil diese Funktion dann sofort
+    // zurueckkehrt, ohne den Lade-Zustand je wieder auszublenden (Bug).
+    if (!sampleApi) {
+      els.fileviewSummaryLoading.hidden = true;
+      els.fileviewSummarySpinner.hidden = true;
+      els.fileviewSummaryOutput.textContent = "Keine Zusammenfassung erzeugt – KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).";
+      els.fileviewSummaryStatusNote.textContent = "";
+      updateFileviewSummaryExportButtons();
+      showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true);
+      return;
+    }
     els.fileviewSummaryLoading.hidden = false;
+    els.fileviewSummarySpinner.hidden = false;
     els.fileviewSummaryOutput.textContent = "";
+    updateFileviewSummaryExportButtons();
     var ctl = new AbortController();
     fileviewSummaryAbortController = ctl;
     try {
       var text = await fileviewGenerateSummary(importId, lang, ctl.signal, function (note) { els.fileviewSummaryStatusNote.textContent = note; });
       cache[lang] = text;
       els.fileviewSummaryLoading.hidden = true;
+      els.fileviewSummarySpinner.hidden = true;
       els.fileviewSummaryOutput.textContent = text;
       els.fileviewSummaryStatusNote.textContent = "";
+      updateFileviewSummaryExportButtons();
       var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
       addLog("Dateiansicht: Zusammenfassung von „" + (imp ? imp.source : importId) + "“ (" + (lang === "en" ? "Englisch" : "Deutsch") + ") erzeugt.");
     } catch (err) {
       if (err && err.code === "cancelled") return;
       var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
       els.fileviewSummaryLoading.hidden = true;
+      els.fileviewSummarySpinner.hidden = true;
       els.fileviewSummaryStatusNote.textContent = "";
+      updateFileviewSummaryExportButtons();
       showToast("Zusammenfassung fehlgeschlagen", msg, true);
     } finally {
       fileviewSummaryAbortController = null;
@@ -10337,10 +10410,13 @@
   }
   function openFileviewSummaryModal(importId, source) {
     fileviewSummaryModalImportId = importId;
+    fileviewSummaryCurrentLang = "de";
     els.fileviewSummaryModalKey.textContent = source;
     els.fileviewSummaryLoading.hidden = false;
+    els.fileviewSummarySpinner.hidden = false;
     els.fileviewSummaryOutput.textContent = "";
     els.fileviewSummaryStatusNote.textContent = "";
+    updateFileviewSummaryExportButtons();
     els.fileviewSummaryModalOverlay.hidden = false;
     els.fileviewSummaryModalClose.focus();
     fileviewLoadSummaryLang("de");
@@ -10356,6 +10432,55 @@
   els.fileviewSummaryModalClose.addEventListener("click", closeFileviewSummaryModal);
   els.fileviewSummaryModalCancelBtn.addEventListener("click", closeFileviewSummaryModal);
   els.fileviewSummaryModalOverlay.addEventListener("click", function (e) { if (e.target === els.fileviewSummaryModalOverlay) closeFileviewSummaryModal(); });
+  // --- Export der fertigen Zusammenfassung als CSV/Word/PDF (gilt fuer die
+  // GERADE angezeigte Sprache) - nur aktiv, wenn tatsaechlich eine
+  // Zusammenfassung vorliegt (s. updateFileviewSummaryExportButtons()). ---
+  function fileviewSummaryExportContext() {
+    var importId = fileviewSummaryModalImportId;
+    if (importId == null) return null;
+    var cache = app.fileviewSummaries[importId];
+    var text = cache && cache[fileviewSummaryCurrentLang];
+    if (!text) return null;
+    var imp = app.imports.filter(function (i) { return i.id === importId; })[0];
+    var source = imp ? imp.source : String(importId);
+    var langLabel = fileviewSummaryCurrentLang === "en" ? "English" : "Deutsch";
+    var title = "Zusammenfassung – " + source + " (" + langLabel + ")";
+    return { text: text, source: source, langLabel: langLabel, title: title };
+  }
+  els.fileviewSummaryExportCsvBtn.addEventListener("click", function () {
+    var ctx = fileviewSummaryExportContext();
+    if (!ctx) return;
+    try {
+      var blob = buildCsvBlob(["Datei", "Sprache", "Zusammenfassung"], [[ctx.source, ctx.langLabel, ctx.text]]);
+      saveOrWarn(safeFilename(ctx.source) + "-zusammenfassung-" + fileviewSummaryCurrentLang + ".csv", blob).then(function (ok) {
+        if (ok) { showToast("Gespeichert", "Zusammenfassung als CSV heruntergeladen."); addLog("Dateiansicht: Zusammenfassung von „" + ctx.source + "“ als CSV exportiert."); }
+      });
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "CSV-Export fehlgeschlagen.", true);
+    }
+  });
+  els.fileviewSummaryExportDocxBtn.addEventListener("click", async function () {
+    var ctx = fileviewSummaryExportContext();
+    if (!ctx) return;
+    try {
+      var blob = await buildMarkdownDocxBlob(ctx.title, "# " + ctx.title + "\n\n" + ctx.text);
+      var ok = await saveOrWarn(safeFilename(ctx.source) + "-zusammenfassung-" + fileviewSummaryCurrentLang + ".docx", blob);
+      if (ok) { showToast("Gespeichert", "Zusammenfassung als Word-Dokument heruntergeladen."); addLog("Dateiansicht: Zusammenfassung von „" + ctx.source + "“ als Word-Dokument exportiert."); }
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Word-Export fehlgeschlagen.", true);
+    }
+  });
+  els.fileviewSummaryExportPdfBtn.addEventListener("click", async function () {
+    var ctx = fileviewSummaryExportContext();
+    if (!ctx) return;
+    try {
+      var blob = buildMarkdownPdfBlob(ctx.title, "# " + ctx.title + "\n\n" + ctx.text);
+      var ok = await saveOrWarn(safeFilename(ctx.source) + "-zusammenfassung-" + fileviewSummaryCurrentLang + ".pdf", blob);
+      if (ok) { showToast("Gespeichert", "Zusammenfassung als PDF heruntergeladen."); addLog("Dateiansicht: Zusammenfassung von „" + ctx.source + "“ als PDF exportiert."); }
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "PDF-Export fehlgeschlagen.", true);
+    }
+  });
 
   /* ============ Import-Statistik (Teil 2c/Import): Feldabdeckung je
      Import - s. computeImportFieldStats() fuer die Berechnung. Wird nach
@@ -12931,7 +13056,13 @@
       btn.disabled = false; btn.textContent = origLabel;
     }
   }
-  Array.prototype.forEach.call(document.querySelectorAll(".job-export-btn"), function (btn) {
+  // Nur Buttons MIT data-job ansprechen (die 7 Verarbeitung-Jobs) - die
+  // .job-export-btn-Klasse wird rein fuer das einheitliche Button-Styling
+  // auch anderswo wiederverwendet (z. B. Dateiansicht-Zusammenfassung-
+  // Export), diese haben eigene, speziell dafuer zustaendige Click-Handler
+  // und duerfen NICHT zusaetzlich hier landen (sonst ueberschreibt dieser
+  // generische Handler faelschlich deren Toast-Meldung).
+  Array.prototype.forEach.call(document.querySelectorAll(".job-export-btn[data-job]"), function (btn) {
     btn.addEventListener("click", function () { exportJob(btn.getAttribute("data-job"), btn.getAttribute("data-format"), btn); });
   });
 
