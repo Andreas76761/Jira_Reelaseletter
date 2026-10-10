@@ -35,6 +35,24 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   // ===================== 1) Jira Verarbeitung (Protokoll) =====================
   check("Protokoll zeigt mind. einen Log-Eintrag (Initial-Import)", doc.querySelectorAll("#log-list li").length >= 1);
 
+  // ===================== 1b) "Protokoll leeren" - loescht NUR das Protokoll
+  // (anders als "Alle Daten löschen"/"Sitzung zurücksetzen" bleiben Tickets/
+  // Imports/Zwischenergebnisse unangetastet) =====================
+  const statTicketsBeforeLogClear = doc.getElementById("stat-tickets").textContent;
+  fire(doc.getElementById("log-clear-btn"), "click");
+  await wait(30);
+  fire(doc.getElementById("confirm-modal-ok-btn"), "click");
+  await wait(300); // Bestaetigungs-Dialog hat eine bewusste 200ms-Sanduhr, bevor er schliesst
+  check("Nach 'Protokoll leeren': genau 1 Eintrag (der Loesch-Log-Eintrag selbst)", doc.querySelectorAll("#log-list li").length === 1);
+  check("Verbleibender Eintrag dokumentiert die Loeschung", doc.getElementById("log-list").textContent.includes("Protokoll geleert"));
+  check("'Protokoll leeren' ruehrt Tickets/Imports NICHT an", doc.getElementById("stat-tickets").textContent === statTicketsBeforeLogClear);
+  // Erneutes Leeren bei (fast) leerem Protokoll funktioniert ebenso (kein Absturz/Deadlock)
+  fire(doc.getElementById("log-clear-btn"), "click");
+  await wait(30);
+  fire(doc.getElementById("confirm-modal-ok-btn"), "click");
+  await wait(300);
+  check("Wiederholtes 'Protokoll leeren' funktioniert fehlerfrei", doc.querySelectorAll("#log-list li").length === 1);
+
   // ===================== 2) Vergleich Jira Tickets =====================
   doc.querySelector('.import-tab[data-vsub="vergleich"]').click();
   check("Tab 'vergleich' aktiv nach Klick", doc.querySelector('.import-tab[data-vsub="vergleich"]').classList.contains("active"));

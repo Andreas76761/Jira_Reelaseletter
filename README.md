@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.65.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.66.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1019,6 +1019,11 @@ zusammenzuführen.
   dabei erhalten – sodass sich die Verarbeitung mit einer neuen Datei-/
   Listen-Auswahl sauber neu starten lässt.
   1. *Jira Verarbeitung* – chronologisches Protokoll aller Import-/Export-Aktionen.
+     Über den Button **"Protokoll leeren"** (mit Sicherheitsabfrage) lässt
+     sich nur das Protokoll selbst löschen – anders als "Alle Daten löschen"/
+     "Sitzung zurücksetzen" bleiben Tickets, Imports und alle übrigen
+     Zwischenergebnisse dabei unberührt. Der Löschvorgang wird danach selbst
+     als neuer erster Eintrag protokolliert.
   2. *Vergleich Jira Tickets* – derselbe Änderungsvergleich wie in der
      Dateiverwaltung (gleiche Jira-Nummer, unterschiedlicher Datenstand),
      zusätzlich direkt hier verfügbar. Über den Button "Vergleich" öffnet
@@ -1081,7 +1086,11 @@ zusammenzuführen.
      statt Text aus allen Tickets zu vermischen; zeigt
      nur unverändert vorhandene Ticket-Daten, "–" bei fehlendem Text; die
      Rohdaten-Tabelle lässt sich wie bei Jobs 1-6 als XLSX/DOCX/PDF
-     exportieren. Schritt 2 (**Generation**, echte KI): mit den Buttons "Zusammenfassung
+     exportieren. Über den Button **"RAG-Daten löschen"** (mit
+     Sicherheitsabfrage) lassen sich extrahierte Rohdaten und generierter
+     Text/Übersetzung gemeinsam löschen – anders als "Alle Daten löschen"/
+     "Sitzung zurücksetzen" bleiben Tickets, Imports und alle übrigen
+     Verarbeitungsergebnisse dabei unberührt. Schritt 2 (**Generation**, echte KI): mit den Buttons "Zusammenfassung
      generieren" bzw. "Fließtext generieren" schickt die App die
      extrahierten Rohdaten über die `sample`-Laufzeit-Capability an Claude
      und lässt daraus einen endnutzergerechten Text schreiben (Live-Streaming

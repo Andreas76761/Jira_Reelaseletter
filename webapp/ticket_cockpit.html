@@ -1338,6 +1338,7 @@
             <button class="btn ghost job-export-btn" data-job="1" data-format="xlsx" type="button">XLSX</button>
             <button class="btn ghost job-export-btn" data-job="1" data-format="docx" type="button">DOCX</button>
             <button class="btn ghost job-export-btn" data-job="1" data-format="pdf" type="button">PDF</button>
+            <button class="btn danger" id="log-clear-btn" type="button" style="margin-left:auto;">Protokoll leeren</button>
           </div>
           <div class="panel" style="padding: 6px 16px;">
             <ul class="log-list" id="log-list"></ul>
@@ -1520,6 +1521,9 @@
           <p class="desc">Rohdaten (Überschrift + Beschreibung) der aktuell in Verarbeitung ausgewählten Datei extrahieren &ndash; gefiltert nach Domäne, Status und Zeitraum &ndash; und daraus mit Claude einen endnutzergerechten Text generieren (Zusammenfassung oder Fließtext). Die Extraktion selbst zeigt nur unverändert vorhandene Ticket-Daten; die KI-Generierung ist ein separater, bewusst ausgelöster Schritt und wird als solcher gekennzeichnet &ndash; automatisch erzeugter Text, vor Verwendung redaktionell prüfen.</p>
           <p class="section-label">Prozessschritte</p>
           <div class="process-steps" id="steps-job-7"></div>
+          <div class="job-export-row">
+            <button class="btn danger" id="rag-clear-btn" type="button" style="margin-left:auto;">RAG-Daten löschen</button>
+          </div>
 
           <section>
             <p class="section-label">1. Rohdaten extrahieren</p>
@@ -4463,7 +4467,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.65.0";
+  var APP_VERSION = "2.66.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5911,7 +5915,7 @@
     "fileview-summary-export-csv-btn", "fileview-summary-export-docx-btn", "fileview-summary-export-pdf-btn",
     "importstats-import-select", "importstats-wrap", "importstats-summary", "importstats-tbody", "importstats-empty",
     "imports-tbody", "imports-refresh-btn", "imports-refresh-pending-hint", "changes-tbody", "changes-empty", "domain-aliases-tbody",
-    "log-list", "log-empty",
+    "log-list", "log-empty", "log-clear-btn",
     "verarbeitung-tabs", "changes-tbody-verarbeitung", "changes-empty-verarbeitung",
     "verarbeitung-burger-wrap", "verarbeitung-burger-btn", "verarbeitung-burger-menu",
     "extract-glossary-btn", "abbrev-count", "abbrev-tbody", "abbrev-empty",
@@ -5964,7 +5968,7 @@
     "graph-zoom-out-btn", "graph-zoom-in-btn", "graph-zoom-reset-btn", "graph-zoom-level",
     "graph-view-tabs", "graph-view-desc",
     "graph-legend", "graph-svg-container", "graph-empty-state", "graph-selection-tbody", "graph-selection-empty",
-    "rag-domain-select", "rag-status-select", "rag-label-category-select", "rag-outline-select", "rag-date-from", "rag-date-to", "rag-extract-btn",
+    "rag-domain-select", "rag-status-select", "rag-label-category-select", "rag-outline-select", "rag-date-from", "rag-date-to", "rag-extract-btn", "rag-clear-btn",
     "rag-extract-summary", "rag-extract-count", "rag-extract-wrap", "rag-extract-tbody", "rag-export-row",
     "rag-generate-summary-btn", "rag-generate-fliesstext-btn", "rag-stop-btn", "rag-resume-btn", "rag-status-note",
     "rag-batch-list-wrap", "rag-batch-tbody", "rag-output", "rag-token-usage", "rag-download-btn", "rag-batch-zip-btn",
@@ -10992,6 +10996,25 @@
     }).join("");
   }
 
+  // Leert NUR das Protokoll (anders als "Alle Daten löschen"/"Sitzung
+  // zurücksetzen" bleiben Tickets, Imports und alle übrigen Zwischen-
+  // ergebnisse unangetastet). Der Löschvorgang selbst wird - wie bei
+  // deleteAllData() - als neuer erster Eintrag protokolliert, damit das
+  // Protokoll nachvollziehbar bleibt statt kommentarlos leer zu sein.
+  els.logClearBtn.addEventListener("click", async function () {
+    if (!app.log.length) { showToast("Nichts zu löschen", "Das Protokoll ist bereits leer.", true); return; }
+    var count = app.log.length;
+    var ok = await confirmDialog(
+      "Protokoll dieser Sitzung (" + count + " Eintr" + (count === 1 ? "ag" : "äge") + ") wirklich unwiderruflich löschen? " +
+      "Tickets, Imports und alle übrigen Verarbeitungsergebnisse bleiben davon unberührt."
+    );
+    if (!ok) return;
+    app.log = [];
+    addLog("Protokoll geleert (" + count + " Eintr" + (count === 1 ? "ag" : "äge") + " entfernt, Admin-Aktion).");
+    renderAllJobSteps();
+    showToast("Protokoll geleert", "Das Protokoll wurde geleert.");
+  });
+
   /* ============ Teil 8b: Verarbeitung Unter-Tabs (2-4) ============ */
 
   function showVerarbeitungSub(name) {
@@ -14692,6 +14715,27 @@
     renderAllJobSteps();
   }
   els.ragExtractBtn.addEventListener("click", ragExtract);
+
+  // Leert NUR die RAG-Daten dieses Jobs (extrahierte Rohdaten + generierter
+  // Text/Übersetzung) - anders als "Alle Daten löschen"/"Sitzung
+  // zurücksetzen" bleiben Tickets, Imports und alle übrigen
+  // Verarbeitungsergebnisse (Protokoll, Glossar-Extraktion, Release-
+  // Abgleich) unangetastet.
+  els.ragClearBtn.addEventListener("click", async function () {
+    if (!ragExtractedRows.length && !ragHasGenerated && !ragBatchRun) {
+      showToast("Nichts zu löschen", "Es sind aktuell keine RAG-Daten vorhanden.", true);
+      return;
+    }
+    var ok = await confirmDialog(
+      "Extrahierte Rohdaten und generierter Text (RAG) dieser Sitzung wirklich unwiderruflich löschen? " +
+      "Tickets, Imports und alle übrigen Verarbeitungsergebnisse bleiben davon unberührt."
+    );
+    if (!ok) return;
+    ragResetOutput();
+    renderAllJobSteps();
+    addLog("RAG-Daten gelöscht (Rohdaten-Extraktion und generierter Text, Admin-Aktion).");
+    showToast("RAG-Daten gelöscht", "Extrahierte Rohdaten und generierter Text wurden gelöscht.");
+  });
 
   /* ============ Einstellungen: RAG-Prompts (editierbare KI-Anweisungen) ============
      Die Anweisungstexte fuer die 3 RAG-Schritte (Erzeugen, Batch-Zusammenfuehrung,

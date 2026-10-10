@@ -136,6 +136,29 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   await wait(150);
   check("Fließtext-Prompt unterscheidet sich vom Zusammenfassungs-Prompt", sampleCalls[0].input.includes("Fließtext") || sampleCalls[0].input.includes("Benutzerhandbuch"));
 
+  // ===================== "RAG-Daten löschen" - loescht NUR die RAG-Daten
+  // dieses Jobs (Rohdaten-Extraktion + generierter Text), Tickets/Imports
+  // bleiben unangetastet =====================
+  const statTicketsBeforeRagClear = doc.getElementById("stat-tickets").textContent;
+  check("'RAG-Daten löschen' vor dem Loeschen: Rohdaten-Tabelle sichtbar", !doc.getElementById("rag-extract-wrap").hidden);
+  fire(doc.getElementById("rag-clear-btn"), "click");
+  await wait(30);
+  fire(doc.getElementById("confirm-modal-ok-btn"), "click");
+  await wait(300); // Bestaetigungs-Dialog hat eine bewusste 200ms-Sanduhr, bevor er schliesst
+  check("Nach 'RAG-Daten löschen': Rohdaten-Tabelle wieder versteckt", doc.getElementById("rag-extract-wrap").hidden);
+  check("Nach 'RAG-Daten löschen': Extraktions-Zusammenfassung wieder versteckt", doc.getElementById("rag-extract-summary").hidden);
+  check("Nach 'RAG-Daten löschen': generierter Text zurueckgesetzt", doc.getElementById("rag-output").textContent.includes("Noch kein Text generiert"));
+  check("'RAG-Daten löschen' ruehrt Tickets/Imports NICHT an", doc.getElementById("stat-tickets").textContent === statTicketsBeforeRagClear);
+
+  // Erneutes Loeschen ohne vorhandene RAG-Daten: Hinweis statt Bestaetigungsdialog
+  fire(doc.getElementById("rag-clear-btn"), "click");
+  await wait(50);
+  check("Ohne RAG-Daten: Hinweistoast statt Bestaetigungsdialog", doc.getElementById("confirm-modal-overlay").hidden &&
+    doc.getElementById("toast").textContent.includes("Nichts zu löschen"));
+
+  // Fuer den Rest des Tests erneut extrahieren
+  fire(doc.getElementById("rag-extract-btn"), "click");
+
   // ===================== Fehlerfall: not_granted =====================
   sampleImpl = async () => { const e = { code: "not_granted", message: "not granted" }; throw e; };
   fire(doc.getElementById("rag-generate-summary-btn"), "click");
