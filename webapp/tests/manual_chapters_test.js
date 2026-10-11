@@ -109,6 +109,40 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("Kapitel-Auswahl listet auch 'Kapitel 1' (kein Ticket zugeordnet)",
     Array.from(doc.getElementById("manual-chapter-select").options).some((o) => o.value.includes("Kapitel 1:")));
 
+  // ===================== Prompt-Hinweis direkt im Kapitel-Generator sichtbar/editierbar
+  // (geteilter Zustand mit Einstellungen -> RAG-Prompts) =====================
+  check("Einklappbarer Prompt-Bereich vorhanden", !!doc.getElementById("manual-prompt-details"));
+  const promptEditor = doc.getElementById("manual-prompt-editor");
+  check("Prompt-Editor enthält 2 Textareas (Erstellung + Zusammenführung)", promptEditor.querySelectorAll(".ragprompt-textarea").length === 2);
+  const chapterPromptTa = promptEditor.querySelector('[data-ragprompt-key="manualChapter"]');
+  check("Textarea 'Benutzerhandbuch-Kapitel erstellen' zeigt den Standardtext", chapterPromptTa.value.includes("Technischer Redakteur"));
+  check("Badge zeigt 'Standard' ohne Override", chapterPromptTa.closest(".ragprompt-block").querySelector(".override-badge").textContent === "Standard");
+
+  chapterPromptTa.value = chapterPromptTa.value + " TESTANPASSUNG.";
+  fire(chapterPromptTa, "input");
+  await wait(30);
+  check("Badge wechselt auf 'angepasst'", promptEditor.querySelector('[data-ragprompt-key="manualChapter"]').closest(".ragprompt-block").querySelector(".override-badge").textContent === "angepasst");
+
+  doc.querySelector('.nav-item[data-view="einstellungen"]').click();
+  await wait(100);
+  const settingsTa = doc.querySelector('#ragprompts-list [data-ragprompt-key="manualChapter"]');
+  check("Dieselbe Änderung erscheint auch unter Einstellungen -> RAG-Prompts (geteilter Zustand)", settingsTa.value.includes("TESTANPASSUNG"));
+
+  const resetBtn = settingsTa.closest(".ragprompt-block").querySelector("[data-ragprompt-reset]");
+  fire(resetBtn, "click");
+  await wait(30);
+  doc.querySelector('.nav-item[data-view="benutzerhandbuch"]').click();
+  await wait(100);
+  check("Nach Zurücksetzen in Einstellungen: Kapitel-Generator zeigt wieder den Standardtext",
+    !doc.querySelector('#manual-prompt-editor [data-ragprompt-key="manualChapter"]').value.includes("TESTANPASSUNG"));
+
+  // Tatsaechlicher Effekt: ein hier bearbeiteter Prompt wird beim naechsten
+  // "Kapitel erstellen" tatsaechlich verwendet (nicht nur kosmetisch).
+  const chapterPromptTa2 = doc.querySelector('#manual-prompt-editor [data-ragprompt-key="manualChapter"]');
+  chapterPromptTa2.value = "MEINE-EIGENE-PROMPT-ANWEISUNG. " + chapterPromptTa2.value;
+  fire(chapterPromptTa2, "input");
+  await wait(30);
+
   // ===================== "Alle auswählen"/"Auswahl aufheben" (generischer Mechanismus) =====================
   const selectAllBtn = doc.querySelector('[data-select-all="manual-domain-select"]');
   check("'Alle auswählen'-Button für Domäne vorhanden", !!selectAllBtn);
@@ -131,12 +165,26 @@ const xml = `<?xml version="1.0"?><rss><channel>
   await wait(50);
   sampleCalls = [];
   fire(doc.getElementById("manual-generate-btn"), "click");
+  // Direkt nach dem (synchronen) Event-Dispatch prüfen, nicht nach einem
+  // Timer-Wait: manualGenerateChapters() setzt Spinner/Statusbalken/
+  // Beschriftung synchron, BEVOR es beim ersten Claude-Aufruf awaitet - bei
+  // nur 1 Ticket/Gruppe und einem Mock ohne künstliche Verzögerung kann der
+  // gesamte Lauf sonst schon innerhalb weniger Millisekunden fertig sein.
+  check("Sanduhr (Spinner) sichtbar während 'Kapitel erstellen' läuft", !doc.getElementById("manual-generate-spinner").hidden);
+  check("Statusbalken sichtbar während 'Kapitel erstellen' läuft", !doc.getElementById("manual-progress-wrap").hidden);
+  check("Button-Beschriftung zeigt 'Erzeuge …' während des Laufs", doc.getElementById("manual-generate-label").textContent === "Erzeuge …");
   for (let waited = 0; waited < 5000 && doc.getElementById("manual-chapters-list").children.length === 0; waited += 100) await wait(100);
+  await wait(50);
+  check("Sanduhr nach Abschluss wieder versteckt", doc.getElementById("manual-generate-spinner").hidden);
+  check("Statusbalken nach Abschluss wieder versteckt", doc.getElementById("manual-progress-wrap").hidden);
+  check("Button-Beschriftung zurückgesetzt auf 'Kapitel erstellen'", doc.getElementById("manual-generate-label").textContent === "Kapitel erstellen");
 
   check("sample() wurde für die Kapitel-Erstellung aufgerufen", sampleCalls.length >= 1);
   check("Prompt enthält die Ticket-Rohdaten (Fahrzeugdaten)", sampleCalls[0].input.includes("Fahrzeugdaten"));
   check("Prompt enthält Typ-Angabe (reichhaltiger als bei RAG)", sampleCalls[0].input.includes("Typ: Feature"));
   check("Prompt nennt das Kapitel", sampleCalls[0].input.includes("Kapitel 7"));
+  check("Im Kapitel-Generator bearbeiteter Prompt wird tatsächlich verwendet (nicht nur kosmetisch)",
+    sampleCalls[0].input.startsWith("MEINE-EIGENE-PROMPT-ANWEISUNG."));
   check("Mindestens 1 Kapitel-Karte erzeugt", doc.getElementById("manual-chapters-list").children.length >= 1);
   check("'Noch keine Kapitel erzeugt'-Hinweis jetzt versteckt", doc.getElementById("manual-chapters-empty").hidden === true);
 
@@ -236,6 +284,42 @@ const xml = `<?xml version="1.0"?><rss><channel>
   if (pdfSaved) {
     const pdfBuf = Buffer.from(await pdfSaved.data.arrayBuffer());
     check("PDF beginnt mit %PDF-Signatur", pdfBuf.slice(0, 4).toString() === "%PDF");
+  }
+
+  // ===================== Kapitel-Übersicht + MD-Export (je Kapitel + "Alle als ZIP") =====================
+  check("Kapitel-Übersicht sichtbar, sobald mindestens 1 Kapitel existiert", doc.getElementById("manual-overview-wrap").hidden === false);
+  const overviewRow = doc.querySelector("#manual-overview-tbody tr");
+  check("Übersicht zeigt eine Zeile für das Kapitel", !!overviewRow && overviewRow.textContent.includes("Kapitel 7: Verträge im Alltag verwalten"));
+
+  savedFiles.length = 0;
+  const mdBtn = doc.getElementById("manual-chapters-list").querySelector('[data-manual-action="export-md"]');
+  check("'Als Markdown'-Button in der Kapitel-Karte vorhanden", !!mdBtn);
+  fire(mdBtn, "click");
+  await wait(100);
+  check("Genau 1 Datei über die Downloads-Capability gespeichert (MD)", savedFiles.length === 1);
+  const mdSaved = savedFiles[0];
+  check("MD-Dateiname endet auf .md", !!mdSaved && mdSaved.filename.endsWith(".md"));
+  check("MD-Datei enthält den generierten Kapiteltext unverändert (kein HTML/Konvertierung)", mdSaved.data.includes("führt in den Prozess ein"));
+
+  savedFiles.length = 0;
+  const overviewMdBtn = doc.querySelector("#manual-overview-tbody [data-manual-overview-download]");
+  check("'MD herunterladen'-Button in der Übersicht vorhanden", !!overviewMdBtn);
+  fire(overviewMdBtn, "click");
+  await wait(100);
+  check("Übersicht-Download speichert ebenfalls genau 1 MD-Datei", savedFiles.length === 1 && savedFiles[0].filename.endsWith(".md"));
+
+  savedFiles.length = 0;
+  fire(doc.getElementById("manual-overview-zip-btn"), "click");
+  await wait(200);
+  check("'Alle als ZIP herunterladen' speichert genau 1 ZIP-Datei", savedFiles.length === 1 && savedFiles[0].filename.endsWith(".zip"));
+  if (savedFiles.length === 1) {
+    const overviewZip = await JSZipNode.loadAsync(savedFiles[0].data);
+    const mdEntries = Object.keys(overviewZip.files).filter((n) => n.endsWith(".md"));
+    check("ZIP enthält genau 1 .md-Datei (1 erzeugtes Kapitel)", mdEntries.length === 1);
+    if (mdEntries.length) {
+      const zippedText = await overviewZip.file(mdEntries[0]).async("string");
+      check("Gezippte MD-Datei enthält den Kapiteltext", zippedText.includes("führt in den Prozess ein"));
+    }
   }
 
   // ===================== Kapitel löschen =====================

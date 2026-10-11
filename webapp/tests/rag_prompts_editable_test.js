@@ -64,7 +64,13 @@ function setValue(el, v) { el.value = v; fire(el, "input"); }
   // ===================== Einstellungen: 5 Prompt-Editoren mit Standardtext =====================
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
   await wait(100);
-  const textareas = Array.from(doc.querySelectorAll(".ragprompt-textarea"));
+  // Scoped auf #ragprompts-list (Einstellungen) statt dokumentweit: seit dem
+  // einklappbaren Prompt-Editor direkt im Benutzerhandbuch-Kapitel-Generator
+  // (geteilter Zustand, s. manual_chapters_test.js) existieren 2 der 14
+  // Prompts (manualChapter/manualChapterSynthesis) zusätzlich noch an einer
+  // zweiten Stelle im DOM - das ist gewollt (Prompt direkt am Ort der
+  // Nutzung editierbar), eine dokumentweite Zaehlung waere daher falsch.
+  const textareas = Array.from(doc.querySelectorAll("#ragprompts-list .ragprompt-textarea"));
   check("Genau 14 editierbare RAG-Prompts vorhanden (inkl. Benutzerhandbuch-Kapitel + Zusammenführung + Handbuch-Vergleich + Qualitätsprüfung + Dateiansicht-FastTrack)", textareas.length === 14);
   const summaryTa = doc.querySelector('.ragprompt-textarea[data-ragprompt-key="summary"]');
   check("Zusammenfassungs-Prompt initial mit Standardtext befüllt", summaryTa.value.includes("prägnanten, endnutzergerechten Zusammenfassung"));

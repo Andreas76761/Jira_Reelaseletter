@@ -137,6 +137,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("sample() wurde mit einem Prompt aufgerufen", sampleCalls.length === 1 && typeof sampleCalls[0].input === "string");
   check("Prompt enthält die Rohdaten (Vertragsmodul)", sampleCalls[0].input.includes("Vertragsmodul"));
   check("Prompt enthält keine Ticket-Schlüssel-Anweisung, aber die Domäne", sampleCalls[0].input.includes("Contract Management"));
+  check("Zusammenfassungs-Prompt verlangt durchgängiges Präsens", sampleCalls[0].input.includes("PRÄSENS"));
   check("Ausgabe zeigt den generierten Text", doc.getElementById("rag-output").textContent.includes("generierter End-Nutzer-Text"));
   check("Statushinweis kennzeichnet den Text als KI-generiert", doc.getElementById("rag-status-note").textContent.includes("KI-generiert"));
   check("'Als Markdown speichern' ist nach Generierung aktiviert", !doc.getElementById("rag-download-btn").disabled);
@@ -146,6 +147,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   fire(doc.getElementById("rag-generate-fliesstext-btn"), "click");
   await wait(150);
   check("Fließtext-Prompt unterscheidet sich vom Zusammenfassungs-Prompt", sampleCalls[0].input.includes("Fließtext") || sampleCalls[0].input.includes("Benutzerhandbuch"));
+  check("Fließtext-Prompt verlangt ebenfalls durchgängiges Präsens", sampleCalls[0].input.includes("PRÄSENS"));
 
   // ===================== "RAG-Daten löschen" - loescht NUR die RAG-Daten
   // dieses Jobs (Rohdaten-Extraktion + generierter Text), Tickets/Imports

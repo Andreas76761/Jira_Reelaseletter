@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.69.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.71.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1104,7 +1104,13 @@ zusammenzuführen.
      aus Schritt 1 bleibt dabei erhalten (anders als "RAG-Daten löschen",
      das beides gemeinsam löscht). Diese
      Funktion ist die einzige Stelle in der App, die echte KI-Textgenerierung
-     nutzt (sonst ausschließlich deterministische Logik) – sie ist nur
+     nutzt (sonst ausschließlich deterministische Logik). Wie beim
+     Benutzerhandbuch-Kapitel-Generator wird der Text durchgängig im
+     **Präsens** verlangt (Gegenwartsform statt Präteritum/Futur) – der
+     Releaseletter selbst (s. u.) verwendet dagegen ausschließlich
+     deterministische Textbausteine direkt aus den Ticket-Feldern, keine
+     freie KI-Formulierung, daher ist dort keine Zeitform-Vorgabe nötig.
+     Diese Funktion ist nur
      innerhalb der veröffentlichten Claude-Artifact-Version verfügbar (nicht
      bei lokalem Öffnen der Datei), fragt beim ersten Aufruf um Zustimmung,
      kostet die Nutzung des Viewer-Kontos und liefert bei Fehlern
@@ -1167,22 +1173,57 @@ zusammenzuführen.
   RAG per Zeichen-Budget in mehrere Teil-Durchläufe zerlegt und
   anschließend zu einem Text zusammengeführt (Map-Reduce). Inhalte, die
   ausschließlich für PKW/Van/einen Marktumfang gelten, werden mit den
-  Tags "[Nur PKW]"/"[Nur Van]"/"[Nur Markt]" gekennzeichnet; wo sich die
+  Tags "[Nur PKW]"/"[Nur Van]"/"[Nur Markt]" gekennzeichnet; zusätzlich
+  kennzeichnet der Text, wo inhaltlich wirklich zutreffend (nicht
+  erzwungen), wichtige Sicherheitshinweise/Warnungen mit "[Warnung]",
+  hilfreiche Zusatzinformationen mit "[Hinweis]", praktische Tipps für
+  den Arbeitsalltag mit "[Tipp]" sowie Querverweise auf andere Kapitel/
+  Abschnitte mit "[Verweis]". Wo sich die
   Bedienung je Rolle unterscheidet, gliedert der Text mit eigenen
   Zwischenüberschriften "Retail"/"Markt"/"HQ"/"Sparte"/"MO" (Market
   Operation) und weist explizit auf Features hin, die dem Retail nicht
-  zur Verfügung stehen. Die Anweisung selbst ist unter Einstellungen →
-  RAG-Prompts editierbar ("Benutzerhandbuch-Kapitel erstellen"). Ergebnis
+  zur Verfügung stehen. Alle 7 Tags sowie die Rollen-Zwischenüberschriften
+  bleiben auch beim Zusammenführen sehr langer Kapitel (Map-Reduce)
+  erhalten. Die Anweisung selbst ist unter Einstellungen →
+  RAG-Prompts editierbar ("Benutzerhandbuch-Kapitel erstellen") – **und
+  zusätzlich direkt hier** über den einklappbaren Bereich
+  "KI-Anweisung (Prompt) für Kapitelerstellung/-zusammenführung
+  anzeigen/bearbeiten" oberhalb von "Kapitel erstellen" (geteilter Zustand,
+  beide Stellen bleiben synchron – praktisch, um den Prompt direkt am Ort
+  der Nutzung anzupassen, ohne extra in die Einstellungen zu wechseln).
+  Während ein Lauf arbeitet, zeigen Sanduhr (Spinner) und ein Statusbalken
+  den Fortschritt ("Kapitel X von Y") zusätzlich zur Textstatuszeile.
+  Ergebnis
   je Kapitel: editierbares Textfeld (im Browser gespeichert, übersteht
   Navigation, wird über Sitzung speichern/laden mit exportiert, aber bei
   "Alle Daten löschen"/"Sitzung zurücksetzen" geleert), ein
   "Ins Englische übersetzen"-Button (identischer Übersetzungs-Mechanismus
-  wie bei RAG) sowie **"Als PDF"/"Als Word"**-Export in einem
-  eigenständigen, professionell formatierten Layout (Kapitel-Titel als
-  Überschrift, "## "-Zwischenüberschriften als echte Word-Überschriften/
-  fette PDF-Zwischentitel, "[Nur PKW]"/"[Nur Van]"/"[Nur Markt]"-Zeilen
-  farbig/fett hervorgehoben – bewusst keine Bild-Icons/Emoji, da jsPDFs
-  Kernschriftart deren Glyphen nicht zuverlässig unterstützt).
+  wie bei RAG) sowie Export **"Als Markdown"/"Als PDF"/"Als Word"** – PDF/
+  Word in einem eigenständigen, professionell formatierten Layout
+  (Kapitel-Titel als Überschrift, "## "-Zwischenüberschriften als echte
+  Word-Überschriften/fette PDF-Zwischentitel, alle 7 Tag-Zeilen
+  ("[Nur PKW]"/"[Nur Van]"/"[Nur Markt]"/"[Warnung]"/"[Hinweis]"/"[Tipp]"/
+  "[Verweis]") farbig/fett UND zusätzlich farbig hinterlegt
+  (Word-Absatzschattierung bzw. PDF-Füllrechtecke je Tag-Typ in einem
+  eigenen Farbton), ebenso der Fließtext innerhalb eines Rollen-Abschnitts
+  ("## Retail" usw., je Rolle ein eigener dezenter Hintergrundton) –
+  bewusst keine Bild-Icons/Emoji in PDF/Word, da jsPDFs Kernschriftart
+  deren Glyphen nicht zuverlässig unterstützt. In der **Lese-Vorschau**
+  ("Vorschau (Icons)"-Umschalter neben Deutsch/English) werden dieselben
+  Tags dagegen mit echten Emoji-Icons (🚗/🚐/🏬/⚠️/ℹ️/💡/🔗) UND jeweils
+  als eigene abgetrennte Box dargestellt; ein Rollen-Abschnitt rahmt dort
+  zusätzlich alle zugehörigen Absätze bis zur nächsten Überschrift in
+  einer eigenen Box, damit sparten-/rollen-/marktspezifische Inhalte auf
+  einen Blick erkennbar sind, ohne den gespeicherten Rohtext zu verändern
+  (Bearbeitung bleibt über Deutsch/English als Rohtext möglich). Alle
+  Box-/Schattierungsfarben sind bewusst aus den bereits vorhandenen
+  Status-/Akzentfarben des App-Farbschemas abgeleitet (keine neue Palette).
+  Unterhalb aller Kapitel-Karten fasst die
+  **Kapitel-Übersicht** jedes im aktuellen Lauf erzeugte Kapitel in einer
+  kompakten Tabelle zusammen (Titel/Wörter/Tickets/Erzeugt), mit einem
+  "MD herunterladen"-Button je Zeile sowie **"Alle als ZIP herunterladen"**
+  (je Kapitel eine eigene .md-Datei in einem ZIP) für den schnellen
+  Gesamtüberblick ohne jede Karte einzeln aufklappen zu müssen.
   **Gruppierung**: wahlweise "Nach Kapitel" (Standard, wie oben) oder "Nach
   Label-Themengebiet" – dann ein eigener Text je Label-Themengebiet (Karten-
   Titel z. B. "Zahlung & Rechnung (Label-Themengebiet)") statt je

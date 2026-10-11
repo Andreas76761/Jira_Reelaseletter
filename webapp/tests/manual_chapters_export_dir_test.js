@@ -126,7 +126,9 @@ const xmlFixture = `<?xml version="1.0"?><rss><channel>
 
   // ===================== (4) "Alle Kapitel zusammenführen" -> Gesamtdokument in Gliederungsreihenfolge =====================
   fire(doc.getElementById("manual-merge-btn"), "click");
+  check("(4) Sanduhr (Spinner) direkt nach Klick sichtbar", !doc.getElementById("manual-merge-spinner").hidden);
   await wait(100);
+  check("(4) Sanduhr nach Abschluss wieder versteckt", doc.getElementById("manual-merge-spinner").hidden);
   const mergedText = doc.getElementById("manual-merge-output").value;
   check("(4) Gesamtdokument enthält beide Kapitelüberschriften", mergedText.indexOf("## Kapitel 4: Servicevertrag anlegen") !== -1 && mergedText.indexOf("## Kapitel 5: Zahlung, Rechnung und Unterschrift") !== -1);
   check("(4) Kapitel 4 steht vor Kapitel 5 (Gliederungsreihenfolge)", mergedText.indexOf("Kapitel 4:") < mergedText.indexOf("Kapitel 5:"));

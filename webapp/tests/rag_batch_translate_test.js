@@ -84,6 +84,7 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("Batch 1 enthält Marker-0, aber nicht Marker-15 (getrennte Batches)", sampleCalls[0] && sampleCalls[0].includes("Marker-0") && !sampleCalls[0].includes("Marker-15"));
   check("Batch 2 enthält Marker-15, aber nicht Marker-0", sampleCalls[1] && sampleCalls[1].includes("Marker-15") && !sampleCalls[1].includes("Marker-0"));
   check("Zusammenführungs-Prompt referenziert 'Teiltext 1' und 'Teiltext 2'", sampleCalls[2].includes("Teiltext 1:") && sampleCalls[2].includes("Teiltext 2:"));
+  check("Zusammenführungs-Prompt verlangt ebenfalls durchgängiges Präsens", sampleCalls[2].includes("PRÄSENS"));
   check("Zusammenführungs-Prompt enthält beide Batch-Antworten", sampleCalls[2].includes("Teiltext-Antwort Nr 1") && sampleCalls[2].includes("Teiltext-Antwort Nr 2"));
   // Seit der Referenz-Nummern-Erweiterung haengt eine "Quellen"-Fussnote am
   // finalen Text (s. ticketSourcesFooter()) - startsWith statt exakter
