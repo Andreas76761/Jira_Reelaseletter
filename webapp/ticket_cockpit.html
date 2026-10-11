@@ -2321,6 +2321,29 @@
             <input type="file" id="outline-upload-input" accept=".docx" hidden>
           </div>
           <p class="step-note" id="outline-upload-status"></p>
+          <div class="paste-actions" style="margin-top:6px; align-items:center;">
+            <button class="btn ghost" id="outline-matrix-upload-btn" type="button">Gliederung + Steuerung/KPI aus Excel-Matrix hochladen (.xlsx)</button>
+            <input type="file" id="outline-matrix-upload-input" accept=".xlsx" hidden>
+          </div>
+          <p class="step-note" id="outline-matrix-upload-status"></p>
+        </section>
+
+        <section>
+          <p class="section-label">Steuerung &amp; KPI (Kapitel-Status)</p>
+          <div class="callout">
+            Je Kapitel frei editierbarer Steuerungs- und KPI-Status &ndash; Bearbeitung, Genehmigung und
+            Publikation sowie die Mess-KPIs Quellenabdeckung, Prüf-Erfüllungsquote und kritische Befunde
+            (Spaltenbedeutung wie im Arbeitsblatt "KPI_Definitionen" einer hochgeladenen Excel-Matrix, s. o.).
+            Ein Upload übernimmt die Basiswerte aus den Arbeitsblättern "Matrix"/"KPI_Kapitel"; unabhängig davon
+            steht jedes Kapitel hier immer mit Standardwerten bereit und lässt sich jederzeit frei pflegen. Der
+            Bearbeitungsstatus erscheint zusätzlich als Status-Spalte bei Massenverarbeitung.
+          </div>
+          <div class="panel table-wrap" id="outline-steuerung-wrap" style="max-height:420px; overflow:auto;">
+            <table class="simple-table" id="outline-steuerung-table">
+              <thead><tr><th>Kapitel</th><th>📝 Bearbeitung</th><th>✅ Genehmigung</th><th>📢 Publikation</th><th>🚦 Gate</th><th>📊 Quellenabdeckung</th><th>🎯 Prüf-Erfüllungsquote</th><th>⚠️ Kritische Befunde</th></tr></thead>
+              <tbody id="outline-steuerung-tbody"></tbody>
+            </table>
+          </div>
         </section>
 
         <section>
@@ -4568,7 +4591,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.73.0";
+  var APP_VERSION = "2.74.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6099,6 +6122,7 @@
     "abbrev-translations-new-fr", "abbrev-translations-add-btn",
     "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn", "outline-domain-datalist",
     "outline-upload-btn", "outline-upload-input", "outline-upload-status",
+    "outline-matrix-upload-btn", "outline-matrix-upload-input", "outline-matrix-upload-status", "outline-steuerung-tbody",
     "outline-versions-generate-btn", "outline-versions-status-note", "outline-versions-wrap",
     "outline-versions-export-row", "outline-versions-matrix-tbody", "outline-versions-matrix-download-btn",
     "role-nav-list", "importformat-list",
@@ -6884,6 +6908,7 @@
     renderLabelsList();
     Object.keys(TERMINOLOGY_LISTS).forEach(renderTerminologyList);
     renderOutlineList();
+    renderOutlineSteuerung();
     renderOutlineVersions();
     renderRagPromptsList();
     renderLanguageStyleSelect();
@@ -8055,6 +8080,7 @@
       app.outline = app.outline.filter(function (c) { return c.id !== chapterId; });
       addLog("Gliederung: Kapitel „" + chapter.title + "“ (inkl. " + chapter.subs.length + " Unterkapitel) entfernt.");
       renderOutlineList();
+      renderOutlineSteuerung();
       refreshDashboard(false);
     } else if (action === "delete-sub") {
       var subId = parseInt(btn.getAttribute("data-sub-id"), 10);
@@ -8096,6 +8122,7 @@
     addLog("Gliederung: neues Kapitel „" + val + "“ angelegt.");
     els.outlineNewChapterInput.value = "";
     renderOutlineList();
+    renderOutlineSteuerung();
     refreshDashboard(false);
   });
   els.outlineNewChapterInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); els.outlineAddChapterBtn.click(); } });
@@ -8187,6 +8214,288 @@
     var file = els.outlineUploadInput.files && els.outlineUploadInput.files[0];
     els.outlineUploadInput.value = "";
     if (file) handleOutlineUploadFile(file);
+  });
+
+  // Steuerung & KPI (Einstellungen, nach der Benutzerhandbuch-Gliederung):
+  // je Kapitel frei editierbarer Steuerungs-/KPI-Status, lebt direkt als
+  // Feld auf dem jeweiligen app.outline-Kapitelobjekt (chapter.steuerung) -
+  // reitet dadurch "umsonst" auf der bereits bestehenden Gliederungs-
+  // Persistenz mit (Konfiguration, bleibt bei "Sitzung zurücksetzen"/
+  // "Alle Daten löschen" erhalten, Teil von outline bei Sitzung speichern/
+  // laden). ensureChapterSteuerung() legt fehlende Felder lazy mit
+  // Standardwerten an - deckt sowohl bestehende/alte Sitzungen ohne dieses
+  // Feld als auch neu angelegte Kapitel ab, ohne jede Erzeugungsstelle von
+  // Kapiteln einzeln anpassen zu muessen. Icons rein visuell (wie ueberall
+  // sonst in der App bewusst Emoji statt Bild-Icons - robust, kein Font-
+  // Risiko, s. Benutzerhandbuch-Kapitel-Generator).
+  var STEUERUNG_BEARBEITUNG_OPTIONS = ["Offen", "In Bearbeitung", "Fertig"];
+  var STEUERUNG_BEARBEITUNG_ICONS = { "Offen": "⚪", "In Bearbeitung": "✏️", "Fertig": "✅" };
+  var STEUERUNG_GENEHMIGUNG_OPTIONS = ["Nicht beantragt", "Beantragt", "Genehmigt", "Abgelehnt"];
+  var STEUERUNG_GENEHMIGUNG_ICONS = { "Nicht beantragt": "⚪", "Beantragt": "📨", "Genehmigt": "✅", "Abgelehnt": "❌" };
+  var STEUERUNG_PUBLIKATION_OPTIONS = ["Nicht veröffentlicht", "Veröffentlicht"];
+  var STEUERUNG_PUBLIKATION_ICONS = { "Nicht veröffentlicht": "🔒", "Veröffentlicht": "📢" };
+  var STEUERUNG_GATE_OPTIONS = ["Nicht geprüft", "Nicht messbar", "Erfüllt", "Nicht erfüllt"];
+  var STEUERUNG_GATE_ICONS = { "Nicht geprüft": "⚪", "Nicht messbar": "➖", "Erfüllt": "✅", "Nicht erfüllt": "❌" };
+  function ensureChapterSteuerung(c) {
+    if (!c.steuerung || typeof c.steuerung !== "object") c.steuerung = {};
+    var s = c.steuerung;
+    if (!s.bearbeitungsstatus) s.bearbeitungsstatus = "Offen";
+    if (!s.genehmigungsstatus) s.genehmigungsstatus = "Nicht beantragt";
+    if (!s.publikationsstatus) s.publikationsstatus = "Nicht veröffentlicht";
+    if (!s.gate) s.gate = "Nicht geprüft";
+    if (s.quellenabdeckung === undefined) s.quellenabdeckung = null;
+    if (s.pruefErfuellungsquote === undefined) s.pruefErfuellungsquote = null;
+    if (s.kritischeBefunde === undefined) s.kritischeBefunde = null;
+    return s;
+  }
+  function chapterByTitle(title) { return app.outline.filter(function (c) { return c.title === title; })[0] || null; }
+  // Status-Badge fuer die neue Status-Spalte bei Massenverarbeitung (s.
+  // renderMassFiles) - zeigt den Bearbeitungsstatus des zugeordneten
+  // Gliederungskapitels, ohne dort eine eigene Kopie der Steuerung-Daten
+  // zu pflegen (liest direkt vom app.outline-Kapitelobjekt).
+  function chapterSteuerungBadge(chapterTitle) {
+    var c = chapterTitle ? chapterByTitle(chapterTitle) : null;
+    if (!c) return "&ndash;";
+    var s = ensureChapterSteuerung(c);
+    return (STEUERUNG_BEARBEITUNG_ICONS[s.bearbeitungsstatus] || "") + " " + escapeHtml(s.bearbeitungsstatus);
+  }
+  function steuerungOptionsHtml(options, icons, current) {
+    return options.map(function (o) {
+      return '<option value="' + escapeHtml(o) + '"' + (o === current ? " selected" : "") + ">" + (icons[o] || "") + " " + escapeHtml(o) + "</option>";
+    }).join("");
+  }
+  function renderOutlineSteuerung() {
+    els.outlineSteuerungTbody.innerHTML = app.outline.map(function (c) {
+      var s = ensureChapterSteuerung(c);
+      return "<tr>" +
+        "<td><b>" + escapeHtml(c.title) + "</b></td>" +
+        '<td><select class="outline-steuerung-select" data-chapter-id="' + c.id + '" data-field="bearbeitungsstatus">' +
+          steuerungOptionsHtml(STEUERUNG_BEARBEITUNG_OPTIONS, STEUERUNG_BEARBEITUNG_ICONS, s.bearbeitungsstatus) + "</select></td>" +
+        '<td><select class="outline-steuerung-select" data-chapter-id="' + c.id + '" data-field="genehmigungsstatus">' +
+          steuerungOptionsHtml(STEUERUNG_GENEHMIGUNG_OPTIONS, STEUERUNG_GENEHMIGUNG_ICONS, s.genehmigungsstatus) + "</select></td>" +
+        '<td><select class="outline-steuerung-select" data-chapter-id="' + c.id + '" data-field="publikationsstatus">' +
+          steuerungOptionsHtml(STEUERUNG_PUBLIKATION_OPTIONS, STEUERUNG_PUBLIKATION_ICONS, s.publikationsstatus) + "</select></td>" +
+        '<td><select class="outline-steuerung-select" data-chapter-id="' + c.id + '" data-field="gate">' +
+          steuerungOptionsHtml(STEUERUNG_GATE_OPTIONS, STEUERUNG_GATE_ICONS, s.gate) + "</select></td>" +
+        '<td><input type="number" class="text-input outline-steuerung-number" data-chapter-id="' + c.id + '" data-field="quellenabdeckung" min="0" max="100" style="width:72px;" value="' +
+          (s.quellenabdeckung == null ? "" : s.quellenabdeckung) + '"> %</td>' +
+        '<td><input type="number" class="text-input outline-steuerung-number" data-chapter-id="' + c.id + '" data-field="pruefErfuellungsquote" min="0" max="100" style="width:72px;" value="' +
+          (s.pruefErfuellungsquote == null ? "" : s.pruefErfuellungsquote) + '"> %</td>' +
+        '<td><input type="number" class="text-input outline-steuerung-number" data-chapter-id="' + c.id + '" data-field="kritischeBefunde" min="0" style="width:64px;" value="' +
+          (s.kritischeBefunde == null ? "" : s.kritischeBefunde) + '"></td>' +
+        "</tr>";
+    }).join("");
+  }
+  els.outlineSteuerungTbody.addEventListener("change", function (e) {
+    var el = e.target.closest("[data-chapter-id][data-field]");
+    if (!el) return;
+    var chapterId = parseInt(el.getAttribute("data-chapter-id"), 10);
+    var chapter = app.outline.filter(function (c) { return c.id === chapterId; })[0];
+    if (!chapter) return;
+    var s = ensureChapterSteuerung(chapter);
+    var field = el.getAttribute("data-field");
+    if (el.tagName === "SELECT") {
+      s[field] = el.value;
+    } else {
+      s[field] = el.value === "" ? null : Number(el.value);
+    }
+    addLog("Steuerung & KPI: Kapitel „" + chapter.title + "“ - " + field + " = " + (s[field] == null ? "(leer)" : s[field]) + ".");
+    renderMassFiles();
+  });
+
+  // Gliederung + Steuerung/KPI aus Excel-Matrix hochladen (Einstellungen):
+  // liest ein mehrblaettriges .xlsx (wie die oneSCM-Matrix-Vorlage) direkt
+  // per ZIP/XML statt einer vollen XLSX-Bibliothek - derselbe hand-
+  // geschriebene Low-Level-Parser wie bei extractTextFromXlsx()
+  // (xlsxSharedStringsFromDoc/xlsxSheetXmlToRows, Teil 8), hier aber
+  // NAMENTLICH nach den Arbeitsblaettern "Matrix" (Kapitelstruktur:
+  // Spalten "Kapitel"/"Thema"/"Ebene", Ebene 1 = Kapitel, Ebene 2+3 =
+  // Unterkapitel/Feinthemen) und "KPI_Kapitel" (Kapitel-KPI-Basiswerte)
+  // gesucht, nicht nur nach Position - ein Workbook kann die Blattreihen-
+  // folge jederzeit aendern. Spaltenbezeichner in der Kopfzeile tragen bei
+  // der Matrix teils eine Nummerierung voran ("8 Bearbeitungsstatus") -
+  // xlsxHeaderIndexMap() entfernt dieses Praefix vor dem Namens-Abgleich.
+  async function xlsxWorkbookSheetMap(zip) {
+    var wbEntry = zip.file("xl/workbook.xml");
+    var relsEntry = zip.file("xl/_rels/workbook.xml.rels");
+    if (!wbEntry || !relsEntry) return {};
+    var wbDoc = new DOMParser().parseFromString(await wbEntry.async("string"), "application/xml");
+    var relsDoc = new DOMParser().parseFromString(await relsEntry.async("string"), "application/xml");
+    var ridToTarget = {};
+    var relEls = relsDoc.getElementsByTagName("Relationship");
+    for (var i = 0; i < relEls.length; i++) {
+      var id = relEls[i].getAttribute("Id");
+      var target = relEls[i].getAttribute("Target") || "";
+      ridToTarget[id] = target.indexOf("/") === 0 ? target.slice(1) : "xl/" + target;
+    }
+    var map = {};
+    var sheetEls = wbDoc.getElementsByTagName("sheet");
+    for (var j = 0; j < sheetEls.length; j++) {
+      var name = sheetEls[j].getAttribute("name");
+      var rid = sheetEls[j].getAttribute("r:id") ||
+        sheetEls[j].getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id");
+      var tgt = rid ? ridToTarget[rid] : null;
+      if (name && tgt) map[name] = tgt;
+    }
+    return map;
+  }
+  async function xlsxNamedSheetRows(zip, sheetMap, sharedStrings, sheetName) {
+    var target = sheetMap[sheetName];
+    if (!target) return null;
+    var entry = zip.file(target);
+    if (!entry) return null;
+    return xlsxSheetXmlToRows(await entry.async("string"), sharedStrings);
+  }
+  function xlsxHeaderIndexMap(headerRow) {
+    var map = {};
+    (headerRow || []).forEach(function (h, i) {
+      var clean = ("" + (h || "")).replace(/^\d+\s+/, "").trim();
+      if (clean && map[clean] === undefined) map[clean] = i;
+    });
+    return map;
+  }
+  function xlsxParsePercent(v) {
+    if (v === undefined || v === null || v === "") return null;
+    var n = parseFloat(("" + v).replace("%", "").replace(",", "."));
+    return isNaN(n) ? null : n;
+  }
+  // Baut die neue Gliederung aus dem "Matrix"-Arbeitsblatt: Ebene 1 wird je
+  // ein Kapitel (inkl. Steuerung-Basiswerte aus Bearbeitungs-/Genehmigungs-/
+  // Publikationsstatus dieser Zeile), Ebene 2 UND 3 werden als Unterkapitel
+  // angehaengt (in Dokumentreihenfolge, daher bleibt die Nummerierung
+  // "1.1"/"1.1.1" als Lesehilfe im Titel erhalten) - volle Gliederungstreue
+  // zur hochgeladenen Matrix, da Unterkapitel ohnehin nur der Struktur/
+  // Anzeige dienen (keine eigene Domänen-Zuordnung, s. computeAutoOutline).
+  // Ebene 0 (Kapitelübergaenge, eigenes Arbeitsblatt "Uebergaenge") wird
+  // bewusst uebersprungen - keine Gliederungsposition.
+  function outlineFromMatrixRows(rows) {
+    var idx = xlsxHeaderIndexMap(rows[0]);
+    function col(row, name) { return idx[name] === undefined ? "" : row[idx[name]]; }
+    var chapters = [];
+    var currentChapter = null;
+    var nextId = 1;
+    for (var r = 1; r < rows.length; r++) {
+      var row = rows[r] || [];
+      var ebene = parseInt(col(row, "Ebene"), 10);
+      var num = ("" + (col(row, "Kapitel") || "")).trim();
+      var thema = ("" + (col(row, "Thema") || "")).trim();
+      if (!num || !thema) continue;
+      if (ebene === 1) {
+        currentChapter = {
+          id: nextId++, title: "Kapitel " + num + ": " + thema, subs: [], domains: [], gapNote: "",
+          steuerung: {
+            bearbeitungsstatus: ("" + (col(row, "Bearbeitungsstatus") || "")).trim() || "Offen",
+            genehmigungsstatus: ("" + (col(row, "Genehmigungsstatus") || "")).trim() || "Nicht beantragt",
+            publikationsstatus: ("" + (col(row, "Publikationsstatus") || "")).trim() || "Nicht veröffentlicht",
+            gate: "Nicht geprüft", quellenabdeckung: null, pruefErfuellungsquote: null, kritischeBefunde: null
+          }
+        };
+        chapters.push(currentChapter);
+      } else if ((ebene === 2 || ebene === 3) && currentChapter) {
+        currentChapter.subs.push({ id: nextId++, title: num + " " + thema });
+      }
+    }
+    return chapters;
+  }
+  // Ergaenzt die KPI-Basiswerte aus "KPI_Kapitel" (ein Arbeitsblatt-Zeile
+  // je Kapitel, Spalte "Kapitel" = reine Kapitelnummer) in die bereits aus
+  // der Matrix gebauten Kapitel - optional, falls das Arbeitsblatt fehlt
+  // bleiben die ensureChapterSteuerung()-Standardwerte bestehen.
+  function mergeKpiKapitelRows(chapters, kpiRows) {
+    if (!kpiRows || kpiRows.length < 2) return;
+    var idx = xlsxHeaderIndexMap(kpiRows[0]);
+    var byNum = {};
+    chapters.forEach(function (c) {
+      var m = c.title.match(/^Kapitel (\S+):/);
+      if (m) byNum[m[1]] = c;
+    });
+    for (var r = 1; r < kpiRows.length; r++) {
+      var row = kpiRows[r] || [];
+      var num = ("" + (idx["Kapitel"] === undefined ? "" : row[idx["Kapitel"]] || "")).trim();
+      var c = byNum[num];
+      if (!c) continue;
+      var gate = idx["Gate"] === undefined ? "" : ("" + (row[idx["Gate"]] || "")).trim();
+      if (gate) c.steuerung.gate = gate;
+      if (idx["Quellenabdeckung"] !== undefined) c.steuerung.quellenabdeckung = xlsxParsePercent(row[idx["Quellenabdeckung"]]);
+      if (idx["Prüf-Erfüllungsquote"] !== undefined) c.steuerung.pruefErfuellungsquote = xlsxParsePercent(row[idx["Prüf-Erfüllungsquote"]]);
+      if (idx["Kritische Befunde (eindeutig)"] !== undefined) {
+        var kb = row[idx["Kritische Befunde (eindeutig)"]];
+        c.steuerung.kritischeBefunde = (kb === undefined || kb === null || kb === "") ? null : (parseInt(kb, 10) || 0);
+      }
+    }
+  }
+  async function handleOutlineMatrixUploadFile(file) {
+    els.outlineMatrixUploadStatus.textContent = "Lese Excel-Datei …";
+    await wait(30);
+    try {
+      if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek konnte nicht geladen werden.");
+      var buf = await readFileAsArrayBuffer(file);
+      var zip;
+      try { zip = await JSZip.loadAsync(buf); }
+      catch (e) { throw new Error("Datei konnte nicht als .xlsx (ZIP) gelesen werden - ist es wirklich eine Excel-Datei?"); }
+      var sharedStrings = [];
+      var sharedEntry = zip.file("xl/sharedStrings.xml");
+      if (sharedEntry) {
+        var sharedDoc = new DOMParser().parseFromString(await sharedEntry.async("string"), "application/xml");
+        sharedStrings = xlsxSharedStringsFromDoc(sharedDoc);
+      }
+      var sheetMap = await xlsxWorkbookSheetMap(zip);
+      var matrixRows = await xlsxNamedSheetRows(zip, sheetMap, sharedStrings, "Matrix");
+      if (!matrixRows || matrixRows.length < 2) {
+        showToast("Kein Arbeitsblatt „Matrix“", "Die Datei enthält kein Arbeitsblatt namens „Matrix“ mit den Spalten „Kapitel“/„Thema“/„Ebene“.", true);
+        return;
+      }
+      var newOutline = outlineFromMatrixRows(matrixRows);
+      if (!newOutline.length) {
+        showToast("Keine Kapitel erkannt", "Im Arbeitsblatt „Matrix“ wurden keine Kapitel (Ebene 1) gefunden.", true);
+        return;
+      }
+      var kpiRows = await xlsxNamedSheetRows(zip, sheetMap, sharedStrings, "KPI_Kapitel");
+      mergeKpiKapitelRows(newOutline, kpiRows);
+      var subCount = newOutline.reduce(function (n, c) { return n + c.subs.length; }, 0);
+      var preview = newOutline.slice(0, 8).map(function (c) { return "• " + c.title; }).join("\n") +
+        (newOutline.length > 8 ? "\n… (" + (newOutline.length - 8) + " weitere)" : "");
+      var ok = await confirmDialog(
+        newOutline.length + " Kapitel (" + subCount + " Unterkapitel/Feinthemen) erkannt" +
+        (kpiRows ? ", inkl. Steuerung/KPI-Basiswerte aus „KPI_Kapitel“" : "") + ":\n\n" + preview +
+        "\n\nDiese ersetzen die komplette aktuelle Gliederung UNWIDERRUFLICH. Domänen-Zuordnungen müssen danach " +
+        "neu gepflegt werden; bereits erzeugte Benutzerhandbuch-Kapitel-Texte und Gliederungs-Stichwörter werden " +
+        "ebenfalls geleert. Wirklich ersetzen?",
+        "Gliederung ersetzen"
+      );
+      if (!ok) return;
+      app.outline = newOutline;
+      app.manualChapters = {};
+      app.manualCheckpoints = [];
+      app.manualMergedDoc = "";
+      app.chapterKeywords = {};
+      app.outlineVersionsGenerated = false;
+      renderOutlineList();
+      renderOutlineSteuerung();
+      renderOutlineVersions();
+      renderManualChapters();
+      renderManualCheckpoints();
+      els.manualMergeOutput.value = "";
+      els.manualMergeDownloadBtn.disabled = true;
+      els.manualMergeStatusNote.textContent = "";
+      renderGliederung();
+      renderMassFiles();
+      refreshDashboard(false);
+      addLog("Gliederung aus Excel-Matrix „" + (file.name || "Excel-Datei") + "“ ersetzt (" + newOutline.length + " Kapitel, " +
+        subCount + " Unterkapitel/Feinthemen) - Domänen-Zuordnungen, Benutzerhandbuch-Kapitel und Gliederungs-Stichwörter zurückgesetzt" +
+        (kpiRows ? "; Steuerung/KPI-Basiswerte aus KPI_Kapitel übernommen." : "."));
+      showToast("Gliederung ersetzt", newOutline.length + " Kapitel aus „" + (file.name || "") + "“ übernommen.");
+    } catch (err) {
+      showToast("Hochladen fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.outlineMatrixUploadStatus.textContent = "";
+    }
+  }
+  els.outlineMatrixUploadBtn.addEventListener("click", function () { els.outlineMatrixUploadInput.click(); });
+  els.outlineMatrixUploadInput.addEventListener("change", function () {
+    var file = els.outlineMatrixUploadInput.files && els.outlineMatrixUploadInput.files[0];
+    els.outlineMatrixUploadInput.value = "";
+    if (file) handleOutlineMatrixUploadFile(file);
   });
 
   // 6 Gliederungs-Versionen (Einstellungen, nach der Benutzerhandbuch-
@@ -16224,6 +16533,7 @@
           "<td>" + escapeHtml(e.label) + "</td>" +
           '<td><select class="mass-domain-select" data-id="' + e.id + '" aria-label="Domäne">' + ragLibraryOptionsHtml(domainOptions, e.domain, "Ohne Domäne") + "</select></td>" +
           '<td><select class="mass-chapter-select" data-id="' + e.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapterOptions, e.chapterTitle, "Nicht zugeordnet") + "</select></td>" +
+          "<td>" + chapterSteuerungBadge(e.chapterTitle) + "</td>" +
           '<td><select class="mass-subchapter-select" data-id="' + e.id + '" aria-label="Unterkapitel">' + ragLibraryOptionsHtml(subchapterOptionsForChapter(e.chapterTitle), e.subTitle || "", "– keine –") + "</select></td>" +
           "<td class=\"mono\">" + (ticketReferenceIdForEntry(e) || "&ndash;") + "</td>" +
           '<td><select class="mass-classification-select" data-id="' + e.id + '" aria-label="Klassifizierung">' + classificationOptionsHtml(e.classification) + "</select></td>" +
@@ -16240,7 +16550,7 @@
         '<button type="button" class="btn ghost btn-tiny mass-domain-md-btn" data-domain="' + escapeHtml(d) + '">Kapitel als MD-Datei erstellen</button>' +
         "</div>" +
         '<div class="table-wrap" style="max-height:400px; overflow:auto;"><table class="simple-table">' +
-        "<thead><tr><th></th><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Unterkapitel</th><th>Ref.-Nr.</th><th>Klassifizierung</th><th>Quelle</th><th>Tickets</th><th>Textschnipsel</th><th></th></tr></thead>" +
+        "<thead><tr><th></th><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Status</th><th>Unterkapitel</th><th>Ref.-Nr.</th><th>Klassifizierung</th><th>Quelle</th><th>Tickets</th><th>Textschnipsel</th><th></th></tr></thead>" +
         "<tbody>" + rows + "</tbody></table></div></div>";
     }).join("");
     massUpdateSelectionUI();
@@ -18838,6 +19148,7 @@
   renderLabelsList();
   Object.keys(TERMINOLOGY_LISTS).forEach(renderTerminologyList);
   renderOutlineList();
+  renderOutlineSteuerung();
   renderOutlineVersions();
   renderRoleNavigationList();
   renderImportFormats();

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.73.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.74.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1596,6 +1596,37 @@ zusammenzuführen.
     bereits erzeugte Benutzerhandbuch-Kapitel-Generator-Texte sowie
     Gliederungs-Stichwörter werden automatisch geleert, da sie sonst an
     nicht mehr existierende Kapiteltitel gebunden blieben.
+  - *Gliederung + Steuerung/KPI aus Excel-Matrix hochladen (.xlsx)* – alternativ
+    zum Word-Upload lässt sich die Gliederung auch aus einem mehrblättrigen
+    Excel-Workbook (wie eine oneSCM-Matrix-Vorlage) übernehmen. Gesucht wird
+    gezielt nach dem Arbeitsblattnamen (nicht nach Position): "Matrix" liefert
+    die Kapitelstruktur über die Spalten "Kapitel"/"Thema"/"Ebene" – Ebene 1
+    wird je ein Kapitel, Ebene 2 UND 3 werden beide als Unterkapitel angehängt
+    (in Dokumentreihenfolge, Nummerierung wie "1.1"/"1.1.1" bleibt im Titel
+    als Lesehilfe erhalten – volle Gliederungstreue, da Unterkapitel ohnehin
+    nur der Struktur/Anzeige dienen). Zusätzlich übernimmt der Import aus der
+    Matrix-Zeile jedes Kapitels (Ebene 1) die Spalten "Bearbeitungsstatus"/
+    "Genehmigungsstatus"/"Publikationsstatus" sowie, falls ein Arbeitsblatt
+    "KPI_Kapitel" vorhanden ist (eine Zeile je Kapitel), dessen KPI-Basiswerte
+    ("Gate"/"Quellenabdeckung"/"Prüf-Erfüllungsquote"/"Kritische Befunde") in
+    den neuen Bereich **"Steuerung & KPI"** (s. u.). Dieselbe Sicherheitsabfrage
+    und derselbe vollständige, unwiderrufliche Ersatz wie beim Word-Upload.
+  - *Steuerung &amp; KPI (Kapitel-Status)* – direkt unter der Gliederung: je
+    Kapitel frei editierbarer Status mit professionellen Icons statt Bild-
+    Icons (dieselbe Begründung wie beim Benutzerhandbuch-Kapitel-Generator) –
+    Bearbeitung (⚪ Offen/✏️ In Bearbeitung/✅ Fertig), Genehmigung (⚪ Nicht
+    beantragt/📨 Beantragt/✅ Genehmigt/❌ Abgelehnt), Publikation (🔒 Nicht
+    veröffentlicht/📢 Veröffentlicht), Prüf-Gate (⚪/➖/✅/❌) sowie die drei
+    Mess-KPIs Quellenabdeckung %, Prüf-Erfüllungsquote % und kritische Befunde
+    (freie Zahlenfelder). Jedes Kapitel steht hier unabhängig von einem Upload
+    sofort mit Standardwerten bereit und lässt sich jederzeit pflegen; ein
+    Excel-Matrix-Upload (s. o.) übernimmt nur die Basiswerte, überschreibt
+    spätere manuelle Änderungen aber nicht rückwirkend. Lebt als Feld direkt
+    auf dem jeweiligen Gliederungs-Kapitel, daher Konfiguration wie Domänen-
+    Zuordnung – bleibt bei "Sitzung zurücksetzen"/"Alle Daten löschen"
+    erhalten, Teil von Sitzung speichern/laden. Der Bearbeitungsstatus
+    erscheint zusätzlich als eigene **Status-Spalte bei Massenverarbeitung**
+    (je Textschnipsel-Zeile, abgeleitet aus dem zugeordneten Kapitel).
   - *6 Gliederungs-Versionen (Markt/MO/Dealer/IT/Van/Pkw)* – direkt unter der
     Gliederung erzeugt der Button **"6 Versionen + Matrix erzeugen"** aus der
     Gesamtgliederung 6 rollen-/spartenspezifische Teilgliederungen sowie eine
