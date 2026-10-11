@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.71.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.72.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1596,6 +1596,23 @@ zusammenzuführen.
     bereits erzeugte Benutzerhandbuch-Kapitel-Generator-Texte sowie
     Gliederungs-Stichwörter werden automatisch geleert, da sie sonst an
     nicht mehr existierende Kapiteltitel gebunden blieben.
+  - *6 Gliederungs-Versionen (Markt/MO/Dealer/IT/Van/Pkw)* – direkt unter der
+    Gliederung erzeugt der Button **"6 Versionen + Matrix erzeugen"** aus der
+    Gesamtgliederung 6 rollen-/spartenspezifische Teilgliederungen sowie eine
+    **Kapitel×Versionen-Matrix**. Rein deterministisch aus dem bereits
+    bestehenden Sparte-/Rollen-Filter abgeleitet (dieselben Tags wie unter
+    Verarbeitung/Massenverarbeitung – Checkbox-Filter "Sparte" Pkw/Van/Markt
+    bzw. "Rolle" Retail/Markt/MO/HQ/**IT**, kein KI-Aufruf): ein Kapitel zählt
+    zu einer Version, wenn mindestens eines der ihm über die Domänen-Zuordnung
+    zugeordneten Tickets die passende Sparte oder Rolle trägt – "Dealer" nutzt
+    dabei den bestehenden Rollen-Tag **Retail** (dieselbe Rolle, nur anders
+    benannt), **IT** ist eine neu angelegte Rolle (ebenfalls über Jira-Label
+    oder inhaltsbasiert über die Labels-Stammdaten-Kategorie "Rolle"
+    erkennbar). Kapitel ganz ohne zugeordnete Tickets erscheinen aus Vorsicht
+    in **allen 6 Versionen** (kein Signal zum Ausschließen) – in der Matrix
+    mit "✓\*" markiert. Jede der 6 Versionen lässt sich einzeln als eigene
+    Markdown-Gliederung herunterladen (Kapitel-/Unterkapitel-Liste wie im
+    Hauptdokument), die Matrix zusätzlich komplett als Markdown-Tabelle.
   - *Farbschema (Domänen &amp; Status-Ampel)* – die im Ticket Graph
     verwendeten Farben (Domänen: eine von 16 festen Farben, stabil je
     Domänenname; Status: Ampel-Kategorie Rot/Gelb/Grün, aus dem

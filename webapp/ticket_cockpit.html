@@ -2316,6 +2316,35 @@
         </section>
 
         <section>
+          <p class="section-label">6 Gliederungs-Versionen (Markt/MO/Dealer/IT/Van/Pkw)</p>
+          <div class="callout">
+            Erzeugt aus der Gesamtgliederung oben 6 rollen-/spartenspezifische Teilgliederungen sowie eine
+            Kapitel×Versionen-Matrix &ndash; rein deterministisch aus dem bereits vorhandenen Sparte-/Rollen-Filter
+            abgeleitet (dieselben Tags wie unter Verarbeitung/Massenverarbeitung, Checkbox-Filter "Sparte"/"Rolle";
+            kein KI-Aufruf). Ein Kapitel zählt zu einer Version, wenn mindestens eines der ihm zugeordneten Tickets
+            (über die Domänen-Zuordnung oben) die passende Sparte (Pkw/Van/Markt) oder Rolle (Retail für "Dealer",
+            Markt, MO, IT) trägt. Kapitel ohne jede zugeordnete Tickets erscheinen aus Vorsicht in <b>allen</b> 6
+            Versionen (kein Signal zum Ausschließen) &ndash; in der Matrix mit einem Hinweis gekennzeichnet.
+          </div>
+          <div class="paste-actions" style="align-items:center;">
+            <button class="btn primary" id="outline-versions-generate-btn" type="button">6 Versionen + Matrix erzeugen</button>
+          </div>
+          <p class="step-note" id="outline-versions-status-note"></p>
+          <div id="outline-versions-wrap" hidden>
+            <div class="job-export-row" id="outline-versions-export-row" style="flex-wrap:wrap;"></div>
+            <div class="panel table-wrap" id="outline-versions-matrix-wrap" style="max-height:420px; overflow:auto; margin-top:10px;">
+              <table class="simple-table" id="outline-versions-matrix-table">
+                <thead><tr><th>Kapitel</th><th>Markt</th><th>MO</th><th>Dealer</th><th>IT</th><th>Van</th><th>Pkw</th></tr></thead>
+                <tbody id="outline-versions-matrix-tbody"></tbody>
+              </table>
+            </div>
+            <div class="job-export-row" style="margin-top:8px;">
+              <button class="btn ghost" id="outline-versions-matrix-download-btn" type="button">Matrix als Markdown speichern</button>
+            </div>
+          </div>
+        </section>
+
+        <section>
           <p class="section-label">Rollen-Navigation (oneSCM)</p>
           <div class="callout">
             Aus der hochgeladenen Navigationsvorlage (<code>Navigation_oneSCM_Version3.docx</code>, Bildschirmaufnahmen +
@@ -4531,7 +4560,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.71.0";
+  var APP_VERSION = "2.72.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6061,6 +6090,8 @@
     "abbrev-translations-new-fr", "abbrev-translations-add-btn",
     "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn", "outline-domain-datalist",
     "outline-upload-btn", "outline-upload-input", "outline-upload-status",
+    "outline-versions-generate-btn", "outline-versions-status-note", "outline-versions-wrap",
+    "outline-versions-export-row", "outline-versions-matrix-tbody", "outline-versions-matrix-download-btn",
     "role-nav-list", "importformat-list",
     "test-results-date", "test-results-suites", "test-results-files-passed", "test-results-total", "test-results-passed",
     "test-results-failed", "test-results-duration", "test-results-failed-banner", "test-results-tbody", "test-results-empty",
@@ -6261,6 +6292,16 @@
     // negativeWordsList(). Konfiguration wie ragPrompts/languageStyle -
     // bleibt auch bei "Sitzung zurücksetzen"/"Alle Daten löschen" erhalten.
     negativeWordsRaw: "",
+    // 6 Gliederungs-Versionen (Einstellungen, nach der Benutzerhandbuch-
+    // Gliederung): nur ein Flag, ob der Nutzer "Versionen + Matrix
+    // erzeugen" bereits geklickt hat - die eigentliche Zuordnung
+    // (computeOutlineVersions()) wird NICHT gespeichert, sondern bei jedem
+    // Rendern frisch aus app.outline + den aktuellen Sparte-/Rollen-Tags
+    // der zugeordneten Tickets berechnet (deterministisch, kein KI-Aufruf,
+    // daher immer konsistent mit dem aktuellen Datenstand statt einer
+    // veralteten Momentaufnahme). Sitzungsdatensatz wie manualChapters -
+    // wird bei "Sitzung zurücksetzen"/"Alle Daten löschen" zurückgesetzt.
+    outlineVersionsGenerated: false,
     // Benutzerhandbuch-Kapitel-Generator: je Kapiteltitel der erzeugte
     // Text (Deutsch/Englisch) + Metadaten. Im Unterschied zu ragPrompts
     // ist das erzeugter INHALT (wie RAG-Ausgabe/Bilder-Galerie), also
@@ -6554,6 +6595,8 @@
     els.manualDirStatusNote.textContent = "Kein Zielordner gewählt – jedes fertige Kapitel bleibt im Browser (unten als Gesamtdokument zusammenführbar). Funktioniert nur außerhalb der Claude-Artifact-Vorschau, z. B. direkt in Chrome/Edge geöffnet.";
     app.chapterKeywords = {};
     renderGliederung();
+    app.outlineVersionsGenerated = false;
+    renderOutlineVersions();
     app.referenceManuals = [];
     app.refCompareActiveManualId = null;
     renderReferenceManuals();
@@ -6631,6 +6674,8 @@
     els.manualDirStatusNote.textContent = "Kein Zielordner gewählt – jedes fertige Kapitel bleibt im Browser (unten als Gesamtdokument zusammenführbar). Funktioniert nur außerhalb der Claude-Artifact-Vorschau, z. B. direkt in Chrome/Edge geöffnet.";
     app.chapterKeywords = {};
     renderGliederung();
+    app.outlineVersionsGenerated = false;
+    renderOutlineVersions();
     app.referenceManuals = [];
     app.refCompareActiveManualId = null;
     renderReferenceManuals();
@@ -6732,6 +6777,7 @@
       ragPrompts: app.ragPrompts,
       languageStyle: app.languageStyle,
       negativeWordsRaw: app.negativeWordsRaw,
+      outlineVersionsGenerated: app.outlineVersionsGenerated,
       manualChapters: app.manualChapters,
       manualCheckpoints: app.manualCheckpoints,
       manualMergedDoc: app.manualMergedDoc,
@@ -6793,6 +6839,7 @@
     if (data.ragPrompts) app.ragPrompts = data.ragPrompts;
     if (typeof data.languageStyle === "string") app.languageStyle = data.languageStyle;
     if (typeof data.negativeWordsRaw === "string") app.negativeWordsRaw = data.negativeWordsRaw;
+    if (typeof data.outlineVersionsGenerated === "boolean") app.outlineVersionsGenerated = data.outlineVersionsGenerated;
     if (data.manualChapters) app.manualChapters = data.manualChapters;
     if (Array.isArray(data.manualCheckpoints)) app.manualCheckpoints = data.manualCheckpoints;
     if (typeof data.manualMergedDoc === "string") app.manualMergedDoc = data.manualMergedDoc;
@@ -6828,6 +6875,7 @@
     renderLabelsList();
     Object.keys(TERMINOLOGY_LISTS).forEach(renderTerminologyList);
     renderOutlineList();
+    renderOutlineVersions();
     renderRagPromptsList();
     renderLanguageStyleSelect();
     renderNegativeWordsBox();
@@ -7295,6 +7343,7 @@
       ["Rolle", "Markt", "Markt"],
       ["Rolle", "MO", "MO"],
       ["Rolle", "HQ", "HQ"],
+      ["Rolle", "IT", "IT"],
       ["Sonderthemen", "Reifen", "Tires"],
       ["Sonderthemen", "Reporting", "Reporting"],
       ["Sonderthemen", "Testing", "Testing"],
@@ -8105,7 +8154,9 @@
       app.manualCheckpoints = [];
       app.manualMergedDoc = "";
       app.chapterKeywords = {};
+      app.outlineVersionsGenerated = false;
       renderOutlineList();
+      renderOutlineVersions();
       renderManualChapters();
       renderManualCheckpoints();
       els.manualMergeOutput.value = "";
@@ -8127,6 +8178,119 @@
     var file = els.outlineUploadInput.files && els.outlineUploadInput.files[0];
     els.outlineUploadInput.value = "";
     if (file) handleOutlineUploadFile(file);
+  });
+
+  // 6 Gliederungs-Versionen (Einstellungen, nach der Benutzerhandbuch-
+  // Gliederung): rollen-/spartenspezifische Teilgliederungen + Kapitel x
+  // Versionen-Matrix, rein deterministisch aus dem bereits bestehenden
+  // Sparte-/Rollen-Filter (SPARTE_FILTER_VALUES/ROLE_FILTER_VALUES, s. Teil
+  // 8b) abgeleitet - kein KI-Aufruf, kein neues Tag-System. "Dealer" nutzt
+  // dabei bewusst den bestehenden Rollen-Tag "Retail" (s. Rollenfilter-
+  // Umbenennung Dealer->Retail an anderer Stelle der App), da es sich
+  // inhaltlich um dieselbe Rolle handelt; "IT" ist eine neue Rolle (s.
+  // ROLE_FILTER_VALUES oben).
+  var OUTLINE_VERSIONS = [
+    { key: "markt", label: "Markt", sparte: ["Markt"], role: ["Markt"] },
+    { key: "mo", label: "MO", sparte: [], role: ["MO"] },
+    { key: "dealer", label: "Dealer", sparte: [], role: ["Retail"] },
+    { key: "it", label: "IT", sparte: [], role: ["IT"] },
+    { key: "van", label: "Van", sparte: ["Van"], role: [] },
+    { key: "pkw", label: "Pkw", sparte: ["Pkw"], role: [] }
+  ];
+  // Fuer ein Gliederungskapitel: welche der 6 Versionen treffen zu, auf
+  // Basis der Sparte-/Rollen-Tags der ihm ueber die Domaenen-Zuordnung
+  // zugeordneten Tickets (computeAutoOutline()/t.outlineChapters,
+  // scopedTickets() fuer dieselbe aktive Datei-/Listen-/Sparte-/Rollen-
+  // Einschraenkung wie ueberall sonst in der App). Ein Kapitel OHNE jedes
+  // zugeordnete Ticket liefert null (statt einer leeren Zuordnung) - das
+  // Fehlen jeglichen Signals ist etwas anderes als "trifft auf keine
+  // Version zu" und wird beim Rendern/Export bewusst als "alle Versionen"
+  // behandelt, damit kein Kapitel ohne echten Grund aus einer Version
+  // verschwindet.
+  function outlineChapterVersionTags(chapterTitle) {
+    var tickets = scopedTickets().filter(function (t) { return (t.outlineChapters || []).indexOf(chapterTitle) !== -1; });
+    if (!tickets.length) return null;
+    var result = {};
+    OUTLINE_VERSIONS.forEach(function (v) {
+      result[v.key] = tickets.some(function (t) {
+        var sparte = ticketSparteTags(t), role = ticketRoleTags(t);
+        return v.sparte.some(function (s) { return sparte.indexOf(s) !== -1; }) ||
+          v.role.some(function (r) { return role.indexOf(r) !== -1; });
+      });
+    });
+    return result;
+  }
+  function computeOutlineVersions() {
+    return app.outline.map(function (c) { return { chapter: c, tags: outlineChapterVersionTags(c.title) }; });
+  }
+  function outlineVersionIncludesChapter(row, versionKey) {
+    return !row.tags || row.tags[versionKey];
+  }
+  function outlineVersionMarkdown(versionKey, label) {
+    var rows = computeOutlineVersions();
+    var lines = ["# Benutzerhandbuch-Gliederung – Version: " + label, ""];
+    rows.forEach(function (row) {
+      if (!outlineVersionIncludesChapter(row, versionKey)) return;
+      lines.push("## " + row.chapter.title);
+      row.chapter.subs.forEach(function (s) { lines.push("- " + s.title); });
+      lines.push("");
+    });
+    return lines.join("\n").replace(/\n+$/, "\n");
+  }
+  function outlineVersionsMatrixMarkdown() {
+    var rows = computeOutlineVersions();
+    var header = "| Kapitel | " + OUTLINE_VERSIONS.map(function (v) { return v.label; }).join(" | ") + " |";
+    var sep = "|---|" + OUTLINE_VERSIONS.map(function () { return "---"; }).join("|") + "|";
+    var lines = [header, sep];
+    rows.forEach(function (row) {
+      var cells = OUTLINE_VERSIONS.map(function (v) {
+        if (!row.tags) return "✓ (alle – keine Tickets zugeordnet)";
+        return row.tags[v.key] ? "✓" : "–";
+      });
+      lines.push("| " + row.chapter.title + " | " + cells.join(" | ") + " |");
+    });
+    return lines.join("\n") + "\n";
+  }
+  function renderOutlineVersionsMatrix() {
+    var rows = computeOutlineVersions();
+    els.outlineVersionsMatrixTbody.innerHTML = rows.map(function (row) {
+      var cells = OUTLINE_VERSIONS.map(function (v) {
+        if (!row.tags) return '<td title="Keine Tickets zugeordnet - in allen Versionen enthalten">✓*</td>';
+        return "<td>" + (row.tags[v.key] ? "✓" : "–") + "</td>";
+      }).join("");
+      return "<tr><td>" + escapeHtml(row.chapter.title) + "</td>" + cells + "</tr>";
+    }).join("");
+  }
+  function renderOutlineVersions() {
+    els.outlineVersionsWrap.hidden = !app.outlineVersionsGenerated;
+    if (!app.outlineVersionsGenerated) return;
+    renderOutlineVersionsMatrix();
+    els.outlineVersionsExportRow.innerHTML = '<span class="job-export-label">Version als Markdown speichern:</span>' +
+      OUTLINE_VERSIONS.map(function (v) {
+        return '<button class="btn ghost btn-tiny" data-outline-version-export="' + v.key + '" type="button">' + escapeHtml(v.label) + "</button>";
+      }).join("");
+  }
+  els.outlineVersionsGenerateBtn.addEventListener("click", function () {
+    if (!app.outline.length) { showToast("Keine Gliederung", "Es ist keine Gliederung vorhanden.", true); return; }
+    app.outlineVersionsGenerated = true;
+    renderOutlineVersions();
+    els.outlineVersionsStatusNote.textContent = "6 Versionen (Markt/MO/Dealer/IT/Van/Pkw) + Matrix erzeugt – " + app.outline.length + " Kapitel geprüft.";
+    addLog("Benutzerhandbuch-Gliederung: 6 Versionen (Markt/MO/Dealer/IT/Van/Pkw) + Kapitel×Versionen-Matrix erzeugt.");
+  });
+  els.outlineVersionsExportRow.addEventListener("click", async function (e) {
+    var btn = e.target.closest("[data-outline-version-export]");
+    if (!btn) return;
+    var key = btn.getAttribute("data-outline-version-export");
+    var version = OUTLINE_VERSIONS.filter(function (v) { return v.key === key; })[0];
+    if (!version) return;
+    var md = outlineVersionMarkdown(version.key, version.label);
+    var ok = await saveOrWarn("Gliederung-Version-" + version.label + ".md", md);
+    if (ok) addLog("Gliederungs-Version „" + version.label + "“ als Markdown-Datei exportiert.");
+  });
+  els.outlineVersionsMatrixDownloadBtn.addEventListener("click", async function () {
+    var md = outlineVersionsMatrixMarkdown();
+    var ok = await saveOrWarn("Gliederung-Versionen-Matrix.md", md);
+    if (ok) addLog("Kapitel×Versionen-Matrix als Markdown-Datei exportiert.");
   });
 
   // Rollen-Navigation (Einstellungen): reine Referenzanzeige aus
@@ -11515,7 +11679,12 @@
   // Jira-Label. Vereinigung beider Quellen - kein erfundenes Mapping: ein
   // Ticket ohne Treffer in beiden liefert weiterhin ein leeres Array.
   var SPARTE_FILTER_VALUES = ["Pkw", "Van", "Markt"];
-  var ROLE_FILTER_VALUES = ["Retail", "Markt", "MO", "HQ"];
+  // "IT" ergaenzt (s. Einstellungen -> 6 Gliederungs-Versionen): neue Rolle,
+  // die es vor diesem Filter noch nicht gab - matcht wie die anderen 3-
+  // oder weniger Zeichen langen Werte ueber Wortgrenzen (s.
+  // labelTermMatchesText), daher kein falsches Ansprechen auf Woerter wie
+  // "mit"/"Seite".
+  var ROLE_FILTER_VALUES = ["Retail", "Markt", "MO", "HQ", "IT"];
   function ticketRawLabels(t) {
     return (t && t.raw && t.raw.labels) || [];
   }
@@ -18628,6 +18797,7 @@
   renderLabelsList();
   Object.keys(TERMINOLOGY_LISTS).forEach(renderTerminologyList);
   renderOutlineList();
+  renderOutlineVersions();
   renderRoleNavigationList();
   renderImportFormats();
   renderTestResults();
