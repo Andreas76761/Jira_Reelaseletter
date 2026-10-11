@@ -226,6 +226,11 @@
   .ampel-btn.active { border-color: #1a1a1a; }
   .color-swatch-input { width: 40px; height: 26px; padding: 0; border: 1px solid var(--panel-border); border-radius: 4px; cursor: pointer; }
   .override-badge { font-size: 10.5px; color: var(--text-muted); font-style: italic; margin-left: 6px; }
+  /* Negativliste (Einstellungen): Treffer verbotener Woerter/Satzbausteine
+     in der Kapitel-Vorschau gelb hervorheben - bewusst feste Farbe (nicht
+     --warn-soft o.ae.), damit die Markierung in Hell- UND Dunkelmodus
+     gleich auffaellig bleibt. */
+  mark.negword-hit { background: #fff176; color: #3a2d00; border-radius: 2px; padding: 0 2px; }
   .domain-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
   .domain-group-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
   .fileview-wrap { margin-top: 8px; padding: 12px; max-height: 640px; overflow: auto; }
@@ -2262,6 +2267,19 @@
             <input type="text" class="text-input" id="outline-new-chapter-input" placeholder="Neues Kapitel, z. B. Kapitel 17: Ausblick" style="max-width:320px;">
             <button class="btn primary" id="outline-add-chapter-btn" type="button">Kapitel hinzufügen</button>
           </div>
+          <div class="callout warn" style="margin-top:14px;">
+            <b>Gliederung komplett ersetzen:</b> Eine hochgeladene .docx-Datei wird anhand ihrer Word-Formatvorlagen
+            ("Überschrift 1" = Kapitel, "Überschrift 2" = Unterkapitel) in eine neue Gliederung umgewandelt, die die
+            obige Liste VOLLSTÄNDIG ersetzt (mit Sicherheitsabfrage vorab). Domänen-Zuordnungen müssen danach neu
+            gepflegt werden; bereits erzeugte Benutzerhandbuch-Kapitel-Texte und Gliederungs-Stichwörter, die an die
+            alten Kapiteltitel gebunden sind, werden dabei ebenfalls geleert, da sie sonst auf keinen gültigen
+            Gliederungs-Eintrag mehr zeigen würden.
+          </div>
+          <div class="paste-actions" style="margin-top:10px; align-items:center;">
+            <button class="btn ghost" id="outline-upload-btn" type="button">Gliederung aus Word-Dokument hochladen (.docx)</button>
+            <input type="file" id="outline-upload-input" accept=".docx" hidden>
+          </div>
+          <p class="step-note" id="outline-upload-status"></p>
         </section>
 
         <section>
@@ -2365,6 +2383,18 @@
             nicht rückwirkend auf bereits erzeugte Texte.
           </div>
           <div id="ragprompts-list"></div>
+        </section>
+
+        <section>
+          <p class="section-label">Negativliste (verbotene Wörter/Satzbausteine)</p>
+          <div class="callout">
+            Wörter oder Satzbausteine, die im Releaseletter und Benutzerhandbuch NICHT auftauchen sollen (z. B.
+            Weichspüler-Formulierungen, veraltete Produktnamen) – kommagetrennt eintragen, auch Wortbestandteile
+            sind erlaubt. Wird NICHT automatisch entfernt (die redaktionelle Entscheidung bleibt beim Menschen),
+            sondern in der Benutzerhandbuch-Kapitel-Vorschau gelb markiert, damit Treffer bei der Prüfung auffallen.
+          </div>
+          <textarea id="negative-words-input" class="text-input" rows="3" style="width:100%; font-family:inherit; resize:vertical;" placeholder="z. B. einfach, lediglich, sozusagen, im Rahmen von"></textarea>
+          <p class="step-note" id="negative-words-count"></p>
         </section>
 
         <section>
@@ -4468,7 +4498,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.68.0";
+  var APP_VERSION = "2.69.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -5982,7 +6012,7 @@
     "points-tbody", "points-new-type", "points-new-value", "points-add-btn",
     "domaincolors-tbody", "domaincolors-empty", "statuscolors-tbody", "statuscolors-empty",
     "domainabbr-tbody", "domainabbr-empty", "ragprompts-list",
-    "language-style-select",
+    "language-style-select", "negative-words-input", "negative-words-count",
     "labels-tbody", "labels-new-category", "labels-new-de", "labels-new-en", "labels-add-btn", "label-category-datalist",
     "synonyms-tbody", "synonyms-empty", "synonyms-new-term", "synonyms-new-synonyms", "synonyms-new-en",
     "synonyms-new-sk", "synonyms-new-hi", "synonyms-new-fr", "synonyms-add-btn",
@@ -5993,6 +6023,7 @@
     "abbrev-translations-new-en", "abbrev-translations-new-sk", "abbrev-translations-new-hi",
     "abbrev-translations-new-fr", "abbrev-translations-add-btn",
     "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn", "outline-domain-datalist",
+    "outline-upload-btn", "outline-upload-input", "outline-upload-status",
     "role-nav-list", "importformat-list",
     "test-results-date", "test-results-suites", "test-results-files-passed", "test-results-total", "test-results-passed",
     "test-results-failed", "test-results-duration", "test-results-failed-banner", "test-results-tbody", "test-results-empty",
@@ -6184,6 +6215,15 @@
     // (Standard) haengt keine Zusatzanweisung an - unveraendertes Verhalten.
     // Ebenfalls Konfiguration, kein Sitzungsdatensatz.
     languageStyle: "neutral",
+    // Negativliste (Einstellungen): kommagetrennte Liste von Woertern/
+    // Satzbausteinen (auch Wortbestandteile), die NICHT in Releaseletter/
+    // Benutzerhandbuch auftauchen sollen - wird NICHT automatisch entfernt
+    // (redaktionelle Entscheidung bleibt beim Menschen), sondern in der
+    // Benutzerhandbuch-Kapitel-Vorschau gelb markiert (s.
+    // highlightNegativeWordsHtml()). Rohtext der Textarea, geparst ueber
+    // negativeWordsList(). Konfiguration wie ragPrompts/languageStyle -
+    // bleibt auch bei "Sitzung zurücksetzen"/"Alle Daten löschen" erhalten.
+    negativeWordsRaw: "",
     // Benutzerhandbuch-Kapitel-Generator: je Kapiteltitel der erzeugte
     // Text (Deutsch/Englisch) + Metadaten. Im Unterschied zu ragPrompts
     // ist das erzeugter INHALT (wie RAG-Ausgabe/Bilder-Galerie), also
@@ -6654,6 +6694,7 @@
       statusColors: app.statusColors,
       ragPrompts: app.ragPrompts,
       languageStyle: app.languageStyle,
+      negativeWordsRaw: app.negativeWordsRaw,
       manualChapters: app.manualChapters,
       manualCheckpoints: app.manualCheckpoints,
       manualMergedDoc: app.manualMergedDoc,
@@ -6714,6 +6755,7 @@
     if (data.statusColors) app.statusColors = data.statusColors;
     if (data.ragPrompts) app.ragPrompts = data.ragPrompts;
     if (typeof data.languageStyle === "string") app.languageStyle = data.languageStyle;
+    if (typeof data.negativeWordsRaw === "string") app.negativeWordsRaw = data.negativeWordsRaw;
     if (data.manualChapters) app.manualChapters = data.manualChapters;
     if (Array.isArray(data.manualCheckpoints)) app.manualCheckpoints = data.manualCheckpoints;
     if (typeof data.manualMergedDoc === "string") app.manualMergedDoc = data.manualMergedDoc;
@@ -6751,6 +6793,7 @@
     renderOutlineList();
     renderRagPromptsList();
     renderLanguageStyleSelect();
+    renderNegativeWordsBox();
     renderManualChapters();
     renderManualCheckpoints();
     els.manualMergeOutput.value = app.manualMergedDoc;
@@ -7960,6 +8003,93 @@
     refreshDashboard(false);
   });
   els.outlineNewChapterInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); els.outlineAddChapterBtn.click(); } });
+
+  // Gliederung aus Word-Dokument hochladen (Einstellungen): nutzt dieselbe
+  // DOCX-Kapitelerkennung wie das Referenz-Handbuch weiter unten
+  // (extractReferenceManualChapters -> docxArrayBufferToChapters, basiert
+  // auf den Word-Formatvorlagen "Überschrift 1"/"Überschrift 2"), ersetzt
+  // aber - anders als das Referenz-Handbuch (reine Vergleichsgrundlage,
+  // Teil 11) - direkt app.outline selbst. Destruktiv (ersetzt die komplette
+  // bisherige Gliederung inkl. aller Domänen-Zuordnungen), daher mit
+  // Sicherheitsabfrage inkl. Vorschau der erkannten Kapitel; leert zugleich
+  // alle an die ALTEN Kapiteltitel gebundenen Datensaetze
+  // (manualChapters/manualCheckpoints/manualMergedDoc/chapterKeywords), die
+  // sonst auf keinen gueltigen Gliederungs-Eintrag mehr zeigen wuerden.
+  function outlineChaptersFromDocxHeadings(rawChapters) {
+    var result = [];
+    var currentChapter = null;
+    rawChapters.forEach(function (c) {
+      var title = redactText(c.title);
+      if (!title) return;
+      if (c.level <= 1) {
+        currentChapter = { title: title, subs: [], domains: [] };
+        result.push(currentChapter);
+      } else if (currentChapter) {
+        currentChapter.subs.push({ title: title });
+      }
+      // Ueberschriften der Ebene 3+ ohne vorangehende Ebene-1-Ueberschrift
+      // (sollte bei einem echten Gliederungsdokument nicht vorkommen) werden
+      // stillschweigend uebersprungen statt einen Fehler zu werfen.
+    });
+    return result;
+  }
+  async function handleOutlineUploadFile(file) {
+    els.outlineUploadStatus.textContent = "Lese Datei …";
+    await wait(30); // UI (Sanduhr-Text) einmal rendern lassen, bevor das synchrone Parsing startet
+    try {
+      var buf = await readFileAsArrayBuffer(file);
+      var rawChapters = await extractReferenceManualChapters(buf);
+      // "Vorspann" (Text vor der ersten Ueberschrift, level 0) enthaelt
+      // keine Kapitelstruktur - fuer eine Gliederung uninteressant.
+      var newOutline = outlineChaptersFromDocxHeadings(rawChapters.filter(function (c) { return c.level > 0; }));
+      if (!newOutline.length) {
+        showToast("Keine Kapitel erkannt", "In der Datei wurden keine Überschriften (Formatvorlage „Überschrift 1“) gefunden.", true);
+        return;
+      }
+      var subCount = newOutline.reduce(function (n, c) { return n + c.subs.length; }, 0);
+      var preview = newOutline.slice(0, 8).map(function (c) { return "• " + c.title; }).join("\n") +
+        (newOutline.length > 8 ? "\n… (" + (newOutline.length - 8) + " weitere)" : "");
+      var ok = await confirmDialog(
+        newOutline.length + " Kapitel (" + subCount + " Unterkapitel) erkannt:\n\n" + preview +
+        "\n\nDiese ersetzen die komplette aktuelle Gliederung UNWIDERRUFLICH. Domänen-Zuordnungen müssen danach " +
+        "neu gepflegt werden; bereits erzeugte Benutzerhandbuch-Kapitel-Texte und Gliederungs-Stichwörter werden " +
+        "ebenfalls geleert. Wirklich ersetzen?",
+        "Gliederung ersetzen"
+      );
+      if (!ok) return;
+      var nextId = 1;
+      newOutline.forEach(function (c) {
+        c.id = nextId++;
+        c.subs.forEach(function (s) { s.id = nextId++; });
+      });
+      app.outline = newOutline;
+      app.manualChapters = {};
+      app.manualCheckpoints = [];
+      app.manualMergedDoc = "";
+      app.chapterKeywords = {};
+      renderOutlineList();
+      renderManualChapters();
+      renderManualCheckpoints();
+      els.manualMergeOutput.value = "";
+      els.manualMergeDownloadBtn.disabled = true;
+      els.manualMergeStatusNote.textContent = "";
+      renderGliederung();
+      refreshDashboard(false);
+      addLog("Gliederung aus „" + (file.name || "Word-Dokument") + "“ ersetzt (" + newOutline.length + " Kapitel, " +
+        subCount + " Unterkapitel) - Domänen-Zuordnungen, Benutzerhandbuch-Kapitel und Gliederungs-Stichwörter zurückgesetzt.");
+      showToast("Gliederung ersetzt", newOutline.length + " Kapitel aus „" + (file.name || "") + "“ übernommen.");
+    } catch (err) {
+      showToast("Hochladen fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.outlineUploadStatus.textContent = "";
+    }
+  }
+  els.outlineUploadBtn.addEventListener("click", function () { els.outlineUploadInput.click(); });
+  els.outlineUploadInput.addEventListener("change", function () {
+    var file = els.outlineUploadInput.files && els.outlineUploadInput.files[0];
+    els.outlineUploadInput.value = "";
+    if (file) handleOutlineUploadFile(file);
+  });
 
   // Rollen-Navigation (Einstellungen): reine Referenzanzeige aus
   // app.roleNavigation (s. roleNavigationSeedData()) - keine Bearbeitung,
@@ -14869,6 +14999,46 @@
   renderRagPromptsList();
   renderLanguageStyleSelect();
 
+  // Negativliste (Einstellungen): s. Kommentar bei app.negativeWordsRaw
+  // weiter oben. Rein informativ/Hinweis (Markierung), KEINE automatische
+  // Entfernung/Blockierung der generierten Texte.
+  function negativeWordsList() {
+    return (app.negativeWordsRaw || "").split(",").map(function (w) { return w.trim(); }).filter(Boolean);
+  }
+  // Escaped UND markiert in einem Zug (statt escapeHtml(text) danach mit
+  // <mark> zu durchsetzen) - sonst wuerde das spaetere Einfuegen des
+  // <mark>-Tags selbst wieder mitsamt seiner spitzen Klammern escaped.
+  // Laengste Begriffe zuerst, damit ein mehrteiliger Satzbaustein (z. B.
+  // "im Rahmen von") nicht durch ein kuerzeres, darin enthaltenes Wort
+  // zerschnitten wird.
+  function highlightNegativeWordsHtml(text) {
+    var words = negativeWordsList();
+    if (!words.length) return escapeHtml(text);
+    var sorted = words.slice().sort(function (a, b) { return b.length - a.length; });
+    var pattern = sorted.map(function (w) { return w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|");
+    var re = new RegExp("(" + pattern + ")", "gi");
+    return text.split(re).map(function (part, i) {
+      return (i % 2 === 1) ? '<mark class="negword-hit">' + escapeHtml(part) + "</mark>" : escapeHtml(part);
+    }).join("");
+  }
+  function renderNegativeWordsBox() {
+    if (!els.negativeWordsInput) return;
+    if (document.activeElement !== els.negativeWordsInput) els.negativeWordsInput.value = app.negativeWordsRaw;
+    var count = negativeWordsList().length;
+    els.negativeWordsCount.textContent = count
+      ? count + " Begriff(e) in der Negativliste - Treffer werden in der Benutzerhandbuch-Kapitel-Vorschau gelb markiert."
+      : "Negativliste ist leer - noch keine Begriffe hinterlegt.";
+  }
+  els.negativeWordsInput && els.negativeWordsInput.addEventListener("input", function () {
+    app.negativeWordsRaw = els.negativeWordsInput.value;
+    renderNegativeWordsBox();
+    renderManualChapters();
+  });
+  els.negativeWordsInput && els.negativeWordsInput.addEventListener("change", function () {
+    addLog("Negativliste (Einstellungen) geändert (" + negativeWordsList().length + " Begriff(e)).");
+  });
+  renderNegativeWordsBox();
+
   function ragBuildPrompt(kind, rows) {
     var body = rows.map(function (r) {
       var parts = ["Domäne: " + r.domain, "Status: " + r.status];
@@ -17223,9 +17393,9 @@
         var icon = MANUAL_SCOPE_TAG_ICONS[tag] || "🏷️";
         var rest = line.split(tag).join("").trim();
         return '<p style="margin:0 0 8px;"><span class="override-badge" style="background:var(--danger-bg,#fde8e8); color:var(--danger,#c0392b);">' +
-          icon + " " + escapeHtml(tag.replace(/^\[|\]$/g, "")) + "</span> " + escapeHtml(rest) + "</p>";
+          icon + " " + escapeHtml(tag.replace(/^\[|\]$/g, "")) + "</span> " + highlightNegativeWordsHtml(rest) + "</p>";
       }
-      return '<p style="margin:0 0 8px;">' + escapeHtml(line) + "</p>";
+      return '<p style="margin:0 0 8px;">' + highlightNegativeWordsHtml(line) + "</p>";
     }).join("");
   }
 

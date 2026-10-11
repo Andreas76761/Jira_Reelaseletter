@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.68.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.69.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1541,7 +1541,20 @@ zusammenzuführen.
     Zuordnung, und sollte geprüft/korrigiert werden.** Bewusst ohne
     Vorschlag blieben Kapitel 1-3, 9, 13-16 (keine eindeutig passende
     Domäne) sowie die Domäne *DevOps* (mit 60 Tickets die zweitgrößte im
-    Demo-Datensatz – passt thematisch zu keinem Kapitel).
+    Demo-Datensatz – passt thematisch zu keinem Kapitel). Über den Button
+    **"Gliederung aus Word-Dokument hochladen (.docx)"** lässt sich die
+    komplette obige Liste stattdessen aus einer hochgeladenen .docx-Datei
+    übernehmen – dieselbe Kapitelerkennung über Word-Formatvorlagen
+    ("Überschrift 1" = Kapitel, "Überschrift 2" = Unterkapitel) wie beim
+    Referenz-Handbuch-Import (s. u.), hier aber direkt in die Gliederung
+    selbst statt nur in eine Vergleichsgrundlage. Eine Sicherheitsabfrage
+    zeigt vorab eine Vorschau der erkannten Kapitel/Unterkapitel und kann
+    abgebrochen werden; nach Bestätigung ersetzt die neue Struktur die
+    bisherige Gliederung **vollständig und unwiderruflich** – Domänen-
+    Zuordnungen fehlen danach zunächst (müssen neu gepflegt werden), und
+    bereits erzeugte Benutzerhandbuch-Kapitel-Generator-Texte sowie
+    Gliederungs-Stichwörter werden automatisch geleert, da sie sonst an
+    nicht mehr existierende Kapiteltitel gebunden blieben.
   - *Farbschema (Domänen &amp; Status-Ampel)* – die im Ticket Graph
     verwendeten Farben (Domänen: eine von 16 festen Farben, stabil je
     Domänenname; Status: Ampel-Kategorie Rot/Gelb/Grün, aus dem
@@ -1584,6 +1597,17 @@ zusammenzuführen.
     aus, nicht rückwirkend auf bereits erzeugte Texte. Konfiguration (kein
     Sitzungsdatensatz) – bleibt auch bei "Sitzung zurücksetzen"/"Alle Daten
     löschen" erhalten, wird über Sitzung speichern/laden mit exportiert.
+  - *Negativliste (verbotene Wörter/Satzbausteine)* – eine kommagetrennte
+    Liste von Wörtern oder Satzbausteinen (auch Wortbestandteile erlaubt,
+    z. B. "im Rahmen von"), die im Releaseletter/Benutzerhandbuch nicht
+    auftauchen sollen. Wird **nicht** automatisch entfernt – die
+    redaktionelle Entscheidung bleibt beim Menschen –, sondern Treffer
+    werden in der Benutzerhandbuch-Kapitel-Vorschau ("Vorschau (Icons)",
+    s. u.) gelb hervorgehoben, damit sie bei der Prüfung auffallen; der
+    eigentliche, bearbeitbare Kapiteltext bleibt davon unberührt.
+    Konfiguration (kein Sitzungsdatensatz) – bleibt auch bei "Sitzung
+    zurücksetzen"/"Alle Daten löschen" erhalten, wird über Sitzung
+    speichern/laden mit exportiert.
   - *Dokumentation → Testing* – visuelles Testdashboard mit dem
     eingebetteten Bericht der automatisierten Tests (Browsertests der
     Web-App + pytest für das CLI-Tool) aus dem letzten Verifikationslauf
