@@ -836,6 +836,26 @@
             <div class="empty-hint" id="graph-selection-empty">Kein Ticket ausgewählt – auf einen Knoten im Graph klicken.</div>
           </div>
         </section>
+
+        <section>
+          <p class="section-label">Textschnipsel-Querverweise (Massenverarbeitung)</p>
+          <div class="callout">
+            Zeigt, welche Kapitel sich in ihren Massenverarbeitung-Textschnipseln gegenseitig per
+            "[Verweis]"-Tag (s. Benutzerhandbuch-Kapitel-Generator) referenzieren – rein deterministisch aus dem
+            bereits vorhandenen Tag erkannt (Muster "Kapitel &lt;Nummer&gt;" im Verweistext, gegen die
+            Kapitelnummern der Gliederung abgeglichen), kein KI-Aufruf. Nur Kapitel mit mindestens einer
+            erkannten Verweis-Beziehung erscheinen als Knoten; eine Linie je Richtung, Pfeil zeigt zum
+            referenzierten Kapitel, Mauszeiger über Linie/Knoten zeigt den genauen Verweistext.
+          </div>
+          <div class="paste-actions" style="align-items:center;">
+            <button class="btn primary" id="xref-graph-generate-btn" type="button">Querverweise anzeigen</button>
+          </div>
+          <p class="step-note" id="xref-graph-status-note"></p>
+          <div class="panel graph-svg-wrap" id="xref-graph-wrap" hidden>
+            <div id="xref-graph-svg-container"></div>
+          </div>
+          <div class="empty-state" id="xref-graph-empty" hidden>Keine "[Verweis]"-Beziehungen zwischen Kapiteln in den aktuellen Massenverarbeitung-Textschnipseln erkannt.</div>
+        </section>
       </section>
 
       <!-- ================= Trend ================= -->
@@ -1397,7 +1417,7 @@
               <p class="section-label">Erkannte Abkürzungen (<span id="abbrev-count">0</span>)</p>
               <div class="panel table-wrap" style="max-height:360px; overflow:auto;">
                 <table class="simple-table" id="abbrev-table">
-                  <thead><tr><th>Kürzel</th><th>Häufigkeit</th><th>Beispiel-Tickets</th><th>Vorschlag Deutsch</th><th>Vorschlag Englisch</th></tr></thead>
+                  <thead><tr><th>Kürzel</th><th>Häufigkeit</th><th>Beispiel-Tickets</th><th>Vorschlag Deutsch</th><th>Vorschlag Englisch</th><th></th></tr></thead>
                   <tbody id="abbrev-tbody"></tbody>
                 </table>
                 <div class="empty-hint" id="abbrev-empty">Noch nicht extrahiert.</div>
@@ -1423,6 +1443,17 @@
                 <tbody id="label-candidate-tbody"></tbody>
               </table>
               <div class="empty-hint" id="label-candidate-empty">Noch nicht extrahiert.</div>
+            </div>
+          </section>
+          <section style="margin-top:16px;">
+            <p class="section-label">Synonym-Kandidaten – "Suche weitere Synonyme" (<span id="synonym-candidate-count">0</span>)</p>
+            <p class="desc">Wiederkehrende Begriffe aus den geladenen Tickets, die noch in keinem Synonym-Eintrag (Register Synonyme) als Hauptbegriff oder Synonym erfasst sind – dieselbe Stichwort-Erkennung wie bei den Label-Kandidaten oben, erfundene Begriffe gibt es nicht. Mit "In Synonyme übernehmen" wird der Begriff als neuer Hauptbegriff ohne Übersetzung angelegt – Übersetzungen/Synonyme danach jederzeit im Register Synonyme ergänzen.</p>
+            <div class="panel table-wrap" style="max-height:360px; overflow:auto;">
+              <table class="simple-table" id="synonym-candidate-table">
+                <thead><tr><th>Begriff</th><th>Tickets</th><th></th></tr></thead>
+                <tbody id="synonym-candidate-tbody"></tbody>
+              </table>
+              <div class="empty-hint" id="synonym-candidate-empty">Noch nicht extrahiert.</div>
             </div>
           </section>
         </div>
@@ -2162,7 +2193,7 @@
         <div class="view-head"><h2>Abkürzungen</h2><p class="desc">Großbuchstaben-Kürzel, die in Zusammenfassung, Beschreibung oder Custom-Feldern der geladenen Tickets vorkommen. Wird über <b>Verarbeitung → 3. Glossar &amp; Abkürzungen extrahieren</b> befüllt. Die Spalten "Vorschlag Deutsch"/"Vorschlag Englisch" sind unverbindliche Vorschläge für bekannte Kürzel und ersetzen keine redaktionelle Prüfung; bei firmenspezifischen/uneindeutigen Kürzeln steht dort bewusst "&ndash;".</p></div>
         <div class="panel table-wrap">
           <table class="simple-table" id="abbrev-table-register">
-            <thead><tr><th>Kürzel</th><th>Häufigkeit</th><th>Beispiel-Tickets</th><th>Vorschlag Deutsch</th><th>Vorschlag Englisch</th></tr></thead>
+            <thead><tr><th>Kürzel</th><th>Häufigkeit</th><th>Beispiel-Tickets</th><th>Vorschlag Deutsch</th><th>Vorschlag Englisch</th><th></th></tr></thead>
             <tbody id="abbrev-tbody-register"></tbody>
           </table>
           <div class="empty-hint" id="abbrev-empty-register">Noch nicht extrahiert. Unter Verarbeitung → 3. Glossar &amp; Abkürzungen extrahieren einmal ausführen.</div>
@@ -2175,13 +2206,14 @@
           </div>
           <div class="panel table-wrap" id="abbrev-translations-wrap">
             <table class="simple-table" id="abbrev-translations-table">
-              <thead><tr><th>Kürzel/Begriff (DE)</th><th>Englisch</th><th>Slowakisch</th><th>Hindi</th><th>Französisch</th><th>Aktion</th></tr></thead>
+              <thead><tr><th>Kürzel/Begriff (DE)</th><th>Bedeutung (Deutsch)</th><th>Englisch</th><th>Slowakisch</th><th>Hindi</th><th>Französisch</th><th>Aktion</th></tr></thead>
               <tbody id="abbrev-translations-tbody"></tbody>
             </table>
             <div class="empty-hint" id="abbrev-translations-empty">Noch keine manuellen Übersetzungen angelegt.</div>
           </div>
           <div class="paste-actions" style="margin-top:10px; align-items:center;">
             <input type="text" class="text-input" id="abbrev-translations-new-term" placeholder="Kürzel/Begriff (DE)" style="max-width:160px;">
+            <input type="text" class="text-input" id="abbrev-translations-new-de" placeholder="Bedeutung (Deutsch)" style="max-width:160px;">
             <input type="text" class="text-input" id="abbrev-translations-new-en" placeholder="Englisch" style="max-width:140px;">
             <input type="text" class="text-input" id="abbrev-translations-new-sk" placeholder="Slowakisch" style="max-width:140px;">
             <input type="text" class="text-input" id="abbrev-translations-new-hi" placeholder="Hindi" style="max-width:140px;">
@@ -4591,7 +4623,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.74.0";
+  var APP_VERSION = "2.75.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6044,6 +6076,7 @@
     "extract-glossary-btn", "abbrev-count", "abbrev-tbody", "abbrev-empty",
     "glossary-candidate-count", "glossary-candidate-tbody", "glossary-candidate-empty",
     "label-candidate-count", "label-candidate-tbody", "label-candidate-empty",
+    "synonym-candidate-count", "synonym-candidate-tbody", "synonym-candidate-empty",
     "glossary-candidate-tbody-register", "glossary-candidate-empty-register",
     "abbrev-tbody-register", "abbrev-empty-register",
     "releaseversion-total", "releaseversion-tbody",
@@ -6117,7 +6150,7 @@
     "glossary-translations-tbody", "glossary-translations-empty", "glossary-translations-new-term",
     "glossary-translations-new-en", "glossary-translations-new-sk", "glossary-translations-new-hi",
     "glossary-translations-new-fr", "glossary-translations-add-btn",
-    "abbrev-translations-tbody", "abbrev-translations-empty", "abbrev-translations-new-term",
+    "abbrev-translations-tbody", "abbrev-translations-empty", "abbrev-translations-new-term", "abbrev-translations-new-de",
     "abbrev-translations-new-en", "abbrev-translations-new-sk", "abbrev-translations-new-hi",
     "abbrev-translations-new-fr", "abbrev-translations-add-btn",
     "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn", "outline-domain-datalist",
@@ -6125,6 +6158,7 @@
     "outline-matrix-upload-btn", "outline-matrix-upload-input", "outline-matrix-upload-status", "outline-steuerung-tbody",
     "outline-versions-generate-btn", "outline-versions-status-note", "outline-versions-wrap",
     "outline-versions-export-row", "outline-versions-matrix-tbody", "outline-versions-matrix-download-btn",
+    "xref-graph-generate-btn", "xref-graph-status-note", "xref-graph-wrap", "xref-graph-svg-container", "xref-graph-empty",
     "role-nav-list", "importformat-list",
     "test-results-date", "test-results-suites", "test-results-files-passed", "test-results-total", "test-results-passed",
     "test-results-failed", "test-results-duration", "test-results-failed-banner", "test-results-tbody", "test-results-empty",
@@ -6176,7 +6210,7 @@
     // NUR die Vorschau der bereits per Dashboard-Checkbox getroffenen Auswahl -
     // keine neue Master-Tabelle, siehe renderListenauswahlPreview()).
     listPreviewFilter: { issueType: "", excludeTypes: {} },
-    extracted: { abbreviations: [], glossaryCandidates: [], labelCandidates: [], ran: false },
+    extracted: { abbreviations: [], glossaryCandidates: [], labelCandidates: [], synonymCandidates: [], ran: false },
     // Zusatzstatus je Job fuer die Prozessschritt-Anzeige, der sich nicht
     // direkt aus den obigen Datenstrukturen ableiten laesst (z. B. ob eine
     // Aktion bereits ausgefuehrt wurde oder dabei ein Fehler auftrat).
@@ -6589,7 +6623,7 @@
     ticketDerivedCache.clear();
     app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
     app.generatedImages = []; app.uploadedImages = []; app.initialized = false; app.nextImportId = 1;
-    app.extracted = { abbreviations: [], glossaryCandidates: [], labelCandidates: [], ran: false };
+    app.extracted = { abbreviations: [], glossaryCandidates: [], labelCandidates: [], synonymCandidates: [], ran: false };
     app.jobState = {
       glossarExtrakt: { error: null },
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
@@ -6610,6 +6644,7 @@
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
     renderExtractedLabelCandidates();
+    renderExtractedSynonymCandidates();
     els.releaseMatchSummary.hidden = true;
     els.releaseMissingWrap.hidden = true;
     els.releaseKeysInput.value = "";
@@ -6667,7 +6702,7 @@
     ticketDerivedCache.clear();
     app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
     app.generatedImages = []; app.uploadedImages = []; app.initialized = false; app.nextImportId = 1;
-    app.extracted = { abbreviations: [], glossaryCandidates: [], labelCandidates: [], ran: false };
+    app.extracted = { abbreviations: [], glossaryCandidates: [], labelCandidates: [], synonymCandidates: [], ran: false };
     app.jobState = {
       glossarExtrakt: { error: null },
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
@@ -6689,6 +6724,7 @@
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
     renderExtractedLabelCandidates();
+    renderExtractedSynonymCandidates();
     els.releaseMatchSummary.hidden = true;
     els.releaseMissingWrap.hidden = true;
     els.releaseKeysInput.value = "";
@@ -6843,8 +6879,9 @@
     app.savedLists = data.savedLists || [];
     app.nextSavedListId = data.nextSavedListId || 1;
     app.listPreviewFilter = data.listPreviewFilter || { issueType: "", excludeTypes: {} };
-    app.extracted = data.extracted || { abbreviations: [], glossaryCandidates: [], labelCandidates: [], ran: false };
+    app.extracted = data.extracted || { abbreviations: [], glossaryCandidates: [], labelCandidates: [], synonymCandidates: [], ran: false };
     if (!Array.isArray(app.extracted.labelCandidates)) app.extracted.labelCandidates = [];
+    if (!Array.isArray(app.extracted.synonymCandidates)) app.extracted.synonymCandidates = [];
     app.jobState = data.jobState || {
       glossarExtrakt: { error: null },
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
@@ -6904,6 +6941,7 @@
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
     renderExtractedLabelCandidates();
+    renderExtractedSynonymCandidates();
     renderPointsTable();
     renderLabelsList();
     Object.keys(TERMINOLOGY_LISTS).forEach(renderTerminologyList);
@@ -7936,9 +7974,9 @@
       addBtn: "glossaryTranslationsAddBtn", logLabel: "Glossar-Übersetzung"
     },
     abbrevTranslations: {
-      stateKey: "abbrevTranslations", hasSynonymsField: false,
+      stateKey: "abbrevTranslations", hasSynonymsField: false, hasDeMeaningField: true,
       tbody: "abbrevTranslationsTbody", empty: "abbrevTranslationsEmpty",
-      newTerm: "abbrevTranslationsNewTerm",
+      newTerm: "abbrevTranslationsNewTerm", newDe: "abbrevTranslationsNewDe",
       newEn: "abbrevTranslationsNewEn", newSk: "abbrevTranslationsNewSk",
       newHi: "abbrevTranslationsNewHi", newFr: "abbrevTranslationsNewFr",
       addBtn: "abbrevTranslationsAddBtn", logLabel: "Abkürzungs-Übersetzung"
@@ -7954,6 +7992,11 @@
         html += entry.fixed
           ? "<td>" + escapeHtml(entry.synonyms || "") + "</td>"
           : '<td><input type="text" class="text-input terminology-field-input" data-field="synonyms" value="' + escapeHtml(entry.synonyms || "") + '"></td>';
+      }
+      if (f === "term" && cfg.hasDeMeaningField) {
+        html += entry.fixed
+          ? "<td>" + escapeHtml(entry.de || "") + "</td>"
+          : '<td><input type="text" class="text-input terminology-field-input" data-field="de" value="' + escapeHtml(entry.de || "") + '"></td>';
       }
       return html;
     }).join("");
@@ -8007,22 +8050,26 @@
       var hi = (els[cfg.newHi].value || "").trim();
       var fr = (els[cfg.newFr].value || "").trim();
       var synonyms = cfg.hasSynonymsField ? (els[cfg.newSynonyms].value || "").trim() : "";
+      var de = cfg.hasDeMeaningField ? (els[cfg.newDe].value || "").trim() : "";
       if (!term) { showToast("Kein Begriff", "Bitte einen deutschen Begriff eingeben.", true); return; }
-      if (!en && !sk && !hi && !fr) { showToast("Keine Übersetzung", "Bitte mindestens eine Übersetzung eingeben.", true); return; }
+      if (!de && !en && !sk && !hi && !fr) { showToast("Keine Übersetzung", "Bitte mindestens eine Übersetzung/Bedeutung eingeben.", true); return; }
       if (app[cfg.stateKey].some(function (r) { return r.term.toLowerCase() === term.toLowerCase(); })) {
         showToast("Begriff existiert bereits", "Dieser Begriff ist schon in der Liste.", true);
         return;
       }
       var entry = { term: term, en: en, sk: sk, hi: hi, fr: fr, fixed: false };
       if (cfg.hasSynonymsField) entry.synonyms = synonyms;
+      if (cfg.hasDeMeaningField) entry.de = de;
       app[cfg.stateKey].push(entry);
       addLog(cfg.logLabel + " „" + term + "“ angelegt.");
       els[cfg.newTerm].value = ""; els[cfg.newEn].value = ""; els[cfg.newSk].value = ""; els[cfg.newHi].value = ""; els[cfg.newFr].value = "";
       if (cfg.hasSynonymsField) els[cfg.newSynonyms].value = "";
+      if (cfg.hasDeMeaningField) els[cfg.newDe].value = "";
       renderTerminologyList(key);
     });
     var newInputs = [els[cfg.newTerm], els[cfg.newEn], els[cfg.newSk], els[cfg.newHi], els[cfg.newFr]];
     if (cfg.hasSynonymsField) newInputs.push(els[cfg.newSynonyms]);
+    if (cfg.hasDeMeaningField) newInputs.push(els[cfg.newDe]);
     newInputs.forEach(function (input) {
       input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); els[cfg.addBtn].click(); } });
     });
@@ -8301,6 +8348,76 @@
     }
     addLog("Steuerung & KPI: Kapitel „" + chapter.title + "“ - " + field + " = " + (s[field] == null ? "(leer)" : s[field]) + ".");
     renderMassFiles();
+  });
+
+  // Ticket Graph - Textschnipsel-Querverweise (Massenverarbeitung): rein
+  // deterministisch aus den bereits vorhandenen "[Verweis]"-Tags in den
+  // generierten Kapitel-Textschnipseln (app.massFiles) erkannt, kein
+  // KI-Aufruf. Bewusst als eigener, einfacher SVG-Renderer gebaut (nicht
+  // in den bestehenden, komplexen Ticket-Abhaengigkeits-Graph integriert),
+  // um dessen bereits getesteten Code-Pfad nicht anzufassen.
+  function chapterNumberFromTitle(title) {
+    var m = (title || "").match(/^Kapitel\s+(\d+(?:\.\d+)*)/);
+    return m ? m[1] : null;
+  }
+  function extractChapterCrossReferences() {
+    var edgesMap = {};
+    app.massFiles.forEach(function (e) {
+      if (!e.chapterTitle || !e.text) return;
+      manualParseParagraphs(e.text).forEach(function (line) {
+        if (line.indexOf("[Verweis]") === -1) return;
+        var m = line.match(/Kapitel\s+(\d+(?:\.\d+)*)/);
+        if (!m) return;
+        var targetChapter = app.outline.filter(function (c) { return chapterNumberFromTitle(c.title) === m[1]; })[0];
+        if (!targetChapter || targetChapter.title === e.chapterTitle) return;
+        var key = e.chapterTitle + "|||" + targetChapter.title;
+        if (!edgesMap[key]) edgesMap[key] = { source: e.chapterTitle, target: targetChapter.title, count: 0, sample: line.replace("[Verweis]", "").trim() };
+        edgesMap[key].count++;
+      });
+    });
+    return Object.keys(edgesMap).map(function (k) { return edgesMap[k]; });
+  }
+  function renderXrefGraph() {
+    var edges = extractChapterCrossReferences();
+    if (!edges.length) {
+      els.xrefGraphWrap.hidden = true;
+      els.xrefGraphEmpty.hidden = false;
+      els.xrefGraphStatusNote.textContent = "Keine [Verweis]-Beziehungen gefunden.";
+      return;
+    }
+    var nodeTitles = dedupeStrings(edges.reduce(function (arr, e) { return arr.concat([e.source, e.target]); }, []));
+    var cx = 260, cy = 260, radius = Math.max(140, nodeTitles.length * 18);
+    var positions = {};
+    nodeTitles.forEach(function (title, i) {
+      var angle = (2 * Math.PI * i) / nodeTitles.length - Math.PI / 2;
+      positions[title] = { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+    });
+    var width = cx * 2, height = cy * 2;
+    var svgParts = [];
+    svgParts.push('<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">');
+    svgParts.push('<defs><marker id="xref-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--text-faint)"/></marker></defs>');
+    edges.forEach(function (e) {
+      var p1 = positions[e.source], p2 = positions[e.target];
+      if (!p1 || !p2) return;
+      svgParts.push('<line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p2.x + '" y2="' + p2.y +
+        '" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#xref-arrow)"><title>' +
+        escapeHtml(e.source + " → " + e.target + " (" + e.count + "x): " + e.sample) + "</title></line>");
+    });
+    nodeTitles.forEach(function (title) {
+      var p = positions[title];
+      svgParts.push('<g><circle cx="' + p.x + '" cy="' + p.y + '" r="26" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"><title>' + escapeHtml(title) + '</title></circle>' +
+        '<text x="' + p.x + '" y="' + p.y + '" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--text)">' +
+        escapeHtml(chapterNumberFromTitle(title) || "?") + "</text></g>");
+    });
+    svgParts.push("</svg>");
+    els.xrefGraphSvgContainer.innerHTML = svgParts.join("");
+    els.xrefGraphWrap.hidden = false;
+    els.xrefGraphEmpty.hidden = true;
+    els.xrefGraphStatusNote.textContent = nodeTitles.length + " Kapitel, " + edges.length + " Verweis-Beziehung(en) erkannt.";
+  }
+  els.xrefGraphGenerateBtn.addEventListener("click", function () {
+    renderXrefGraph();
+    addLog("Textschnipsel-Querverweise: Graph aktualisiert.");
   });
 
   // Gliederung + Steuerung/KPI aus Excel-Matrix hochladen (Einstellungen):
@@ -11870,12 +11987,22 @@
       .map(function (k) { return { term: k.term, count: k.tickets.length }; });
   }
 
+  // "Übernehmen"-Button je Zeile (nur wenn mind. ein Vorschlag bekannt ist,
+  // s. abbrevMeaningSuggestion) speichert die Vorschläge fest im manuell
+  // gepflegten Register app.abbrevTranslations (Register Abkürzungen,
+  // "Bedeutung (Deutsch)"-Spalte) - bisher waren die Vorschläge rein
+  // transient (verschwanden mit jeder erneuten Extraktion), ohne jemals in
+  // der editierbaren/persistenten Übersetzungstabelle zu landen.
   function renderExtractedAbbreviations() {
     var list = app.extracted.abbreviations;
     var html = list.map(function (r) {
+      var hasSuggestion = (r.suggestedDe && r.suggestedDe !== "–") || (r.suggestedEn && r.suggestedEn !== "–");
       return "<tr><td class=\"mono\">" + escapeHtml(r.term) + "</td><td class=\"mono\">" + r.count +
         "</td><td class=\"mono\">" + escapeHtml(r.examples.join(", ")) + "</td>" +
-        "<td>" + escapeHtml(r.suggestedDe || "–") + "</td><td>" + escapeHtml(r.suggestedEn || "–") + "</td></tr>";
+        "<td>" + escapeHtml(r.suggestedDe || "–") + "</td><td>" + escapeHtml(r.suggestedEn || "–") + "</td>" +
+        "<td>" + (hasSuggestion
+          ? '<button type="button" class="btn ghost btn-tiny abbrev-suggestion-add-btn" data-term="' + escapeHtml(r.term) + '">In Abkürzungs-Übersetzungen übernehmen</button>'
+          : "") + "</td></tr>";
     }).join("");
     [els.abbrevCount].forEach(function (el) { el.textContent = list.length; });
     [[els.abbrevTbody, els.abbrevEmpty], [els.abbrevTbodyRegister, els.abbrevEmptyRegister]].forEach(function (pair) {
@@ -11884,6 +12011,33 @@
       if (app.extracted.ran && !list.length) pair[1].textContent = "Keine Abkürzungen in den geladenen Tickets gefunden.";
     });
   }
+  function takeOverAbbrevSuggestion(term) {
+    var r = app.extracted.abbreviations.filter(function (a) { return a.term === term; })[0];
+    if (!r) return;
+    var de = r.suggestedDe && r.suggestedDe !== "–" ? r.suggestedDe : "";
+    var en = r.suggestedEn && r.suggestedEn !== "–" ? r.suggestedEn : "";
+    var existing = app.abbrevTranslations.filter(function (e) { return e.term.toLowerCase() === term.toLowerCase(); })[0];
+    if (existing) {
+      if (existing.fixed) {
+        showToast("Bereits fixiert", "„" + term + "“ ist im Register bereits fixiert - erst entsperren, um den Vorschlag zu übernehmen.", true);
+        return;
+      }
+      existing.de = de; existing.en = en;
+      addLog("Abkürzungs-Übersetzung „" + term + "“ mit dem Vorschlag aktualisiert (Deutsch/Englisch).");
+    } else {
+      app.abbrevTranslations.push({ term: term, de: de, en: en, sk: "", hi: "", fr: "", fixed: false });
+      addLog("Abkürzungs-Übersetzung „" + term + "“ aus dem Vorschlag übernommen (Deutsch/Englisch).");
+    }
+    renderTerminologyList("abbrevTranslations");
+    showToast("Übernommen", "„" + term + "“ steht jetzt im Register Abkürzungen -> Manuell gepflegte Übersetzungen.");
+  }
+  [els.abbrevTbody, els.abbrevTbodyRegister].forEach(function (tbody) {
+    tbody.addEventListener("click", function (e) {
+      var btn = e.target.closest(".abbrev-suggestion-add-btn");
+      if (!btn) return;
+      takeOverAbbrevSuggestion(btn.getAttribute("data-term"));
+    });
+  });
 
   function renderExtractedGlossaryCandidates() {
     var list = app.extracted.glossaryCandidates;
@@ -11946,6 +12100,67 @@
     showToast("Übernommen", "„" + term + "“ wurde als neues Label gespeichert.");
   });
 
+  // Synonym-Kandidaten ("Suche weitere Synonyme"): exakt dieselbe Stichwort-
+  // Extraktion/Filterlogik wie bei den Label-Kandidaten oben
+  // (extractLabelCandidates), nur gegen app.synonyms (Hauptbegriff UND
+  // dessen Synonyme-Freitext) statt app.labels abgeglichen - ein Begriff,
+  // der bereits irgendwo im Synonyme-Register vorkommt, ist kein neuer
+  // Kandidat mehr. Erwartet ebenfalls NORMALISIERTE Tickets.
+  var SYNONYM_CANDIDATE_MIN_TICKETS = 3;
+  var SYNONYM_CANDIDATE_MAX = 30;
+  function extractSynonymCandidates(tickets) {
+    var existingTerms = {};
+    app.synonyms.forEach(function (s) {
+      if (s.term) existingTerms[s.term.toLowerCase()] = true;
+      (s.synonyms || "").split(",").forEach(function (alt) {
+        var t = alt.trim().toLowerCase();
+        if (t) existingTerms[t] = true;
+      });
+    });
+    app.labels.forEach(function (l) {
+      if (l.de) existingTerms[l.de.toLowerCase()] = true;
+      if (l.en) existingTerms[l.en.toLowerCase()] = true;
+    });
+    tickets.forEach(function (t) {
+      [t.status, t.issueType, t.domain, anlagemonatJahrLabel(t.raw)].forEach(function (v) {
+        if (v) existingTerms[String(v).toLowerCase()] = true;
+      });
+    });
+    return glExtractKeywords(tickets)
+      .filter(function (k) { return !existingTerms[k.term.toLowerCase()] && k.tickets.length >= SYNONYM_CANDIDATE_MIN_TICKETS; })
+      .slice(0, SYNONYM_CANDIDATE_MAX)
+      .map(function (k) { return { term: k.term, count: k.tickets.length }; });
+  }
+  function renderExtractedSynonymCandidates() {
+    var list = app.extracted.synonymCandidates;
+    var html = list.map(function (r) {
+      return "<tr>" +
+        "<td>" + escapeHtml(r.term) + "</td>" +
+        "<td class=\"mono\">" + r.count + "</td>" +
+        '<td><button type="button" class="btn ghost btn-tiny synonym-candidate-add-btn" data-term="' + escapeHtml(r.term) + '">In Synonyme übernehmen</button></td>' +
+        "</tr>";
+    }).join("");
+    els.synonymCandidateCount.textContent = list.length;
+    els.synonymCandidateTbody.innerHTML = html;
+    els.synonymCandidateEmpty.hidden = list.length > 0;
+    if (app.extracted.ran && !list.length) els.synonymCandidateEmpty.textContent = "Keine neuen Synonym-Kandidaten gefunden.";
+  }
+  els.synonymCandidateTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest(".synonym-candidate-add-btn");
+    if (!btn) return;
+    var term = btn.getAttribute("data-term");
+    if (app.synonyms.some(function (s) { return s.term.toLowerCase() === term.toLowerCase(); })) {
+      showToast("Bereits vorhanden", "„" + term + "“ ist bereits als Hauptbegriff im Synonyme-Register vorhanden.", true);
+      return;
+    }
+    app.synonyms.push({ term: term, synonyms: "", en: "", sk: "", hi: "", fr: "", fixed: false });
+    app.extracted.synonymCandidates = app.extracted.synonymCandidates.filter(function (r) { return r.term !== term; });
+    renderExtractedSynonymCandidates();
+    renderTerminologyList("synonyms");
+    addLog("Synonym-Eintrag „" + term + "“ aus Synonym-Kandidaten übernommen (noch ohne Übersetzung).");
+    showToast("Übernommen", "„" + term + "“ wurde als neuer Hauptbegriff im Synonyme-Register angelegt.");
+  });
+
   els.extractGlossaryBtn.addEventListener("click", function () {
     try {
       var scopedNow = scopedTickets();
@@ -11953,21 +12168,25 @@
       app.extracted.abbreviations = extractAbbreviations(tickets);
       app.extracted.glossaryCandidates = extractGlossaryCandidates(tickets);
       app.extracted.labelCandidates = extractLabelCandidates(scopedNow);
+      app.extracted.synonymCandidates = extractSynonymCandidates(scopedNow);
       app.extracted.ran = true;
       app.jobState.glossarExtrakt.error = null;
       renderExtractedAbbreviations();
       renderExtractedGlossaryCandidates();
       renderExtractedLabelCandidates();
+      renderExtractedSynonymCandidates();
       addLog(
         "Glossar-/Abkürzungs-Extraktion: " + app.extracted.abbreviations.length + " Abkürzungen, " +
         app.extracted.glossaryCandidates.length + " Glossar-Kandidaten, " +
-        app.extracted.labelCandidates.length + " Label-Kandidaten über " + tickets.length + " Tickets."
+        app.extracted.labelCandidates.length + " Label-Kandidaten, " +
+        app.extracted.synonymCandidates.length + " Synonym-Kandidaten über " + tickets.length + " Tickets."
       );
       showToast(
         "Extraktion abgeschlossen",
         app.extracted.abbreviations.length + " Abkürzungen, " + app.extracted.glossaryCandidates.length +
-        " Glossar-Kandidaten und " + app.extracted.labelCandidates.length +
-        " Label-Kandidaten gefunden – auch in den Registern Glossar und Abkürzungen sichtbar."
+        " Glossar-Kandidaten, " + app.extracted.labelCandidates.length + " Label-Kandidaten und " +
+        app.extracted.synonymCandidates.length +
+        " Synonym-Kandidaten gefunden – auch in den Registern Glossar, Abkürzungen und Synonyme sichtbar."
       );
     } catch (err) {
       app.jobState.glossarExtrakt.error = (err && err.message) || "Unbekannter Fehler bei der Extraktion.";
@@ -13501,11 +13720,12 @@
   // selbst zu loeschen, damit sich die Verarbeitung mit einer geänderten
   // Datei-/Listen-Auswahl (s.o.) sauber neu starten laesst.
   function resetIntermediateJobResults() {
-    app.extracted = { abbreviations: [], glossaryCandidates: [], labelCandidates: [], ran: false };
+    app.extracted = { abbreviations: [], glossaryCandidates: [], labelCandidates: [], synonymCandidates: [], ran: false };
     app.jobState.glossarExtrakt.error = null;
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
     renderExtractedLabelCandidates();
+    renderExtractedSynonymCandidates();
 
     app.jobState.releaseversion = { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null };
     els.releaseMatchSummary.hidden = true;

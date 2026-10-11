@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.74.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.75.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -516,6 +516,22 @@ zusammenzuführen.
     werden. Bei vielen Tickets derselben Domäne mit ähnlichem Datum ist
     etwas Überlappung eine bekannte, akzeptierte Einschränkung dieser
     Ansicht (keine vollständige Kollisionsvermeidung innerhalb einer Zeile).
+  Zusätzlich ein eigener, bewusst einfach gehaltener zweiter Graph im
+  selben Bereich: **"Textschnipsel-Querverweise (Massenverarbeitung)"**
+  – zeigt, welche Gliederungskapitel sich in ihren
+  Massenverarbeitung-Textschnipseln gegenseitig per **"[Verweis]"-Tag**
+  (demselben Tag, den der Benutzerhandbuch-Kapitel-Generator schon beim
+  Schreiben setzt) referenzieren. Rein deterministisch aus dem bereits
+  vorhandenen Tag erkannt (Muster "Kapitel &lt;Nummer&gt;" im
+  Verweistext, gegen die Kapitelnummern der Gliederung abgeglichen) –
+  kein eigener KI-Aufruf. Button "Querverweise anzeigen" berechnet den
+  Graphen auf Knopfdruck; nur Kapitel mit mindestens einer erkannten
+  Verweis-Beziehung erscheinen als Knoten (Kreisanordnung), eine Linie
+  je Richtung mit Pfeil zum referenzierten Kapitel. Mauszeiger über
+  Linie/Knoten zeigt per natives SVG-Tooltip den vollen Kapiteltitel
+  bzw. den genauen Verweistext. Bewusst als eigener, einfacher
+  SVG-Renderer umgesetzt statt in den obigen Ticket-Abhängigkeitsgraphen
+  integriert, um dessen Code nicht anzufassen.
 - **Trend** (neu, direkt unter Ticket Graph) – zeitlicher Verlauf der
   aktuell geladenen Tickets, rein deterministisch aus den Feldern
   "Erstellt"/"Gelöst am"/Domäne berechnet (kein KI-Aufruf). Zeitraster
@@ -1042,6 +1058,21 @@ zusammenzuführen.
      Kürzeln bleibt das Feld bewusst leer ("–") statt geraten zu werden.
      Ergebnisse erscheinen zusätzlich in den neuen Registern **Glossar**
      (Abschnitt "Aus Ticket-Daten erkannte Begriffe") und **Abkürzungen**.
+     Zwei Erweiterungen hierzu: (a) ein eigener Bereich
+     **"Synonym-Kandidaten"** ("Suche weitere Synonyme") – dieselbe
+     Stichwort-Extraktion wie bei den bestehenden Label-Kandidaten, aber
+     gegen das Register **Synonyme** abgeglichen statt gegen Labels; ein
+     Klick auf **"In Synonyme übernehmen"** legt den Begriff dort direkt
+     als neuen Hauptbegriff an (bereits übernommene oder schon im
+     Register vorhandene Begriffe erscheinen bei erneuter Extraktion
+     nicht noch einmal als Kandidat). (b) die unverbindlichen
+     Deutsch-/Englisch-Vorschläge der Abkürzungs-Tabelle bekommen einen
+     Button **"In Abkürzungs-Übersetzungen übernehmen"**, der sie fest im
+     Register **Abkürzungen → Manuell gepflegte Übersetzungen**
+     speichert (dort zusätzlich um die neue Spalte **"Bedeutung
+     (Deutsch)"** erweitert); ein bereits dort fixierter Eintrag wird
+     dabei nicht überschrieben, sondern es erscheint ein entsprechender
+     Hinweis.
   4. *Releaseversion* – tabellarische Übersicht aller geladenen Tickets
      mit Beschreibung (direkt neben dem Ticket-Schlüssel), Typ, Domäne,
      Priorität (Punkte) und Labels, ein Abgleich

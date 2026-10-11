@@ -46,12 +46,12 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
 
   // ===================== Tabellenkopf =====================
   const headCells = Array.from(doc.querySelectorAll("#abbrev-table thead th")).map((th) => th.textContent);
-  check("Job-3-Tabelle hat 5 Spalten inkl. Vorschlag DE/EN", headCells.length === 5);
+  check("Job-3-Tabelle hat 6 Spalten inkl. Vorschlag DE/EN + Übernehmen-Aktion", headCells.length === 6);
   check("Spalte 'Vorschlag Deutsch' vorhanden (Job 3)", headCells.includes("Vorschlag Deutsch"));
   check("Spalte 'Vorschlag Englisch' vorhanden (Job 3)", headCells.includes("Vorschlag Englisch"));
 
   const headCellsRegister = Array.from(doc.querySelectorAll("#abbrev-table-register thead th")).map((th) => th.textContent);
-  check("Register-Tabelle hat 5 Spalten inkl. Vorschlag DE/EN", headCellsRegister.length === 5);
+  check("Register-Tabelle hat 6 Spalten inkl. Vorschlag DE/EN + Übernehmen-Aktion", headCellsRegister.length === 6);
 
   // ===================== Bekannte Kürzel bekommen Vorschlag =====================
   function rowFor(term, tbodyId) {
@@ -90,7 +90,12 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   check("Register-Beschreibung erklärt die Vorschlagsspalten", registerDesc.includes("unverbindliche Vorschläge"));
 
   // ===================== HTML-Escaping der Vorschlags-Spalten (XSS-Schutz) =====================
-  check("Keine ungeschützten '<' in gerenderten Vorschlagszellen", !doc.getElementById("abbrev-tbody").innerHTML.match(/<td>[^<]*<(?!\/td)/));
+  // Nur die ersten 5 (reinen Text-)Zellen jeder Zeile pruefen - die 6.
+  // Zelle (neuer "In Abkürzungs-Übersetzungen übernehmen"-Button) enthaelt
+  // bewusst echtes Markup und faellt zu Recht nicht unter diesen Schutz.
+  const abbrevRows = Array.from(doc.querySelectorAll("#abbrev-tbody tr"));
+  const hasUnescapedInTextCells = abbrevRows.some((tr) => Array.from(tr.children).slice(0, 5).some((td) => td.innerHTML.includes("<")));
+  check("Keine ungeschützten '<' in den reinen Text-Vorschlagszellen (Kürzel/Häufigkeit/Beispiele/Vorschläge)", !hasUnescapedInTextCells);
 
   if (errors.length) { console.error("\nJS-Fehler:", errors); checks.push(["keine Fehler", false]); }
   const failed = checks.filter((c) => !c[1]);
