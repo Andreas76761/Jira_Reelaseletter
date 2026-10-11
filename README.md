@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.75.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.76.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -532,6 +532,27 @@ zusammenzuführen.
   bzw. den genauen Verweistext. Bewusst als eigener, einfacher
   SVG-Renderer umgesetzt statt in den obigen Ticket-Abhängigkeitsgraphen
   integriert, um dessen Code nicht anzufassen.
+  Ein dritter, ebenfalls eigenständiger Graph im selben Bereich:
+  **"Kapitel-Übergänge (aus Excel-Matrix 'Uebergaenge')"** – zeigt die im
+  gleichnamigen Arbeitsblatt der hochgeladenen oneSCM-Excel-Matrix (s.
+  Einstellungen → "Gliederung + Steuerung/KPI aus Excel-Matrix
+  hochladen") hinterlegten Übergänge/Abgrenzungen zwischen Kapiteln –
+  unabhängig von den "[Verweis]"-Tags oben, da diese Daten aus der Matrix
+  selbst stammen statt aus Massenverarbeitung-Textschnipseln. Jede Zeile
+  des Arbeitsblatts beschreibt einen Übergang mit einer ID (z. B.
+  "T14-15"), einem erläuternden Text und einem Kapitelbezug wie "14 ↔ 15"
+  (wechselseitig) oder "15.2/15.7 → 14.8" (gerichtet, ggf. mehrere
+  Kapitel/Unterkapitel je Seite – dann wird je referenziertem Hauptkapitel
+  eine Kante gebildet). Mehrere Übergangs-Zeilen, die auf dasselbe
+  Kapitelpaar führen, werden zu einer einzigen Kante zusammengeführt
+  (Tooltip listet alle zugehörigen IDs) statt sich deckungsgleich zu
+  überlagern. Unter dem Graphen zeigt eine Tabelle zusätzlich alle
+  Übergänge mit vollem Text und "Fehlende Nachweise" im Klartext (auch
+  für Zeilen, deren Kapitelbezug sich nicht auf die aktuelle Gliederung
+  abbilden lässt). Wie die Gliederung/Steuerung & KPI selbst Konfiguration
+  (kein Sitzungsdatensatz) – bleibt bei "Sitzung zurücksetzen"/"Alle Daten
+  löschen" erhalten und wird nur durch einen erneuten Matrix-Upload
+  ersetzt.
 - **Trend** (neu, direkt unter Ticket Graph) – zeitlicher Verlauf der
   aktuell geladenen Tickets, rein deterministisch aus den Feldern
   "Erstellt"/"Gelöst am"/Domäne berechnet (kein KI-Aufruf). Zeitraster
@@ -1640,8 +1661,14 @@ zusammenzuführen.
     "Genehmigungsstatus"/"Publikationsstatus" sowie, falls ein Arbeitsblatt
     "KPI_Kapitel" vorhanden ist (eine Zeile je Kapitel), dessen KPI-Basiswerte
     ("Gate"/"Quellenabdeckung"/"Prüf-Erfüllungsquote"/"Kritische Befunde") in
-    den neuen Bereich **"Steuerung & KPI"** (s. u.). Dieselbe Sicherheitsabfrage
-    und derselbe vollständige, unwiderrufliche Ersatz wie beim Word-Upload.
+    den neuen Bereich **"Steuerung & KPI"** (s. u.). Ist zusätzlich ein
+    Arbeitsblatt **"Uebergaenge"** vorhanden (Spalten "ID"/"Text"/"Fehlende
+    Nachweise", Letztere kombiniert einen Kapitelbezug wie "14 ↔ 15" mit dem
+    eigentlichen Nachweistext), werden auch diese Kapitel-Übergänge
+    übernommen und im Ticket Graph als eigener Graph angezeigt (s.
+    Ticket-Graph-Bullet oben, Abschnitt "Kapitel-Übergänge"). Dieselbe
+    Sicherheitsabfrage und derselbe vollständige, unwiderrufliche Ersatz wie
+    beim Word-Upload.
   - *Steuerung &amp; KPI (Kapitel-Status)* – direkt unter der Gliederung: je
     Kapitel frei editierbarer Status mit professionellen Icons statt Bild-
     Icons (dieselbe Begründung wie beim Benutzerhandbuch-Kapitel-Generator) –

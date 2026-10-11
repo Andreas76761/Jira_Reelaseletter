@@ -856,6 +856,34 @@
           </div>
           <div class="empty-state" id="xref-graph-empty" hidden>Keine "[Verweis]"-Beziehungen zwischen Kapiteln in den aktuellen Massenverarbeitung-Textschnipseln erkannt.</div>
         </section>
+
+        <section>
+          <p class="section-label">Kapitel-Übergänge (aus Excel-Matrix „Uebergaenge“)</p>
+          <div class="callout">
+            Zeigt die im Arbeitsblatt "Uebergaenge" der hochgeladenen Excel-Matrix hinterlegten
+            Übergänge/Abgrenzungen zwischen Kapiteln (s. Einstellungen → Gliederung + Steuerung/KPI aus
+            Excel-Matrix hochladen) als eigenen Graphen – unabhängig von den "[Verweis]"-Tags oben. Jede Zeile
+            des Arbeitsblatts beschreibt einen Übergang mit einer ID (z. B. "T14-15"), einem erläuternden Text
+            und einem Kapitelbezug ("14 ↔ 15" für einen wechselseitigen, "15.2/15.7 → 14.8" für einen
+            gerichteten Übergang, ggf. mehrere Kapitel/Unterkapitel je Seite). Pfeile zeigen die erkannte
+            Richtung, Mauszeiger über Linie/Knoten zeigt ID, Text-Ausschnitt und fehlende Nachweise; die
+            vollständigen Texte stehen zusätzlich in der Tabelle darunter.
+          </div>
+          <div class="paste-actions" style="align-items:center;">
+            <button class="btn primary" id="outline-transitions-graph-generate-btn" type="button">Kapitel-Übergänge anzeigen</button>
+          </div>
+          <p class="step-note" id="outline-transitions-graph-status-note"></p>
+          <div class="panel graph-svg-wrap" id="outline-transitions-graph-wrap" hidden>
+            <div id="outline-transitions-graph-svg-container"></div>
+          </div>
+          <div class="table-wrap" id="outline-transitions-table-wrap" hidden style="margin-top:10px; max-height:360px; overflow:auto;">
+            <table class="simple-table">
+              <thead><tr><th>ID</th><th>Kapitelbezug</th><th>Text</th><th>Fehlende Nachweise</th></tr></thead>
+              <tbody id="outline-transitions-tbody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="outline-transitions-graph-empty" hidden>Keine Kapitel-Übergänge vorhanden – lade zunächst in den Einstellungen eine Excel-Matrix mit Arbeitsblatt "Uebergaenge" hoch.</div>
+        </section>
       </section>
 
       <!-- ================= Trend ================= -->
@@ -4623,7 +4651,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.75.0";
+  var APP_VERSION = "2.76.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6159,6 +6187,9 @@
     "outline-versions-generate-btn", "outline-versions-status-note", "outline-versions-wrap",
     "outline-versions-export-row", "outline-versions-matrix-tbody", "outline-versions-matrix-download-btn",
     "xref-graph-generate-btn", "xref-graph-status-note", "xref-graph-wrap", "xref-graph-svg-container", "xref-graph-empty",
+    "outline-transitions-graph-generate-btn", "outline-transitions-graph-status-note", "outline-transitions-graph-wrap",
+    "outline-transitions-graph-svg-container", "outline-transitions-table-wrap", "outline-transitions-tbody",
+    "outline-transitions-graph-empty",
     "role-nav-list", "importformat-list",
     "test-results-date", "test-results-suites", "test-results-files-passed", "test-results-total", "test-results-passed",
     "test-results-failed", "test-results-duration", "test-results-failed-banner", "test-results-tbody", "test-results-empty",
@@ -6286,6 +6317,13 @@
     // Tickets zugeordnet - siehe outlineSeedData()/computeAutoOutline().
     // Ebenfalls Konfiguration, kein Sitzungsdatensatz.
     outline: outlineSeedData(),
+    // Kapitel-Übergänge (Arbeitsblatt "Uebergaenge" der Excel-Matrix, s.
+    // handleOutlineMatrixUploadFile/outlineTransitionsFromRows): leer
+    // vorbelegt, da es keine fachliche Startbefüllung ohne hochgeladene
+    // Matrix gibt. Wie outline Konfiguration, kein Sitzungsdatensatz -
+    // bleibt bei "Sitzung zurücksetzen"/"Alle Daten löschen" erhalten und
+    // wird nur durch einen erneuten Matrix-Upload ersetzt.
+    outlineTransitions: [],
     // Rollen-Navigation (Einstellungen): aus der oneSCM-Navigationsvorlage
     // abgeleitete Menüstruktur je Rolle (Retail/Markt/MO/HQ), s.
     // roleNavigationSeedData(). Reine Referenzanzeige (nicht editierbar wie
@@ -6837,6 +6875,7 @@
       glossaryTranslations: app.glossaryTranslations,
       abbrevTranslations: app.abbrevTranslations,
       outline: app.outline,
+      outlineTransitions: app.outlineTransitions,
       domainColors: app.domainColors,
       domainAbbreviations: app.domainAbbreviations,
       ticketRefSeq: app.ticketRefSeq,
@@ -6900,6 +6939,7 @@
     if (data.glossaryTranslations) app.glossaryTranslations = data.glossaryTranslations;
     if (data.abbrevTranslations) app.abbrevTranslations = data.abbrevTranslations;
     if (data.outline) app.outline = data.outline;
+    if (data.outlineTransitions) app.outlineTransitions = data.outlineTransitions;
     if (data.domainColors) app.domainColors = data.domainColors;
     if (data.domainAbbreviations) app.domainAbbreviations = data.domainAbbreviations;
     if (data.ticketRefSeq) app.ticketRefSeq = data.ticketRefSeq;
@@ -8420,6 +8460,98 @@
     addLog("Textschnipsel-Querverweise: Graph aktualisiert.");
   });
 
+  // Ticket Graph - Kapitel-Übergänge (aus Excel-Matrix-Arbeitsblatt
+  // "Uebergaenge", s. outlineTransitionsFromRows/handleOutlineMatrixUploadFile
+  // weiter unten): unabhaengig vom Textschnipsel-Querverweise-Graph oben -
+  // eigener, ebenso einfacher SVG-Renderer, aber auf statischen, beim
+  // Matrix-Upload einmalig geparsten Uebergangs-Daten statt live aus
+  // Massenverarbeitung-Textschnipseln.
+  function outlineChapterByNumber(num) {
+    return app.outline.filter(function (c) { return chapterNumberFromTitle(c.title) === String(num); })[0] || null;
+  }
+  // Mehrere Kapitel/Unterkapitel je Seite (z. B. "15.2/15.7 → 14.8") sowie
+  // mehrere Übergangs-Zeilen, die dasselbe Kapitelpaar betreffen, werden zu
+  // EINER Kante zusammengefasst (Tooltip listet alle zugehörigen IDs) -
+  // sonst wuerden identische Linien deckungsgleich uebereinanderliegen.
+  function addOutlineTransitionEdge(edgesMap, source, target, t) {
+    var key = source + "|||" + target;
+    if (!edgesMap[key]) edgesMap[key] = { source: source, target: target, ids: [], text: t.text, missingEvidence: t.missingEvidence };
+    if (edgesMap[key].ids.indexOf(t.id) === -1) edgesMap[key].ids.push(t.id);
+  }
+  function outlineTransitionEdges() {
+    var edgesMap = {};
+    (app.outlineTransitions || []).forEach(function (t) {
+      (t.pairs || []).forEach(function (p) {
+        var sourceChapter = outlineChapterByNumber(p.from);
+        var targetChapter = outlineChapterByNumber(p.to);
+        if (!sourceChapter || !targetChapter || sourceChapter.title === targetChapter.title) return;
+        addOutlineTransitionEdge(edgesMap, sourceChapter.title, targetChapter.title, t);
+        if (!t.directed) addOutlineTransitionEdge(edgesMap, targetChapter.title, sourceChapter.title, t);
+      });
+    });
+    return Object.keys(edgesMap).map(function (k) { return edgesMap[k]; });
+  }
+  function renderOutlineTransitionsTable() {
+    els.outlineTransitionsTbody.innerHTML = (app.outlineTransitions || []).map(function (t) {
+      return "<tr><td>" + escapeHtml(t.id) + "</td><td>" + escapeHtml(t.refRaw) + "</td><td>" +
+        escapeHtml(t.text) + "</td><td>" + escapeHtml(t.missingEvidence) + "</td></tr>";
+    }).join("");
+  }
+  function renderOutlineTransitionsGraph() {
+    if (!(app.outlineTransitions || []).length) {
+      els.outlineTransitionsGraphWrap.hidden = true;
+      els.outlineTransitionsTableWrap.hidden = true;
+      els.outlineTransitionsGraphEmpty.hidden = false;
+      els.outlineTransitionsGraphStatusNote.textContent = "Keine Kapitel-Übergänge vorhanden.";
+      return;
+    }
+    renderOutlineTransitionsTable();
+    els.outlineTransitionsTableWrap.hidden = false;
+    var edges = outlineTransitionEdges();
+    if (!edges.length) {
+      els.outlineTransitionsGraphWrap.hidden = true;
+      els.outlineTransitionsGraphEmpty.hidden = false;
+      els.outlineTransitionsGraphStatusNote.textContent = app.outlineTransitions.length +
+        " Kapitel-Übergang/Übergänge geladen, aber keiner referenziert ein Kapitel der aktuellen Gliederung.";
+      return;
+    }
+    var nodeTitles = dedupeStrings(edges.reduce(function (arr, e) { return arr.concat([e.source, e.target]); }, []));
+    var cx = 260, cy = 260, radius = Math.max(140, nodeTitles.length * 18);
+    var positions = {};
+    nodeTitles.forEach(function (title, i) {
+      var angle = (2 * Math.PI * i) / nodeTitles.length - Math.PI / 2;
+      positions[title] = { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+    });
+    var width = cx * 2, height = cy * 2;
+    var svgParts = [];
+    svgParts.push('<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">');
+    svgParts.push('<defs><marker id="outline-transitions-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--text-faint)"/></marker></defs>');
+    edges.forEach(function (e) {
+      var p1 = positions[e.source], p2 = positions[e.target];
+      if (!p1 || !p2) return;
+      svgParts.push('<line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p2.x + '" y2="' + p2.y +
+        '" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#outline-transitions-arrow)"><title>' +
+        escapeHtml(e.ids.join(", ") + ": " + e.source + " → " + e.target + " - " + truncate(e.text, 160) +
+          (e.missingEvidence ? " | Fehlende Nachweise: " + truncate(e.missingEvidence, 120) : "")) + "</title></line>");
+    });
+    nodeTitles.forEach(function (title) {
+      var p = positions[title];
+      svgParts.push('<g><circle cx="' + p.x + '" cy="' + p.y + '" r="26" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"><title>' + escapeHtml(title) + '</title></circle>' +
+        '<text x="' + p.x + '" y="' + p.y + '" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--text)">' +
+        escapeHtml(chapterNumberFromTitle(title) || "?") + "</text></g>");
+    });
+    svgParts.push("</svg>");
+    els.outlineTransitionsGraphSvgContainer.innerHTML = svgParts.join("");
+    els.outlineTransitionsGraphWrap.hidden = false;
+    els.outlineTransitionsGraphEmpty.hidden = true;
+    els.outlineTransitionsGraphStatusNote.textContent = nodeTitles.length + " Kapitel, " + edges.length +
+      " Übergangs-Beziehung(en) aus " + app.outlineTransitions.length + " Kapitel-Übergang/Übergängen.";
+  }
+  els.outlineTransitionsGraphGenerateBtn.addEventListener("click", function () {
+    renderOutlineTransitionsGraph();
+    addLog("Kapitel-Übergänge: Graph aktualisiert.");
+  });
+
   // Gliederung + Steuerung/KPI aus Excel-Matrix hochladen (Einstellungen):
   // liest ein mehrblaettriges .xlsx (wie die oneSCM-Matrix-Vorlage) direkt
   // per ZIP/XML statt einer vollen XLSX-Bibliothek - derselbe hand-
@@ -8541,6 +8673,63 @@
       }
     }
   }
+  // Kapitel-Übergänge (Arbeitsblatt "Uebergaenge"): je Zeile ID/Text sowie
+  // eine kombinierte Spalte "<Kapitelbezug> | Fehlende Nachweise: <Text>" -
+  // wird hier in Kapitelbezug und Nachweistext zerlegt.
+  function splitOutlineTransitionRefCell(raw) {
+    var s = "" + (raw || "");
+    var marker = "| Fehlende Nachweise:";
+    var idx = s.indexOf(marker);
+    if (idx === -1) return { refRaw: s.trim(), missingEvidence: "" };
+    return { refRaw: s.slice(0, idx).trim(), missingEvidence: s.slice(idx + marker.length).trim() };
+  }
+  // Extrahiert die Kapitelnummern (ganzzahliger Anteil vor einem optionalen
+  // ".Unterkapitel") aus einer Seite eines Kapitelbezugs wie "15.2/15.7" -
+  // mehrere Kapitel/Unterkapitel je Seite sind per "/" oder "," getrennt.
+  function outlineTransitionChapterNums(part) {
+    return ("" + (part || "")).split(/[\/,]/).map(function (p) {
+      var m = p.trim().match(/^(\d+)/);
+      return m ? parseInt(m[1], 10) : null;
+    }).filter(function (n) { return n !== null; });
+  }
+  // Erkennt Richtung ("→" gerichtet, "↔" wechselseitig) und baut alle
+  // Kapitel-Paare aus dem Kreuzprodukt beider Seiten (z. B. "15.2/15.7 →
+  // 14.8" ergibt die Paare 15→14 und 15→14 - Dubletten werden beim
+  // Kanten-Aufbau in outlineTransitionEdges() ohnehin pro Kapitelpaar
+  // zusammengefasst).
+  function parseOutlineTransitionRef(refRaw) {
+    var m = ("" + (refRaw || "")).match(/^(.*?)(↔|→)(.*)$/);
+    if (!m) return { directed: true, pairs: [] };
+    var leftNums = outlineTransitionChapterNums(m[1]);
+    var rightNums = outlineTransitionChapterNums(m[3]);
+    var directed = m[2] === "→";
+    var pairs = [];
+    leftNums.forEach(function (l) {
+      rightNums.forEach(function (r) {
+        if (l !== r) pairs.push({ from: l, to: r });
+      });
+    });
+    return { directed: directed, pairs: pairs };
+  }
+  function outlineTransitionsFromRows(rows) {
+    if (!rows || rows.length < 2) return [];
+    var idx = xlsxHeaderIndexMap(rows[0]);
+    var out = [];
+    for (var r = 1; r < rows.length; r++) {
+      var row = rows[r] || [];
+      var id = ("" + (idx["ID"] === undefined ? "" : row[idx["ID"]] || "")).trim();
+      var text = ("" + (idx["Text"] === undefined ? "" : row[idx["Text"]] || "")).trim();
+      var refCell = idx["Fehlende Nachweise"] === undefined ? "" : row[idx["Fehlende Nachweise"]];
+      if (!id && !text && !refCell) continue;
+      var split = splitOutlineTransitionRefCell(refCell);
+      var parsed = parseOutlineTransitionRef(split.refRaw);
+      out.push({
+        id: id || ("Übergang " + r), text: text, refRaw: split.refRaw, missingEvidence: split.missingEvidence,
+        directed: parsed.directed, pairs: parsed.pairs
+      });
+    }
+    return out;
+  }
   async function handleOutlineMatrixUploadFile(file) {
     els.outlineMatrixUploadStatus.textContent = "Lese Excel-Datei …";
     await wait(30);
@@ -8569,12 +8758,16 @@
       }
       var kpiRows = await xlsxNamedSheetRows(zip, sheetMap, sharedStrings, "KPI_Kapitel");
       mergeKpiKapitelRows(newOutline, kpiRows);
+      var uebergaengeRows = await xlsxNamedSheetRows(zip, sheetMap, sharedStrings, "Uebergaenge");
+      var newTransitions = outlineTransitionsFromRows(uebergaengeRows);
       var subCount = newOutline.reduce(function (n, c) { return n + c.subs.length; }, 0);
       var preview = newOutline.slice(0, 8).map(function (c) { return "• " + c.title; }).join("\n") +
         (newOutline.length > 8 ? "\n… (" + (newOutline.length - 8) + " weitere)" : "");
       var ok = await confirmDialog(
         newOutline.length + " Kapitel (" + subCount + " Unterkapitel/Feinthemen) erkannt" +
-        (kpiRows ? ", inkl. Steuerung/KPI-Basiswerte aus „KPI_Kapitel“" : "") + ":\n\n" + preview +
+        (kpiRows ? ", inkl. Steuerung/KPI-Basiswerte aus „KPI_Kapitel“" : "") +
+        (newTransitions.length ? ", inkl. " + newTransitions.length + " Kapitel-Übergänge aus „Uebergaenge“" : "") +
+        ":\n\n" + preview +
         "\n\nDiese ersetzen die komplette aktuelle Gliederung UNWIDERRUFLICH. Domänen-Zuordnungen müssen danach " +
         "neu gepflegt werden; bereits erzeugte Benutzerhandbuch-Kapitel-Texte und Gliederungs-Stichwörter werden " +
         "ebenfalls geleert. Wirklich ersetzen?",
@@ -8582,6 +8775,7 @@
       );
       if (!ok) return;
       app.outline = newOutline;
+      app.outlineTransitions = newTransitions;
       app.manualChapters = {};
       app.manualCheckpoints = [];
       app.manualMergedDoc = "";
@@ -8598,9 +8792,14 @@
       renderGliederung();
       renderMassFiles();
       refreshDashboard(false);
+      els.outlineTransitionsGraphWrap.hidden = true;
+      els.outlineTransitionsTableWrap.hidden = true;
+      els.outlineTransitionsGraphEmpty.hidden = true;
+      els.outlineTransitionsGraphStatusNote.textContent = "";
       addLog("Gliederung aus Excel-Matrix „" + (file.name || "Excel-Datei") + "“ ersetzt (" + newOutline.length + " Kapitel, " +
         subCount + " Unterkapitel/Feinthemen) - Domänen-Zuordnungen, Benutzerhandbuch-Kapitel und Gliederungs-Stichwörter zurückgesetzt" +
-        (kpiRows ? "; Steuerung/KPI-Basiswerte aus KPI_Kapitel übernommen." : "."));
+        (kpiRows ? "; Steuerung/KPI-Basiswerte aus KPI_Kapitel übernommen" : "") +
+        (newTransitions.length ? "; " + newTransitions.length + " Kapitel-Übergänge aus Uebergaenge übernommen." : "."));
       showToast("Gliederung ersetzt", newOutline.length + " Kapitel aus „" + (file.name || "") + "“ übernommen.");
     } catch (err) {
       showToast("Hochladen fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
