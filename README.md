@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.72.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.73.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1660,12 +1660,18 @@ zusammenzuführen.
     z. B. "im Rahmen von"), die im Releaseletter/Benutzerhandbuch nicht
     auftauchen sollen. Wird **nicht** automatisch entfernt – die
     redaktionelle Entscheidung bleibt beim Menschen –, sondern Treffer
-    werden in der Benutzerhandbuch-Kapitel-Vorschau ("Vorschau (Icons)",
-    s. u.) gelb hervorgehoben, damit sie bei der Prüfung auffallen; der
-    eigentliche, bearbeitbare Kapiteltext bleibt davon unberührt.
-    Konfiguration (kein Sitzungsdatensatz) – bleibt auch bei "Sitzung
-    zurücksetzen"/"Alle Daten löschen" erhalten, wird über Sitzung
-    speichern/laden mit exportiert.
+    werden gelb hervorgehoben, damit sie bei der Prüfung auffallen: in der
+    Benutzerhandbuch-Kapitel-Vorschau ("Vorschau (Icons)", s. u.) UND direkt
+    in den Entwürfen von **Releaseletter** und **Benutzerhandbuch**
+    (Rohgerüst) – dort jeweils mit einem kleinen Hinweis samt Link direkt
+    zur Negativliste oberhalb der Vorschau. Die Markierung aktualisiert
+    sich live, sobald die Negativliste geändert wird, ohne den Entwurf neu
+    erzeugen zu müssen; der eigentliche, bearbeitbare/herunterladbare Text
+    bleibt davon unberührt (reine Anzeige-Markierung). Clickanweisung/
+    Prozessbild bleiben bewusst außen vor (dort geht es um Klickschritte/
+    Bilder, nicht um Fließtext). Konfiguration (kein Sitzungsdatensatz) –
+    bleibt auch bei "Sitzung zurücksetzen"/"Alle Daten löschen" erhalten,
+    wird über Sitzung speichern/laden mit exportiert.
   - *Dokumentation → Testing* – visuelles Testdashboard mit dem
     eingebetteten Bericht der automatisierten Tests (Browsertests der
     Web-App + pytest für das CLI-Tool) aus dem letzten Verifikationslauf

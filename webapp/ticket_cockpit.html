@@ -1680,6 +1680,10 @@
             </div>
           </div>
           <div class="gen-preview-wrap">
+            <div class="callout" style="margin-bottom:2px;">
+              Begriffe aus der <b>Negativliste</b> (Einstellungen) werden unten gelb markiert.
+              <button class="btn ghost btn-tiny" type="button" id="releaseletter-goto-negative-words-btn" style="margin-left:6px;">Zur Negativliste (Einstellungen)</button>
+            </div>
             <div class="preview-toggle" role="tablist" aria-label="Ansicht">
               <button class="preview-toggle-btn active" type="button" data-variant="de" id="releaseletter-variant-de">Deutsch</button>
               <button class="preview-toggle-btn" type="button" data-variant="en" id="releaseletter-variant-en">English</button>
@@ -1746,6 +1750,10 @@
             </div>
           </div>
           <div class="gen-preview-wrap">
+            <div class="callout" style="margin-bottom:2px;">
+              Begriffe aus der <b>Negativliste</b> (Einstellungen) werden unten gelb markiert.
+              <button class="btn ghost btn-tiny" type="button" id="benutzerhandbuch-goto-negative-words-btn" style="margin-left:6px;">Zur Negativliste (Einstellungen)</button>
+            </div>
             <div class="preview-toggle" role="tablist" aria-label="Ansicht">
               <button class="preview-toggle-btn active" type="button" data-variant="de" id="benutzerhandbuch-variant-de">Deutsch</button>
               <button class="preview-toggle-btn" type="button" data-variant="en" id="benutzerhandbuch-variant-en">English</button>
@@ -4560,7 +4568,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.72.0";
+  var APP_VERSION = "2.73.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6079,6 +6087,7 @@
     "domaincolors-tbody", "domaincolors-empty", "statuscolors-tbody", "statuscolors-empty",
     "domainabbr-tbody", "domainabbr-empty", "ragprompts-list",
     "language-style-select", "negative-words-input", "negative-words-count",
+    "releaseletter-goto-negative-words-btn", "benutzerhandbuch-goto-negative-words-btn",
     "labels-tbody", "labels-new-category", "labels-new-de", "labels-new-en", "labels-add-btn", "label-category-datalist",
     "synonyms-tbody", "synonyms-empty", "synonyms-new-term", "synonyms-new-synonyms", "synonyms-new-en",
     "synonyms-new-sk", "synonyms-new-hi", "synonyms-new-fr", "synonyms-add-btn",
@@ -14283,8 +14292,20 @@
     clickanweisung: { render: renderClickInstructions, ext: "md" }
   };
 
+  // Negativliste (Einstellungen -> highlightNegativeWordsHtml()): Treffer
+  // gelb markieren, nicht nur im Benutzerhandbuch-Kapitel-Generator,
+  // sondern auch in diesen beiden einfachen Entwurfs-Generatoren
+  // (Releaseletter/Benutzerhandbuch-Rohgerüst) - genau wie urspruenglich
+  // in Einstellungen angefragt ("nicht im Releaseletter, Handbuch
+  // erscheinen"). Clickanweisung bleibt bewusst aussen vor (dort geht es
+  // um Klickschritte/Screenshots, nicht um Fliesstext). Jeder wireTextGenerator-
+  // Aufruf fuer diese 2 Arten registriert hier eine Refresh-Funktion, die
+  // die Negativliste-Textarea bei jeder Aenderung aufruft, damit eine
+  // bereits sichtbare Vorschau sofort mitaktualisiert wird (s. u.).
+  var negativeWordsPreviewRefreshers = [];
   function wireTextGenerator(kind) {
     var cfg = GENERATORS[kind];
+    var highlightsNegativeWords = kind === "releaseletter" || kind === "benutzerhandbuch";
     var nameInput = document.getElementById(kind + "-name");
     var preview = document.getElementById(kind + "-preview");
     var downloadBtn = document.getElementById(kind + "-download-btn");
@@ -14306,9 +14327,16 @@
     function applyVariant(v) {
       currentVariant = v;
       lastContent = contentByVariant[v];
-      preview.textContent = lastContent || "Noch kein Entwurf generiert.";
+      if (!lastContent) {
+        preview.textContent = "Noch kein Entwurf generiert.";
+      } else if (highlightsNegativeWords) {
+        preview.innerHTML = highlightNegativeWordsHtml(lastContent);
+      } else {
+        preview.textContent = lastContent;
+      }
       [variantDeBtn, variantEnBtn].forEach(function (btn) { btn.classList.toggle("active", btn.getAttribute("data-variant") === v); });
     }
+    if (highlightsNegativeWords) negativeWordsPreviewRefreshers.push(function () { applyVariant(currentVariant); });
     variantDeBtn.addEventListener("click", function () { applyVariant("de"); });
     variantEnBtn.addEventListener("click", function () { applyVariant("en"); });
     generateBtn.addEventListener("click", function () {
@@ -15279,18 +15307,31 @@
     if (document.activeElement !== els.negativeWordsInput) els.negativeWordsInput.value = app.negativeWordsRaw;
     var count = negativeWordsList().length;
     els.negativeWordsCount.textContent = count
-      ? count + " Begriff(e) in der Negativliste - Treffer werden in der Benutzerhandbuch-Kapitel-Vorschau gelb markiert."
+      ? count + " Begriff(e) in der Negativliste - Treffer werden in der Benutzerhandbuch-Kapitel-Vorschau sowie in den Entwürfen für Releaseletter und Benutzerhandbuch gelb markiert."
       : "Negativliste ist leer - noch keine Begriffe hinterlegt.";
   }
   els.negativeWordsInput && els.negativeWordsInput.addEventListener("input", function () {
     app.negativeWordsRaw = els.negativeWordsInput.value;
     renderNegativeWordsBox();
     renderManualChapters();
+    negativeWordsPreviewRefreshers.forEach(function (fn) { fn(); });
   });
   els.negativeWordsInput && els.negativeWordsInput.addEventListener("change", function () {
     addLog("Negativliste (Einstellungen) geändert (" + negativeWordsList().length + " Begriff(e)).");
   });
   renderNegativeWordsBox();
+  // "Zur Negativliste (Einstellungen)"-Link (Releaseletter/Benutzerhandbuch,
+  // s. Kommentar bei negativeWordsPreviewRefreshers oben) - springt in die
+  // Einstellungen und fokussiert direkt die Negativliste-Textarea.
+  function goToNegativeWordsSettings() {
+    showView("einstellungen");
+    if (els.negativeWordsInput) {
+      if (typeof els.negativeWordsInput.scrollIntoView === "function") els.negativeWordsInput.scrollIntoView({ block: "center" });
+      els.negativeWordsInput.focus();
+    }
+  }
+  els.releaseletterGotoNegativeWordsBtn && els.releaseletterGotoNegativeWordsBtn.addEventListener("click", goToNegativeWordsSettings);
+  els.benutzerhandbuchGotoNegativeWordsBtn && els.benutzerhandbuchGotoNegativeWordsBtn.addEventListener("click", goToNegativeWordsSettings);
 
   function ragBuildPrompt(kind, rows) {
     var body = rows.map(function (r) {

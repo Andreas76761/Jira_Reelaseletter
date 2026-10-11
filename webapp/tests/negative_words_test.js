@@ -50,7 +50,7 @@ async function waitUntil(fn, timeoutMs) {
 }
 
 const xml = `<?xml version="1.0"?><rss><channel>
-  <item><key>NEGW-1</key><summary>Vertrag anlegen</summary><description>Beschreibung NEGW-1.</description><status>Offen</status><type>Task</type>
+  <item><key>NEGW-1</key><summary>Vertrag anlegen</summary><description>Diese Funktion ist einfach zu nutzen.</description><status>Offen</status><type>Task</type>
     <customfields><customfield><customfieldname>Domain</customfieldname><customfieldvalues><customfieldvalue>Contract Management</customfieldvalue></customfieldvalues></customfield></customfields></item>
 </channel></rss>`;
 
@@ -128,6 +128,57 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("(4) Rohtext (Deutsch-Ansicht) enthält KEIN <mark>-Tag (nur Vorschau markiert, Originaltext unveraendert)",
     !rawTextarea.value.includes("<mark"));
   check("(4) Rohtext enthält weiterhin das Wort 'einfach' unveraendert", rawTextarea.value.includes("Das ist einfach zu bedienen"));
+
+  // ===================== (4b) Negativliste auch in den einfachen Entwürfen
+  // (Releaseletter/Benutzerhandbuch-Rohgerüst, NICHT der Kapitel-Generator von
+  // oben) gelb markiert - urspruengliche Anfrage ("nicht im Releaseletter,
+  // Handbuch erscheinen"), bisher nur im Kapitel-Generator umgesetzt. Negativliste
+  // ist an dieser Stelle weiterhin "einfach, im Rahmen von, Testwort" (s. (2)). =====================
+  doc.querySelector('.nav-item[data-view="releaseletter"]').click();
+  await wait(50);
+  fire(doc.getElementById("releaseletter-generate-btn"), "click");
+  await wait(50);
+  const rlPreviewHtml = doc.getElementById("releaseletter-preview").innerHTML;
+  check("(4b) Releaseletter-Vorschau markiert 'einfach' gelb", /<mark class="negword-hit">einfach<\/mark>/.test(rlPreviewHtml));
+  check("(4b) Releaseletter-Vorschau zeigt weiterhin den vollen Text (textContent unveraendert)",
+    doc.getElementById("releaseletter-preview").textContent.includes("Diese Funktion ist einfach zu nutzen."));
+  check("(4b) 'Zur Negativliste (Einstellungen)'-Link im Releaseletter vorhanden", !!doc.getElementById("releaseletter-goto-negative-words-btn"));
+  fire(doc.getElementById("releaseletter-goto-negative-words-btn"), "click");
+  await wait(30);
+  check("(4b) Link springt in die Einstellungen", !doc.querySelector('.view-panel[data-view-panel="einstellungen"]').hidden);
+  check("(4b) Negativliste-Textarea danach fokussiert", doc.activeElement === doc.getElementById("negative-words-input"));
+
+  doc.querySelector('.nav-item[data-view="benutzerhandbuch"]').click();
+  await wait(50);
+  fire(doc.getElementById("benutzerhandbuch-generate-btn"), "click");
+  await wait(50);
+  const bhPreviewHtml = doc.getElementById("benutzerhandbuch-preview").innerHTML;
+  check("(4b) Benutzerhandbuch-Entwurf-Vorschau markiert 'einfach' gelb", /<mark class="negword-hit">einfach<\/mark>/.test(bhPreviewHtml));
+  check("(4b) 'Zur Negativliste (Einstellungen)'-Link im Benutzerhandbuch-Entwurf vorhanden", !!doc.getElementById("benutzerhandbuch-goto-negative-words-btn"));
+
+  // Live-Aktualisierung: Negativliste waehrend bereits sichtbarer Vorschau
+  // aendern - beide Vorschauen (Releaseletter + Benutzerhandbuch-Entwurf)
+  // muessen sich ohne erneutes "Entwurf generieren" sofort nachziehen.
+  doc.querySelector('.nav-item[data-view="einstellungen"]').click();
+  await wait(50);
+  const liveInput = doc.getElementById("negative-words-input");
+  liveInput.value = "Testwort";
+  fire(liveInput, "input");
+  await wait(30);
+  check("(4b) Nach Entfernen von 'einfach' aus der Negativliste: Releaseletter-Vorschau live aktualisiert (keine Markierung mehr)",
+    !doc.getElementById("releaseletter-preview").innerHTML.includes("negword-hit"));
+  check("(4b) ... ebenso die Benutzerhandbuch-Entwurf-Vorschau",
+    !doc.getElementById("benutzerhandbuch-preview").innerHTML.includes("negword-hit"));
+  // Fuer die Clickanweisung (bewusst NICHT Teil der Negativliste-Markierung,
+  // s. Kommentar bei negativeWordsPreviewRefreshers) bleibt die Vorschau
+  // reiner Text - keine <mark>-Tags, auch wenn ein Treffer vorkaeme.
+  check("(4b) Clickanweisung-Vorschau bleibt bewusst unangetastet (kein data-attribute fuer Negativliste-Link)",
+    !doc.getElementById("clickanweisung-goto-negative-words-btn"));
+
+  // Negativliste fuer die folgenden Checks wieder auf den Ausgangsstand von (2).
+  liveInput.value = "einfach, im Rahmen von, Testwort";
+  fire(liveInput, "input");
+  await wait(30);
 
   // ===================== (5) Leere Negativliste: keine Markierung =====================
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
