@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.77.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.78.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1366,6 +1366,35 @@ zusammenzuführen.
   Version landet in dessen Verlauf) oder **"Verwerfen"** löscht den
   verwaisten Eintrag endgültig. Bis dahin bleibt das verwaiste Kapitel ganz
   normal in der regulären Kapitel-Liste sichtbar/editierbar/exportierbar.
+  **Qualitätsprüfung-Dashboard + 3 Verbesserungs-Varianten** (neu, v2.78.0):
+  nach einer durchgeführten Qualitätsprüfung erscheint unter dem
+  dreigeteilten Ergebnis ein kleines Dashboard mit der aktuellen Wortanzahl
+  sowie – sofern das Kapitel einer Gliederungs-Nummer zugeordnet ist – den
+  Steuerung & KPI-Werten (Quellenabdeckung/Prüf-Erfüllungsquote/Kritische
+  Befunde/Gate). Darunter stehen 3 neue Buttons, die den Kapiteltext für
+  eine andere Zielgruppe neu schreiben und dabei die
+  Verbesserungsvorschläge der Qualitätsprüfung einarbeiten – das Ergebnis
+  landet in einer **neuen, zusätzlichen, farblich markierten Textbox**
+  unterhalb der Karte, der ursprüngliche Kapiteltext bleibt dabei
+  unverändert:
+  - **😊 Enduser-Text**: aus Sicht eines Endanwenders, flüssiger und
+    kompakter formuliert, ohne Floskeln und ohne technische Deep-Dives –
+    der Nutzen für den Anwender steht im Fokus.
+  - **🛠️ Fachtext**: präzise und technisch, für erfahrene Power-User/
+    Administratoren, mit allen relevanten Details.
+  - **⚡ Kurzfassung**: stark komprimierte Management-Zusammenfassung (ca.
+    ein Viertel der ursprünglichen Länge), nur die wichtigsten
+    Kernaussagen.
+
+  Jede Variante bekommt eine eigene Rahmenfarbe und nutzt zur farblichen
+  Kennzeichnung/Icon-Darstellung dieselbe Lese-Vorschau-Logik wie die
+  bestehenden Pkw/Van/Markt- und Warnung/Hinweis/Tipp/Verweis-Tags sowie
+  die Rollen-Zwischenüberschriften. Jeder Button lässt sich beliebig oft
+  erneut auslösen ("… neu erzeugen"), ohne die anderen Varianten oder den
+  Haupttext zu beeinflussen. Die 3 zugrundeliegenden Prompts sind unter
+  Einstellungen → Design einsehbar/editierbar (geteilter Zustand mit der
+  allgemeinen RAG-Prompts-Liste), zusammen mit der Icon-/Farblegende der
+  3 Varianten.
 - **Referenz-Handbuch-Import + Handbuch-Änderung nach Kapitel** – Import →
   eigener Bereich "Referenz-Handbuch" zum Hochladen eines bereits
   bestehenden, veröffentlichten Word-Benutzerhandbuchs (z. B. eine ca.
@@ -1551,11 +1580,14 @@ zusammenzuführen.
   Punkte-System reine Konfiguration (kein Sitzungsdatensatz, bleibt bei
   "Alle Daten löschen"/"Sitzung zurücksetzen" erhalten), aber Teil von
   "Sitzung speichern/laden".
-- **Einstellungen** – seit v2.77.0 in 6 Unter-Tabs gegliedert ("Sitzung &
+- **Einstellungen** – seit v2.77.0 in Unter-Tabs gegliedert ("Sitzung &
   Verwaltung", "Stammdaten", "Gliederung & Steuerung", "Rollen-Navigation",
-  "KI-Texterzeugung", "Dokumentation") statt einer einzigen langen Liste –
-  rein navigatorisch (dieselben Bereiche/Inhalte wie zuvor, nur
-  gruppiert; kein Bereich wurde inhaltlich verändert).
+  "KI-Texterzeugung", "Design" (neu, v2.78.0), "Dokumentation") statt einer
+  einzigen langen Liste – rein navigatorisch (dieselben Bereiche/Inhalte wie
+  zuvor, nur gruppiert; kein Bereich wurde inhaltlich verändert). "Design"
+  zeigt die 3 Prompts der Verbesserungs-Varianten (Benutzerhandbuch-
+  Kapitel-Generator, s. u.) zusammen mit ihrer Icon-/Farblegende, editierbar
+  über denselben geteilten Zustand wie die allgemeine RAG-Prompts-Liste.
   - *Sitzung speichern/laden* – da es keinen Server gibt und mit dem
     Schließen der Seite alles verloren geht, lässt sich der komplette
     aktuelle Stand (Tickets, Imports, Änderungsverlauf, Protokoll,

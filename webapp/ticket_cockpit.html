@@ -2275,6 +2275,7 @@
           <button class="import-tab" data-esub="gliederung" type="button">Gliederung &amp; Steuerung</button>
           <button class="import-tab" data-esub="rollen" type="button">Rollen-Navigation</button>
           <button class="import-tab" data-esub="ki-text" type="button">KI-Texterzeugung</button>
+          <button class="import-tab" data-esub="design" type="button">Design</button>
           <button class="import-tab" data-esub="dokumentation" type="button">Dokumentation</button>
         </div>
 
@@ -2585,6 +2586,20 @@
           </div>
           <textarea id="negative-words-input" class="text-input" rows="3" style="width:100%; font-family:inherit; resize:vertical;" placeholder="z. B. einfach, lediglich, sozusagen, im Rahmen von"></textarea>
           <p class="step-note" id="negative-words-count"></p>
+        </section>
+
+        <section data-esub-panel="design" hidden>
+          <p class="section-label">Design: Verbesserte Fassungen (Benutzerhandbuch-Kapitel-Generator)</p>
+          <div class="callout">
+            Nach einer Qualitätsprüfung eines Benutzerhandbuch-Kapitels lassen sich 3 verbesserte Textfassungen
+            erzeugen, die in einer neuen, separaten Textbox unterhalb des Kapitels erscheinen (der Originaltext bleibt
+            unverändert). Jede Variante arbeitet die Verbesserungsvorschläge der Qualitätsprüfung ein und bekommt eine
+            eigene Rahmenfarbe sowie ein eigenes Icon zur schnellen Unterscheidung. Die farbliche Kennzeichnung nutzt
+            dieselbe Lese-Vorschau-Logik wie die bestehenden Pkw/Van/Markt- und Warnung/Hinweis/Tipp/Verweis-Tags sowie
+            die Rollen-Zwischenüberschriften.
+          </div>
+          <div class="stat-line" id="manual-improve-design-legend" style="margin: 10px 0 14px;"></div>
+          <div id="manual-improve-design-prompts"></div>
         </section>
 
         <section data-esub-panel="dokumentation" hidden>
@@ -4688,7 +4703,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.77.0";
+  var APP_VERSION = "2.78.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6220,6 +6235,7 @@
     "abbrev-translations-new-en", "abbrev-translations-new-sk", "abbrev-translations-new-hi",
     "abbrev-translations-new-fr", "abbrev-translations-add-btn",
     "einstellungen-tabs",
+    "manual-improve-design-legend", "manual-improve-design-prompts",
     "outline-level-tree-list",
     "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn", "outline-domain-datalist",
     "outline-upload-btn", "outline-upload-input", "outline-upload-status",
@@ -15990,7 +16006,10 @@
     fileviewSummaryDe: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Fasse den folgenden Dateiinhalt (bereinigte Ticket-Rohdaten aus einem Jira-Export) in einer prägnanten, verständlichen Zusammenfassung auf Deutsch zusammen (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen). Nutze ausschließlich Informationen aus dem Text unten, erfinde nichts hinzu:",
     fileviewSummaryEn: "You are an editor for an IT release team at a fleet/contract management system (oneSCM). Summarize the following file content (sanitized Jira ticket raw data) in a concise, understandable summary in English (approx. 150-300 words, factual, no bullet points). Use only information from the text below, do not invent anything:",
     fileviewSummarySynthesisDe: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Die folgenden Teiltexte sind Zusammenfassungen unterschiedlicher Ausschnitte derselben Datei (aus technischen Gründen in mehreren Durchläufen erzeugt). Verschmelze sie zu EINER einzigen, prägnanten Gesamt-Zusammenfassung auf Deutsch (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen, ohne Hinweise auf 'Teiltexte'). Entferne Redundanzen, erfinde nichts hinzu:",
-    fileviewSummarySynthesisEn: "You are an editor for an IT release team at a fleet/contract management system (oneSCM). The following partial texts are summaries of different excerpts of the same file (generated in multiple passes for technical reasons). Merge them into ONE single, concise overall summary in English (approx. 150-300 words, factual, no bullet points, no references to 'partial texts'). Remove redundancy, do not invent anything:"
+    fileviewSummarySynthesisEn: "You are an editor for an IT release team at a fleet/contract management system (oneSCM). The following partial texts are summaries of different excerpts of the same file (generated in multiple passes for technical reasons). Merge them into ONE single, concise overall summary in English (approx. 150-300 words, factual, no bullet points, no references to 'partial texts'). Remove redundancy, do not invent anything:",
+    manualImproveEnduser: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Schreibe den unten stehenden Kapiteltext aus Sicht eines ENDANWENDERS neu: flüssiger und kompakter formuliert, OHNE Floskeln, OHNE technische Deep-Dives/Implementierungsdetails - der Nutzen für den Anwender (was kann ich damit tun, was bringt es mir) steht im Fokus. Arbeite dabei, soweit inhaltlich zutreffend, die unten angegebenen Verbesserungsvorschläge aus der Qualitätsprüfung ein. Erhalte die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\"/\"[Warnung]\"/\"[Hinweis]\"/\"[Tipp]\"/\"[Verweis]\" sowie die Zwischenüberschriften \"## Retail\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" an den fachlich passenden Stellen, damit die handbuchgerechte farbliche Kennzeichnung/Icon-Darstellung erhalten bleibt. Präsens durchgängig. Gib ausschließlich den neuen Kapiteltext aus, keine Erklärungen dazu:",
+    manualImproveFachtext: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Schreibe den unten stehenden Kapiteltext als PRÄZISEN FACHTEXT für erfahrene Power-User/Administratoren neu: technisch genau, mit allen relevanten Details, Feldnamen, Systemverhalten und Rahmenbedingungen - kurze, stichpunktnahe Sätze sind erlaubt. Arbeite dabei, soweit inhaltlich zutreffend, die unten angegebenen Verbesserungsvorschläge aus der Qualitätsprüfung ein. Erhalte die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\"/\"[Warnung]\"/\"[Hinweis]\"/\"[Tipp]\"/\"[Verweis]\" sowie die Zwischenüberschriften \"## Retail\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" an den fachlich passenden Stellen. Präsens durchgängig. Gib ausschließlich den neuen Kapiteltext aus, keine Erklärungen dazu:",
+    manualImproveKurzfassung: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Fasse den unten stehenden Kapiteltext als STARK KOMPRIMIERTE MANAGEMENT-ZUSAMMENFASSUNG zusammen (max. ca. ein Viertel der ursprünglichen Länge - nur die wichtigsten Kernaussagen, Entscheidungsrelevantes und Auswirkungen, keine Bedienungsdetails). Arbeite dabei, soweit inhaltlich zutreffend, die unten angegebenen Verbesserungsvorschläge aus der Qualitätsprüfung ein. Setze \"[Warnung]\"/\"[Hinweis]\" nur, wenn wirklich zentral - lasse die Pkw/Van/Markt-Scope-Tags sowie die Rollen-Zwischenüberschriften weg, da die Kurzfassung rollenübergreifend gilt. Präsens durchgängig. Gib ausschließlich die neue Kurzfassung aus, keine Erklärungen dazu:"
   };
   var RAG_PROMPT_LABELS = {
     summary: "Zusammenfassung erzeugen",
@@ -16006,7 +16025,10 @@
     fileviewSummaryDe: "Dateiansicht: Zusammenfassung (Deutsch)",
     fileviewSummaryEn: "Dateiansicht: Zusammenfassung (Englisch)",
     fileviewSummarySynthesisDe: "Dateiansicht: Zusammenfassung zusammenführen (Deutsch, Batch-Modus)",
-    fileviewSummarySynthesisEn: "Dateiansicht: Zusammenfassung zusammenführen (Englisch, Batch-Modus)"
+    fileviewSummarySynthesisEn: "Dateiansicht: Zusammenfassung zusammenführen (Englisch, Batch-Modus)",
+    manualImproveEnduser: "Verbesserte Fassung: Enduser-Text",
+    manualImproveFachtext: "Verbesserte Fassung: Fachtext",
+    manualImproveKurzfassung: "Verbesserte Fassung: Kurzfassung"
   };
   function ragPromptFor(promptKey) {
     var override = app.ragPrompts[promptKey];
@@ -18502,7 +18524,7 @@
       if (label) label.textContent = running ? "Prüft …" : (qc ? "Qualitätsprüfung erneut ausführen" : "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)");
     }
     var resultWrap = card.querySelector(".manual-qc-result");
-    if (resultWrap) resultWrap.innerHTML = manualQualityCheckResultHtml(qc);
+    if (resultWrap) resultWrap.innerHTML = manualQualityCheckResultHtml(qc) + manualDashboardHtml(chapterTitle, entry, qc) + manualImproveButtonsHtml(chapterTitle, entry);
   }
   // signal (optional): ermöglicht Abbruch über "Alle prüfen" (s. u.) - bei
   // Abbruch wird der cancelled-Fehler bewusst WEITERGEREICHT (throw), statt
@@ -18570,6 +18592,167 @@
   }
   els.manualQualityCheckAllBtn.addEventListener("click", manualRunQualityCheckAll);
   els.manualQualityCheckAllStopBtn.addEventListener("click", function () { if (manualQualityCheckAllAbortController) manualQualityCheckAllAbortController.abort(); });
+
+  // Mini-Dashboard (KPI + Wortanzahl) direkt nach der Qualitätsprüfung: zeigt
+  // die aktuellen Steuerung&KPI-Werte des zugehörigen Gliederungskapitels
+  // (s. ensureChapterSteuerung/manualRunKpiEvaluation) zusammen mit der
+  // Wortanzahl des aktuell gespeicherten Kapiteltexts - rein lesend, keine
+  // eigene Datenhaltung. Nur Label-Themengebiet-Einträge (kein zugehöriges
+  // Gliederungskapitel, s. chapterByTitle) zeigen lediglich die Wortanzahl.
+  function manualDashboardHtml(title, entry, qc) {
+    if (!qc) return "";
+    var chips = ['<div class="chip">📝 <b class="mono">' + manualWordCount(entry.de) + "</b> Wörter</div>"];
+    var c = chapterByTitle(title);
+    if (c) {
+      var s = ensureChapterSteuerung(c);
+      chips.push('<div class="chip">🎯 Quellenabdeckung <b class="mono">' + (s.quellenabdeckung !== null ? s.quellenabdeckung + "%" : "–") + "</b></div>");
+      chips.push('<div class="chip">✅ Prüf-Erfüllungsquote <b class="mono">' + (s.pruefErfuellungsquote !== null ? s.pruefErfuellungsquote + "%" : "–") + "</b></div>");
+      chips.push('<div class="chip">⚠️ Kritische Befunde <b class="mono">' + (s.kritischeBefunde !== null ? s.kritischeBefunde : "–") + "</b></div>");
+      chips.push('<div class="chip">' + (STEUERUNG_GATE_ICONS[s.gate] || "") + " Gate <b class=\"mono\">" + escapeHtml(s.gate) + "</b></div>");
+    }
+    return '<div class="stat-line manual-kpi-dashboard" style="margin:10px 0;">' + chips.join("") + "</div>";
+  }
+
+  // 3 Verbesserungs-Varianten (NACH der Qualitätsprüfung wählbar, s.
+  // RAG_PROMPT_DEFAULTS.manualImprove*): jede Variante schreibt den
+  // Kapiteltext für eine andere Zielgruppe neu und arbeitet dabei die
+  // Verbesserungsvorschläge der Qualitätsprüfung ein. Ergebnis landet in
+  // entry.improved[key] - einer vom Haupttext (entry.de) GETRENNTEN,
+  // zusätzlichen Textbox, der Originaltext wird nie überschrieben. Wie
+  // qualityCheck wird improved bewusst NICHT von manualStoreVersion
+  // übernommen (neue Fassung -> alte Verbesserungsvorschläge sind ohnehin
+  // veraltet, müssen nach erneuter Generierung neu erzeugt werden).
+  var MANUAL_IMPROVE_VARIANTS = {
+    enduser: { label: "Enduser-Text", icon: "😊", color: "var(--done)", promptKey: "manualImproveEnduser" },
+    fachtext: { label: "Fachtext", icon: "🛠️", color: "var(--backlog)", promptKey: "manualImproveFachtext" },
+    kurzfassung: { label: "Kurzfassung", icon: "⚡", color: "var(--progress)", promptKey: "manualImproveKurzfassung" }
+  };
+  function manualImproveKey(title, variantKey) { return title + "|" + variantKey; }
+  function manualBuildImprovePrompt(variantKey, title, text, qc) {
+    var variant = MANUAL_IMPROVE_VARIANTS[variantKey];
+    var qcSuffix = (qc && qc.analysisText) ? "\n\nVerbesserungsvorschläge aus der Qualitätsprüfung (wo inhaltlich sinnvoll, einarbeiten):\n" + qc.analysisText : "";
+    return ragPromptFor(variant.promptKey) + qcSuffix + "\n\nKapitel: " + title + "\n\n" + text;
+  }
+  function manualImproveResultHtml(variantKey, res) {
+    if (!res || !res.text) return "";
+    var v = MANUAL_IMPROVE_VARIANTS[variantKey];
+    return '<div class="panel" style="margin-top:8px; padding:10px 12px; border-left: 4px solid ' + v.color + ';">' +
+      '<div class="mono" style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">' + v.icon + " " + escapeHtml(v.label) +
+      " · erzeugt " + escapeHtml(res.generatedAt) + " · " + manualWordCount(res.text) + " Wörter</div>" +
+      manualRenderPreviewHtml(res.text) + "</div>";
+  }
+  // Nur nach einer durchgeführten Qualitätsprüfung sichtbar (s. Request:
+  // "nach Qualitätsprüfung ... Baue 3 neue Buttons ein").
+  function manualImproveButtonsHtml(title, entry) {
+    if (!entry.qualityCheck) return "";
+    var improved = entry.improved || {};
+    return '<div class="manual-improve-wrap" style="margin-top:10px;">' +
+      '<div class="controls" style="flex-wrap:wrap; gap:6px;">' +
+      Object.keys(MANUAL_IMPROVE_VARIANTS).map(function (vk) {
+        var v = MANUAL_IMPROVE_VARIANTS[vk];
+        var running = !!manualImproveRunning[manualImproveKey(title, vk)];
+        var has = !!(improved[vk] && improved[vk].text);
+        return '<button type="button" class="btn ghost btn-tiny" data-manual-improve="' + vk + '"' + (running ? " disabled" : "") + ">" +
+          '<span class="btn-spinner"' + (running ? "" : " hidden") + "></span> " +
+          '<span class="manual-improve-label-' + vk + '">' + v.icon + " " + (running ? v.label + " …" : (has ? v.label + " neu erzeugen" : v.label + " erzeugen")) + "</span>" +
+          "</button>";
+      }).join("") +
+      "</div>" +
+      Object.keys(MANUAL_IMPROVE_VARIANTS).map(function (vk) {
+        return '<div class="manual-improve-result" data-manual-improve-result="' + vk + '">' + manualImproveResultHtml(vk, improved[vk]) + "</div>";
+      }).join("") +
+      "</div>";
+  }
+  function manualUpdateImproveUiInPlace(title, variantKey) {
+    var card = manualFindChapterCard(title);
+    if (!card) return;
+    var entry = app.manualChapters[title];
+    var improved = (entry && entry.improved) || {};
+    var res = improved[variantKey];
+    var running = !!manualImproveRunning[manualImproveKey(title, variantKey)];
+    var v = MANUAL_IMPROVE_VARIANTS[variantKey];
+    var btn = card.querySelector('[data-manual-improve="' + variantKey + '"]');
+    if (btn) {
+      btn.disabled = running;
+      var spinner = btn.querySelector(".btn-spinner");
+      if (spinner) spinner.hidden = !running;
+      var label = btn.querySelector(".manual-improve-label-" + variantKey);
+      if (label) label.textContent = v.icon + " " + (running ? v.label + " …" : ((res && res.text) ? v.label + " neu erzeugen" : v.label + " erzeugen"));
+    }
+    var resultWrap = card.querySelector('[data-manual-improve-result="' + variantKey + '"]');
+    if (resultWrap) resultWrap.innerHTML = manualImproveResultHtml(variantKey, res);
+  }
+  var manualImproveRunning = {};
+  async function manualRunImprovedVariant(chapterTitle, variantKey) {
+    var entry = app.manualChapters[chapterTitle];
+    if (!entry || !entry.de) return false;
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion ist in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Laufzeit).", true); return false; }
+    var key = manualImproveKey(chapterTitle, variantKey);
+    manualImproveRunning[key] = true;
+    manualUpdateImproveUiInPlace(chapterTitle, variantKey);
+    try {
+      var prompt = manualBuildImprovePrompt(variantKey, chapterTitle, entry.de, entry.qualityCheck);
+      var result = await sampleApi(prompt, { modelTier: "default", cache: false });
+      if (!entry.improved || typeof entry.improved !== "object") entry.improved = {};
+      entry.improved[variantKey] = { text: result.text || "", generatedAt: new Date().toLocaleString("de-DE") };
+      addLog("Benutzerhandbuch-Kapitel \"" + chapterTitle + "\": Verbesserte Fassung (" + MANUAL_IMPROVE_VARIANTS[variantKey].label + ") erzeugt.");
+      return true;
+    } catch (err) {
+      var msg = (err && (RAG_ERROR_MESSAGES[err.code] || err.message)) || "Unbekannter Fehler.";
+      showToast(MANUAL_IMPROVE_VARIANTS[variantKey].label + " fehlgeschlagen", msg, true);
+      return false;
+    } finally {
+      delete manualImproveRunning[key];
+      manualUpdateImproveUiInPlace(chapterTitle, variantKey);
+    }
+  }
+  // Design (Einstellungen): dieselben 3 Prompts, hier zusätzlich editierbar
+  // am Ort ihrer fachlichen Dokumentation (geteilter Zustand app.ragPrompts,
+  // bleibt mit der allgemeinen RAG-Prompts-Liste synchron, s.
+  // renderManualPromptEditor fuer das identische Muster).
+  function renderManualImproveDesignSection() {
+    if (els.manualImproveDesignLegend) {
+      els.manualImproveDesignLegend.innerHTML = Object.keys(MANUAL_IMPROVE_VARIANTS).map(function (vk) {
+        var v = MANUAL_IMPROVE_VARIANTS[vk];
+        return '<div class="chip" style="border-left: 4px solid ' + v.color + ';">' + v.icon + " <b>" + escapeHtml(v.label) + "</b></div>";
+      }).join("");
+    }
+    if (els.manualImproveDesignPrompts) {
+      els.manualImproveDesignPrompts.innerHTML = Object.keys(MANUAL_IMPROVE_VARIANTS).map(function (vk) {
+        var v = MANUAL_IMPROVE_VARIANTS[vk];
+        var key = v.promptKey;
+        var isOverridden = app.ragPrompts[key] !== undefined && app.ragPrompts[key] !== RAG_PROMPT_DEFAULTS[key];
+        return '<div class="ragprompt-block" style="margin-bottom:16px;">' +
+          '<div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">' +
+          "<b>" + v.icon + " " + escapeHtml(RAG_PROMPT_LABELS[key]) + "</b>" +
+          '<span class="override-badge">' + (isOverridden ? "angepasst" : "Standard") + "</span>" +
+          '<button type="button" class="btn ghost" data-ragprompt-reset="' + key + '" ' + (isOverridden ? "" : "disabled") + ">Zurücksetzen</button>" +
+          "</div>" +
+          '<textarea class="text-input ragprompt-textarea" data-ragprompt-key="' + key + '" rows="4" style="width:100%; font-family:inherit; resize:vertical;">' +
+          escapeHtml(ragPromptFor(key)) + "</textarea></div>";
+      }).join("");
+    }
+  }
+  els.manualImproveDesignPrompts && els.manualImproveDesignPrompts.addEventListener("input", function (e) {
+    var ta = e.target.closest(".ragprompt-textarea");
+    if (!ta) return;
+    var key = ta.getAttribute("data-ragprompt-key");
+    app.ragPrompts[key] = ta.value;
+    var badge = ta.closest(".ragprompt-block").querySelector(".override-badge");
+    var resetBtn = ta.closest(".ragprompt-block").querySelector("[data-ragprompt-reset]");
+    var isOverridden = ta.value !== RAG_PROMPT_DEFAULTS[key];
+    badge.textContent = isOverridden ? "angepasst" : "Standard";
+    resetBtn.disabled = !isOverridden;
+    renderRagPromptsList();
+  });
+  els.manualImproveDesignPrompts && els.manualImproveDesignPrompts.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-ragprompt-reset]");
+    if (!btn) return;
+    delete app.ragPrompts[btn.getAttribute("data-ragprompt-reset")];
+    renderManualImproveDesignSection();
+    renderRagPromptsList();
+  });
+  renderManualImproveDesignSection();
 
   // Export: einfache Konventionen aus dem generierten/bearbeiteten Text
   // erkannt - Zeilen "## Retail"/"## Markt"/"## HQ"/"## Sparte"/"## MO"
@@ -18845,7 +19028,7 @@
         '<span class="btn-spinner"' + (qcRunning ? "" : " hidden") + '></span> ' +
         '<span class="manual-qc-label">' + (qcRunning ? "Prüft …" : (qc ? "Qualitätsprüfung erneut ausführen" : "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)")) + '</span>' +
         "</button>" +
-        '<div class="manual-qc-result">' + manualQualityCheckResultHtml(qc) + "</div>" +
+        '<div class="manual-qc-result">' + manualQualityCheckResultHtml(qc) + manualDashboardHtml(title, entry, qc) + manualImproveButtonsHtml(title, entry) + "</div>" +
         "</div>";
       return '<div class="manual-chapter-card panel" data-manual-chapter="' + escapeHtml(title) + '" style="margin-bottom:16px; padding:14px;">' +
         '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;">' +
@@ -19027,6 +19210,12 @@
       }
       return;
     }
+    var improveBtn = e.target.closest("[data-manual-improve]");
+    if (improveBtn) {
+      if (improveBtn.disabled) return;
+      manualRunImprovedVariant(title, improveBtn.getAttribute("data-manual-improve"));
+      return;
+    }
     var actionBtn = e.target.closest("[data-manual-action]");
     if (!actionBtn) return;
     var action = actionBtn.getAttribute("data-manual-action");
@@ -19040,6 +19229,7 @@
       delete manualChapterLangView[title];
       delete manualHistoryExpanded[title];
       delete manualQualityCheckRunning[title];
+      Object.keys(MANUAL_IMPROVE_VARIANTS).forEach(function (vk) { delete manualImproveRunning[manualImproveKey(title, vk)]; });
       renderManualChapters();
       addLog("Benutzerhandbuch-Kapitel \"" + title + "\" gelöscht.");
     }
