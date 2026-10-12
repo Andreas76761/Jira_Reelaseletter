@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.78.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.79.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1395,6 +1395,23 @@ zusammenzuführen.
   Einstellungen → Design einsehbar/editierbar (geteilter Zustand mit der
   allgemeinen RAG-Prompts-Liste), zusammen mit der Icon-/Farblegende der
   3 Varianten.
+- **Ergebnisse** (neu, v2.79.0) – eigener Navigationspunkt direkt nach
+  "Benutzerhandbuch": Übersichtstabelle **aller** im Benutzerhandbuch-
+  Kapitel-Generator erzeugten Dokumente – der Haupttext **und** jede
+  bereits erzeugte Verbesserungs-Variante (Enduser-Text/Fachtext/
+  Kurzfassung, s. o.) je Kapitel als eigene Zeile, mit Datum, Kapitel,
+  Typ (inkl. Icon) und Status (das Steuerung & KPI-Prüf-Gate des
+  zugehörigen Gliederungskapitels – dieselbe Quelle wie das KPI-Dashboard,
+  kein zweiter, eigener Status-Datensatz; Label-Themengebiete ohne
+  Gliederungskapitel zeigen "–"). Jedes Dokument lässt sich direkt aus der
+  Zeile heraus einzeln als Markdown oder Word exportieren – für die
+  Verbesserungs-Varianten (bisher nur in der Kapitel-Karte lesbar) stehen
+  damit erstmals eigene Export-Funktionen zur Verfügung. Darunter eine
+  **Designvorlagen-Vorschau**: Farb-/Icon-Legende, die genau die im Word-
+  und PDF-Export bereits fest hinterlegte Gestaltung zeigt (Rollen-
+  Zwischenüberschriften-Schattierung und Hinweis-/Scope-Tag-Hervorhebung,
+  s. "Icons/Boxen"-Export weiter oben) – reine Anzeige der schon
+  verwendeten Werte, keine zusätzliche, separate Theming-Konfiguration.
 - **Referenz-Handbuch-Import + Handbuch-Änderung nach Kapitel** – Import →
   eigener Bereich "Referenz-Handbuch" zum Hochladen eines bereits
   bestehenden, veröffentlichten Word-Benutzerhandbuchs (z. B. eine ca.

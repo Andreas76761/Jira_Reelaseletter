@@ -647,6 +647,7 @@
       <li class="nav-sep">Dokumente</li>
       <li><button class="nav-item" data-view="releaseletter" type="button">Releaseletter</button></li>
       <li><button class="nav-item" data-view="benutzerhandbuch" type="button">Benutzerhandbuch</button></li>
+      <li><button class="nav-item" data-view="ergebnisse" type="button">Ergebnisse</button></li>
       <li><button class="nav-item" data-view="prozessbild" type="button">Prozessbild</button></li>
       <li><button class="nav-item" data-view="clickanweisung" type="button">Clickanweisung</button></li>
       <li><button class="nav-item" data-view="bilder" type="button">Bilder</button></li>
@@ -2000,6 +2001,42 @@
             </div>
             <p class="section-label">Änderungsanalyse (KI)</p>
             <div class="callout" id="refcompare-analysis-output"></div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= Ergebnisse ================= -->
+      <section class="view-panel" data-view-panel="ergebnisse" hidden>
+        <div class="view-head"><h2>Ergebnisse</h2><p class="desc">Übersicht aller im Benutzerhandbuch-Kapitel-Generator erzeugten Dokumente (Haupttext je Kapitel sowie die daraus erzeugten Enduser-/Fachtext-/Kurzfassungs-Varianten) mit Datum, Status und direktem Export je Dokument.</p></div>
+
+        <section>
+          <p class="section-label">Übersicht erzeugter Dokumente</p>
+          <div class="callout">
+            Je Zeile ein eigenständiges Dokument (Haupttext oder eine der 3 Verbesserungs-Varianten) mit Erzeugungsdatum,
+            zugehörigem Kapitel, Typ und dem aktuellen Steuerung&amp;KPI-Prüf-Gate des Kapitels (Einstellungen →
+            Gliederung &amp; Steuerung). Jedes Dokument lässt sich einzeln als Markdown oder Word exportieren.
+          </div>
+          <div class="table-wrap">
+            <table class="simple-table">
+              <thead><tr><th>Datum</th><th>Kapitel</th><th>Typ</th><th>Status</th><th>Export</th></tr></thead>
+              <tbody id="ergebnisse-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="ergebnisse-empty">Noch keine Dokumente erzeugt (Benutzerhandbuch → Kapitel erstellen).</div>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">Designvorlagen (Word-/PDF-Export)</p>
+          <div class="callout">
+            Farb-/Icon-Vorschau der im Word- und PDF-Export fest hinterlegten Gestaltung: Rollen-Zwischenüberschriften
+            ("## Retail" usw.) schattieren den folgenden Abschnitt, Hinweis-/Scope-Tags ("[Warnung]" usw.) heben die
+            betroffene Zeile hervor. Dieselbe Zuordnung gilt für beide Exportformate.
+          </div>
+          <div class="table-wrap">
+            <table class="simple-table">
+              <thead><tr><th>Icon</th><th>Bezeichnung</th><th>Word-Hintergrund</th><th>PDF-Hintergrund</th></tr></thead>
+              <tbody id="ergebnisse-design-tbody"></tbody>
+            </table>
           </div>
         </section>
       </section>
@@ -4703,7 +4740,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.78.0";
+  var APP_VERSION = "2.79.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6236,6 +6273,7 @@
     "abbrev-translations-new-fr", "abbrev-translations-add-btn",
     "einstellungen-tabs",
     "manual-improve-design-legend", "manual-improve-design-prompts",
+    "ergebnisse-tbody", "ergebnisse-empty", "ergebnisse-design-tbody",
     "outline-level-tree-list",
     "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn", "outline-domain-datalist",
     "outline-upload-btn", "outline-upload-input", "outline-upload-status",
@@ -8474,6 +8512,7 @@
     }
     addLog("Steuerung & KPI: Kapitel „" + chapter.title + "“ - " + field + " = " + (s[field] == null ? "(leer)" : s[field]) + ".");
     renderMassFiles();
+    if (field === "gate") renderErgebnisse();
   });
 
   // Ticket Graph - Textschnipsel-Querverweise (Massenverarbeitung): rein
@@ -18525,6 +18564,7 @@
     }
     var resultWrap = card.querySelector(".manual-qc-result");
     if (resultWrap) resultWrap.innerHTML = manualQualityCheckResultHtml(qc) + manualDashboardHtml(chapterTitle, entry, qc) + manualImproveButtonsHtml(chapterTitle, entry);
+    renderErgebnisse();
   }
   // signal (optional): ermöglicht Abbruch über "Alle prüfen" (s. u.) - bei
   // Abbruch wird der cancelled-Fehler bewusst WEITERGEREICHT (throw), statt
@@ -18681,6 +18721,7 @@
     }
     var resultWrap = card.querySelector('[data-manual-improve-result="' + variantKey + '"]');
     if (resultWrap) resultWrap.innerHTML = manualImproveResultHtml(variantKey, res);
+    renderErgebnisse();
   }
   var manualImproveRunning = {};
   async function manualRunImprovedVariant(chapterTitle, variantKey) {
@@ -18753,6 +18794,114 @@
     renderRagPromptsList();
   });
   renderManualImproveDesignSection();
+
+  // Ergebnisse (eigenes Register, direkt nach Benutzerhandbuch): Übersicht
+  // ALLER erzeugten Benutzerhandbuch-Dokumente - Haupttext (entry.de) UND
+  // jede vorhandene Verbesserungs-Variante (entry.improved[key], s. o.) je
+  // Kapitel als eigene Zeile, mit Datum/Kapitel/Typ und dem Steuerung&KPI-
+  // Prüf-Gate des zugehörigen Gliederungskapitels als Status (identische
+  // Quelle wie das KPI-Dashboard oben - kein eigener, zweiter Status-
+  // Datensatz). Label-Themengebiet-Einträge haben kein Gliederungskapitel
+  // (s. manualOrphanedChapterTitles) und zeigen daher "–" als Status.
+  function manualErgebnisseRows() {
+    var rows = [];
+    Object.keys(app.manualChapters).forEach(function (title) {
+      var entry = app.manualChapters[title];
+      if (!entry.de) return;
+      var displayTitle = entry.groupKind === "label" ? entry.groupName + " (Label-Themengebiet)" : title;
+      var c = chapterByTitle(title);
+      var gate = c ? ensureChapterSteuerung(c).gate : null;
+      rows.push({ title: title, displayTitle: displayTitle, typeLabel: "Haupttext (Benutzerhandbuch)", typeIcon: "", date: entry.generatedAt, gate: gate, kind: "haupttext" });
+      var improved = entry.improved || {};
+      Object.keys(MANUAL_IMPROVE_VARIANTS).forEach(function (vk) {
+        var res = improved[vk];
+        if (!res || !res.text) return;
+        var v = MANUAL_IMPROVE_VARIANTS[vk];
+        rows.push({ title: title, displayTitle: displayTitle, typeLabel: v.label, typeIcon: v.icon, date: res.generatedAt, gate: gate, kind: vk });
+      });
+    });
+    return rows;
+  }
+  function renderErgebnisse() {
+    if (!els.ergebnisseTbody) return;
+    var rows = manualErgebnisseRows();
+    els.ergebnisseEmpty.hidden = rows.length > 0;
+    els.ergebnisseTbody.innerHTML = rows.map(function (r) {
+      var statusHtml = r.gate ? ((STEUERUNG_GATE_ICONS[r.gate] || "") + " " + escapeHtml(r.gate)) : "–";
+      return "<tr>" +
+        "<td>" + escapeHtml(r.date) + "</td>" +
+        "<td>" + escapeHtml(r.displayTitle) + "</td>" +
+        "<td>" + (r.typeIcon ? r.typeIcon + " " : "") + escapeHtml(r.typeLabel) + "</td>" +
+        "<td>" + statusHtml + "</td>" +
+        '<td><button type="button" class="btn ghost btn-tiny" data-ergebnisse-export="md" data-ergebnisse-chapter="' + escapeHtml(r.title) + '" data-ergebnisse-kind="' + r.kind + '">Als Markdown</button> ' +
+        '<button type="button" class="btn ghost btn-tiny" data-ergebnisse-export="docx" data-ergebnisse-chapter="' + escapeHtml(r.title) + '" data-ergebnisse-kind="' + r.kind + '">Als Word</button></td>' +
+        "</tr>";
+    }).join("");
+    renderErgebnisseDesignLegend();
+  }
+  // Designvorlagen-Vorschau: zeigt die in manualChapterDocumentXml (Word)
+  // und buildManualChapterPdfDoc (PDF) bereits fest hinterlegten Rollen-/
+  // Tag-Farben als Farbmuster, statt eine zweite, separate Theming-
+  // Konfiguration einzuführen - reine Anzeige der schon beim Export
+  // verwendeten Werte (MANUAL_ROLE_SHD_HEX/MANUAL_TAG_SHD_HEX für Word,
+  // MANUAL_ROLE_FILL_RGB/MANUAL_TAG_FILL_RGB für PDF).
+  function renderErgebnisseDesignLegend() {
+    if (!els.ergebnisseDesignTbody) return;
+    var roleRows = Object.keys(MANUAL_ROLE_HEADING_ICONS).map(function (role) {
+      return { icon: MANUAL_ROLE_HEADING_ICONS[role], label: role, wordHex: MANUAL_ROLE_SHD_HEX[role], pdfRgb: MANUAL_ROLE_FILL_RGB[role] };
+    });
+    var tagRows = MANUAL_SCOPE_TAGS.concat(MANUAL_CALLOUT_TAGS).map(function (tag) {
+      return {
+        icon: MANUAL_SCOPE_TAG_ICONS[tag] || MANUAL_CALLOUT_ICONS[tag] || "🏷️",
+        label: tag.replace(/^\[|\]$/g, ""), wordHex: MANUAL_TAG_SHD_HEX[tag], pdfRgb: MANUAL_TAG_FILL_RGB[tag],
+      };
+    });
+    els.ergebnisseDesignTbody.innerHTML = roleRows.concat(tagRows).map(function (r) {
+      var wordSwatch = '<span style="display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:6px;background:#' + r.wordHex + ';border:1px solid var(--border);"></span>#' + r.wordHex;
+      var pdfSwatch = '<span style="display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:6px;background:rgb(' + r.pdfRgb.join(",") + ');border:1px solid var(--border);"></span>rgb(' + r.pdfRgb.join(",") + ")";
+      return "<tr><td>" + r.icon + "</td><td>" + escapeHtml(r.label) + "</td><td>" + wordSwatch + "</td><td>" + pdfSwatch + "</td></tr>";
+    }).join("");
+  }
+  // Export je Dokument aus der Ergebnisse-Übersicht: Haupttext nutzt die
+  // bereits vorhandenen Export-Funktionen (gleiches Verhalten wie der
+  // Export-Button auf der Kapitel-Karte selbst); für Verbesserungs-
+  // Varianten (bisher nur lesbar) kommen zwei neue, schlanke Export-
+  // Funktionen hinzu, die dieselben DOCX/MD-Bausteine wiederverwenden.
+  async function manualExportImprovedMd(title, variantKey) {
+    var entry = app.manualChapters[title];
+    var res = entry && entry.improved && entry.improved[variantKey];
+    if (!res || !res.text) return;
+    var variant = MANUAL_IMPROVE_VARIANTS[variantKey];
+    var filename = safeFilename(title) + "_" + safeFilename(variant.label) + ".md";
+    var ok = await saveOrWarn(filename, res.text);
+    if (ok) addLog("Benutzerhandbuch-Kapitel \"" + title + "\": Verbesserte Fassung (" + variant.label + ") als Markdown-Datei exportiert.");
+  }
+  async function manualExportImprovedDocx(title, variantKey) {
+    var entry = app.manualChapters[title];
+    var res = entry && entry.improved && entry.improved[variantKey];
+    if (!res || !res.text) return;
+    var variant = MANUAL_IMPROVE_VARIANTS[variantKey];
+    try {
+      var blob = await buildManualChapterDocxBlob(title + " (" + variant.label + ")", res.text);
+      var filename = safeFilename(title) + "_" + safeFilename(variant.label) + ".docx";
+      var ok = await saveOrWarn(filename, blob);
+      if (ok) addLog("Benutzerhandbuch-Kapitel \"" + title + "\": Verbesserte Fassung (" + variant.label + ") als DOCX exportiert.");
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "DOCX-Export fehlgeschlagen.", true);
+    }
+  }
+  els.ergebnisseTbody && els.ergebnisseTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-ergebnisse-export]");
+    if (!btn) return;
+    var title = btn.getAttribute("data-ergebnisse-chapter");
+    var kind = btn.getAttribute("data-ergebnisse-kind");
+    var format = btn.getAttribute("data-ergebnisse-export");
+    if (kind === "haupttext") {
+      if (format === "md") manualExportChapterMd(title); else manualExportChapterDocx(title);
+    } else {
+      if (format === "md") manualExportImprovedMd(title, kind); else manualExportImprovedDocx(title, kind);
+    }
+  });
 
   // Export: einfache Konventionen aus dem generierten/bearbeiteten Text
   // erkannt - Zeilen "## Retail"/"## Markt"/"## HQ"/"## Sparte"/"## MO"
@@ -19058,6 +19207,7 @@
     }).join("");
     renderManualOverview();
     renderManualOrphans();
+    renderErgebnisse();
   }
   // Nicht mehr zugeordnete Kapitel (Titel existiert in app.manualChapters,
   // aber nicht mehr in der aktuellen Gliederung app.outline - typischerweise
