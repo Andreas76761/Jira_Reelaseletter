@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.80.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.81.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1366,6 +1366,21 @@ zusammenzuführen.
   Version landet in dessen Verlauf) oder **"Verwerfen"** löscht den
   verwaisten Eintrag endgültig. Bis dahin bleibt das verwaiste Kapitel ganz
   normal in der regulären Kapitel-Liste sichtbar/editierbar/exportierbar.
+  **Bugfix (v2.81.0): Kapitel-Erstellung begann immer bei "Kapitel 4"
+  statt bei "Willkommen"** – ist keine einzelne Domäne, sondern **alle**
+  verfügbaren Domänen ausgewählt ("Alle auswählen"), wurden Gliederungs­
+  kapitel ohne eigene Domänen-Zuordnung (z. B. "Willkommen",
+  "Inhaltsverzeichnis", allgemeine Einführungskapitel) bisher bei JEDER
+  Domänen-Auswahl dauerhaft aus der Kandidatenliste ausgeschlossen – die
+  Kapitel-Erstellung begann dadurch immer beim ersten domänen-zugeordneten
+  Kapitel statt wie in der aktuellen Gliederung nummeriert bei "Willkommen"
+  zu starten. Domänenlose Kapitel gelten jetzt bei "Alle auswählen" als
+  domänenübergreifend und werden korrekt als Kandidaten berücksichtigt
+  (und – mangels Tickets, da ihnen ohne Domäne grundsätzlich kein Ticket
+  zugeordnet werden kann – ehrlich als "übersprungen (keine passenden
+  Tickets)" angezeigt, statt stillschweigend zu verschwinden). Bei einer
+  einzelnen/eingeschränkten Domänen-Auswahl bleibt das bisherige, engere
+  Verhalten unverändert.
   **Qualitätsprüfung-Dashboard + 3 Verbesserungs-Varianten** (neu, v2.78.0):
   nach einer durchgeführten Qualitätsprüfung erscheint unter dem
   dreigeteilten Ergebnis ein kleines Dashboard mit der aktuellen Wortanzahl

@@ -4740,7 +4740,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.80.0";
+  var APP_VERSION = "2.81.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -17747,15 +17747,34 @@
   });
 
   // Zielkapitel: explizit gewählte Kapitel, sonst (falls Domäne(n)
-  // gewählt) alle Kapitel dieser Domäne(n) aus der Gliederung.
+  // gewählt) alle Kapitel dieser Domäne(n) aus der Gliederung. Sind ALLE
+  // verfügbaren Domänen ausgewählt ("Alle auswählen"), zählen zusätzlich
+  // Kapitel OHNE eigene Domänen-Zuordnung (z. B. Willkommen,
+  // Inhaltsverzeichnis, allgemeine Einführungs-/Troubleshooting-/Glossar-
+  // Kapitel, s. outlineSeedData()-Kommentar "Bewusst NICHT zugeordnet") als
+  // domänenübergreifend dazu. Bugfix: domänenlose Kapitel wurden bisher
+  // bei JEDER Domänen-Auswahl dauerhaft übersprungen (leeres domains-Array
+  // matcht über .some() nie), wodurch die Kapitel-Erstellung bei "Alle
+  // auswählen" immer beim ersten domänen-zugeordneten Kapitel begann statt
+  // wie in der aktuellen Gliederung nummeriert mit "Willkommen" zu
+  // starten. Bei EINZELNEN/EINGESCHRÄNKTEN Domänen-Auswahlen bleibt das
+  // bisherige, engere Verhalten unverändert (nur die wirklich zur Domäne
+  // gehörenden Kapitel, keine Mitnahme allgemeiner Einführungskapitel).
+  // app.outline wird dabei live/aktuell gelesen (keine zwischengespeicherte
+  // Kopie), die Reihenfolge entspricht also immer der zuletzt hochgeladenen/
+  // bearbeiteten Gliederungs-Nummerierung.
   function manualTargetChapters() {
     var chapters = selectedValues(els.manualChapterSelect);
     if (chapters.length) return chapters;
     var domains = selectedValues(els.manualDomainSelect);
     if (!domains.length) return [];
+    var allDomainsSelected = els.manualDomainSelect.options.length > 0 && domains.length === els.manualDomainSelect.options.length;
     var titles = {};
     app.outline.forEach(function (c) {
-      if ((c.domains || []).some(function (d) { return domains.indexOf(d) !== -1; })) titles[c.title] = true;
+      var chapterDomains = c.domains || [];
+      var matchesDomain = chapterDomains.some(function (d) { return domains.indexOf(d) !== -1; });
+      var isUniversal = !chapterDomains.length && allDomainsSelected;
+      if (matchesDomain || isUniversal) titles[c.title] = true;
     });
     return Object.keys(titles);
   }
