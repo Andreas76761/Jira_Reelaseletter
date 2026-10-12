@@ -220,9 +220,9 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("'Vorschau (Icons)'-Button nach Klick aktiv", cardAfterPreview.querySelector('[data-manual-lang="preview"]').classList.contains("active"));
   check("Im Vorschau-Modus kein editierbares Textfeld mehr sichtbar", !cardAfterPreview.querySelector(".manual-chapter-textarea"));
   const previewHtml = cardAfterPreview.innerHTML;
-  check("Vorschau zeigt Rollen-Icon vor 'Retail'-Überschrift", previewHtml.includes("🚗 Retail</h4>"));
-  check("Vorschau zeigt Rollen-Icon vor 'HQ'-Überschrift", previewHtml.includes("🏢 HQ</h4>"));
-  check("Vorschau zeigt Icon-Badge statt rohem '[Nur PKW]'-Text", previewHtml.includes("🚗 Nur PKW"));
+  check("Vorschau zeigt Rollen-Icon vor 'Retail'-Überschrift", previewHtml.includes("◆ Retail</h4>"));
+  check("Vorschau zeigt Rollen-Icon vor 'HQ'-Überschrift", previewHtml.includes("▲ HQ</h4>"));
+  check("Vorschau zeigt Icon-Badge statt rohem '[Nur PKW]'-Text", previewHtml.includes("◇ Nur PKW"));
   check("Vorschau enthält den rohen Tag '[Nur PKW]' nicht mehr unverändert im Fließtext", !previewHtml.includes("[Nur PKW] Für PKW"));
   // Zurück zu Deutsch fuer die restlichen Pruefungen (Textfeld wieder benoetigt).
   fire(doc.querySelector('[data-manual-chapter="Kapitel 7: Verträge im Alltag verwalten"] [data-manual-lang="de"]'), "click");

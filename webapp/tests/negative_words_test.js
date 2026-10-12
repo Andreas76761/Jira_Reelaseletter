@@ -120,7 +120,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("(4) 'einfach' ist als negword-hit markiert", /<mark class="negword-hit">einfach<\/mark>/.test(previewHtml));
   check("(4) 'Testwort' ist auch als TEIL von 'Testwortbeispiel' markiert (Wortbestandteil)",
     /<mark class="negword-hit">Testwort<\/mark>beispiel/.test(previewHtml));
-  check("(4) Rollen-Icon für '## Retail' weiterhin vorhanden (Feature nicht beeinträchtigt)", previewHtml.includes("🚗"));
+  check("(4) Rollen-Icon für '## Retail' weiterhin vorhanden (Feature nicht beeinträchtigt)", previewHtml.includes("◆"));
 
   fire(doc.querySelector("[data-manual-chapter] [data-manual-lang=\"de\"]"), "click");
   await wait(30);

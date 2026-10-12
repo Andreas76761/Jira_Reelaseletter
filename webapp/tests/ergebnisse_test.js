@@ -101,7 +101,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("Designvorlagen-Tabelle zeigt 12 Zeilen (5 Rollen + 7 Tags)", designTbody.querySelectorAll("tr").length === 12);
   check("Designvorlagen-Vorschau zeigt Word-Hex-Farbwert", designTbody.textContent.includes("#FBEDD9") || designTbody.textContent.includes("#"));
   check("Designvorlagen-Vorschau zeigt PDF-RGB-Farbwert", designTbody.textContent.includes("rgb("));
-  check("Retail-Icon in der Designvorlagen-Vorschau vorhanden", designTbody.textContent.includes("🚗"));
+  check("Retail-Icon in der Designvorlagen-Vorschau vorhanden", designTbody.textContent.includes("◆"));
 
   // ===================== Kapitel erzeugen (Haupttext + automatische KPI-Bewertung) =====================
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
@@ -159,7 +159,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   rows = Array.from(doc.querySelectorAll("#ergebnisse-tbody tr"));
   check("Nach Erzeugen der Enduser-Variante: 2 Zeilen in der Übersicht", rows.length === 2);
   const variantRow = rows.find((r) => r.textContent.includes("Enduser-Text"));
-  check("Enduser-Variante erscheint mit eigenem Typ und Icon", !!variantRow && variantRow.textContent.includes("😊"));
+  check("Enduser-Variante erscheint mit eigenem Typ und Icon", !!variantRow && variantRow.textContent.includes("☆"));
   check("Enduser-Variante zeigt ebenfalls den Status 'Erfüllt' (gleiches Kapitel-Gate)", !!variantRow && variantRow.textContent.includes("Erfüllt"));
 
   // ===================== Export der Enduser-Variante (neue Export-Funktion) =====================

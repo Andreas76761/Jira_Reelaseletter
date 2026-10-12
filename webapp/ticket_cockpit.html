@@ -4740,7 +4740,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.79.0";
+  var APP_VERSION = "2.80.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -18641,17 +18641,23 @@
   // Gliederungskapitel, s. chapterByTitle) zeigen lediglich die Wortanzahl.
   function manualDashboardHtml(title, entry, qc) {
     if (!qc) return "";
-    var chips = ['<div class="chip">📝 <b class="mono">' + manualWordCount(entry.de) + "</b> Wörter</div>"];
+    var chips = ['<div class="chip">¶ <b class="mono">' + manualWordCount(entry.de) + "</b> Wörter</div>"];
     var c = chapterByTitle(title);
     if (c) {
       var s = ensureChapterSteuerung(c);
-      chips.push('<div class="chip">🎯 Quellenabdeckung <b class="mono">' + (s.quellenabdeckung !== null ? s.quellenabdeckung + "%" : "–") + "</b></div>");
-      chips.push('<div class="chip">✅ Prüf-Erfüllungsquote <b class="mono">' + (s.pruefErfuellungsquote !== null ? s.pruefErfuellungsquote + "%" : "–") + "</b></div>");
-      chips.push('<div class="chip">⚠️ Kritische Befunde <b class="mono">' + (s.kritischeBefunde !== null ? s.kritischeBefunde : "–") + "</b></div>");
-      chips.push('<div class="chip">' + (STEUERUNG_GATE_ICONS[s.gate] || "") + " Gate <b class=\"mono\">" + escapeHtml(s.gate) + "</b></div>");
+      chips.push('<div class="chip">◎ Quellenabdeckung <b class="mono">' + (s.quellenabdeckung !== null ? s.quellenabdeckung + "%" : "–") + "</b></div>");
+      chips.push('<div class="chip">✓ Prüf-Erfüllungsquote <b class="mono">' + (s.pruefErfuellungsquote !== null ? s.pruefErfuellungsquote + "%" : "–") + "</b></div>");
+      chips.push('<div class="chip">⚠ Kritische Befunde <b class="mono">' + (s.kritischeBefunde !== null ? s.kritischeBefunde : "–") + "</b></div>");
+      chips.push('<div class="chip">' + (MANUAL_GATE_ICONS_MONO[s.gate] || "") + " Gate <b class=\"mono\">" + escapeHtml(s.gate) + "</b></div>");
     }
     return '<div class="stat-line manual-kpi-dashboard" style="margin:10px 0;">' + chips.join("") + "</div>";
   }
+  // Monochrome Gate-Icons NUR fuer die beiden neu gestalteten, read-only
+  // Anzeigen oben (KPI-Dashboard) und im Register "Ergebnisse" - bewusst
+  // eine EIGENE, kleine Zuordnung statt STEUERUNG_GATE_ICONS global zu
+  // aendern, damit die <select>-Dropdown-Optionen in Einstellungen ->
+  // Gliederung & Steuerung (dieselbe Konstante) unveraendert bleiben.
+  var MANUAL_GATE_ICONS_MONO = { "Nicht geprüft": "○", "Nicht messbar": "–", "Erfüllt": "✓", "Nicht erfüllt": "✗" };
 
   // 3 Verbesserungs-Varianten (NACH der Qualitätsprüfung wählbar, s.
   // RAG_PROMPT_DEFAULTS.manualImprove*): jede Variante schreibt den
@@ -18662,10 +18668,14 @@
   // qualityCheck wird improved bewusst NICHT von manualStoreVersion
   // übernommen (neue Fassung -> alte Verbesserungsvorschläge sind ohnehin
   // veraltet, müssen nach erneuter Generierung neu erzeugt werden).
+  // Icons monochrom statt farbiger Emoji (s. MANUAL_ROLE_HEADING_ICONS/
+  // MANUAL_CALLOUT_ICONS oben fuer dieselbe Begruendung): ☆ (Stern,
+  // zugaenglich/einfach), ⚙ (Zahnrad, technisch/Fachtext), Σ (Summe -
+  // "zusammengefasst" fuer die Kurzfassung).
   var MANUAL_IMPROVE_VARIANTS = {
-    enduser: { label: "Enduser-Text", icon: "😊", color: "var(--done)", promptKey: "manualImproveEnduser" },
-    fachtext: { label: "Fachtext", icon: "🛠️", color: "var(--backlog)", promptKey: "manualImproveFachtext" },
-    kurzfassung: { label: "Kurzfassung", icon: "⚡", color: "var(--progress)", promptKey: "manualImproveKurzfassung" }
+    enduser: { label: "Enduser-Text", icon: "☆", color: "var(--done)", promptKey: "manualImproveEnduser" },
+    fachtext: { label: "Fachtext", icon: "⚙", color: "var(--backlog)", promptKey: "manualImproveFachtext" },
+    kurzfassung: { label: "Kurzfassung", icon: "Σ", color: "var(--progress)", promptKey: "manualImproveKurzfassung" }
   };
   function manualImproveKey(title, variantKey) { return title + "|" + variantKey; }
   function manualBuildImprovePrompt(variantKey, title, text, qc) {
@@ -18827,7 +18837,7 @@
     var rows = manualErgebnisseRows();
     els.ergebnisseEmpty.hidden = rows.length > 0;
     els.ergebnisseTbody.innerHTML = rows.map(function (r) {
-      var statusHtml = r.gate ? ((STEUERUNG_GATE_ICONS[r.gate] || "") + " " + escapeHtml(r.gate)) : "–";
+      var statusHtml = r.gate ? ((MANUAL_GATE_ICONS_MONO[r.gate] || "") + " " + escapeHtml(r.gate)) : "–";
       return "<tr>" +
         "<td>" + escapeHtml(r.date) + "</td>" +
         "<td>" + escapeHtml(r.displayTitle) + "</td>" +
@@ -18852,7 +18862,7 @@
     });
     var tagRows = MANUAL_SCOPE_TAGS.concat(MANUAL_CALLOUT_TAGS).map(function (tag) {
       return {
-        icon: MANUAL_SCOPE_TAG_ICONS[tag] || MANUAL_CALLOUT_ICONS[tag] || "🏷️",
+        icon: MANUAL_SCOPE_TAG_ICONS[tag] || MANUAL_CALLOUT_ICONS[tag] || "▪",
         label: tag.replace(/^\[|\]$/g, ""), wordHex: MANUAL_TAG_SHD_HEX[tag], pdfRgb: MANUAL_TAG_FILL_RGB[tag],
       };
     });
@@ -18920,10 +18930,18 @@
   // (RAG_PROMPT_DEFAULTS.manualChapter) vorgegebenen Scope-/Hinweis-Tags/
   // Rollen-Zwischenueberschriften, KEINE neue Datenstruktur/kein neuer
   // Filter - Claude erzeugt diese Tags/Ueberschriften bereits selbst im
-  // Fliesstext.
-  var MANUAL_SCOPE_TAG_ICONS = { "[Nur PKW]": "🚗", "[Nur Van]": "🚐", "[Nur Markt]": "🏬" };
-  var MANUAL_CALLOUT_ICONS = { "[Warnung]": "⚠️", "[Hinweis]": "ℹ️", "[Tipp]": "💡", "[Verweis]": "🔗" };
-  var MANUAL_ROLE_HEADING_ICONS = { "Retail": "🚗", "Markt": "🏬", "HQ": "🏢", "Sparte": "🧩", "MO": "⚙️" };
+  // Fliesstext. Bewusst monochrome Unicode-Symbole (Geometric Shapes/
+  // Dingbats, OHNE Variation-Selector U+FE0F) statt farbiger Emoji - diese
+  // Zeichen haben keine Emoji-Darstellung und werden daher von jeder
+  // Standard-UI-Schrift schwarz/weiss (in der jeweiligen Textfarbe) statt
+  // farbig gerendert ("professionelle" Optik, kein Emoji-Font-Zugriff).
+  // Rollen = gefuellte Formen, Scope-Tags = dieselben Formen als Umriss
+  // (Fahrzeug-/Marktbezug bleibt am Textlabel selbst erkennbar, nicht am
+  // Icon), Hinweis-Tags = etablierte monochrome Konventionen (⚠/ℹ wie in
+  // GitHub/Microsoft-Docs-Hinweisboxen).
+  var MANUAL_SCOPE_TAG_ICONS = { "[Nur PKW]": "◇", "[Nur Van]": "□", "[Nur Markt]": "△" };
+  var MANUAL_CALLOUT_ICONS = { "[Warnung]": "⚠", "[Hinweis]": "ℹ", "[Tipp]": "✎", "[Verweis]": "→" };
+  var MANUAL_ROLE_HEADING_ICONS = { "Retail": "◆", "Markt": "■", "HQ": "▲", "Sparte": "●", "MO": "▶" };
   // Randfarben je Box-Typ fuer die Vorschau - bewusst aus den bereits
   // vorhandenen Status-/Akzentfarben des App-Farbschemas wiederverwendet
   // (keine neuen Hex-Werte), damit die Boxen zur selben .callout-Basis
@@ -18966,9 +18984,16 @@
   function manualCalloutTagOf(line) {
     return MANUAL_CALLOUT_TAGS.filter(function (tag) { return line.indexOf(tag) !== -1; })[0] || null;
   }
+  // Volle Textkontrastfarbe (var(--text)) statt des gedaempften
+  // .callout-Standardtons (var(--text-muted)) - diese Boxen sind fuer den
+  // Anwender oft der WICHTIGSTE Inhalt (Warnungen/Rollenhinweise), duerfen
+  // also nicht blasser als der Rest des Fliesstexts wirken. Grosszuegigere
+  // Polsterung/Zeilenhoehe fuer bessere Lesbarkeit; Icon+Bezeichnung in der
+  // Randfarbe der Box, damit Farbe/Icon/Text als Einheit erkennbar bleiben.
   function manualTagBoxHtml(tag, icon, rest) {
-    return '<div class="callout" style="border-left-color:' + MANUAL_CALLOUT_BORDER_COLORS[tag] + '; margin:0 0 8px;">' +
-      "<b>" + icon + " " + escapeHtml(tag.replace(/^\[|\]$/g, "")) + ":</b> " + highlightNegativeWordsHtml(rest) + "</div>";
+    var color = MANUAL_CALLOUT_BORDER_COLORS[tag];
+    return '<div class="callout" style="border-left-color:' + color + '; background:var(--surface-2); color:var(--text); margin:0 0 11px; padding:11px 15px; line-height:1.65;">' +
+      '<b style="color:' + color + ';">' + icon + " " + escapeHtml(tag.replace(/^\[|\]$/g, "")) + ":</b> " + highlightNegativeWordsHtml(rest) + "</div>";
   }
   // Lese-Vorschau mit Icons (Umschalter "Vorschau" neben Deutsch/English,
   // s. renderManualChapters): rein read-only HTML-Rendering derselben
@@ -18981,18 +19006,25 @@
   // rohe "[Nur PKW]"-Textmarke dargestellt. Veraendert den Text selbst
   // nicht (Bearbeitung bleibt über Deutsch/English-Ansicht als Rohtext
   // möglich).
+  // Lesbarkeit fuer den Anwender (statt der dichten Standard-Textgroesse):
+  // groesserer Zeilenabstand (1.7) und Absatzabstand, begrenzte Textbreite
+  // fuer eine angenehme Zeilenlaenge (~75 Zeichen bei 15px), deutlichere
+  // Zwischenueberschriften (groesser, mit Trennlinie als Scan-Hilfe beim
+  // Ueberfliegen eines laengeren Kapitels) - wirkt sich nur auf die
+  // Lese-Vorschau aus, der bearbeitbare Rohtext (Deutsch/English) bleibt
+  // unveraendert.
   function manualRenderPreviewHtml(text) {
-    var html = "";
+    var html = '<div style="font-size:15px; line-height:1.7; color:var(--text); max-width:720px;">';
     var roleBoxOpen = false;
     manualParseParagraphs(text).forEach(function (line) {
       if (manualIsHeading(line)) {
         if (roleBoxOpen) { html += "</div>"; roleBoxOpen = false; }
         var headingText = manualHeadingText(line);
         var headingIcon = MANUAL_ROLE_HEADING_ICONS[headingText] || "";
-        html += '<h4 style="margin:14px 0 6px;">' + (headingIcon ? headingIcon + " " : "") + escapeHtml(headingText) + "</h4>";
+        html += '<h4 style="margin:22px 0 10px; font-size:16px; font-weight:700; padding-bottom:5px; border-bottom:1px solid var(--border);">' + (headingIcon ? headingIcon + " " : "") + escapeHtml(headingText) + "</h4>";
         var roleBorder = MANUAL_ROLE_BORDER_COLORS[headingText];
         if (roleBorder) {
-          html += '<div class="callout" style="border-left-color:' + roleBorder + '; margin:0 0 10px;">';
+          html += '<div class="callout" style="border-left-color:' + roleBorder + '; background:var(--surface-2); color:var(--text); margin:0 0 12px; padding:12px 16px; line-height:1.7;">';
           roleBoxOpen = true;
         }
         return;
@@ -19000,18 +19032,19 @@
       var calloutTag = manualCalloutTagOf(line);
       if (calloutTag) {
         var calloutRest = line.split(calloutTag).join("").trim();
-        html += manualTagBoxHtml(calloutTag, MANUAL_CALLOUT_ICONS[calloutTag] || "🏷️", calloutRest);
+        html += manualTagBoxHtml(calloutTag, MANUAL_CALLOUT_ICONS[calloutTag] || "▪", calloutRest);
         return;
       }
       var scopeTag = manualScopeTagOf(line);
       if (scopeTag) {
         var scopeRest = line.split(scopeTag).join("").trim();
-        html += manualTagBoxHtml(scopeTag, MANUAL_SCOPE_TAG_ICONS[scopeTag] || "🏷️", scopeRest);
+        html += manualTagBoxHtml(scopeTag, MANUAL_SCOPE_TAG_ICONS[scopeTag] || "▪", scopeRest);
         return;
       }
-      html += '<p style="margin:0 0 8px;">' + highlightNegativeWordsHtml(line) + "</p>";
+      html += '<p style="margin:0 0 12px;">' + highlightNegativeWordsHtml(line) + "</p>";
     });
     if (roleBoxOpen) html += "</div>";
+    html += "</div>";
     return html;
   }
 

@@ -97,18 +97,18 @@ const xml = `<?xml version="1.0"?><rss><channel>
   const cardAfterPreview = doc.getElementById("manual-chapters-list").querySelector('[data-manual-chapter="' + chapterTitle + '"]');
   const previewHtml = cardAfterPreview.innerHTML;
 
-  check("Vorschau zeigt Rollen-Icon vor 'Retail'-Überschrift", previewHtml.includes("🚗 Retail</h4>"));
-  check("Vorschau zeigt Rollen-Icon vor 'HQ'-Überschrift", previewHtml.includes("🏢 HQ</h4>"));
+  check("Vorschau zeigt Rollen-Icon vor 'Retail'-Überschrift", previewHtml.includes("◆ Retail</h4>"));
+  check("Vorschau zeigt Rollen-Icon vor 'HQ'-Überschrift", previewHtml.includes("▲ HQ</h4>"));
   check("Retail-Rollenabschnitt ist als eigene .callout-Box mit Rollen-Randfarbe gerahmt",
     /<div class="callout" style="border-left-color:var\(--progress\);[^"]*">\s*<p[^>]*>Der Retail legt/.test(previewHtml));
   check("[Warnung] wird als eigene Box mit Icon/Randfarbe dargestellt",
-    previewHtml.includes('border-left-color:var(--blocked)') && previewHtml.includes("⚠️ Warnung:"));
+    previewHtml.includes('border-left-color:var(--blocked)') && previewHtml.includes("⚠ Warnung:"));
   check("[Hinweis] wird als eigene Box mit Icon/Randfarbe dargestellt",
-    previewHtml.includes('border-left-color:var(--accent)') && previewHtml.includes("ℹ️ Hinweis:"));
+    previewHtml.includes('border-left-color:var(--accent)') && previewHtml.includes("ℹ Hinweis:"));
   check("[Tipp] wird als eigene Box mit Icon/Randfarbe dargestellt",
-    previewHtml.includes('border-left-color:var(--done)') && previewHtml.includes("💡 Tipp:"));
+    previewHtml.includes('border-left-color:var(--done)') && previewHtml.includes("✎ Tipp:"));
   check("[Verweis] wird als eigene Box mit Icon/Randfarbe dargestellt",
-    previewHtml.includes('border-left-color:var(--backlog)') && previewHtml.includes("🔗 Verweis:"));
+    previewHtml.includes('border-left-color:var(--backlog)') && previewHtml.includes("→ Verweis:"));
   check("Rohe Tags erscheinen nicht mehr unveraendert im Fließtext",
     !previewHtml.includes("[Warnung] Pruefe") && !previewHtml.includes("[Hinweis] Diese") &&
     !previewHtml.includes("[Tipp] Nutze") && !previewHtml.includes("[Verweis] Siehe"));

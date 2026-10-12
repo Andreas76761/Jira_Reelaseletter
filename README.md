@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.79.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.80.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1412,6 +1412,22 @@ zusammenzuführen.
   Zwischenüberschriften-Schattierung und Hinweis-/Scope-Tag-Hervorhebung,
   s. "Icons/Boxen"-Export weiter oben) – reine Anzeige der schon
   verwendeten Werte, keine zusätzliche, separate Theming-Konfiguration.
+  **Professionelle Schwarz-Weiß-Icons + bessere Lesbarkeit** (neu, v2.80.0):
+  alle Rollen-/Scope-/Hinweis-/Varianten-Icons in der Lese-Vorschau, dem
+  KPI-Dashboard, der Design-Legende und dem Register "Ergebnisse" sind von
+  farbigen Emoji auf monochrome Unicode-Symbole (geometrische Formen/
+  Dingbats, z. B. ◆ ■ ▲ ● ▶ für die Rollen, ⚠ ℹ ✎ → für Warnung/Hinweis/
+  Tipp/Verweis, ☆ ⚙ Σ für Enduser-Text/Fachtext/Kurzfassung) umgestellt –
+  diese Zeichen besitzen keine Emoji-Darstellung und werden daher in jeder
+  Standardschrift schwarz/weiß statt farbig gerendert. Zusätzlich wurde die
+  Lese-Vorschau selbst leserlicher gestaltet: volle Textkontrastfarbe statt
+  des zuvor gedämpften Grautons in Hinweis-/Rollenboxen (diese enthalten
+  oft die wichtigsten Inhalte), großzügigerer Zeilenabstand und
+  Absatzabstand, begrenzte Textbreite für eine angenehme Zeilenlänge sowie
+  deutlichere Zwischenüberschriften mit Trennlinie zum schnellen
+  Überfliegen längerer Kapitel. Der Word- und PDF-Export war von den
+  farbigen Icons nie betroffen (dort wird ausschließlich mit Farbschattierung
+  der Tag-Zeilen gearbeitet, s. o.) und bleibt unverändert.
 - **Referenz-Handbuch-Import + Handbuch-Änderung nach Kapitel** – Import →
   eigener Bereich "Referenz-Handbuch" zum Hochladen eines bereits
   bestehenden, veröffentlichten Word-Benutzerhandbuchs (z. B. eine ca.

@@ -150,7 +150,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   const enduserResult = card().querySelector('[data-manual-improve-result="enduser"]');
   check("Enduser-Variante erzeugt eigene Textbox", !!enduserResult && enduserResult.innerHTML.includes("Spar dir Zeit"));
   check("Enduser-Variante mit grüner Rahmenfarbe (var(--done))", enduserResult.innerHTML.includes("var(--done)"));
-  check("Enduser-Variante zeigt Hinweis-Icon (ℹ️) für den [Hinweis]-Tag", enduserResult.innerHTML.includes("ℹ️"));
+  check("Enduser-Variante zeigt Hinweis-Icon (ℹ) für den [Hinweis]-Tag", enduserResult.innerHTML.includes("ℹ"));
   check("Button-Beschriftung wechselt auf 'neu erzeugen'", card().querySelector('[data-manual-improve="enduser"]').textContent.includes("Enduser-Text neu erzeugen"));
   check("Originaltext (Deutsch) bleibt unverändert", card().querySelector(".manual-chapter-textarea[data-lang='de']").value.indexOf("Spar dir Zeit") === -1);
 
@@ -161,7 +161,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   const fachtextResult = card().querySelector('[data-manual-improve-result="fachtext"]');
   check("Fachtext-Variante erzeugt eigene Textbox", !!fachtextResult && fachtextResult.innerHTML.includes("Vertragsstatus"));
   check("Fachtext-Variante mit violetter Rahmenfarbe (var(--backlog))", fachtextResult.innerHTML.includes("var(--backlog)"));
-  check("Fachtext-Variante zeigt Verweis-Icon (🔗) für den [Verweis]-Tag", fachtextResult.innerHTML.includes("🔗"));
+  check("Fachtext-Variante zeigt Verweis-Icon (→) für den [Verweis]-Tag", fachtextResult.innerHTML.includes("→ Verweis"));
 
   // ===================== Variante 3: Kurzfassung =====================
   fire(kurzfassungBtn, "click");
@@ -183,7 +183,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   await wait(30);
   const legend = doc.getElementById("manual-improve-design-legend");
   check("Design-Legende zeigt 3 Einträge (Enduser/Fachtext/Kurzfassung)", legend.querySelectorAll(".chip").length === 3);
-  check("Design-Legende zeigt Icons", legend.textContent.includes("😊") && legend.textContent.includes("🛠️") && legend.textContent.includes("⚡"));
+  check("Design-Legende zeigt Icons", legend.textContent.includes("☆") && legend.textContent.includes("⚙") && legend.textContent.includes("Σ"));
   const designPrompts = doc.getElementById("manual-improve-design-prompts");
   const designTextareas = Array.from(designPrompts.querySelectorAll(".ragprompt-textarea"));
   check("Design-Sektion zeigt genau 3 editierbare Prompts", designTextareas.length === 3);
