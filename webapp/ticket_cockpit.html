@@ -181,6 +181,11 @@
   .inactive-import-row td { font-style: italic; }
   .checkbox-label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
   .graph-svg-wrap { overflow: auto; max-height: 640px; padding: 12px; }
+  .outline-level-tree, .outline-level-tree ul { list-style: none; margin: 0; padding-left: 0; }
+  .outline-level-tree ul { padding-left: 18px; margin-top: 4px; }
+  .outline-level-tree li { margin: 3px 0; }
+  .outline-level-tree summary { cursor: pointer; font-weight: 500; }
+  .outline-level-tree summary:hover { color: var(--accent-text); }
   .graph-legend { display: flex; flex-direction: column; gap: 4px; padding: 10px 14px; margin-top: 8px; font-size: 12.5px; }
   .graph-legend-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
   .graph-legend-chip { display: inline-flex; align-items: center; gap: 5px; }
@@ -1922,6 +1927,15 @@
             </div>
             <p class="step-note" id="manual-quality-check-all-status-note"></p>
           </div>
+          <div id="manual-orphans-wrap" hidden style="margin-bottom:16px;">
+            <div class="callout warn">
+              Diese Kapitel wurden unter einem Titel erzeugt, der in der aktuellen Gliederung nicht mehr vorkommt
+              (z.&nbsp;B. nach einem Gliederungs-Update aus einer neuen Excel-Matrix) &ndash; sie bleiben erhalten
+              statt automatisch gelöscht zu werden. Hier gezielt auf ein aktuelles Kapitel übernehmen (ersetzt
+              dessen vorhandenen Text unwiderruflich) oder verwerfen.
+            </div>
+            <div id="manual-orphans-list"></div>
+          </div>
           <div id="manual-chapters-list"></div>
           <div class="empty-hint" id="manual-chapters-empty">Noch keine Kapitel erzeugt.</div>
           <div id="manual-overview-wrap" hidden style="margin-top:16px;">
@@ -2255,7 +2269,16 @@
       <section class="view-panel" data-view-panel="einstellungen" hidden>
         <div class="view-head"><h2>Einstellungen</h2><p class="desc">Verwaltung der aktuellen Sitzung. Es gibt keinen Server &ndash; alle Daten liegen ausschließlich im Speicher dieses Browser-Tabs und sind mit dem Schließen der Seite ohnehin weg.</p></div>
 
-        <section>
+        <div class="import-tabs" id="einstellungen-tabs">
+          <button class="import-tab active" data-esub="verwaltung" type="button">Sitzung &amp; Verwaltung</button>
+          <button class="import-tab" data-esub="stammdaten" type="button">Stammdaten</button>
+          <button class="import-tab" data-esub="gliederung" type="button">Gliederung &amp; Steuerung</button>
+          <button class="import-tab" data-esub="rollen" type="button">Rollen-Navigation</button>
+          <button class="import-tab" data-esub="ki-text" type="button">KI-Texterzeugung</button>
+          <button class="import-tab" data-esub="dokumentation" type="button">Dokumentation</button>
+        </div>
+
+        <section data-esub-panel="verwaltung">
           <p class="section-label">Sitzung speichern/laden</p>
           <div class="callout">
             Es gibt keinen Server – alle Daten sind mit dem Schließen dieser Seite weg. Hier lässt sich der komplette
@@ -2271,7 +2294,7 @@
           </div>
         </section>
 
-        <section>
+        <section data-esub-panel="verwaltung">
           <p class="section-label">Persistenter Speicher (automatisches Speichern)</p>
           <div class="callout">
             Speichert die Sitzung zusätzlich automatisch (nach kurzer Inaktivität) im Browser selbst (IndexedDB) –
@@ -2289,7 +2312,7 @@
           </div>
         </section>
 
-        <section>
+        <section data-esub-panel="verwaltung">
           <p class="section-label">Admin-Bereich</p>
           <div class="panel danger-zone">
             <h3>Alle geladenen Daten löschen</h3>
@@ -2302,7 +2325,7 @@
           </div>
         </section>
 
-        <section>
+        <section data-esub-panel="stammdaten" hidden>
           <p class="section-label">Punkte-System (nach Tickettyp)</p>
           <div class="callout">
             Jedem Ticket wird beim Verarbeiten automatisch eine Punktzahl auf Basis des Jira-Felds "Typ" (issue_type)
@@ -2323,7 +2346,7 @@
           </div>
         </section>
 
-        <section>
+        <section data-esub-panel="stammdaten" hidden>
           <p class="section-label">Labels (nach Themengebiet)</p>
           <div class="callout">
             Diese Begriffe (Deutsch/Englisch je Themengebiet) werden beim Verarbeiten automatisch jedem Ticket
@@ -2347,7 +2370,7 @@
           </div>
         </section>
 
-        <section>
+        <section data-esub-panel="gliederung" hidden>
           <p class="section-label">Benutzerhandbuch-Gliederung</p>
           <div class="callout">
             Kapitel/Unterkapitel des Benutzerhandbuchs. Jedem Kapitel lassen sich eine oder mehrere <b>Jira-Domänen</b>
@@ -2388,7 +2411,21 @@
           <p class="step-note" id="outline-matrix-upload-status"></p>
         </section>
 
-        <section>
+        <section data-esub-panel="gliederung" hidden>
+          <p class="section-label">Gliederungs-Baum (Ebene 0&ndash;4)</p>
+          <div class="callout">
+            Reine Lese-Ansicht der vollen Ebenen-Struktur aus einer hochgeladenen Excel-Matrix (Arbeitsblatt
+            "Matrix": Ebene 1 = Kapitel, Ebene 2/3/ggf. weitere = Unterkapitel/Feinthemen, hier ECHT verschachtelt
+            statt wie in der Liste oben zu einer flachen Unterkapitel-Liste zusammengefasst) &ndash; zum Ausklappen
+            je Ebene. "Ebene 0" sind die Kapitel-Übergänge aus dem Arbeitsblatt "Uebergaenge" (s. Ticket Graph
+            für den zugehörigen Graphen); sie zählen nicht zur Gliederung selbst. Diese Ansicht ist unabhängig von
+            der editierbaren Kapitelliste oben und erscheint NICHT bei Verarbeitung/Massenverarbeitung/
+            Benutzerhandbuch/Releaseletter &ndash; dort bleibt es bei der flachen Kapitelauswahl.
+          </div>
+          <ul class="outline-level-tree" id="outline-level-tree-list" style="margin:0; padding-left:0; list-style:none;"></ul>
+        </section>
+
+        <section data-esub-panel="gliederung" hidden>
           <p class="section-label">Steuerung &amp; KPI (Kapitel-Status)</p>
           <div class="callout">
             Je Kapitel frei editierbarer Steuerungs- und KPI-Status &ndash; Bearbeitung, Genehmigung und
@@ -2406,7 +2443,7 @@
           </div>
         </section>
 
-        <section>
+        <section data-esub-panel="gliederung" hidden>
           <p class="section-label">6 Gliederungs-Versionen (Markt/MO/Dealer/IT/Van/Pkw)</p>
           <div class="callout">
             Erzeugt aus der Gesamtgliederung oben 6 rollen-/spartenspezifische Teilgliederungen sowie eine
@@ -2435,7 +2472,7 @@
           </div>
         </section>
 
-        <section>
+        <section data-esub-panel="rollen" hidden>
           <p class="section-label">Rollen-Navigation (oneSCM)</p>
           <div class="callout">
             Aus der hochgeladenen Navigationsvorlage (<code>Navigation_oneSCM_Version3.docx</code>, Bildschirmaufnahmen +
@@ -2448,7 +2485,7 @@
           <div id="role-nav-list"></div>
         </section>
 
-        <section>
+        <section data-esub-panel="stammdaten" hidden>
           <p class="section-label">Importformat (Spalten je Vorgangstyp)</p>
           <div class="callout">
             Jira liefert je Vorgangstyp (<b>Epic</b>, <b>Feature</b>, <b>Bug</b>, <b>Incident</b>, <b>Change
@@ -2466,7 +2503,7 @@
           <div id="importformat-list"></div>
         </section>
 
-        <section>
+        <section data-esub-panel="stammdaten" hidden>
           <p class="section-label">Farbschema (Domänen &amp; Status-Ampel)</p>
           <div class="callout">
             Domänen erhalten automatisch eine von 16 festen Farben zugewiesen (stabil je Domänenname, s. Ticket
@@ -2494,7 +2531,7 @@
           </div>
         </section>
 
-        <section>
+        <section data-esub-panel="stammdaten" hidden>
           <p class="section-label">Domänen-Kürzel (Referenz-Nummern)</p>
           <div class="callout">
             Kurzes Kürzel je Domäne, Grundlage der Referenz-Nummer, die Massenverarbeitung/Benutzerhandbuch-
@@ -2514,7 +2551,7 @@
           </div>
         </section>
 
-        <section>
+        <section data-esub-panel="ki-text" hidden>
           <p class="section-label">Sprachstil (KI-Texterzeugung)</p>
           <div class="callout">
             Globale Stilvorgabe für die von Claude erzeugten Fließtexte (Verarbeitung → 7. RAG: Zusammenfassung
@@ -2526,7 +2563,7 @@
           <select id="language-style-select"></select>
         </section>
 
-        <section>
+        <section data-esub-panel="ki-text" hidden>
           <p class="section-label">RAG-Prompts (KI-Texterzeugung)</p>
           <div class="callout">
             Die Anweisungen ("Prompts"), mit denen Claude aus den gefilterten Ticket-Rohdaten (Verarbeitung → 7. RAG)
@@ -2538,7 +2575,7 @@
           <div id="ragprompts-list"></div>
         </section>
 
-        <section>
+        <section data-esub-panel="ki-text" hidden>
           <p class="section-label">Negativliste (verbotene Wörter/Satzbausteine)</p>
           <div class="callout">
             Wörter oder Satzbausteine, die im Releaseletter und Benutzerhandbuch NICHT auftauchen sollen (z. B.
@@ -2550,7 +2587,7 @@
           <p class="step-note" id="negative-words-count"></p>
         </section>
 
-        <section>
+        <section data-esub-panel="dokumentation" hidden>
           <p class="section-label">Dokumentation</p>
           <p class="section-label" style="margin-top:6px;">Testing</p>
           <div class="callout">
@@ -4651,7 +4688,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.76.0";
+  var APP_VERSION = "2.77.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6121,6 +6158,7 @@
     "manual-domain-select", "manual-label-select", "manual-chapter-select", "manual-role-select", "manual-group-select", "manual-match-count",
     "manual-prompt-editor",
     "manual-generate-btn", "manual-generate-spinner", "manual-generate-label", "manual-stop-btn", "manual-status-note",
+    "manual-orphans-wrap", "manual-orphans-list",
     "manual-chapters-list", "manual-chapters-empty",
     "manual-overview-wrap", "manual-overview-tbody", "manual-overview-zip-btn",
     "manual-progress-wrap", "manual-progress-fill",
@@ -6181,6 +6219,8 @@
     "abbrev-translations-tbody", "abbrev-translations-empty", "abbrev-translations-new-term", "abbrev-translations-new-de",
     "abbrev-translations-new-en", "abbrev-translations-new-sk", "abbrev-translations-new-hi",
     "abbrev-translations-new-fr", "abbrev-translations-add-btn",
+    "einstellungen-tabs",
+    "outline-level-tree-list",
     "outline-tbody", "outline-new-chapter-input", "outline-add-chapter-btn", "outline-domain-datalist",
     "outline-upload-btn", "outline-upload-input", "outline-upload-status",
     "outline-matrix-upload-btn", "outline-matrix-upload-input", "outline-matrix-upload-status", "outline-steuerung-tbody",
@@ -8155,6 +8195,36 @@
         '<button type="button" class="btn ghost btn-tiny" data-action="add-domain" data-chapter-id="' + c.id + '">Domäne hinzufügen</button></td></tr>';
       return chapterRow + gapNoteRow + subRows + addSubRow + domainRows + addDomainRow;
     }).join("");
+    renderOutlineLevelTree();
+  }
+  // Reine Lese-Baumansicht (Einstellungen -> Gliederung & Steuerung) der
+  // ECHTEN Ebenen-Verschachtelung aus chapter.levelTree (nur befuellt nach
+  // einem Excel-Matrix-Upload, s. outlineFromMatrixRows) - Kapitel ohne
+  // levelTree (Ausgangsgliederung, .docx-Upload, manuell angelegte Kapitel)
+  // zeigen sich hier als Kapitel ohne Unterebenen statt einen Fehler
+  // auszuloesen. "Ebene 0" (Kapitel-Übergänge) kommt aus app.outlineTransitions
+  // (bereits beim Matrix-Upload separat geparst, s. outlineTransitionsFromRows).
+  function outlineLevelTreeNodeHtml(node) {
+    if (!node.children || !node.children.length) return "<li>" + escapeHtml(node.title) + "</li>";
+    return "<li><details><summary>" + escapeHtml(node.title) + "</summary><ul>" +
+      node.children.map(outlineLevelTreeNodeHtml).join("") + "</ul></details></li>";
+  }
+  function outlineLevelTreeChapterHtml(chapter) {
+    var tree = chapter.levelTree || [];
+    if (!tree.length) return "<li>" + escapeHtml(chapter.title) + "</li>";
+    return "<li><details><summary>" + escapeHtml(chapter.title) + "</summary><ul>" +
+      tree.map(outlineLevelTreeNodeHtml).join("") + "</ul></details></li>";
+  }
+  function renderOutlineLevelTree() {
+    if (!els.outlineLevelTreeList) return;
+    var transitions = app.outlineTransitions || [];
+    var transitionsHtml = transitions.length
+      ? "<li><details><summary>Ebene 0 &ndash; Kapitel-Übergänge (" + transitions.length + ")</summary><ul>" +
+        transitions.map(function (t) {
+          return "<li>" + escapeHtml(t.id) + (t.refRaw ? " &ndash; " + escapeHtml(t.refRaw) : "") + "</li>";
+        }).join("") + "</ul></details></li>"
+      : "";
+    els.outlineLevelTreeList.innerHTML = transitionsHtml + app.outline.map(outlineLevelTreeChapterHtml).join("");
   }
   els.outlineTbody.addEventListener("click", function (e) {
     var btn = e.target.closest("button[data-action]");
@@ -8396,7 +8466,18 @@
   // KI-Aufruf. Bewusst als eigener, einfacher SVG-Renderer gebaut (nicht
   // in den bestehenden, komplexen Ticket-Abhaengigkeits-Graph integriert),
   // um dessen bereits getesteten Code-Pfad nicht anzufassen.
-  function chapterNumberFromTitle(title) {
+  // Eigener Name (nicht "chapterNumberFromTitle") bewusst gewaehlt: ein
+  // GLEICHNAMIGES chapterNumberFromTitle existiert bereits weiter unten
+  // (Referenz-Nummern-Generator, zweistellig nullgepolstert fuer sortierbare
+  // IDs wie "CM-04.01-..."). Eine fruehere Version dieser Datei hat
+  // versehentlich den gleichen Funktionsnamen fuer eine ANDERE Bedeutung
+  // (reine Kapitelnummer ohne Polsterung) wiederverwendet - die SPAETERE
+  // Definition im Dateiverlauf gewinnt bei JS-Funktionsdeklarationen
+  // (ueberschreibt die hier noetige Variante), wodurch z. B. Kapitel 1-9
+  // (einstellig) beim Abgleich mit "6"/"7" etc. faelschlich auf "06"/"07"
+  // gepolstert und so NIE gefunden wurden - erkannt beim Testen mit der
+  // echten, 23-Kapitel-Matrix (Kapitel 6-10 sind dort einstellig).
+  function xrefChapterNumberFromTitle(title) {
     var m = (title || "").match(/^Kapitel\s+(\d+(?:\.\d+)*)/);
     return m ? m[1] : null;
   }
@@ -8408,7 +8489,7 @@
         if (line.indexOf("[Verweis]") === -1) return;
         var m = line.match(/Kapitel\s+(\d+(?:\.\d+)*)/);
         if (!m) return;
-        var targetChapter = app.outline.filter(function (c) { return chapterNumberFromTitle(c.title) === m[1]; })[0];
+        var targetChapter = app.outline.filter(function (c) { return xrefChapterNumberFromTitle(c.title) === m[1]; })[0];
         if (!targetChapter || targetChapter.title === e.chapterTitle) return;
         var key = e.chapterTitle + "|||" + targetChapter.title;
         if (!edgesMap[key]) edgesMap[key] = { source: e.chapterTitle, target: targetChapter.title, count: 0, sample: line.replace("[Verweis]", "").trim() };
@@ -8447,7 +8528,7 @@
       var p = positions[title];
       svgParts.push('<g><circle cx="' + p.x + '" cy="' + p.y + '" r="26" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"><title>' + escapeHtml(title) + '</title></circle>' +
         '<text x="' + p.x + '" y="' + p.y + '" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--text)">' +
-        escapeHtml(chapterNumberFromTitle(title) || "?") + "</text></g>");
+        escapeHtml(xrefChapterNumberFromTitle(title) || "?") + "</text></g>");
     });
     svgParts.push("</svg>");
     els.xrefGraphSvgContainer.innerHTML = svgParts.join("");
@@ -8467,7 +8548,7 @@
   // Matrix-Upload einmalig geparsten Uebergangs-Daten statt live aus
   // Massenverarbeitung-Textschnipseln.
   function outlineChapterByNumber(num) {
-    return app.outline.filter(function (c) { return chapterNumberFromTitle(c.title) === String(num); })[0] || null;
+    return app.outline.filter(function (c) { return xrefChapterNumberFromTitle(c.title) === String(num); })[0] || null;
   }
   // Mehrere Kapitel/Unterkapitel je Seite (z. B. "15.2/15.7 → 14.8") sowie
   // mehrere Übergangs-Zeilen, die dasselbe Kapitelpaar betreffen, werden zu
@@ -8538,7 +8619,7 @@
       var p = positions[title];
       svgParts.push('<g><circle cx="' + p.x + '" cy="' + p.y + '" r="26" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"><title>' + escapeHtml(title) + '</title></circle>' +
         '<text x="' + p.x + '" y="' + p.y + '" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--text)">' +
-        escapeHtml(chapterNumberFromTitle(title) || "?") + "</text></g>");
+        escapeHtml(xrefChapterNumberFromTitle(title) || "?") + "</text></g>");
     });
     svgParts.push("</svg>");
     els.outlineTransitionsGraphSvgContainer.innerHTML = svgParts.join("");
@@ -8622,6 +8703,15 @@
     function col(row, name) { return idx[name] === undefined ? "" : row[idx[name]]; }
     var chapters = [];
     var currentChapter = null;
+    // levelStack[ebene] = zuletzt angelegter Baumknoten dieser Ebene -
+    // generisch fuer beliebige Tiefe (aktuell 2-3, faellt bei einer
+    // zukuenftigen Ebene 4+ automatisch mit an, ohne Codeänderung); dient
+    // NUR dem Aufbau von chapter.levelTree (echte Verschachtelung fuer die
+    // Baumansicht in Einstellungen) - chapter.subs bleibt wie bisher eine
+    // flache Liste (Ebene 2 UND 3 zusammengefasst), da Massenverarbeitung/
+    // RAG-Bibliothek/Unterkapitel-Auswahl weiterhin nur diese flache Liste
+    // kennen sollen (s. Anfrage: Level-Baum nur in Einstellungen).
+    var levelStack = [];
     var nextId = 1;
     for (var r = 1; r < rows.length; r++) {
       var row = rows[r] || [];
@@ -8631,7 +8721,7 @@
       if (!num || !thema) continue;
       if (ebene === 1) {
         currentChapter = {
-          id: nextId++, title: "Kapitel " + num + ": " + thema, subs: [], domains: [], gapNote: "",
+          id: nextId++, title: "Kapitel " + num + ": " + thema, subs: [], domains: [], gapNote: "", levelTree: [],
           steuerung: {
             bearbeitungsstatus: ("" + (col(row, "Bearbeitungsstatus") || "")).trim() || "Offen",
             genehmigungsstatus: ("" + (col(row, "Genehmigungsstatus") || "")).trim() || "Nicht beantragt",
@@ -8640,8 +8730,14 @@
           }
         };
         chapters.push(currentChapter);
-      } else if ((ebene === 2 || ebene === 3) && currentChapter) {
+        levelStack = [];
+      } else if (ebene >= 2 && currentChapter) {
         currentChapter.subs.push({ id: nextId++, title: num + " " + thema });
+        var node = { title: num + " " + thema, ebene: ebene, children: [] };
+        var parent = levelStack[ebene - 1];
+        if (parent) parent.children.push(node); else currentChapter.levelTree.push(node);
+        levelStack[ebene] = node;
+        levelStack.length = ebene + 1;
       }
     }
     return chapters;
@@ -8769,14 +8865,14 @@
         (newTransitions.length ? ", inkl. " + newTransitions.length + " Kapitel-Übergänge aus „Uebergaenge“" : "") +
         ":\n\n" + preview +
         "\n\nDiese ersetzen die komplette aktuelle Gliederung UNWIDERRUFLICH. Domänen-Zuordnungen müssen danach " +
-        "neu gepflegt werden; bereits erzeugte Benutzerhandbuch-Kapitel-Texte und Gliederungs-Stichwörter werden " +
-        "ebenfalls geleert. Wirklich ersetzen?",
+        "neu gepflegt werden; Gliederungs-Stichwörter werden dabei ebenfalls geleert. Bereits erzeugte " +
+        "Benutzerhandbuch-Kapitel-Texte bleiben dagegen erhalten (auch wenn sich ihr Kapiteltitel geändert hat) " +
+        "und lassen sich dort gezielt auf ein neues Kapitel übernehmen. Wirklich ersetzen?",
         "Gliederung ersetzen"
       );
       if (!ok) return;
       app.outline = newOutline;
       app.outlineTransitions = newTransitions;
-      app.manualChapters = {};
       app.manualCheckpoints = [];
       app.manualMergedDoc = "";
       app.chapterKeywords = {};
@@ -8797,7 +8893,9 @@
       els.outlineTransitionsGraphEmpty.hidden = true;
       els.outlineTransitionsGraphStatusNote.textContent = "";
       addLog("Gliederung aus Excel-Matrix „" + (file.name || "Excel-Datei") + "“ ersetzt (" + newOutline.length + " Kapitel, " +
-        subCount + " Unterkapitel/Feinthemen) - Domänen-Zuordnungen, Benutzerhandbuch-Kapitel und Gliederungs-Stichwörter zurückgesetzt" +
+        subCount + " Unterkapitel/Feinthemen) - Domänen-Zuordnungen und Gliederungs-Stichwörter zurückgesetzt; " +
+        "bereits erzeugte Benutzerhandbuch-Kapitel bleiben erhalten und lassen sich bei Bedarf dort auf ein neues " +
+        "Kapitel übernehmen" +
         (kpiRows ? "; Steuerung/KPI-Basiswerte aus KPI_Kapitel übernommen" : "") +
         (newTransitions.length ? "; " + newTransitions.length + " Kapitel-Übergänge aus Uebergaenge übernommen." : "."));
       showToast("Gliederung ersetzt", newOutline.length + " Kapitel aus „" + (file.name || "") + "“ übernommen.");
@@ -11996,6 +12094,23 @@
   }
   Array.prototype.forEach.call(els.verarbeitungTabs.querySelectorAll(".import-tab"), function (btn) {
     btn.addEventListener("click", function () { showVerarbeitungSub(btn.getAttribute("data-vsub")); });
+  });
+
+  // Einstellungen Unter-Tabs: gleiches, einfacheres Muster wie bei der
+  // Verarbeitung (kein Burger-Menü hier noetig) - toggelt per data-esub-panel
+  // ausgezeichnete <section>-Bloecke, die dafuer NICHT umsortiert werden
+  // mussten (dieselben 16 Bloecke bleiben an ihrer Stelle im Dokument,
+  // bekommen nur eine Gruppen-Zugehoerigkeit als Attribut).
+  function showEinstellungenSub(name) {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-esub-panel]"), function (p) {
+      p.hidden = p.getAttribute("data-esub-panel") !== name;
+    });
+    Array.prototype.forEach.call(els.einstellungenTabs.querySelectorAll(".import-tab"), function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-esub") === name);
+    });
+  }
+  Array.prototype.forEach.call(els.einstellungenTabs.querySelectorAll(".import-tab"), function (btn) {
+    btn.addEventListener("click", function () { showEinstellungenSub(btn.getAttribute("data-esub")); });
   });
 
   // Burger-Menü: kompakte Alternative zu den Tabs, listet dieselben 6 Jobs.
@@ -18111,6 +18226,73 @@
     }
   });
 
+  // Automatische KPI-Bewertung (direkt nach jeder Kapitel-Erzeugung, s.
+  // manualGenerateChapters): ein zusaetzlicher, eigener Claude-Aufruf
+  // bewertet den gerade erzeugten Text gegen die 3 KPI-Kriterien aus dem
+  // Arbeitsblatt "KPI_Definitionen" einer oneSCM-Excel-Matrix
+  // (Quellenabdeckung/Pruef-Erfuellungsquote/Kritische Befunde) und
+  // befuellt damit automatisch die Steuerung&KPI-Felder (Einstellungen)
+  // des zugehoerigen Gliederungskapitels - dieselbe "zusaetzlicher Aufruf
+  // nach der eigentlichen Generierung"-Architektur wie die bestehende
+  // Qualitaetspruefung (manualRunQualityCheck), nur automatisch statt
+  // auf Knopfdruck. Nur fuer Kapitel-Gruppen (group.kind === "chapter"),
+  // nicht fuer Label-Themengebiete, da Steuerung&KPI an app.outline-
+  // Kapitel haengt. Ein Fehlschlag hier bricht die Kapitel-Erzeugung
+  // selbst NICHT ab (eigener try/catch, nur Protokoll-Eintrag).
+  var KPI_DEFINITIONS_TEXT =
+    "1. Quellenabdeckung (%): Anteil der im Text getroffenen fachlichen Aussagen, die auf eine konkrete, " +
+    "nachvollziehbare Quelle (Ticket/Vorgabe) zurückgehen, an allen fachlichen Aussagen des Textes.\n" +
+    "2. Prüf-Erfüllungsquote (%): Anteil der erfüllten Pflichtkriterien (vollständig, widerspruchsfrei, " +
+    "durchgängig im Präsens, ohne Negativlisten-Treffer, nachvollziehbare Rollenabgrenzung) an allen " +
+    "anwendbaren Pflichtkriterien.\n" +
+    "3. Kritische Befunde (Anzahl): eindeutige, schwerwiegende inhaltliche Probleme ohne bestätigten " +
+    "Abschluss (z. B. falsche Berechtigungs-/Freigabeaussage, widersprüchliche Finanzregel, nicht belegte " +
+    "zwingende Handlungsanweisung). 0 ist der Zielwert.";
+  function manualBuildKpiEvaluationPrompt(title, text) {
+    return "Du bewertest einen fertigen Benutzerhandbuch-Kapiteltext anhand von 3 KPI-Kriterien. Antworte " +
+      "AUSSCHLIESSLICH in exakt diesem Format, eine Angabe je Zeile, keine weiteren Zeilen davor oder danach:\n" +
+      "QUELLENABDECKUNG: <Zahl 0-100>\n" +
+      "PRUEF_ERFUELLUNGSQUOTE: <Zahl 0-100>\n" +
+      "KRITISCHE_BEFUNDE: <Zahl, Anzahl eindeutiger kritischer Befunde>\n" +
+      "GATE: <eines von: Erfüllt / Nicht erfüllt / Nicht messbar>\n" +
+      "BEGRUENDUNG: <1-2 Sätze>\n\nKPI-Definitionen:\n" + KPI_DEFINITIONS_TEXT +
+      "\n\nKapitel: " + title + "\n\n" + text;
+  }
+  function manualParseKpiEvaluation(resultText) {
+    function num(re) { var m = ("" + (resultText || "")).match(re); return m ? parseFloat(m[1].replace(",", ".")) : null; }
+    var gateMatch = ("" + (resultText || "")).match(/GATE:\s*([^\n]+)/i);
+    var gateRaw = gateMatch ? gateMatch[1].trim() : "";
+    var gate = STEUERUNG_GATE_OPTIONS.filter(function (g) { return g.toLowerCase() === gateRaw.toLowerCase(); })[0] || null;
+    var kb = num(/KRITISCHE_BEFUNDE:\s*(-?\d+(?:[.,]\d+)?)/i);
+    return {
+      quellenabdeckung: num(/QUELLENABDECKUNG:\s*(-?\d+(?:[.,]\d+)?)/i),
+      pruefErfuellungsquote: num(/PRUEF_ERFUELLUNGSQUOTE:\s*(-?\d+(?:[.,]\d+)?)/i),
+      kritischeBefunde: kb == null ? null : Math.round(kb),
+      gate: gate
+    };
+  }
+  async function manualRunKpiEvaluation(chapterTitle, text, signal) {
+    var chapter = chapterByTitle(chapterTitle);
+    if (!chapter || !sampleApi) return;
+    try {
+      var result = await sampleApi(manualBuildKpiEvaluationPrompt(chapterTitle, text), { signal: signal, modelTier: "default", cache: false });
+      var parsed = manualParseKpiEvaluation(result.text || "");
+      var s = ensureChapterSteuerung(chapter);
+      if (parsed.quellenabdeckung != null) s.quellenabdeckung = Math.max(0, Math.min(100, Math.round(parsed.quellenabdeckung)));
+      if (parsed.pruefErfuellungsquote != null) s.pruefErfuellungsquote = Math.max(0, Math.min(100, Math.round(parsed.pruefErfuellungsquote)));
+      if (parsed.kritischeBefunde != null) s.kritischeBefunde = Math.max(0, parsed.kritischeBefunde);
+      if (parsed.gate) s.gate = parsed.gate;
+      renderOutlineSteuerung();
+      renderMassFiles();
+      addLog("Benutzerhandbuch-Kapitel \"" + chapterTitle + "\": KPI-Bewertung aktualisiert (Quellenabdeckung " +
+        (s.quellenabdeckung == null ? "–" : s.quellenabdeckung + "%") + ", Prüf-Erfüllungsquote " +
+        (s.pruefErfuellungsquote == null ? "–" : s.pruefErfuellungsquote + "%") + ", Kritische Befunde " +
+        (s.kritischeBefunde == null ? "–" : s.kritischeBefunde) + ", Gate " + s.gate + ").");
+    } catch (err) {
+      if (err && err.code === "cancelled") throw err;
+      addLog("Benutzerhandbuch-Kapitel \"" + chapterTitle + "\": KPI-Bewertung fehlgeschlagen (" + ((err && err.message) || "unbekannter Fehler") + ").");
+    }
+  }
   async function manualGenerateChapters() {
     var groups = manualTargetGroups();
     if (!groups.length) { showToast("Keine Auswahl", "Bitte mindestens ein Kapitel/Label-Themengebiet oder eine Domäne auswählen.", true); return; }
@@ -18156,6 +18338,10 @@
         var key = manualStorageKey(group);
         manualStoreVersion(key, { de: text, en: "", generatedAt: new Date().toLocaleString("de-DE"), ticketCount: rows.length, role: role, groupKind: group.kind, groupName: group.name });
         completedCount++;
+        if (group.kind === "chapter") {
+          els.manualStatusNote.textContent = "\"" + group.name + "\": KPI-Bewertung …";
+          await manualRunKpiEvaluation(group.name, text, ctl.signal);
+        }
         if (await manualWriteFileToExportDir(safeFilename(key) + ".md", text)) savedToFolderCount++;
         // Voller Kartenneuaufbau (renderManualChapters(), s. u.) nicht mehr
         // bei JEDEM fertigen Kapitel, sondern nur noch periodisch (wie beim
@@ -18688,7 +18874,73 @@
         manualHistoryHtml(title, entry) + "</div>";
     }).join("");
     renderManualOverview();
+    renderManualOrphans();
   }
+  // Nicht mehr zugeordnete Kapitel (Titel existiert in app.manualChapters,
+  // aber nicht mehr in der aktuellen Gliederung app.outline - typischerweise
+  // nach einem erneuten Excel-Matrix-Upload, der NUR die Gliederung/
+  // Struktur ersetzt, s. handleOutlineMatrixUploadFile, und bewusst NICHT
+  // mehr automatisch bereits erzeugte Kapitel loescht). Label-Themengebiet-
+  // Eintraege ("Label: "-Praefix, s. manualStorageKey) sind von der
+  // Gliederung unabhaengig und daher niemals "verwaist". Diese Kapitel
+  // bleiben zusaetzlich ganz normal in der Kapitelliste oben editierbar -
+  // dieser Bereich ist nur eine Abkuerzung fuer den gezielten Austausch.
+  function manualOrphanedChapterTitles() {
+    var outlineTitles = {};
+    app.outline.forEach(function (c) { outlineTitles[c.title] = true; });
+    return Object.keys(app.manualChapters).filter(function (title) {
+      return title.indexOf("Label: ") !== 0 && !outlineTitles[title];
+    });
+  }
+  function renderManualOrphans() {
+    var orphans = manualOrphanedChapterTitles();
+    els.manualOrphansWrap.hidden = orphans.length === 0;
+    if (!orphans.length) { els.manualOrphansList.innerHTML = ""; return; }
+    var chapterOptions = app.outline.map(function (c) { return c.title; });
+    els.manualOrphansList.innerHTML = orphans.map(function (title) {
+      var entry = app.manualChapters[title];
+      return '<div class="panel" data-manual-orphan="' + escapeHtml(title) + '" style="margin-bottom:10px; padding:10px 12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
+        '<div style="flex:1; min-width:200px;"><b>' + escapeHtml(title) + '</b> <span class="mono" style="font-size:11.5px; color:var(--text-muted);">(' +
+        manualWordCount(entry.de) + " Wörter, erzeugt " + escapeHtml(entry.generatedAt) + ')</span></div>' +
+        '<select class="text-input manual-orphan-target-select" style="max-width:280px;"><option value="">Ziel-Kapitel wählen …</option>' +
+        chapterOptions.map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + "</option>"; }).join("") +
+        "</select>" +
+        '<button type="button" class="btn primary btn-tiny" data-manual-orphan-action="apply">Übernehmen (ersetzt Ziel-Text)</button>' +
+        '<button type="button" class="btn danger btn-tiny" data-manual-orphan-action="discard">Verwerfen</button>' +
+        "</div>";
+    }).join("");
+  }
+  function manualApplyOrphanToChapter(oldTitle, newTitle) {
+    var oldEntry = app.manualChapters[oldTitle];
+    if (!oldEntry) return;
+    manualStoreVersion(newTitle, {
+      de: oldEntry.de, en: oldEntry.en || "", generatedAt: oldEntry.generatedAt, ticketCount: oldEntry.ticketCount,
+      role: oldEntry.role, groupKind: "chapter", groupName: newTitle
+    });
+    delete app.manualChapters[oldTitle];
+    delete manualChapterLangView[oldTitle];
+    renderManualChapters();
+    addLog("Benutzerhandbuch-Kapitel \"" + oldTitle + "\" (nicht mehr in der Gliederung) auf \"" + newTitle + "\" übernommen - vorhandener Text dort ersetzt.");
+    showToast("Übernommen", "„" + oldTitle + "“ wurde auf „" + newTitle + "“ übertragen.");
+  }
+  els.manualOrphansList.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-manual-orphan-action]");
+    if (!btn) return;
+    var card = btn.closest("[data-manual-orphan]");
+    var oldTitle = card.getAttribute("data-manual-orphan");
+    var action = btn.getAttribute("data-manual-orphan-action");
+    if (action === "discard") {
+      delete app.manualChapters[oldTitle];
+      delete manualChapterLangView[oldTitle];
+      renderManualChapters();
+      addLog("Nicht mehr zugeordnetes Benutzerhandbuch-Kapitel \"" + oldTitle + "\" verworfen.");
+      return;
+    }
+    var select = card.querySelector(".manual-orphan-target-select");
+    var newTitle = select && select.value;
+    if (!newTitle) { showToast("Kein Ziel-Kapitel", "Bitte zuerst ein Ziel-Kapitel auswählen.", true); return; }
+    manualApplyOrphanToChapter(oldTitle, newTitle);
+  });
   // Kapitel-Übersicht: separate, kompakte Liste ALLER aktuell erzeugten
   // Kapitel (Gliederungsreihenfolge wie beim Zusammenführen, s.
   // manualMergeOrderIndex) mit Download je Kapitel als einzelne .md-Datei

@@ -43,6 +43,8 @@ function buildMatrixXlsxBuffer() {
   const wb = XLSX.utils.book_new();
   const matrixAoa = [
     ["Kapitel", "Thema", "Ebene"],
+    ["6", "Antrag abschließen", 1],
+    ["7", "Zahlungsdaten", 1],
     ["14", "MO Checks", 1],
     ["15", "HQ-Rolle und Blueprint", 1],
     ["16", "Glossar, Checklisten, Anhang", 1],
@@ -52,6 +54,15 @@ function buildMatrixXlsxBuffer() {
     ["T14-15", "Text A ueber den Bezug 14/15.", "14 ↔ 15 | Fehlende Nachweise: Evidence A"],
     ["T15-16", "Text B ueber den Bezug 15/16.", "15 → 16 | Fehlende Nachweise: Evidence B"],
     ["T15-14b", "Text C mit Unterkapiteln.", "15.2/15.7 → 14.8 | Fehlende Nachweise: Evidence C"],
+    // Regression: EINSTELLIGE Kapitelnummern (6/7) - fing frueher faelschlich
+    // nichts, weil ein GLEICHNAMIGES, aber zweistellig nullgepolstertes
+    // chapterNumberFromTitle() (Referenz-Nummern-Generator, an anderer
+    // Stelle der Datei definiert) die hier noetige Funktion überschrieben
+    // hatte (spaetere Funktionsdeklaration gewinnt) - "6"/"7" wurden dabei
+    // mit "06"/"07" verglichen und nie gefunden. Mit zweistelligen Test-
+    // Kapitelnummern (14/15/16) allein war das nicht aufgefallen, da
+    // Nullpolsterung auf 2 Stellen dort wirkungslos blieb.
+    ["T6-7", "Text D ueber den einstelligen Bezug 6/7.", "6 → 7 | Fehlende Nachweise: Evidence D"],
   ];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(matrixAoa), "Matrix");
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(uebergaengeAoa), "Uebergaenge");
@@ -84,8 +95,8 @@ function buildMatrixXlsxBuffer() {
   fire(input, "change");
   await confirmViaModal(doc);
 
-  check("Gliederung ersetzt: genau 3 Kapitel", doc.querySelectorAll(".outline-chapter-row").length === 3);
-  check("Protokoll vermerkt 3 übernommene Kapitel-Übergänge", doc.getElementById("log-list").textContent.includes("3 Kapitel-Übergänge"));
+  check("Gliederung ersetzt: genau 5 Kapitel", doc.querySelectorAll(".outline-chapter-row").length === 5);
+  check("Protokoll vermerkt 4 übernommene Kapitel-Übergänge", doc.getElementById("log-list").textContent.includes("4 Kapitel-Übergänge"));
 
   // ===================== Graph + Tabelle nach Upload =====================
   doc.querySelector('.nav-item[data-view="ticketgraph"]').click();
@@ -98,7 +109,7 @@ function buildMatrixXlsxBuffer() {
   check("Tabelle jetzt sichtbar", doc.getElementById("outline-transitions-table-wrap").hidden === false);
 
   const tableRows = Array.from(doc.querySelectorAll("#outline-transitions-tbody tr"));
-  check("Tabelle zeigt alle 3 rohen Übergangs-Zeilen (unabhängig von der Graph-Zuordnung)", tableRows.length === 3);
+  check("Tabelle zeigt alle 4 rohen Übergangs-Zeilen (unabhängig von der Graph-Zuordnung)", tableRows.length === 4);
   check("Tabelle zeigt ID 'T15-14b'", tableRows.some((tr) => tr.textContent.includes("T15-14b")));
   check("Tabelle zeigt vollen Text von T15-16 ('Text B ueber den Bezug 15/16.')", tableRows.some((tr) => tr.textContent.includes("Text B ueber den Bezug 15/16.")));
   check("Tabelle zeigt 'Fehlende Nachweise' von T14-15 ('Evidence A')", tableRows.some((tr) => tr.textContent.includes("Evidence A")));
@@ -106,23 +117,27 @@ function buildMatrixXlsxBuffer() {
   const svg = doc.querySelector("#outline-transitions-graph-svg-container svg");
   check("SVG wurde gerendert", !!svg);
   const circles = svg ? Array.from(svg.querySelectorAll("circle")) : [];
-  check("Genau 3 Kapitel-Knoten (14/15/16)", circles.length === 3);
+  check("Genau 5 Kapitel-Knoten (6/7/14/15/16)", circles.length === 5);
   const circleTitles = circles.map((c) => c.querySelector("title") && c.querySelector("title").textContent);
+  check("Knoten 'Kapitel 6: Antrag abschließen' vorhanden (einstellige Kapitelnummer)", circleTitles.includes("Kapitel 6: Antrag abschließen"));
+  check("Knoten 'Kapitel 7: Zahlungsdaten' vorhanden (einstellige Kapitelnummer)", circleTitles.includes("Kapitel 7: Zahlungsdaten"));
   check("Knoten 'Kapitel 14: MO Checks' vorhanden", circleTitles.includes("Kapitel 14: MO Checks"));
   check("Knoten 'Kapitel 15: HQ-Rolle und Blueprint' vorhanden", circleTitles.includes("Kapitel 15: HQ-Rolle und Blueprint"));
   check("Knoten 'Kapitel 16: Glossar, Checklisten, Anhang' vorhanden", circleTitles.includes("Kapitel 16: Glossar, Checklisten, Anhang"));
 
   const lines = svg ? Array.from(svg.querySelectorAll("line")) : [];
-  check("Genau 3 Kanten (14→15, 15→14 [zusammengeführt], 15→16) - keine doppelte Linie für denselben Übergang", lines.length === 3);
+  check("Genau 4 Kanten (14→15, 15→14 [zusammengeführt], 15→16, 6→7) - keine doppelte Linie für denselben Übergang", lines.length === 4);
   const lineTitles = lines.map((l) => l.querySelector("title") && l.querySelector("title").textContent);
   check("Kante 14→15 (aus T14-15, wechselseitig) vorhanden", lineTitles.some((t) => t && t.includes("T14-15") && t.includes("Kapitel 14") && t.includes("Kapitel 15") && t.includes("Text A")));
   check("Kante 15→16 (aus T15-16, gerichtet) vorhanden", lineTitles.some((t) => t && t.includes("T15-16") && t.includes("Kapitel 15") && t.includes("Kapitel 16") && t.includes("Text B")));
+  check("Kante 6→7 (aus T6-7, EINSTELLIGE Kapitelnummern) vorhanden - Regressionsschutz gegen die Funktionsnamen-Kollision",
+    lineTitles.some((t) => t && t.includes("T6-7") && t.includes("Kapitel 6") && t.includes("Kapitel 7") && t.includes("Text D")));
   const merged15to14 = lineTitles.find((t) => t && t.includes("Kapitel 15") && t.includes("Kapitel 14") && t.indexOf("Kapitel 15") < t.indexOf("Kapitel 14"));
   check("Kante 15→14 führt T14-15 (wechselseitig) UND T15-14b (Unterkapitel-Bezug) in einer Linie zusammen", !!merged15to14 && merged15to14.includes("T14-15") && merged15to14.includes("T15-14b"));
   check("Zusammengeführte Kante 15→14 zeigt den Text des ERSTEN Übergangs (T14-15: 'Text A'), nicht T15-14b", !!merged15to14 && merged15to14.includes("Text A") && !merged15to14.includes("Text C"));
 
   const statusNote = doc.getElementById("outline-transitions-graph-status-note").textContent;
-  check("Status-Hinweis nennt 3 Kapitel und 3 Übergangs-Beziehung(en)", statusNote.includes("3 Kapitel") && statusNote.includes("3 Übergangs-Beziehung"));
+  check("Status-Hinweis nennt 5 Kapitel und 4 Übergangs-Beziehung(en)", statusNote.includes("5 Kapitel") && statusNote.includes("4 Übergangs-Beziehung"));
 
   // ===================== Bleibt bei "Alle Daten löschen" erhalten (Konfiguration) =====================
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
@@ -134,7 +149,7 @@ function buildMatrixXlsxBuffer() {
   fire(doc.getElementById("outline-transitions-graph-generate-btn"), "click");
   await wait(50);
   check("Nach 'Alle Daten löschen': Kapitel-Übergänge bleiben erhalten (Konfiguration, kein Sitzungsdatensatz)",
-    doc.querySelectorAll("#outline-transitions-tbody tr").length === 3);
+    doc.querySelectorAll("#outline-transitions-tbody tr").length === 4);
 
   check("Kein unbehandelter JS-Fehler während der gesamten Interaktion", errors.length === 0);
 

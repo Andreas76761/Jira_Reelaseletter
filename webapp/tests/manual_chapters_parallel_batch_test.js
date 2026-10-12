@@ -138,7 +138,9 @@ async function waitUntil(fn, timeoutMs) {
   const elapsedMs = Date.now() - t0;
 
   check("Generierung abgeschlossen (Zusammenführungs-Ergebnis sichtbar)", ready);
-  check("3 Batch-Aufrufe + 1 Zusammenführungs-Aufruf an sample() gesendet", sampleCalls.length === 4);
+  // 3 Batch-Aufrufe + 1 Zusammenführungs-Aufruf + 1 automatischer
+  // KPI-Bewertungs-Aufruf direkt danach (s. manualRunKpiEvaluation).
+  check("3 Batch-Aufrufe + 1 Zusammenführungs-Aufruf + 1 KPI-Bewertungs-Aufruf an sample() gesendet", sampleCalls.length === 5);
 
   const maxDelay = Math.max(DELAYS[1], DELAYS[2], DELAYS[3]);
   const sumDelays = DELAYS[1] + DELAYS[2] + DELAYS[3];

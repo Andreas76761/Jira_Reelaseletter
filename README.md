@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.76.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.77.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1341,6 +1341,31 @@ zusammenzuführen.
   neu auf; zusätzlich wird die Ticket-Auswahl für den Lauf nur noch einmal
   statt je Kapitel neu berechnet – bei vielen Kapiteln in einem Lauf
   spürbar schneller.
+  **Automatische KPI-Bewertung** (neu, v2.77.0): direkt nach jeder
+  Kapitel-Erzeugung (nicht bei "Alle prüfen" – das bleibt die separate
+  Grammatik-/Lücken-Qualitätsprüfung) bewertet ein zusätzlicher, eigener
+  KI-Aufruf den frisch erzeugten Text gegen die 3 KPI-Kriterien Quellenabdeckung/
+  Prüf-Erfüllungsquote/Kritische Befunde (dieselbe Methodik wie im
+  Arbeitsblatt "KPI_Definitionen" einer oneSCM-Excel-Matrix) und befüllt
+  damit automatisch die **Steuerung & KPI**-Felder (Einstellungen →
+  Gliederung & Steuerung) des zugehörigen Kapitels inklusive Prüf-Gate –
+  ohne das händisch nachtragen zu müssen. Gilt nur für Kapitel-Gruppen
+  (nicht für Label-Themengebiete, da Steuerung & KPI an Gliederungskapitel
+  gebunden ist); eine unparsebare KI-Antwort überschreibt bestehende Werte
+  nicht und bricht die Kapitel-Erstellung selbst nicht ab (eigener
+  Protokoll-Hinweis statt Fehler-Toast).
+  **Nicht mehr zugeordnete Kapitel austauschen** (neu, v2.77.0): lädt man
+  über Einstellungen eine neue Excel-Matrix mit geänderter Gliederung hoch,
+  werden bereits erzeugte Kapitel-Texte seitdem **nicht mehr automatisch
+  gelöscht** (anders als zuvor), auch wenn ihr alter Titel in der neuen
+  Gliederung nicht mehr vorkommt. Ein neuer Bereich "Nicht mehr
+  zugeordnete, bereits generierte Kapitel" oberhalb der Kapitel-Liste zeigt
+  solche "verwaisten" Kapitel mit einer Ziel-Auswahl aus der aktuellen
+  Gliederung: **"Übernehmen"** verschiebt den alten Text auf das gewählte
+  neue Kapitel (ersetzt dessen vorhandenen Entwurf unwiderruflich, alte
+  Version landet in dessen Verlauf) oder **"Verwerfen"** löscht den
+  verwaisten Eintrag endgültig. Bis dahin bleibt das verwaiste Kapitel ganz
+  normal in der regulären Kapitel-Liste sichtbar/editierbar/exportierbar.
 - **Referenz-Handbuch-Import + Handbuch-Änderung nach Kapitel** – Import →
   eigener Bereich "Referenz-Handbuch" zum Hochladen eines bereits
   bestehenden, veröffentlichten Word-Benutzerhandbuchs (z. B. eine ca.
@@ -1526,7 +1551,11 @@ zusammenzuführen.
   Punkte-System reine Konfiguration (kein Sitzungsdatensatz, bleibt bei
   "Alle Daten löschen"/"Sitzung zurücksetzen" erhalten), aber Teil von
   "Sitzung speichern/laden".
-- **Einstellungen**
+- **Einstellungen** – seit v2.77.0 in 6 Unter-Tabs gegliedert ("Sitzung &
+  Verwaltung", "Stammdaten", "Gliederung & Steuerung", "Rollen-Navigation",
+  "KI-Texterzeugung", "Dokumentation") statt einer einzigen langen Liste –
+  rein navigatorisch (dieselben Bereiche/Inhalte wie zuvor, nur
+  gruppiert; kein Bereich wurde inhaltlich verändert).
   - *Sitzung speichern/laden* – da es keinen Server gibt und mit dem
     Schließen der Seite alles verloren geht, lässt sich der komplette
     aktuelle Stand (Tickets, Imports, Änderungsverlauf, Protokoll,
@@ -1669,6 +1698,20 @@ zusammenzuführen.
     Ticket-Graph-Bullet oben, Abschnitt "Kapitel-Übergänge"). Dieselbe
     Sicherheitsabfrage und derselbe vollständige, unwiderrufliche Ersatz wie
     beim Word-Upload.
+  - *Gliederungs-Baum (Ebene 0&ndash;4)* (neu, direkt unter der obigen
+    Gliederungsliste) – reine Lese-Ansicht der ECHTEN Ebenen-Verschachtelung
+    aus einem Excel-Matrix-Upload: anders als die Kapitelliste oben (die
+    Ebene 2 und 3 zu einer flachen Unterkapitel-Liste zusammenfasst) bleibt
+    hier z. B. "1.1.1" ein echtes Kind von "1.1", nicht nur ein weiterer
+    Listeneintrag unter Kapitel 1 – zum Ausklappen je Ebene (native
+    `<details>`-Elemente). "Ebene 0" oben in der Liste sind die
+    Kapitel-Übergänge aus dem Arbeitsblatt "Uebergaenge" (dieselben Daten
+    wie im Ticket-Graph-Bullet oben). Tiefenunabhängig umgesetzt (keine
+    feste Ebenen-Anzahl im Code), funktioniert also auch mit einer
+    zukünftigen Ebene 4+ ohne Anpassung. Diese Baumansicht gibt es
+    ausschließlich hier in den Einstellungen – Verarbeitung,
+    Massenverarbeitung, Benutzerhandbuch und Releaseletter zeigen
+    weiterhin nur die flache Kapitelauswahl wie bisher.
   - *Steuerung &amp; KPI (Kapitel-Status)* – direkt unter der Gliederung: je
     Kapitel frei editierbarer Status mit professionellen Icons statt Bild-
     Icons (dieselbe Begründung wie beim Benutzerhandbuch-Kapitel-Generator) –
