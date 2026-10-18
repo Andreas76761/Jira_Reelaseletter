@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.81.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.82.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1366,6 +1366,33 @@ zusammenzuführen.
   Version landet in dessen Verlauf) oder **"Verwerfen"** löscht den
   verwaisten Eintrag endgültig. Bis dahin bleibt das verwaiste Kapitel ganz
   normal in der regulären Kapitel-Liste sichtbar/editierbar/exportierbar.
+  **Neuer Navigationsbereich "Editor": Screens aus Word/PowerPoint
+  extrahieren** (neu, v2.82.0): lädt Dateien mit Screens je Domäne
+  (Überschrift + Bildschirmfoto, z. B. aus Word (.docx) oder PowerPoint
+  (.pptx)) hoch – auch Exporte der separaten Screenrecorder-App, da diese
+  laut Angabe ebenfalls Word/PowerPoint liefert und somit dieselbe
+  Extraktion durchläuft, ohne eigene Pipeline. Die enthaltenen
+  Bildschirmfotos werden automatisch erkannt (eingebettete Bilder über die
+  OOXML-Beziehungen aufgelöst), nach ihrer Reihenfolge im Dokument
+  nummeriert und mit dem jeweils zugehörigen Überschriften-/Folientiteltext
+  als "Bildtext" versehen (bei Word: die zuletzt gesehene Überschrift bzw.
+  der eigene Absatztext; bei PowerPoint: der Titel-Platzhalter der Folie).
+  Eine Datei-Übersichtstabelle zeigt Dateiname, Typ (Word/PowerPoint),
+  Domäne, Status und Anzahl extrahierter Screens je Datei, mit Löschen
+  (entfernt dabei auch die zugehörigen Screens). Eine zweite Tabelle zeigt
+  alle extrahierten Screens mit Vorschau, Bildnummer, Bildtext, Quelldatei,
+  Domäne und einem Kapitel-Dropdown zur Zuordnung – wahlweise von Hand oder
+  per **KI-Vorschlag** (analog zur "KI-Zuordnung" in der
+  Massenverarbeitung): Claude schlägt anhand von Bildtext und Domäne ein
+  passendes Gliederungskapitel vor, wörtlich aus der vorhandenen
+  Gliederung, überschreibt dabei nie eine bereits gesetzte Zuordnung und
+  lässt diese im Zweifel offen. Technisch nutzen die extrahierten Screens
+  dieselbe Datenstruktur wie die bestehende "Bilder"-Galerie (keine
+  doppelte Datenhaltung) und erscheinen deshalb automatisch auch dort. Die
+  eigentliche Übernahme der zugeordneten Screens in die Benutzerhandbuch-/
+  Releaseletter-Exporte (DOCX/PDF) ist als nächster Ausbauschritt geplant,
+  diese erste Stufe deckt Upload, Extraktion, Übersicht und
+  Kapitel-Zuordnung ab.
   **Bugfix (v2.81.0): Kapitel-Erstellung begann immer bei "Kapitel 4"
   statt bei "Willkommen"** – ist keine einzelne Domäne, sondern **alle**
   verfügbaren Domänen ausgewählt ("Alle auswählen"), wurden Gliederungs­
@@ -1586,6 +1613,17 @@ zusammenzuführen.
   Zusätzlich lässt sich die zugrundeliegende Schritt-Tabelle
   (Ticket/Typ/Titel/Status/Domäne/ Priorität-Punkte/Labels/Beschreibung)
   unabhängig vom Bildformat als XLSX/DOCX/PDF exportieren.
+- **Editor** (neu, v2.82.0) – Word- (.docx) oder PowerPoint-Dateien (.pptx)
+  mit Screens je Domäne hochladen (auch Exporte der separaten
+  Screenrecorder-App, die ebenfalls Word/PowerPoint liefert). Enthaltene
+  Bildschirmfotos werden automatisch erkannt, nach Dokumentreihenfolge
+  nummeriert und mit dem zugehörigen Überschriften-/Folientiteltext als
+  Bildtext versehen. Datei-Übersichtstabelle (Typ/Domäne/Status/Anzahl
+  Screens) und Screens-Übersichtstabelle (Vorschau/Nr./Bildtext/
+  Quelldatei/Domäne/Kapitel-Dropdown) – Kapitel-Zuordnung von Hand oder per
+  **KI-Vorschlag** (überschreibt nie bereits gesetzte Zuordnungen). Screens
+  nutzen dieselbe Datenstruktur wie "Bilder" und erscheinen dort
+  automatisch mit. Details siehe Abschnitt weiter unten.
 - **Bilder** – Tabelle **und** Kachel-Galerie aller in der Sitzung
   erzeugten Prozessdiagramme sowie eigener Bild-Uploads, jeweils mit
   Datum. Beschreibungen lassen sich für beide Bildarten direkt in der

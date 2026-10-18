@@ -650,6 +650,7 @@
       <li><button class="nav-item" data-view="ergebnisse" type="button">Ergebnisse</button></li>
       <li><button class="nav-item" data-view="prozessbild" type="button">Prozessbild</button></li>
       <li><button class="nav-item" data-view="clickanweisung" type="button">Clickanweisung</button></li>
+      <li><button class="nav-item" data-view="editor" type="button">Editor</button></li>
       <li><button class="nav-item" data-view="bilder" type="button">Bilder</button></li>
       <li class="nav-sep">Output</li>
       <li><button class="nav-item" data-view="output-md" type="button">Output MD Tickets</button></li>
@@ -2105,6 +2106,54 @@
             <div class="gen-preview" id="clickanweisung-preview">Noch kein Entwurf generiert.</div>
           </div>
         </div>
+      </section>
+
+      <!-- ================= Editor ================= -->
+      <section class="view-panel" data-view-panel="editor" hidden>
+        <div class="view-head"><h2>Editor</h2><p class="desc">Word- (.docx) oder PowerPoint-Dateien (.pptx) mit Screens je Domäne (Überschrift + Bildschirmfoto) hochladen &ndash; auch Exporte der separaten Screenrecorder-App, da diese laut Angabe ebenfalls Word/PowerPoint liefert. Enthaltene Bilder werden automatisch erkannt, nach Reihenfolge im Dokument nummeriert und mit dem jeweils zugehörigen Überschriften-/Absatztext (Bildtext) versehen. Je Screen lässt sich ein Gliederungskapitel zuordnen &ndash; von Hand oder per KI-Vorschlag &ndash; als Vorbereitung für die spätere Übernahme ins Benutzerhandbuch/Releaseletter. Alle Screens erscheinen zusätzlich, da dieselbe Datenstruktur genutzt wird, unter „Bilder“.</p></div>
+
+        <section>
+          <p class="section-label">Datei hochladen (.docx / .pptx)</p>
+          <label for="editor-domain-select">Domäne für neu hochgeladene Dateien</label>
+          <select id="editor-domain-select" style="margin-bottom:10px; max-width:320px;"></select>
+          <div class="dropzone" id="editor-dropzone" tabindex="0" role="button" aria-label="Word-/PowerPoint-Datei(en) auswählen">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span class="txt">
+              <strong>Datei(en) hier ablegen</strong>
+              <span>oder klicken zum Auswählen (.docx/.pptx, Mehrfachauswahl möglich)</span>
+            </span>
+          </div>
+          <input type="file" id="editor-file-input" accept=".docx,.pptx" multiple hidden>
+        </section>
+
+        <section>
+          <p class="section-label">Hochgeladene Dateien (<span id="editor-files-count">0</span>)</p>
+          <div class="panel table-wrap" style="max-height:260px; overflow:auto;">
+            <table class="simple-table" id="editor-files-table">
+              <thead><tr><th>Dateiname</th><th>Typ</th><th>Domäne</th><th>Status</th><th>Screens</th><th>Aktion</th></tr></thead>
+              <tbody id="editor-files-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="editor-files-empty">Noch keine Dateien hochgeladen.</div>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">Extrahierte Screens (<span id="editor-screens-count">0</span>)</p>
+          <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+            <button class="btn ghost" id="editor-ai-assign-btn" type="button">
+              <span class="btn-spinner" id="editor-ai-assign-spinner" hidden></span>
+              KI-Vorschlag für Kapitel-Zuordnung
+            </button>
+            <span class="step-note" id="editor-ai-status-note" style="margin:0;"></span>
+          </div>
+          <div class="panel table-wrap" style="max-height:440px; overflow:auto;">
+            <table class="simple-table" id="editor-screens-table">
+              <thead><tr><th>Vorschau</th><th>Nr.</th><th>Bildtext</th><th>Quelldatei</th><th>Domäne</th><th>Kapitel</th></tr></thead>
+              <tbody id="editor-screens-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="editor-screens-empty">Noch keine Screens extrahiert &ndash; zuerst eine Datei hochladen.</div>
+          </div>
+        </section>
       </section>
 
       <!-- ================= Bilder ================= -->
@@ -4740,7 +4789,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.81.0";
+  var APP_VERSION = "2.82.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6294,6 +6343,10 @@
     "gallery", "gallery-empty",
     "image-dropzone", "image-file-input", "image-paste-clipboard-btn",
     "images-table-count", "images-tbody", "images-table-empty",
+    "editor-dropzone", "editor-file-input", "editor-domain-select",
+    "editor-files-count", "editor-files-tbody", "editor-files-empty",
+    "editor-screens-count", "editor-screens-tbody", "editor-screens-empty",
+    "editor-ai-assign-btn", "editor-ai-assign-spinner", "editor-ai-status-note",
     "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
     "modal-overlay", "modal-key", "modal-title", "modal-fields", "modal-desc-wrap", "modal-desc",
@@ -6316,6 +6369,13 @@
     // Vom Nutzer hochgeladene Bilder (Datei/Zwischenablage) - eigene Liste,
     // gemeinsam mit generatedImages in der Bilder-Galerie angezeigt.
     uploadedImages: [],
+    // Editor: hochgeladene Word-/PowerPoint-Dateien mit Screens je Domäne
+    // (inkl. Export der separaten Screenrecorder-App, die laut Nutzerangabe
+    // ebenfalls Word/PowerPoint liefert - keine eigene Pipeline nötig). Die
+    // daraus extrahierten Screens landen als eigene Einträge in
+    // uploadedImages (gemeinsame Datenstruktur, s. o.), ergänzt um
+    // imageNumber/sourceFile.
+    editorFiles: [],
     tickets: [],
     view: { bucket: "all", domain: "", label: "", query: "", issueType: "", excludeTypes: {}, sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
@@ -6754,7 +6814,7 @@
   function resetSession() {
     ticketDerivedCache.clear();
     app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
-    app.generatedImages = []; app.uploadedImages = []; app.initialized = false; app.nextImportId = 1;
+    app.generatedImages = []; app.uploadedImages = []; app.editorFiles = []; app.initialized = false; app.nextImportId = 1;
     app.extracted = { abbreviations: [], glossaryCandidates: [], labelCandidates: [], synonymCandidates: [], ran: false };
     app.jobState = {
       glossarExtrakt: { error: null },
@@ -6833,7 +6893,7 @@
   function deleteAllData() {
     ticketDerivedCache.clear();
     app.imports = []; app.ticketStore = new Map(); app.changes = []; app.log = [];
-    app.generatedImages = []; app.uploadedImages = []; app.initialized = false; app.nextImportId = 1;
+    app.generatedImages = []; app.uploadedImages = []; app.editorFiles = []; app.initialized = false; app.nextImportId = 1;
     app.extracted = { abbreviations: [], glossaryCandidates: [], labelCandidates: [], synonymCandidates: [], ran: false };
     app.jobState = {
       glossarExtrakt: { error: null },
@@ -6853,6 +6913,9 @@
     renderStats();
     renderOutputCounts();
     renderGallery();
+    renderEditorDomainSelect();
+    renderEditorFiles();
+    renderEditorScreens();
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
     renderExtractedLabelCandidates();
@@ -6949,6 +7012,7 @@
       log: app.log,
       generatedImages: app.generatedImages,
       uploadedImages: app.uploadedImages,
+      editorFiles: app.editorFiles,
       selectedKeys: app.selectedKeys,
       savedLists: app.savedLists,
       nextSavedListId: app.nextSavedListId,
@@ -7008,6 +7072,7 @@
     app.log = data.log || [];
     app.generatedImages = data.generatedImages || [];
     app.uploadedImages = data.uploadedImages || [];
+    app.editorFiles = data.editorFiles || [];
     app.selectedKeys = data.selectedKeys || {};
     app.savedLists = data.savedLists || [];
     app.nextSavedListId = data.nextSavedListId || 1;
@@ -7072,6 +7137,9 @@
     renderStats();
     renderOutputCounts();
     renderGallery();
+    renderEditorDomainSelect();
+    renderEditorFiles();
+    renderEditorScreens();
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
     renderExtractedLabelCandidates();
@@ -10399,6 +10467,160 @@
       "Endung), da die Kapitelerkennung auf den Word-Formatvorlagen (Überschrift 1/2/…) aufbaut. Bitte die Datei " +
       "in Word über „Speichern unter“ als .docx speichern und erneut hochladen."
     );
+  }
+
+  // ===================== Editor: Screens aus Word/PowerPoint extrahieren =====================
+  // Liest eingebettete Bilder (Screenshots) samt zugehoerigem Ueberschriften-
+  // /Absatztext (als "Bildtext"/Caption) aus .docx- und .pptx-Dateien - die
+  // Quelle kann entweder eine manuell erstellte "Screens je Domäne"-Datei
+  // oder ein Export der separaten Screenrecorder-App sein (liefert laut
+  // Nutzerangabe ebenfalls Word/PowerPoint, daher keine eigene Pipeline
+  // nötig). Nutzt dieselbe Absatz-/Formatvorlagen-Traversierung wie der
+  // Referenz-Handbuch-Import (docxParagraphText/docxParagraphStyleId/
+  // docxHeadingLevel), ergänzt um die Auflösung eingebetteter Bilder über
+  // die OOXML-Beziehungen (word/_rels/document.xml.rels bzw.
+  // ppt/slides/_rels/slideN.xml.rels) und das Einlesen der Bilddaten direkt
+  // aus dem ZIP (word/media/* bzw. ppt/media/*).
+  var IMAGE_EXT_MIME = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", bmp: "image/bmp" };
+  function imageMimeFromPath(path) {
+    var m = /\.([a-z0-9]+)$/i.exec(path || "");
+    var ext = m ? m[1].toLowerCase() : "";
+    return IMAGE_EXT_MIME[ext] || null;
+  }
+  // Löst einen (ggf. relativen, ".."-haltigen) OOXML-Beziehungs-Zielpfad
+  // gegenüber dem Verzeichnis des Teils auf, der die .rels-Datei besitzt
+  // (z. B. "word/document.xml" für word/_rels/document.xml.rels) - genau
+  // wie es die OOXML-Spezifikation für Relationship-Targets vorschreibt.
+  function resolveZipRelPath(ownerPartPath, target) {
+    if (!target || /^[a-z][a-z0-9+.-]*:\/\//i.test(target)) return null; // externe/absolute URL - keine Datei im ZIP
+    var baseParts = ownerPartPath.split("/");
+    baseParts.pop();
+    target.split("/").forEach(function (seg) {
+      if (seg === "." || seg === "") return;
+      if (seg === "..") baseParts.pop();
+      else baseParts.push(seg);
+    });
+    return baseParts.join("/");
+  }
+  async function loadZipRelationships(zip, relsPath) {
+    var map = {};
+    var entry = zip.file(relsPath);
+    if (!entry) return map;
+    var xmlText = await entry.async("string");
+    var doc = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (doc.querySelector("parsererror")) return map;
+    Array.prototype.forEach.call(doc.getElementsByTagName("Relationship"), function (rel) {
+      var id = rel.getAttribute("Id");
+      var target = rel.getAttribute("Target");
+      if (id && target) map[id] = target;
+    });
+    return map;
+  }
+  async function blipsInNode(node, relsMap, ownerPartPath, zip) {
+    var out = [];
+    var blips = node.getElementsByTagName("a:blip");
+    for (var i = 0; i < blips.length; i++) {
+      var rId = blips[i].getAttribute("r:embed") || blips[i].getAttribute("r:link");
+      if (!rId) continue;
+      var target = relsMap[rId];
+      if (!target) continue;
+      var mediaPath = resolveZipRelPath(ownerPartPath, target);
+      if (!mediaPath) continue;
+      var mediaEntry = zip.file(mediaPath);
+      if (!mediaEntry) continue;
+      var mime = imageMimeFromPath(mediaPath);
+      if (!mime) continue; // Vektor-/Metadatei (z. B. .emf/.wmf) - keine im Browser darstellbare Vorschau
+      var base64 = await mediaEntry.async("base64");
+      out.push({ dataUrl: "data:" + mime + ";base64," + base64 });
+    }
+    return out;
+  }
+  // Bildtext/Caption-Heuristik: die Dateien folgen laut Nutzerangabe dem
+  // Muster "Überschrift" gefolgt vom zugehörigen "Screen" - daher wird
+  // bevorzugt der Text des Absatzes verwendet, der das Bild selbst enthält
+  // (falls das Bild nicht allein in seinem Absatz steht), sonst die zuletzt
+  // gesehene Überschrift.
+  async function docxZipToScreens(zip) {
+    var docXmlEntry = zip.file("word/document.xml");
+    if (!docXmlEntry) throw new Error("Kein word/document.xml in der .docx-Datei gefunden - ist es wirklich ein Word-Dokument?");
+    var xmlText = await docXmlEntry.async("string");
+    var relsMap = await loadZipRelationships(zip, "word/_rels/document.xml.rels");
+    var doc = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (doc.querySelector("parsererror")) throw new Error("word/document.xml konnte nicht gelesen werden (beschädigte .docx-Datei?).");
+    var body = doc.getElementsByTagName("w:body")[0];
+    if (!body) throw new Error("Kein Dokumentinhalt (w:body) in der .docx-Datei gefunden.");
+    var screens = [];
+    var lastHeadingText = "";
+    for (var i = 0; i < body.childNodes.length; i++) {
+      var node = body.childNodes[i];
+      if (node.nodeType !== 1 || node.tagName !== "w:p") continue;
+      var level = docxHeadingLevel(docxParagraphStyleId(node));
+      var text = docxParagraphText(node);
+      var blips = await blipsInNode(node, relsMap, "word/document.xml", zip);
+      for (var j = 0; j < blips.length; j++) screens.push({ dataUrl: blips[j].dataUrl, caption: text || lastHeadingText || "" });
+      if (level > 0 && text) lastHeadingText = text;
+    }
+    return screens;
+  }
+  function pptxSlideNumber(path) {
+    var m = /slide(\d+)\.xml$/i.exec(path || "");
+    return m ? parseInt(m[1], 10) : 0;
+  }
+  // Bildtext einer Folie = Text des Titel-Platzhalters (p:ph type="title"/
+  // "ctrTitle"); ohne erkennbaren Titel-Platzhalter ersatzweise der Text des
+  // ersten Textrahmens der Folie.
+  function pptxSlideTitleText(slideDoc) {
+    var sps = slideDoc.getElementsByTagName("p:sp");
+    var titleSp = null;
+    for (var i = 0; i < sps.length; i++) {
+      var ph = sps[i].getElementsByTagName("p:ph")[0];
+      if (ph && /title/i.test(ph.getAttribute("type") || "")) { titleSp = sps[i]; break; }
+    }
+    var targetSp = titleSp || sps[0];
+    if (!targetSp) return "";
+    var runs = targetSp.getElementsByTagName("a:t");
+    var parts = [];
+    for (var j = 0; j < runs.length; j++) parts.push(runs[j].textContent);
+    return parts.join("").trim();
+  }
+  async function pptxZipToScreens(zip) {
+    var slidePaths = [];
+    zip.forEach(function (relPath) { if (/^ppt\/slides\/slide\d+\.xml$/i.test(relPath)) slidePaths.push(relPath); });
+    slidePaths.sort(function (a, b) { return pptxSlideNumber(a) - pptxSlideNumber(b); });
+    if (!slidePaths.length) throw new Error("Keine Folien (ppt/slides/*.xml) in der .pptx-Datei gefunden - ist es wirklich eine PowerPoint-Datei?");
+    var screens = [];
+    for (var s = 0; s < slidePaths.length; s++) {
+      var slidePath = slidePaths[s];
+      var slideXml = await zip.file(slidePath).async("string");
+      var slideDoc = new DOMParser().parseFromString(slideXml, "application/xml");
+      if (slideDoc.querySelector("parsererror")) continue;
+      var relsPath = "ppt/slides/_rels/" + slidePath.split("/").pop() + ".rels";
+      var relsMap = await loadZipRelationships(zip, relsPath);
+      var caption = pptxSlideTitleText(slideDoc);
+      var blips = await blipsInNode(slideDoc, relsMap, slidePath, zip);
+      for (var j = 0; j < blips.length; j++) screens.push({ dataUrl: blips[j].dataUrl, caption: caption || "" });
+    }
+    return screens;
+  }
+  // Gemeinsamer Einstiegspunkt für den Editor-Upload: erkennt anhand des
+  // tatsächlichen ZIP-Inhalts (nicht der Dateiendung), ob ein Word- oder
+  // PowerPoint-Dokument vorliegt, und liefert die extrahierten Screens
+  // samt erkanntem Format zurück.
+  async function extractScreensFromOfficeFile(buf) {
+    var kind = classifyWordBuffer(buf);
+    if (kind !== "zip") {
+      if (kind === "ole") {
+        throw new Error("Altes .doc-/.ppt-Format (vor Office 2007, binäres Format) wird nicht unterstützt. Bitte die Datei über „Speichern unter“ im .docx- bzw. .pptx-Format speichern und erneut hochladen.");
+      }
+      throw new Error("Dateiformat nicht erkannt - es wird nur ein echtes .docx- oder .pptx-Dokument unterstützt (kein HTML-/RTF-Export mit anderer Endung).");
+    }
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek (JSZip) nicht geladen - Datei kann nicht gelesen werden.");
+    var zip;
+    try { zip = await JSZip.loadAsync(buf); }
+    catch (e) { throw new Error("Datei konnte nicht als ZIP gelesen werden - ist es wirklich eine Word-/PowerPoint-Datei?"); }
+    if (zip.file("word/document.xml")) return { format: "docx", screens: await docxZipToScreens(zip) };
+    if (zip.file("ppt/presentation.xml")) return { format: "pptx", screens: await pptxZipToScreens(zip) };
+    throw new Error("Datei ist zwar ein ZIP-Archiv, aber weder ein Word- (.docx) noch ein PowerPoint-Dokument (.pptx).");
   }
 
   // .xlsx ist wie .docx ein ZIP mit OOXML-Inhalt darin - dieselbe bereits
@@ -15789,6 +16011,186 @@
     }
   });
 
+  /* ============ Editor: Word/PowerPoint hochladen, Screens extrahieren ============
+     Lädt .docx-/.pptx-Dateien mit Screens je Domäne hoch (inkl. Export der
+     separaten Screenrecorder-App - liefert laut Nutzerangabe ebenfalls Word/
+     PowerPoint), extrahiert die enthaltenen Bilder samt Bildtext
+     (extractScreensFromOfficeFile) und legt sie als eigene Einträge in
+     app.uploadedImages ab (dieselbe Datenstruktur wie "Bilder" - Screens
+     erscheinen dadurch dort automatisch mit, ohne doppelte Datenhaltung),
+     ergänzt um imageNumber (Reihenfolge im Quelldokument) und sourceFile. */
+  function renderEditorDomainSelect() {
+    var domains = massDomainOptionsList();
+    var current = els.editorDomainSelect.value;
+    els.editorDomainSelect.innerHTML = '<option value="">Ohne Domäne</option>' +
+      domains.map(function (d) { return '<option value="' + escapeHtml(d) + '"' + (current === d ? " selected" : "") + ">" + escapeHtml(d) + "</option>"; }).join("");
+  }
+  function editorFileTypeLabel(format) {
+    if (format === "docx") return "Word";
+    if (format === "pptx") return "PowerPoint";
+    return "–";
+  }
+  function renderEditorFiles() {
+    var list = app.editorFiles;
+    els.editorFilesCount.textContent = list.length;
+    els.editorFilesEmpty.hidden = list.length > 0;
+    els.editorFilesTbody.innerHTML = list.map(function (f) {
+      return "<tr>" +
+        "<td>" + escapeHtml(f.filename) + "</td>" +
+        "<td>" + editorFileTypeLabel(f.format) + "</td>" +
+        "<td>" + escapeHtml(f.domain || "–") + "</td>" +
+        "<td>" + escapeHtml(f.status) + "</td>" +
+        "<td class=\"mono\">" + f.screenCount + "</td>" +
+        '<td><button type="button" class="btn ghost btn-tiny" data-editor-file-delete="' + f.id + '">Löschen</button></td>' +
+        "</tr>";
+    }).join("");
+  }
+  function renderEditorScreens() {
+    var chapters = massChapterOptionsList();
+    var screens = app.uploadedImages.filter(function (i) { return !!i.sourceFile; })
+      .slice().sort(function (a, b) {
+        if (a.sourceFile !== b.sourceFile) return a.sourceFile < b.sourceFile ? -1 : 1;
+        return (a.imageNumber || 0) - (b.imageNumber || 0);
+      });
+    els.editorScreensCount.textContent = screens.length;
+    els.editorScreensEmpty.hidden = screens.length > 0;
+    els.editorScreensTbody.innerHTML = screens.map(function (s) {
+      return "<tr>" +
+        '<td><img src="' + s.dataUrl + '" alt="Screen" style="max-width:90px; max-height:60px; object-fit:contain; border:1px solid var(--border); border-radius:4px;"></td>' +
+        '<td class="mono">' + s.imageNumber + "</td>" +
+        "<td>" + escapeHtml(s.description || "–") + "</td>" +
+        "<td>" + escapeHtml(s.sourceFile) + "</td>" +
+        "<td>" + escapeHtml(s.domain || "–") + "</td>" +
+        '<td><select class="editor-screen-chapter-select" data-id="' + s.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapters, s.chapter, "Ohne Kapitel") + "</select></td>" +
+        "</tr>";
+    }).join("");
+  }
+  var nextEditorFileId = 1;
+  async function handleEditorFiles(fileList) {
+    var files = Array.prototype.filter.call(fileList || [], function (f) { return /\.(docx|pptx)$/i.test(f.name || ""); });
+    if (!files.length) { showToast("Keine passende Datei", "Bitte eine .docx- oder .pptx-Datei auswählen.", true); return; }
+    var domain = els.editorDomainSelect.value;
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      var entry = { id: nextEditorFileId++, filename: file.name, format: "", domain: domain, status: "Wird verarbeitet …", screenCount: 0, when: nowLabel() };
+      app.editorFiles.unshift(entry);
+      renderEditorFiles();
+      try {
+        var buf = await readFileAsArrayBuffer(file);
+        var result = await extractScreensFromOfficeFile(buf);
+        entry.format = result.format;
+        if (!result.screens.length) {
+          entry.status = "Verarbeitet - keine Bilder gefunden";
+        } else {
+          result.screens.forEach(function (screen, idx) {
+            app.uploadedImages.unshift({
+              id: nextImageId++, filename: file.name + " - Screen " + (idx + 1), dataUrl: screen.dataUrl, mimeType: (/^data:([^;]+);/.exec(screen.dataUrl) || [])[1] || "unbekannt",
+              sizeBytes: Math.round((screen.dataUrl.length - screen.dataUrl.indexOf(",") - 1) * 0.75), when: nowLabel(), domain: domain, processStep: "", chapter: "", description: screen.caption || "",
+              width: null, height: null, avgColor: null, brightnessPct: null, metadataComputed: false, metadataError: null,
+              ocrText: null, ocrError: null, ocrRanAt: null, imageNumber: idx + 1, sourceFile: file.name
+            });
+          });
+          entry.status = "Verarbeitet";
+        }
+        entry.screenCount = result.screens.length;
+        addLog("Editor: „" + file.name + "“ (" + editorFileTypeLabel(result.format) + ") hochgeladen, " + result.screens.length + " Screen(s) extrahiert.");
+      } catch (err) {
+        entry.status = "Fehler: " + ((err && err.message) || "Unbekannter Fehler.");
+        showToast("Fehler beim Verarbeiten", entry.filename + ": " + entry.status.replace(/^Fehler: /, ""), true);
+      }
+      renderEditorFiles();
+      renderGallery();
+      renderEditorScreens();
+    }
+  }
+  els.editorDropzone.addEventListener("click", function () { els.editorFileInput.click(); });
+  els.editorDropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.editorFileInput.click(); } });
+  els.editorFileInput.addEventListener("change", function () { handleEditorFiles(els.editorFileInput.files); els.editorFileInput.value = ""; });
+  ["dragenter", "dragover"].forEach(function (evt) {
+    els.editorDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.editorDropzone.classList.add("dragover"); });
+  });
+  ["dragleave", "drop"].forEach(function (evt) {
+    els.editorDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.editorDropzone.classList.remove("dragover"); });
+  });
+  els.editorDropzone.addEventListener("drop", function (e) {
+    var files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length) handleEditorFiles(files);
+  });
+  els.editorFilesTbody.addEventListener("click", function (e) {
+    var delBtn = e.target.closest("[data-editor-file-delete]");
+    if (!delBtn) return;
+    var id = parseInt(delBtn.getAttribute("data-editor-file-delete"), 10);
+    var file = app.editorFiles.filter(function (f) { return f.id === id; })[0];
+    if (!file) return;
+    app.editorFiles = app.editorFiles.filter(function (f) { return f.id !== id; });
+    var removedCount = app.uploadedImages.filter(function (i) { return i.sourceFile === file.filename; }).length;
+    app.uploadedImages = app.uploadedImages.filter(function (i) { return i.sourceFile !== file.filename; });
+    renderEditorFiles();
+    renderEditorScreens();
+    renderGallery();
+    addLog("Editor: Datei „" + file.filename + "“ und " + removedCount + " zugehörige(r) Screen(s) gelöscht.");
+    showToast("Gelöscht", 'Datei „' + file.filename + '“ wurde entfernt.');
+  });
+  els.editorScreensTbody.addEventListener("change", function (e) {
+    var sel = e.target.closest(".editor-screen-chapter-select");
+    if (!sel) return;
+    var img = app.uploadedImages.filter(function (i) { return i.id === parseInt(sel.getAttribute("data-id"), 10); })[0];
+    if (img) img.chapter = sel.value;
+  });
+
+  // KI-Vorschlag für Kapitel-Zuordnung je Screen (analog massRunAiAssignment/
+  // "KI-Zuordnung" in der Massenverarbeitung): Claude erhält Domäne +
+  // Bildtext/Beschriftung des Screens und wählt - wörtlich aus der
+  // tatsächlich vorhandenen Gliederung - das passende Kapitel, oder lässt es
+  // im Zweifel leer. Überschreibt nie ein bereits (manuell oder per KI)
+  // gesetztes Kapitel, füllt nur, was noch leer ist; jederzeit per
+  // Kapitel-Dropdown in der Screens-Tabelle manuell korrigierbar.
+  function editorBuildAiChapterPrompt(img, chapters) {
+    return "Du ordnest einen Screenshot aus einem Quellmaterial für das oneSCM-Benutzerhandbuch (Word/PowerPoint mit Screens je Domäne) einem passenden Gliederungskapitel zu.\n\n" +
+      "Verfügbare Gliederungskapitel (wähle GENAU EINEN Titel davon wörtlich aus der Liste, oder \"keines\" falls nichts eindeutig passt):\n" +
+      chapters.map(function (c) { return "- " + c; }).join("\n") + "\n\n" +
+      "Domäne des Screens: " + (img.domain || "unbekannt") + "\n" +
+      "Bildtext/Beschriftung (aus der Quelldatei übernommene Überschrift): \"" + (img.description || img.filename) + "\"\n\n" +
+      "Antworte AUSSCHLIESSLICH in genau diesem Format, ohne weitere Erklärung, ohne Anführungszeichen:\n" +
+      "Kapitel: <Titel aus der Liste oder keines>";
+  }
+  function editorParseAiChapter(responseText, chapters) {
+    var m = /Kapitel:\s*(.+)/i.exec(responseText || "");
+    var chapterTitle = m ? m[1].trim() : "";
+    if (chapters.indexOf(chapterTitle) === -1) chapterTitle = "";
+    return chapterTitle;
+  }
+  async function editorRunAiChapterAssignment() {
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    var targets = app.uploadedImages.filter(function (i) { return i.sourceFile && !i.chapter; });
+    if (!targets.length) { showToast("Nichts zu tun", "Alle Screens haben bereits ein Kapitel zugeordnet.", true); return; }
+    var chapters = massChapterOptionsList();
+    els.editorAiAssignBtn.disabled = true;
+    els.editorAiAssignSpinner.hidden = false;
+    var updated = 0, skippedErrors = 0;
+    for (var i = 0; i < targets.length; i++) {
+      var img = targets[i];
+      els.editorAiStatusNote.textContent = "KI-Vorschlag: Screen " + (i + 1) + " von " + targets.length + " …";
+      try {
+        var result = await sampleApi(editorBuildAiChapterPrompt(img, chapters), { modelTier: "default", cache: false });
+        var chapterTitle = editorParseAiChapter(result.text, chapters);
+        if (chapterTitle) updated++;
+        img.chapter = chapterTitle || img.chapter;
+      } catch (err) {
+        skippedErrors++;
+      }
+    }
+    renderEditorScreens();
+    els.editorAiStatusNote.textContent = updated + " von " + targets.length + " Screens per KI zugeordnet." + (skippedErrors ? " (" + skippedErrors + " fehlgeschlagen.)" : "");
+    addLog("Editor: KI-Vorschlag Kapitel-Zuordnung abgeschlossen - " + updated + " von " + targets.length + " Screens zugeordnet" + (skippedErrors ? ", " + skippedErrors + " fehlgeschlagen" : "") + ".");
+    els.editorAiAssignBtn.disabled = false;
+    els.editorAiAssignSpinner.hidden = true;
+  }
+  els.editorAiAssignBtn.addEventListener("click", editorRunAiChapterAssignment);
+
   /* ============ Teil 9b: RAG - Rohdaten-Extraktion + KI-Text (sample-Capability) ============
      "RAG" hier im Sinn von Retrieval (deterministische Filterung/Extraktion der
      Ticket-Rohdaten - Überschrift+Beschreibung nach Domäne/Status/Zeitraum,
@@ -20184,6 +20586,7 @@
     viewPanels.forEach(function (p) { p.hidden = p.getAttribute("data-view-panel") !== name; });
     navItems.forEach(function (btn) { btn.classList.toggle("active", btn.getAttribute("data-view") === name); });
     if (name === "output-md" || name === "output-pdf") renderOutputCounts();
+    if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); }
     if (window.innerWidth <= 900) setSidebar(false);
   }
   navItems.forEach(function (btn) { btn.addEventListener("click", function () { showView(btn.getAttribute("data-view")); }); });
