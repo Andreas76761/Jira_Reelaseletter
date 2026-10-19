@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.82.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.83.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1388,11 +1388,28 @@ zusammenzuführen.
   Gliederung, überschreibt dabei nie eine bereits gesetzte Zuordnung und
   lässt diese im Zweifel offen. Technisch nutzen die extrahierten Screens
   dieselbe Datenstruktur wie die bestehende "Bilder"-Galerie (keine
-  doppelte Datenhaltung) und erscheinen deshalb automatisch auch dort. Die
-  eigentliche Übernahme der zugeordneten Screens in die Benutzerhandbuch-/
-  Releaseletter-Exporte (DOCX/PDF) ist als nächster Ausbauschritt geplant,
-  diese erste Stufe deckt Upload, Extraktion, Übersicht und
-  Kapitel-Zuordnung ab.
+  doppelte Datenhaltung) und erscheinen deshalb automatisch auch dort.
+  **Neuer Navigationsbereich "Bildband": Screens in den Benutzerhandbuch-
+  Export einbetten** (neu, v2.83.0): verbindet die im Editor-Register
+  zugeordneten Screens mit dem im Benutzerhandbuch-Kapitel-Generator
+  erzeugten Text. Dafür den Platzhalter `[Bild]` als eigene Zeile an der
+  gewünschten Stelle im Kapiteltext einfügen – jedes Vorkommen wird in der
+  Lese-Vorschau ("Vorschau (Icons)") sowie im DOCX- und PDF-Export durch
+  das jeweils nächste diesem Kapitel zugeordnete Bild ersetzt (Reihenfolge:
+  Quelldatei, dann Bildnummer aus dem Editor-Register), inklusive
+  automatischer Bildunterschrift "Abbildung N: &lt;Bildtext&gt;". Im DOCX-
+  Export wird dabei ein echtes eingebettetes Bild erzeugt (OOXML-Relationship
+  + Media-Datei im ZIP, kein bloßer Verweis), im PDF-Export über
+  `jsPDF.addImage()` unter Beibehaltung des tatsächlichen Seitenverhältnisses
+  des Bildes. Das neue Register zeigt je Kapitel eine Übersicht mit Anzahl
+  Platzhalter im Text, Anzahl zugeordneter Screens, Status ("passt genau"/
+  "Bild(er) fehlen"/"Bild(er) überschüssig"), Vorschau-Thumbnails sowie
+  direkte DOCX-/PDF-Export-Buttons (dieselben wie im Benutzerhandbuch-
+  Register – die Bildeinbettung wirkt überall dort automatisch mit, wo ein
+  Kapiteltext exportiert wird). Zusätzlich lässt sich im Editor-Register je
+  Screen nun auch ein **Unterkapitel** zuordnen (dient nur der eigenen
+  Übersicht/Filterung – die Platzhalter werden technisch pro Kapitel,
+  nicht pro Unterkapitel-Abschnitt im Text, befüllt).
   **Bugfix (v2.81.0): Kapitel-Erstellung begann immer bei "Kapitel 4"
   statt bei "Willkommen"** – ist keine einzelne Domäne, sondern **alle**
   verfügbaren Domänen ausgewählt ("Alle auswählen"), wurden Gliederungs­
@@ -1623,7 +1640,16 @@ zusammenzuführen.
   Quelldatei/Domäne/Kapitel-Dropdown) – Kapitel-Zuordnung von Hand oder per
   **KI-Vorschlag** (überschreibt nie bereits gesetzte Zuordnungen). Screens
   nutzen dieselbe Datenstruktur wie "Bilder" und erscheinen dort
-  automatisch mit. Details siehe Abschnitt weiter unten.
+  automatisch mit. Details siehe Abschnitt weiter unten. Zusätzlich je
+  Screen ein **Unterkapitel**-Dropdown (nur für die eigene Übersicht im
+  Register "Bildband", s. u.).
+- **Bildband** (neu, v2.83.0) – verbindet Editor-Screens mit dem
+  Benutzerhandbuch-Kapiteltext über den Platzhalter `[Bild]` (eigene
+  Zeile): jedes Vorkommen wird in Vorschau sowie DOCX-/PDF-Export durch das
+  jeweils nächste zugeordnete Bild ersetzt (inkl. automatischer
+  Bildunterschrift). Übersichtstabelle je Kapitel mit Anzahl Platzhalter/
+  zugeordneter Screens, Status und direktem DOCX-/PDF-Export. Details siehe
+  Abschnitt weiter unten.
 - **Bilder** – Tabelle **und** Kachel-Galerie aller in der Sitzung
   erzeugten Prozessdiagramme sowie eigener Bild-Uploads, jeweils mit
   Datum. Beschreibungen lassen sich für beide Bildarten direkt in der

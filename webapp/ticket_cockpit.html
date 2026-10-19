@@ -651,6 +651,7 @@
       <li><button class="nav-item" data-view="prozessbild" type="button">Prozessbild</button></li>
       <li><button class="nav-item" data-view="clickanweisung" type="button">Clickanweisung</button></li>
       <li><button class="nav-item" data-view="editor" type="button">Editor</button></li>
+      <li><button class="nav-item" data-view="bildband" type="button">Bildband</button></li>
       <li><button class="nav-item" data-view="bilder" type="button">Bilder</button></li>
       <li class="nav-sep">Output</li>
       <li><button class="nav-item" data-view="output-md" type="button">Output MD Tickets</button></li>
@@ -2148,12 +2149,25 @@
           </div>
           <div class="panel table-wrap" style="max-height:440px; overflow:auto;">
             <table class="simple-table" id="editor-screens-table">
-              <thead><tr><th>Vorschau</th><th>Nr.</th><th>Bildtext</th><th>Quelldatei</th><th>Domäne</th><th>Kapitel</th></tr></thead>
+              <thead><tr><th>Vorschau</th><th>Nr.</th><th>Bildtext</th><th>Quelldatei</th><th>Domäne</th><th>Kapitel</th><th>Unterkapitel</th></tr></thead>
               <tbody id="editor-screens-tbody"></tbody>
             </table>
             <div class="empty-hint" id="editor-screens-empty">Noch keine Screens extrahiert &ndash; zuerst eine Datei hochladen.</div>
           </div>
         </section>
+      </section>
+
+      <!-- ================= Bildband ================= -->
+      <section class="view-panel" data-view-panel="bildband" hidden>
+        <div class="view-head"><h2>Bildband</h2><p class="desc">Verbindet die im Register „Editor“ aus Word-/PowerPoint-Dateien extrahierten und einem Kapitel zugeordneten Screens mit dem im Benutzerhandbuch-Kapitel-Generator erzeugten Text. Dafür den Platzhalter <code class="mono">[Bild]</code> als eigene Zeile an der gewünschten Stelle im Kapiteltext einfügen (z. B. unter "Deutsch"/"English" im Register Benutzerhandbuch bearbeiten) – jedes Vorkommen wird in Vorschau, DOCX- und PDF-Export durch das nächste diesem Kapitel zugeordnete Bild ersetzt (Reihenfolge: Quelldatei, dann Bildnummer aus dem Editor-Register). Die Unterkapitel-Zuordnung im Editor-Register dient dabei nur der eigenen Übersicht/Filterung hier – die Platzhalter werden ausschließlich pro Kapitel, nicht pro Unterkapitel-Abschnitt im Text, befüllt.</p></div>
+
+        <div class="panel table-wrap">
+          <table class="simple-table" id="bildband-table">
+            <thead><tr><th>Kapitel</th><th>Platzhalter <code class="mono">[Bild]</code></th><th>Zugeordnete Screens</th><th>Status</th><th>Vorschau</th><th>Export</th></tr></thead>
+            <tbody id="bildband-tbody"></tbody>
+          </table>
+          <div class="empty-hint" id="bildband-empty">Noch keine Kapitel mit Platzhaltern oder zugeordneten Screens &ndash; zuerst im Benutzerhandbuch-Register Kapitel erzeugen, im Editor-Register Screens hochladen/zuordnen und im Kapiteltext <code class="mono">[Bild]</code>-Platzhalter einfügen.</div>
+        </div>
       </section>
 
       <!-- ================= Bilder ================= -->
@@ -4789,7 +4803,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.82.0";
+  var APP_VERSION = "2.83.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6347,6 +6361,7 @@
     "editor-files-count", "editor-files-tbody", "editor-files-empty",
     "editor-screens-count", "editor-screens-tbody", "editor-screens-empty",
     "editor-ai-assign-btn", "editor-ai-assign-spinner", "editor-ai-status-note",
+    "bildband-table", "bildband-tbody", "bildband-empty",
     "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
     "modal-overlay", "modal-key", "modal-title", "modal-fields", "modal-desc-wrap", "modal-desc",
@@ -6916,6 +6931,7 @@
     renderEditorDomainSelect();
     renderEditorFiles();
     renderEditorScreens();
+    renderBildband();
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
     renderExtractedLabelCandidates();
@@ -7140,6 +7156,7 @@
     renderEditorDomainSelect();
     renderEditorFiles();
     renderEditorScreens();
+    renderBildband();
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
     renderExtractedLabelCandidates();
@@ -8580,7 +8597,7 @@
     }
     addLog("Steuerung & KPI: Kapitel „" + chapter.title + "“ - " + field + " = " + (s[field] == null ? "(leer)" : s[field]) + ".");
     renderMassFiles();
-    if (field === "gate") renderErgebnisse();
+    if (field === "gate") { renderErgebnisse(); renderBildband(); }
   });
 
   // Ticket Graph - Textschnipsel-Querverweise (Massenverarbeitung): rein
@@ -16062,6 +16079,7 @@
         "<td>" + escapeHtml(s.sourceFile) + "</td>" +
         "<td>" + escapeHtml(s.domain || "–") + "</td>" +
         '<td><select class="editor-screen-chapter-select" data-id="' + s.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapters, s.chapter, "Ohne Kapitel") + "</select></td>" +
+        '<td><select class="editor-screen-subchapter-select" data-id="' + s.id + '" aria-label="Unterkapitel"' + (s.chapter ? "" : " disabled") + ">" + ragLibraryOptionsHtml(subchapterOptionsForChapter(s.chapter), s.subchapter, "Ohne Unterkapitel") + "</select></td>" +
         "</tr>";
     }).join("");
   }
@@ -16085,7 +16103,7 @@
           result.screens.forEach(function (screen, idx) {
             app.uploadedImages.unshift({
               id: nextImageId++, filename: file.name + " - Screen " + (idx + 1), dataUrl: screen.dataUrl, mimeType: (/^data:([^;]+);/.exec(screen.dataUrl) || [])[1] || "unbekannt",
-              sizeBytes: Math.round((screen.dataUrl.length - screen.dataUrl.indexOf(",") - 1) * 0.75), when: nowLabel(), domain: domain, processStep: "", chapter: "", description: screen.caption || "",
+              sizeBytes: Math.round((screen.dataUrl.length - screen.dataUrl.indexOf(",") - 1) * 0.75), when: nowLabel(), domain: domain, processStep: "", chapter: "", subchapter: "", description: screen.caption || "",
               width: null, height: null, avgColor: null, brightnessPct: null, metadataComputed: false, metadataError: null,
               ocrText: null, ocrError: null, ocrRanAt: null, imageNumber: idx + 1, sourceFile: file.name
             });
@@ -16132,10 +16150,22 @@
     showToast("Gelöscht", 'Datei „' + file.filename + '“ wurde entfernt.');
   });
   els.editorScreensTbody.addEventListener("change", function (e) {
-    var sel = e.target.closest(".editor-screen-chapter-select");
-    if (!sel) return;
-    var img = app.uploadedImages.filter(function (i) { return i.id === parseInt(sel.getAttribute("data-id"), 10); })[0];
-    if (img) img.chapter = sel.value;
+    var chapterSel = e.target.closest(".editor-screen-chapter-select");
+    if (chapterSel) {
+      var img = app.uploadedImages.filter(function (i) { return i.id === parseInt(chapterSel.getAttribute("data-id"), 10); })[0];
+      if (img) {
+        img.chapter = chapterSel.value;
+        img.subchapter = ""; // Unterkapitel-Liste haengt vom Kapitel ab - bei Kapitelwechsel zuruecksetzen
+        renderEditorScreens();
+        renderBildband();
+      }
+      return;
+    }
+    var subSel = e.target.closest(".editor-screen-subchapter-select");
+    if (subSel) {
+      var img2 = app.uploadedImages.filter(function (i) { return i.id === parseInt(subSel.getAttribute("data-id"), 10); })[0];
+      if (img2) img2.subchapter = subSel.value;
+    }
   });
 
   // KI-Vorschlag für Kapitel-Zuordnung je Screen (analog massRunAiAssignment/
@@ -16184,12 +16214,61 @@
       }
     }
     renderEditorScreens();
+    renderBildband();
     els.editorAiStatusNote.textContent = updated + " von " + targets.length + " Screens per KI zugeordnet." + (skippedErrors ? " (" + skippedErrors + " fehlgeschlagen.)" : "");
     addLog("Editor: KI-Vorschlag Kapitel-Zuordnung abgeschlossen - " + updated + " von " + targets.length + " Screens zugeordnet" + (skippedErrors ? ", " + skippedErrors + " fehlgeschlagen" : "") + ".");
     els.editorAiAssignBtn.disabled = false;
     els.editorAiAssignSpinner.hidden = true;
   }
   els.editorAiAssignBtn.addEventListener("click", editorRunAiChapterAssignment);
+
+  /* ============ Bildband: Kapitel/Unterkapitel-Übersicht + Export ============
+     Fasst zusammen, wie gut die im Editor-Register zugeordneten Screens zu
+     den [Bild]-Platzhaltern im jeweils generierten Benutzerhandbuch-
+     Kapiteltext passen (Anzahl Platzhalter vs. Anzahl zugeordneter Screens),
+     und bietet denselben DOCX-/PDF-Export wie das Benutzerhandbuch-Register
+     direkt an (die Bildeinbettung selbst sitzt in buildManualChapterDocxBlob/
+     buildManualChapterPdfDoc, s. o. - hier nur Übersicht + Export-Trigger). */
+  function bildbandStatusFor(placeholderCount, screenCount) {
+    if (!placeholderCount && !screenCount) return { label: "–", icon: "" };
+    if (placeholderCount === screenCount) return { label: "passt genau", icon: "✓" };
+    if (screenCount < placeholderCount) return { label: (placeholderCount - screenCount) + " Bild(er) fehlen", icon: "⚠" };
+    return { label: (screenCount - placeholderCount) + " Bild(er) überschüssig", icon: "ℹ" };
+  }
+  function renderBildband() {
+    var rows = Object.keys(app.manualChapters).map(function (title) {
+      var entry = app.manualChapters[title];
+      if (!entry || !entry.de) return null;
+      var placeholderCount = bildbandCountPlaceholders(entry.de);
+      var screens = bildbandScreensForChapter(title);
+      if (!placeholderCount && !screens.length) return null;
+      return { title: title, placeholderCount: placeholderCount, screens: screens };
+    }).filter(Boolean).sort(function (a, b) { return a.title.localeCompare(b.title, "de"); });
+    els.bildbandEmpty.hidden = rows.length > 0;
+    els.bildbandTbody.innerHTML = rows.map(function (r) {
+      var status = bildbandStatusFor(r.placeholderCount, r.screens.length);
+      var thumbs = r.screens.map(function (s) {
+        return '<img src="' + s.dataUrl + '" alt="" title="Abbildung ' + s.imageNumber + ': ' + escapeHtml(s.description || s.sourceFile || "") +
+          '" style="max-width:46px; max-height:32px; object-fit:contain; border:1px solid var(--border); border-radius:3px; margin:0 3px 3px 0;">';
+      }).join("") || "–";
+      return "<tr>" +
+        "<td>" + escapeHtml(r.title) + "</td>" +
+        '<td class="mono">' + r.placeholderCount + "</td>" +
+        '<td class="mono">' + r.screens.length + "</td>" +
+        "<td>" + escapeHtml(status.icon + (status.icon ? " " : "") + status.label) + "</td>" +
+        "<td>" + thumbs + "</td>" +
+        '<td><button type="button" class="btn ghost btn-tiny" data-bildband-export="docx" data-bildband-chapter="' + escapeHtml(r.title) + '">DOCX</button> ' +
+        '<button type="button" class="btn ghost btn-tiny" data-bildband-export="pdf" data-bildband-chapter="' + escapeHtml(r.title) + '">PDF</button></td>' +
+        "</tr>";
+    }).join("");
+  }
+  els.bildbandTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-bildband-export]");
+    if (!btn) return;
+    var title = btn.getAttribute("data-bildband-chapter");
+    if (btn.getAttribute("data-bildband-export") === "docx") manualExportChapterDocx(title);
+    else manualExportChapterPdf(title);
+  });
 
   /* ============ Teil 9b: RAG - Rohdaten-Extraktion + KI-Text (sample-Capability) ============
      "RAG" hier im Sinn von Retrieval (deterministische Filterung/Extraktion der
@@ -18986,6 +19065,7 @@
     var resultWrap = card.querySelector(".manual-qc-result");
     if (resultWrap) resultWrap.innerHTML = manualQualityCheckResultHtml(qc) + manualDashboardHtml(chapterTitle, entry, qc) + manualImproveButtonsHtml(chapterTitle, entry);
     renderErgebnisse();
+    renderBildband();
   }
   // signal (optional): ermöglicht Abbruch über "Alle prüfen" (s. u.) - bei
   // Abbruch wird der cancelled-Fehler bewusst WEITERGEREICHT (throw), statt
@@ -19104,13 +19184,13 @@
     var qcSuffix = (qc && qc.analysisText) ? "\n\nVerbesserungsvorschläge aus der Qualitätsprüfung (wo inhaltlich sinnvoll, einarbeiten):\n" + qc.analysisText : "";
     return ragPromptFor(variant.promptKey) + qcSuffix + "\n\nKapitel: " + title + "\n\n" + text;
   }
-  function manualImproveResultHtml(variantKey, res) {
+  function manualImproveResultHtml(variantKey, res, title) {
     if (!res || !res.text) return "";
     var v = MANUAL_IMPROVE_VARIANTS[variantKey];
     return '<div class="panel" style="margin-top:8px; padding:10px 12px; border-left: 4px solid ' + v.color + ';">' +
       '<div class="mono" style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">' + v.icon + " " + escapeHtml(v.label) +
       " · erzeugt " + escapeHtml(res.generatedAt) + " · " + manualWordCount(res.text) + " Wörter</div>" +
-      manualRenderPreviewHtml(res.text) + "</div>";
+      manualRenderPreviewHtml(res.text, title) + "</div>";
   }
   // Nur nach einer durchgeführten Qualitätsprüfung sichtbar (s. Request:
   // "nach Qualitätsprüfung ... Baue 3 neue Buttons ein").
@@ -19130,7 +19210,7 @@
       }).join("") +
       "</div>" +
       Object.keys(MANUAL_IMPROVE_VARIANTS).map(function (vk) {
-        return '<div class="manual-improve-result" data-manual-improve-result="' + vk + '">' + manualImproveResultHtml(vk, improved[vk]) + "</div>";
+        return '<div class="manual-improve-result" data-manual-improve-result="' + vk + '">' + manualImproveResultHtml(vk, improved[vk], title) + "</div>";
       }).join("") +
       "</div>";
   }
@@ -19151,8 +19231,9 @@
       if (label) label.textContent = v.icon + " " + (running ? v.label + " …" : ((res && res.text) ? v.label + " neu erzeugen" : v.label + " erzeugen"));
     }
     var resultWrap = card.querySelector('[data-manual-improve-result="' + variantKey + '"]');
-    if (resultWrap) resultWrap.innerHTML = manualImproveResultHtml(variantKey, res);
+    if (resultWrap) resultWrap.innerHTML = manualImproveResultHtml(variantKey, res, title);
     renderErgebnisse();
+    renderBildband();
   }
   var manualImproveRunning = {};
   async function manualRunImprovedVariant(chapterTitle, variantKey) {
@@ -19313,7 +19394,7 @@
     if (!res || !res.text) return;
     var variant = MANUAL_IMPROVE_VARIANTS[variantKey];
     try {
-      var blob = await buildManualChapterDocxBlob(title + " (" + variant.label + ")", res.text);
+      var blob = await buildManualChapterDocxBlob(title + " (" + variant.label + ")", res.text, title);
       var filename = safeFilename(title) + "_" + safeFilename(variant.label) + ".docx";
       var ok = await saveOrWarn(filename, blob);
       if (ok) addLog("Benutzerhandbuch-Kapitel \"" + title + "\": Verbesserte Fassung (" + variant.label + ") als DOCX exportiert.");
@@ -19393,6 +19474,28 @@
   }
   function manualIsHeading(line) { return /^##\s+/.test(line); }
   function manualHeadingText(line) { return line.replace(/^##\s+/, ""); }
+  // Bildband: "[Bild]" als eigene Zeile im Kapiteltext ist ein Platzhalter,
+  // der in Vorschau/Export durch das jeweils naechste, diesem Kapitel im
+  // Editor-Register zugeordnete Screen (aus Word/PowerPoint extrahiert)
+  // ersetzt wird - sequenziell in Zuordnungsreihenfolge (Quelldatei, dann
+  // Bildnummer), NICHT nach Unterkapitel innerhalb des Texts aufgeloest
+  // (die Unterkapitel-Zuordnung im Editor-Register dient nur der eigenen
+  // Uebersicht/Filterung im Bildband-Register, nicht der Platzierung
+  // einzelner Platzhalter). Bewusst eine exakte Zeile (kein Freitext
+  // daneben), damit die Erkennung eindeutig bleibt.
+  var MANUAL_IMAGE_PLACEHOLDER = "[Bild]";
+  function manualIsImagePlaceholder(line) { return line.trim() === MANUAL_IMAGE_PLACEHOLDER; }
+  function bildbandScreensForChapter(chapterTitle) {
+    if (!chapterTitle) return [];
+    return app.uploadedImages.filter(function (i) { return i.sourceFile && i.chapter === chapterTitle; })
+      .slice().sort(function (a, b) {
+        if (a.sourceFile !== b.sourceFile) return a.sourceFile < b.sourceFile ? -1 : 1;
+        return (a.imageNumber || 0) - (b.imageNumber || 0);
+      });
+  }
+  function bildbandCountPlaceholders(text) {
+    return manualParseParagraphs(text).filter(manualIsImagePlaceholder).length;
+  }
   // Erkennt einen Tag IRGENDWO im Absatz (nicht nur am Anfang) - der Prompt
   // weist Claude zwar an, den Tag direkt vor den betreffenden Satz zu
   // stellen, aber ein LLM folgt Formatierungsvorgaben nicht immer exakt;
@@ -19434,10 +19537,29 @@
   // Ueberfliegen eines laengeren Kapitels) - wirkt sich nur auf die
   // Lese-Vorschau aus, der bearbeitbare Rohtext (Deutsch/English) bleibt
   // unveraendert.
-  function manualRenderPreviewHtml(text) {
+  // Bildtext-Caption im Format "Abbildung N: <Text>" - dieselbe Nummerierung
+  // wie im Editor-Register (Bildnummer je Quelldatei), damit Vorschau/Export
+  // und Editor-Uebersicht konsistent referenzierbar bleiben.
+  function manualImagePlaceholderHtml(screen) {
+    if (!screen) {
+      return '<div class="callout warn" style="margin:0 0 12px;"><b>⚠ [Bild]</b>: kein zugeordnetes Bild - im Register „Bildband“ diesem Kapitel ein Screen zuordnen.</div>';
+    }
+    return '<figure style="margin:0 0 14px;">' +
+      '<img src="' + screen.dataUrl + '" alt="' + escapeHtml(screen.description || "Bild") + '" style="max-width:100%; max-height:420px; display:block; border:1px solid var(--border); border-radius:8px;">' +
+      '<figcaption class="step-note" style="margin-top:4px;">Abbildung ' + screen.imageNumber + ": " + escapeHtml(screen.description || screen.sourceFile) + "</figcaption>" +
+      "</figure>";
+  }
+  function manualRenderPreviewHtml(text, chapterTitle) {
     var html = '<div style="font-size:15px; line-height:1.7; color:var(--text); max-width:720px;">';
     var roleBoxOpen = false;
+    var bildbandQueue = bildbandScreensForChapter(chapterTitle);
+    var bildbandIdx = 0;
     manualParseParagraphs(text).forEach(function (line) {
+      if (manualIsImagePlaceholder(line)) {
+        html += manualImagePlaceholderHtml(bildbandQueue[bildbandIdx]);
+        bildbandIdx++;
+        return;
+      }
       if (manualIsHeading(line)) {
         if (roleBoxOpen) { html += "</div>"; roleBoxOpen = false; }
         var headingText = manualHeadingText(line);
@@ -19469,10 +19591,74 @@
     return html;
   }
 
-  function manualChapterDocumentXml(title, text) {
+  // Bildband-Bildeinbettung in DOCX/PDF-Export: Zielbreite fest auf 140mm,
+  // Hoehe ueber das tatsaechliche Seitenverhaeltnis des Bildes bestimmt
+  // (Image()-Decode der Browser-Bitmap) - mit Fallback auf ein 4:3-
+  // Verhaeltnis, falls das Decodieren fehlschlaegt oder zu lange dauert
+  // (z. B. in Testumgebungen ohne echtes Bild-Rendering).
+  function loadImageNaturalSize(dataUrl) {
+    return new Promise(function (resolve) {
+      try {
+        var img = new Image();
+        var done = false;
+        var finish = function (result) { if (!done) { done = true; resolve(result); } };
+        img.onload = function () { finish({ width: img.naturalWidth || 800, height: img.naturalHeight || 600 }); };
+        img.onerror = function () { finish(null); };
+        img.src = dataUrl;
+        setTimeout(function () { finish(null); }, 2000);
+      } catch (e) { resolve(null); }
+    });
+  }
+  var MANUAL_IMAGE_EXT_BY_MIME = { "image/png": "png", "image/jpeg": "jpg", "image/gif": "gif", "image/bmp": "bmp" };
+  function manualImageExtFromDataUrl(dataUrl) {
+    var m = /^data:([^;]+);/.exec(dataUrl || "");
+    return (m && MANUAL_IMAGE_EXT_BY_MIME[m[1]]) || "png";
+  }
+  // Bereitet fuer ein Kapitel alle Bildband-Medien vor (Relationship-Id,
+  // Dateiendung, Zielmasse in EMU unter Beibehaltung des Seitenverhaeltnisses)
+  // - gemeinsam von DOCX- und PDF-Export genutzt, damit beide dieselbe
+  // Reihenfolge/Nummerierung (Abbildung 1, 2, ...) verwenden.
+  var MANUAL_IMAGE_TARGET_WIDTH_EMU = 5040000; // 140mm (36000 EMU/mm)
+  async function manualPrepareBildbandMedia(chapterTitle) {
+    var screens = bildbandScreensForChapter(chapterTitle);
+    var media = [];
+    for (var i = 0; i < screens.length; i++) {
+      var s = screens[i];
+      var dims = await loadImageNaturalSize(s.dataUrl);
+      var naturalW = (dims && dims.width) || 800, naturalH = (dims && dims.height) || 600;
+      var widthEmu = MANUAL_IMAGE_TARGET_WIDTH_EMU;
+      var heightEmu = Math.round(widthEmu * (naturalH / naturalW));
+      media.push({ num: i + 1, rId: "rIdBild" + (i + 1), screen: s, ext: manualImageExtFromDataUrl(s.dataUrl), widthEmu: widthEmu, heightEmu: heightEmu });
+    }
+    return media;
+  }
+  function manualImageDrawingParagraphXml(m) {
+    var caption = m.screen.description || m.screen.sourceFile || "";
+    return '<w:p><w:r><w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">' +
+      '<wp:extent cx="' + m.widthEmu + '" cy="' + m.heightEmu + '"/>' +
+      '<wp:docPr id="' + m.num + '" name="Bild' + m.num + '"/>' +
+      '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">' +
+      '<a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+      '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+      '<pic:nvPicPr><pic:cNvPr id="' + m.num + '" name="Bild' + m.num + '"/><pic:cNvPicPr/></pic:nvPicPr>' +
+      '<pic:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="' + m.rId + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
+      '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + m.widthEmu + '" cy="' + m.heightEmu + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>' +
+      "</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>" +
+      '<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:i/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">' +
+      xmlEsc("Abbildung " + m.num + ": " + caption) + "</w:t></w:r></w:p>";
+  }
+  function manualChapterDocumentXml(title, text, media) {
     var body = '<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>' + xmlEsc(title) + "</w:t></w:r></w:p>";
     var roleShd = null;
+    var mediaIdx = 0;
     manualParseParagraphs(text).forEach(function (line) {
+      if (manualIsImagePlaceholder(line)) {
+        var m = (media || [])[mediaIdx];
+        mediaIdx++;
+        body += m ? manualImageDrawingParagraphXml(m) :
+          '<w:p><w:r><w:rPr><w:i/></w:rPr><w:t xml:space="preserve">[Bild: kein Screen zugeordnet]</w:t></w:r></w:p>';
+        return;
+      }
       if (manualIsHeading(line)) {
         var headingText = manualHeadingText(line);
         roleShd = MANUAL_ROLE_SHD_HEX[headingText] || null;
@@ -19491,14 +19677,23 @@
       '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
       "<w:body>" + body + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/></w:sectPr></w:body></w:document>';
   }
-  function buildManualChapterDocxBlob(title, text) {
+  // chapterTitleForImages: optionaler abweichender Kapiteltitel fuer die
+  // Bildband-Zuordnung, falls der Anzeigetitel (erster Parameter) vom
+  // echten Gliederungskapitel abweicht (z. B. "<Kapitel> (Enduser-Text)"
+  // bei den Verbesserungs-Varianten in manualExportImprovedDocx).
+  async function buildManualChapterDocxBlob(title, text, chapterTitleForImages) {
     if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek konnte nicht geladen werden.");
+    var media = await manualPrepareBildbandMedia(chapterTitleForImages || title);
     var zip = new JSZip();
     zip.file("[Content_Types].xml",
       '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
       '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
       '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Default Extension="png" ContentType="image/png"/>' +
+      '<Default Extension="jpg" ContentType="image/jpeg"/>' +
+      '<Default Extension="gif" ContentType="image/gif"/>' +
+      '<Default Extension="bmp" ContentType="image/bmp"/>' +
       '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
       "</Types>");
     zip.file("_rels/.rels",
@@ -19506,12 +19701,25 @@
       '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
       '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
       "</Relationships>");
-    zip.file("word/document.xml", manualChapterDocumentXml(title, text));
+    if (media.length) {
+      zip.file("word/_rels/document.xml.rels",
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        media.map(function (m) { return '<Relationship Id="' + m.rId + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/bild' + m.num + "." + m.ext + '"/>'; }).join("") +
+        "</Relationships>");
+      media.forEach(function (m) {
+        zip.file("word/media/bild" + m.num + "." + m.ext, m.screen.dataUrl.split(",")[1], { base64: true });
+      });
+    }
+    zip.file("word/document.xml", manualChapterDocumentXml(title, text, media));
     return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
   }
-  function buildManualChapterPdfDoc(title, text) {
+  var MANUAL_IMAGE_EXT_TO_JSPDF_FORMAT = { png: "PNG", jpg: "JPEG", gif: "GIF", bmp: "BMP" };
+  async function buildManualChapterPdfDoc(title, text, chapterTitleForImages) {
     var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
     if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
+    var media = await manualPrepareBildbandMedia(chapterTitleForImages || title);
+    var mediaIdx = 0;
     var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
     var margin = 18, pageW = 210, pageHLimit = 280, y = margin;
     doc.setFont("helvetica", "bold"); doc.setFontSize(18);
@@ -19519,6 +19727,31 @@
     doc.text(titleLines, margin, y); y += titleLines.length * 8 + 6;
     var roleFill = null;
     manualParseParagraphs(text).forEach(function (line) {
+      if (manualIsImagePlaceholder(line)) {
+        var m = media[mediaIdx];
+        mediaIdx++;
+        if (!m) {
+          doc.setFont("helvetica", "italic"); doc.setFontSize(11); doc.setTextColor(0, 0, 0);
+          if (y > pageHLimit) { doc.addPage(); y = margin; }
+          doc.text("[Bild: kein Screen zugeordnet]", margin, y);
+          y += 7;
+          return;
+        }
+        var widthMm = m.widthEmu / 36000, heightMm = m.heightEmu / 36000;
+        if (y + heightMm > pageHLimit) { doc.addPage(); y = margin; }
+        var format = MANUAL_IMAGE_EXT_TO_JSPDF_FORMAT[m.ext] || "PNG";
+        try { doc.addImage(m.screen.dataUrl, format, margin, y, widthMm, heightMm); } catch (e) { /* defektes/nicht unterstuetztes Bildformat - Platzhalter einfach auslassen */ }
+        y += heightMm + 4;
+        doc.setFont("helvetica", "italic"); doc.setFontSize(9); doc.setTextColor(0, 0, 0);
+        var captionLines = doc.splitTextToSize("Abbildung " + m.num + ": " + (m.screen.description || m.screen.sourceFile || ""), widthMm);
+        captionLines.forEach(function (cl) {
+          if (y > pageHLimit) { doc.addPage(); y = margin; }
+          doc.text(cl, margin, y);
+          y += 5;
+        });
+        y += 3;
+        return;
+      }
       var isHeading = manualIsHeading(line);
       var tag = isHeading ? null : (manualCalloutTagOf(line) || manualScopeTagOf(line));
       var displayLine = isHeading ? manualHeadingText(line) : line;
@@ -19576,7 +19809,7 @@
     var text = lang === "en" ? entry.en : entry.de;
     if (!text) { showToast("Kein Text", "Für diese Sprache liegt noch kein Text vor.", true); return; }
     try {
-      var blob = buildManualChapterPdfDoc(title, text).output("blob");
+      var blob = (await buildManualChapterPdfDoc(title, text)).output("blob");
       var filename = safeFilename(title) + (lang === "en" ? "_en" : "") + ".pdf";
       var ok = await saveOrWarn(filename, blob);
       if (ok) addLog("Benutzerhandbuch-Kapitel \"" + title + "\" als PDF exportiert.");
@@ -19645,7 +19878,7 @@
         '<button type="button" class="preview-toggle-btn' + (lang === "preview" ? " active" : "") + '" data-manual-lang="preview">Vorschau (Icons)</button>' +
         "</div>" +
         (lang === "preview"
-          ? '<div class="panel" style="padding:12px; max-height:420px; overflow:auto;">' + manualRenderPreviewHtml(entry.de) + "</div>" +
+          ? '<div class="panel" style="padding:12px; max-height:420px; overflow:auto;">' + manualRenderPreviewHtml(entry.de, title) + "</div>" +
             '<p class="step-note">Nur Lesevorschau mit Icons für Pkw/Van/Markt-Kennzeichnung und rollenspezifische Zwischenüberschriften – zum Bearbeiten zu "Deutsch"/"English" wechseln.</p>'
           : '<textarea class="text-input manual-chapter-textarea" data-manual-text data-lang="' + lang + '" rows="16" style="width:100%; font-family:inherit;">' +
             escapeHtml(text) + "</textarea>") +
@@ -19662,6 +19895,7 @@
     renderManualOverview();
     renderManualOrphans();
     renderErgebnisse();
+    renderBildband();
   }
   // Nicht mehr zugeordnete Kapitel (Titel existiert in app.manualChapters,
   // aber nicht mehr in der aktuellen Gliederung app.outline - typischerweise
@@ -20586,7 +20820,8 @@
     viewPanels.forEach(function (p) { p.hidden = p.getAttribute("data-view-panel") !== name; });
     navItems.forEach(function (btn) { btn.classList.toggle("active", btn.getAttribute("data-view") === name); });
     if (name === "output-md" || name === "output-pdf") renderOutputCounts();
-    if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); }
+    if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); renderBildband(); }
+    if (name === "bildband") renderBildband();
     if (window.innerWidth <= 900) setSidebar(false);
   }
   navItems.forEach(function (btn) { btn.addEventListener("click", function () { showView(btn.getAttribute("data-view")); }); });
