@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.85.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.86.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -905,19 +905,23 @@ zusammenzuführen.
   beliebigen anderen Unterkapiteln, deren Ticket-Zuordnung sich mit den
   Suchtreffern überschneidet.
 
-  **Gliederung exportieren & vergleichen** (neu, v2.85.0): die aktuelle
-  Gliederung (Kapitel/Unterkapitel) lässt sich als eigene JSON-Datei
-  exportieren – z. B. zur Wiederverwendung in einem anderen Projekt oder
-  als Vergleichsgrundlage. Zum Vergleich lässt sich eine zuvor exportierte
-  Gliederung (.json) oder eine fremde Gliederung aus einem Word-Dokument
-  (.docx, Formatvorlagen "Überschrift 1/2") hochladen – beliebig viele
-  bleiben nebeneinander erhalten, die eigene Gliederung bleibt dabei
-  unverändert. Ein Klick auf "Vergleichen" zeigt je Upload einen
-  **deterministischen Struktur-Diff** (Kapitel nur in der aktuellen bzw.
-  nur in der hochgeladenen Gliederung, geänderte Unterkapitel je
-  gemeinsamem Kapitel – kein KI-Aufruf nötig) sowie zusätzlich eine von
-  Claude (sample-Capability) erzeugte Kurz-Einschätzung der inhaltlichen
-  Bedeutung der Änderungen.
+  **Gliederung exportieren & zuordnen** (neu, v2.85.0, umgebaut in
+  v2.86.0): die aktuelle Gliederung (Kapitel/Unterkapitel) lässt sich als
+  eigene JSON-Datei exportieren – z. B. zur Wiederverwendung in einem
+  anderen Projekt oder als Zuordnungsgrundlage. Es lassen sich beliebig
+  viele andere Gliederungen hochladen – eine zuvor exportierte Gliederung
+  (.json) oder eine fremde Gliederung aus einem Word-Dokument (.docx,
+  Formatvorlagen "Überschrift 1/2") – die eigene Gliederung bleibt dabei
+  unverändert. Für jede hochgeladene Gliederung (per Dropdown umschaltbar)
+  zeigt eine **Zuordnungstabelle** je Kapitel der aktuellen Gliederung ein
+  automatisch per **Fuzzy-Matching** (wortbasierte Titel-Ähnlichkeit,
+  dieselbe Logik wie beim Referenz-Handbuch-Mapping – erkennt auch leicht
+  abweichende, nicht identische Titel) vorgeschlagenes Kapitel der
+  hochgeladenen Gliederung, jederzeit per Dropdown manuell korrigierbar
+  und dauerhaft gespeichert (unabhängig je hochgeladener Gliederung) –
+  so lassen sich bestehende Kapitel-Inhalte mehreren Gliederungen
+  zuordnen. Rein zur Übersicht/Dokumentation, kein automatischer
+  Inhalts-Transfer und kein KI-Aufruf nötig.
 - **Rovo Knowledge** (neu, v2.85.0, eigener Navigationspunkt direkt nach
   Import): eigenständiger Bestand für Textschnipsel aus Rovo-KI-Chats
   (Chatverlauf + Antwort als zwei getrennte Felder), importierbar über

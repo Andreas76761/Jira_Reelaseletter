@@ -1327,13 +1327,17 @@
         </section>
 
         <section>
-          <p class="section-label">Gliederung exportieren &amp; vergleichen</p>
+          <p class="section-label">Gliederung exportieren &amp; zuordnen</p>
           <div class="callout">
             Die aktuelle Gliederung (Kapitel/Unterkapitel) als Datei exportieren &ndash; z. B. um sie in einem
-            anderen Projekt wiederzuverwenden oder als Vergleichsgrundlage aufzubewahren. Zum Vergleich lässt sich
-            eine zuvor exportierte Gliederung (.json) oder eine andere Gliederung aus einem Word-Dokument (.docx,
-            Formatvorlagen „Überschrift 1/2“) hochladen &ndash; es können mehrere hochgeladen werden. Claude zeigt je
-            Vergleich zusätzlich zum reinen Struktur-Abgleich eine kurze inhaltliche Einschätzung der Änderungen.
+            anderen Projekt wiederzuverwenden oder als Vergleichsgrundlage aufzubewahren. Es lassen sich beliebig
+            viele andere Gliederungen hochladen &ndash; eine zuvor exportierte Gliederung (.json) oder eine fremde
+            Gliederung aus einem Word-Dokument (.docx, Formatvorlagen „Überschrift 1/2“). Für jede hochgeladene
+            Gliederung lässt sich anschließend je Kapitel der AKTUELLEN Gliederung ein passendes Kapitel darin
+            zuordnen &ndash; automatisch per Fuzzy-Matching (wortbasierte Titel-Ähnlichkeit, wie beim
+            Referenz-Handbuch-Mapping) vorgeschlagen, jederzeit per Dropdown korrigierbar und gespeichert. So lassen
+            sich bestehende Kapitel-Inhalte mehreren Gliederungen zuordnen (rein zur Übersicht/Dokumentation, keine
+            automatische Inhaltsübernahme).
           </div>
           <div class="controls">
             <button class="btn ghost" id="outline-export-btn" type="button">Gliederung als Datei exportieren</button>
@@ -1357,23 +1361,20 @@
           </div>
           <p class="step-note" id="outline-uploaded-empty">Noch keine Gliederung zum Vergleich hochgeladen.</p>
 
-          <div id="outline-compare-result" hidden style="margin-top:14px;">
-            <p class="section-label" id="outline-compare-title" style="margin-top:0;"></p>
-            <p class="step-note" id="outline-compare-status-note"></p>
-            <div class="extract-grid">
-              <div>
-                <p class="section-label">Nur in aktueller Gliederung</p>
-                <ul id="outline-compare-only-current"></ul>
-              </div>
-              <div>
-                <p class="section-label">Nur in hochgeladener Gliederung</p>
-                <ul id="outline-compare-only-uploaded"></ul>
+          <div id="outline-mapping-wrap" hidden style="margin-top:14px;">
+            <p class="section-label">Kapitel-Zuordnung</p>
+            <div class="controls">
+              <div class="graph-filter-col" style="min-width:280px;">
+                <label for="outline-mapping-select">Hochgeladene Gliederung</label>
+                <select id="outline-mapping-select"></select>
               </div>
             </div>
-            <p class="section-label">Geänderte Unterkapitel (gemeinsame Kapitel)</p>
-            <ul id="outline-compare-sub-changes"></ul>
-            <p class="section-label">KI-Analyse</p>
-            <div class="gen-preview" id="outline-compare-analysis-output">Noch nicht ausgeführt.</div>
+            <div class="table-wrap" style="margin-top:8px;">
+              <table class="field-table">
+                <thead><tr><th>Aktuelles Kapitel</th><th>Kapitel in hochgeladener Gliederung</th></tr></thead>
+                <tbody id="outline-mapping-tbody"></tbody>
+              </table>
+            </div>
           </div>
         </section>
       </section>
@@ -4927,7 +4928,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.85.0";
+  var APP_VERSION = "2.86.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6419,9 +6420,7 @@
     "gl-search-neighbors",
     "outline-export-btn", "outline-compare-dropzone", "outline-compare-spinner", "outline-compare-file-input",
     "outline-uploaded-table-wrap", "outline-uploaded-tbody", "outline-uploaded-empty",
-    "outline-compare-result", "outline-compare-title", "outline-compare-status-note",
-    "outline-compare-only-current", "outline-compare-only-uploaded", "outline-compare-sub-changes",
-    "outline-compare-analysis-output",
+    "outline-mapping-wrap", "outline-mapping-select", "outline-mapping-tbody",
     "mass-import-btn", "mass-import-input", "mass-import-note", "mass-collect-btn",
     "mass-ticket-source-wrap", "mass-collect-tickets-btn", "mass-ticket-source-note",
     "mass-empty", "mass-groups-wrap", "mass-groups",
@@ -6768,12 +6767,19 @@
     // Kapitel-Zuordnung/den Vergleich ausgewählt ist. Sitzungsdatensatz wie
     // referenceManuals selbst.
     refCompareActiveManualId: null,
-    // Gliederung exportieren & vergleichen (Teil 9d): hochgeladene
-    // Gliederungen (eigenes JSON-Export-Format oder .docx-Überschriften) als
-    // Vergleichsgrundlage für die aktuelle app.outline - rein strukturell
+    // Gliederung exportieren & zuordnen (Teil 9d): hochgeladene Gliederungen
+    // (eigenes JSON-Export-Format oder .docx-Überschriften) als
+    // Zuordnungsgrundlage für die aktuelle app.outline - rein strukturell
     // (Kapitel-/Unterkapitel-Titel), unabhängig von referenceManuals (dort:
-    // Kapitel-FLIESSTEXT-Vergleich). Sitzungsdatensatz wie referenceManuals.
+    // Kapitel-FLIESSTEXT-Vergleich). Jeder Eintrag hat zusätzlich
+    // chapterMapping (aktueller Kapiteltitel -> zugeordneter Kapiteltitel in
+    // dieser hochgeladenen Gliederung, per Fuzzy-Matching vorgeschlagen,
+    // manuell korrigierbar). Sitzungsdatensatz wie referenceManuals.
     uploadedOutlines: [],
+    // Welche hochgeladene Gliederung (uploadedOutlines[].id) aktuell für die
+    // Kapitel-Zuordnung ausgewählt ist. Sitzungsdatensatz wie
+    // refCompareActiveManualId.
+    outlineCompareActiveId: null,
     // RAG-Bibliothek (Teil 9b, Punkte 3-5): anders als der eigentliche RAG-
     // Ausgabebereich (ragBatchRun/ragExtractedRows, s. Kommentar bei
     // "Sitzung speichern/laden" weiter unten - bewusst NICHT gesichert)
@@ -7019,6 +7025,7 @@
     app.refCompareActiveManualId = null;
     renderReferenceManuals();
     app.uploadedOutlines = [];
+    app.outlineCompareActiveId = null;
     renderUploadedOutlines();
     app.ragLibrary = [];
     app.ragMergedDoc = "";
@@ -7107,6 +7114,7 @@
     app.refCompareActiveManualId = null;
     renderReferenceManuals();
     app.uploadedOutlines = [];
+    app.outlineCompareActiveId = null;
     renderUploadedOutlines();
     app.ragLibrary = [];
     app.ragMergedDoc = "";
@@ -7219,6 +7227,7 @@
       referenceManuals: app.referenceManuals,
       refCompareActiveManualId: app.refCompareActiveManualId,
       uploadedOutlines: app.uploadedOutlines,
+      outlineCompareActiveId: app.outlineCompareActiveId,
       ragLibrary: app.ragLibrary,
       ragMergedDoc: app.ragMergedDoc,
       massFiles: app.massFiles,
@@ -7286,6 +7295,7 @@
     if (Array.isArray(data.referenceManuals)) app.referenceManuals = data.referenceManuals;
     if (data.refCompareActiveManualId !== undefined) app.refCompareActiveManualId = data.refCompareActiveManualId;
     if (Array.isArray(data.uploadedOutlines)) app.uploadedOutlines = data.uploadedOutlines;
+    if (data.outlineCompareActiveId !== undefined) app.outlineCompareActiveId = data.outlineCompareActiveId;
     if (Array.isArray(data.ragLibrary)) app.ragLibrary = data.ragLibrary;
     if (typeof data.ragMergedDoc === "string") app.ragMergedDoc = data.ragMergedDoc;
     if (Array.isArray(data.massFiles)) app.massFiles = data.massFiles;
@@ -17037,7 +17047,6 @@
     manualChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender (erfahrene Nutzer im operativen Tagesgeschäft). Schreibe für das unten genannte Kapitel einen sachlichen, professionellen Fließtext im Stil eines Softwarehandbuchs auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform - z. B. \"Der Nutzer öffnet die Maske und trägt die Daten ein\", NICHT Präteritum/Futur wie \"öffnete\"/\"wird öffnen\"), mindestens 3, idealerweise bis zu 12 DIN-A4-Seiten Umfang (ca. 500-600 Wörter je Seite). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen (roter Faden), gefolgt von zusammenhängenden Abschnitten statt einer reinen Aufzählung. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, deutlich mit den Tags \"[Nur PKW]\", \"[Nur Van]\" bzw. \"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz. Kennzeichne außerdem, wo inhaltlich wirklich zutreffend (nicht erzwingen), wichtige Sicherheitshinweise/Warnungen mit \"[Warnung]\", hilfreiche Zusatzinformationen mit \"[Hinweis]\", praktische Tipps für den Arbeitsalltag mit \"[Tipp]\" sowie Querverweise auf andere Kapitel/Abschnitte mit \"[Verweis]\" - ebenfalls jeweils direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Retail\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\" (Market Operation) und weise explizit darauf hin, wenn ein Feature dem Retail NICHT zur Verfügung steht. Nutze ausschließlich Informationen aus den Ticket-Rohdaten unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text.",
     manualChapterSynthesis: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender. Die folgenden Teiltexte sind Abschnitte desselben Kapitels, aus technischen Gründen in mehreren Durchläufen aus unterschiedlichen Ausschnitten derselben Ticket-Rohdaten erzeugt. Verschmelze sie zu EINEM einzigen, zusammenhängenden Kapiteltext auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform, auch wenn ein Teiltext abweicht - dann beim Verschmelzen ins Präsens korrigieren) (roter Faden, mindestens 3 DIN-A4-Seiten, sachlicher Softwarehandbuch-Stil), ohne Hinweise auf \"Teiltexte\" oder \"Batches\". Erhalte dabei die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\"/\"[Warnung]\"/\"[Hinweis]\"/\"[Tipp]\"/\"[Verweis]\" sowie die Zwischenüberschriften \"## Retail\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" aus den Teiltexten. Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
     refCompare: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen zwei Fassungen desselben Kapitels: der ALTE STAND (aus einem bestehenden, bereits veröffentlichten Word-Handbuch) und der NEUE STAND (frisch aus aktuellen Jira-Tickets erzeugter Text). Vergleiche beide Fassungen inhaltlich und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Features\n- (ein Stichpunkt je im neuen Stand beschriebenem Inhalt, der im alten Stand fehlt oder dort erkennbar anders/noch nicht vorhanden war)\n\n### Widersprüche\n- (ein Stichpunkt je Aussage im alten Stand, die dem neuen Stand inhaltlich widerspricht oder durch ihn überholt/ungültig wird)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den beiden Texten unten, erfinde nichts hinzu:",
-    outlineCompare: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen zwei Fassungen einer Gliederung (reine Kapitel-/Unterkapitelstruktur, kein Fließtext): die AKTUELLE GLIEDERUNG (in dieser App) und eine HOCHGELADENE GLIEDERUNG zum Vergleich. Vergleiche beide strukturell und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Themenbereiche\n- (ein Stichpunkt je Kapitel/Unterkapitel, das in der hochgeladenen Gliederung vorkommt, in der aktuellen Gliederung aber fehlt oder dort erkennbar anders gegliedert ist)\n\n### Entfallene Themenbereiche\n- (ein Stichpunkt je Kapitel/Unterkapitel, das in der aktuellen Gliederung vorkommt, in der hochgeladenen Gliederung aber fehlt)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich die beiden Gliederungen unten, erfinde nichts hinzu:",
     manualQualityCheck: "Du bist Lektor/Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Prüfe den folgenden Kapiteltext und gib AUSSCHLIESSLICH die folgenden drei Abschnitte aus, in genau diesem Format:\n\n### Grammatikfehler\n- (ein Stichpunkt je Grammatik-/Rechtschreib-/Zeitform-Fehler - insbesondere Abweichungen vom geforderten Präsens -, mit kurzem Zitat der betroffenen Stelle)\n\n### Lücken\n- (ein Stichpunkt je inhaltlicher Lücke, unklarer oder unvollständiger Stelle)\n\n### Verbesserungsvorschläge\n- (ein Stichpunkt je Vorschlag zur Verständlichkeit/Lesbarkeit/Struktur)\n\nIst eine der drei Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
     fileviewTranslateToDe: "Übersetze den folgenden Text sinngemäß ins Deutsche, ohne Inhalte hinzuzufügen oder wegzulassen und ohne zusätzliche Erklärungen oder Anmerkungen. Gib ausschließlich den übersetzten Text aus:",
     fileviewSummaryDe: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Fasse den folgenden Dateiinhalt (bereinigte Ticket-Rohdaten aus einem Jira-Export) in einer prägnanten, verständlichen Zusammenfassung auf Deutsch zusammen (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen). Nutze ausschließlich Informationen aus dem Text unten, erfinde nichts hinzu:",
@@ -17057,7 +17066,6 @@
     manualChapter: "Benutzerhandbuch-Kapitel erstellen",
     manualChapterSynthesis: "Benutzerhandbuch-Kapitel zusammenführen (Batch-Modus)",
     refCompare: "Handbuch-Änderung nach Kapitel (Vergleich mit Referenz-Handbuch)",
-    outlineCompare: "Gliederung vergleichen (Struktur-Analyse)",
     manualQualityCheck: "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)",
     fileviewTranslateToDe: "Dateiansicht: Übersetzen (→ DE)",
     fileviewSummaryDe: "Dateiansicht: Zusammenfassung (Deutsch)",
@@ -21331,13 +21339,13 @@
   }, 200);
   els.glSearchInput.addEventListener("input", glSearchDebounced);
 
-  // Gliederung exportieren & vergleichen: eigenes JSON-Export-Format
+  // Gliederung exportieren & zuordnen: eigenes JSON-Export-Format
   // (Round-Trip) sowie .docx-Upload (gleiche Erkennung wie der destruktive
   // Gliederung-Ersetzen-Upload in den Einstellungen, s.
   // outlineChaptersFromDocxHeadings/extractReferenceManualChapters weiter
   // oben, Teil 2) - hier aber NICHT destruktiv: beliebig viele hochgeladene
   // Gliederungen (app.uploadedOutlines) bleiben nebeneinander als
-  // Vergleichsgrundlage erhalten, app.outline selbst bleibt unverändert.
+  // Zuordnungsgrundlage erhalten, app.outline selbst bleibt unverändert.
   function outlineExportPayload() {
     return {
       app: "oneSCM Ticket-Cockpit – Gliederung-Export",
@@ -21382,10 +21390,10 @@
         "<td>" + escapeHtml(u.uploadedAt) + "</td>" +
         "<td>" + u.outline.length + "</td>" +
         "<td>" + subCount + "</td>" +
-        '<td><button type="button" class="btn ghost btn-tiny outline-compare-run-btn" data-id="' + u.id + '">Vergleichen</button> ' +
-        '<button type="button" class="btn danger btn-tiny outline-compare-delete-btn" data-id="' + u.id + '">Löschen</button></td>' +
+        '<td><button type="button" class="btn danger btn-tiny outline-compare-delete-btn" data-id="' + u.id + '">Löschen</button></td>' +
         "</tr>";
     }).join("");
+    renderOutlineMapping();
   }
   async function handleOutlineCompareUploadFile(file) {
     var name = file.name || "Gliederung";
@@ -21409,7 +21417,12 @@
         return;
       }
       var subCount = outline.reduce(function (n, c) { return n + c.subs.length; }, 0);
-      app.uploadedOutlines.unshift({ id: nextUploadedOutlineId++, filename: name, uploadedAt: nowLabel(), outline: outline, compareResult: null });
+      var newId = nextUploadedOutlineId++;
+      app.uploadedOutlines.unshift({ id: newId, filename: name, uploadedAt: nowLabel(), outline: outline, chapterMapping: {} });
+      // Neuester Upload wird automatisch zur aktiven Gliederung fuer die
+      // Kapitel-Zuordnung - sonst wuerde die Zuordnungstabelle weiter die
+      // zuvor aktive (aeltere) Gliederung zeigen.
+      app.outlineCompareActiveId = newId;
       renderUploadedOutlines();
       addLog("Gliederung „" + name + "“ zum Vergleich hochgeladen (" + outline.length + " Kapitel, " + subCount + " Unterkapitel).");
       showToast("Hochgeladen", outline.length + " Kapitel aus „" + name + "“ zum Vergleich bereit.");
@@ -21441,96 +21454,83 @@
   });
   els.outlineUploadedTbody.addEventListener("click", async function (e) {
     var delBtn = e.target.closest(".outline-compare-delete-btn");
-    if (delBtn) {
-      var delId = parseInt(delBtn.getAttribute("data-id"), 10);
-      var delEntry = app.uploadedOutlines.filter(function (u) { return u.id === delId; })[0];
-      if (!delEntry) return;
-      var ok = await confirmDialog('Hochgeladene Gliederung „' + delEntry.filename + '“ wirklich löschen?');
-      if (!ok) return;
-      app.uploadedOutlines = app.uploadedOutlines.filter(function (u) { return u.id !== delId; });
-      renderUploadedOutlines();
-      els.outlineCompareResult.hidden = true;
-      addLog("Hochgeladene Gliederung „" + delEntry.filename + "“ gelöscht.");
-      showToast("Gelöscht", 'Gliederung „' + delEntry.filename + '“ wurde entfernt.');
-      return;
-    }
-    var runBtn = e.target.closest(".outline-compare-run-btn");
-    if (runBtn) {
-      runBtn.disabled = true;
-      try { await runOutlineCompare(parseInt(runBtn.getAttribute("data-id"), 10)); }
-      finally { runBtn.disabled = false; }
-    }
+    if (!delBtn) return;
+    var delId = parseInt(delBtn.getAttribute("data-id"), 10);
+    var delEntry = app.uploadedOutlines.filter(function (u) { return u.id === delId; })[0];
+    if (!delEntry) return;
+    var ok = await confirmDialog('Hochgeladene Gliederung „' + delEntry.filename + '“ wirklich löschen?');
+    if (!ok) return;
+    app.uploadedOutlines = app.uploadedOutlines.filter(function (u) { return u.id !== delId; });
+    if (app.outlineCompareActiveId === delId) app.outlineCompareActiveId = null;
+    renderUploadedOutlines();
+    addLog("Hochgeladene Gliederung „" + delEntry.filename + "“ gelöscht.");
+    showToast("Gelöscht", 'Gliederung „' + delEntry.filename + '“ wurde entfernt.');
   });
   renderUploadedOutlines();
 
-  // Deterministischer Struktur-Diff (kein KI-Aufruf, immer verfügbar):
-  // Kapitel nur in der jeweils anderen Gliederung (nach Titel, exakter
-  // Abgleich) sowie geänderte Unterkapitel je GEMEINSAMEM Kapitel.
-  function outlineStructuralDiff(currentOutline, uploadedOutline) {
-    var curTitles = currentOutline.map(function (c) { return c.title; });
-    var upTitles = uploadedOutline.map(function (c) { return c.title; });
-    var onlyInCurrent = curTitles.filter(function (t) { return upTitles.indexOf(t) === -1; });
-    var onlyInUploaded = upTitles.filter(function (t) { return curTitles.indexOf(t) === -1; });
-    var subchapterChanges = [];
-    currentOutline.forEach(function (c) {
-      var match = uploadedOutline.filter(function (u) { return u.title === c.title; })[0];
-      if (!match) return;
-      var curSubs = (c.subs || []).map(function (s) { return s.title; });
-      var upSubs = (match.subs || []).map(function (s) { return s.title; });
-      var addedSubs = upSubs.filter(function (t) { return curSubs.indexOf(t) === -1; });
-      var removedSubs = curSubs.filter(function (t) { return upSubs.indexOf(t) === -1; });
-      if (addedSubs.length || removedSubs.length) {
-        subchapterChanges.push({ chapterTitle: c.title, addedSubs: addedSubs, removedSubs: removedSubs });
-      }
+  // Kapitel-Zuordnung (ersetzt den fruehen reinen Struktur-Diff): je
+  // Kapitel der AKTUELLEN Gliederung wird per Fuzzy-Matching (wortbasierte
+  // Titel-Aehnlichkeit, dieselbe Logik wie beim Referenz-Handbuch-Mapping,
+  // s. chapterTitleSimilarity/CHAPTER_MATCH_THRESHOLD weiter oben) ein
+  // passendes Kapitel der jeweils AKTIVEN hochgeladenen Gliederung
+  // vorgeschlagen, per Dropdown manuell korrigierbar. Vorschlaege werden
+  // NICHT gespeichert (immer frisch aus der aktuellen app.outline
+  // berechnet, bleibt so auch nach spaeteren Gliederungs-Aenderungen
+  // aktuell) - nur eine tatsaechliche manuelle Korrektur landet dauerhaft in
+  // entry.chapterMapping. Rein zur Uebersicht/Dokumentation, keine
+  // automatische Inhaltsuebernahme.
+  function suggestUploadedChapterForCurrentChapter(currentTitle, uploadedTitles) {
+    var best = "", bestScore = 0;
+    uploadedTitles.forEach(function (t) {
+      var score = chapterTitleSimilarity(currentTitle, t);
+      if (score > bestScore) { bestScore = score; best = t; }
     });
-    return { onlyInCurrent: onlyInCurrent, onlyInUploaded: onlyInUploaded, subchapterChanges: subchapterChanges };
+    return bestScore >= CHAPTER_MATCH_THRESHOLD ? best : "";
   }
-  function outlineCompareOutlineText(outline) {
-    return outline.map(function (c) {
-      return "- " + c.title + ((c.subs && c.subs.length) ? "\n  " + c.subs.map(function (s) { return s.title; }).join("; ") : "");
-    }).join("\n");
+  function activeOutlineMappingEntry() {
+    var list = app.uploadedOutlines;
+    if (!list.length) return null;
+    var found = list.filter(function (u) { return u.id === app.outlineCompareActiveId; })[0];
+    return found || list[0];
   }
-  function outlineCompareBuildPrompt(currentOutline, uploadedOutline) {
-    return ragPromptFor("outlineCompare") + "\n\nAKTUELLE GLIEDERUNG:\n" + outlineCompareOutlineText(currentOutline) +
-      "\n\nHOCHGELADENE GLIEDERUNG:\n" + outlineCompareOutlineText(uploadedOutline);
-  }
-  function outlineCompareListHtml(titles) {
-    return titles.length ? titles.map(function (t) { return "<li>" + escapeHtml(t) + "</li>"; }).join("") : "<li>Keine.</li>";
-  }
-  async function runOutlineCompare(id) {
-    var entry = app.uploadedOutlines.filter(function (u) { return u.id === id; })[0];
-    if (!entry) return;
-    var diff = outlineStructuralDiff(app.outline, entry.outline);
-    els.outlineCompareResult.hidden = false;
-    els.outlineCompareTitle.textContent = "Vergleich mit „" + entry.filename + "“ (hochgeladen " + entry.uploadedAt + ")";
-    els.outlineCompareOnlyCurrent.innerHTML = outlineCompareListHtml(diff.onlyInCurrent);
-    els.outlineCompareOnlyUploaded.innerHTML = outlineCompareListHtml(diff.onlyInUploaded);
-    els.outlineCompareSubChanges.innerHTML = diff.subchapterChanges.length
-      ? diff.subchapterChanges.map(function (ch) {
-          return "<li><b>" + escapeHtml(ch.chapterTitle) + "</b>" +
-            (ch.addedSubs.length ? " – neu: " + ch.addedSubs.map(function (t) { return escapeHtml(t); }).join(", ") : "") +
-            (ch.removedSubs.length ? " – entfallen: " + ch.removedSubs.map(function (t) { return escapeHtml(t); }).join(", ") : "") +
-            "</li>";
-        }).join("")
-      : "<li>Keine Unterschiede bei gemeinsamen Kapiteln.</li>";
-    els.outlineCompareStatusNote.textContent = "";
-    if (!sampleApi) {
-      els.outlineCompareAnalysisOutput.textContent = "";
-      els.outlineCompareStatusNote.textContent = "KI-Analyse in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar. Der Struktur-Vergleich oben bleibt unabhängig davon verfügbar.";
+  function renderOutlineMapping() {
+    var list = app.uploadedOutlines;
+    var has = list.length > 0;
+    els.outlineMappingWrap.hidden = !has;
+    if (!has) {
+      els.outlineMappingSelect.innerHTML = "";
+      els.outlineMappingTbody.innerHTML = "";
       return;
     }
-    els.outlineCompareAnalysisOutput.textContent = "Wird analysiert …";
-    try {
-      var result = await sampleApi(outlineCompareBuildPrompt(app.outline, entry.outline), { modelTier: "default", cache: false });
-      els.outlineCompareAnalysisOutput.textContent = result.text || "";
-      entry.compareResult = { generatedAt: nowLabel(), analysisText: result.text || "" };
-      addLog("Gliederung-Vergleich mit „" + entry.filename + "“ erzeugt (Struktur-Diff + KI-Analyse).");
-    } catch (err) {
-      els.outlineCompareAnalysisOutput.textContent = "";
-      els.outlineCompareStatusNote.textContent = "Fehler: " + ((err && err.message) || "Unbekannter Fehler.");
-      showToast("Vergleich fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
-    }
+    var active = activeOutlineMappingEntry();
+    app.outlineCompareActiveId = active.id;
+    els.outlineMappingSelect.innerHTML = list.map(function (u) {
+      return '<option value="' + u.id + '"' + (u.id === active.id ? " selected" : "") + ">" + escapeHtml(u.filename) + " (" + escapeHtml(u.uploadedAt) + ")</option>";
+    }).join("");
+    var uploadedTitles = active.outline.map(function (c) { return c.title; });
+    els.outlineMappingTbody.innerHTML = app.outline.map(function (c) {
+      var stored = active.chapterMapping[c.title];
+      var current = stored !== undefined ? stored : suggestUploadedChapterForCurrentChapter(c.title, uploadedTitles);
+      var options = '<option value="">– nicht zugeordnet –</option>' + uploadedTitles.map(function (t) {
+        return '<option value="' + escapeHtml(t) + '"' + (current === t ? " selected" : "") + ">" + escapeHtml(t) + "</option>";
+      }).join("");
+      return "<tr>" +
+        "<td>" + escapeHtml(c.title) + "</td>" +
+        '<td><select class="outline-mapping-select" data-chapter-title="' + escapeHtml(c.title) + '" aria-label="Kapitel in hochgeladener Gliederung für \'' + escapeHtml(c.title) + '\'">' + options + "</select></td>" +
+        "</tr>";
+    }).join("");
   }
+  els.outlineMappingSelect.addEventListener("change", function () {
+    app.outlineCompareActiveId = parseInt(els.outlineMappingSelect.value, 10) || null;
+    renderOutlineMapping();
+  });
+  els.outlineMappingTbody.addEventListener("change", function (e) {
+    var sel = e.target.closest(".outline-mapping-select");
+    if (!sel) return;
+    var active = activeOutlineMappingEntry();
+    if (!active) return;
+    active.chapterMapping[sel.getAttribute("data-chapter-title")] = sel.value;
+  });
 
   /* ============ Teil 10: Navigation ============ */
 
