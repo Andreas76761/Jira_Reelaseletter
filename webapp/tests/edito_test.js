@@ -97,11 +97,16 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   fire(ticketInput, "change");
   await wait(400);
 
+  // ===================== Register umbenannt: "EDITO" -> "Editor" =====================
+  check("Nav-Eintrag für EDITO heißt jetzt 'Editor'", doc.querySelector('.nav-item[data-view="edito"]').textContent.trim() === "Editor");
+  check("Bestehendes Register 'editor' heißt jetzt 'Screens-Import' (kein Namenskonflikt)", doc.querySelector('.nav-item[data-view="editor"]').textContent.trim() === "Screens-Import");
+
   // ===================== EDITO vor Rolle/Sparte-Auswahl =====================
   doc.querySelector('.nav-item[data-view="edito"]').click();
   await wait(100);
   check("Rolle/Sparte-Auswahl vorhanden mit 6 Versionen", doc.getElementById("edito-version-select").options.length === 7); // 1 Platzhalter + 6 Versionen
   check("Kapitel-Bereich vor Auswahl versteckt", doc.getElementById("edito-chapters-section").hidden === true);
+  check("Übersicht aller Dokumente vor jeder Erzeugung leer", doc.getElementById("edito-files-count").textContent === "0" && doc.getElementById("edito-files-empty").hidden === false);
 
   // ===================== Rolle/Sparte "Dealer" wählen =====================
   const versionSelect = doc.getElementById("edito-version-select");
@@ -168,6 +173,29 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   check("Kapitel 7: Status jetzt „Erzeugt“", kap7RowAfterGen.children[6].textContent.includes("Erzeugt"));
   check("Erzeugen-Button-Beschriftung wechselt zu „Neu erzeugen“", kap7RowAfterGen.querySelector("[data-edito-generate]").textContent.includes("Neu erzeugen"));
 
+  // ===================== Nach Erzeugen: Word+PDF automatisch abgelegt, in Übersicht sichtbar =====================
+  const dateStamp = new Date().toISOString().slice(0, 10);
+  check("Übersicht aller Dokumente zeigt jetzt genau 1 Datei-Zeile", doc.getElementById("edito-files-count").textContent === "1");
+  check("Leer-Hinweis der Dokumenten-Übersicht jetzt ausgeblendet", doc.getElementById("edito-files-empty").hidden === true);
+  const filesRow1 = doc.getElementById("edito-files-tbody").querySelector("tr");
+  check("Dokumenten-Übersicht nennt das Kapitel", filesRow1.children[0].textContent.includes("Kapitel 7"));
+  check("Dokumenten-Übersicht nennt die Rolle/Sparte 'Dealer'", /Dealer/i.test(filesRow1.children[1].textContent));
+  check("Dokumenten-Übersicht nennt ein Erzeugungsdatum (nicht leer)", filesRow1.children[2].textContent.trim().length > 0);
+  const docxFileBtn = filesRow1.children[3].querySelector("[data-edito-file-download='docx']");
+  const pdfFileBtn = filesRow1.children[4].querySelector("[data-edito-file-download='pdf']");
+  check("Dokumenten-Übersicht: Word-Dateiname enthält das heutige Datum", !!docxFileBtn && docxFileBtn.textContent.includes(dateStamp) && docxFileBtn.textContent.endsWith(".docx"));
+  check("Dokumenten-Übersicht: PDF-Dateiname enthält das heutige Datum", !!pdfFileBtn && pdfFileBtn.textContent.includes(dateStamp) && pdfFileBtn.textContent.endsWith(".pdf"));
+
+  // ===================== Download direkt aus der Dokumenten-Übersicht =====================
+  const savedBeforeOverviewDownload = savedFiles.length;
+  fire(docxFileBtn, "click");
+  await wait(100);
+  check("Klick auf Word-Datei in der Übersicht löst Download aus", savedFiles.length === savedBeforeOverviewDownload + 1);
+  check("Heruntergeladener Dateiname stimmt mit Anzeige überein", savedFiles[savedBeforeOverviewDownload].filename === docxFileBtn.textContent);
+  fire(pdfFileBtn, "click");
+  await wait(100);
+  check("Klick auf PDF-Datei in der Übersicht löst Download aus", savedFiles.length === savedBeforeOverviewDownload + 2);
+
   // ===================== Manuelle Bearbeitung der Vorschau =====================
   const previewTa = doc.getElementById("edito-preview-output");
   previewTa.value = previewTa.value + "\nManuell ergänzter Satz.";
@@ -225,6 +253,8 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   check("Sammel-Lauf-Status vermerkt Abschluss", /von \d+ Kapiteln erzeugt/.test(doc.getElementById("edito-generate-all-status-note").textContent));
   const allChapterRows = Array.from(doc.getElementById("edito-chapters-tbody").querySelectorAll("tr"));
   check("Sammel-Lauf: alle Kapitel der Dealer-Version zeigen Status „Erzeugt“", allChapterRows.every((r) => r.children[6].textContent.includes("Erzeugt")));
+  check("Dokumenten-Übersicht enthält nach Sammel-Lauf für jedes erzeugte Kapitel eine Zeile (eine je Kapitel, unabhängig von der Version)", doc.getElementById("edito-files-tbody").querySelectorAll("tr").length === allChapterRows.length);
+  check("Dokumenten-Übersicht-Zähler stimmt mit Zeilenanzahl überein", parseInt(doc.getElementById("edito-files-count").textContent, 10) === allChapterRows.length);
 
   // ===================== Version wechseln: Kapitelliste ändert sich =====================
   versionSelect.value = "it";

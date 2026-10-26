@@ -652,9 +652,9 @@
       <li><button class="nav-item" data-view="ergebnisse" type="button">Ergebnisse</button></li>
       <li><button class="nav-item" data-view="prozessbild" type="button">Prozessbild</button></li>
       <li><button class="nav-item" data-view="clickanweisung" type="button">Clickanweisung</button></li>
-      <li><button class="nav-item" data-view="editor" type="button">Editor</button></li>
+      <li><button class="nav-item" data-view="editor" type="button">Screens-Import</button></li>
       <li><button class="nav-item" data-view="bildband" type="button">Bildband</button></li>
-      <li><button class="nav-item" data-view="edito" type="button">EDITO</button></li>
+      <li><button class="nav-item" data-view="edito" type="button">Editor</button></li>
       <li><button class="nav-item" data-view="bilder" type="button">Bilder</button></li>
       <li class="nav-sep">Output</li>
       <li><button class="nav-item" data-view="output-md" type="button">Output MD Tickets</button></li>
@@ -2220,7 +2220,7 @@
 
       <!-- ================= Editor ================= -->
       <section class="view-panel" data-view-panel="editor" hidden>
-        <div class="view-head"><h2>Editor</h2><p class="desc">Word- (.docx) oder PowerPoint-Dateien (.pptx) mit Screens je Domäne (Überschrift + Bildschirmfoto) hochladen &ndash; auch Exporte der separaten Screenrecorder-App, da diese laut Angabe ebenfalls Word/PowerPoint liefert. Enthaltene Bilder werden automatisch erkannt, nach Reihenfolge im Dokument nummeriert und mit dem jeweils zugehörigen Überschriften-/Absatztext (Bildtext) versehen. Je Screen lässt sich ein Gliederungskapitel zuordnen &ndash; von Hand oder per KI-Vorschlag &ndash; als Vorbereitung für die spätere Übernahme ins Benutzerhandbuch/Releaseletter. Alle Screens erscheinen zusätzlich, da dieselbe Datenstruktur genutzt wird, unter „Bilder“.</p></div>
+        <div class="view-head"><h2>Screens-Import</h2><p class="desc">Word- (.docx) oder PowerPoint-Dateien (.pptx) mit Screens je Domäne (Überschrift + Bildschirmfoto) hochladen &ndash; auch Exporte der separaten Screenrecorder-App, da diese laut Angabe ebenfalls Word/PowerPoint liefert. Enthaltene Bilder werden automatisch erkannt, nach Reihenfolge im Dokument nummeriert und mit dem jeweils zugehörigen Überschriften-/Absatztext (Bildtext) versehen. Je Screen lässt sich ein Gliederungskapitel zuordnen &ndash; von Hand oder per KI-Vorschlag &ndash; als Vorbereitung für die spätere Übernahme ins Benutzerhandbuch/Releaseletter. Alle Screens erscheinen zusätzlich, da dieselbe Datenstruktur genutzt wird, unter „Bilder“.</p></div>
 
         <section>
           <p class="section-label">Datei hochladen (.docx / .pptx)</p>
@@ -2281,7 +2281,7 @@
 
       <!-- ================= EDITO ================= -->
       <section class="view-panel" data-view-panel="edito" hidden>
-        <div class="view-head"><h2>EDITO</h2><p class="desc">Erstellt eine neue Fassung des Benutzerhandbuchs je Rolle/Sparte aus mehreren internen Quellen gleichzeitig: importierten Jira-Tickets, der RAG-Bibliothek, dem bereits bestehenden Benutzerhandbuch-Text, Rovo-Knowledge-Textschnipseln sowie zugeordneten Bildern (Bildband-Platzhalter <code class="mono">[Bild]</code>). Drei Prüf-Agenten bewerten anschließend Inhalt, Sprache und Dokument-Struktur (zwei weitere Agenten folgen später).</p></div>
+        <div class="view-head"><h2>Editor</h2><p class="desc">Erstellt eine neue Fassung des Benutzerhandbuchs je Rolle/Sparte aus mehreren internen Quellen gleichzeitig: importierten Jira-Tickets, der RAG-Bibliothek, dem bereits bestehenden Benutzerhandbuch-Text, Rovo-Knowledge-Textschnipseln sowie zugeordneten Bildern (Bildband-Platzhalter <code class="mono">[Bild]</code>). Drei Prüf-Agenten bewerten anschließend Inhalt, Sprache und Dokument-Struktur (zwei weitere Agenten folgen später). Nach dem Erzeugen wird je Kapitel automatisch ein datiertes Word- und PDF-Dokument abgelegt, siehe Übersicht "4. Alle erzeugten Dokumente" unten.</p></div>
 
         <section>
           <p class="section-label">1. Rolle/Sparte wählen</p>
@@ -2335,6 +2335,22 @@
           <div id="edito-agent2-result" class="panel" style="padding:12px 14px; margin-top:8px;" hidden>
             <p class="section-label" style="margin-top:0;">Agent 2: Grammatik, Sprachstil, roter Faden</p>
             <div class="gen-preview" id="edito-agent2-output"></div>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">4. Alle erzeugten Dokumente (<span id="edito-files-count">0</span>)</p>
+          <div class="callout">
+            Nach jedem Erzeugen (je Kapitel oder im Sammel-Lauf) werden automatisch ein Word- (.docx) und ein
+            PDF-Dokument mit Datum im Dateinamen abgelegt &ndash; über alle Rollen/Sparten hinweg, unabhängig von
+            der oben aktuell gewählten Version.
+          </div>
+          <div class="table-wrap">
+            <table class="simple-table" id="edito-files-table">
+              <thead><tr><th>Kapitel</th><th>Rolle/Sparte</th><th>Erzeugt am</th><th>Word</th><th>PDF</th></tr></thead>
+              <tbody id="edito-files-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="edito-files-empty">Noch keine Dokumente erzeugt.</div>
           </div>
         </section>
       </section>
@@ -4989,7 +5005,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.89.0";
+  var APP_VERSION = "2.90.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6372,6 +6388,7 @@
   function safeFilename(key) { return key.replace(/[^A-Za-z0-9_-]+/g, "_"); }
   function truncate(s, n) { s = s || ""; return s.length > n ? s.slice(0, n - 1) + "…" : s; }
   function nowLabel() { return new Date().toLocaleString("de-DE"); }
+  function dateStampForFilename(d) { return (d || new Date()).toISOString().slice(0, 10); }
   // Generischer Helfer fuer "Mehrfachauswahl aus tatsaechlich vorkommenden
   // Feldwerten befuellen" (aktuell: RAG-Domaene/-Status, siehe Teil 9b).
   // Bewusst NICHT fuer den Dashboard-Domain-/Label-Filter genutzt: die
@@ -6562,6 +6579,7 @@
     "edito-export-docx-btn", "edito-export-pdf-btn", "edito-export-md-btn",
     "edito-agent1-btn", "edito-agent1-spinner", "edito-agent1-result", "edito-agent1-output",
     "edito-agent2-btn", "edito-agent2-spinner", "edito-agent2-result", "edito-agent2-output",
+    "edito-files-count", "edito-files-table", "edito-files-tbody", "edito-files-empty",
     "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
     "modal-overlay", "modal-key", "modal-title", "modal-fields", "modal-desc-wrap", "modal-desc",
@@ -7166,6 +7184,7 @@
     renderBildband();
     renderRovoEntries();
     renderEditoChapters();
+    renderEditoFiles();
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
     renderExtractedLabelCandidates();
@@ -7409,6 +7428,7 @@
     renderBildband();
     renderRovoEntries();
     renderEditoChapters();
+    renderEditoFiles();
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
     renderExtractedLabelCandidates();
@@ -16305,6 +16325,17 @@
     for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
     return new Blob([bytes], { type: mime });
   }
+  // Nutzt blob.arrayBuffer() statt FileReader.readAsDataURL(): von JSZip/
+  // jsPDF erzeugte Blobs stammen aus deren eigenem Realm (z. B. Node statt
+  // Browser-Fenster, je nach Laufzeit) - FileReader prueft dort strikt auf
+  // Instanz-Identitaet und lehnt sonst "fremde" Blobs ab, waehrend
+  // arrayBuffer() ueberall funktioniert.
+  async function blobToDataUrl(blob) {
+    var bytes = new Uint8Array(await blob.arrayBuffer());
+    var binary = "";
+    for (var i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return "data:" + (blob.type || "application/octet-stream") + ";base64," + btoa(binary);
+  }
   async function downloadUploadedImage(id) {
     var img = app.uploadedImages.filter(function (i) { return i.id === id; })[0];
     if (!img) return;
@@ -21695,6 +21726,7 @@
     app.editoVersionKey = els.editoVersionSelect.value;
     els.editoPreviewSection.hidden = true;
     renderEditoChapters();
+    renderEditoFiles();
   });
   function editoVersionDef() {
     return OUTLINE_VERSIONS.filter(function (v) { return v.key === app.editoVersionKey; })[0] || null;
@@ -21799,12 +21831,76 @@
     try {
       var result = await sampleApi(editoBuildChapterPrompt(chapterTitle), { modelTier: "default", cache: false });
       app.editoChapters[chapterTitle] = { de: result.text || "", generatedAt: nowLabel(), versionKey: app.editoVersionKey, agent1: null, agent2: null };
+      await editoSaveChapterFiles(chapterTitle);
       return true;
     } catch (err) {
       showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
       return false;
     }
   }
+  // Legt nach jedem Erzeugen automatisch ein Word- und ein PDF-Dokument mit
+  // Datum im Dateinamen ab (als Daten-URL im Sitzungsstand, nicht als
+  // sofortiger Download - ein automatischer Speichern-Dialog je Kapitel
+  // waere bei "Alle Kapitel erzeugen" sonst eine Flut nicht angeforderter
+  // Downloads). Ueberschreibt bei erneutem Erzeugen die vorherige Datei
+  // desselben Kapitels. Fehler hier (z. B. PDF-Aufbau) duerfen die
+  // eigentliche Text-Erzeugung nicht zum Absturz bringen.
+  async function editoSaveChapterFiles(chapterTitle) {
+    var entry = app.editoChapters[chapterTitle];
+    if (!entry || !entry.de) return;
+    var stamp = dateStampForFilename();
+    try {
+      var docxBlob = await buildManualChapterDocxBlob(chapterTitle, entry.de, chapterTitle);
+      entry.docxDataUrl = await blobToDataUrl(docxBlob);
+      entry.docxFilename = safeFilename(chapterTitle) + "_EDITO_" + stamp + ".docx";
+    } catch (err) {
+      entry.docxDataUrl = null; entry.docxFilename = null;
+    }
+    try {
+      var pdfBlob = (await buildManualChapterPdfDoc(chapterTitle, entry.de, chapterTitle)).output("blob");
+      entry.pdfDataUrl = await blobToDataUrl(pdfBlob);
+      entry.pdfFilename = safeFilename(chapterTitle) + "_EDITO_" + stamp + ".pdf";
+    } catch (err) {
+      entry.pdfDataUrl = null; entry.pdfFilename = null;
+    }
+    entry.filesGeneratedAt = nowLabel();
+  }
+  function editoAllFileEntries() {
+    return Object.keys(app.editoChapters)
+      .map(function (title) { return { title: title, entry: app.editoChapters[title] }; })
+      .filter(function (row) { return row.entry && (row.entry.docxDataUrl || row.entry.pdfDataUrl); })
+      .sort(function (a, b) { return (b.entry.filesGeneratedAt || "").localeCompare(a.entry.filesGeneratedAt || ""); });
+  }
+  function renderEditoFiles() {
+    var rows = editoAllFileEntries();
+    els.editoFilesCount.textContent = rows.length;
+    els.editoFilesEmpty.hidden = rows.length > 0;
+    els.editoFilesTbody.innerHTML = rows.map(function (row) {
+      var versionDef = OUTLINE_VERSIONS.filter(function (v) { return v.key === row.entry.versionKey; })[0];
+      return "<tr>" +
+        "<td>" + escapeHtml(row.title) + "</td>" +
+        "<td>" + escapeHtml(versionDef ? versionDef.label : "–") + "</td>" +
+        "<td>" + escapeHtml(row.entry.filesGeneratedAt || "") + "</td>" +
+        "<td>" + (row.entry.docxDataUrl ? '<button type="button" class="btn ghost btn-tiny" data-edito-file-download="docx" data-edito-file-chapter="' + escapeHtml(row.title) + '">' + escapeHtml(row.entry.docxFilename) + "</button>" : "–") + "</td>" +
+        "<td>" + (row.entry.pdfDataUrl ? '<button type="button" class="btn ghost btn-tiny" data-edito-file-download="pdf" data-edito-file-chapter="' + escapeHtml(row.title) + '">' + escapeHtml(row.entry.pdfFilename) + "</button>" : "–") + "</td>" +
+        "</tr>";
+    }).join("");
+  }
+  els.editoFilesTbody.addEventListener("click", async function (e) {
+    var btn = e.target.closest("[data-edito-file-download]");
+    if (!btn) return;
+    var title = btn.getAttribute("data-edito-file-chapter");
+    var kind = btn.getAttribute("data-edito-file-download");
+    var entry = app.editoChapters[title];
+    if (!entry) return;
+    if (kind === "docx" && entry.docxDataUrl) {
+      var ok = await saveOrWarn(entry.docxFilename, dataUrlToBlob(entry.docxDataUrl));
+      if (ok) addLog("EDITO: Dokument „" + entry.docxFilename + "“ heruntergeladen.");
+    } else if (kind === "pdf" && entry.pdfDataUrl) {
+      var ok2 = await saveOrWarn(entry.pdfFilename, dataUrlToBlob(entry.pdfDataUrl));
+      if (ok2) addLog("EDITO: Dokument „" + entry.pdfFilename + "“ heruntergeladen.");
+    }
+  });
   var editoActiveChapterTitle = "";
   function editoShowChapter(title) {
     editoActiveChapterTitle = title;
@@ -21832,6 +21928,7 @@
           addLog("EDITO: neue Fassung für Kapitel „" + genTitle + "“ erzeugt (Version: " + (editoVersionDef() || {}).label + ").");
           showToast("Erzeugt", "Neue Fassung für „" + genTitle + "“ erzeugt.");
           renderEditoChapters();
+          renderEditoFiles();
           editoShowChapter(genTitle);
         }
       } finally {
@@ -21857,6 +21954,7 @@
       var ok = await editoGenerateChapter(chapters[i].title);
       if (ok) done++; else failed++;
       renderEditoChapters();
+      renderEditoFiles();
     }
     els.editoGenerateAllStatusNote.textContent = done + " von " + chapters.length + " Kapiteln erzeugt" + (failed ? " (" + failed + " fehlgeschlagen)" : "") + ".";
     addLog("EDITO: Sammel-Lauf abgeschlossen (Version: " + (editoVersionDef() || {}).label + ") - " + done + " von " + chapters.length + " Kapiteln erzeugt" + (failed ? ", " + failed + " fehlgeschlagen" : "") + ".");
@@ -21968,7 +22066,7 @@
     if (name === "output-md" || name === "output-pdf") renderOutputCounts();
     if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); renderBildband(); }
     if (name === "bildband") renderBildband();
-    if (name === "edito") { renderEditoVersionSelect(); renderEditoChapters(); }
+    if (name === "edito") { renderEditoVersionSelect(); renderEditoChapters(); renderEditoFiles(); }
     if (name === "rovoknowledge") renderRovoEntries();
     if (window.innerWidth <= 900) setSidebar(false);
   }

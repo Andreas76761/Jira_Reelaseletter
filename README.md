@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.89.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.90.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1431,13 +1431,13 @@ zusammenzuführen.
   dieselbe Datenstruktur wie die bestehende "Bilder"-Galerie (keine
   doppelte Datenhaltung) und erscheinen deshalb automatisch auch dort.
   **Neuer Navigationsbereich "Bildband": Screens in den Benutzerhandbuch-
-  Export einbetten** (neu, v2.83.0): verbindet die im Editor-Register
+  Export einbetten** (neu, v2.83.0): verbindet die im Screens-Import-Register
   zugeordneten Screens mit dem im Benutzerhandbuch-Kapitel-Generator
   erzeugten Text. Dafür den Platzhalter `[Bild]` als eigene Zeile an der
   gewünschten Stelle im Kapiteltext einfügen – jedes Vorkommen wird in der
   Lese-Vorschau ("Vorschau (Icons)") sowie im DOCX- und PDF-Export durch
   das jeweils nächste diesem Kapitel zugeordnete Bild ersetzt (Reihenfolge:
-  Quelldatei, dann Bildnummer aus dem Editor-Register), inklusive
+  Quelldatei, dann Bildnummer aus dem Screens-Import-Register), inklusive
   automatischer Bildunterschrift "Abbildung N: &lt;Bildtext&gt;". Im DOCX-
   Export wird dabei ein echtes eingebettetes Bild erzeugt (OOXML-Relationship
   + Media-Datei im ZIP, kein bloßer Verweis), im PDF-Export über
@@ -1447,7 +1447,7 @@ zusammenzuführen.
   "Bild(er) fehlen"/"Bild(er) überschüssig"), Vorschau-Thumbnails sowie
   direkte DOCX-/PDF-Export-Buttons (dieselben wie im Benutzerhandbuch-
   Register – die Bildeinbettung wirkt überall dort automatisch mit, wo ein
-  Kapiteltext exportiert wird). Zusätzlich lässt sich im Editor-Register je
+  Kapiteltext exportiert wird). Zusätzlich lässt sich im Screens-Import-Register je
   Screen nun auch ein **Unterkapitel** zuordnen (dient nur der eigenen
   Übersicht/Filterung – die Platzhalter werden technisch pro Kapitel,
   nicht pro Unterkapitel-Abschnitt im Text, befüllt).
@@ -1671,7 +1671,9 @@ zusammenzuführen.
   Zusätzlich lässt sich die zugrundeliegende Schritt-Tabelle
   (Ticket/Typ/Titel/Status/Domäne/ Priorität-Punkte/Labels/Beschreibung)
   unabhängig vom Bildformat als XLSX/DOCX/PDF exportieren.
-- **Editor** (neu, v2.82.0) – Word- (.docx) oder PowerPoint-Dateien (.pptx)
+- **Screens-Import** (neu, v2.82.0, bis v2.89.0 "Editor" genannt – umbenannt
+  in v2.90.0, da "Editor" seitdem das EDITO-Register bezeichnet, s. u.) –
+  Word- (.docx) oder PowerPoint-Dateien (.pptx)
   mit Screens je Domäne hochladen (auch Exporte der separaten
   Screenrecorder-App, die ebenfalls Word/PowerPoint liefert). Enthaltene
   Bildschirmfotos werden automatisch erkannt, nach Dokumentreihenfolge
@@ -1693,7 +1695,10 @@ zusammenzuführen.
   Abschnitt weiter unten. (v2.84.0: Bild-Maße für den DOCX-/PDF-Export
   werden jetzt parallel statt sequentiell ermittelt – deutlich schnellerer
   Export bei mehreren Bildern je Kapitel.)
-- **EDITO** (neu, v2.88.0) – erstellt eine NEUE Fassung des
+- **Editor** (neu, v2.88.0 unter dem Namen "EDITO", umbenannt in "Editor"
+  in v2.90.0 – das vorherige Register "Editor" heißt seitdem
+  "Screens-Import", s. o., damit es nicht zwei gleichnamige
+  Navigationspunkte gibt) – erstellt eine NEUE Fassung des
   Benutzerhandbuchs je Rolle/Sparte aus 5 internen Quellen gleichzeitig:
   importierten Jira-Tickets, der RAG-Bibliothek, dem bereits bestehenden
   Benutzerhandbuch-Text, Rovo-Knowledge-Textschnipseln sowie zugeordneten
@@ -1707,8 +1712,17 @@ zusammenzuführen.
   Version passen (die anderen 4 Quellen tragen keine solchen Tags und
   fließen vollständig ein). Erzeugung je Kapitel einzeln oder über einen
   Sammel-Lauf "Alle Kapitel erzeugen", Vorschau frei editierbar, Export je
-  Kapitel als DOCX/PDF/Markdown. Drei Prüf-Agenten (reine Befund-Reports,
-  keine Auto-Korrektur): **Agent 1** validiert jede fachliche Aussage im
+  Kapitel als DOCX/PDF/Markdown. **Automatische Dokumentenablage** (neu,
+  v2.90.0): nach jedem Erzeugen (einzeln oder im Sammel-Lauf) werden
+  automatisch ein Word- (.docx) und ein PDF-Dokument mit Datum im
+  Dateinamen abgelegt (als Daten-URL im Sitzungsstand, kein automatischer
+  Download-Dialog) – eine neue Übersichtstabelle "4. Alle erzeugten
+  Dokumente" listet je Kapitel Rolle/Sparte, Erzeugungsdatum sowie
+  Word-/PDF-Datei zum direkten Herunterladen, über alle Rollen/Sparten
+  hinweg (unabhängig von der aktuell gewählten Version). Bei erneutem
+  Erzeugen eines Kapitels wird die vorherige Datei desselben Kapitels
+  ersetzt. Drei Prüf-Agenten (reine Befund-Reports, keine
+  Auto-Korrektur): **Agent 1** validiert jede fachliche Aussage im
   erzeugten Text gegen die Rovo-/Jira-Quellen (nicht belegte Aussagen/
   Widersprüche), **Agent 2** prüft Grammatik, Sprachstil, Wiederholungen
   und roten Faden. **Agent 3** (Design: Struktur-Prüfung des exportierten
@@ -1725,7 +1739,7 @@ zusammenzuführen.
   zusätzlich:
   - mit **Domäne / Schritt (für Clickanweisung)** als Freitext
     verschlagworten, **Kapitel/Unterkapitel** per Dropdown (wie im
-    Editor-Register) wörtlich aus der Gliederung zuordnen,
+    Screens-Import-Register) wörtlich aus der Gliederung zuordnen,
   - per **OCR** (Tesseract.js, läuft komplett im Browser via WebAssembly,
     Englisch + Deutsch; lädt beim ersten Lauf Erkennungsdaten per CDN
     nach) nach Text durchsuchen,
