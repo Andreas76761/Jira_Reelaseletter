@@ -74,7 +74,7 @@ function setValue(el, v) { el.value = v; fire(el, "input"); }
   // (Prompt direkt am Ort der Nutzung editierbar), eine dokumentweite
   // Zaehlung waere daher falsch.
   const textareas = Array.from(doc.querySelectorAll("#ragprompts-list .ragprompt-textarea"));
-  check("Genau 17 editierbare RAG-Prompts vorhanden (inkl. Benutzerhandbuch-Kapitel + Zusammenführung + Handbuch-Vergleich + Qualitätsprüfung + Dateiansicht-FastTrack + 3 Verbesserungs-Varianten)", textareas.length === 17);
+  check("Genau 18 editierbare RAG-Prompts vorhanden (inkl. Benutzerhandbuch-Kapitel + Zusammenführung + Handbuch-Vergleich + Qualitätsprüfung + Dateiansicht-FastTrack + 3 Verbesserungs-Varianten + Gliederung-Vergleich)", textareas.length === 18);
   const summaryTa = doc.querySelector('.ragprompt-textarea[data-ragprompt-key="summary"]');
   check("Zusammenfassungs-Prompt initial mit Standardtext befüllt", summaryTa.value.includes("prägnanten, endnutzergerechten Zusammenfassung"));
   const summaryBlock = summaryTa.closest(".ragprompt-block");

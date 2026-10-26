@@ -476,6 +476,7 @@
   .stat-line { display: flex; gap: 20px; flex-wrap: wrap; }
   .stat-line .chip { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 12.5px; }
   .stat-line .chip b { font-size: 14px; }
+  #rovo-entries-tbody .chip { display: inline-block; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 3px 8px; font-size: 11.5px; margin: 1px; }
 
   /* ---- Prozessschritte je Job (Verarbeitung) ---- */
   .process-steps {
@@ -639,6 +640,7 @@
       <li><button class="nav-item" data-view="trend" type="button">Trend</button></li>
       <li><button class="nav-item" data-view="dataquality" type="button">Datenqualität</button></li>
       <li><button class="nav-item" data-view="import" type="button">Import</button></li>
+      <li><button class="nav-item" data-view="rovoknowledge" type="button">Rovo Knowledge</button></li>
       <li><button class="nav-item" data-view="dateiverwaltung" type="button">Dateiverwaltung<span class="count-badge" id="nav-badge-changes" hidden>0</span></button></li>
       <li><button class="nav-item" data-view="listenauswahl" type="button">Listenauswahl<span class="count-badge" id="nav-badge-lists" hidden>0</span></button></li>
       <li><button class="nav-item" data-view="gliederung" type="button">Gliederung</button></li>
@@ -1110,6 +1112,60 @@
         </section>
       </section>
 
+      <!-- ================= Rovo Knowledge ================= -->
+      <section class="view-panel" data-view-panel="rovoknowledge" hidden>
+        <div class="view-head"><h2>Rovo Knowledge</h2><p class="desc">Textschnipsel aus Rovo-KI-Chats (Chatverlauf + Antwort) sammeln &ndash; per Zwischenablage oder als Markdown-Datei-Upload (eine eigene Zeile <code class="mono">---</code> trennt Chatverlauf von Antwort; fehlt sie, landet der gesamte Inhalt im Chatverlauf). Jeder Eintrag wird fest mit dem Label <b>ROVO</b> markiert. Per KI-Zuordnung lässt sich zusätzlich ein Kapitel/Unterkapitel sowie bis zu 3 passende Labels vorschlagen (wörtlich aus der vorhandenen Gliederung/Labels-Liste, nie erfunden). Im Text enthaltene Jira-Ticketnummern werden automatisch erkannt und bleiben standardmäßig ausgeblendet &ndash; je Eintrag über den Button "Jira" ein-/ausblendbar.</p></div>
+
+        <section>
+          <p class="section-label">Neuer Eintrag</p>
+          <div class="controls" style="flex-wrap:wrap; gap:16px; align-items:flex-start;">
+            <div style="flex:1; min-width:260px;">
+              <label for="rovo-chat-textarea">Chatverlauf</label>
+              <textarea class="text-input" id="rovo-chat-textarea" rows="6" placeholder="Chatverlauf/Frage einfügen …" style="width:100%; font-family:inherit;"></textarea>
+              <button class="btn ghost btn-tiny" id="rovo-chat-paste-btn" type="button" style="margin-top:4px;">Aus Zwischenablage einfügen</button>
+            </div>
+            <div style="flex:1; min-width:260px;">
+              <label for="rovo-answer-textarea">Antwort</label>
+              <textarea class="text-input" id="rovo-answer-textarea" rows="6" placeholder="Antwort einfügen …" style="width:100%; font-family:inherit;"></textarea>
+              <button class="btn ghost btn-tiny" id="rovo-answer-paste-btn" type="button" style="margin-top:4px;">Aus Zwischenablage einfügen</button>
+            </div>
+          </div>
+          <button class="btn primary" id="rovo-add-entry-btn" type="button" style="margin-top:10px;">Eintrag hinzufügen</button>
+        </section>
+
+        <section>
+          <p class="section-label">Markdown-Dateien hochladen</p>
+          <div class="dropzone" id="rovo-md-dropzone" tabindex="0" role="button" aria-label="Markdown-Datei(en) auswählen">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span class="txt">
+              <strong>Markdown-Datei(en) hier ablegen</strong>
+              <span>oder klicken zum Auswählen (.md, Mehrfachauswahl möglich)</span>
+            </span>
+          </div>
+          <input type="file" id="rovo-md-file-input" accept=".md,.markdown,text/markdown" multiple hidden>
+        </section>
+
+        <section>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:6px;">
+            <p class="section-label" style="margin:0;">Einträge (<span id="rovo-entries-count">0</span>)</p>
+            <span class="spacer"></span>
+            <button class="btn ghost btn-tiny" id="rovo-ai-assign-btn" type="button">
+              <span class="btn-spinner" id="rovo-ai-assign-spinner" hidden></span>
+              KI-Zuordnung (Kapitel/Unterkapitel/Labels)
+            </button>
+            <button class="btn ghost btn-tiny" id="rovo-zip-export-btn" type="button">Alle als ZIP exportieren</button>
+          </div>
+          <p class="step-note" id="rovo-ai-status-note"></p>
+          <div class="panel table-wrap" style="max-height:480px; overflow:auto;">
+            <table class="simple-table" id="rovo-entries-table">
+              <thead><tr><th>Datum</th><th>Chatverlauf</th><th>Antwort</th><th>Kapitel</th><th>Unterkapitel</th><th>Labels</th><th>Jira</th><th>Aktion</th></tr></thead>
+              <tbody id="rovo-entries-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="rovo-entries-empty">Noch keine Einträge &ndash; Text einfügen oder Markdown-Datei hochladen.</div>
+          </div>
+        </section>
+      </section>
+
       <!-- ================= Dateiverwaltung ================= -->
       <section class="view-panel" data-view-panel="dateiverwaltung" hidden>
         <div class="view-head"><h2>Dateiverwaltung</h2><p class="desc">Alle in dieser Sitzung importierten Dateien sowie Tickets, die sich zwischen zwei Importen geändert haben (z. B. Status oder Datum).</p></div>
@@ -1268,6 +1324,57 @@
           <input type="text" class="text-input" id="gl-search-input" placeholder="Im Ticket-Inhalt suchen, z. B. API, Blueprint, Indien …" style="max-width:420px;">
           <p id="gl-search-summary" class="step-note"></p>
           <div id="gl-search-neighbors"></div>
+        </section>
+
+        <section>
+          <p class="section-label">Gliederung exportieren &amp; vergleichen</p>
+          <div class="callout">
+            Die aktuelle Gliederung (Kapitel/Unterkapitel) als Datei exportieren &ndash; z. B. um sie in einem
+            anderen Projekt wiederzuverwenden oder als Vergleichsgrundlage aufzubewahren. Zum Vergleich lässt sich
+            eine zuvor exportierte Gliederung (.json) oder eine andere Gliederung aus einem Word-Dokument (.docx,
+            Formatvorlagen „Überschrift 1/2“) hochladen &ndash; es können mehrere hochgeladen werden. Claude zeigt je
+            Vergleich zusätzlich zum reinen Struktur-Abgleich eine kurze inhaltliche Einschätzung der Änderungen.
+          </div>
+          <div class="controls">
+            <button class="btn ghost" id="outline-export-btn" type="button">Gliederung als Datei exportieren</button>
+          </div>
+          <div class="upload-row" style="margin-top:12px;">
+            <div class="dropzone" id="outline-compare-dropzone" tabindex="0" role="button" aria-label="Gliederung zum Vergleich hochladen">
+              <span class="btn-spinner dropzone-spinner" id="outline-compare-spinner" hidden></span>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+              <span class="txt">
+                <strong>Gliederung zum Vergleich hier ablegen</strong>
+                <span>oder klicken zum Auswählen &middot; .json (Export dieser App) oder .docx</span>
+              </span>
+            </div>
+          </div>
+          <input type="file" id="outline-compare-file-input" accept=".json,.docx,.doc" hidden>
+          <div class="table-wrap" id="outline-uploaded-table-wrap" hidden>
+            <table class="field-table">
+              <thead><tr><th>Datei</th><th>Hochgeladen am</th><th>Kapitel</th><th>Unterkapitel</th><th></th></tr></thead>
+              <tbody id="outline-uploaded-tbody"></tbody>
+            </table>
+          </div>
+          <p class="step-note" id="outline-uploaded-empty">Noch keine Gliederung zum Vergleich hochgeladen.</p>
+
+          <div id="outline-compare-result" hidden style="margin-top:14px;">
+            <p class="section-label" id="outline-compare-title" style="margin-top:0;"></p>
+            <p class="step-note" id="outline-compare-status-note"></p>
+            <div class="extract-grid">
+              <div>
+                <p class="section-label">Nur in aktueller Gliederung</p>
+                <ul id="outline-compare-only-current"></ul>
+              </div>
+              <div>
+                <p class="section-label">Nur in hochgeladener Gliederung</p>
+                <ul id="outline-compare-only-uploaded"></ul>
+              </div>
+            </div>
+            <p class="section-label">Geänderte Unterkapitel (gemeinsame Kapitel)</p>
+            <ul id="outline-compare-sub-changes"></ul>
+            <p class="section-label">KI-Analyse</p>
+            <div class="gen-preview" id="outline-compare-analysis-output">Noch nicht ausgeführt.</div>
+          </div>
         </section>
       </section>
 
@@ -2187,6 +2294,23 @@
           <div class="paste-actions" style="margin-top:8px;">
             <button class="btn ghost" id="image-paste-clipboard-btn" type="button">Aus Zwischenablage einfügen</button>
           </div>
+        </section>
+
+        <section>
+          <p class="section-label">OCR: Bilder automatisch interpretieren</p>
+          <div class="callout">
+            Erkennt für ALLE hochgeladenen Bilder per OCR (Tesseract.js) den enthaltenen Text und lässt Claude
+            anhand dieses Textes ein passendes Kapitel, Unterkapitel (wörtlich aus der Gliederung) sowie eine
+            Kurzbeschreibung vorschlagen &ndash; bereits ausgefüllte Felder bleiben dabei unangetastet, nur leere
+            werden ergänzt. Der erkannte OCR-Text selbst wird bei jedem Lauf für jedes Bild neu erkannt.
+          </div>
+          <div class="controls">
+            <button class="btn primary" id="images-ocr-batch-btn" type="button">
+              <span class="btn-spinner" id="images-ocr-batch-spinner" hidden></span>
+              OCR: Alle Bilder interpretieren
+            </button>
+          </div>
+          <p class="step-note" id="images-ocr-batch-status-note"></p>
         </section>
 
         <section>
@@ -4803,7 +4927,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.83.0";
+  var APP_VERSION = "2.85.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6293,6 +6417,11 @@
     "gl-new-term-input", "gl-add-term-btn", "gl-chat-btn", "gl-grill-btn", "gl-chat-panel", "gl-chat-history",
     "gl-chat-input", "gl-chat-send-btn", "gl-grill-panel", "gl-grill-output", "gl-search-input", "gl-search-summary",
     "gl-search-neighbors",
+    "outline-export-btn", "outline-compare-dropzone", "outline-compare-spinner", "outline-compare-file-input",
+    "outline-uploaded-table-wrap", "outline-uploaded-tbody", "outline-uploaded-empty",
+    "outline-compare-result", "outline-compare-title", "outline-compare-status-note",
+    "outline-compare-only-current", "outline-compare-only-uploaded", "outline-compare-sub-changes",
+    "outline-compare-analysis-output",
     "mass-import-btn", "mass-import-input", "mass-import-note", "mass-collect-btn",
     "mass-ticket-source-wrap", "mass-collect-tickets-btn", "mass-ticket-source-note",
     "mass-empty", "mass-groups-wrap", "mass-groups",
@@ -6356,11 +6485,15 @@
     "prozessbild-theme", "prozessbild-layout", "prozessbild-layout-desc",
     "gallery", "gallery-empty",
     "image-dropzone", "image-file-input", "image-paste-clipboard-btn",
+    "images-ocr-batch-btn", "images-ocr-batch-spinner", "images-ocr-batch-status-note",
     "images-table-count", "images-tbody", "images-table-empty",
     "editor-dropzone", "editor-file-input", "editor-domain-select",
     "editor-files-count", "editor-files-tbody", "editor-files-empty",
     "editor-screens-count", "editor-screens-tbody", "editor-screens-empty",
     "editor-ai-assign-btn", "editor-ai-assign-spinner", "editor-ai-status-note",
+    "rovo-chat-textarea", "rovo-answer-textarea", "rovo-chat-paste-btn", "rovo-answer-paste-btn", "rovo-add-entry-btn",
+    "rovo-md-dropzone", "rovo-md-file-input", "rovo-entries-count", "rovo-ai-assign-btn", "rovo-ai-assign-spinner",
+    "rovo-zip-export-btn", "rovo-ai-status-note", "rovo-entries-table", "rovo-entries-tbody", "rovo-entries-empty",
     "bildband-table", "bildband-tbody", "bildband-empty",
     "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
@@ -6391,6 +6524,10 @@
     // uploadedImages (gemeinsame Datenstruktur, s. o.), ergänzt um
     // imageNumber/sourceFile.
     editorFiles: [],
+    // Rovo Knowledge: Textschnipsel aus Rovo-KI-Chats (Chatverlauf +
+    // Antwort), eigenständiger Bestand unabhängig von Massenverarbeitung/
+    // RAG-Bibliothek - jeder Eintrag ist fest mit dem Label "ROVO" markiert.
+    rovoEntries: [],
     tickets: [],
     view: { bucket: "all", domain: "", label: "", query: "", issueType: "", excludeTypes: {}, sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
@@ -6631,6 +6768,12 @@
     // Kapitel-Zuordnung/den Vergleich ausgewählt ist. Sitzungsdatensatz wie
     // referenceManuals selbst.
     refCompareActiveManualId: null,
+    // Gliederung exportieren & vergleichen (Teil 9d): hochgeladene
+    // Gliederungen (eigenes JSON-Export-Format oder .docx-Überschriften) als
+    // Vergleichsgrundlage für die aktuelle app.outline - rein strukturell
+    // (Kapitel-/Unterkapitel-Titel), unabhängig von referenceManuals (dort:
+    // Kapitel-FLIESSTEXT-Vergleich). Sitzungsdatensatz wie referenceManuals.
+    uploadedOutlines: [],
     // RAG-Bibliothek (Teil 9b, Punkte 3-5): anders als der eigentliche RAG-
     // Ausgabebereich (ragBatchRun/ragExtractedRows, s. Kommentar bei
     // "Sitzung speichern/laden" weiter unten - bewusst NICHT gesichert)
@@ -6875,6 +7018,8 @@
     app.referenceManuals = [];
     app.refCompareActiveManualId = null;
     renderReferenceManuals();
+    app.uploadedOutlines = [];
+    renderUploadedOutlines();
     app.ragLibrary = [];
     app.ragMergedDoc = "";
     renderRagLibrary();
@@ -6882,6 +7027,7 @@
     els.ragMergeDownloadBtn.disabled = true;
     els.ragMergeStatusNote.textContent = "";
     app.massFiles = [];
+    app.rovoEntries = [];
     massSelectedIds = {};
     renderMassFiles();
     renderMassTicketSourceWrap();
@@ -6932,6 +7078,7 @@
     renderEditorFiles();
     renderEditorScreens();
     renderBildband();
+    renderRovoEntries();
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
     renderExtractedLabelCandidates();
@@ -6959,6 +7106,8 @@
     app.referenceManuals = [];
     app.refCompareActiveManualId = null;
     renderReferenceManuals();
+    app.uploadedOutlines = [];
+    renderUploadedOutlines();
     app.ragLibrary = [];
     app.ragMergedDoc = "";
     renderRagLibrary();
@@ -6966,6 +7115,7 @@
     els.ragMergeDownloadBtn.disabled = true;
     els.ragMergeStatusNote.textContent = "";
     app.massFiles = [];
+    app.rovoEntries = [];
     massSelectedIds = {};
     renderMassFiles();
     renderMassTicketSourceWrap();
@@ -7029,6 +7179,7 @@
       generatedImages: app.generatedImages,
       uploadedImages: app.uploadedImages,
       editorFiles: app.editorFiles,
+      rovoEntries: app.rovoEntries,
       selectedKeys: app.selectedKeys,
       savedLists: app.savedLists,
       nextSavedListId: app.nextSavedListId,
@@ -7067,6 +7218,7 @@
       importFormats: app.importFormats,
       referenceManuals: app.referenceManuals,
       refCompareActiveManualId: app.refCompareActiveManualId,
+      uploadedOutlines: app.uploadedOutlines,
       ragLibrary: app.ragLibrary,
       ragMergedDoc: app.ragMergedDoc,
       massFiles: app.massFiles,
@@ -7089,6 +7241,7 @@
     app.generatedImages = data.generatedImages || [];
     app.uploadedImages = data.uploadedImages || [];
     app.editorFiles = data.editorFiles || [];
+    app.rovoEntries = data.rovoEntries || [];
     app.selectedKeys = data.selectedKeys || {};
     app.savedLists = data.savedLists || [];
     app.nextSavedListId = data.nextSavedListId || 1;
@@ -7132,6 +7285,7 @@
     if (data.importFormats) app.importFormats = data.importFormats;
     if (Array.isArray(data.referenceManuals)) app.referenceManuals = data.referenceManuals;
     if (data.refCompareActiveManualId !== undefined) app.refCompareActiveManualId = data.refCompareActiveManualId;
+    if (Array.isArray(data.uploadedOutlines)) app.uploadedOutlines = data.uploadedOutlines;
     if (Array.isArray(data.ragLibrary)) app.ragLibrary = data.ragLibrary;
     if (typeof data.ragMergedDoc === "string") app.ragMergedDoc = data.ragMergedDoc;
     if (Array.isArray(data.massFiles)) app.massFiles = data.massFiles;
@@ -7157,6 +7311,7 @@
     renderEditorFiles();
     renderEditorScreens();
     renderBildband();
+    renderRovoEntries();
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
     renderExtractedLabelCandidates();
@@ -7179,6 +7334,7 @@
     renderImportFormats();
     renderReferenceManuals();
     renderRefCompareMapping();
+    renderUploadedOutlines();
     renderRagLibrary();
     els.ragMergeOutput.value = app.ragMergedDoc;
     els.ragMergeDownloadBtn.disabled = !app.ragMergedDoc;
@@ -15765,7 +15921,10 @@
       '<div class="image-tag-row">' +
       '<label>Domäne<input type="text" class="text-input image-tag-input" data-id="' + img.id + '" data-field="domain" value="' + escapeHtml(img.domain) + '" placeholder="z. B. Contract Management"></label>' +
       '<label>Schritt (für Clickanweisung)<input type="text" class="text-input image-tag-input" data-id="' + img.id + '" data-field="processStep" value="' + escapeHtml(img.processStep) + '" placeholder="z. B. Schritt 3: Freigabe"></label>' +
-      '<label>Kapitel<input type="text" class="text-input image-tag-input" data-id="' + img.id + '" data-field="chapter" value="' + escapeHtml(img.chapter) + '" placeholder="z. B. 2.1 Einrichtung"></label>' +
+      '<label>Kapitel<select class="image-chapter-select" data-id="' + img.id + '" aria-label="Kapitel">' +
+      ragLibraryOptionsHtml(massChapterOptionsList(), img.chapter, "Ohne Kapitel") + "</select></label>" +
+      '<label>Unterkapitel<select class="image-subchapter-select" data-id="' + img.id + '" aria-label="Unterkapitel"' + (img.chapter ? "" : " disabled") + ">" +
+      ragLibraryOptionsHtml(img.chapter ? subchapterOptionsForChapter(img.chapter) : [], img.subchapter, "Ohne Unterkapitel") + "</select></label>" +
       "</div>" +
       '<div class="image-action-row">' +
       '<button type="button" class="btn ghost image-metadata-btn" data-id="' + img.id + '">Technische Metadaten</button>' +
@@ -15859,6 +16018,27 @@
     var img = app.uploadedImages.filter(function (i) { return i.id === id; })[0];
     if (img) img[field] = input.value;
   });
+  els.gallery.addEventListener("change", function (e) {
+    var chapterSel = e.target.closest(".image-chapter-select");
+    if (chapterSel) {
+      var img = app.uploadedImages.filter(function (i) { return i.id === parseInt(chapterSel.getAttribute("data-id"), 10); })[0];
+      if (img) {
+        img.chapter = chapterSel.value;
+        img.subchapter = ""; // Unterkapitel-Liste haengt vom Kapitel ab - bei Kapitelwechsel zuruecksetzen
+        renderGallery();
+        if (img.sourceFile) { renderEditorScreens(); renderBildband(); }
+      }
+      return;
+    }
+    var subSel = e.target.closest(".image-subchapter-select");
+    if (subSel) {
+      var img2 = app.uploadedImages.filter(function (i) { return i.id === parseInt(subSel.getAttribute("data-id"), 10); })[0];
+      if (img2) {
+        img2.subchapter = subSel.value;
+        if (img2.sourceFile) renderEditorScreens();
+      }
+    }
+  });
 
   // Technische Metadaten (bewusst KEINE KI-Bildanalyse): Maße + Dateigröße +
   // Format kommen direkt vom Bild/der Datei, Helligkeit/Durchschnittsfarbe
@@ -15919,6 +16099,92 @@
     }
   }
 
+  // OCR-Stapelverarbeitung (Button "OCR: Alle Bilder interpretieren", direkt
+  // nach dem Hochladen-Bereich): laeuft fuer JEDES hochgeladene Bild Tesseract
+  // (OCR-Text wird dabei immer neu erkannt), uebergibt den erkannten Text an
+  // Claude (sample-Capability) zur Zuordnung von Kapitel/Unterkapitel (woertlich
+  // aus der Gliederung) sowie einer Kurzbeschreibung - ueberschreibt dabei NIE
+  // ein bereits gesetztes Kapitel/Unterkapitel/Beschreibung (gleiche Regel wie
+  // bei allen anderen KI-Zuordnungen der App), fuellt nur, was noch leer ist.
+  function imagesOcrOutlineForPrompt() {
+    return app.outline.map(function (c) {
+      var subs = (c.subs || []).map(function (s) { return s.title; });
+      return "- " + c.title + (subs.length ? " | Unterkapitel: " + subs.join("; ") : "");
+    }).join("\n");
+  }
+  function imagesOcrBuildPrompt(ocrText, filename) {
+    return "Du interpretierst einen per OCR aus einem Bild/Screenshot für das oneSCM-Benutzerhandbuch extrahierten Text (Dateiname: \"" + filename + "\"). Ordne den Inhalt GENAU EINEM der folgenden Gliederungskapitel zu (wörtlich aus der Liste, oder \"keines\" falls nichts eindeutig passt), optional GENAU EINEM dort aufgeführten Unterkapitel, und formuliere eine knappe Kurzbeschreibung (max. 1 Satz) dessen, was auf dem Bild zu sehen ist.\n\n" +
+      "Verfügbare Gliederungskapitel mit Unterkapiteln:\n" + imagesOcrOutlineForPrompt() + "\n\n" +
+      "Per OCR erkannter Text:\n" + truncate(ocrText, 2000) + "\n\n" +
+      "Antworte AUSSCHLIESSLICH in genau diesem Format, ohne weitere Erklärung, ohne Anführungszeichen:\n" +
+      "Kapitel: <Titel aus der Liste oder keines>\n" +
+      "Unterkapitel: <Titel aus der Liste oder keines>\n" +
+      "Kurzbeschreibung: <ein Satz>";
+  }
+  function imagesOcrParseResponse(responseText, chapters) {
+    var chapterMatch = /Kapitel:\s*(.+)/i.exec(responseText || "");
+    var subMatch = /Unterkapitel:\s*(.+)/i.exec(responseText || "");
+    var descMatch = /Kurzbeschreibung:\s*([\s\S]*)/i.exec(responseText || "");
+    var chapterTitle = chapterMatch ? chapterMatch[1].trim() : "";
+    if (chapters.indexOf(chapterTitle) === -1) chapterTitle = "";
+    var subTitle = subMatch ? subMatch[1].trim() : "";
+    if (!chapterTitle || subchapterOptionsForChapter(chapterTitle).indexOf(subTitle) === -1) subTitle = "";
+    var description = descMatch ? descMatch[1].trim().split("\n")[0].trim() : "";
+    return { chapterTitle: chapterTitle, subchapterTitle: subTitle, description: description };
+  }
+  async function runImagesOcrBatch() {
+    var targets = app.uploadedImages.slice();
+    if (!targets.length) { showToast("Keine Bilder", "Es sind keine hochgeladenen Bilder vorhanden.", true); return; }
+    if (typeof Tesseract === "undefined") {
+      showToast("Nicht verfügbar", "OCR-Bibliothek (Tesseract.js) konnte nicht geladen werden - Internetzugriff erforderlich.", true);
+      return;
+    }
+    var chapters = massChapterOptionsList();
+    els.imagesOcrBatchBtn.disabled = true;
+    els.imagesOcrBatchSpinner.hidden = false;
+    var ocrFailed = 0, imagesFilled = 0;
+    for (var i = 0; i < targets.length; i++) {
+      var img = targets[i];
+      els.imagesOcrBatchStatusNote.textContent = "Bild " + (i + 1) + " von " + targets.length + " wird interpretiert (" + img.filename + ") …";
+      try {
+        var result = await Tesseract.recognize(img.dataUrl, "eng+deu");
+        img.ocrText = ((result && result.data && result.data.text) || "").trim();
+        img.ocrError = null;
+        img.ocrRanAt = nowLabel();
+      } catch (err) {
+        img.ocrError = (err && err.message) || "Unbekannter Fehler bei der Texterkennung.";
+        ocrFailed++;
+        renderGallery();
+        continue;
+      }
+      if (sampleApi && img.ocrText && (!img.chapter || !img.subchapter || !img.description)) {
+        try {
+          var aiResult = await sampleApi(imagesOcrBuildPrompt(img.ocrText, img.filename), { modelTier: "default", cache: false });
+          var parsed = imagesOcrParseResponse(aiResult.text, chapters);
+          var filledSomething = false;
+          if (!img.chapter && parsed.chapterTitle) { img.chapter = parsed.chapterTitle; filledSomething = true; }
+          if (!img.subchapter && img.chapter === parsed.chapterTitle && parsed.subchapterTitle) { img.subchapter = parsed.subchapterTitle; filledSomething = true; }
+          if (!img.description && parsed.description) { img.description = parsed.description; filledSomething = true; }
+          if (filledSomething) imagesFilled++;
+        } catch (err) {
+          // KI-Fehler bei einem Bild bricht den Gesamtlauf nicht ab - der OCR-Text bleibt trotzdem erhalten.
+        }
+      }
+      renderGallery();
+    }
+    addLog("OCR-Stapelverarbeitung: " + targets.length + " Bild(er) interpretiert" +
+      (imagesFilled ? ", bei " + imagesFilled + " Bild(ern) Kapitel/Unterkapitel/Kurzbeschreibung ergänzt" : "") +
+      (ocrFailed ? ", " + ocrFailed + " OCR-Fehler" : "") + ".");
+    els.imagesOcrBatchStatusNote.textContent = targets.length + " Bild(er) per OCR verarbeitet" +
+      (imagesFilled ? ", bei " + imagesFilled + " Bild(ern) Feld(er) ergänzt" : "") +
+      (ocrFailed ? " (" + ocrFailed + " OCR-Fehler)" : "") +
+      (!sampleApi ? " - KI-Zuordnung in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Version), nur OCR-Text wurde erkannt." : "") + ".";
+    showToast("OCR abgeschlossen", targets.length + " Bild(er) verarbeitet.");
+    els.imagesOcrBatchBtn.disabled = false;
+    els.imagesOcrBatchSpinner.hidden = true;
+  }
+  els.imagesOcrBatchBtn.addEventListener("click", runImagesOcrBatch);
+
   function dataUrlToBlob(dataUrl) {
     var parts = dataUrl.split(",");
     var mimeMatch = /data:([^;]+);base64/.exec(parts[0]);
@@ -15970,7 +16236,7 @@
         var dataUrl = await readImageFileAsDataUrl(file);
         app.uploadedImages.unshift({
           id: nextImageId++, filename: file.name || "Bild", dataUrl: dataUrl, mimeType: file.type || "unbekannt",
-          sizeBytes: file.size || 0, when: nowLabel(), domain: "", processStep: "", chapter: "", description: "",
+          sizeBytes: file.size || 0, when: nowLabel(), domain: "", processStep: "", chapter: "", subchapter: "", description: "",
           width: null, height: null, avgColor: null, brightnessPct: null, metadataComputed: false, metadataError: null,
           ocrText: null, ocrError: null, ocrRanAt: null
         });
@@ -16270,6 +16536,256 @@
     else manualExportChapterPdf(title);
   });
 
+  /* ============ Rovo Knowledge: Textschnipsel aus Rovo-KI-Chats ============
+     Eigenständiger Bestand (app.rovoEntries) für Chatverlauf+Antwort-Paare
+     aus Rovo-KI-Chats - unabhängig von Massenverarbeitung/RAG-Bibliothek.
+     Jeder Eintrag ist fest mit dem Label "ROVO" markiert (ab dem Moment der
+     Erstellung, nicht erst nach der KI-Zuordnung). Import per Zwischenablage
+     (zwei getrennte Felder, keine Rate-Heuristik) oder als Markdown-Datei -
+     dort trennt eine eigene Zeile "---" Chatverlauf (davor) von Antwort
+     (danach); fehlt sie, landet der gesamte Inhalt im Chatverlauf. */
+  var ROVO_JIRA_KEY_RE = /\b[A-Z][A-Z0-9]{1,9}-\d+\b/g;
+  function rovoDetectJiraKeys(text) {
+    var matches = (text || "").match(ROVO_JIRA_KEY_RE) || [];
+    return dedupeStrings(matches);
+  }
+  var nextRovoId = 1;
+  function rovoAddEntry(chatText, answerText) {
+    chatText = (chatText || "").trim();
+    answerText = (answerText || "").trim();
+    if (!chatText && !answerText) return null;
+    var entry = {
+      id: nextRovoId++, when: nowLabel(), chatText: chatText, answerText: answerText,
+      chapter: "", subchapter: "", labels: ["ROVO"],
+      jiraKeys: rovoDetectJiraKeys(chatText + "\n" + answerText), jiraVisible: false
+    };
+    app.rovoEntries.unshift(entry);
+    return entry;
+  }
+  function rovoTruncatePreview(text, max) {
+    var t = (text || "").trim();
+    if (!t) return "–";
+    return t.length > max ? t.slice(0, max) + " …" : t;
+  }
+  function renderRovoEntries() {
+    var chapters = massChapterOptionsList();
+    els.rovoEntriesCount.textContent = app.rovoEntries.length;
+    els.rovoEntriesEmpty.hidden = app.rovoEntries.length > 0;
+    els.rovoEntriesTbody.innerHTML = app.rovoEntries.map(function (e) {
+      var subOptions = e.chapter ? subchapterOptionsForChapter(e.chapter) : [];
+      var jiraCell = e.jiraKeys.length
+        ? '<button type="button" class="btn ghost btn-tiny" data-rovo-jira-toggle="' + e.id + '">Jira (' + e.jiraKeys.length + (e.jiraVisible ? " ausblenden" : " einblenden") + ")</button>" +
+          (e.jiraVisible ? '<div class="mono" style="margin-top:4px; font-size:11.5px;">' + e.jiraKeys.map(escapeHtml).join(", ") + "</div>" : "")
+        : "–";
+      return "<tr>" +
+        '<td class="mono">' + escapeHtml(e.when) + "</td>" +
+        "<td>" + escapeHtml(rovoTruncatePreview(e.chatText, 160)) + "</td>" +
+        "<td>" + escapeHtml(rovoTruncatePreview(e.answerText, 160)) + "</td>" +
+        '<td><select class="rovo-chapter-select" data-id="' + e.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapters, e.chapter, "Ohne Kapitel") + "</select></td>" +
+        '<td><select class="rovo-subchapter-select" data-id="' + e.id + '" aria-label="Unterkapitel"' + (e.chapter ? "" : " disabled") + ">" + ragLibraryOptionsHtml(subOptions, e.subchapter, "Ohne Unterkapitel") + "</select></td>" +
+        "<td>" + e.labels.map(function (l) { return '<span class="chip">' + escapeHtml(l) + "</span>"; }).join(" ") + "</td>" +
+        "<td>" + jiraCell + "</td>" +
+        '<td><button type="button" class="btn danger btn-tiny" data-rovo-delete="' + e.id + '">Löschen</button></td>' +
+        "</tr>";
+    }).join("");
+  }
+  els.rovoChatPasteBtn.addEventListener("click", async function () {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      showToast("Zwischenablage nicht verfügbar", "Bitte den Text stattdessen mit Strg+V direkt in das Feld einfügen.", true);
+      return;
+    }
+    try { els.rovoChatTextarea.value = await navigator.clipboard.readText(); els.rovoChatTextarea.focus(); }
+    catch (e) { showToast("Zugriff verweigert", "Der Browser hat den Lesezugriff auf die Zwischenablage verweigert. Bitte mit Strg+V einfügen.", true); }
+  });
+  els.rovoAnswerPasteBtn.addEventListener("click", async function () {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      showToast("Zwischenablage nicht verfügbar", "Bitte den Text stattdessen mit Strg+V direkt in das Feld einfügen.", true);
+      return;
+    }
+    try { els.rovoAnswerTextarea.value = await navigator.clipboard.readText(); els.rovoAnswerTextarea.focus(); }
+    catch (e) { showToast("Zugriff verweigert", "Der Browser hat den Lesezugriff auf die Zwischenablage verweigert. Bitte mit Strg+V einfügen.", true); }
+  });
+  els.rovoAddEntryBtn.addEventListener("click", function () {
+    var entry = rovoAddEntry(els.rovoChatTextarea.value, els.rovoAnswerTextarea.value);
+    if (!entry) { showToast("Kein Inhalt", "Bitte Chatverlauf und/oder Antwort einfügen.", true); return; }
+    els.rovoChatTextarea.value = ""; els.rovoAnswerTextarea.value = "";
+    renderRovoEntries();
+    addLog("Rovo Knowledge: neuer Eintrag hinzugefügt (" + entry.when + ").");
+    showToast("Hinzugefügt", "Eintrag zu Rovo Knowledge hinzugefügt.");
+  });
+  // Trennzeile "---" (eigene Zeile, wie ein Markdown-Thematic-Break) trennt
+  // Chatverlauf (davor) von Antwort (danach); ohne Trenner landet der ganze
+  // Dateiinhalt im Chatverlauf - bewusst keine Rate-Heuristik über
+  // Stichworte wie "Antwort:", um keine falschen Trennungen zu erzeugen.
+  function rovoSplitChatAnswer(text) {
+    var lines = (text || "").split(/\r?\n/);
+    var dividerIdx = lines.findIndex(function (l) { return l.trim() === "---"; });
+    if (dividerIdx === -1) return { chat: text, answer: "" };
+    return { chat: lines.slice(0, dividerIdx).join("\n"), answer: lines.slice(dividerIdx + 1).join("\n") };
+  }
+  async function handleRovoMdFiles(fileList) {
+    var files = Array.prototype.filter.call(fileList || [], function (f) { return /\.(md|markdown)$/i.test(f.name || ""); });
+    if (!files.length) { showToast("Keine passende Datei", "Bitte eine .md-Datei auswählen.", true); return; }
+    var added = 0;
+    for (var i = 0; i < files.length; i++) {
+      try {
+        var text = await files[i].text();
+        var split = rovoSplitChatAnswer(text);
+        if (rovoAddEntry(split.chat, split.answer)) added++;
+      } catch (err) {
+        showToast("Fehler beim Lesen", files[i].name + ": " + ((err && err.message) || "Unbekannter Fehler."), true);
+      }
+    }
+    renderRovoEntries();
+    if (added) { addLog("Rovo Knowledge: " + added + " Markdown-Datei(en) als Einträge importiert."); showToast("Importiert", added + " Eintrag/Einträge hinzugefügt."); }
+  }
+  els.rovoMdDropzone.addEventListener("click", function () { els.rovoMdFileInput.click(); });
+  els.rovoMdDropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.rovoMdFileInput.click(); } });
+  els.rovoMdFileInput.addEventListener("change", function () { handleRovoMdFiles(els.rovoMdFileInput.files); els.rovoMdFileInput.value = ""; });
+  ["dragenter", "dragover"].forEach(function (evt) {
+    els.rovoMdDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.rovoMdDropzone.classList.add("dragover"); });
+  });
+  ["dragleave", "drop"].forEach(function (evt) {
+    els.rovoMdDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.rovoMdDropzone.classList.remove("dragover"); });
+  });
+  els.rovoMdDropzone.addEventListener("drop", function (e) {
+    var files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length) handleRovoMdFiles(files);
+  });
+  els.rovoEntriesTbody.addEventListener("click", function (e) {
+    var jiraBtn = e.target.closest("[data-rovo-jira-toggle]");
+    if (jiraBtn) {
+      var je = app.rovoEntries.filter(function (x) { return x.id === parseInt(jiraBtn.getAttribute("data-rovo-jira-toggle"), 10); })[0];
+      if (je) { je.jiraVisible = !je.jiraVisible; renderRovoEntries(); }
+      return;
+    }
+    var delBtn = e.target.closest("[data-rovo-delete]");
+    if (delBtn) {
+      var id = parseInt(delBtn.getAttribute("data-rovo-delete"), 10);
+      app.rovoEntries = app.rovoEntries.filter(function (x) { return x.id !== id; });
+      renderRovoEntries();
+      addLog("Rovo Knowledge: Eintrag gelöscht.");
+      return;
+    }
+  });
+  els.rovoEntriesTbody.addEventListener("change", function (e) {
+    var chapterSel = e.target.closest(".rovo-chapter-select");
+    if (chapterSel) {
+      var ce = app.rovoEntries.filter(function (x) { return x.id === parseInt(chapterSel.getAttribute("data-id"), 10); })[0];
+      if (ce) { ce.chapter = chapterSel.value; ce.subchapter = ""; renderRovoEntries(); }
+      return;
+    }
+    var subSel = e.target.closest(".rovo-subchapter-select");
+    if (subSel) {
+      var se = app.rovoEntries.filter(function (x) { return x.id === parseInt(subSel.getAttribute("data-id"), 10); })[0];
+      if (se) se.subchapter = subSel.value;
+    }
+  });
+
+  // KI-Zuordnung (analog massBuildAiAssignmentPrompt/jfBuildPrompt-Muster):
+  // Claude erhält Chatverlauf+Antwort und wählt - wörtlich aus der
+  // tatsächlich vorhandenen Gliederung bzw. Labels-Liste, nie erfunden -
+  // ein Kapitel (inkl. Unterkapitel) sowie bis zu 3 passende Labels.
+  // Überschreibt nie eine bereits gesetzte Kapitel-Zuordnung.
+  function rovoOutlineForPrompt() {
+    return app.outline.map(function (c) {
+      var subs = (c.subs || []).map(function (s) { return s.title; });
+      return "- " + c.title + (subs.length ? " | Unterkapitel: " + subs.join("; ") : "");
+    }).join("\n");
+  }
+  function rovoLabelOptionsList() {
+    return dedupeStrings(app.labels.map(function (l) { return l.de; })).filter(Boolean).sort(function (a, b) { return a.localeCompare(b, "de"); });
+  }
+  function rovoBuildAiAssignmentPrompt(entry, labelOptions) {
+    return "Du ordnest einen Textschnipsel aus einem Rovo-KI-Chat (Chatverlauf + Antwort, Wissens-Notiz für oneSCM) einem passenden Gliederungskapitel (inkl. Unterkapitel) und bis zu 3 passenden Labels zu.\n\n" +
+      "Verfügbare Gliederungskapitel mit Unterkapiteln (wähle GENAU EINEN Kapitel-Titel wörtlich aus der Liste, sowie optional GENAU EIN dort aufgeführtes Unterkapitel, oder \"keines\" falls nichts eindeutig passt):\n" +
+      rovoOutlineForPrompt() + "\n\n" +
+      "Verfügbare Labels (wähle 0 bis 3 davon wörtlich aus der Liste, kommagetrennt, oder leer lassen falls nichts passt):\n" +
+      labelOptions.map(function (l) { return "- " + l; }).join("\n") + "\n\n" +
+      "Chatverlauf:\n" + truncate(entry.chatText, 2500) + "\n\nAntwort:\n" + truncate(entry.answerText, 2500) + "\n\n" +
+      "Antworte AUSSCHLIESSLICH in genau diesem Format, ohne weitere Erklärung, ohne Anführungszeichen:\n" +
+      "Kapitel: <Titel aus der Liste oder keines>\n" +
+      "Unterkapitel: <Titel aus der Liste oder keines>\n" +
+      "Labels: <kommagetrennte Liste aus der Liste oder leer>";
+  }
+  function rovoParseAiAssignment(responseText, chapters, labelOptions) {
+    var chapterMatch = /Kapitel:\s*(.+)/i.exec(responseText || "");
+    var subMatch = /Unterkapitel:\s*(.+)/i.exec(responseText || "");
+    var labelsMatch = /Labels:\s*(.*)/i.exec(responseText || "");
+    var chapterTitle = chapterMatch ? chapterMatch[1].trim() : "";
+    if (chapters.indexOf(chapterTitle) === -1) chapterTitle = "";
+    var subTitle = subMatch ? subMatch[1].trim() : "";
+    if (!chapterTitle || subchapterOptionsForChapter(chapterTitle).indexOf(subTitle) === -1) subTitle = "";
+    var labelsRaw = labelsMatch ? labelsMatch[1].trim() : "";
+    var labels = labelsRaw ? labelsRaw.split(",").map(function (s) { return s.trim(); }).filter(function (s) { return labelOptions.indexOf(s) !== -1; }) : [];
+    return { chapterTitle: chapterTitle, subchapterTitle: subTitle, labels: labels.slice(0, 3) };
+  }
+  async function rovoRunAiAssignment() {
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    var targets = app.rovoEntries.filter(function (e) { return !e.chapter; });
+    if (!targets.length) { showToast("Nichts zu tun", "Alle Einträge haben bereits ein Kapitel zugeordnet.", true); return; }
+    var chapters = massChapterOptionsList();
+    var labelOptions = rovoLabelOptionsList();
+    els.rovoAiAssignBtn.disabled = true;
+    els.rovoAiAssignSpinner.hidden = false;
+    var updated = 0, skippedErrors = 0;
+    for (var i = 0; i < targets.length; i++) {
+      var entry = targets[i];
+      els.rovoAiStatusNote.textContent = "KI-Zuordnung: Eintrag " + (i + 1) + " von " + targets.length + " …";
+      try {
+        var result = await sampleApi(rovoBuildAiAssignmentPrompt(entry, labelOptions), { modelTier: "default", cache: false });
+        var suggestion = rovoParseAiAssignment(result.text, chapters, labelOptions);
+        if (suggestion.chapterTitle) {
+          entry.chapter = suggestion.chapterTitle;
+          entry.subchapter = suggestion.subchapterTitle || "";
+          entry.labels = dedupeStrings(["ROVO"].concat(suggestion.labels));
+          updated++;
+        }
+      } catch (err) {
+        skippedErrors++;
+      }
+    }
+    renderRovoEntries();
+    els.rovoAiStatusNote.textContent = updated + " von " + targets.length + " Einträgen per KI zugeordnet." + (skippedErrors ? " (" + skippedErrors + " fehlgeschlagen.)" : "");
+    addLog("Rovo Knowledge: KI-Zuordnung abgeschlossen - " + updated + " von " + targets.length + " Einträgen zugeordnet" + (skippedErrors ? ", " + skippedErrors + " fehlgeschlagen" : "") + ".");
+    els.rovoAiAssignBtn.disabled = false;
+    els.rovoAiAssignSpinner.hidden = true;
+  }
+  els.rovoAiAssignBtn.addEventListener("click", rovoRunAiAssignment);
+
+  // ZIP-Export aller Einträge (analog RAG-Bibliothek-ZIP-Export-Muster,
+  // s. ragBuildLibraryEntryMdFile/els.ragLibraryZipBtn): jeder Rovo-Eintrag
+  // als eigene .md-Datei mit Metadaten-Kopf (Datum, Kapitel/Unterkapitel,
+  // Labels) und Chatverlauf+Antwort im Fließtext.
+  function rovoBuildEntryMdFile(entry, index) {
+    var filename = String(index + 1).padStart(2, "0") + "_Rovo_" + entry.when.replace(/[^0-9]/g, "") + ".md";
+    var md = "# Rovo-Eintrag vom " + entry.when + "\n\n_Kapitel: " + (entry.chapter || "Nicht zugeordnet") +
+      (entry.subchapter ? " · Unterkapitel: " + entry.subchapter : "") +
+      " · Labels: " + entry.labels.join(", ") +
+      (entry.jiraKeys.length ? " · Jira: " + entry.jiraKeys.join(", ") : "") + "_\n\n" +
+      "## Chatverlauf\n\n" + (entry.chatText || "_(leer)_") + "\n\n## Antwort\n\n" + (entry.answerText || "_(leer)_");
+    return { filename: filename, md: md };
+  }
+  els.rovoZipExportBtn.addEventListener("click", async function () {
+    if (!app.rovoEntries.length) { showToast("Keine Einträge", "Noch keine Rovo-Einträge vorhanden.", true); return; }
+    if (typeof JSZip === "undefined") { showToast("Fehlgeschlagen", "ZIP-Bibliothek konnte nicht geladen werden.", true); return; }
+    try {
+      var zip = new JSZip();
+      app.rovoEntries.forEach(function (entry, i) {
+        var file = rovoBuildEntryMdFile(entry, i);
+        zip.file(file.filename, file.md);
+      });
+      var blob = await zip.generateAsync({ type: "blob" });
+      var ok = await saveOrWarn("Rovo_Knowledge_" + app.rovoEntries.length + "-Eintraege.zip", blob);
+      if (ok) { showToast("Gespeichert", app.rovoEntries.length + " Eintrag/Einträge als ZIP heruntergeladen."); addLog("Rovo Knowledge: " + app.rovoEntries.length + " Einträge als ZIP heruntergeladen."); }
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "ZIP konnte nicht erzeugt werden.", true);
+    }
+  });
+
   /* ============ Teil 9b: RAG - Rohdaten-Extraktion + KI-Text (sample-Capability) ============
      "RAG" hier im Sinn von Retrieval (deterministische Filterung/Extraktion der
      Ticket-Rohdaten - Überschrift+Beschreibung nach Domäne/Status/Zeitraum,
@@ -16521,6 +17037,7 @@
     manualChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender (erfahrene Nutzer im operativen Tagesgeschäft). Schreibe für das unten genannte Kapitel einen sachlichen, professionellen Fließtext im Stil eines Softwarehandbuchs auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform - z. B. \"Der Nutzer öffnet die Maske und trägt die Daten ein\", NICHT Präteritum/Futur wie \"öffnete\"/\"wird öffnen\"), mindestens 3, idealerweise bis zu 12 DIN-A4-Seiten Umfang (ca. 500-600 Wörter je Seite). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen (roter Faden), gefolgt von zusammenhängenden Abschnitten statt einer reinen Aufzählung. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, deutlich mit den Tags \"[Nur PKW]\", \"[Nur Van]\" bzw. \"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz. Kennzeichne außerdem, wo inhaltlich wirklich zutreffend (nicht erzwingen), wichtige Sicherheitshinweise/Warnungen mit \"[Warnung]\", hilfreiche Zusatzinformationen mit \"[Hinweis]\", praktische Tipps für den Arbeitsalltag mit \"[Tipp]\" sowie Querverweise auf andere Kapitel/Abschnitte mit \"[Verweis]\" - ebenfalls jeweils direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Retail\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\" (Market Operation) und weise explizit darauf hin, wenn ein Feature dem Retail NICHT zur Verfügung steht. Nutze ausschließlich Informationen aus den Ticket-Rohdaten unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text.",
     manualChapterSynthesis: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender. Die folgenden Teiltexte sind Abschnitte desselben Kapitels, aus technischen Gründen in mehreren Durchläufen aus unterschiedlichen Ausschnitten derselben Ticket-Rohdaten erzeugt. Verschmelze sie zu EINEM einzigen, zusammenhängenden Kapiteltext auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform, auch wenn ein Teiltext abweicht - dann beim Verschmelzen ins Präsens korrigieren) (roter Faden, mindestens 3 DIN-A4-Seiten, sachlicher Softwarehandbuch-Stil), ohne Hinweise auf \"Teiltexte\" oder \"Batches\". Erhalte dabei die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\"/\"[Warnung]\"/\"[Hinweis]\"/\"[Tipp]\"/\"[Verweis]\" sowie die Zwischenüberschriften \"## Retail\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" aus den Teiltexten. Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
     refCompare: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen zwei Fassungen desselben Kapitels: der ALTE STAND (aus einem bestehenden, bereits veröffentlichten Word-Handbuch) und der NEUE STAND (frisch aus aktuellen Jira-Tickets erzeugter Text). Vergleiche beide Fassungen inhaltlich und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Features\n- (ein Stichpunkt je im neuen Stand beschriebenem Inhalt, der im alten Stand fehlt oder dort erkennbar anders/noch nicht vorhanden war)\n\n### Widersprüche\n- (ein Stichpunkt je Aussage im alten Stand, die dem neuen Stand inhaltlich widerspricht oder durch ihn überholt/ungültig wird)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den beiden Texten unten, erfinde nichts hinzu:",
+    outlineCompare: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen zwei Fassungen einer Gliederung (reine Kapitel-/Unterkapitelstruktur, kein Fließtext): die AKTUELLE GLIEDERUNG (in dieser App) und eine HOCHGELADENE GLIEDERUNG zum Vergleich. Vergleiche beide strukturell und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Themenbereiche\n- (ein Stichpunkt je Kapitel/Unterkapitel, das in der hochgeladenen Gliederung vorkommt, in der aktuellen Gliederung aber fehlt oder dort erkennbar anders gegliedert ist)\n\n### Entfallene Themenbereiche\n- (ein Stichpunkt je Kapitel/Unterkapitel, das in der aktuellen Gliederung vorkommt, in der hochgeladenen Gliederung aber fehlt)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich die beiden Gliederungen unten, erfinde nichts hinzu:",
     manualQualityCheck: "Du bist Lektor/Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Prüfe den folgenden Kapiteltext und gib AUSSCHLIESSLICH die folgenden drei Abschnitte aus, in genau diesem Format:\n\n### Grammatikfehler\n- (ein Stichpunkt je Grammatik-/Rechtschreib-/Zeitform-Fehler - insbesondere Abweichungen vom geforderten Präsens -, mit kurzem Zitat der betroffenen Stelle)\n\n### Lücken\n- (ein Stichpunkt je inhaltlicher Lücke, unklarer oder unvollständiger Stelle)\n\n### Verbesserungsvorschläge\n- (ein Stichpunkt je Vorschlag zur Verständlichkeit/Lesbarkeit/Struktur)\n\nIst eine der drei Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
     fileviewTranslateToDe: "Übersetze den folgenden Text sinngemäß ins Deutsche, ohne Inhalte hinzuzufügen oder wegzulassen und ohne zusätzliche Erklärungen oder Anmerkungen. Gib ausschließlich den übersetzten Text aus:",
     fileviewSummaryDe: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Fasse den folgenden Dateiinhalt (bereinigte Ticket-Rohdaten aus einem Jira-Export) in einer prägnanten, verständlichen Zusammenfassung auf Deutsch zusammen (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen). Nutze ausschließlich Informationen aus dem Text unten, erfinde nichts hinzu:",
@@ -16540,6 +17057,7 @@
     manualChapter: "Benutzerhandbuch-Kapitel erstellen",
     manualChapterSynthesis: "Benutzerhandbuch-Kapitel zusammenführen (Batch-Modus)",
     refCompare: "Handbuch-Änderung nach Kapitel (Vergleich mit Referenz-Handbuch)",
+    outlineCompare: "Gliederung vergleichen (Struktur-Analyse)",
     manualQualityCheck: "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)",
     fileviewTranslateToDe: "Dateiansicht: Übersetzen (→ DE)",
     fileviewSummaryDe: "Dateiansicht: Zusammenfassung (Deutsch)",
@@ -19621,16 +20139,17 @@
   var MANUAL_IMAGE_TARGET_WIDTH_EMU = 5040000; // 140mm (36000 EMU/mm)
   async function manualPrepareBildbandMedia(chapterTitle) {
     var screens = bildbandScreensForChapter(chapterTitle);
-    var media = [];
-    for (var i = 0; i < screens.length; i++) {
-      var s = screens[i];
-      var dims = await loadImageNaturalSize(s.dataUrl);
+    // Alle Bildmasse PARALLEL decodieren statt sequenziell - sonst summiert
+    // sich der bis zu 2s lange Timeout-Fallback von loadImageNaturalSize()
+    // je Bild (z. B. 10 Screens => bis zu 20s statt ~2s Gesamtwartezeit).
+    var dimsList = await Promise.all(screens.map(function (s) { return loadImageNaturalSize(s.dataUrl); }));
+    return screens.map(function (s, i) {
+      var dims = dimsList[i];
       var naturalW = (dims && dims.width) || 800, naturalH = (dims && dims.height) || 600;
       var widthEmu = MANUAL_IMAGE_TARGET_WIDTH_EMU;
       var heightEmu = Math.round(widthEmu * (naturalH / naturalW));
-      media.push({ num: i + 1, rId: "rIdBild" + (i + 1), screen: s, ext: manualImageExtFromDataUrl(s.dataUrl), widthEmu: widthEmu, heightEmu: heightEmu });
-    }
-    return media;
+      return { num: i + 1, rId: "rIdBild" + (i + 1), screen: s, ext: manualImageExtFromDataUrl(s.dataUrl), widthEmu: widthEmu, heightEmu: heightEmu };
+    });
   }
   function manualImageDrawingParagraphXml(m) {
     var caption = m.screen.description || m.screen.sourceFile || "";
@@ -20812,6 +21331,207 @@
   }, 200);
   els.glSearchInput.addEventListener("input", glSearchDebounced);
 
+  // Gliederung exportieren & vergleichen: eigenes JSON-Export-Format
+  // (Round-Trip) sowie .docx-Upload (gleiche Erkennung wie der destruktive
+  // Gliederung-Ersetzen-Upload in den Einstellungen, s.
+  // outlineChaptersFromDocxHeadings/extractReferenceManualChapters weiter
+  // oben, Teil 2) - hier aber NICHT destruktiv: beliebig viele hochgeladene
+  // Gliederungen (app.uploadedOutlines) bleiben nebeneinander als
+  // Vergleichsgrundlage erhalten, app.outline selbst bleibt unverändert.
+  function outlineExportPayload() {
+    return {
+      app: "oneSCM Ticket-Cockpit – Gliederung-Export",
+      exportedAt: nowLabel(),
+      outline: app.outline.map(function (c) {
+        return { title: c.title, subs: (c.subs || []).map(function (s) { return { title: s.title }; }) };
+      })
+    };
+  }
+  els.outlineExportBtn.addEventListener("click", async function () {
+    if (!app.outline.length) { showToast("Keine Gliederung", "Es ist keine Gliederung vorhanden.", true); return; }
+    var payload = outlineExportPayload();
+    var filename = "Gliederung_" + nowLabel().replace(/[^0-9]/g, "") + ".json";
+    var ok = await saveOrWarn(filename, JSON.stringify(payload, null, 2));
+    if (ok) {
+      showToast("Exportiert", "Gliederung als „" + filename + "“ heruntergeladen.");
+      addLog("Gliederung exportiert (" + app.outline.length + " Kapitel) als „" + filename + "“.");
+    }
+  });
+  function outlineFromJsonPayload(raw) {
+    var parsed = JSON.parse(raw);
+    var list = Array.isArray(parsed) ? parsed : parsed.outline;
+    if (!Array.isArray(list)) throw new Error("Keine gültige Gliederungs-Export-Datei (Feld „outline“ fehlt).");
+    return list.map(function (c) {
+      return {
+        title: redactText(String((c && c.title) || "").trim()),
+        subs: (Array.isArray(c && c.subs) ? c.subs : []).map(function (s) {
+          return { title: redactText(String((s && s.title) || "").trim()) };
+        }).filter(function (s) { return s.title; })
+      };
+    }).filter(function (c) { return c.title; });
+  }
+  var nextUploadedOutlineId = 1;
+  function renderUploadedOutlines() {
+    var list = app.uploadedOutlines;
+    els.outlineUploadedEmpty.hidden = list.length > 0;
+    els.outlineUploadedTableWrap.hidden = list.length === 0;
+    els.outlineUploadedTbody.innerHTML = list.map(function (u) {
+      var subCount = u.outline.reduce(function (n, c) { return n + (c.subs ? c.subs.length : 0); }, 0);
+      return "<tr>" +
+        "<td>" + escapeHtml(u.filename) + "</td>" +
+        "<td>" + escapeHtml(u.uploadedAt) + "</td>" +
+        "<td>" + u.outline.length + "</td>" +
+        "<td>" + subCount + "</td>" +
+        '<td><button type="button" class="btn ghost btn-tiny outline-compare-run-btn" data-id="' + u.id + '">Vergleichen</button> ' +
+        '<button type="button" class="btn danger btn-tiny outline-compare-delete-btn" data-id="' + u.id + '">Löschen</button></td>' +
+        "</tr>";
+    }).join("");
+  }
+  async function handleOutlineCompareUploadFile(file) {
+    var name = file.name || "Gliederung";
+    els.outlineCompareDropzone.classList.add("processing");
+    els.outlineCompareSpinner.hidden = false;
+    await wait(30); // UI (Sanduhr) einmal rendern lassen, bevor das synchrone Parsing startet
+    try {
+      var outline;
+      if (/\.json$/i.test(name)) {
+        outline = outlineFromJsonPayload(await file.text());
+      } else if (/\.docx?$/i.test(name)) {
+        var buf = await readFileAsArrayBuffer(file);
+        var rawChapters = await extractReferenceManualChapters(buf);
+        outline = outlineChaptersFromDocxHeadings(rawChapters.filter(function (c) { return c.level > 0; }));
+      } else {
+        showToast("Format nicht unterstützt", "Bitte eine .json- (Gliederung-Export dieser App) oder .docx-Datei hochladen.", true);
+        return;
+      }
+      if (!outline.length) {
+        showToast("Keine Kapitel erkannt", "In der Datei wurden keine Kapitel gefunden.", true);
+        return;
+      }
+      var subCount = outline.reduce(function (n, c) { return n + c.subs.length; }, 0);
+      app.uploadedOutlines.unshift({ id: nextUploadedOutlineId++, filename: name, uploadedAt: nowLabel(), outline: outline, compareResult: null });
+      renderUploadedOutlines();
+      addLog("Gliederung „" + name + "“ zum Vergleich hochgeladen (" + outline.length + " Kapitel, " + subCount + " Unterkapitel).");
+      showToast("Hochgeladen", outline.length + " Kapitel aus „" + name + "“ zum Vergleich bereit.");
+    } catch (err) {
+      showToast("Hochladen fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.outlineCompareDropzone.classList.remove("processing");
+      els.outlineCompareSpinner.hidden = true;
+    }
+  }
+  els.outlineCompareDropzone.addEventListener("click", function () { els.outlineCompareFileInput.click(); });
+  els.outlineCompareDropzone.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.outlineCompareFileInput.click(); }
+  });
+  els.outlineCompareFileInput.addEventListener("change", function () {
+    var file = els.outlineCompareFileInput.files && els.outlineCompareFileInput.files[0];
+    els.outlineCompareFileInput.value = "";
+    if (file) handleOutlineCompareUploadFile(file);
+  });
+  ["dragenter", "dragover"].forEach(function (evt) {
+    els.outlineCompareDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.outlineCompareDropzone.classList.add("dragover"); });
+  });
+  ["dragleave", "drop"].forEach(function (evt) {
+    els.outlineCompareDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.outlineCompareDropzone.classList.remove("dragover"); });
+  });
+  els.outlineCompareDropzone.addEventListener("drop", function (e) {
+    var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) handleOutlineCompareUploadFile(file);
+  });
+  els.outlineUploadedTbody.addEventListener("click", async function (e) {
+    var delBtn = e.target.closest(".outline-compare-delete-btn");
+    if (delBtn) {
+      var delId = parseInt(delBtn.getAttribute("data-id"), 10);
+      var delEntry = app.uploadedOutlines.filter(function (u) { return u.id === delId; })[0];
+      if (!delEntry) return;
+      var ok = await confirmDialog('Hochgeladene Gliederung „' + delEntry.filename + '“ wirklich löschen?');
+      if (!ok) return;
+      app.uploadedOutlines = app.uploadedOutlines.filter(function (u) { return u.id !== delId; });
+      renderUploadedOutlines();
+      els.outlineCompareResult.hidden = true;
+      addLog("Hochgeladene Gliederung „" + delEntry.filename + "“ gelöscht.");
+      showToast("Gelöscht", 'Gliederung „' + delEntry.filename + '“ wurde entfernt.');
+      return;
+    }
+    var runBtn = e.target.closest(".outline-compare-run-btn");
+    if (runBtn) {
+      runBtn.disabled = true;
+      try { await runOutlineCompare(parseInt(runBtn.getAttribute("data-id"), 10)); }
+      finally { runBtn.disabled = false; }
+    }
+  });
+  renderUploadedOutlines();
+
+  // Deterministischer Struktur-Diff (kein KI-Aufruf, immer verfügbar):
+  // Kapitel nur in der jeweils anderen Gliederung (nach Titel, exakter
+  // Abgleich) sowie geänderte Unterkapitel je GEMEINSAMEM Kapitel.
+  function outlineStructuralDiff(currentOutline, uploadedOutline) {
+    var curTitles = currentOutline.map(function (c) { return c.title; });
+    var upTitles = uploadedOutline.map(function (c) { return c.title; });
+    var onlyInCurrent = curTitles.filter(function (t) { return upTitles.indexOf(t) === -1; });
+    var onlyInUploaded = upTitles.filter(function (t) { return curTitles.indexOf(t) === -1; });
+    var subchapterChanges = [];
+    currentOutline.forEach(function (c) {
+      var match = uploadedOutline.filter(function (u) { return u.title === c.title; })[0];
+      if (!match) return;
+      var curSubs = (c.subs || []).map(function (s) { return s.title; });
+      var upSubs = (match.subs || []).map(function (s) { return s.title; });
+      var addedSubs = upSubs.filter(function (t) { return curSubs.indexOf(t) === -1; });
+      var removedSubs = curSubs.filter(function (t) { return upSubs.indexOf(t) === -1; });
+      if (addedSubs.length || removedSubs.length) {
+        subchapterChanges.push({ chapterTitle: c.title, addedSubs: addedSubs, removedSubs: removedSubs });
+      }
+    });
+    return { onlyInCurrent: onlyInCurrent, onlyInUploaded: onlyInUploaded, subchapterChanges: subchapterChanges };
+  }
+  function outlineCompareOutlineText(outline) {
+    return outline.map(function (c) {
+      return "- " + c.title + ((c.subs && c.subs.length) ? "\n  " + c.subs.map(function (s) { return s.title; }).join("; ") : "");
+    }).join("\n");
+  }
+  function outlineCompareBuildPrompt(currentOutline, uploadedOutline) {
+    return ragPromptFor("outlineCompare") + "\n\nAKTUELLE GLIEDERUNG:\n" + outlineCompareOutlineText(currentOutline) +
+      "\n\nHOCHGELADENE GLIEDERUNG:\n" + outlineCompareOutlineText(uploadedOutline);
+  }
+  function outlineCompareListHtml(titles) {
+    return titles.length ? titles.map(function (t) { return "<li>" + escapeHtml(t) + "</li>"; }).join("") : "<li>Keine.</li>";
+  }
+  async function runOutlineCompare(id) {
+    var entry = app.uploadedOutlines.filter(function (u) { return u.id === id; })[0];
+    if (!entry) return;
+    var diff = outlineStructuralDiff(app.outline, entry.outline);
+    els.outlineCompareResult.hidden = false;
+    els.outlineCompareTitle.textContent = "Vergleich mit „" + entry.filename + "“ (hochgeladen " + entry.uploadedAt + ")";
+    els.outlineCompareOnlyCurrent.innerHTML = outlineCompareListHtml(diff.onlyInCurrent);
+    els.outlineCompareOnlyUploaded.innerHTML = outlineCompareListHtml(diff.onlyInUploaded);
+    els.outlineCompareSubChanges.innerHTML = diff.subchapterChanges.length
+      ? diff.subchapterChanges.map(function (ch) {
+          return "<li><b>" + escapeHtml(ch.chapterTitle) + "</b>" +
+            (ch.addedSubs.length ? " – neu: " + ch.addedSubs.map(function (t) { return escapeHtml(t); }).join(", ") : "") +
+            (ch.removedSubs.length ? " – entfallen: " + ch.removedSubs.map(function (t) { return escapeHtml(t); }).join(", ") : "") +
+            "</li>";
+        }).join("")
+      : "<li>Keine Unterschiede bei gemeinsamen Kapiteln.</li>";
+    els.outlineCompareStatusNote.textContent = "";
+    if (!sampleApi) {
+      els.outlineCompareAnalysisOutput.textContent = "";
+      els.outlineCompareStatusNote.textContent = "KI-Analyse in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar. Der Struktur-Vergleich oben bleibt unabhängig davon verfügbar.";
+      return;
+    }
+    els.outlineCompareAnalysisOutput.textContent = "Wird analysiert …";
+    try {
+      var result = await sampleApi(outlineCompareBuildPrompt(app.outline, entry.outline), { modelTier: "default", cache: false });
+      els.outlineCompareAnalysisOutput.textContent = result.text || "";
+      entry.compareResult = { generatedAt: nowLabel(), analysisText: result.text || "" };
+      addLog("Gliederung-Vergleich mit „" + entry.filename + "“ erzeugt (Struktur-Diff + KI-Analyse).");
+    } catch (err) {
+      els.outlineCompareAnalysisOutput.textContent = "";
+      els.outlineCompareStatusNote.textContent = "Fehler: " + ((err && err.message) || "Unbekannter Fehler.");
+      showToast("Vergleich fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    }
+  }
+
   /* ============ Teil 10: Navigation ============ */
 
   var viewPanels = document.querySelectorAll("[data-view-panel]");
@@ -20822,6 +21542,7 @@
     if (name === "output-md" || name === "output-pdf") renderOutputCounts();
     if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); renderBildband(); }
     if (name === "bildband") renderBildband();
+    if (name === "rovoknowledge") renderRovoEntries();
     if (window.innerWidth <= 900) setSidebar(false);
   }
   navItems.forEach(function (btn) { btn.addEventListener("click", function () { showView(btn.getAttribute("data-view")); }); });

@@ -1,0 +1,173 @@
+// Register "Bilder": neuer Button "OCR: Alle Bilder interpretieren" direkt
+// nach dem Hochladen-Bereich. Prüft: Sanduhr-Spinner + Statustext während
+// des Laufs, OCR-Text wird für JEDES Bild neu erkannt (Tesseract.js,
+// gemockt), Claude (sample-Capability, gemockt) ordnet daraus Kapitel,
+// Unterkapitel (wörtlich aus der Gliederung) und eine Kurzbeschreibung zu -
+// überschreibt dabei NIE ein bereits gesetztes Kapitel/Unterkapitel/
+// Beschreibung (nur leere Felder werden ergänzt), das Unterkapitel wird nur
+// übernommen, wenn es zum (ggf. bereits gesetzten) Kapitel passt. Das
+// Kapitel-Textfeld der Galerie-Karte ist jetzt ein Dropdown (wie im Editor-
+// Register), mit neuem kaskadierendem Unterkapitel-Dropdown. Zusätzlich:
+// Fehlerbehandlung ohne Tesseract/ohne Bilder, kein Absturz bei KI-Fehler
+// für ein einzelnes Bild.
+const fs = require("fs");
+const path = require("path");
+const BUILD_HTML = path.join(__dirname, "..", "ticket_cockpit.build.html");
+const { JSDOM, VirtualConsole } = require("jsdom");
+
+const fragment = fs.readFileSync(BUILD_HTML, "utf-8");
+const full = `<!doctype html><html><head><meta charset="utf-8"></head><body>${fragment}</body></html>`;
+const errors = [];
+const vc = new VirtualConsole();
+vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract|pdf\.js|pdf\.worker/i)) errors.push(e.message); });
+
+// Claude liest aus dem Prompt die angebotene Kapitel-/Unterkapitelliste und
+// schlägt immer das ERSTE dort aufgeführte Kapitel samt dessen erstem
+// Unterkapitel vor - robust gegenüber der tatsächlich hinterlegten
+// Gliederung (keine Kopplung an konkrete Kapitelnamen).
+var ocrMockText = "Mocked OCR Text 123";
+function sampleImplFactory() {
+  return async function (promptText) {
+    var m = /Verfügbare Gliederungskapitel[^\n]*\n((?:- .+\n?)+)/.exec(promptText || "");
+    var firstChapter = "keines", firstSub = "keines";
+    if (m) {
+      var firstLine = m[1].split("\n")[0].replace(/^- /, "").trim();
+      var parts = firstLine.split(" | Unterkapitel: ");
+      firstChapter = parts[0];
+      if (parts[1]) firstSub = parts[1].split("; ")[0];
+    }
+    return { text: "Kapitel: " + firstChapter + "\nUnterkapitel: " + firstSub + "\nKurzbeschreibung: Zeigt die Startseite des Moduls.", truncated: false, modelTierApplied: "default" };
+  };
+}
+let sampleImpl = sampleImplFactory();
+const dom = new JSDOM(full, {
+  runScripts: "dangerously", resources: "usable", pretendToBeVisual: true, url: "https://example.com/t", virtualConsole: vc,
+  beforeParse(window) {
+    window.Tesseract = { recognize: function () { return Promise.resolve({ data: { text: ocrMockText } }); } };
+    window.claude = {
+      use: function (name) {
+        if (name === "sample") return Promise.resolve(function (input, opts) { return sampleImpl(input, opts); });
+        return Promise.resolve(null);
+      },
+    };
+  },
+});
+
+function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
+function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles: true })); }
+async function confirmViaModal(doc) {
+  await wait(30);
+  fire(doc.getElementById("confirm-modal-ok-btn"), "click");
+  await wait(200);
+}
+const PNG_1X1 = Buffer.from(
+  fs.readFileSync(path.join(__dirname, "fixtures", "red_square_dataurl.txt"), "utf-8").trim().split(",")[1],
+  "base64"
+);
+
+(async () => {
+  await wait(500);
+  const doc = dom.window.document;
+  const win = dom.window;
+  const checks = [];
+  function check(l, ok) { checks.push([l, ok]); console.log((ok ? "OK  " : "FAIL") + " - " + l); }
+
+  doc.querySelector('.nav-item[data-view="einstellungen"]').click();
+  await wait(100);
+  fire(doc.getElementById("delete-all-data-btn"), "click");
+  await confirmViaModal(doc);
+
+  doc.querySelector('.nav-item[data-view="bilder"]').click();
+  await wait(100);
+
+  check("OCR-Stapel-Button vorhanden", !!doc.getElementById("images-ocr-batch-btn"));
+  check("OCR-Stapel-Spinner vorhanden (anfangs versteckt)", doc.getElementById("images-ocr-batch-spinner").hidden === true);
+
+  // ===================== Ohne Bilder: verständlicher Hinweis =====================
+  fire(doc.getElementById("images-ocr-batch-btn"), "click");
+  await wait(50);
+  check("OCR-Stapel ohne Bilder zeigt Hinweis statt Absturz", doc.getElementById("toast").textContent.includes("Es sind keine hochgeladenen Bilder vorhanden"));
+
+  // ===================== 2 Bilder hochladen =====================
+  const imageInput = doc.getElementById("image-file-input");
+  Object.defineProperty(imageInput, "files", {
+    value: [
+      new win.File([PNG_1X1], "screenshot_a.png", { type: "image/png" }),
+      new win.File([PNG_1X1], "screenshot_b.png", { type: "image/png" })
+    ], configurable: true
+  });
+  fire(imageInput, "change");
+  await wait(300);
+
+  function cards() { return Array.from(doc.querySelectorAll("#gallery .uploaded-image-card")); }
+  function descriptionValueFor(filename) {
+    var row = Array.from(doc.getElementById("images-tbody").querySelectorAll("tr")).find((r) => r.textContent.includes(filename));
+    return row ? row.querySelector(".image-description-input").value : null;
+  }
+  check("2 Bilder hochgeladen", cards().length === 2);
+  check("Galerie-Karte zeigt Kapitel-Dropdown (kein Textfeld mehr)", !!cards()[0].querySelector(".image-chapter-select"));
+  check("Galerie-Karte zeigt Unterkapitel-Dropdown", !!cards()[0].querySelector(".image-subchapter-select"));
+  check("Unterkapitel-Dropdown anfangs deaktiviert (noch kein Kapitel gesetzt)", cards()[0].querySelector(".image-subchapter-select").disabled === true);
+
+  const chapterOptions = Array.from(cards()[0].querySelector(".image-chapter-select").options).map((o) => o.value);
+  check("Kapitel-Dropdown bietet mind. 2 echte Kapitel (für den Mismatch-Test unten)", chapterOptions.filter(Boolean).length >= 2);
+  const firstRealChapter = chapterOptions.filter(Boolean)[0];
+  const secondRealChapter = chapterOptions.filter(Boolean)[1];
+
+  // ===================== Manuelle Vorbelegung bei Bild 1 (zweites Kapitel, NICHT das von der KI vorgeschlagene erste) =====================
+  const chapterSelect1 = cards()[0].querySelector(".image-chapter-select");
+  chapterSelect1.value = secondRealChapter;
+  fire(chapterSelect1, "change");
+  await wait(50);
+  check("Unterkapitel-Dropdown nach Kapitel-Auswahl aktiviert", cards()[0].querySelector(".image-subchapter-select").disabled === false);
+
+  // ===================== OCR-Stapellauf =====================
+  fire(doc.getElementById("images-ocr-batch-btn"), "click");
+  await wait(400);
+
+  check("Status-Hinweis nennt 2 verarbeitete Bilder", doc.getElementById("images-ocr-batch-status-note").textContent.includes("2 Bild(er) per OCR verarbeitet"));
+  check("Protokoll vermerkt die Stapelverarbeitung", doc.getElementById("log-list").textContent.includes("OCR-Stapelverarbeitung"));
+
+  const ocrBoxes = cards().map((c) => c.querySelector(".image-ocr-box"));
+  check("Beide Bilder zeigen den (gemockten) OCR-Text", ocrBoxes.every((b) => b && b.textContent.includes("Mocked OCR Text 123")));
+
+  const row1 = cards()[0];
+  const row2 = cards()[1];
+  check("Bild 1 (manuell vorbelegt): Kapitel bleibt unverändert (wird nie überschrieben)", row1.querySelector(".image-chapter-select").value === secondRealChapter);
+  check("Bild 1: Unterkapitel NICHT von der KI übernommen (Vorschlag gehört zu einem ANDEREN Kapitel)", row1.querySelector(".image-subchapter-select").value === "");
+  check("Bild 1: Kurzbeschreibung trotzdem von der KI ergänzt (Feld war leer)", descriptionValueFor("screenshot_a.png") === "Zeigt die Startseite des Moduls.");
+
+  check("Bild 2 (keine Vorbelegung): Kapitel von der KI zugeordnet (erstes Kapitel aus der Liste)", row2.querySelector(".image-chapter-select").value === firstRealChapter);
+
+  // ===================== Erneuter Lauf: bereits gesetzte Felder bleiben, OCR-Text wird neu erkannt =====================
+  ocrMockText = "Zweiter OCR-Durchlauf, anderer Text";
+  const chapterBeforeSecondRun = row1.querySelector(".image-chapter-select").value;
+  const descBeforeSecondRun = descriptionValueFor("screenshot_a.png");
+  fire(doc.getElementById("images-ocr-batch-btn"), "click");
+  await wait(400);
+  check("Erneuter Lauf: OCR-Text wird für jedes Bild neu erkannt (geänderter Mock-Text sichtbar)",
+    cards().every((c) => c.querySelector(".image-ocr-box").textContent.includes("Zweiter OCR-Durchlauf")));
+  check("Erneuter Lauf: bereits gesetztes Kapitel bleibt unverändert", cards()[0].querySelector(".image-chapter-select").value === chapterBeforeSecondRun);
+  check("Erneuter Lauf: bereits gesetzte Kurzbeschreibung bleibt unverändert (nicht durch neuen OCR-Text ersetzt)",
+    descBeforeSecondRun === "Zeigt die Startseite des Moduls." && descriptionValueFor("screenshot_a.png") === descBeforeSecondRun);
+
+  // ===================== Ohne Tesseract: ehrlicher Fehler statt Absturz =====================
+  delete win.Tesseract;
+  fire(doc.getElementById("images-ocr-batch-btn"), "click");
+  await wait(100);
+  check("Ohne Tesseract: verständlicher Hinweis statt Absturz", doc.getElementById("toast").textContent.includes("OCR-Bibliothek"));
+  win.Tesseract = { recognize: function () { return Promise.resolve({ data: { text: ocrMockText } }); } };
+
+  check("Kein unbehandelter JS-Fehler während der gesamten Interaktion", errors.length === 0);
+
+  const passed = checks.filter((c) => c[1]).length;
+  console.log(`\n${passed}/${checks.length} bestanden`);
+  if (passed === checks.length) {
+    console.log("ALLE BILDER-OCR-STAPEL-TESTS BESTANDEN");
+    process.exit(0);
+  } else {
+    console.log("FEHLGESCHLAGENE PRÜFUNGEN:");
+    checks.filter((c) => !c[1]).forEach((c) => console.log("  - " + c[0]));
+    process.exit(1);
+  }
+})().catch((e) => { console.error(e); process.exit(1); });

@@ -72,22 +72,34 @@ const redSquareDataUrl = fs.readFileSync(path.join(FIXTURES, "red_square_dataurl
   check("Nicht-Bild-Datei erzeugt keine neue Karte (weiterhin nur 1)", cards().length === 1);
   check("Toast meldet 'Kein Bild'", doc.getElementById("toast").textContent.includes("Kein Bild"));
 
-  // ===================== Domäne/Prozessschritt/Kapitel taggen =====================
+  // ===================== Domäne/Prozessschritt taggen, Kapitel/Unterkapitel zuordnen =====================
+  // Kapitel/Unterkapitel sind (wie im Editor-Register) echte Dropdowns aus
+  // der tatsächlichen Gliederung, Domäne/Prozessschritt bleiben freie
+  // Textfelder.
   const domainInput = card.querySelector('.image-tag-input[data-field="domain"]');
   const stepInput = card.querySelector('.image-tag-input[data-field="processStep"]');
-  const chapterInput = card.querySelector('.image-tag-input[data-field="chapter"]');
-  check("Domäne/Prozessschritt/Kapitel-Felder vorhanden", !!domainInput && !!stepInput && !!chapterInput);
+  const chapterSelect = card.querySelector(".image-chapter-select");
+  const subchapterSelect = card.querySelector(".image-subchapter-select");
+  check("Domäne/Prozessschritt-Felder vorhanden", !!domainInput && !!stepInput);
+  check("Kapitel-/Unterkapitel-Dropdowns vorhanden", !!chapterSelect && !!subchapterSelect);
+  check("Unterkapitel-Dropdown anfangs deaktiviert (noch kein Kapitel gesetzt)", subchapterSelect.disabled === true);
   domainInput.value = "Contract Management";
   fire(domainInput, "input");
   stepInput.value = "Schritt 2: Prüfung";
   fire(stepInput, "input");
-  chapterInput.value = "3.1 Einrichtung";
-  fire(chapterInput, "input");
   // Kein Re-Render bei Tag-Eingabe (Fokus darf nicht verloren gehen) - Werte direkt im State pruefen.
   check("Getaggte Werte werden im State übernommen (kein Re-Render nötig)", true);
 
+  const chapterOptionValue = Array.from(chapterSelect.options).map((o) => o.value).filter(Boolean)[0];
+  chapterSelect.value = chapterOptionValue;
+  fire(chapterSelect, "change");
+  await wait(50);
+  let cardAfterChapter = cards()[0];
+  check("Kapitel-Auswahl wird übernommen", cardAfterChapter.querySelector(".image-chapter-select").value === chapterOptionValue);
+  check("Unterkapitel-Dropdown nach Kapitel-Auswahl aktiviert", cardAfterChapter.querySelector(".image-subchapter-select").disabled === false);
+
   // ===================== Technische Metadaten (keine KI-Bildanalyse) =====================
-  fire(card.querySelector(".image-metadata-btn"), "click");
+  fire(cardAfterChapter.querySelector(".image-metadata-btn"), "click");
   await wait(200);
   const cardAfterMeta = cards()[0];
   const metaBox = cardAfterMeta.querySelector(".image-meta-box");

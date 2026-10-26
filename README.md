@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.83.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.85.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -904,6 +904,38 @@ zusammenzuführen.
   **benachbarte Themenfelder** – bereits erzeugte Stichwörter aus
   beliebigen anderen Unterkapiteln, deren Ticket-Zuordnung sich mit den
   Suchtreffern überschneidet.
+
+  **Gliederung exportieren & vergleichen** (neu, v2.85.0): die aktuelle
+  Gliederung (Kapitel/Unterkapitel) lässt sich als eigene JSON-Datei
+  exportieren – z. B. zur Wiederverwendung in einem anderen Projekt oder
+  als Vergleichsgrundlage. Zum Vergleich lässt sich eine zuvor exportierte
+  Gliederung (.json) oder eine fremde Gliederung aus einem Word-Dokument
+  (.docx, Formatvorlagen "Überschrift 1/2") hochladen – beliebig viele
+  bleiben nebeneinander erhalten, die eigene Gliederung bleibt dabei
+  unverändert. Ein Klick auf "Vergleichen" zeigt je Upload einen
+  **deterministischen Struktur-Diff** (Kapitel nur in der aktuellen bzw.
+  nur in der hochgeladenen Gliederung, geänderte Unterkapitel je
+  gemeinsamem Kapitel – kein KI-Aufruf nötig) sowie zusätzlich eine von
+  Claude (sample-Capability) erzeugte Kurz-Einschätzung der inhaltlichen
+  Bedeutung der Änderungen.
+- **Rovo Knowledge** (neu, v2.85.0, eigener Navigationspunkt direkt nach
+  Import): eigenständiger Bestand für Textschnipsel aus Rovo-KI-Chats
+  (Chatverlauf + Antwort als zwei getrennte Felder), importierbar über
+  Zwischenablage (je ein eigener "Aus Zwischenablage einfügen"-Button für
+  Chatverlauf und Antwort) oder durch Hochladen von .md-Dateien – eine
+  eigene Zeile "---" im Dateiinhalt trennt dabei Chatverlauf (davor) von
+  Antwort (danach), ohne Trennzeile landet der gesamte Inhalt im
+  Chatverlauf-Feld. Jeder Eintrag ist fest mit dem Label **"ROVO"**
+  markiert. Ein Klick auf "KI-Zuordnung" ordnet alle noch offenen Einträge
+  per Claude (sample-Capability) einem passenden Kapitel/Unterkapitel
+  (wörtlich aus der Gliederung) sowie bis zu 3 weiteren Labels zu, ohne
+  ein bereits gesetztes Kapitel zu überschreiben und ohne das feste
+  ROVO-Label zu verlieren. Im Text vorkommende Jira-Ticketnummern werden
+  automatisch erkannt und lassen sich je Eintrag über einen eigenen
+  "Jira"-Button ein-/ausblenden (reiner Anzeige-Umschalter, keine
+  Abgleich mit importierten Ticketdaten). Alle Einträge lassen sich über
+  "Alle als ZIP exportieren" gesammelt als ZIP-Archiv herunterladen (je
+  Eintrag eine eigene .md-Datei mit Metadaten-Kopf).
 - **Massenverarbeitung** (neu, eigener Navigationspunkt direkt vor
   Verarbeitung) – bewusst **eigenständige** Funktion, unabhängig von der
   RAG-Bibliothek (Verarbeitung → 7. RAG, s. u.): eigener Datenbestand
@@ -1649,7 +1681,9 @@ zusammenzuführen.
   jeweils nächste zugeordnete Bild ersetzt (inkl. automatischer
   Bildunterschrift). Übersichtstabelle je Kapitel mit Anzahl Platzhalter/
   zugeordneter Screens, Status und direktem DOCX-/PDF-Export. Details siehe
-  Abschnitt weiter unten.
+  Abschnitt weiter unten. (v2.84.0: Bild-Maße für den DOCX-/PDF-Export
+  werden jetzt parallel statt sequentiell ermittelt – deutlich schnellerer
+  Export bei mehreren Bildern je Kapitel.)
 - **Bilder** – Tabelle **und** Kachel-Galerie aller in der Sitzung
   erzeugten Prozessdiagramme sowie eigener Bild-Uploads, jeweils mit
   Datum. Beschreibungen lassen sich für beide Bildarten direkt in der
@@ -1658,8 +1692,9 @@ zusammenzuführen.
   Datei-Dialog/Drag&Drop oder aus der Zwischenablage (Strg+V bzw. Button
   „Aus Zwischenablage einfügen“). Hochgeladene Bilder lassen sich
   zusätzlich:
-  - mit **Domäne / Kapitel / Schritt (für Clickanweisung)** als Freitext
-    verschlagworten,
+  - mit **Domäne / Schritt (für Clickanweisung)** als Freitext
+    verschlagworten, **Kapitel/Unterkapitel** per Dropdown (wie im
+    Editor-Register) wörtlich aus der Gliederung zuordnen,
   - per **OCR** (Tesseract.js, läuft komplett im Browser via WebAssembly,
     Englisch + Deutsch; lädt beim ersten Lauf Erkennungsdaten per CDN
     nach) nach Text durchsuchen,
@@ -1668,6 +1703,18 @@ zusammenzuführen.
     Durchschnittsfarbe/-helligkeit – bewusst **keine KI-Bildanalyse/
     -interpretation**, nur deterministisch nachvollziehbare Werte,
   - wieder **herunterladen**.
+
+  **OCR-Stapelverarbeitung: "OCR: Alle Bilder interpretieren"** (neu,
+  v2.85.0), direkt nach dem Hochladen-Bereich: ein Klick erkennt per OCR
+  für JEDES hochgeladene Bild den enthaltenen Text neu (Sanduhr-Spinner +
+  laufender Statustext "Bild X von Y …") und lässt Claude (sample-
+  Capability) anhand dieses Texts ein passendes Kapitel, Unterkapitel
+  (wörtlich aus der Gliederung) sowie eine Kurzbeschreibung vorschlagen –
+  überschreibt dabei **nie** ein bereits gesetztes Kapitel/Unterkapitel/
+  Beschreibung, ergänzt nur, was noch leer ist; das Unterkapitel wird nur
+  übernommen, wenn es zum (ggf. bereits gesetzten) Kapitel passt. Ohne
+  Claude-Artifact-Laufzeit bzw. ohne Internetzugriff (Tesseract-Nachladen)
+  bleibt der OCR-Text trotzdem erkennbar, nur die KI-Zuordnung entfällt.
 - **Output MD Tickets / Output PDF Tickets** – bereinigte Tickets als
   ZIP-Archiv aus Markdown- bzw. PDF-Dateien exportieren (respektiert die
   aktuelle Dashboard-Filterung); PDFs werden clientseitig mit jsPDF
