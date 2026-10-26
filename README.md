@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.86.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.89.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -934,7 +934,12 @@ zusammenzuführen.
   per Claude (sample-Capability) einem passenden Kapitel/Unterkapitel
   (wörtlich aus der Gliederung) sowie bis zu 3 weiteren Labels zu, ohne
   ein bereits gesetztes Kapitel zu überschreiben und ohne das feste
-  ROVO-Label zu verlieren. Im Text vorkommende Jira-Ticketnummern werden
+  ROVO-Label zu verlieren. Kapitel, Unterkapitel und Labels bleiben danach
+  frei manuell nachpflegbar (neu, v2.87.0): Kapitel/Unterkapitel per
+  Dropdown, Labels als entfernbare Chips ("×") mit eigenem
+  "+ Label"-Auswahlfeld (wörtlich aus der Stammdaten-Labelliste, keine
+  Freitext-Labels) – "ROVO" selbst bleibt fest und ist nicht entfernbar.
+  Im Text vorkommende Jira-Ticketnummern werden
   automatisch erkannt und lassen sich je Eintrag über einen eigenen
   "Jira"-Button ein-/ausblenden (reiner Anzeige-Umschalter, keine
   Abgleich mit importierten Ticketdaten). Alle Einträge lassen sich über
@@ -1688,6 +1693,28 @@ zusammenzuführen.
   Abschnitt weiter unten. (v2.84.0: Bild-Maße für den DOCX-/PDF-Export
   werden jetzt parallel statt sequentiell ermittelt – deutlich schnellerer
   Export bei mehreren Bildern je Kapitel.)
+- **EDITO** (neu, v2.88.0) – erstellt eine NEUE Fassung des
+  Benutzerhandbuchs je Rolle/Sparte aus 5 internen Quellen gleichzeitig:
+  importierten Jira-Tickets, der RAG-Bibliothek, dem bereits bestehenden
+  Benutzerhandbuch-Text, Rovo-Knowledge-Textschnipseln sowie zugeordneten
+  Bildern (Bildband-Platzhalter `[Bild]`) – ein eigener, von
+  `app.manualChapters` unabhängiger Bestand, existiert also bewusst
+  parallel zum bestehenden Stand. Nutzt für die Rolle/Sparte-Auswahl
+  dieselben 6 Gliederungsversionen wie "Verarbeitung → Gliederung-
+  Versionen" (Markt/MO/Dealer/IT/Van/Pkw): nur Kapitel, die für die
+  gewählte Version zutreffen, werden angeboten, zusätzlich werden je
+  Kapitel nur die TICKETS berücksichtigt, deren Sparte-/Rollen-Tags zur
+  Version passen (die anderen 4 Quellen tragen keine solchen Tags und
+  fließen vollständig ein). Erzeugung je Kapitel einzeln oder über einen
+  Sammel-Lauf "Alle Kapitel erzeugen", Vorschau frei editierbar, Export je
+  Kapitel als DOCX/PDF/Markdown. Drei Prüf-Agenten (reine Befund-Reports,
+  keine Auto-Korrektur): **Agent 1** validiert jede fachliche Aussage im
+  erzeugten Text gegen die Rovo-/Jira-Quellen (nicht belegte Aussagen/
+  Widersprüche), **Agent 2** prüft Grammatik, Sprachstil, Wiederholungen
+  und roten Faden. **Agent 3** (Design: Struktur-Prüfung des exportierten
+  Gesamtdokuments – echte Seitenanzahl, eingebettete Bilder,
+  Inhaltsverzeichnis) sowie zwei weitere Agenten folgen in einem späteren
+  Ausbauschritt zusammen mit dem Mehrkapitel-Gesamtdokument-Export.
 - **Bilder** – Tabelle **und** Kachel-Galerie aller in der Sitzung
   erzeugten Prozessdiagramme sowie eigener Bild-Uploads, jeweils mit
   Datum. Beschreibungen lassen sich für beide Bildarten direkt in der
@@ -1711,12 +1738,17 @@ zusammenzuführen.
   **OCR-Stapelverarbeitung: "OCR: Alle Bilder interpretieren"** (neu,
   v2.85.0), direkt nach dem Hochladen-Bereich: ein Klick erkennt per OCR
   für JEDES hochgeladene Bild den enthaltenen Text neu (Sanduhr-Spinner +
-  laufender Statustext "Bild X von Y …") und lässt Claude (sample-
-  Capability) anhand dieses Texts ein passendes Kapitel, Unterkapitel
-  (wörtlich aus der Gliederung) sowie eine Kurzbeschreibung vorschlagen –
-  überschreibt dabei **nie** ein bereits gesetztes Kapitel/Unterkapitel/
-  Beschreibung, ergänzt nur, was noch leer ist; das Unterkapitel wird nur
-  übernommen, wenn es zum (ggf. bereits gesetzten) Kapitel passt. Ohne
+  laufender Statustext, der die Anzahl bereits verarbeiteter Bilder zeigt)
+  und lässt Claude (sample-Capability) anhand dieses Texts ein passendes
+  Kapitel, Unterkapitel (wörtlich aus der Gliederung) sowie eine
+  Kurzbeschreibung vorschlagen – überschreibt dabei **nie** ein bereits
+  gesetztes Kapitel/Unterkapitel/Beschreibung, ergänzt nur, was noch leer
+  ist; das Unterkapitel wird nur übernommen, wenn es zum (ggf. bereits
+  gesetzten) Kapitel passt. Alle Zuordnungen werden dauerhaft in der
+  Sitzung gespeichert und bleiben jederzeit per Dropdown/Textfeld manuell
+  korrigierbar. Die Bilder werden dabei **parallel statt sequentiell**
+  per OCR verarbeitet (neu, v2.89.0, bis zu 3 gleichzeitig), was den
+  Gesamtdurchlauf bei mehreren Bildern deutlich beschleunigt. Ohne
   Claude-Artifact-Laufzeit bzw. ohne Internetzugriff (Tesseract-Nachladen)
   bleibt der OCR-Text trotzdem erkennbar, nur die KI-Zuordnung entfällt.
 - **Output MD Tickets / Output PDF Tickets** – bereinigte Tickets als

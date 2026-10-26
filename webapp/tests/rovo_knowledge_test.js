@@ -4,10 +4,13 @@
 // Übersicht eingefügt, jeder Eintrag ist fest mit dem Label "ROVO"
 // markiert, wird per KI (sample-Capability) einem Kapitel/Unterkapitel und
 // bis zu 3 weiteren Labels zugeordnet (ohne das feste ROVO-Label zu
-// verlieren, ohne ein bereits gesetztes Kapitel zu überschreiben), im Text
-// vorkommende Jira-Ticketnummern lassen sich je Eintrag ein-/ausblenden,
-// und alle Einträge lassen sich als ZIP (je Eintrag eine .md-Datei)
-// exportieren. Prüft zusätzlich den Sitzung-speichern/laden-Rundlauf.
+// verlieren, ohne ein bereits gesetztes Kapitel zu überschreiben). Kapitel,
+// Unterkapitel UND Labels bleiben nach der KI-Zuordnung frei manuell
+// nachpflegbar (Dropdowns bzw. entfernbare/hinzufügbare Label-Chips, "ROVO"
+// selbst nicht entfernbar). Im Text vorkommende Jira-Ticketnummern lassen
+// sich je Eintrag ein-/ausblenden, und alle Einträge lassen sich als ZIP
+// (je Eintrag eine .md-Datei) exportieren. Prüft zusätzlich den
+// Sitzung-speichern/laden-Rundlauf.
 const fs = require("fs");
 const path = require("path");
 const BUILD_HTML = path.join(__dirname, "..", "ticket_cockpit.build.html");
@@ -203,6 +206,28 @@ function mockClipboard(win, text) {
   fire(doc.getElementById("rovo-ai-assign-btn"), "click");
   await wait(100);
   check("Erneute KI-Zuordnung ohne offene Einträge meldet „Nichts zu tun“", doc.getElementById("toast").textContent.includes("Alle Einträge haben bereits ein Kapitel"));
+
+  // ===================== Manuelles Nachpflegen von Labels nach der KI-Zuordnung =====================
+  var labelRow = doc.querySelector("#rovo-entries-tbody tr");
+  check("ROVO-Chip hat KEINEN Entfernen-Button (fest, nicht entfernbar)",
+    Array.from(labelRow.querySelectorAll("[data-rovo-label-remove]")).every((b) => b.getAttribute("data-label") !== "ROVO"));
+  var addSelect = labelRow.querySelector(".rovo-label-add-select");
+  var addableOption = Array.from(addSelect.options).map((o) => o.value).filter(Boolean)[0];
+  check("Hinzufügen-Auswahl bietet mindestens ein noch nicht gesetztes Label an", !!addableOption);
+  addSelect.value = addableOption;
+  fire(addSelect, "change");
+  await wait(30);
+  var labelRowAfterAdd = doc.querySelector("#rovo-entries-tbody tr");
+  check("Manuell hinzugefügtes Label erscheint im Eintrag", labelRowAfterAdd.textContent.includes(addableOption));
+
+  var removeBtn = labelRowAfterAdd.querySelector('[data-rovo-label-remove][data-label="' + addableOption + '"]');
+  fire(removeBtn, "click");
+  await wait(30);
+  var labelRowAfterRemove = doc.querySelector("#rovo-entries-tbody tr");
+  check("Manuell entferntes Label verschwindet wieder aus dem Eintrag", !labelRowAfterRemove.querySelector('[data-rovo-label-remove][data-label="' + addableOption + '"]'));
+  check("Entferntes Label steht in der Hinzufügen-Auswahl wieder zur Verfügung",
+    Array.from(labelRowAfterRemove.querySelector(".rovo-label-add-select").options).some((o) => o.value === addableOption));
+  check("Label „ROVO“ bleibt nach manuellem Hinzufügen/Entfernen weiterhin erhalten", labelRowAfterRemove.textContent.includes("ROVO"));
 
   // ===================== Sitzung speichern/laden (Rundlauf) =====================
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();

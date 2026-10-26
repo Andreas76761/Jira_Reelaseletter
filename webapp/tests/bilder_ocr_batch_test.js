@@ -40,10 +40,22 @@ function sampleImplFactory() {
   };
 }
 let sampleImpl = sampleImplFactory();
+// Fuer den Parallelitaets-Nachweis (s. u.) je Aufruf eine Verzoegerung aus
+// dieser Warteschlange entnehmen (Reihenfolge = Dispatch-Reihenfolge der
+// mapWithConcurrency-Worker, s. manual_chapters_parallel_batch_test.js fuer
+// dasselbe Muster) - leer = keine Verzoegerung (Standardverhalten aller
+// anderen Checks in dieser Datei).
+var ocrDelayQueue = [];
+var ocrDelayIndex = 0;
 const dom = new JSDOM(full, {
   runScripts: "dangerously", resources: "usable", pretendToBeVisual: true, url: "https://example.com/t", virtualConsole: vc,
   beforeParse(window) {
-    window.Tesseract = { recognize: function () { return Promise.resolve({ data: { text: ocrMockText } }); } };
+    window.Tesseract = {
+      recognize: function () {
+        var delay = ocrDelayQueue[ocrDelayIndex++] || 0;
+        return new Promise(function (resolve) { setTimeout(function () { resolve({ data: { text: ocrMockText } }); }, delay); });
+      }
+    };
     window.claude = {
       use: function (name) {
         if (name === "sample") return Promise.resolve(function (input, opts) { return sampleImpl(input, opts); });
@@ -54,6 +66,14 @@ const dom = new JSDOM(full, {
 });
 
 function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
+async function waitUntil(fn, timeoutMs) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (fn()) return true;
+    await wait(15);
+  }
+  return false;
+}
 function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles: true })); }
 async function confirmViaModal(doc) {
   await wait(30);
@@ -156,7 +176,53 @@ const PNG_1X1 = Buffer.from(
   fire(doc.getElementById("images-ocr-batch-btn"), "click");
   await wait(100);
   check("Ohne Tesseract: verständlicher Hinweis statt Absturz", doc.getElementById("toast").textContent.includes("OCR-Bibliothek"));
-  win.Tesseract = { recognize: function () { return Promise.resolve({ data: { text: ocrMockText } }); } };
+  win.Tesseract = {
+    recognize: function () {
+      var delay = ocrDelayQueue[ocrDelayIndex++] || 0;
+      return new Promise(function (resolve) { setTimeout(function () { resolve({ data: { text: ocrMockText } }); }, delay); });
+    }
+  };
+
+  // ===================== Parallelitäts-Nachweis (Performance) =====================
+  // Frischer, isolierter Datensatz mit genau 3 Bildern und absichtlich
+  // vertauschten Tesseract-Verzögerungen (langsamstes zuerst dispatcht) -
+  // bei weiterhin sequenzieller Verarbeitung (for-await-Schleife) wäre die
+  // Gesamtlaufzeit nahe der SUMME aller drei Verzögerungen; bei echter
+  // Parallelität (mapWithConcurrency) nahe der LÄNGSTEN Einzelverzögerung.
+  // Gleiches Beweismuster wie manual_chapters_parallel_batch_test.js.
+  // "Alle Daten löschen" ist an Tickets/Imports gekoppelt (zeigt bei 0/0
+  // nur einen Hinweis-Toast, loescht aber NICHTS) - diese Testdatei
+  // importiert nie Tickets, daher stattdessen die beiden bestehenden
+  // Bild-Karten einzeln ueber ihren eigenen Loeschen-Button entfernen.
+  while (cards().length > 0) {
+    fire(cards()[0].querySelector(".image-delete-btn"), "click");
+    await confirmViaModal(doc);
+  }
+  check("Galerie vor dem Parallelitäts-Test leer", cards().length === 0);
+  const imageInputPerf = doc.getElementById("image-file-input");
+  Object.defineProperty(imageInputPerf, "files", {
+    value: [
+      new win.File([PNG_1X1], "perf_a.png", { type: "image/png" }),
+      new win.File([PNG_1X1], "perf_b.png", { type: "image/png" }),
+      new win.File([PNG_1X1], "perf_c.png", { type: "image/png" })
+    ], configurable: true
+  });
+  fire(imageInputPerf, "change");
+  await wait(200);
+  check("3 Bilder für den Parallelitäts-Test hochgeladen", cards().length === 3);
+
+  const DELAYS = [220, 140, 60];
+  const sumDelays = DELAYS.reduce((a, b) => a + b, 0);
+  const maxDelay = Math.max.apply(null, DELAYS);
+  ocrDelayQueue = DELAYS.slice();
+  ocrDelayIndex = 0;
+  const t0 = Date.now();
+  fire(doc.getElementById("images-ocr-batch-btn"), "click");
+  await waitUntil(() => doc.getElementById("images-ocr-batch-status-note").textContent.includes("3 Bild(er) per OCR verarbeitet"), 3000);
+  const elapsedMs = Date.now() - t0;
+  check("Gesamtlaufzeit liegt nahe der LÄNGSTEN Einzelverzögerung (" + maxDelay + "ms), nicht nahe der SUMME (" + sumDelays + "ms) – Beweis für echte Parallelität statt sequenzieller Verarbeitung",
+    elapsedMs < (maxDelay + sumDelays) / 2);
+  ocrDelayQueue = [];
 
   check("Kein unbehandelter JS-Fehler während der gesamten Interaktion", errors.length === 0);
 

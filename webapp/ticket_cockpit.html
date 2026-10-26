@@ -654,6 +654,7 @@
       <li><button class="nav-item" data-view="clickanweisung" type="button">Clickanweisung</button></li>
       <li><button class="nav-item" data-view="editor" type="button">Editor</button></li>
       <li><button class="nav-item" data-view="bildband" type="button">Bildband</button></li>
+      <li><button class="nav-item" data-view="edito" type="button">EDITO</button></li>
       <li><button class="nav-item" data-view="bilder" type="button">Bilder</button></li>
       <li class="nav-sep">Output</li>
       <li><button class="nav-item" data-view="output-md" type="button">Output MD Tickets</button></li>
@@ -2276,6 +2277,66 @@
           </table>
           <div class="empty-hint" id="bildband-empty">Noch keine Kapitel mit Platzhaltern oder zugeordneten Screens &ndash; zuerst im Benutzerhandbuch-Register Kapitel erzeugen, im Editor-Register Screens hochladen/zuordnen und im Kapiteltext <code class="mono">[Bild]</code>-Platzhalter einfügen.</div>
         </div>
+      </section>
+
+      <!-- ================= EDITO ================= -->
+      <section class="view-panel" data-view-panel="edito" hidden>
+        <div class="view-head"><h2>EDITO</h2><p class="desc">Erstellt eine neue Fassung des Benutzerhandbuchs je Rolle/Sparte aus mehreren internen Quellen gleichzeitig: importierten Jira-Tickets, der RAG-Bibliothek, dem bereits bestehenden Benutzerhandbuch-Text, Rovo-Knowledge-Textschnipseln sowie zugeordneten Bildern (Bildband-Platzhalter <code class="mono">[Bild]</code>). Drei Prüf-Agenten bewerten anschließend Inhalt, Sprache und Dokument-Struktur (zwei weitere Agenten folgen später).</p></div>
+
+        <section>
+          <p class="section-label">1. Rolle/Sparte wählen</p>
+          <div class="callout">
+            Nutzt dieselben 6 Gliederungsversionen wie "Verarbeitung → Gliederung-Versionen" (Markt/MO/Dealer/IT/Van/Pkw). Nur Kapitel, die für die gewählte Version zutreffen, werden unten angeboten – zusätzlich werden je Kapitel nur die TICKETS berücksichtigt, deren Sparte-/Rollen-Tags zur gewählten Version passen (Kapitel bzw. Tickets ohne jedes Tag-Signal gelten für alle Versionen). RAG-Bibliothek, Rovo-Textschnipsel, bestehender Handbuchtext und Bilder tragen keine Sparte-/Rollen-Tags und werden daher für jedes Kapitel der gewählten Version vollständig einbezogen.
+          </div>
+          <select id="edito-version-select">
+            <option value="">– Rolle/Sparte wählen –</option>
+          </select>
+        </section>
+
+        <section id="edito-chapters-section" hidden>
+          <p class="section-label">2. Kapitel &amp; Quellen (<span id="edito-chapters-count">0</span>)</p>
+          <div class="controls">
+            <button class="btn primary" id="edito-generate-all-btn" type="button">
+              <span class="btn-spinner" id="edito-generate-all-spinner" hidden></span>
+              Alle Kapitel erzeugen
+            </button>
+          </div>
+          <p class="step-note" id="edito-generate-all-status-note"></p>
+          <div class="table-wrap">
+            <table class="simple-table" id="edito-chapters-table">
+              <thead><tr><th>Kapitel</th><th>Tickets</th><th>RAG</th><th>Bestehendes Handbuch</th><th>Rovo</th><th>Bilder</th><th>Status</th><th>Aktion</th></tr></thead>
+              <tbody id="edito-chapters-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="edito-preview-section" hidden>
+          <p class="section-label">3. Vorschau, Export &amp; Prüfung: <span id="edito-preview-title"></span></p>
+          <textarea id="edito-preview-output" class="text-input" style="width:100%; min-height:320px; font-family:'IBM Plex Mono', monospace; font-size:12.5px; resize:vertical;"></textarea>
+          <div class="controls">
+            <button class="btn ghost" id="edito-export-docx-btn" type="button">Als DOCX exportieren</button>
+            <button class="btn ghost" id="edito-export-pdf-btn" type="button">Als PDF exportieren</button>
+            <button class="btn ghost" id="edito-export-md-btn" type="button">Als Markdown exportieren</button>
+          </div>
+          <div class="controls" style="margin-top:10px;">
+            <button class="btn ghost" id="edito-agent1-btn" type="button">
+              <span class="btn-spinner" id="edito-agent1-spinner" hidden></span>
+              Agent 1: Inhalt prüfen (vs. Rovo/Jira)
+            </button>
+            <button class="btn ghost" id="edito-agent2-btn" type="button">
+              <span class="btn-spinner" id="edito-agent2-spinner" hidden></span>
+              Agent 2: Grammatik &amp; Sprachstil prüfen
+            </button>
+          </div>
+          <div id="edito-agent1-result" class="panel" style="padding:12px 14px; margin-top:8px;" hidden>
+            <p class="section-label" style="margin-top:0;">Agent 1: Inhalt, Qualität, Textaussagen</p>
+            <div class="gen-preview" id="edito-agent1-output"></div>
+          </div>
+          <div id="edito-agent2-result" class="panel" style="padding:12px 14px; margin-top:8px;" hidden>
+            <p class="section-label" style="margin-top:0;">Agent 2: Grammatik, Sprachstil, roter Faden</p>
+            <div class="gen-preview" id="edito-agent2-output"></div>
+          </div>
+        </section>
       </section>
 
       <!-- ================= Bilder ================= -->
@@ -4928,7 +4989,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.86.0";
+  var APP_VERSION = "2.89.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6494,6 +6555,13 @@
     "rovo-md-dropzone", "rovo-md-file-input", "rovo-entries-count", "rovo-ai-assign-btn", "rovo-ai-assign-spinner",
     "rovo-zip-export-btn", "rovo-ai-status-note", "rovo-entries-table", "rovo-entries-tbody", "rovo-entries-empty",
     "bildband-table", "bildband-tbody", "bildband-empty",
+    "edito-version-select", "edito-chapters-section", "edito-chapters-count",
+    "edito-generate-all-btn", "edito-generate-all-spinner", "edito-generate-all-status-note",
+    "edito-chapters-table", "edito-chapters-tbody",
+    "edito-preview-section", "edito-preview-title", "edito-preview-output",
+    "edito-export-docx-btn", "edito-export-pdf-btn", "edito-export-md-btn",
+    "edito-agent1-btn", "edito-agent1-spinner", "edito-agent1-result", "edito-agent1-output",
+    "edito-agent2-btn", "edito-agent2-spinner", "edito-agent2-result", "edito-agent2-output",
     "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
     "modal-overlay", "modal-key", "modal-title", "modal-fields", "modal-desc-wrap", "modal-desc",
@@ -6527,6 +6595,15 @@
     // Antwort), eigenständiger Bestand unabhängig von Massenverarbeitung/
     // RAG-Bibliothek - jeder Eintrag ist fest mit dem Label "ROVO" markiert.
     rovoEntries: [],
+    // EDITO: neue Fassung des Benutzerhandbuchs je Rolle/Sparte (eine der 6
+    // bestehenden Gliederungsversionen, s. OUTLINE_VERSIONS), synthetisiert
+    // aus Tickets, RAG-Bibliothek, bestehendem Benutzerhandbuch-Text, Rovo
+    // Knowledge und Bildband-Bildern. editoChapters: wie manualChapters
+    // (Schlüssel = Kapiteltitel, {de, generatedAt, sourceCounts,
+    // agent1, agent2}) - eigener Bestand, NICHT dasselbe wie manualChapters,
+    // da "neue Fassung" bewusst parallel zum bestehenden Stand existiert.
+    editoVersionKey: "",
+    editoChapters: {},
     tickets: [],
     view: { bucket: "all", domain: "", label: "", query: "", issueType: "", excludeTypes: {}, sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
@@ -7035,6 +7112,8 @@
     els.ragMergeStatusNote.textContent = "";
     app.massFiles = [];
     app.rovoEntries = [];
+    app.editoVersionKey = "";
+    app.editoChapters = {};
     massSelectedIds = {};
     renderMassFiles();
     renderMassTicketSourceWrap();
@@ -7086,6 +7165,7 @@
     renderEditorScreens();
     renderBildband();
     renderRovoEntries();
+    renderEditoChapters();
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
     renderExtractedLabelCandidates();
@@ -7124,6 +7204,8 @@
     els.ragMergeStatusNote.textContent = "";
     app.massFiles = [];
     app.rovoEntries = [];
+    app.editoVersionKey = "";
+    app.editoChapters = {};
     massSelectedIds = {};
     renderMassFiles();
     renderMassTicketSourceWrap();
@@ -7188,6 +7270,8 @@
       uploadedImages: app.uploadedImages,
       editorFiles: app.editorFiles,
       rovoEntries: app.rovoEntries,
+      editoVersionKey: app.editoVersionKey,
+      editoChapters: app.editoChapters,
       selectedKeys: app.selectedKeys,
       savedLists: app.savedLists,
       nextSavedListId: app.nextSavedListId,
@@ -7251,6 +7335,8 @@
     app.uploadedImages = data.uploadedImages || [];
     app.editorFiles = data.editorFiles || [];
     app.rovoEntries = data.rovoEntries || [];
+    if (typeof data.editoVersionKey === "string") app.editoVersionKey = data.editoVersionKey;
+    if (data.editoChapters && typeof data.editoChapters === "object") app.editoChapters = data.editoChapters;
     app.selectedKeys = data.selectedKeys || {};
     app.savedLists = data.savedLists || [];
     app.nextSavedListId = data.nextSavedListId || 1;
@@ -7322,6 +7408,7 @@
     renderEditorScreens();
     renderBildband();
     renderRovoEntries();
+    renderEditoChapters();
     renderExtractedAbbreviations();
     renderExtractedGlossaryCandidates();
     renderExtractedLabelCandidates();
@@ -16142,6 +16229,17 @@
     var description = descMatch ? descMatch[1].trim().split("\n")[0].trim() : "";
     return { chapterTitle: chapterTitle, subchapterTitle: subTitle, description: description };
   }
+  // Laeuft mit begrenzter Parallelitaet (mapWithConcurrency, s. Teil 9c -
+  // dieselbe Funktion wie beim Benutzerhandbuch-Kapitel-Generator) statt
+  // strikt sequentiell je Bild: deutlich schnellerer Gesamtlauf bei
+  // mehreren Bildern (OCR + KI-Zuordnung je Bild laufen nicht mehr
+  // nacheinander auf ALLE anderen Bilder wartend). Die Statuszeile zaehlt
+  // deshalb FERTIGGESTELLTE statt "gerade laufende" Bilder. Kapitel/
+  // Unterkapitel/Kurzbeschreibung werden wie bisher direkt in
+  // app.uploadedImages geschrieben (= dauerhaft gespeichert, Teil von
+  // Sitzung speichern/laden) und bleiben jederzeit per Dropdown/Textfeld
+  // manuell korrigierbar - die Parallelisierung aendert daran nichts.
+  var IMAGES_OCR_CONCURRENCY = 3;
   async function runImagesOcrBatch() {
     var targets = app.uploadedImages.slice();
     if (!targets.length) { showToast("Keine Bilder", "Es sind keine hochgeladenen Bilder vorhanden.", true); return; }
@@ -16152,10 +16250,9 @@
     var chapters = massChapterOptionsList();
     els.imagesOcrBatchBtn.disabled = true;
     els.imagesOcrBatchSpinner.hidden = false;
-    var ocrFailed = 0, imagesFilled = 0;
-    for (var i = 0; i < targets.length; i++) {
-      var img = targets[i];
-      els.imagesOcrBatchStatusNote.textContent = "Bild " + (i + 1) + " von " + targets.length + " wird interpretiert (" + img.filename + ") …";
+    var ocrFailed = 0, imagesFilled = 0, completed = 0;
+    els.imagesOcrBatchStatusNote.textContent = "0 von " + targets.length + " Bildern verarbeitet …";
+    await mapWithConcurrency(targets, IMAGES_OCR_CONCURRENCY, async function (img) {
       try {
         var result = await Tesseract.recognize(img.dataUrl, "eng+deu");
         img.ocrText = ((result && result.data && result.data.text) || "").trim();
@@ -16164,8 +16261,10 @@
       } catch (err) {
         img.ocrError = (err && err.message) || "Unbekannter Fehler bei der Texterkennung.";
         ocrFailed++;
+        completed++;
+        els.imagesOcrBatchStatusNote.textContent = completed + " von " + targets.length + " Bildern verarbeitet …";
         renderGallery();
-        continue;
+        return;
       }
       if (sampleApi && img.ocrText && (!img.chapter || !img.subchapter || !img.description)) {
         try {
@@ -16180,8 +16279,10 @@
           // KI-Fehler bei einem Bild bricht den Gesamtlauf nicht ab - der OCR-Text bleibt trotzdem erhalten.
         }
       }
+      completed++;
+      els.imagesOcrBatchStatusNote.textContent = completed + " von " + targets.length + " Bildern verarbeitet …";
       renderGallery();
-    }
+    });
     addLog("OCR-Stapelverarbeitung: " + targets.length + " Bild(er) interpretiert" +
       (imagesFilled ? ", bei " + imagesFilled + " Bild(ern) Kapitel/Unterkapitel/Kurzbeschreibung ergänzt" : "") +
       (ocrFailed ? ", " + ocrFailed + " OCR-Fehler" : "") + ".");
@@ -16577,6 +16678,24 @@
     if (!t) return "–";
     return t.length > max ? t.slice(0, max) + " …" : t;
   }
+  // Labels je Eintrag (inkl. die von der KI-Zuordnung vorgeschlagenen,
+  // s. u.) sind frei nachpflegbar: "ROVO" ist fest und nicht entfernbar
+  // (einzige Ausnahme, s. Konzept), alle anderen ueber ein "x" am Chip
+  // entfernbar, neue ueber das Auswahlfeld (wortwoertlich aus der
+  // Stammdaten-Labelliste, wie bei der KI-Zuordnung - keine Freitext-Labels).
+  function rovoLabelsCellHtml(e) {
+    var chips = e.labels.map(function (l) {
+      if (l === "ROVO") return '<span class="label-chip" title="Fest zugeordnet, nicht entfernbar">' + escapeHtml(l) + "</span>";
+      return '<span class="label-chip">' + escapeHtml(l) +
+        '<button type="button" data-rovo-label-remove="' + e.id + '" data-label="' + escapeHtml(l) + '" aria-label="Label „' + escapeHtml(l) + '“ entfernen">×</button></span>';
+    }).join("");
+    var available = rovoLabelOptionsList().filter(function (l) { return e.labels.indexOf(l) === -1; });
+    var addSelect = '<select class="rovo-label-add-select" data-id="' + e.id + '" aria-label="Label hinzufügen"' + (available.length ? "" : " disabled") + '>' +
+      '<option value="">+ Label</option>' +
+      available.map(function (l) { return "<option value=\"" + escapeHtml(l) + "\">" + escapeHtml(l) + "</option>"; }).join("") +
+      "</select>";
+    return '<div class="chip-list">' + chips + "</div>" + addSelect;
+  }
   function renderRovoEntries() {
     var chapters = massChapterOptionsList();
     els.rovoEntriesCount.textContent = app.rovoEntries.length;
@@ -16593,7 +16712,7 @@
         "<td>" + escapeHtml(rovoTruncatePreview(e.answerText, 160)) + "</td>" +
         '<td><select class="rovo-chapter-select" data-id="' + e.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapters, e.chapter, "Ohne Kapitel") + "</select></td>" +
         '<td><select class="rovo-subchapter-select" data-id="' + e.id + '" aria-label="Unterkapitel"' + (e.chapter ? "" : " disabled") + ">" + ragLibraryOptionsHtml(subOptions, e.subchapter, "Ohne Unterkapitel") + "</select></td>" +
-        "<td>" + e.labels.map(function (l) { return '<span class="chip">' + escapeHtml(l) + "</span>"; }).join(" ") + "</td>" +
+        "<td>" + rovoLabelsCellHtml(e) + "</td>" +
         "<td>" + jiraCell + "</td>" +
         '<td><button type="button" class="btn danger btn-tiny" data-rovo-delete="' + e.id + '">Löschen</button></td>' +
         "</tr>";
@@ -16677,6 +16796,16 @@
       addLog("Rovo Knowledge: Eintrag gelöscht.");
       return;
     }
+    var labelRemoveBtn = e.target.closest("[data-rovo-label-remove]");
+    if (labelRemoveBtn) {
+      var lre = app.rovoEntries.filter(function (x) { return x.id === parseInt(labelRemoveBtn.getAttribute("data-rovo-label-remove"), 10); })[0];
+      var labelToRemove = labelRemoveBtn.getAttribute("data-label");
+      if (lre && labelToRemove !== "ROVO") {
+        lre.labels = lre.labels.filter(function (l) { return l !== labelToRemove; });
+        renderRovoEntries();
+      }
+      return;
+    }
   });
   els.rovoEntriesTbody.addEventListener("change", function (e) {
     var chapterSel = e.target.closest(".rovo-chapter-select");
@@ -16689,6 +16818,12 @@
     if (subSel) {
       var se = app.rovoEntries.filter(function (x) { return x.id === parseInt(subSel.getAttribute("data-id"), 10); })[0];
       if (se) se.subchapter = subSel.value;
+      return;
+    }
+    var labelAddSel = e.target.closest(".rovo-label-add-select");
+    if (labelAddSel && labelAddSel.value) {
+      var lae = app.rovoEntries.filter(function (x) { return x.id === parseInt(labelAddSel.getAttribute("data-id"), 10); })[0];
+      if (lae) { lae.labels = dedupeStrings(lae.labels.concat([labelAddSel.value])); renderRovoEntries(); }
     }
   });
 
@@ -17047,6 +17182,9 @@
     manualChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender (erfahrene Nutzer im operativen Tagesgeschäft). Schreibe für das unten genannte Kapitel einen sachlichen, professionellen Fließtext im Stil eines Softwarehandbuchs auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform - z. B. \"Der Nutzer öffnet die Maske und trägt die Daten ein\", NICHT Präteritum/Futur wie \"öffnete\"/\"wird öffnen\"), mindestens 3, idealerweise bis zu 12 DIN-A4-Seiten Umfang (ca. 500-600 Wörter je Seite). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen (roter Faden), gefolgt von zusammenhängenden Abschnitten statt einer reinen Aufzählung. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, deutlich mit den Tags \"[Nur PKW]\", \"[Nur Van]\" bzw. \"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz. Kennzeichne außerdem, wo inhaltlich wirklich zutreffend (nicht erzwingen), wichtige Sicherheitshinweise/Warnungen mit \"[Warnung]\", hilfreiche Zusatzinformationen mit \"[Hinweis]\", praktische Tipps für den Arbeitsalltag mit \"[Tipp]\" sowie Querverweise auf andere Kapitel/Abschnitte mit \"[Verweis]\" - ebenfalls jeweils direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Retail\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\" (Market Operation) und weise explizit darauf hin, wenn ein Feature dem Retail NICHT zur Verfügung steht. Nutze ausschließlich Informationen aus den Ticket-Rohdaten unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text.",
     manualChapterSynthesis: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender. Die folgenden Teiltexte sind Abschnitte desselben Kapitels, aus technischen Gründen in mehreren Durchläufen aus unterschiedlichen Ausschnitten derselben Ticket-Rohdaten erzeugt. Verschmelze sie zu EINEM einzigen, zusammenhängenden Kapiteltext auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform, auch wenn ein Teiltext abweicht - dann beim Verschmelzen ins Präsens korrigieren) (roter Faden, mindestens 3 DIN-A4-Seiten, sachlicher Softwarehandbuch-Stil), ohne Hinweise auf \"Teiltexte\" oder \"Batches\". Erhalte dabei die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\"/\"[Warnung]\"/\"[Hinweis]\"/\"[Tipp]\"/\"[Verweis]\" sowie die Zwischenüberschriften \"## Retail\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" aus den Teiltexten. Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
     refCompare: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen zwei Fassungen desselben Kapitels: der ALTE STAND (aus einem bestehenden, bereits veröffentlichten Word-Handbuch) und der NEUE STAND (frisch aus aktuellen Jira-Tickets erzeugter Text). Vergleiche beide Fassungen inhaltlich und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Features\n- (ein Stichpunkt je im neuen Stand beschriebenem Inhalt, der im alten Stand fehlt oder dort erkennbar anders/noch nicht vorhanden war)\n\n### Widersprüche\n- (ein Stichpunkt je Aussage im alten Stand, die dem neuen Stand inhaltlich widerspricht oder durch ihn überholt/ungültig wird)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den beiden Texten unten, erfinde nichts hinzu:",
+    editoChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Erstelle eine NEUE, konsolidierte Fassung des unten genannten Kapitels für die angegebene Zielversion (Rolle/Sparte), DURCHGÄNGIG IM PRÄSENS, im Stil eines professionellen Softwarehandbuchs (zusammenhängende Absätze, keine reine Aufzählung). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, mit \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz, wichtige Sicherheitshinweise mit \"[Warnung]\", hilfreiche Zusatzinformationen mit \"[Hinweis]\", praktische Tipps mit \"[Tipp]\" sowie Querverweise auf andere Kapitel mit \"[Verweis]\" - jeweils direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Retail\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\". Füge an inhaltlich passenden Stellen im Text eine eigene Zeile \"[Bild]\" als Bild-Platzhalter ein, wenn ein zugeordneter Screenshot (s. u.) dort sinnvoll ist - nie mehr [Bild]-Platzhalter als zugeordnete Screenshots vorhanden sind. Nutze AUSSCHLIESSLICH Informationen aus den Quellen unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text.",
+    editoAgent1: "Du prüfst einen Benutzerhandbuch-Kapiteltext (neue, aus mehreren Quellen synthetisierte Fassung) auf inhaltliche Richtigkeit. Prüfe JEDE fachliche Aussage im Kapiteltext darauf, ob sie durch die unten angegebenen Quellen (Jira-Tickets, Rovo-Wissens-Notizen) gedeckt ist. Gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Nicht belegte Aussagen\n- (ein Stichpunkt je Aussage im Kapiteltext, die durch keine der Quellen gedeckt ist)\n\n### Widersprüche zu den Quellen\n- (ein Stichpunkt je Aussage im Kapiteltext, die einer Quelle widerspricht)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
+    editoAgent2: "Du bist Lektor für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Prüfe den folgenden Kapiteltext und gib AUSSCHLIESSLICH die folgenden vier Abschnitte aus, in genau diesem Format:\n\n### Grammatikfehler\n- (ein Stichpunkt je Grammatik-/Rechtschreib-/Zeitform-Fehler - insbesondere Abweichungen vom geforderten Präsens -, mit kurzem Zitat der betroffenen Stelle)\n\n### Sprachstil-Unstimmigkeiten\n- (ein Stichpunkt je Stilbruch, uneinheitlicher Terminologie oder unpassendem Ton)\n\n### Wiederholungen\n- (ein Stichpunkt je auffälliger Wort-/Formulierungs-Wiederholung)\n\n### Roter Faden\n- (ein Stichpunkt je Stelle, an der der Text den inhaltlichen Zusammenhang/Lesefluss verliert oder unlogisch springt)\n\nIst eine der vier Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
     manualQualityCheck: "Du bist Lektor/Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Prüfe den folgenden Kapiteltext und gib AUSSCHLIESSLICH die folgenden drei Abschnitte aus, in genau diesem Format:\n\n### Grammatikfehler\n- (ein Stichpunkt je Grammatik-/Rechtschreib-/Zeitform-Fehler - insbesondere Abweichungen vom geforderten Präsens -, mit kurzem Zitat der betroffenen Stelle)\n\n### Lücken\n- (ein Stichpunkt je inhaltlicher Lücke, unklarer oder unvollständiger Stelle)\n\n### Verbesserungsvorschläge\n- (ein Stichpunkt je Vorschlag zur Verständlichkeit/Lesbarkeit/Struktur)\n\nIst eine der drei Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
     fileviewTranslateToDe: "Übersetze den folgenden Text sinngemäß ins Deutsche, ohne Inhalte hinzuzufügen oder wegzulassen und ohne zusätzliche Erklärungen oder Anmerkungen. Gib ausschließlich den übersetzten Text aus:",
     fileviewSummaryDe: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Fasse den folgenden Dateiinhalt (bereinigte Ticket-Rohdaten aus einem Jira-Export) in einer prägnanten, verständlichen Zusammenfassung auf Deutsch zusammen (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen). Nutze ausschließlich Informationen aus dem Text unten, erfinde nichts hinzu:",
@@ -17066,6 +17204,9 @@
     manualChapter: "Benutzerhandbuch-Kapitel erstellen",
     manualChapterSynthesis: "Benutzerhandbuch-Kapitel zusammenführen (Batch-Modus)",
     refCompare: "Handbuch-Änderung nach Kapitel (Vergleich mit Referenz-Handbuch)",
+    editoChapter: "EDITO: Neue Kapitelfassung aus mehreren Quellen erzeugen",
+    editoAgent1: "EDITO Agent 1: Inhalt gegen Rovo/Jira-Quellen prüfen",
+    editoAgent2: "EDITO Agent 2: Grammatik, Sprachstil & roter Faden prüfen",
     manualQualityCheck: "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)",
     fileviewTranslateToDe: "Dateiansicht: Übersetzen (→ DE)",
     fileviewSummaryDe: "Dateiansicht: Zusammenfassung (Deutsch)",
@@ -21532,6 +21673,291 @@
     active.chapterMapping[sel.getAttribute("data-chapter-title")] = sel.value;
   });
 
+  /* ============ EDITO: neue Benutzerhandbuch-Fassung je Rolle/Sparte ============
+     Synthetisiert aus 5 Quellen (Jira-Tickets, RAG-Bibliothek, bestehender
+     Benutzerhandbuch-Text, Rovo Knowledge, Bildband-Bilder) eine neue
+     Kapitelfassung je ausgewählter Rolle/Sparte - nutzt dafür dieselben 6
+     Gliederungsversionen wie "Verarbeitung -> Gliederung-Versionen"
+     (OUTLINE_VERSIONS, Teil 8c). app.editoChapters ist ein eigener,
+     unabhängiger Bestand (NICHT app.manualChapters) - die "neue Fassung"
+     existiert bewusst parallel zum bestehenden Stand. Nur TICKETS werden
+     zusätzlich je Version nach Sparte-/Rollen-Tag gefiltert (RAG/Rovo/
+     bestehender Handbuchtext/Bilder tragen keine solchen Tags, werden also
+     für jedes Kapitel der gewählten Version vollständig einbezogen).
+     Export je Kapitel nutzt direkt buildManualChapterDocxBlob/
+     buildManualChapterPdfDoc (Teil 9c) unverändert weiter, da editoChapter
+     Text im selben Format (Überschriften/Tags/[Bild]-Platzhalter) erzeugt. */
+  function renderEditoVersionSelect() {
+    els.editoVersionSelect.innerHTML = '<option value="">– Rolle/Sparte wählen –</option>' +
+      OUTLINE_VERSIONS.map(function (v) { return '<option value="' + v.key + '"' + (v.key === app.editoVersionKey ? " selected" : "") + ">" + escapeHtml(v.label) + "</option>"; }).join("");
+  }
+  els.editoVersionSelect.addEventListener("change", function () {
+    app.editoVersionKey = els.editoVersionSelect.value;
+    els.editoPreviewSection.hidden = true;
+    renderEditoChapters();
+  });
+  function editoVersionDef() {
+    return OUTLINE_VERSIONS.filter(function (v) { return v.key === app.editoVersionKey; })[0] || null;
+  }
+  function editoChaptersForVersion() {
+    if (!app.editoVersionKey) return [];
+    return computeOutlineVersions()
+      .filter(function (row) { return outlineVersionIncludesChapter(row, app.editoVersionKey); })
+      .map(function (row) { return row.chapter; });
+  }
+  // Ticket traegt KEIN Sparte-/Rollen-Tag -> gilt (wie bei
+  // outlineChapterVersionTags) als "kein Signal", daher fuer jede Version
+  // einbezogen statt stillschweigend ausgeschlossen zu werden.
+  function editoTicketMatchesVersion(t) {
+    var version = editoVersionDef();
+    if (!version) return true;
+    var sparte = ticketSparteTags(t), role = ticketRoleTags(t);
+    if (!sparte.length && !role.length) return true;
+    return version.sparte.some(function (s) { return sparte.indexOf(s) !== -1; }) ||
+      version.role.some(function (r) { return role.indexOf(r) !== -1; });
+  }
+  function editoTicketsForChapter(chapterTitle) {
+    return manualRowsForChapter(chapterTitle).filter(editoTicketMatchesVersion);
+  }
+  function editoRagEntriesForChapter(chapterTitle) {
+    return app.ragLibrary.filter(function (e) { return e.chapterTitle === chapterTitle && e.text; });
+  }
+  function editoRovoEntriesForChapter(chapterTitle) {
+    return app.rovoEntries.filter(function (e) { return e.chapter === chapterTitle; });
+  }
+  function editoExistingManualText(chapterTitle) {
+    var entry = app.manualChapters[chapterTitle];
+    return (entry && entry.de) || "";
+  }
+  function editoImagesForChapter(chapterTitle) {
+    return bildbandScreensForChapter(chapterTitle);
+  }
+  function editoSourceCounts(chapterTitle) {
+    return {
+      tickets: editoTicketsForChapter(chapterTitle).length,
+      rag: editoRagEntriesForChapter(chapterTitle).length,
+      manual: editoExistingManualText(chapterTitle) ? 1 : 0,
+      rovo: editoRovoEntriesForChapter(chapterTitle).length,
+      images: editoImagesForChapter(chapterTitle).length
+    };
+  }
+  function renderEditoChapters() {
+    var chapters = editoChaptersForVersion();
+    els.editoChaptersSection.hidden = !app.editoVersionKey;
+    if (!app.editoVersionKey) { els.editoChaptersTbody.innerHTML = ""; els.editoChaptersCount.textContent = "0"; return; }
+    els.editoChaptersCount.textContent = chapters.length;
+    els.editoChaptersTbody.innerHTML = chapters.map(function (c) {
+      var counts = editoSourceCounts(c.title);
+      var entry = app.editoChapters[c.title];
+      var hasText = !!(entry && entry.de);
+      return "<tr>" +
+        "<td>" + escapeHtml(c.title) + "</td>" +
+        '<td class="mono">' + counts.tickets + "</td>" +
+        '<td class="mono">' + counts.rag + "</td>" +
+        '<td class="mono">' + (counts.manual ? "✓" : "–") + "</td>" +
+        '<td class="mono">' + counts.rovo + "</td>" +
+        '<td class="mono">' + counts.images + "</td>" +
+        "<td>" + (hasText ? "Erzeugt (" + escapeHtml(entry.generatedAt) + ")" : "Noch nicht erzeugt") + "</td>" +
+        '<td><button type="button" class="btn ghost btn-tiny" data-edito-generate="' + escapeHtml(c.title) + '">' + (hasText ? "Neu erzeugen" : "Erzeugen") + "</button>" +
+        (hasText ? ' <button type="button" class="btn ghost btn-tiny" data-edito-view="' + escapeHtml(c.title) + '">Anzeigen</button>' : "") +
+        "</td></tr>";
+    }).join("");
+  }
+  function editoOutlineChapterSubsText(chapterTitle) {
+    var chapter = app.outline.filter(function (c) { return c.title === chapterTitle; })[0];
+    var subs = chapter ? (chapter.subs || []).map(function (s) { return s.title; }) : [];
+    return subs.length ? "Unterkapitel laut Gliederung: " + subs.join("; ") : "";
+  }
+  function editoBuildChapterPrompt(chapterTitle) {
+    var tickets = editoTicketsForChapter(chapterTitle);
+    var ragEntries = editoRagEntriesForChapter(chapterTitle);
+    var rovoList = editoRovoEntriesForChapter(chapterTitle);
+    var existingText = editoExistingManualText(chapterTitle);
+    var images = editoImagesForChapter(chapterTitle);
+    var version = editoVersionDef();
+    var parts = [ragPromptFor("editoChapter")];
+    parts.push("\n\nZielversion (Rolle/Sparte): " + (version ? version.label : "") +
+      "\nKapitel: " + chapterTitle + (editoOutlineChapterSubsText(chapterTitle) ? "\n" + editoOutlineChapterSubsText(chapterTitle) : ""));
+    if (version) parts.push(manualRoleInstruction(version.key));
+    parts.push("\n\nQUELLE 1 – Bestehender Benutzerhandbuch-Text (bereits vorhandene Fassung, als fachliche Grundlage nutzen, mit den weiteren Quellen aktualisieren/ergänzen):\n" +
+      (existingText ? truncate(existingText, 6000) : "(keine vorhanden)"));
+    parts.push("\n\nQUELLE 2 – Jira-Tickets (" + tickets.length + "):\n" +
+      (tickets.length ? truncate(tickets.map(manualTicketBlock).join("\n"), 8000) : "(keine zugeordnet)"));
+    parts.push("\n\nQUELLE 3 – RAG-Bibliothek (" + ragEntries.length + " Einträge):\n" +
+      (ragEntries.length ? ragEntries.map(function (e) { return "- " + e.label + ":\n" + truncate(e.text, 1500); }).join("\n\n") : "(keine zugeordnet)"));
+    parts.push("\n\nQUELLE 4 – Rovo-Knowledge-Textschnipsel (" + rovoList.length + "):\n" +
+      (rovoList.length ? rovoList.map(function (e) { return "- Chatverlauf: " + truncate(e.chatText, 600) + "\n  Antwort: " + truncate(e.answerText, 600); }).join("\n") : "(keine zugeordnet)"));
+    parts.push("\n\nQUELLE 5 – Zugeordnete Screenshots: " + images.length +
+      (images.length ? " (" + images.map(function (i) { return i.description || i.sourceFile; }).join(", ") + ") – höchstens so viele [Bild]-Platzhalter einfügen" : " (keine – keine [Bild]-Platzhalter einfügen)"));
+    return parts.join("");
+  }
+  async function editoGenerateChapter(chapterTitle) {
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return false;
+    }
+    try {
+      var result = await sampleApi(editoBuildChapterPrompt(chapterTitle), { modelTier: "default", cache: false });
+      app.editoChapters[chapterTitle] = { de: result.text || "", generatedAt: nowLabel(), versionKey: app.editoVersionKey, agent1: null, agent2: null };
+      return true;
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+      return false;
+    }
+  }
+  var editoActiveChapterTitle = "";
+  function editoShowChapter(title) {
+    editoActiveChapterTitle = title;
+    var entry = app.editoChapters[title];
+    els.editoPreviewSection.hidden = false;
+    els.editoPreviewTitle.textContent = title;
+    els.editoPreviewOutput.value = entry ? entry.de : "";
+    els.editoAgent1Result.hidden = !(entry && entry.agent1);
+    els.editoAgent2Result.hidden = !(entry && entry.agent2);
+    els.editoAgent1Output.textContent = (entry && entry.agent1) ? entry.agent1.text : "";
+    els.editoAgent2Output.textContent = (entry && entry.agent2) ? entry.agent2.text : "";
+  }
+  els.editoPreviewOutput.addEventListener("input", function () {
+    var entry = editoActiveChapterTitle && app.editoChapters[editoActiveChapterTitle];
+    if (entry) entry.de = els.editoPreviewOutput.value;
+  });
+  els.editoChaptersTbody.addEventListener("click", async function (e) {
+    var genBtn = e.target.closest("[data-edito-generate]");
+    if (genBtn) {
+      var genTitle = genBtn.getAttribute("data-edito-generate");
+      genBtn.disabled = true;
+      try {
+        var ok = await editoGenerateChapter(genTitle);
+        if (ok) {
+          addLog("EDITO: neue Fassung für Kapitel „" + genTitle + "“ erzeugt (Version: " + (editoVersionDef() || {}).label + ").");
+          showToast("Erzeugt", "Neue Fassung für „" + genTitle + "“ erzeugt.");
+          renderEditoChapters();
+          editoShowChapter(genTitle);
+        }
+      } finally {
+        genBtn.disabled = false;
+      }
+      return;
+    }
+    var viewBtn = e.target.closest("[data-edito-view]");
+    if (viewBtn) editoShowChapter(viewBtn.getAttribute("data-edito-view"));
+  });
+  els.editoGenerateAllBtn.addEventListener("click", async function () {
+    var chapters = editoChaptersForVersion();
+    if (!chapters.length) { showToast("Keine Kapitel", "Bitte zuerst oben eine Rolle/Sparte wählen.", true); return; }
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    els.editoGenerateAllBtn.disabled = true;
+    els.editoGenerateAllSpinner.hidden = false;
+    var done = 0, failed = 0;
+    for (var i = 0; i < chapters.length; i++) {
+      els.editoGenerateAllStatusNote.textContent = "Kapitel " + (i + 1) + " von " + chapters.length + ": „" + chapters[i].title + "“ …";
+      var ok = await editoGenerateChapter(chapters[i].title);
+      if (ok) done++; else failed++;
+      renderEditoChapters();
+    }
+    els.editoGenerateAllStatusNote.textContent = done + " von " + chapters.length + " Kapiteln erzeugt" + (failed ? " (" + failed + " fehlgeschlagen)" : "") + ".";
+    addLog("EDITO: Sammel-Lauf abgeschlossen (Version: " + (editoVersionDef() || {}).label + ") - " + done + " von " + chapters.length + " Kapiteln erzeugt" + (failed ? ", " + failed + " fehlgeschlagen" : "") + ".");
+    els.editoGenerateAllBtn.disabled = false;
+    els.editoGenerateAllSpinner.hidden = true;
+  });
+  els.editoExportDocxBtn.addEventListener("click", async function () {
+    var entry = editoActiveChapterTitle && app.editoChapters[editoActiveChapterTitle];
+    if (!entry || !entry.de) { showToast("Kein Text", "Für dieses Kapitel wurde noch keine Fassung erzeugt.", true); return; }
+    try {
+      var blob = await buildManualChapterDocxBlob(editoActiveChapterTitle, entry.de, editoActiveChapterTitle);
+      var ok = await saveOrWarn(safeFilename(editoActiveChapterTitle) + "_EDITO.docx", blob);
+      if (ok) addLog("EDITO: Kapitel „" + editoActiveChapterTitle + "“ als DOCX exportiert.");
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    }
+  });
+  els.editoExportPdfBtn.addEventListener("click", async function () {
+    var entry = editoActiveChapterTitle && app.editoChapters[editoActiveChapterTitle];
+    if (!entry || !entry.de) { showToast("Kein Text", "Für dieses Kapitel wurde noch keine Fassung erzeugt.", true); return; }
+    try {
+      var blob = (await buildManualChapterPdfDoc(editoActiveChapterTitle, entry.de, editoActiveChapterTitle)).output("blob");
+      var ok = await saveOrWarn(safeFilename(editoActiveChapterTitle) + "_EDITO.pdf", blob);
+      if (ok) addLog("EDITO: Kapitel „" + editoActiveChapterTitle + "“ als PDF exportiert.");
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "PDF-Export fehlgeschlagen.", true);
+    }
+  });
+  els.editoExportMdBtn.addEventListener("click", async function () {
+    var entry = editoActiveChapterTitle && app.editoChapters[editoActiveChapterTitle];
+    if (!entry || !entry.de) { showToast("Kein Text", "Für dieses Kapitel wurde noch keine Fassung erzeugt.", true); return; }
+    var ok = await saveOrWarn(safeFilename(editoActiveChapterTitle) + "_EDITO.md", entry.de);
+    if (ok) addLog("EDITO: Kapitel „" + editoActiveChapterTitle + "“ als Markdown exportiert.");
+  });
+
+  // Agent 1 (Inhalt/Qualität/Textaussagen, Validierung gegen Rovo/Jira) +
+  // Agent 2 (Grammatik/Sprachstil/Wiederholungen/roter Faden) - reine
+  // Befund-Reports (keine Auto-Korrektur), je Kapitel. Agent 3 (Design:
+  // Struktur-Pruefung des exportierten Gesamtdokuments) folgt in einem
+  // spaeteren Ausbauschritt zusammen mit dem Mehrkapitel-Export.
+  function editoAgent1Prompt(chapterTitle, text) {
+    var tickets = editoTicketsForChapter(chapterTitle);
+    var rovoList = editoRovoEntriesForChapter(chapterTitle);
+    return ragPromptFor("editoAgent1") +
+      "\n\nKAPITELTEXT:\n" + truncate(text, 6000) +
+      "\n\nQUELLEN – Jira-Tickets (" + tickets.length + "):\n" + (tickets.length ? truncate(tickets.map(manualTicketBlock).join("\n"), 6000) : "(keine)") +
+      "\n\nQUELLEN – Rovo-Wissens-Notizen (" + rovoList.length + "):\n" +
+      (rovoList.length ? rovoList.map(function (e) { return "- " + truncate(e.chatText, 400) + " -> " + truncate(e.answerText, 400); }).join("\n") : "(keine)");
+  }
+  function editoAgent2Prompt(text) {
+    return ragPromptFor("editoAgent2") + "\n\n" + truncate(text, 7000);
+  }
+  els.editoAgent1Btn.addEventListener("click", async function () {
+    var entry = editoActiveChapterTitle && app.editoChapters[editoActiveChapterTitle];
+    if (!entry || !entry.de) { showToast("Kein Text", "Für dieses Kapitel wurde noch keine Fassung erzeugt.", true); return; }
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    els.editoAgent1Btn.disabled = true;
+    els.editoAgent1Spinner.hidden = false;
+    els.editoAgent1Result.hidden = false;
+    els.editoAgent1Output.textContent = "Wird geprüft …";
+    try {
+      var result = await sampleApi(editoAgent1Prompt(editoActiveChapterTitle, entry.de), { modelTier: "default", cache: false });
+      entry.agent1 = { generatedAt: nowLabel(), text: result.text || "" };
+      els.editoAgent1Output.textContent = entry.agent1.text;
+      addLog("EDITO Agent 1 (Inhalt): Prüfung für „" + editoActiveChapterTitle + "“ abgeschlossen.");
+    } catch (err) {
+      els.editoAgent1Output.textContent = "";
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.editoAgent1Btn.disabled = false;
+      els.editoAgent1Spinner.hidden = true;
+    }
+  });
+  els.editoAgent2Btn.addEventListener("click", async function () {
+    var entry = editoActiveChapterTitle && app.editoChapters[editoActiveChapterTitle];
+    if (!entry || !entry.de) { showToast("Kein Text", "Für dieses Kapitel wurde noch keine Fassung erzeugt.", true); return; }
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    els.editoAgent2Btn.disabled = true;
+    els.editoAgent2Spinner.hidden = false;
+    els.editoAgent2Result.hidden = false;
+    els.editoAgent2Output.textContent = "Wird geprüft …";
+    try {
+      var result2 = await sampleApi(editoAgent2Prompt(entry.de), { modelTier: "default", cache: false });
+      entry.agent2 = { generatedAt: nowLabel(), text: result2.text || "" };
+      els.editoAgent2Output.textContent = entry.agent2.text;
+      addLog("EDITO Agent 2 (Sprache): Prüfung für „" + editoActiveChapterTitle + "“ abgeschlossen.");
+    } catch (err) {
+      els.editoAgent2Output.textContent = "";
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.editoAgent2Btn.disabled = false;
+      els.editoAgent2Spinner.hidden = true;
+    }
+  });
+
   /* ============ Teil 10: Navigation ============ */
 
   var viewPanels = document.querySelectorAll("[data-view-panel]");
@@ -21542,6 +21968,7 @@
     if (name === "output-md" || name === "output-pdf") renderOutputCounts();
     if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); renderBildband(); }
     if (name === "bildband") renderBildband();
+    if (name === "edito") { renderEditoVersionSelect(); renderEditoChapters(); }
     if (name === "rovoknowledge") renderRovoEntries();
     if (window.innerWidth <= 900) setSidebar(false);
   }
