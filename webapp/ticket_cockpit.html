@@ -2300,18 +2300,21 @@
               <span class="btn-spinner" id="edito-generate-all-spinner" hidden></span>
               Alle Kapitel erzeugen
             </button>
+            <button class="btn ghost" id="edito-select-all-btn" type="button">Alle auswählen</button>
+            <button class="btn ghost" id="edito-select-clear-btn" type="button">Auswahl aufheben</button>
+            <span class="step-note" id="edito-selection-count" style="align-self:center;">0 Kapitel ausgewählt</span>
           </div>
           <p class="step-note" id="edito-generate-all-status-note"></p>
           <div class="table-wrap">
             <table class="simple-table" id="edito-chapters-table">
-              <thead><tr><th>Kapitel</th><th>Tickets</th><th>RAG</th><th>Bestehendes Handbuch</th><th>Rovo</th><th>Bilder</th><th>Status</th><th>Aktion</th></tr></thead>
+              <thead><tr><th></th><th>Kapitel</th><th>Tickets</th><th>RAG</th><th>Bestehendes Handbuch</th><th>Rovo</th><th>Bilder</th><th>Status</th><th>Aktion</th></tr></thead>
               <tbody id="edito-chapters-tbody"></tbody>
             </table>
           </div>
         </section>
 
         <section id="edito-preview-section" hidden>
-          <p class="section-label">3. Vorschau, Export &amp; Prüfung: <span id="edito-preview-title"></span></p>
+          <p class="section-label">4. Vorschau, Export &amp; Prüfung: <span id="edito-preview-title"></span></p>
           <textarea id="edito-preview-output" class="text-input" style="width:100%; min-height:320px; font-family:'IBM Plex Mono', monospace; font-size:12.5px; resize:vertical;"></textarea>
           <div class="controls">
             <button class="btn ghost" id="edito-export-docx-btn" type="button">Als DOCX exportieren</button>
@@ -2338,8 +2341,17 @@
           </div>
         </section>
 
+        <section id="edito-batch-export-section" hidden>
+          <p class="section-label">3. Ausgewählte Kapitel exportieren</p>
+          <p class="step-note">Export für die oben unter "2. Kapitel &amp; Quellen" per Checkbox ausgewählten Kapitel (je Kapitel eine eigene Datei, nur bereits erzeugte Kapitel &ndash; noch nicht erzeugte werden übersprungen):</p>
+          <div class="controls">
+            <button class="btn ghost" id="edito-batch-export-docx-btn" type="button">Ausgewählte als Word erzeugen</button>
+            <button class="btn ghost" id="edito-batch-export-pdf-btn" type="button">Ausgewählte als PDF erzeugen</button>
+          </div>
+        </section>
+
         <section>
-          <p class="section-label">4. Alle erzeugten Dokumente (<span id="edito-files-count">0</span>)</p>
+          <p class="section-label">5. Alle erzeugten Dokumente (<span id="edito-files-count">0</span>)</p>
           <div class="callout">
             Nach jedem Erzeugen (je Kapitel oder im Sammel-Lauf) werden automatisch ein Word- (.docx) und ein
             PDF-Dokument mit Datum im Dateinamen abgelegt &ndash; über alle Rollen/Sparten hinweg, unabhängig von
@@ -5005,7 +5017,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.90.0";
+  var APP_VERSION = "2.92.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6574,7 +6586,9 @@
     "bildband-table", "bildband-tbody", "bildband-empty",
     "edito-version-select", "edito-chapters-section", "edito-chapters-count",
     "edito-generate-all-btn", "edito-generate-all-spinner", "edito-generate-all-status-note",
+    "edito-select-all-btn", "edito-select-clear-btn", "edito-selection-count",
     "edito-chapters-table", "edito-chapters-tbody",
+    "edito-batch-export-section", "edito-batch-export-docx-btn", "edito-batch-export-pdf-btn",
     "edito-preview-section", "edito-preview-title", "edito-preview-output",
     "edito-export-docx-btn", "edito-export-pdf-btn", "edito-export-md-btn",
     "edito-agent1-btn", "edito-agent1-spinner", "edito-agent1-result", "edito-agent1-output",
@@ -7132,6 +7146,7 @@
     app.rovoEntries = [];
     app.editoVersionKey = "";
     app.editoChapters = {};
+    editoSelectedChapters = {};
     massSelectedIds = {};
     renderMassFiles();
     renderMassTicketSourceWrap();
@@ -7225,6 +7240,7 @@
     app.rovoEntries = [];
     app.editoVersionKey = "";
     app.editoChapters = {};
+    editoSelectedChapters = {};
     massSelectedIds = {};
     renderMassFiles();
     renderMassTicketSourceWrap();
@@ -16194,6 +16210,44 @@
 
   // OCR ueber Tesseract.js (per CDN geladen, laeuft vollstaendig im Browser
   // via WebAssembly - kein eigener Server). Erkennt Englisch + Deutsch.
+  //
+  // Performance: Tesseract.recognize(image, langs) ist nur eine komfortable
+  // Kurzform, die bei JEDEM Aufruf intern einen kompletten neuen Worker
+  // erzeugt (inkl. Nachladen der Sprachdaten eng+deu) und danach wieder
+  // verwirft - das macht wiederholte OCR-Laeufe sehr langsam, selbst mit
+  // Parallelitaet (jede "Spur" zahlt dann den vollen Initialisierungs-Preis
+  // fuer JEDES einzelne Bild). Stattdessen: ein einmal erzeugter, ueber die
+  // gesamte Sitzung wiederverwendeter Worker-Pool (ocrWorkerPoolPromise) -
+  // die Sprachdaten bleiben nach der allerersten Erkennung geladen, jeder
+  // weitere Aufruf (Einzelbild wie Stapel) nutzt direkt worker.recognize().
+  var IMAGES_OCR_CONCURRENCY = 3;
+  var ocrWorkerPoolPromise = null;
+  function getOcrWorkerPool() {
+    if (!ocrWorkerPoolPromise) {
+      var creations = [];
+      for (var i = 0; i < IMAGES_OCR_CONCURRENCY; i++) creations.push(Tesseract.createWorker("eng+deu"));
+      ocrWorkerPoolPromise = Promise.all(creations).catch(function (err) {
+        ocrWorkerPoolPromise = null; // bei Fehlschlag (z. B. kein Internetzugriff) erneuten Versuch beim naechsten Aufruf erlauben
+        throw err;
+      });
+    }
+    return ocrWorkerPoolPromise;
+  }
+  // Wie mapWithConcurrency (Teil 9c), bindet aber jede der parallelen
+  // "Spuren" dauerhaft an EINEN Worker aus dem Pool (1:1), statt nur die
+  // Anzahl gleichzeitiger Aufrufe zu begrenzen - noetig, damit derselbe
+  // wiederverwendete Tesseract-Worker nicht von mehreren Bildern
+  // gleichzeitig angefragt wird.
+  async function mapWithWorkerPool(items, pool, fn) {
+    var nextIndex = 0;
+    async function lane(worker) {
+      while (nextIndex < items.length) {
+        var i = nextIndex++;
+        await fn(items[i], worker);
+      }
+    }
+    await Promise.all(pool.map(function (w) { return lane(w); }));
+  }
   async function runImageOcr(id, btn) {
     var img = app.uploadedImages.filter(function (i) { return i.id === id; })[0];
     if (!img) return;
@@ -16204,7 +16258,8 @@
     }
     if (btn) { btn.disabled = true; btn.textContent = "Erkenne Text …"; }
     try {
-      var result = await Tesseract.recognize(img.dataUrl, "eng+deu");
+      var pool = await getOcrWorkerPool();
+      var result = await pool[0].recognize(img.dataUrl);
       img.ocrText = ((result && result.data && result.data.text) || "").trim();
       img.ocrError = null;
       img.ocrRanAt = nowLabel();
@@ -16249,8 +16304,9 @@
     var description = descMatch ? descMatch[1].trim().split("\n")[0].trim() : "";
     return { chapterTitle: chapterTitle, subchapterTitle: subTitle, description: description };
   }
-  // Laeuft mit begrenzter Parallelitaet (mapWithConcurrency, s. Teil 9c -
-  // dieselbe Funktion wie beim Benutzerhandbuch-Kapitel-Generator) statt
+  // Laeuft mit begrenzter Parallelitaet (je einem eigenen, wiederverwendeten
+  // Worker aus dem OCR-Pool, s. o. - mapWithWorkerPool statt
+  // mapWithConcurrency, damit jede Spur denselben Worker behaelt) statt
   // strikt sequentiell je Bild: deutlich schnellerer Gesamtlauf bei
   // mehreren Bildern (OCR + KI-Zuordnung je Bild laufen nicht mehr
   // nacheinander auf ALLE anderen Bilder wartend). Die Statuszeile zaehlt
@@ -16259,7 +16315,6 @@
   // app.uploadedImages geschrieben (= dauerhaft gespeichert, Teil von
   // Sitzung speichern/laden) und bleiben jederzeit per Dropdown/Textfeld
   // manuell korrigierbar - die Parallelisierung aendert daran nichts.
-  var IMAGES_OCR_CONCURRENCY = 3;
   async function runImagesOcrBatch() {
     var targets = app.uploadedImages.slice();
     if (!targets.length) { showToast("Keine Bilder", "Es sind keine hochgeladenen Bilder vorhanden.", true); return; }
@@ -16272,9 +16327,21 @@
     els.imagesOcrBatchSpinner.hidden = false;
     var ocrFailed = 0, imagesFilled = 0, completed = 0;
     els.imagesOcrBatchStatusNote.textContent = "0 von " + targets.length + " Bildern verarbeitet …";
-    await mapWithConcurrency(targets, IMAGES_OCR_CONCURRENCY, async function (img) {
+    var pool;
+    try {
+      pool = await getOcrWorkerPool();
+    } catch (err) {
+      targets.forEach(function (img) { img.ocrError = (err && err.message) || "Unbekannter Fehler bei der Texterkennung."; });
+      els.imagesOcrBatchStatusNote.textContent = "OCR-Bibliothek konnte nicht initialisiert werden.";
+      showToast("Fehlgeschlagen", "OCR-Bibliothek (Tesseract.js) konnte nicht initialisiert werden - Internetzugriff erforderlich.", true);
+      els.imagesOcrBatchBtn.disabled = false;
+      els.imagesOcrBatchSpinner.hidden = true;
+      renderGallery();
+      return;
+    }
+    await mapWithWorkerPool(targets, pool, async function (img, worker) {
       try {
-        var result = await Tesseract.recognize(img.dataUrl, "eng+deu");
+        var result = await worker.recognize(img.dataUrl);
         img.ocrText = ((result && result.data && result.data.text) || "").trim();
         img.ocrError = null;
         img.ocrRanAt = nowLabel();
@@ -21725,6 +21792,7 @@
   els.editoVersionSelect.addEventListener("change", function () {
     app.editoVersionKey = els.editoVersionSelect.value;
     els.editoPreviewSection.hidden = true;
+    editoSelectedChapters = {};
     renderEditoChapters();
     renderEditoFiles();
   });
@@ -21773,16 +21841,31 @@
       images: editoImagesForChapter(chapterTitle).length
     };
   }
+  // editoSelectedChapters: transiente, NICHT in der Sitzung gespeicherte
+  // Checkbox-Auswahl (wie massSelectedIds bei der Massenverarbeitung) fuer
+  // den Mehrfach-Export einzelner, bereits erzeugter Kapitel als separate
+  // Word-/PDF-Dateien (Abschnitt 3). Wird bei Versionswechsel geleert, da
+  // sich die angebotenen Kapitel dann aendern.
+  var editoSelectedChapters = {};
+  function editoSelectedChaptersList() {
+    return Object.keys(editoSelectedChapters).filter(function (t) { return editoSelectedChapters[t]; });
+  }
+  function editoUpdateSelectionUI() {
+    var n = editoSelectedChaptersList().length;
+    els.editoSelectionCount.textContent = n + (n === 1 ? " Kapitel ausgewählt" : " Kapitel ausgewählt");
+    els.editoBatchExportSection.hidden = !app.editoVersionKey;
+  }
   function renderEditoChapters() {
     var chapters = editoChaptersForVersion();
     els.editoChaptersSection.hidden = !app.editoVersionKey;
-    if (!app.editoVersionKey) { els.editoChaptersTbody.innerHTML = ""; els.editoChaptersCount.textContent = "0"; return; }
+    if (!app.editoVersionKey) { els.editoChaptersTbody.innerHTML = ""; els.editoChaptersCount.textContent = "0"; editoUpdateSelectionUI(); return; }
     els.editoChaptersCount.textContent = chapters.length;
     els.editoChaptersTbody.innerHTML = chapters.map(function (c) {
       var counts = editoSourceCounts(c.title);
       var entry = app.editoChapters[c.title];
       var hasText = !!(entry && entry.de);
       return "<tr>" +
+        '<td><input type="checkbox" class="edito-chapter-select" data-chapter="' + escapeHtml(c.title) + '" aria-label="' + escapeHtml(c.title) + ' auswählen"' + (editoSelectedChapters[c.title] ? " checked" : "") + "></td>" +
         "<td>" + escapeHtml(c.title) + "</td>" +
         '<td class="mono">' + counts.tickets + "</td>" +
         '<td class="mono">' + counts.rag + "</td>" +
@@ -21794,6 +21877,7 @@
         (hasText ? ' <button type="button" class="btn ghost btn-tiny" data-edito-view="' + escapeHtml(c.title) + '">Anzeigen</button>' : "") +
         "</td></tr>";
     }).join("");
+    editoUpdateSelectionUI();
   }
   function editoOutlineChapterSubsText(chapterTitle) {
     var chapter = app.outline.filter(function (c) { return c.title === chapterTitle; })[0];
@@ -21838,33 +21922,84 @@
       return false;
     }
   }
-  // Legt nach jedem Erzeugen automatisch ein Word- und ein PDF-Dokument mit
-  // Datum im Dateinamen ab (als Daten-URL im Sitzungsstand, nicht als
-  // sofortiger Download - ein automatischer Speichern-Dialog je Kapitel
-  // waere bei "Alle Kapitel erzeugen" sonst eine Flut nicht angeforderter
-  // Downloads). Ueberschreibt bei erneutem Erzeugen die vorherige Datei
-  // desselben Kapitels. Fehler hier (z. B. PDF-Aufbau) duerfen die
-  // eigentliche Text-Erzeugung nicht zum Absturz bringen.
-  async function editoSaveChapterFiles(chapterTitle) {
+  // Baut und speichert je EIN Format (Word ODER PDF) fuer ein Kapitel als
+  // Daten-URL im Sitzungsstand ab (kein sofortiger Speichern-Dialog) -
+  // Basis sowohl fuer die automatische Ablage direkt nach dem Erzeugen
+  // (editoSaveChapterFiles, beide Formate) als auch fuer den manuellen
+  // Mehrfach-Export einer Checkbox-Auswahl (editoBatchExportSelected, nur
+  // das angeforderte Format). Ueberschreibt bei erneutem Aufruf die
+  // vorherige Datei desselben Kapitels/Formats. Gibt true bei Erfolg
+  // zurueck, false wenn kein Text vorhanden ist oder der Aufbau fehlschlug
+  // (z. B. Bibliothek nicht geladen) - ein Fehler hier darf die eigentliche
+  // Text-Erzeugung nie zum Absturz bringen.
+  async function editoSaveChapterDocx(chapterTitle) {
     var entry = app.editoChapters[chapterTitle];
-    if (!entry || !entry.de) return;
-    var stamp = dateStampForFilename();
+    if (!entry || !entry.de) return false;
     try {
       var docxBlob = await buildManualChapterDocxBlob(chapterTitle, entry.de, chapterTitle);
       entry.docxDataUrl = await blobToDataUrl(docxBlob);
-      entry.docxFilename = safeFilename(chapterTitle) + "_EDITO_" + stamp + ".docx";
+      entry.docxFilename = safeFilename(chapterTitle) + "_EDITO_" + dateStampForFilename() + ".docx";
+      entry.filesGeneratedAt = nowLabel();
+      return true;
     } catch (err) {
       entry.docxDataUrl = null; entry.docxFilename = null;
+      return false;
     }
+  }
+  async function editoSaveChapterPdf(chapterTitle) {
+    var entry = app.editoChapters[chapterTitle];
+    if (!entry || !entry.de) return false;
     try {
       var pdfBlob = (await buildManualChapterPdfDoc(chapterTitle, entry.de, chapterTitle)).output("blob");
       entry.pdfDataUrl = await blobToDataUrl(pdfBlob);
-      entry.pdfFilename = safeFilename(chapterTitle) + "_EDITO_" + stamp + ".pdf";
+      entry.pdfFilename = safeFilename(chapterTitle) + "_EDITO_" + dateStampForFilename() + ".pdf";
+      entry.filesGeneratedAt = nowLabel();
+      return true;
     } catch (err) {
       entry.pdfDataUrl = null; entry.pdfFilename = null;
+      return false;
     }
-    entry.filesGeneratedAt = nowLabel();
   }
+  // Legt nach jedem Erzeugen (Einzel- oder Sammel-Lauf) automatisch BEIDE
+  // Formate ab - ein automatischer Speichern-Dialog je Kapitel waere bei
+  // "Alle Kapitel erzeugen" sonst eine Flut nicht angeforderter Downloads,
+  // daher nur Ablage als Daten-URL, kein sofortiger Download.
+  async function editoSaveChapterFiles(chapterTitle) {
+    await editoSaveChapterDocx(chapterTitle);
+    await editoSaveChapterPdf(chapterTitle);
+  }
+  // Manueller Mehrfach-Export (Abschnitt 3): baut je ausgewaehltem Kapitel
+  // NUR das angeforderte Format (separate Datei je Kapitel, kein
+  // zusammengefuehrtes Gesamtdokument - das ist ein spaeterer Ausbauschritt)
+  // und ueberspringt Kapitel ohne bereits erzeugten Text.
+  async function editoBatchExportSelected(format) {
+    var titles = editoSelectedChaptersList();
+    if (!titles.length) { showToast("Keine Auswahl", "Bitte zuerst oben in \"2. Kapitel & Quellen\" mindestens ein Kapitel auswählen.", true); return; }
+    var done = 0, skipped = 0;
+    for (var i = 0; i < titles.length; i++) {
+      var entry = app.editoChapters[titles[i]];
+      if (!entry || !entry.de) { skipped++; continue; }
+      var ok = format === "pdf" ? await editoSaveChapterPdf(titles[i]) : await editoSaveChapterDocx(titles[i]);
+      if (ok) done++; else skipped++;
+    }
+    renderEditoChapters();
+    renderEditoFiles();
+    var formatLabel = format === "pdf" ? "PDF" : "Word";
+    addLog("EDITO: Mehrfach-Export (" + formatLabel + ") für Auswahl - " + done + " Dokument(e) erzeugt" + (skipped ? ", " + skipped + " übersprungen (noch kein Text erzeugt)" : "") + ".");
+    showToast(done ? "Erzeugt" : "Nichts erzeugt",
+      done + " " + formatLabel + "-Dokument(e) erzeugt und in der Übersicht gespeichert" + (skipped ? ", " + skipped + " übersprungen (noch kein Text erzeugt - zuerst „Erzeugen“ nutzen)." : "."),
+      done === 0);
+  }
+  els.editoSelectAllBtn.addEventListener("click", function () {
+    editoChaptersForVersion().forEach(function (c) { editoSelectedChapters[c.title] = true; });
+    renderEditoChapters();
+  });
+  els.editoSelectClearBtn.addEventListener("click", function () {
+    editoSelectedChapters = {};
+    renderEditoChapters();
+  });
+  els.editoBatchExportDocxBtn.addEventListener("click", function () { editoBatchExportSelected("docx"); });
+  els.editoBatchExportPdfBtn.addEventListener("click", function () { editoBatchExportSelected("pdf"); });
   function editoAllFileEntries() {
     return Object.keys(app.editoChapters)
       .map(function (title) { return { title: title, entry: app.editoChapters[title] }; })
@@ -21916,6 +22051,13 @@
   els.editoPreviewOutput.addEventListener("input", function () {
     var entry = editoActiveChapterTitle && app.editoChapters[editoActiveChapterTitle];
     if (entry) entry.de = els.editoPreviewOutput.value;
+  });
+  els.editoChaptersTbody.addEventListener("change", function (e) {
+    var cb = e.target.closest(".edito-chapter-select");
+    if (!cb) return;
+    var title = cb.getAttribute("data-chapter");
+    if (cb.checked) editoSelectedChapters[title] = true; else delete editoSelectedChapters[title];
+    editoUpdateSelectionUI();
   });
   els.editoChaptersTbody.addEventListener("click", async function (e) {
     var genBtn = e.target.closest("[data-edito-generate]");

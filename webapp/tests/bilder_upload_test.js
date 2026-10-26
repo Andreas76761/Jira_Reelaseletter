@@ -14,8 +14,12 @@ const dom = new JSDOM(full, {
   runScripts: "dangerously", resources: "usable", pretendToBeVisual: true, url: "https://example.com/t", virtualConsole: vc,
   beforeParse(window) {
     window.Tesseract = {
-      recognize: function (dataUrl, lang) {
-        return Promise.resolve({ data: { text: "Mocked OCR Text 123" } });
+      createWorker: function () {
+        return Promise.resolve({
+          recognize: function (dataUrl) {
+            return Promise.resolve({ data: { text: "Mocked OCR Text 123" } });
+          },
+        });
       },
     };
   },
@@ -128,7 +132,7 @@ const redSquareDataUrl = fs.readFileSync(path.join(FIXTURES, "red_square_dataurl
   await wait(100);
   const cardAfterOcrFail = cards()[0];
   check("Ohne Tesseract: Fehlermeldung statt Absturz", cardAfterOcrFail.querySelector(".image-ocr-box.error") !== null);
-  win.Tesseract = { recognize: function () { return Promise.resolve({ data: { text: "erneut erkannt" } }); } };
+  win.Tesseract = { createWorker: function () { return Promise.resolve({ recognize: function () { return Promise.resolve({ data: { text: "erneut erkannt" } }); } }); } };
 
   // ===================== Zusammen mit generierten Prozessbildern in derselben Galerie =====================
   // Basis-Import: die App startet bewusst mit 0 eingebetteten Tickets (s.

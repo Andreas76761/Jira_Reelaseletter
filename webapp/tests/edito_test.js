@@ -116,14 +116,14 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   check("Kapitel-Bereich nach Auswahl sichtbar", doc.getElementById("edito-chapters-section").hidden === false);
 
   function rowFor(chapterTitleSubstring) {
-    return Array.from(doc.getElementById("edito-chapters-tbody").querySelectorAll("tr")).find((r) => r.children[0].textContent.includes(chapterTitleSubstring));
+    return Array.from(doc.getElementById("edito-chapters-tbody").querySelectorAll("tr")).find((r) => r.children[1].textContent.includes(chapterTitleSubstring));
   }
   const kap7Row = rowFor("Kapitel 7");
   check("Kapitel 7 (Contract Management, Retail-Ticket) ist in Dealer-Version enthalten", !!kap7Row);
-  check("Kapitel 7: genau 1 Ticket gezählt (OV-1, Retail)", !!kap7Row && kap7Row.children[1].textContent.trim() === "1");
+  check("Kapitel 7: genau 1 Ticket gezählt (OV-1, Retail)", !!kap7Row && kap7Row.children[2].textContent.trim() === "1");
   const kap5Row = rowFor("Kapitel 5");
   check("Kapitel 5 (Revenue Management, nur Van/MO-Ticket) ist NICHT in Dealer-Version enthalten", !kap5Row);
-  const kap7TitleFull = kap7Row.children[0].textContent;
+  const kap7TitleFull = kap7Row.children[1].textContent;
 
   // ===================== Rovo-Eintrag für Kapitel 7 anlegen =====================
   doc.querySelector('.nav-item[data-view="rovoknowledge"]').click();
@@ -157,11 +157,11 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   doc.querySelector('.nav-item[data-view="edito"]').click();
   await wait(100);
   const kap7RowAfterSources = rowFor("Kapitel 7");
-  check("Kapitel 7: Ticket-Anzahl weiterhin 1", kap7RowAfterSources.children[1].textContent.trim() === "1");
-  check("Kapitel 7: RAG-Anzahl jetzt 1", kap7RowAfterSources.children[2].textContent.trim() === "1");
-  check("Kapitel 7: bestehender Handbuchtext „–“ (noch keiner erzeugt)", kap7RowAfterSources.children[3].textContent.trim() === "–");
-  check("Kapitel 7: Rovo-Anzahl jetzt 1", kap7RowAfterSources.children[4].textContent.trim() === "1");
-  check("Kapitel 7: Status „Noch nicht erzeugt“", kap7RowAfterSources.children[6].textContent.includes("Noch nicht erzeugt"));
+  check("Kapitel 7: Ticket-Anzahl weiterhin 1", kap7RowAfterSources.children[2].textContent.trim() === "1");
+  check("Kapitel 7: RAG-Anzahl jetzt 1", kap7RowAfterSources.children[3].textContent.trim() === "1");
+  check("Kapitel 7: bestehender Handbuchtext „–“ (noch keiner erzeugt)", kap7RowAfterSources.children[4].textContent.trim() === "–");
+  check("Kapitel 7: Rovo-Anzahl jetzt 1", kap7RowAfterSources.children[5].textContent.trim() === "1");
+  check("Kapitel 7: Status „Noch nicht erzeugt“", kap7RowAfterSources.children[7].textContent.includes("Noch nicht erzeugt"));
 
   // ===================== Einzelnes Kapitel erzeugen =====================
   fire(kap7RowAfterSources.querySelector("[data-edito-generate]"), "click");
@@ -170,7 +170,7 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   check("Vorschau-Titel nennt das Kapitel", doc.getElementById("edito-preview-title").textContent.includes("Kapitel 7"));
   check("Vorschau zeigt den (gemockten) generierten Text", doc.getElementById("edito-preview-output").value.includes("Testabsatz für die neue EDITO-Fassung"));
   const kap7RowAfterGen = rowFor("Kapitel 7");
-  check("Kapitel 7: Status jetzt „Erzeugt“", kap7RowAfterGen.children[6].textContent.includes("Erzeugt"));
+  check("Kapitel 7: Status jetzt „Erzeugt“", kap7RowAfterGen.children[7].textContent.includes("Erzeugt"));
   check("Erzeugen-Button-Beschriftung wechselt zu „Neu erzeugen“", kap7RowAfterGen.querySelector("[data-edito-generate]").textContent.includes("Neu erzeugen"));
 
   // ===================== Nach Erzeugen: Word+PDF automatisch abgelegt, in Übersicht sichtbar =====================
@@ -195,6 +195,53 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   fire(pdfFileBtn, "click");
   await wait(100);
   check("Klick auf PDF-Datei in der Übersicht löst Download aus", savedFiles.length === savedBeforeOverviewDownload + 2);
+
+  // ===================== Checkbox-Auswahl + Mehrfach-Export (Punkt 2 + 3) =====================
+  const chapterCheckbox = (title) => rowFor(title).querySelector(".edito-chapter-select");
+  check("Auswahl-Zähler initial '0 Kapitel ausgewählt'", doc.getElementById("edito-selection-count").textContent.trim() === "0 Kapitel ausgewählt");
+
+  chapterCheckbox("Kapitel 7").checked = true;
+  fire(chapterCheckbox("Kapitel 7"), "change");
+  await wait(30);
+  check("Nach Anhaken einer Checkbox: Zähler zeigt '1 Kapitel ausgewählt'", doc.getElementById("edito-selection-count").textContent.trim() === "1 Kapitel ausgewählt");
+
+  const totalDealerChapters = parseInt(doc.getElementById("edito-chapters-count").textContent, 10);
+  fire(doc.getElementById("edito-select-all-btn"), "click");
+  await wait(30);
+  check("'Alle auswählen' setzt Zähler auf Gesamtzahl der Kapitel dieser Version", doc.getElementById("edito-selection-count").textContent.trim() === totalDealerChapters + " Kapitel ausgewählt");
+  check("'Alle auswählen' hakt auch die Kapitel-7-Checkbox an", chapterCheckbox("Kapitel 7").checked === true);
+
+  fire(doc.getElementById("edito-select-clear-btn"), "click");
+  await wait(30);
+  check("'Auswahl aufheben' setzt Zähler zurück auf 0", doc.getElementById("edito-selection-count").textContent.trim() === "0 Kapitel ausgewählt");
+  check("'Auswahl aufheben' hakt die Checkboxen wieder ab", chapterCheckbox("Kapitel 7").checked === false);
+
+  fire(doc.getElementById("edito-batch-export-pdf-btn"), "click");
+  await wait(100);
+  check("Mehrfach-Export ohne Auswahl zeigt Hinweis statt Absturz", doc.getElementById("toast").textContent.includes("Bitte zuerst oben"));
+
+  // Kapitel 7 (bereits mit Text) + Kapitel 1 (noch ohne Text) auswählen -
+  // der Export muss das erzeugte Kapitel exportieren und das andere
+  // überspringen, nicht abstürzen.
+  check("Kapitel 1 ist in der Dealer-Version vorhanden (Vergleichskapitel ohne Text)", !!rowFor("Kapitel 1"));
+  check("Kapitel 1 hat noch keinen erzeugten Text", rowFor("Kapitel 1").children[7].textContent.includes("Noch nicht erzeugt"));
+  chapterCheckbox("Kapitel 7").checked = true;
+  fire(chapterCheckbox("Kapitel 7"), "change");
+  chapterCheckbox("Kapitel 1").checked = true;
+  fire(chapterCheckbox("Kapitel 1"), "change");
+  await wait(30);
+  check("2 Kapitel ausgewählt (1 mit, 1 ohne Text)", doc.getElementById("edito-selection-count").textContent.trim() === "2 Kapitel ausgewählt");
+
+  const logLengthBeforeBatch = doc.getElementById("log-list").textContent.length;
+  fire(doc.getElementById("edito-batch-export-pdf-btn"), "click");
+  await waitUntil(() => doc.getElementById("log-list").textContent.length > logLengthBeforeBatch, 2000);
+  check("Protokoll vermerkt Mehrfach-Export mit 1 erzeugt und 1 übersprungen", /Mehrfach-Export \(PDF\).*1 Dokument\(e\) erzeugt.*1 übersprungen/.test(doc.getElementById("log-list").textContent));
+  check("Auswahl bleibt nach dem Export erhalten (Kapitel 7 weiterhin angehakt)", chapterCheckbox("Kapitel 7").checked === true);
+  check("Auswahl bleibt nach dem Export erhalten (Kapitel 1 weiterhin angehakt)", chapterCheckbox("Kapitel 1").checked === true);
+  check("Kapitel 1 wurde NICHT in die Dokumenten-Übersicht aufgenommen (kein Text vorhanden)", !Array.from(doc.getElementById("edito-files-tbody").querySelectorAll("tr")).some((r) => r.children[0].textContent.includes("Kapitel 1")));
+
+  fire(doc.getElementById("edito-select-clear-btn"), "click");
+  await wait(30);
 
   // ===================== Manuelle Bearbeitung der Vorschau =====================
   const previewTa = doc.getElementById("edito-preview-output");
@@ -252,15 +299,19 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   await waitUntil(() => doc.getElementById("edito-generate-all-status-note").textContent.includes("erzeugt"), 3000);
   check("Sammel-Lauf-Status vermerkt Abschluss", /von \d+ Kapiteln erzeugt/.test(doc.getElementById("edito-generate-all-status-note").textContent));
   const allChapterRows = Array.from(doc.getElementById("edito-chapters-tbody").querySelectorAll("tr"));
-  check("Sammel-Lauf: alle Kapitel der Dealer-Version zeigen Status „Erzeugt“", allChapterRows.every((r) => r.children[6].textContent.includes("Erzeugt")));
+  check("Sammel-Lauf: alle Kapitel der Dealer-Version zeigen Status „Erzeugt“", allChapterRows.every((r) => r.children[7].textContent.includes("Erzeugt")));
   check("Dokumenten-Übersicht enthält nach Sammel-Lauf für jedes erzeugte Kapitel eine Zeile (eine je Kapitel, unabhängig von der Version)", doc.getElementById("edito-files-tbody").querySelectorAll("tr").length === allChapterRows.length);
   check("Dokumenten-Übersicht-Zähler stimmt mit Zeilenanzahl überein", parseInt(doc.getElementById("edito-files-count").textContent, 10) === allChapterRows.length);
 
-  // ===================== Version wechseln: Kapitelliste ändert sich =====================
+  // ===================== Version wechseln: Kapitelliste ändert sich, Auswahl wird geleert =====================
+  fire(doc.getElementById("edito-select-all-btn"), "click");
+  await wait(30);
+  check("Vor Versionswechsel: Auswahl nicht leer (Vorbedingung)", doc.getElementById("edito-selection-count").textContent.trim() !== "0 Kapitel ausgewählt");
   versionSelect.value = "it";
   fire(versionSelect, "change");
   await wait(100);
   check("Nach Wechsel zu „IT“: Kapitel 7 (reines Retail-Ticket) nicht mehr enthalten", !rowFor("Kapitel 7"));
+  check("Nach Versionswechsel: Checkbox-Auswahl geleert", doc.getElementById("edito-selection-count").textContent.trim() === "0 Kapitel ausgewählt");
 
   // ===================== Sitzung speichern/laden =====================
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();

@@ -47,14 +47,31 @@ let sampleImpl = sampleImplFactory();
 // anderen Checks in dieser Datei).
 var ocrDelayQueue = [];
 var ocrDelayIndex = 0;
+// Zaehlt, wie oft ein kompletter neuer Worker erzeugt wird (Performance-
+// Nachweis unten: muss ueber mehrere Laeufe/Bilder hinweg KONSTANT bei
+// IMAGES_OCR_CONCURRENCY bleiben, statt mit jedem Bild weiter zu wachsen).
+var createWorkerCallCount = 0;
+// Muss mit IMAGES_OCR_CONCURRENCY in ticket_cockpit.html uebereinstimmen
+// (dort nicht exportiert, daher hier als bekannter Wert dupliziert).
+var IMAGES_OCR_CONCURRENCY_EXPECTED = 3;
 const dom = new JSDOM(full, {
   runScripts: "dangerously", resources: "usable", pretendToBeVisual: true, url: "https://example.com/t", virtualConsole: vc,
   beforeParse(window) {
+    // Produktivcode erzeugt ueber Tesseract.createWorker(...) einen einmaligen,
+    // wiederverwendeten Worker-Pool statt bei jedem Bild Tesseract.recognize()
+    // (= kompletter Neuaufbau samt Sprachdaten) direkt aufzurufen - der Mock
+    // bildet dieselbe Form nach (createWorker liefert ein Objekt mit
+    // .recognize()), die Verzoegerungs-Warteschlange bleibt unveraendert.
     window.Tesseract = {
-      recognize: function () {
-        var delay = ocrDelayQueue[ocrDelayIndex++] || 0;
-        return new Promise(function (resolve) { setTimeout(function () { resolve({ data: { text: ocrMockText } }); }, delay); });
-      }
+      createWorker: function () {
+        createWorkerCallCount++;
+        return Promise.resolve({
+          recognize: function () {
+            var delay = ocrDelayQueue[ocrDelayIndex++] || 0;
+            return new Promise(function (resolve) { setTimeout(function () { resolve({ data: { text: ocrMockText } }); }, delay); });
+          },
+        });
+      },
     };
     window.claude = {
       use: function (name) {
@@ -171,16 +188,35 @@ const PNG_1X1 = Buffer.from(
   check("Erneuter Lauf: bereits gesetzte Kurzbeschreibung bleibt unverändert (nicht durch neuen OCR-Text ersetzt)",
     descBeforeSecondRun === "Zeigt die Startseite des Moduls." && descriptionValueFor("screenshot_a.png") === descBeforeSecondRun);
 
+  // ===================== Performance-Nachweis: Worker-Pool wird NICHT je Bild neu erzeugt =====================
+  // Zwei Stapellaeufe mit je 2 Bildern (4 Bilder insgesamt) oben - ohne
+  // Wiederverwendung waere Tesseract.createWorker() 4x aufgerufen worden
+  // (bzw. frueher: Tesseract.recognize() baute sogar 4x einen kompletten
+  // Worker+Sprachdaten neu auf). Mit dem wiederverwendeten Pool wird
+  // createWorker() genau einmal pro Pool-Platz (IMAGES_OCR_CONCURRENCY),
+  // nicht einmal pro Bild, aufgerufen.
+  check("Worker-Pool wurde nur einmalig erzeugt (createWorker genau " + IMAGES_OCR_CONCURRENCY_EXPECTED + "x aufgerufen, NICHT einmal je Bild, obwohl bereits 4 Bilder per OCR verarbeitet wurden)",
+    createWorkerCallCount === IMAGES_OCR_CONCURRENCY_EXPECTED);
+
   // ===================== Ohne Tesseract: ehrlicher Fehler statt Absturz =====================
   delete win.Tesseract;
   fire(doc.getElementById("images-ocr-batch-btn"), "click");
   await wait(100);
   check("Ohne Tesseract: verständlicher Hinweis statt Absturz", doc.getElementById("toast").textContent.includes("OCR-Bibliothek"));
+  // Der Worker-Pool wurde durch die beiden erfolgreichen Läufe oben bereits
+  // erstellt und bleibt ueber die gesamte Sitzung hinweg zwischengespeichert
+  // (genau die geprüfte Performance-Optimierung) - window.Tesseract wird nur
+  // der Vollständigkeit halber wiederhergestellt, wird fürs Folgende aber gar
+  // nicht mehr aufgerufen.
   win.Tesseract = {
-    recognize: function () {
-      var delay = ocrDelayQueue[ocrDelayIndex++] || 0;
-      return new Promise(function (resolve) { setTimeout(function () { resolve({ data: { text: ocrMockText } }); }, delay); });
-    }
+    createWorker: function () {
+      return Promise.resolve({
+        recognize: function () {
+          var delay = ocrDelayQueue[ocrDelayIndex++] || 0;
+          return new Promise(function (resolve) { setTimeout(function () { resolve({ data: { text: ocrMockText } }); }, delay); });
+        },
+      });
+    },
   };
 
   // ===================== Parallelitäts-Nachweis (Performance) =====================

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.90.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.92.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1716,12 +1716,21 @@ zusammenzuführen.
   v2.90.0): nach jedem Erzeugen (einzeln oder im Sammel-Lauf) werden
   automatisch ein Word- (.docx) und ein PDF-Dokument mit Datum im
   Dateinamen abgelegt (als Daten-URL im Sitzungsstand, kein automatischer
-  Download-Dialog) – eine neue Übersichtstabelle "4. Alle erzeugten
-  Dokumente" listet je Kapitel Rolle/Sparte, Erzeugungsdatum sowie
-  Word-/PDF-Datei zum direkten Herunterladen, über alle Rollen/Sparten
-  hinweg (unabhängig von der aktuell gewählten Version). Bei erneutem
-  Erzeugen eines Kapitels wird die vorherige Datei desselben Kapitels
-  ersetzt. Drei Prüf-Agenten (reine Befund-Reports, keine
+  Download-Dialog) – eine Übersichtstabelle "5. Alle erzeugten Dokumente"
+  listet je Kapitel Rolle/Sparte, Erzeugungsdatum sowie Word-/PDF-Datei zum
+  direkten Herunterladen, über alle Rollen/Sparten hinweg (unabhängig von
+  der aktuell gewählten Version). Bei erneutem Erzeugen eines Kapitels wird
+  die vorherige Datei desselben Kapitels ersetzt. **Checkbox-Auswahl +
+  Mehrfach-Export** (neu, v2.91.0): in "2. Kapitel & Quellen" lässt sich
+  je Kapitel eine Checkbox anhaken, dazu "Alle auswählen"/"Auswahl
+  aufheben" für die gesamte aktuell angezeigte Kapitelliste; der neue
+  Bereich "3. Ausgewählte Kapitel exportieren" erzeugt per Klick für JEDES
+  ausgewählte Kapitel separat ein Word- bzw. PDF-Dokument (je eine eigene
+  Datei, kein zusammengeführtes Gesamtdokument) und legt es ebenfalls in
+  der Dokumenten-Übersicht ab – Kapitel ohne bereits erzeugten Text werden
+  dabei übersprungen (Hinweis statt Absturz). Die Auswahl ist reiner
+  Sitzungs-Anzeigezustand (nicht Teil von "Sitzung speichern") und wird bei
+  Versionswechsel geleert. Drei Prüf-Agenten (reine Befund-Reports, keine
   Auto-Korrektur): **Agent 1** validiert jede fachliche Aussage im
   erzeugten Text gegen die Rovo-/Jira-Quellen (nicht belegte Aussagen/
   Widersprüche), **Agent 2** prüft Grammatik, Sprachstil, Wiederholungen
@@ -1762,7 +1771,15 @@ zusammenzuführen.
   Sitzung gespeichert und bleiben jederzeit per Dropdown/Textfeld manuell
   korrigierbar. Die Bilder werden dabei **parallel statt sequentiell**
   per OCR verarbeitet (neu, v2.89.0, bis zu 3 gleichzeitig), was den
-  Gesamtdurchlauf bei mehreren Bildern deutlich beschleunigt. Ohne
+  Gesamtdurchlauf bei mehreren Bildern deutlich beschleunigt. **Performance-
+  Fix (v2.92.0)**: `Tesseract.recognize()` erzeugt bei jedem Aufruf einen
+  komplett neuen Worker samt Neuladen der Sprachdaten (eng+deu) – das
+  machte OCR unabhängig von der Parallelität sehr langsam, da selbst die
+  parallelen Durchläufe je Bild erneut den vollen Initialisierungspreis
+  zahlten. Jetzt wird ein einmal erzeugter, über die gesamte Sitzung
+  wiederverwendeter Worker-Pool genutzt (Sprachdaten bleiben nach der
+  ersten Erkennung geladen) – spürbar schnellere Einzel- wie
+  Stapelerkennung, besonders ab dem zweiten Bild bzw. Lauf. Ohne
   Claude-Artifact-Laufzeit bzw. ohne Internetzugriff (Tesseract-Nachladen)
   bleibt der OCR-Text trotzdem erkennbar, nur die KI-Zuordnung entfällt.
 - **Output MD Tickets / Output PDF Tickets** – bereinigte Tickets als
