@@ -466,6 +466,27 @@
   .rovo-detail-col-text { flex: 1; overflow: auto; white-space: pre-wrap; font-size: 13.5px; line-height: 1.6; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
   @media (max-width: 760px) { .rovo-detail-cols { grid-template-columns: 1fr; } }
 
+  /* ---- Bild-Betrachter: frei bewegliches, größenveränderbares Fenster
+     (kein Modal-Overlay/Backdrop - verhält sich wie ein echtes Fenster,
+     nicht wie ein Dialog, der den Rest der Seite blockiert). Größe über
+     die native CSS-resize-Ecke unten rechts, Position per Titelleiste
+     (JS, s. imageViewerDrag*). ---- */
+  .image-viewer-window {
+    position: fixed; left: 4vw; top: 4vh; width: 92vw; height: 88vh; min-width: 360px; min-height: 280px;
+    max-width: 98vw; max-height: 96vh; resize: both; overflow: hidden; z-index: 400;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: 0 16px 48px rgba(0,0,0,.4); display: flex; flex-direction: column;
+  }
+  .image-viewer-titlebar {
+    flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 16px;
+    background: var(--surface-2); border-bottom: 1px solid var(--border); cursor: move; user-select: none;
+  }
+  .image-viewer-titlebar b { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .image-viewer-body { flex: 1; min-height: 0; overflow: auto; position: relative; display: flex; align-items: center; justify-content: center; background: var(--surface-2); }
+  .image-viewer-body canvas { max-width: 100%; max-height: 100%; cursor: crosshair; }
+  .image-viewer-select-box { position: absolute; border: 2px dashed var(--accent); background: rgba(127,127,127,.18); pointer-events: none; }
+  .image-viewer-hint { flex: none; margin: 0; padding: 7px 16px; border-top: 1px solid var(--border); }
+
   .log-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
   .log-list li { padding: 10px 2px; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; gap: 12px; align-items: baseline; }
   .log-list li:last-child { border-bottom: none; }
@@ -2268,7 +2289,7 @@
 
       <!-- ================= Editor ================= -->
       <section class="view-panel" data-view-panel="editor" hidden>
-        <div class="view-head"><h2>Screens-Import</h2><p class="desc">Word- (.docx) oder PowerPoint-Dateien (.pptx) mit Screens je Domäne (Überschrift + Bildschirmfoto) hochladen &ndash; auch Exporte der separaten Screenrecorder-App, da diese laut Angabe ebenfalls Word/PowerPoint liefert. Enthaltene Bilder werden automatisch erkannt, nach Reihenfolge im Dokument nummeriert und mit dem jeweils zugehörigen Überschriften-/Absatztext (Bildtext) versehen. Je Screen lässt sich ein Gliederungskapitel zuordnen &ndash; von Hand oder per KI-Vorschlag &ndash; als Vorbereitung für die spätere Übernahme ins Benutzerhandbuch/Releaseletter. Alle Screens erscheinen zusätzlich, da dieselbe Datenstruktur genutzt wird, unter „Bilder“.</p></div>
+        <div class="view-head"><h2>Screens-Import</h2><p class="desc">Word- (.docx) oder PowerPoint-Dateien (.pptx) mit Screens je Domäne (Überschrift + Bildschirmfoto) hochladen &ndash; auch Exporte der separaten Screenrecorder-App, da diese laut Angabe ebenfalls Word/PowerPoint liefert. Enthaltene Bilder werden automatisch erkannt, nach Reihenfolge im Dokument nummeriert und mit dem jeweils zugehörigen Überschriften-/Absatztext (Bildtext) versehen. Nach dem Import erkennt <b>"OCR: Alle Screens interpretieren"</b> (neu) per Texterkennung den tatsächlich AUF dem Screenshot sichtbaren Text (nicht nur die Überschrift aus der Quelldatei) und lässt Claude anhand dieses Texts automatisch Kapitel, Unterkapitel und eine Kurzbeschreibung vorschlagen &ndash; parallel über mehrere Screens gleichzeitig (derselbe Worker-Pool wie im Register "Bilder"), überschreibt dabei nie bereits gesetzte Felder. Alternativ bzw. ergänzend lässt sich ein Gliederungskapitel auch per einfachem KI-Vorschlag (nur anhand der Überschrift, ohne OCR) oder von Hand zuordnen &ndash; als Vorbereitung für die spätere Übernahme ins Benutzerhandbuch/Releaseletter. Alle Screens erscheinen zusätzlich, da dieselbe Datenstruktur genutzt wird, unter „Bilder“.</p></div>
 
         <section>
           <p class="section-label">Datei hochladen (.docx / .pptx)</p>
@@ -2297,6 +2318,13 @@
 
         <section>
           <p class="section-label">Extrahierte Screens (<span id="editor-screens-count">0</span>)</p>
+          <div style="display:flex; gap:10px; align-items:center; margin-bottom:6px; flex-wrap:wrap;">
+            <button class="btn primary" id="editor-ocr-batch-btn" type="button">
+              <span class="btn-spinner" id="editor-ocr-batch-spinner" hidden></span>
+              OCR: Alle Screens interpretieren
+            </button>
+            <span class="step-note" id="editor-ocr-batch-status-note" style="margin:0;"></span>
+          </div>
           <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
             <button class="btn ghost" id="editor-ai-assign-btn" type="button">
               <span class="btn-spinner" id="editor-ai-assign-spinner" hidden></span>
@@ -2452,7 +2480,7 @@
 
       <!-- ================= Bilder ================= -->
       <section class="view-panel" data-view-panel="bilder" hidden>
-        <div class="view-head"><h2>Bilder</h2><p class="desc">Tabelle und Galerie aller in dieser Sitzung erzeugten Prozessdiagramme sowie hochgeladener Bilder, mit Datum. Beschreibungen lassen sich in der Tabelle direkt bearbeiten oder leeren, Bilder dort auch löschen. Hochgeladene Bilder lassen sich zusätzlich mit Domäne/Kapitel/Schritt (für Clickanweisung) verschlagworten, per OCR nach Text durchsuchen (Tesseract.js, läuft im Browser, benötigt beim ersten Lauf Internetzugriff zum Nachladen der Erkennungsdaten), mit rein technischen Metadaten (Maße, Dateigröße, Helligkeit/Farbe &ndash; keine KI-Bildinterpretation) anzeigen oder wieder herunterladen.</p></div>
+        <div class="view-head"><h2>Bilder</h2><p class="desc">Tabelle und Galerie aller in dieser Sitzung erzeugten Prozessdiagramme sowie hochgeladener Bilder, mit Datum. Beschreibungen lassen sich in der Tabelle direkt bearbeiten oder leeren, Bilder dort auch löschen. Hochgeladene Bilder lassen sich zusätzlich mit Domäne/Kapitel/Schritt (für Clickanweisung) verschlagworten, per OCR nach Text durchsuchen (Tesseract.js, läuft im Browser, benötigt beim ersten Lauf Internetzugriff zum Nachladen der Erkennungsdaten), mit rein technischen Metadaten (Maße, Dateigröße, Helligkeit/Farbe &ndash; keine KI-Bildinterpretation) anzeigen oder wieder herunterladen. Ein Klick auf das Vorschaubild (Galerie oder Tabelle) öffnet es in einem frei beweglichen, größenveränderbaren Vollbild-Fenster &ndash; dort lassen sich mit der Maus Rechtecke über sensible Stellen (Namen, FIN, Servicenummer) ziehen, um diese dauerhaft zu verpixeln ("Speichern"; die Originalversion bleibt über "Original wiederherstellen" einmalig erhalten).</p></div>
 
         <section>
           <p class="section-label">Bild hochladen</p>
@@ -3199,6 +3227,24 @@
       <button class="btn ghost" id="rovo-detail-modal-cancel-btn" type="button">Schließen</button>
     </div>
   </div>
+</div>
+
+<div class="image-viewer-window" id="image-viewer-window" hidden>
+  <div class="image-viewer-titlebar" id="image-viewer-titlebar">
+    <b id="image-viewer-title"></b>
+    <span class="spacer"></span>
+    <button class="btn ghost btn-tiny" id="image-viewer-blur-undo-btn" type="button" hidden>Letzten Bereich entfernen</button>
+    <button class="btn ghost btn-tiny" id="image-viewer-restore-btn" type="button" hidden>Original wiederherstellen</button>
+    <button class="btn primary btn-tiny" id="image-viewer-save-btn" type="button" hidden>Speichern</button>
+    <button class="modal-close" id="image-viewer-close-btn" type="button" aria-label="Schließen">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="image-viewer-body" id="image-viewer-body">
+    <canvas id="image-viewer-canvas"></canvas>
+    <div class="image-viewer-select-box" id="image-viewer-select-box" hidden></div>
+  </div>
+  <p class="step-note image-viewer-hint">Mit der Maus ein Rechteck über Namen/FIN/Servicenummer ziehen, um die Stelle zu verpixeln &ndash; Fenster per Titelleiste verschiebbar, per Ecke unten rechts größenveränderbar.</p>
 </div>
 
 <div id="toast" role="status" aria-live="polite"></div>
@@ -5139,7 +5185,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.100.0";
+  var APP_VERSION = "2.102.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6701,12 +6747,16 @@
     "editor-dropzone", "editor-file-input", "editor-domain-select",
     "editor-files-count", "editor-files-tbody", "editor-files-empty",
     "editor-screens-count", "editor-screens-tbody", "editor-screens-empty",
+    "editor-ocr-batch-btn", "editor-ocr-batch-spinner", "editor-ocr-batch-status-note",
     "editor-ai-assign-btn", "editor-ai-assign-spinner", "editor-ai-status-note",
     "rovo-chat-textarea", "rovo-answer-textarea", "rovo-chat-paste-btn", "rovo-answer-paste-btn", "rovo-add-entry-btn",
     "rovo-md-dropzone", "rovo-md-file-input", "rovo-entries-count", "rovo-ai-assign-btn", "rovo-ai-assign-spinner",
     "rovo-zip-export-btn", "rovo-ai-status-note", "rovo-entries-table", "rovo-entries-tbody", "rovo-entries-empty",
     "rovo-detail-modal-overlay", "rovo-detail-modal-key", "rovo-detail-modal-title", "rovo-detail-modal-close",
     "rovo-detail-modal-meta", "rovo-detail-modal-chat", "rovo-detail-modal-answer", "rovo-detail-modal-cancel-btn",
+    "image-viewer-window", "image-viewer-titlebar", "image-viewer-title", "image-viewer-blur-undo-btn",
+    "image-viewer-restore-btn", "image-viewer-save-btn", "image-viewer-close-btn", "image-viewer-body",
+    "image-viewer-canvas", "image-viewer-select-box",
     "rovo-chapter-summary-count", "rovo-chapter-summary-all-btn", "rovo-chapter-summary-all-spinner",
     "rovo-chapter-summary-all-status-note", "rovo-chapter-summary-table", "rovo-chapter-summary-tbody",
     "rovo-chapter-summary-empty", "rovo-chapter-summary-preview-section", "rovo-chapter-summary-preview-title",
@@ -10614,6 +10664,7 @@
     if (!els.massDomainMdModalOverlay.hidden) closeMassDomainMdModal();
     if (!els.fileviewSummaryModalOverlay.hidden) closeFileviewSummaryModal();
     if (!els.rovoDetailModalOverlay.hidden) closeRovoDetailModal();
+    if (!els.imageViewerWindow.hidden) closeImageViewer();
   });
 
   /* ============ Teil 4: Export (downloads-Capability) ============ */
@@ -16360,7 +16411,7 @@
     card.innerHTML =
       "<h3>" + escapeHtml(img.filename) + "</h3>" +
       '<div class="meta">' + escapeHtml(img.when) + "</div>" +
-      '<img class="uploaded-thumb" src="' + img.dataUrl + '" alt="' + escapeHtml(img.filename) + '">' +
+      '<img class="uploaded-thumb" src="' + img.dataUrl + '" alt="' + escapeHtml(img.filename) + '" data-img-view="' + img.id + '" style="cursor:zoom-in;" title="Zum Vergrößern/Verwischen anklicken">' +
       '<div class="image-tag-row">' +
       '<label>Domäne<input type="text" class="text-input image-tag-input" data-id="' + img.id + '" data-field="domain" value="' + escapeHtml(img.domain) + '" placeholder="z. B. Contract Management"></label>' +
       '<label>Schritt (für Clickanweisung)<input type="text" class="text-input image-tag-input" data-id="' + img.id + '" data-field="processStep" value="' + escapeHtml(img.processStep) + '" placeholder="z. B. Schritt 3: Freigabe"></label>' +
@@ -16388,7 +16439,7 @@
     // bedeutungstragender Inhalt sind, keine Dekoration.
     if (kind === "uploaded") {
       var altUploaded = data.description || data.filename || "Hochgeladenes Bild";
-      return '<img class="uploaded-thumb table-thumb" src="' + data.dataUrl + '" alt="' + escapeHtml(altUploaded) + '">';
+      return '<img class="uploaded-thumb table-thumb" src="' + data.dataUrl + '" alt="' + escapeHtml(altUploaded) + '" data-img-view="' + data.id + '" style="cursor:zoom-in;" title="Zum Vergrößern/Verwischen anklicken">';
     }
     var altGenerated = data.description || data.title || "Generiertes Prozessbild";
     if (data.kind === "svg") return '<img class="uploaded-thumb table-thumb" src="data:image/svg+xml;utf8,' + encodeURIComponent(data.svg) + '" alt="' + escapeHtml(altGenerated) + '">';
@@ -16408,7 +16459,7 @@
         "<td>" + escapeHtml(title) + "</td>" +
         "<td>" + escapeHtml(imageTypeLabel(entry.kind, img)) + "</td>" +
         '<td class="mono">' + escapeHtml(img.when) + "</td>" +
-        '<td><input type="text" class="text-input image-description-input" data-kind="' + entry.kind + '" data-id="' + img.id + '" value="' + escapeHtml(img.description || "") + '" placeholder="Beschreibung ergänzen …"></td>' +
+        '<td style="min-width:340px;"><input type="text" class="text-input image-description-input" data-kind="' + entry.kind + '" data-id="' + img.id + '" value="' + escapeHtml(img.description || "") + '" placeholder="Beschreibung ergänzen …"></td>' +
         '<td><button type="button" class="btn danger comment-edit-btn image-delete-btn" data-kind="' + entry.kind + '" data-id="' + img.id + '">Löschen</button></td>' +
         "</tr>";
     }).join("");
@@ -16420,6 +16471,8 @@
     if (img) img.description = input.value;
   });
   els.imagesTbody.addEventListener("click", function (e) {
+    var viewThumb = e.target.closest("[data-img-view]");
+    if (viewThumb) { openImageViewer(parseInt(viewThumb.getAttribute("data-img-view"), 10)); return; }
     var delBtn = e.target.closest(".image-delete-btn");
     if (delBtn) deleteImageEntry(delBtn.getAttribute("data-kind"), parseInt(delBtn.getAttribute("data-id"), 10));
   });
@@ -16627,7 +16680,7 @@
     }).join("\n");
   }
   function imagesOcrBuildPrompt(ocrText, filename) {
-    return "Du interpretierst einen per OCR aus einem Bild/Screenshot für das oneSCM-Benutzerhandbuch extrahierten Text (Dateiname: \"" + filename + "\"). Ordne den Inhalt GENAU EINEM der folgenden Gliederungskapitel zu (wörtlich aus der Liste, oder \"keines\" falls nichts eindeutig passt), optional GENAU EINEM dort aufgeführten Unterkapitel, und formuliere eine knappe Kurzbeschreibung (max. 1 Satz) dessen, was auf dem Bild zu sehen ist.\n\n" +
+    return "Du interpretierst einen per OCR aus einem Bild/Screenshot für das oneSCM-Benutzerhandbuch extrahierten Text (Dateiname: \"" + filename + "\"). Ordne den Inhalt GENAU EINEM der folgenden Gliederungskapitel zu (wörtlich aus der Liste, oder \"keines\" falls nichts eindeutig passt), optional GENAU EINEM dort aufgeführten Unterkapitel, und formuliere eine knappe Kurzbeschreibung (max. 1-2 Sätze). Nenne darin ZUERST WÖRTLICH die auf dem Bild sichtbare Überschrift/den Seitentitel (meist die erste, optisch hervorgehobene Zeile im erkannten Text), danach in Kürze, was sonst noch auf dem Bild zu sehen ist - erfindest du keine Überschrift, wenn der erkannte Text keine erkennbare enthält.\n\n" +
       "Verfügbare Gliederungskapitel mit Unterkapiteln:\n" + imagesOcrOutlineForPrompt() + "\n\n" +
       "Per OCR erkannter Text:\n" + truncate(ocrText, 2000) + "\n\n" +
       "Antworte AUSSCHLIESSLICH in genau diesem Format, ohne weitere Erklärung, ohne Anführungszeichen:\n" +
@@ -16758,6 +16811,8 @@
     }
   }
   els.gallery.addEventListener("click", function (e) {
+    var viewThumb = e.target.closest("[data-img-view]");
+    if (viewThumb) { openImageViewer(parseInt(viewThumb.getAttribute("data-img-view"), 10)); return; }
     var metaBtn = e.target.closest(".image-metadata-btn");
     if (metaBtn) { computeImageMetadata(parseInt(metaBtn.getAttribute("data-id"), 10)); return; }
     var ocrBtn = e.target.closest(".image-ocr-btn");
@@ -16766,6 +16821,184 @@
     if (dlBtn) { downloadUploadedImage(parseInt(dlBtn.getAttribute("data-id"), 10)); return; }
     var delBtn = e.target.closest(".image-delete-btn");
     if (delBtn) { deleteImageEntry(delBtn.getAttribute("data-kind") || "uploaded", parseInt(delBtn.getAttribute("data-id"), 10)); return; }
+  });
+
+  /* ============ Bild-Betrachter: frei bewegliches, größenveränderbares
+     Fenster (kein Modal-Overlay - verhält sich wie ein echtes Fenster
+     statt wie ein blockierender Dialog) bei Klick auf ein hochgeladenes
+     Bild (Galerie-Karte oder Tabellen-Vorschau, s. data-img-view oben).
+     Inkl. Verwischen-Werkzeug: mit der Maus ein Rechteck über eine
+     sensible Stelle (Name/FIN/Servicenummer) ziehen, verpixelt diesen
+     Bildbereich - bewusst manuell statt automatischer Erkennung (Nutzer-
+     Entscheidung), da Position/Schriftart auf Screenshots zu stark
+     variieren, um zuverlässig automatisch erkannt zu werden. "Speichern"
+     ersetzt img.dataUrl dauerhaft (Originalversion bleibt einmalig unter
+     originalDataUrl erhalten, s. "Original wiederherstellen"). Nur für
+     hochgeladene Bilder (inkl. Screens-Import-Screens, gleiche Datenstruktur)
+     - generierte Prozessdiagramme sind SVG/Mermaid, kein Pixelbild. */
+  var imageViewerState = null; // { id, undoStack: [{x,y,data}] }
+  function closeImageViewer() {
+    imageViewerState = null;
+    els.imageViewerWindow.hidden = true;
+  }
+  function imageViewerPointFromEvent(e) {
+    var canvas = els.imageViewerCanvas;
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+    return {
+      x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY,
+      cssX: e.clientX - rect.left, cssY: e.clientY - rect.top
+    };
+  }
+  // Mosaik-/Pixel-Unschaerfe: Mittelwert je BLOCK×BLOCK-Kachel, unkenntlich
+  // aber deterministisch (kein echter Gauss-Blur nötig, Pixelation reicht
+  // für den Zweck "unlesbar machen" voellig aus und ist deutlich einfacher).
+  var IMAGE_BLUR_BLOCK = 10;
+  function pixelateCanvasRegion(ctx, x, y, w, h) {
+    if (w <= 1 || h <= 1) return;
+    var imgData = ctx.getImageData(x, y, w, h);
+    var data = imgData.data;
+    for (var by = 0; by < h; by += IMAGE_BLUR_BLOCK) {
+      for (var bx = 0; bx < w; bx += IMAGE_BLUR_BLOCK) {
+        var bw = Math.min(IMAGE_BLUR_BLOCK, w - bx), bh = Math.min(IMAGE_BLUR_BLOCK, h - by);
+        var r = 0, g = 0, b = 0, a = 0, count = 0;
+        for (var yy = 0; yy < bh; yy++) {
+          for (var xx = 0; xx < bw; xx++) {
+            var idx = ((by + yy) * w + (bx + xx)) * 4;
+            r += data[idx]; g += data[idx + 1]; b += data[idx + 2]; a += data[idx + 3]; count++;
+          }
+        }
+        r = Math.round(r / count); g = Math.round(g / count); b = Math.round(b / count); a = Math.round(a / count);
+        for (var yy2 = 0; yy2 < bh; yy2++) {
+          for (var xx2 = 0; xx2 < bw; xx2++) {
+            var idx2 = ((by + yy2) * w + (bx + xx2)) * 4;
+            data[idx2] = r; data[idx2 + 1] = g; data[idx2 + 2] = b; data[idx2 + 3] = a;
+          }
+        }
+      }
+    }
+    ctx.putImageData(imgData, x, y);
+  }
+  function openImageViewer(id) {
+    var img = app.uploadedImages.filter(function (i) { return i.id === id; })[0];
+    if (!img) return;
+    var el = new Image();
+    el.onload = function () {
+      var canvas = els.imageViewerCanvas;
+      canvas.width = el.naturalWidth || 800;
+      canvas.height = el.naturalHeight || 600;
+      canvas.getContext("2d").drawImage(el, 0, 0);
+      imageViewerState = { id: id, undoStack: [] };
+      els.imageViewerTitle.textContent = img.filename;
+      els.imageViewerBlurUndoBtn.hidden = true;
+      els.imageViewerSaveBtn.hidden = true;
+      els.imageViewerRestoreBtn.hidden = !img.originalDataUrl;
+      els.imageViewerSelectBox.hidden = true;
+      // Standardgröße/-position bei jedem Öffnen (statt die zuletzt per
+      // CSS-resize/Drag gesetzte Größe/Position zu übernehmen) - sonst
+      // könnte ein zuvor sehr klein gezogenes Fenster beim nächsten Bild
+      // überraschen.
+      els.imageViewerWindow.style.left = ""; els.imageViewerWindow.style.top = "";
+      els.imageViewerWindow.style.width = ""; els.imageViewerWindow.style.height = "";
+      els.imageViewerWindow.hidden = false;
+    };
+    el.onerror = function () { showToast("Fehler", "Bild konnte nicht geladen werden.", true); };
+    el.src = img.dataUrl;
+  }
+  els.imageViewerCloseBtn.addEventListener("click", closeImageViewer);
+  // Fenster per Titelleiste frei verschiebbar (Größenänderung uebernimmt
+  // die native CSS "resize: both"-Ecke unten rechts, braucht kein JS).
+  (function () {
+    var dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+    els.imageViewerTitlebar.addEventListener("mousedown", function (e) {
+      if (e.target.closest("button")) return;
+      var rect = els.imageViewerWindow.getBoundingClientRect();
+      dragging = true; startX = e.clientX; startY = e.clientY; startLeft = rect.left; startTop = rect.top;
+      els.imageViewerWindow.style.left = rect.left + "px";
+      els.imageViewerWindow.style.top = rect.top + "px";
+      e.preventDefault();
+    });
+    document.addEventListener("mousemove", function (e) {
+      if (!dragging) return;
+      els.imageViewerWindow.style.left = (startLeft + (e.clientX - startX)) + "px";
+      els.imageViewerWindow.style.top = (startTop + (e.clientY - startY)) + "px";
+    });
+    document.addEventListener("mouseup", function () { dragging = false; });
+  })();
+  // Rechteck-Auswahl per Maus auf dem Canvas -> beim Loslassen verpixelt.
+  (function () {
+    var selecting = false, startPt = null;
+    els.imageViewerCanvas.addEventListener("mousedown", function (e) {
+      if (!imageViewerState) return;
+      selecting = true;
+      startPt = imageViewerPointFromEvent(e);
+      els.imageViewerSelectBox.style.left = startPt.cssX + "px";
+      els.imageViewerSelectBox.style.top = startPt.cssY + "px";
+      els.imageViewerSelectBox.style.width = "0px";
+      els.imageViewerSelectBox.style.height = "0px";
+      els.imageViewerSelectBox.hidden = false;
+      e.preventDefault();
+    });
+    els.imageViewerBody.addEventListener("mousemove", function (e) {
+      if (!selecting) return;
+      var pt = imageViewerPointFromEvent(e);
+      els.imageViewerSelectBox.style.left = Math.min(startPt.cssX, pt.cssX) + "px";
+      els.imageViewerSelectBox.style.top = Math.min(startPt.cssY, pt.cssY) + "px";
+      els.imageViewerSelectBox.style.width = Math.abs(pt.cssX - startPt.cssX) + "px";
+      els.imageViewerSelectBox.style.height = Math.abs(pt.cssY - startPt.cssY) + "px";
+    });
+    function finishSelection(e) {
+      if (!selecting) return;
+      selecting = false;
+      els.imageViewerSelectBox.hidden = true;
+      var pt = imageViewerPointFromEvent(e);
+      var canvas = els.imageViewerCanvas;
+      var x = Math.max(0, Math.round(Math.min(startPt.x, pt.x)));
+      var y = Math.max(0, Math.round(Math.min(startPt.y, pt.y)));
+      var w = Math.min(canvas.width - x, Math.round(Math.abs(pt.x - startPt.x)));
+      var h = Math.min(canvas.height - y, Math.round(Math.abs(pt.y - startPt.y)));
+      if (w < 4 || h < 4) return; // zu klein - vermutlich nur ein Klick statt einer Auswahl
+      var ctx = canvas.getContext("2d");
+      imageViewerState.undoStack.push({ x: x, y: y, data: ctx.getImageData(x, y, w, h) });
+      pixelateCanvasRegion(ctx, x, y, w, h);
+      els.imageViewerBlurUndoBtn.hidden = false;
+      els.imageViewerSaveBtn.hidden = false;
+    }
+    els.imageViewerBody.addEventListener("mouseup", finishSelection);
+  })();
+  els.imageViewerBlurUndoBtn.addEventListener("click", function () {
+    if (!imageViewerState || !imageViewerState.undoStack.length) return;
+    var last = imageViewerState.undoStack.pop();
+    els.imageViewerCanvas.getContext("2d").putImageData(last.data, last.x, last.y);
+    els.imageViewerBlurUndoBtn.hidden = imageViewerState.undoStack.length === 0;
+  });
+  els.imageViewerSaveBtn.addEventListener("click", function () {
+    if (!imageViewerState) return;
+    var img = app.uploadedImages.filter(function (i) { return i.id === imageViewerState.id; })[0];
+    if (!img) return;
+    if (!img.originalDataUrl) img.originalDataUrl = img.dataUrl;
+    var mime = (img.mimeType === "image/jpeg" || img.mimeType === "image/jpg") ? "image/jpeg" : "image/png";
+    img.dataUrl = els.imageViewerCanvas.toDataURL(mime);
+    img.sizeBytes = Math.round((img.dataUrl.length - img.dataUrl.indexOf(",") - 1) * 0.75);
+    imageViewerState.undoStack = [];
+    els.imageViewerBlurUndoBtn.hidden = true;
+    els.imageViewerRestoreBtn.hidden = false;
+    addLog("Bild „" + img.filename + "“: sensible Bereiche verwischt und gespeichert.");
+    showToast("Gespeichert", "Verwischte Version wurde gespeichert.");
+    renderGallery();
+  });
+  els.imageViewerRestoreBtn.addEventListener("click", async function () {
+    if (!imageViewerState) return;
+    var img = app.uploadedImages.filter(function (i) { return i.id === imageViewerState.id; })[0];
+    if (!img || !img.originalDataUrl) return;
+    var ok = await confirmDialog("Wirklich zur ursprünglichen, unverwischten Version zurückkehren? Verwischte Bereiche gehen dabei verloren.");
+    if (!ok) return;
+    img.dataUrl = img.originalDataUrl;
+    img.originalDataUrl = null;
+    addLog("Bild „" + img.filename + "“: Original wiederhergestellt.");
+    showToast("Wiederhergestellt", "Ursprüngliche Version ist wieder aktiv.");
+    renderGallery();
+    openImageViewer(imageViewerState.id);
   });
 
   /* ============ Bilder: Hochladen (Datei/Drag&Drop/Zwischenablage) ============ */
@@ -17039,6 +17272,88 @@
     els.editorAiAssignSpinner.hidden = true;
   }
   els.editorAiAssignBtn.addEventListener("click", editorRunAiChapterAssignment);
+
+  /* ============ Screens-Import: OCR-Stapelverarbeitung ============
+     Zusätzlich zur obigen, rein auf dem Bildtext (Überschrift aus der
+     Quelldatei) basierenden KI-Zuordnung: erkennt per OCR (Tesseract.js,
+     derselbe Worker-Pool/Downscaling wie im Register "Bilder", s. o. -
+     IMAGES_OCR_CONCURRENCY parallele Spuren statt sequenziell je Screen)
+     den tatsächlich AUF DEM BILD sichtbaren Text und lässt Claude anhand
+     dieses Texts Kapitel, Unterkapitel UND Kurzbeschreibung vorschlagen -
+     nutzt dieselben, bereits vorhandenen Prompt-/Parse-Funktionen wie bei
+     "Bilder" (imagesOcrBuildPrompt/imagesOcrParseResponse), kein Duplikat
+     nötig. Überschreibt wie dort nie ein bereits gesetztes Feld, nur
+     leere werden ergänzt. Ziel sind NUR Screens (sourceFile vorhanden),
+     nicht alle hochgeladenen Bilder. */
+  async function runEditorScreensOcrBatch() {
+    var targets = app.uploadedImages.filter(function (i) { return !!i.sourceFile; });
+    if (!targets.length) { showToast("Keine Screens", "Es sind keine extrahierten Screens vorhanden.", true); return; }
+    if (typeof Tesseract === "undefined") {
+      showToast("Nicht verfügbar", "OCR-Bibliothek (Tesseract.js) konnte nicht geladen werden - Internetzugriff erforderlich.", true);
+      return;
+    }
+    var chapters = massChapterOptionsList();
+    els.editorOcrBatchBtn.disabled = true;
+    els.editorOcrBatchSpinner.hidden = false;
+    var ocrFailed = 0, filled = 0, completed = 0;
+    els.editorOcrBatchStatusNote.textContent = "0 von " + targets.length + " Screens verarbeitet …";
+    var pool;
+    try {
+      pool = await getOcrWorkerPool();
+    } catch (err) {
+      targets.forEach(function (img) { img.ocrError = (err && err.message) || "Unbekannter Fehler bei der Texterkennung."; });
+      els.editorOcrBatchStatusNote.textContent = "OCR-Bibliothek konnte nicht initialisiert werden.";
+      showToast("Fehlgeschlagen", "OCR-Bibliothek (Tesseract.js) konnte nicht initialisiert werden - Internetzugriff erforderlich.", true);
+      els.editorOcrBatchBtn.disabled = false;
+      els.editorOcrBatchSpinner.hidden = true;
+      renderGallery(); renderEditorScreens();
+      return;
+    }
+    await mapWithWorkerPool(targets, pool, async function (img, worker) {
+      try {
+        var ocrInput = await downscaleDataUrlForOcr(img.dataUrl);
+        var result = await worker.recognize(ocrInput);
+        img.ocrText = ((result && result.data && result.data.text) || "").trim();
+        img.ocrError = null;
+        img.ocrRanAt = nowLabel();
+      } catch (err) {
+        img.ocrError = (err && err.message) || "Unbekannter Fehler bei der Texterkennung.";
+        ocrFailed++;
+        completed++;
+        els.editorOcrBatchStatusNote.textContent = completed + " von " + targets.length + " Screens verarbeitet …";
+        renderGallery(); renderEditorScreens();
+        return;
+      }
+      if (sampleApi && img.ocrText && (!img.chapter || !img.subchapter || !img.description)) {
+        try {
+          var aiResult = await sampleApi(imagesOcrBuildPrompt(img.ocrText, img.filename), { modelTier: "default", cache: false });
+          var parsed = imagesOcrParseResponse(aiResult.text, chapters);
+          var filledSomething = false;
+          if (!img.chapter && parsed.chapterTitle) { img.chapter = parsed.chapterTitle; filledSomething = true; }
+          if (!img.subchapter && img.chapter === parsed.chapterTitle && parsed.subchapterTitle) { img.subchapter = parsed.subchapterTitle; filledSomething = true; }
+          if (!img.description && parsed.description) { img.description = parsed.description; filledSomething = true; }
+          if (filledSomething) filled++;
+        } catch (err) {
+          // KI-Fehler bei einem Screen bricht den Gesamtlauf nicht ab - der OCR-Text bleibt trotzdem erhalten.
+        }
+      }
+      completed++;
+      els.editorOcrBatchStatusNote.textContent = completed + " von " + targets.length + " Screens verarbeitet …";
+      renderGallery(); renderEditorScreens();
+    });
+    renderBildband();
+    addLog("Screens-Import: OCR-Stapelverarbeitung - " + targets.length + " Screen(s) interpretiert" +
+      (filled ? ", bei " + filled + " Screen(s) Kapitel/Unterkapitel/Kurzbeschreibung ergänzt" : "") +
+      (ocrFailed ? ", " + ocrFailed + " OCR-Fehler" : "") + ".");
+    els.editorOcrBatchStatusNote.textContent = targets.length + " Screen(s) per OCR verarbeitet" +
+      (filled ? ", bei " + filled + " Screen(s) Feld(er) ergänzt" : "") +
+      (ocrFailed ? " (" + ocrFailed + " OCR-Fehler)" : "") +
+      (!sampleApi ? " - KI-Zuordnung in dieser Ansicht nicht verfügbar (nur innerhalb der Claude-Artifact-Version), nur OCR-Text wurde erkannt." : "") + ".";
+    showToast("OCR abgeschlossen", targets.length + " Screen(s) verarbeitet.");
+    els.editorOcrBatchBtn.disabled = false;
+    els.editorOcrBatchSpinner.hidden = true;
+  }
+  els.editorOcrBatchBtn.addEventListener("click", runEditorScreensOcrBatch);
 
   /* ============ Bildband: Kapitel/Unterkapitel-Übersicht + Export ============
      Fasst zusammen, wie gut die im Editor-Register zugeordneten Screens zu

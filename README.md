@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.100.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.102.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1723,7 +1723,15 @@ zusammenzuführen.
   nutzen dieselbe Datenstruktur wie "Bilder" und erscheinen dort
   automatisch mit. Details siehe Abschnitt weiter unten. Zusätzlich je
   Screen ein **Unterkapitel**-Dropdown (nur für die eigene Übersicht im
-  Register "Bildband", s. u.).
+  Register "Bildband", s. u.). **OCR: Alle Screens interpretieren** (neu,
+  v2.102.0, zusätzlich zum bestehenden, rein auf dem Bildtext
+  basierenden KI-Vorschlag): erkennt per OCR (Tesseract.js, derselbe
+  wiederverwendete Worker-Pool wie im Register "Bilder" – mehrere Screens
+  parallel statt sequenziell) den tatsächlich AUF dem Screenshot
+  sichtbaren Text (nicht nur die aus der Quelldatei übernommene
+  Überschrift) und lässt Claude anhand dieses Texts Kapitel, Unterkapitel
+  UND eine Kurzbeschreibung vorschlagen – überschreibt dabei nie bereits
+  gesetzte Felder, ergänzt nur, was noch leer ist.
 - **Bildband** (neu, v2.83.0) – verbindet Editor-Screens mit dem
   Benutzerhandbuch-Kapiteltext über den Platzhalter `[Bild]` (eigene
   Zeile): jedes Vorkommen wird in Vorschau sowie DOCX-/PDF-Export durch das
@@ -1870,6 +1878,29 @@ zusammenzuführen.
   hochaufgelöst; kleinere Bilder bleiben unverändert. Ohne
   Claude-Artifact-Laufzeit bzw. ohne Internetzugriff (Tesseract-Nachladen)
   bleibt der OCR-Text trotzdem erkennbar, nur die KI-Zuordnung entfällt.
+  **Kurzbeschreibung nennt jetzt die Bild-Überschrift** (neu, v2.102.0):
+  die von Claude anhand des OCR-Texts vorgeschlagene Kurzbeschreibung
+  nennt zuerst wörtlich die auf dem Bild sichtbare Überschrift/den
+  Seitentitel (meist die optisch hervorgehobenste Zeile), danach knapp
+  den übrigen Bildinhalt – dafür wurde die Beschreibungs-Spalte in der
+  Tabelle breiter gemacht.
+  **Vollbild-Bildbetrachter mit Verwischen-Werkzeug** (neu, v2.102.0):
+  ein Klick auf das Vorschaubild (Galerie-Karte oder Tabellenzeile) öffnet
+  es in einem **frei beweglichen, größenveränderbaren** Fenster (per
+  Titelleiste verschiebbar, per Ecke unten rechts größenveränderbar –
+  kein blockierendes Modal). Darin lässt sich mit der Maus ein Rechteck
+  über sensible Stellen (Namen, Fahrgestellnummer/FIN, Servicenummer)
+  ziehen, um diesen Bereich dauerhaft zu verpixeln/unkenntlich zu machen
+  – bewusst **manuell** statt automatischer Erkennung, da Position und
+  Schriftart auf Screenshots zu stark variieren, um zuverlässig
+  automatisch erkannt zu werden. "Letzten Bereich entfernen" macht die
+  zuletzt gezogene Verwischung rückgängig (solange noch nicht
+  gespeichert), "Speichern" ersetzt das Bild dauerhaft durch die
+  verwischte Fassung (die Originalversion bleibt einmalig über "Original
+  wiederherstellen" erhalten). Gilt für alle hochgeladenen Bilder,
+  inklusive der aus "Screens-Import" extrahierten Screens (gemeinsame
+  Datenstruktur) – nicht für generierte Prozessdiagramme (SVG/Mermaid,
+  kein Pixelbild).
 - **Tabelle** (neu, v2.97.0) – eigenständiges Register für Tabellen, die
   automatisch aus bei Rovo Knowledge importierten .docx-/.pptx-Dateien
   extrahiert wurden (strukturiert als Zeilen/Zellen, nicht als
