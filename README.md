@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.94.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.95.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -939,6 +939,12 @@ zusammenzuführen.
   Dropdown, Labels als entfernbare Chips ("×") mit eigenem
   "+ Label"-Auswahlfeld (wörtlich aus der Stammdaten-Labelliste, keine
   Freitext-Labels) – "ROVO" selbst bleibt fest und ist nicht entfernbar.
+  **Vorrangige Quelle** (neu, v2.95.0): das "ROVO"-Label ist visuell
+  hervorgehoben (eigener Chip-Stil, Tooltip erklärt den Grund), da diese
+  Daten direkt aus dem Rovo-Quellsystem stammen – bei der EDITO-
+  Kapitelerzeugung (s. u.) ist Rovo Knowledge als QUELLE 4 explizit
+  vorrangig gegenüber den anderen Quellen markiert; widersprechen sich
+  Quellen inhaltlich, ist Rovo Knowledge maßgeblich.
   Im Text vorkommende Jira-Ticketnummern werden
   automatisch erkannt und lassen sich je Eintrag über einen eigenen
   "Jira"-Button ein-/ausblenden (reiner Anzeige-Umschalter, keine
@@ -1714,8 +1720,11 @@ zusammenzuführen.
   Navigationspunkte gibt) – erstellt eine NEUE Fassung des
   Benutzerhandbuchs je Rolle/Sparte aus 5 internen Quellen gleichzeitig:
   importierten Jira-Tickets, der RAG-Bibliothek, dem bereits bestehenden
-  Benutzerhandbuch-Text, Rovo-Knowledge-Textschnipseln sowie zugeordneten
-  Bildern (Bildband-Platzhalter `[Bild]`) – ein eigener, von
+  Benutzerhandbuch-Text, Rovo-Knowledge-Textschnipseln (als QUELLE 4 im
+  Prompt explizit als vorrangige Quelle markiert, neu v2.95.0 – diese
+  Daten stammen direkt aus dem Rovo-Quellsystem und sind bei
+  inhaltlichen Widersprüchen zu den anderen Quellen maßgeblich) sowie
+  zugeordneten Bildern (Bildband-Platzhalter `[Bild]`) – ein eigener, von
   `app.manualChapters` unabhängiger Bestand, existiert also bewusst
   parallel zum bestehenden Stand. Nutzt für die Rolle/Sparte-Auswahl
   dieselben 6 Gliederungsversionen wie "Verarbeitung → Gliederung-

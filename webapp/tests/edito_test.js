@@ -23,6 +23,7 @@ vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract
 
 // Unterscheidet die drei EDITO-Prompt-Arten an eindeutigen Textmarkern aus
 // den jeweiligen RAG_PROMPT_DEFAULTS-Texten/Prompt-Buildern.
+let lastChapterPromptText = "";
 async function sampleImpl(promptText) {
   if (/KAPITELTEXT:/.test(promptText || "")) {
     return { text: "### Nicht belegte Aussagen\n- Keine gefunden.\n\n### Widersprüche zu den Quellen\n- Keine gefunden.", truncated: false, modelTierApplied: "default" };
@@ -30,6 +31,7 @@ async function sampleImpl(promptText) {
   if (/Grammatikfehler/.test(promptText || "")) {
     return { text: "### Grammatikfehler\n- Keine gefunden.\n\n### Sprachstil-Unstimmigkeiten\n- Keine gefunden.\n\n### Wiederholungen\n- Keine gefunden.\n\n### Roter Faden\n- Keine gefunden.", truncated: false, modelTierApplied: "default" };
   }
+  lastChapterPromptText = promptText || "";
   return { text: "## Retail\nTestabsatz für die neue EDITO-Fassung.\n[Bild]\n", truncated: false, modelTierApplied: "default" };
 }
 const savedFiles = [];
@@ -175,6 +177,8 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   check("Vorschau-Bereich nach Erzeugen sichtbar", doc.getElementById("edito-preview-section").hidden === false);
   check("Vorschau-Titel nennt das Kapitel", doc.getElementById("edito-preview-title").textContent.includes("Kapitel 7"));
   check("Vorschau zeigt den (gemockten) generierten Text", doc.getElementById("edito-preview-output").value.includes("Testabsatz für die neue EDITO-Fassung"));
+  check("Kapitel-Prompt kennzeichnet Rovo-Knowledge (Quelle 4) explizit als vorrangige Quelle", lastChapterPromptText.includes("QUELLE 4") && lastChapterPromptText.includes("VORRANGIGE Quelle"));
+  check("Hauptprompt nennt den Vorrang von Quelle 4 bei Widersprüchen", lastChapterPromptText.includes("hat QUELLE 4") && lastChapterPromptText.includes("Vorrang"));
   const kap7RowAfterGen = rowFor("Kapitel 7");
   check("Kapitel 7: Status jetzt „Erzeugt“", kap7RowAfterGen.children[7].textContent.includes("Erzeugt"));
   check("Erzeugen-Button-Beschriftung wechselt zu „Neu erzeugen“", kap7RowAfterGen.querySelector("[data-edito-generate]").textContent.includes("Neu erzeugen"));

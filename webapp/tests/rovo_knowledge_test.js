@@ -284,6 +284,9 @@ function mockClipboard(win, text) {
   var labelRow = doc.querySelector("#rovo-entries-tbody tr");
   check("ROVO-Chip hat KEINEN Entfernen-Button (fest, nicht entfernbar)",
     Array.from(labelRow.querySelectorAll("[data-rovo-label-remove]")).every((b) => b.getAttribute("data-label") !== "ROVO"));
+  var rovoChipEl = Array.from(labelRow.querySelectorAll(".label-chip")).find((c) => c.textContent.trim() === "ROVO");
+  check("ROVO-Chip visuell als vorrangige Quelle hervorgehoben (eigene CSS-Klasse)", !!rovoChipEl && rovoChipEl.classList.contains("rovo-priority-chip"));
+  check("ROVO-Chip-Tooltip erklärt den Vorrang gegenüber anderen Quellen", !!rovoChipEl && /vorrangig/i.test(rovoChipEl.getAttribute("title") || ""));
   var addSelect = labelRow.querySelector(".rovo-label-add-select");
   var addableOption = Array.from(addSelect.options).map((o) => o.value).filter(Boolean)[0];
   check("Hinzufügen-Auswahl bietet mindestens ein noch nicht gesetztes Label an", !!addableOption);
