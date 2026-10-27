@@ -447,6 +447,16 @@
   .compare-table tr.diff-row td { background: var(--warn-soft); }
   .compare-table td { overflow-wrap: anywhere; }
 
+  /* ---- Rovo-Detail-Modal (Vollbildschirm per Doppelklick auf einen Eintrag) ---- */
+  .modal.rovo-detail-modal { max-width: 96vw; width: 96vw; max-height: 94vh; height: 94vh; display: flex; flex-direction: column; }
+  .rovo-detail-modal .modal-head { flex: none; }
+  .rovo-detail-modal-meta { color: var(--text-muted); font-size: 12.5px; margin: 0 0 12px; }
+  .rovo-detail-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex: 1; min-height: 0; }
+  .rovo-detail-col { display: flex; flex-direction: column; min-height: 0; }
+  .rovo-detail-col h3 { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 6px; }
+  .rovo-detail-col-text { flex: 1; overflow: auto; white-space: pre-wrap; font-size: 13.5px; line-height: 1.6; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  @media (max-width: 760px) { .rovo-detail-cols { grid-template-columns: 1fr; } }
+
   .log-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
   .log-list li { padding: 10px 2px; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; gap: 12px; align-items: baseline; }
   .log-list li:last-child { border-bottom: none; }
@@ -1163,6 +1173,34 @@
               <tbody id="rovo-entries-tbody"></tbody>
             </table>
             <div class="empty-hint" id="rovo-entries-empty">Noch keine Einträge &ndash; Text einfügen oder Markdown-Datei hochladen.</div>
+          </div>
+          <p class="step-note">Tipp: ein Eintrag lässt sich per Doppelklick auf die Zeile vollständig (Chatverlauf + Antwort) in einem Vollbild-Fenster öffnen.</p>
+        </section>
+
+        <section>
+          <p class="section-label">Zusammenfassung je Kapitel (<span id="rovo-chapter-summary-count">0</span>)</p>
+          <div class="callout">
+            Fasst je Kapitel mit mindestens einem zugeordneten Rovo-Eintrag per Claude zusammen, welche
+            Informationen zu welchem Unterkapitel aus den Chatverlauf-/Antwort-Texten vorliegen. Nur Einträge mit
+            bereits gesetztem Kapitel fließen ein.
+          </div>
+          <div class="controls">
+            <button class="btn primary" id="rovo-chapter-summary-all-btn" type="button">
+              <span class="btn-spinner" id="rovo-chapter-summary-all-spinner" hidden></span>
+              Alle Zusammenfassungen erzeugen
+            </button>
+          </div>
+          <p class="step-note" id="rovo-chapter-summary-all-status-note"></p>
+          <div class="table-wrap">
+            <table class="simple-table" id="rovo-chapter-summary-table">
+              <thead><tr><th>Kapitel</th><th>Rovo-Einträge</th><th>Status</th><th>Aktion</th></tr></thead>
+              <tbody id="rovo-chapter-summary-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="rovo-chapter-summary-empty">Noch keine Rovo-Einträge mit zugeordnetem Kapitel.</div>
+          </div>
+          <div id="rovo-chapter-summary-preview-section" hidden>
+            <p class="section-label" style="margin-top:14px;">Zusammenfassung: <span id="rovo-chapter-summary-preview-title"></span></p>
+            <div class="panel gen-preview" id="rovo-chapter-summary-preview-output" style="padding:12px 14px; white-space:pre-wrap;"></div>
           </div>
         </section>
       </section>
@@ -2365,6 +2403,28 @@
             <div class="empty-hint" id="edito-files-empty">Noch keine Dokumente erzeugt.</div>
           </div>
         </section>
+
+        <section>
+          <p class="section-label">6. Gesamtdokument</p>
+          <div class="callout">
+            Führt alle bereits erzeugten Kapitel der oben gewählten Rolle/Sparte in der Reihenfolge der Gliederung
+            zu einem Word-Gesamtdokument zusammen (mit Seitenumbruch zwischen den Kapiteln). Noch nicht erzeugte
+            Kapitel werden dabei übersprungen.
+          </div>
+          <div class="controls">
+            <button class="btn primary" id="edito-merge-btn" type="button">
+              <span class="btn-spinner" id="edito-merge-spinner" hidden></span>
+              Gesamtdokument zusammenführen
+            </button>
+          </div>
+          <p class="step-note" id="edito-merge-status-note"></p>
+          <div id="edito-merge-preview-section" hidden>
+            <div class="controls" style="margin-top:4px;">
+              <button class="btn ghost" id="edito-merge-download-btn" type="button">Als Word herunterladen</button>
+            </div>
+            <div class="panel gen-preview" id="edito-merge-preview-output" style="padding:12px 14px; margin-top:10px; max-height:480px; overflow:auto; white-space:pre-wrap;"></div>
+          </div>
+        </section>
       </section>
 
       <!-- ================= Bilder ================= -->
@@ -3075,6 +3135,34 @@
     </div>
     <div class="modal-actions">
       <button class="btn ghost" id="fileview-summary-modal-cancel-btn" type="button">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="rovo-detail-modal-overlay" hidden>
+  <div class="modal rovo-detail-modal" role="dialog" aria-modal="true" aria-labelledby="rovo-detail-modal-title">
+    <div class="modal-head">
+      <div>
+        <div class="key mono" id="rovo-detail-modal-key">Rovo Knowledge</div>
+        <h2 id="rovo-detail-modal-title"></h2>
+      </div>
+      <button class="modal-close" id="rovo-detail-modal-close" type="button" aria-label="Schließen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p class="rovo-detail-modal-meta" id="rovo-detail-modal-meta"></p>
+    <div class="rovo-detail-cols">
+      <div class="rovo-detail-col">
+        <h3>Chatverlauf</h3>
+        <div class="rovo-detail-col-text" id="rovo-detail-modal-chat"></div>
+      </div>
+      <div class="rovo-detail-col">
+        <h3>Antwort</h3>
+        <div class="rovo-detail-col-text" id="rovo-detail-modal-answer"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="rovo-detail-modal-cancel-btn" type="button">Schließen</button>
     </div>
   </div>
 </div>
@@ -5017,7 +5105,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.92.0";
+  var APP_VERSION = "2.94.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6583,6 +6671,12 @@
     "rovo-chat-textarea", "rovo-answer-textarea", "rovo-chat-paste-btn", "rovo-answer-paste-btn", "rovo-add-entry-btn",
     "rovo-md-dropzone", "rovo-md-file-input", "rovo-entries-count", "rovo-ai-assign-btn", "rovo-ai-assign-spinner",
     "rovo-zip-export-btn", "rovo-ai-status-note", "rovo-entries-table", "rovo-entries-tbody", "rovo-entries-empty",
+    "rovo-detail-modal-overlay", "rovo-detail-modal-key", "rovo-detail-modal-title", "rovo-detail-modal-close",
+    "rovo-detail-modal-meta", "rovo-detail-modal-chat", "rovo-detail-modal-answer", "rovo-detail-modal-cancel-btn",
+    "rovo-chapter-summary-count", "rovo-chapter-summary-all-btn", "rovo-chapter-summary-all-spinner",
+    "rovo-chapter-summary-all-status-note", "rovo-chapter-summary-table", "rovo-chapter-summary-tbody",
+    "rovo-chapter-summary-empty", "rovo-chapter-summary-preview-section", "rovo-chapter-summary-preview-title",
+    "rovo-chapter-summary-preview-output",
     "bildband-table", "bildband-tbody", "bildband-empty",
     "edito-version-select", "edito-chapters-section", "edito-chapters-count",
     "edito-generate-all-btn", "edito-generate-all-spinner", "edito-generate-all-status-note",
@@ -6594,6 +6688,8 @@
     "edito-agent1-btn", "edito-agent1-spinner", "edito-agent1-result", "edito-agent1-output",
     "edito-agent2-btn", "edito-agent2-spinner", "edito-agent2-result", "edito-agent2-output",
     "edito-files-count", "edito-files-table", "edito-files-tbody", "edito-files-empty",
+    "edito-merge-btn", "edito-merge-spinner", "edito-merge-status-note",
+    "edito-merge-preview-section", "edito-merge-download-btn", "edito-merge-preview-output",
     "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
     "modal-overlay", "modal-key", "modal-title", "modal-fields", "modal-desc-wrap", "modal-desc",
@@ -6627,6 +6723,11 @@
     // Antwort), eigenständiger Bestand unabhängig von Massenverarbeitung/
     // RAG-Bibliothek - jeder Eintrag ist fest mit dem Label "ROVO" markiert.
     rovoEntries: [],
+    // Je Kapitel (nur Kapitel mit mind. 1 zugeordnetem Rovo-Eintrag) eine
+    // KI-generierte Zusammenfassung "welche Informationen zu welchem
+    // Unterkapitel vorliegen" - unabhaengig von rovoEntries selbst, wird
+    // nicht automatisch neu erzeugt, wenn sich Eintraege aendern.
+    rovoChapterSummaries: {},
     // EDITO: neue Fassung des Benutzerhandbuchs je Rolle/Sparte (eine der 6
     // bestehenden Gliederungsversionen, s. OUTLINE_VERSIONS), synthetisiert
     // aus Tickets, RAG-Bibliothek, bestehendem Benutzerhandbuch-Text, Rovo
@@ -7144,9 +7245,11 @@
     els.ragMergeStatusNote.textContent = "";
     app.massFiles = [];
     app.rovoEntries = [];
+    app.rovoChapterSummaries = {};
     app.editoVersionKey = "";
     app.editoChapters = {};
     editoSelectedChapters = {};
+    editoResetMergedDocument();
     massSelectedIds = {};
     renderMassFiles();
     renderMassTicketSourceWrap();
@@ -7238,9 +7341,11 @@
     els.ragMergeStatusNote.textContent = "";
     app.massFiles = [];
     app.rovoEntries = [];
+    app.rovoChapterSummaries = {};
     app.editoVersionKey = "";
     app.editoChapters = {};
     editoSelectedChapters = {};
+    editoResetMergedDocument();
     massSelectedIds = {};
     renderMassFiles();
     renderMassTicketSourceWrap();
@@ -7305,6 +7410,7 @@
       uploadedImages: app.uploadedImages,
       editorFiles: app.editorFiles,
       rovoEntries: app.rovoEntries,
+      rovoChapterSummaries: app.rovoChapterSummaries,
       editoVersionKey: app.editoVersionKey,
       editoChapters: app.editoChapters,
       selectedKeys: app.selectedKeys,
@@ -7370,6 +7476,7 @@
     app.uploadedImages = data.uploadedImages || [];
     app.editorFiles = data.editorFiles || [];
     app.rovoEntries = data.rovoEntries || [];
+    app.rovoChapterSummaries = (data.rovoChapterSummaries && typeof data.rovoChapterSummaries === "object") ? data.rovoChapterSummaries : {};
     if (typeof data.editoVersionKey === "string") app.editoVersionKey = data.editoVersionKey;
     if (data.editoChapters && typeof data.editoChapters === "object") app.editoChapters = data.editoChapters;
     app.selectedKeys = data.selectedKeys || {};
@@ -10460,6 +10567,7 @@
     if (!els.compareModalOverlay.hidden) closeCompareModal();
     if (!els.massDomainMdModalOverlay.hidden) closeMassDomainMdModal();
     if (!els.fileviewSummaryModalOverlay.hidden) closeFileviewSummaryModal();
+    if (!els.rovoDetailModalOverlay.hidden) closeRovoDetailModal();
   });
 
   /* ============ Teil 4: Export (downloads-Capability) ============ */
@@ -16211,16 +16319,47 @@
   // OCR ueber Tesseract.js (per CDN geladen, laeuft vollstaendig im Browser
   // via WebAssembly - kein eigener Server). Erkennt Englisch + Deutsch.
   //
-  // Performance: Tesseract.recognize(image, langs) ist nur eine komfortable
-  // Kurzform, die bei JEDEM Aufruf intern einen kompletten neuen Worker
-  // erzeugt (inkl. Nachladen der Sprachdaten eng+deu) und danach wieder
-  // verwirft - das macht wiederholte OCR-Laeufe sehr langsam, selbst mit
-  // Parallelitaet (jede "Spur" zahlt dann den vollen Initialisierungs-Preis
-  // fuer JEDES einzelne Bild). Stattdessen: ein einmal erzeugter, ueber die
-  // gesamte Sitzung wiederverwendeter Worker-Pool (ocrWorkerPoolPromise) -
-  // die Sprachdaten bleiben nach der allerersten Erkennung geladen, jeder
-  // weitere Aufruf (Einzelbild wie Stapel) nutzt direkt worker.recognize().
-  var IMAGES_OCR_CONCURRENCY = 3;
+  // Performance, zwei Hebel:
+  // 1) Tesseract.recognize(image, langs) ist nur eine komfortable Kurzform,
+  //    die bei JEDEM Aufruf intern einen kompletten neuen Worker erzeugt
+  //    (inkl. Nachladen der Sprachdaten eng+deu) und danach wieder
+  //    verwirft - das macht wiederholte OCR-Laeufe sehr langsam, selbst
+  //    mit Parallelitaet (jede "Spur" zahlt dann den vollen
+  //    Initialisierungs-Preis fuer JEDES einzelne Bild). Stattdessen: ein
+  //    einmal erzeugter, ueber die gesamte Sitzung wiederverwendeter
+  //    Worker-Pool (ocrWorkerPoolPromise) - die Sprachdaten bleiben nach
+  //    der allerersten Erkennung geladen, jeder weitere Aufruf (Einzelbild
+  //    wie Stapel) nutzt direkt worker.recognize().
+  // 2) Die eigentliche Erkennungsdauer je Bild waechst mit der Pixelzahl -
+  //    viele Screenshots sind fuer reine Texterkennung unnoetig
+  //    hochaufgeloest. downscaleDataUrlForOcr() verkleinert vor der
+  //    Erkennung auf eine vernuenftige maximale Kantenlaenge (kleinere
+  //    Bilder bleiben unveraendert, um keine unnoetige Qualitaet zu
+  //    verlieren).
+  var IMAGES_OCR_CONCURRENCY = 4;
+  var OCR_MAX_DIMENSION = 1800;
+  function downscaleDataUrlForOcr(dataUrl) {
+    return new Promise(function (resolve) {
+      var el = new Image();
+      el.onload = function () {
+        var w = el.naturalWidth, h = el.naturalHeight;
+        if (!w || !h || Math.max(w, h) <= OCR_MAX_DIMENSION) { resolve(dataUrl); return; }
+        var scale = OCR_MAX_DIMENSION / Math.max(w, h);
+        try {
+          var canvas = document.createElement("canvas");
+          canvas.width = Math.round(w * scale);
+          canvas.height = Math.round(h * scale);
+          var ctx = canvas.getContext("2d");
+          ctx.drawImage(el, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.85));
+        } catch (err) {
+          resolve(dataUrl); // z. B. Canvas nicht nutzbar - lieber Original verwenden als OCR abbrechen
+        }
+      };
+      el.onerror = function () { resolve(dataUrl); };
+      el.src = dataUrl;
+    });
+  }
   var ocrWorkerPoolPromise = null;
   function getOcrWorkerPool() {
     if (!ocrWorkerPoolPromise) {
@@ -16259,7 +16398,8 @@
     if (btn) { btn.disabled = true; btn.textContent = "Erkenne Text …"; }
     try {
       var pool = await getOcrWorkerPool();
-      var result = await pool[0].recognize(img.dataUrl);
+      var ocrInput = await downscaleDataUrlForOcr(img.dataUrl);
+      var result = await pool[0].recognize(ocrInput);
       img.ocrText = ((result && result.data && result.data.text) || "").trim();
       img.ocrError = null;
       img.ocrRanAt = nowLabel();
@@ -16341,7 +16481,8 @@
     }
     await mapWithWorkerPool(targets, pool, async function (img, worker) {
       try {
-        var result = await worker.recognize(img.dataUrl);
+        var ocrInput = await downscaleDataUrlForOcr(img.dataUrl);
+        var result = await worker.recognize(ocrInput);
         img.ocrText = ((result && result.data && result.data.text) || "").trim();
         img.ocrError = null;
         img.ocrRanAt = nowLabel();
@@ -16815,7 +16956,38 @@
         '<td><button type="button" class="btn danger btn-tiny" data-rovo-delete="' + e.id + '">Löschen</button></td>' +
         "</tr>";
     }).join("");
+    // Haengt an jedem renderRovoEntries()-Aufruf mit dran (statt an jeder
+    // einzelnen der vielen Stellen, die renderRovoEntries() aufrufen, die
+    // Zusammenfassungs-Tabelle separat zu aktualisieren) - sie haengt direkt
+    // von app.rovoEntries (Kapitel-Zuordnung je Eintrag) ab, muss also immer
+    // mitlaufen.
+    renderRovoChapterSummaries();
   }
+  // Vollbild-Ansicht eines einzelnen Eintrags per Doppelklick auf die Zeile
+  // (ausser auf interaktiven Elementen wie Dropdowns/Buttons) - zeigt
+  // Chatverlauf und Antwort ungekuerzt nebeneinander.
+  function openRovoDetailModal(id) {
+    var entry = app.rovoEntries.filter(function (x) { return x.id === id; })[0];
+    if (!entry) return;
+    els.rovoDetailModalTitle.textContent = entry.chapter ? (entry.chapter + (entry.subchapter ? " – " + entry.subchapter : "")) : "Ohne Kapitel";
+    els.rovoDetailModalMeta.textContent = entry.when + (entry.labels.length ? " · " + entry.labels.join(", ") : "") +
+      (entry.jiraKeys.length ? " · Jira: " + entry.jiraKeys.join(", ") : "");
+    els.rovoDetailModalChat.textContent = entry.chatText || "(leer)";
+    els.rovoDetailModalAnswer.textContent = entry.answerText || "(leer)";
+    els.rovoDetailModalOverlay.hidden = false;
+    els.rovoDetailModalClose.focus();
+  }
+  function closeRovoDetailModal() { els.rovoDetailModalOverlay.hidden = true; }
+  els.rovoDetailModalClose.addEventListener("click", closeRovoDetailModal);
+  els.rovoDetailModalCancelBtn.addEventListener("click", closeRovoDetailModal);
+  els.rovoDetailModalOverlay.addEventListener("click", function (e) { if (e.target === els.rovoDetailModalOverlay) closeRovoDetailModal(); });
+  els.rovoEntriesTbody.addEventListener("dblclick", function (e) {
+    if (e.target.closest("select, button, input, a")) return;
+    var row = e.target.closest("tr");
+    var delBtn = row && row.querySelector("[data-rovo-delete]");
+    if (!delBtn) return;
+    openRovoDetailModal(parseInt(delBtn.getAttribute("data-rovo-delete"), 10));
+  });
   els.rovoChatPasteBtn.addEventListener("click", async function () {
     if (!navigator.clipboard || !navigator.clipboard.readText) {
       showToast("Zwischenablage nicht verfügbar", "Bitte den Text stattdessen mit Strg+V direkt in das Feld einfügen.", true);
@@ -16998,6 +17170,115 @@
     els.rovoAiAssignSpinner.hidden = true;
   }
   els.rovoAiAssignBtn.addEventListener("click", rovoRunAiAssignment);
+
+  // Zusammenfassung je Kapitel ("welche Informationen zu welchem
+  // Unterkapitel gibt es"): je Kapitel mit mind. 1 zugeordnetem Rovo-
+  // Eintrag eine eigene, per Claude erzeugte Zusammenfassung - rein
+  // informativ (nicht editierbar, kein Export), unabhaengig von den
+  // einzelnen Eintraegen gespeichert (wird bei erneuter Zuordnung NICHT
+  // automatisch neu erzeugt).
+  function rovoEntriesWithChapter() { return app.rovoEntries.filter(function (e) { return e.chapter; }); }
+  function rovoChaptersWithEntries() {
+    var seen = {}, order = [];
+    rovoEntriesWithChapter().forEach(function (e) { if (!seen[e.chapter]) { seen[e.chapter] = true; order.push(e.chapter); } });
+    return order;
+  }
+  function rovoEntriesForChapter(chapterTitle) { return rovoEntriesWithChapter().filter(function (e) { return e.chapter === chapterTitle; }); }
+  function rovoChapterSummaryBuildPrompt(chapterTitle) {
+    var entries = rovoEntriesForChapter(chapterTitle);
+    var subs = subchapterOptionsForChapter(chapterTitle);
+    return "Du fasst mehrere Rovo-KI-Chat-Wissensschnipsel (Chatverlauf + Antwort) zusammen, die alle demselben Kapitel „" + chapterTitle + "“ des Benutzerhandbuchs zugeordnet sind.\n\n" +
+      (subs.length ? "Bekannte Unterkapitel laut Gliederung: " + subs.join("; ") + "\n\n" : "") +
+      "Ordne die Informationen den jeweiligen Unterkapiteln zu (nutze das am Eintrag gesetzte Unterkapitel, falls vorhanden; sonst ordne inhaltlich sinnvoll einem der bekannten Unterkapitel zu oder liste es unter \"Allgemein zum Kapitel\", falls keines passt) und fasse knapp zusammen, WELCHE Informationen zu WELCHEM Unterkapitel aus den Quellen vorliegen. Erfinde nichts hinzu, was nicht in den Quellen steht. Antworte als Markdown mit einer eigenen Überschrift je Unterkapitel.\n\n" +
+      "Rovo-Wissens-Einträge (" + entries.length + "):\n" + entries.map(function (e, i) {
+        return "Eintrag " + (i + 1) + (e.subchapter ? " (zugeordnetes Unterkapitel: " + e.subchapter + ")" : "") + ":\n- Chatverlauf: " + truncate(e.chatText, 1000) + "\n- Antwort: " + truncate(e.answerText, 1000);
+      }).join("\n\n");
+  }
+  async function rovoGenerateChapterSummary(chapterTitle) {
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return false;
+    }
+    try {
+      var result = await sampleApi(rovoChapterSummaryBuildPrompt(chapterTitle), { modelTier: "default", cache: false });
+      app.rovoChapterSummaries[chapterTitle] = { text: result.text || "", generatedAt: nowLabel() };
+      return true;
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+      return false;
+    }
+  }
+  function renderRovoChapterSummaries() {
+    var chapters = rovoChaptersWithEntries();
+    els.rovoChapterSummaryCount.textContent = chapters.length;
+    els.rovoChapterSummaryEmpty.hidden = chapters.length > 0;
+    els.rovoChapterSummaryTbody.innerHTML = chapters.map(function (c) {
+      var s = app.rovoChapterSummaries[c];
+      return "<tr>" +
+        "<td>" + escapeHtml(c) + "</td>" +
+        '<td class="mono">' + rovoEntriesForChapter(c).length + "</td>" +
+        "<td>" + (s ? "Erzeugt (" + escapeHtml(s.generatedAt) + ")" : "Noch nicht erzeugt") + "</td>" +
+        '<td><button type="button" class="btn ghost btn-tiny" data-rovo-summary-generate="' + escapeHtml(c) + '">' + (s ? "Neu erzeugen" : "Erzeugen") + "</button>" +
+        (s ? ' <button type="button" class="btn ghost btn-tiny" data-rovo-summary-view="' + escapeHtml(c) + '">Anzeigen</button>' : "") +
+        "</td></tr>";
+    }).join("");
+    // Wenn das aktuell angezeigte Kapitel nicht mehr existiert (z. B. alle
+    // seine Eintraege wurden umgehaengt/geloescht), Vorschau ausblenden.
+    if (rovoChapterSummaryActiveChapter && chapters.indexOf(rovoChapterSummaryActiveChapter) === -1) {
+      els.rovoChapterSummaryPreviewSection.hidden = true;
+      rovoChapterSummaryActiveChapter = "";
+    }
+  }
+  var rovoChapterSummaryActiveChapter = "";
+  function rovoShowChapterSummary(chapterTitle) {
+    rovoChapterSummaryActiveChapter = chapterTitle;
+    var s = app.rovoChapterSummaries[chapterTitle];
+    els.rovoChapterSummaryPreviewSection.hidden = false;
+    els.rovoChapterSummaryPreviewTitle.textContent = chapterTitle;
+    els.rovoChapterSummaryPreviewOutput.textContent = s ? s.text : "";
+  }
+  els.rovoChapterSummaryTbody.addEventListener("click", async function (e) {
+    var genBtn = e.target.closest("[data-rovo-summary-generate]");
+    if (genBtn) {
+      var chapterTitle = genBtn.getAttribute("data-rovo-summary-generate");
+      genBtn.disabled = true;
+      try {
+        var ok = await rovoGenerateChapterSummary(chapterTitle);
+        if (ok) {
+          addLog("Rovo Knowledge: Zusammenfassung für Kapitel „" + chapterTitle + "“ erzeugt.");
+          showToast("Erzeugt", "Zusammenfassung für „" + chapterTitle + "“ erzeugt.");
+          renderRovoChapterSummaries();
+          rovoShowChapterSummary(chapterTitle);
+        }
+      } finally {
+        genBtn.disabled = false;
+      }
+      return;
+    }
+    var viewBtn = e.target.closest("[data-rovo-summary-view]");
+    if (viewBtn) rovoShowChapterSummary(viewBtn.getAttribute("data-rovo-summary-view"));
+  });
+  els.rovoChapterSummaryAllBtn.addEventListener("click", async function () {
+    var chapters = rovoChaptersWithEntries();
+    if (!chapters.length) { showToast("Keine Kapitel", "Es sind noch keine Rovo-Einträge einem Kapitel zugeordnet.", true); return; }
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    els.rovoChapterSummaryAllBtn.disabled = true;
+    els.rovoChapterSummaryAllSpinner.hidden = false;
+    var done = 0, failed = 0;
+    for (var i = 0; i < chapters.length; i++) {
+      els.rovoChapterSummaryAllStatusNote.textContent = "Kapitel " + (i + 1) + " von " + chapters.length + ": „" + chapters[i] + "“ …";
+      var ok = await rovoGenerateChapterSummary(chapters[i]);
+      if (ok) done++; else failed++;
+      renderRovoChapterSummaries();
+    }
+    els.rovoChapterSummaryAllStatusNote.textContent = done + " von " + chapters.length + " Zusammenfassungen erzeugt" + (failed ? " (" + failed + " fehlgeschlagen)" : "") + ".";
+    addLog("Rovo Knowledge: Sammel-Zusammenfassung abgeschlossen - " + done + " von " + chapters.length + " Kapiteln" + (failed ? ", " + failed + " fehlgeschlagen" : "") + ".");
+    els.rovoChapterSummaryAllBtn.disabled = false;
+    els.rovoChapterSummaryAllSpinner.hidden = true;
+  });
 
   // ZIP-Export aller Einträge (analog RAG-Bibliothek-ZIP-Export-Muster,
   // s. ragBuildLibraryEntryMdFile/els.ragLibraryZipBtn): jeder Rovo-Eintrag
@@ -20413,7 +20694,11 @@
       '<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:i/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">' +
       xmlEsc("Abbildung " + m.num + ": " + caption) + "</w:t></w:r></w:p>";
   }
-  function manualChapterDocumentXml(title, text, media) {
+  // Baut NUR die Absaetze eines Kapitels (ohne Dokument-Hülle/sectPr) -
+  // getrennt von manualChapterDocumentXml(), damit mehrere Kapitel zu
+  // einem Gesamtdokument zusammengefuehrt werden koennen (s.
+  // buildMergedEditoDocxBlob), ohne die Einzel-Kapitel-Logik zu duplizieren.
+  function manualChapterBodyXml(title, text, media) {
     var body = '<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>' + xmlEsc(title) + "</w:t></w:r></w:p>";
     var roleShd = null;
     var mediaIdx = 0;
@@ -20439,17 +20724,21 @@
       var rolePPr = roleShd ? '<w:pPr><w:shd w:val="clear" w:fill="' + roleShd + '"/></w:pPr>' : "";
       body += '<w:p>' + rolePPr + '<w:r><w:t xml:space="preserve">' + xmlEsc(line) + "</w:t></w:r></w:p>";
     });
+    return body;
+  }
+  function manualDocumentWrapperXml(bodyXml) {
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
-      "<w:body>" + body + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/></w:sectPr></w:body></w:document>';
+      "<w:body>" + bodyXml + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/></w:sectPr></w:body></w:document>';
   }
-  // chapterTitleForImages: optionaler abweichender Kapiteltitel fuer die
-  // Bildband-Zuordnung, falls der Anzeigetitel (erster Parameter) vom
-  // echten Gliederungskapitel abweicht (z. B. "<Kapitel> (Enduser-Text)"
-  // bei den Verbesserungs-Varianten in manualExportImprovedDocx).
-  async function buildManualChapterDocxBlob(title, text, chapterTitleForImages) {
+  function manualPageBreakParagraphXml() { return '<w:p><w:r><w:br w:type="page"/></w:r></w:p>'; }
+  // Baut aus Fliesstext + Medienliste das fertige .docx-Blob (Content-
+  // Types/Rels/Media-Dateien + document.xml) - gemeinsam genutzt von
+  // buildManualChapterDocxBlob (ein Kapitel) und buildMergedEditoDocxBlob
+  // (mehrere zusammengefuehrte Kapitel), damit das OOXML-Grundgeruest nur
+  // an einer Stelle gepflegt werden muss.
+  async function buildDocxBlobFromBodyAndMedia(bodyXml, media) {
     if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek konnte nicht geladen werden.");
-    var media = await manualPrepareBildbandMedia(chapterTitleForImages || title);
     var zip = new JSZip();
     zip.file("[Content_Types].xml",
       '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
@@ -20477,8 +20766,38 @@
         zip.file("word/media/bild" + m.num + "." + m.ext, m.screen.dataUrl.split(",")[1], { base64: true });
       });
     }
-    zip.file("word/document.xml", manualChapterDocumentXml(title, text, media));
+    zip.file("word/document.xml", manualDocumentWrapperXml(bodyXml));
     return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  }
+  // chapterTitleForImages: optionaler abweichender Kapiteltitel fuer die
+  // Bildband-Zuordnung, falls der Anzeigetitel (erster Parameter) vom
+  // echten Gliederungskapitel abweicht (z. B. "<Kapitel> (Enduser-Text)"
+  // bei den Verbesserungs-Varianten in manualExportImprovedDocx).
+  async function buildManualChapterDocxBlob(title, text, chapterTitleForImages) {
+    var media = await manualPrepareBildbandMedia(chapterTitleForImages || title);
+    return buildDocxBlobFromBodyAndMedia(manualChapterBodyXml(title, text, media), media);
+  }
+  // Fuehrt mehrere bereits erzeugte EDITO-Kapitel zu EINEM Word-Dokument
+  // zusammen (Seitenumbruch zwischen den Kapiteln, Reihenfolge wie
+  // uebergeben). Medien-rIds/-Dateinamen werden ueber alle Kapitel hinweg
+  // fortlaufend neu nummeriert (nicht je Kapitel bei 1 neu beginnend), da
+  // sie sonst innerhalb des EINEN zusammengefuehrten Dokuments kollidieren
+  // wuerden.
+  async function buildMergedEditoDocxBlob(chapters) {
+    var allMedia = [];
+    var bodyParts = [];
+    var nextMediaNum = 1;
+    for (var i = 0; i < chapters.length; i++) {
+      var localMedia = await manualPrepareBildbandMedia(chapters[i].title);
+      var renumbered = localMedia.map(function (m, idx) {
+        return { num: nextMediaNum + idx, rId: "rIdBild" + (nextMediaNum + idx), screen: m.screen, ext: m.ext, widthEmu: m.widthEmu, heightEmu: m.heightEmu };
+      });
+      nextMediaNum += renumbered.length;
+      allMedia = allMedia.concat(renumbered);
+      bodyParts.push(manualChapterBodyXml(chapters[i].title, chapters[i].text, renumbered));
+      if (i < chapters.length - 1) bodyParts.push(manualPageBreakParagraphXml());
+    }
+    return buildDocxBlobFromBodyAndMedia(bodyParts.join(""), allMedia);
   }
   var MANUAL_IMAGE_EXT_TO_JSPDF_FORMAT = { png: "PNG", jpg: "JPEG", gif: "GIF", bmp: "BMP" };
   async function buildManualChapterPdfDoc(title, text, chapterTitleForImages) {
@@ -21793,6 +22112,7 @@
     app.editoVersionKey = els.editoVersionSelect.value;
     els.editoPreviewSection.hidden = true;
     editoSelectedChapters = {};
+    editoResetMergedDocument();
     renderEditoChapters();
     renderEditoFiles();
   });
@@ -22036,6 +22356,58 @@
       if (ok2) addLog("EDITO: Dokument „" + entry.pdfFilename + "“ heruntergeladen.");
     }
   });
+
+  // 6. Gesamtdokument: fuehrt alle bereits erzeugten Kapitel der aktuell
+  // gewaehlten Version in Gliederungs-Reihenfolge zu EINEM Word-Dokument
+  // zusammen (Seitenumbruch zwischen Kapiteln, s. buildMergedEditoDocxBlob
+  // weiter oben). Bewusst reiner Sitzungs-Anzeigezustand (nicht Teil von
+  // "Sitzung speichern") - laesst sich aus den bereits gespeicherten
+  // Kapiteltexten jederzeit per Klick neu erzeugen.
+  function editoChaptersWithTextInOrder() {
+    return editoChaptersForVersion()
+      .map(function (c) { return c.title; })
+      .filter(function (title) { return app.editoChapters[title] && app.editoChapters[title].de; })
+      .map(function (title) { return { title: title, text: app.editoChapters[title].de }; });
+  }
+  var editoMergedDocxBlob = null;
+  var editoMergedFilename = "";
+  function editoResetMergedDocument() {
+    editoMergedDocxBlob = null;
+    editoMergedFilename = "";
+    els.editoMergePreviewSection.hidden = true;
+    els.editoMergePreviewOutput.textContent = "";
+    els.editoMergeStatusNote.textContent = "";
+  }
+  els.editoMergeBtn.addEventListener("click", async function () {
+    if (!app.editoVersionKey) { showToast("Keine Version", "Bitte zuerst oben eine Rolle/Sparte wählen.", true); return; }
+    var allChapters = editoChaptersForVersion();
+    var chaptersWithText = editoChaptersWithTextInOrder();
+    if (!chaptersWithText.length) { showToast("Keine Kapitel", "Für diese Version wurde noch kein Kapitel erzeugt.", true); return; }
+    els.editoMergeBtn.disabled = true;
+    els.editoMergeSpinner.hidden = false;
+    try {
+      editoMergedDocxBlob = await buildMergedEditoDocxBlob(chaptersWithText);
+      var version = editoVersionDef();
+      editoMergedFilename = "Editor_Gesamtdokument_" + safeFilename((version || {}).label || app.editoVersionKey) + "_" + dateStampForFilename() + ".docx";
+      var skipped = allChapters.length - chaptersWithText.length;
+      els.editoMergeStatusNote.textContent = chaptersWithText.length + " von " + allChapters.length + " Kapiteln zusammengeführt" + (skipped ? " (" + skipped + " noch nicht erzeugt, übersprungen)" : "") + ".";
+      els.editoMergePreviewSection.hidden = false;
+      els.editoMergePreviewOutput.textContent = chaptersWithText.map(function (c) { return "## " + c.title + "\n\n" + c.text; }).join("\n\n――――――――――――――――――――――――――――――――\n\n");
+      addLog("EDITO: Gesamtdokument für Version „" + (version ? version.label : app.editoVersionKey) + "“ zusammengeführt (" + chaptersWithText.length + " Kapitel" + (skipped ? ", " + skipped + " übersprungen" : "") + ").");
+      showToast("Zusammengeführt", chaptersWithText.length + " Kapitel zu einem Gesamtdokument zusammengeführt.");
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.editoMergeBtn.disabled = false;
+      els.editoMergeSpinner.hidden = true;
+    }
+  });
+  els.editoMergeDownloadBtn.addEventListener("click", async function () {
+    if (!editoMergedDocxBlob) return;
+    var ok = await saveOrWarn(editoMergedFilename, editoMergedDocxBlob);
+    if (ok) addLog("EDITO: Gesamtdokument „" + editoMergedFilename + "“ heruntergeladen.");
+  });
+
   var editoActiveChapterTitle = "";
   function editoShowChapter(title) {
     editoActiveChapterTitle = title;

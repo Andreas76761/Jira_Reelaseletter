@@ -14,6 +14,19 @@ const fs = require("fs");
 const path = require("path");
 const BUILD_HTML = path.join(__dirname, "..", "ticket_cockpit.build.html");
 const { JSDOM, VirtualConsole } = require("jsdom");
+const { createCanvas } = require("canvas");
+
+// Erzeugt ein grosses (> OCR_MAX_DIMENSION) Test-PNG, um den Downscale-vor-
+// OCR-Pfad zu pruefen - ohne Downscaling waere die Pixelzahl unnoetig hoch
+// und die Erkennung entsprechend langsam (s. downscaleDataUrlForOcr in
+// ticket_cockpit.html).
+function makeLargeTestPngBuffer(width, height) {
+  var c = createCanvas(width, height);
+  var ctx = c.getContext("2d");
+  ctx.fillStyle = "#3366cc";
+  ctx.fillRect(0, 0, width, height);
+  return c.toBuffer("image/png");
+}
 
 const fragment = fs.readFileSync(BUILD_HTML, "utf-8");
 const full = `<!doctype html><html><head><meta charset="utf-8"></head><body>${fragment}</body></html>`;
@@ -53,7 +66,12 @@ var ocrDelayIndex = 0;
 var createWorkerCallCount = 0;
 // Muss mit IMAGES_OCR_CONCURRENCY in ticket_cockpit.html uebereinstimmen
 // (dort nicht exportiert, daher hier als bekannter Wert dupliziert).
-var IMAGES_OCR_CONCURRENCY_EXPECTED = 3;
+var IMAGES_OCR_CONCURRENCY_EXPECTED = 4;
+// Zeichnet die Anfaenge aller an recognize() uebergebenen Daten-URLs auf -
+// Downscale-Nachweis unten: ein verkleinertes Bild wird als "data:image/
+// jpeg" neu kodiert uebergeben, ein unveraendertes (zu kleines) Bild
+// behaelt seinen Original-MIME-Typ (hier immer PNG).
+var recognizeCallPrefixes = [];
 const dom = new JSDOM(full, {
   runScripts: "dangerously", resources: "usable", pretendToBeVisual: true, url: "https://example.com/t", virtualConsole: vc,
   beforeParse(window) {
@@ -66,7 +84,8 @@ const dom = new JSDOM(full, {
       createWorker: function () {
         createWorkerCallCount++;
         return Promise.resolve({
-          recognize: function () {
+          recognize: function (dataUrl) {
+            recognizeCallPrefixes.push(String(dataUrl).slice(0, 15));
             var delay = ocrDelayQueue[ocrDelayIndex++] || 0;
             return new Promise(function (resolve) { setTimeout(function () { resolve({ data: { text: ocrMockText } }); }, delay); });
           },
@@ -197,6 +216,27 @@ const PNG_1X1 = Buffer.from(
   // nicht einmal pro Bild, aufgerufen.
   check("Worker-Pool wurde nur einmalig erzeugt (createWorker genau " + IMAGES_OCR_CONCURRENCY_EXPECTED + "x aufgerufen, NICHT einmal je Bild, obwohl bereits 4 Bilder per OCR verarbeitet wurden)",
     createWorkerCallCount === IMAGES_OCR_CONCURRENCY_EXPECTED);
+
+  // ===================== Downscale vor OCR (Performance) =====================
+  // Die bisherigen Testbilder (8x8 px) liegen weit unter der Downscale-
+  // Grenze - recognize() muss daher bislang immer die unveraenderte
+  // Original-PNG-Daten-URL erhalten haben.
+  check("Kleine Testbilder wurden UNVERÄNDERT (Original-PNG) an recognize() übergeben, kein unnötiges Downscaling",
+    recognizeCallPrefixes.length > 0 && recognizeCallPrefixes.every((p) => p.startsWith("data:image/png")));
+
+  var largePngBuffer = makeLargeTestPngBuffer(2200, 300); // breiter als OCR_MAX_DIMENSION (1800px)
+  const largeImageInput = doc.getElementById("image-file-input");
+  Object.defineProperty(largeImageInput, "files", { value: [new win.File([largePngBuffer], "grosser_screenshot.png", { type: "image/png" })], configurable: true });
+  fire(largeImageInput, "change");
+  await wait(300);
+  const largeCard = Array.from(cards()).find((c) => c.textContent.includes("grosser_screenshot.png"));
+  check("Großes Testbild (2200×300) hochgeladen", !!largeCard);
+
+  var recognizeCallsBeforeLarge = recognizeCallPrefixes.length;
+  fire(largeCard.querySelector(".image-ocr-btn"), "click");
+  await waitUntil(() => recognizeCallPrefixes.length > recognizeCallsBeforeLarge, 2000);
+  check("Großes Testbild wird vor der Erkennung herunterskaliert (als JPEG neu kodiert statt im Original-PNG übergeben)",
+    recognizeCallPrefixes[recognizeCallPrefixes.length - 1].startsWith("data:image/jpeg"));
 
   // ===================== Ohne Tesseract: ehrlicher Fehler statt Absturz =====================
   delete win.Tesseract;

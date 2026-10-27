@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.92.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.94.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -944,7 +944,20 @@ zusammenzuführen.
   "Jira"-Button ein-/ausblenden (reiner Anzeige-Umschalter, keine
   Abgleich mit importierten Ticketdaten). Alle Einträge lassen sich über
   "Alle als ZIP exportieren" gesammelt als ZIP-Archiv herunterladen (je
-  Eintrag eine eigene .md-Datei mit Metadaten-Kopf).
+  Eintrag eine eigene .md-Datei mit Metadaten-Kopf). **Vollbild-Ansicht per
+  Doppelklick** (neu, v2.93.0): ein Doppelklick auf eine Eintrags-Zeile
+  (außerhalb von Dropdowns/Buttons) öffnet Chatverlauf und Antwort
+  ungekürzt nebeneinander in einem Vollbild-Overlay (schließen über ×,
+  "Schließen"-Button, Escape oder Klick auf den Hintergrund). **Zusammen-
+  fassung je Kapitel** (neu, v2.93.0): eigener Abschnitt am Ende des
+  Registers listet jedes Kapitel mit mindestens einem zugeordneten Rovo-
+  Eintrag; ein Klick auf "Erzeugen" lässt Claude aus allen diesem Kapitel
+  zugeordneten Chatverlauf-/Antwort-Texten zusammenfassen, welche
+  Informationen zu welchem Unterkapitel vorliegen (als Markdown mit einer
+  Überschrift je Unterkapitel) – rein informativ, nicht editierbar, wird
+  bei erneuter Zuordnung nicht automatisch neu erzeugt. "Alle
+  Zusammenfassungen erzeugen" läuft den Sammel-Lauf über alle Kapitel mit
+  zugeordneten Einträgen.
 - **Massenverarbeitung** (neu, eigener Navigationspunkt direkt vor
   Verarbeitung) – bewusst **eigenständige** Funktion, unabhängig von der
   RAG-Bibliothek (Verarbeitung → 7. RAG, s. u.): eigener Datenbestand
@@ -1737,7 +1750,18 @@ zusammenzuführen.
   und roten Faden. **Agent 3** (Design: Struktur-Prüfung des exportierten
   Gesamtdokuments – echte Seitenanzahl, eingebettete Bilder,
   Inhaltsverzeichnis) sowie zwei weitere Agenten folgen in einem späteren
-  Ausbauschritt zusammen mit dem Mehrkapitel-Gesamtdokument-Export.
+  Ausbauschritt. **Gesamtdokument** (neu, v2.94.0, Abschnitt "6."): führt
+  alle bereits erzeugten Kapitel der oben gewählten Rolle/Sparte in
+  Gliederungs-Reihenfolge zu EINEM Word-Dokument zusammen (echter
+  Seitenumbruch zwischen den Kapiteln, Bildband-Platzhalter werden wie
+  beim Einzel-Export eingebettet); noch nicht erzeugte Kapitel werden
+  übersprungen, der Status-Hinweis nennt die Anzahl. Die zusammengeführte
+  Fassung wird vor dem Download zusätzlich als Lesevorschau angezeigt.
+  Rein Sitzungs-Anzeigezustand (nicht Teil von "Sitzung speichern"), wird
+  bei Versionswechsel oder erneutem Zusammenführen verworfen bzw. neu
+  aufgebaut. Ein generiertes Inhaltsverzeichnis sowie der PDF-Export des
+  Gesamtdokuments folgen zusammen mit Agent 3 in einem späteren
+  Ausbauschritt.
 - **Bilder** – Tabelle **und** Kachel-Galerie aller in der Sitzung
   erzeugten Prozessdiagramme sowie eigener Bild-Uploads, jeweils mit
   Datum. Beschreibungen lassen sich für beide Bildarten direkt in der
@@ -1770,16 +1794,21 @@ zusammenzuführen.
   gesetzten) Kapitel passt. Alle Zuordnungen werden dauerhaft in der
   Sitzung gespeichert und bleiben jederzeit per Dropdown/Textfeld manuell
   korrigierbar. Die Bilder werden dabei **parallel statt sequentiell**
-  per OCR verarbeitet (neu, v2.89.0, bis zu 3 gleichzeitig), was den
-  Gesamtdurchlauf bei mehreren Bildern deutlich beschleunigt. **Performance-
-  Fix (v2.92.0)**: `Tesseract.recognize()` erzeugt bei jedem Aufruf einen
-  komplett neuen Worker samt Neuladen der Sprachdaten (eng+deu) – das
-  machte OCR unabhängig von der Parallelität sehr langsam, da selbst die
-  parallelen Durchläufe je Bild erneut den vollen Initialisierungspreis
-  zahlten. Jetzt wird ein einmal erzeugter, über die gesamte Sitzung
-  wiederverwendeter Worker-Pool genutzt (Sprachdaten bleiben nach der
-  ersten Erkennung geladen) – spürbar schnellere Einzel- wie
-  Stapelerkennung, besonders ab dem zweiten Bild bzw. Lauf. Ohne
+  per OCR verarbeitet (neu, v2.89.0, v2.94.0: 4 statt 3 gleichzeitig), was
+  den Gesamtdurchlauf bei mehreren Bildern deutlich beschleunigt.
+  **Performance-Fix (v2.92.0)**: `Tesseract.recognize()` erzeugt bei jedem
+  Aufruf einen komplett neuen Worker samt Neuladen der Sprachdaten
+  (eng+deu) – das machte OCR unabhängig von der Parallelität sehr
+  langsam, da selbst die parallelen Durchläufe je Bild erneut den vollen
+  Initialisierungspreis zahlten. Jetzt wird ein einmal erzeugter, über die
+  gesamte Sitzung wiederverwendeter Worker-Pool genutzt (Sprachdaten
+  bleiben nach der ersten Erkennung geladen) – spürbar schnellere Einzel-
+  wie Stapelerkennung, besonders ab dem zweiten Bild bzw. Lauf.
+  **Zusätzlicher Performance-Hebel (v2.94.0)**: Bilder werden vor der
+  Erkennung bei Bedarf auf eine vernünftige maximale Kantenlänge (1800px)
+  herunterskaliert – die Erkennungsdauer selbst wächst mit der Pixelzahl,
+  und viele Screenshots sind für reine Texterkennung unnötig
+  hochaufgelöst; kleinere Bilder bleiben unverändert. Ohne
   Claude-Artifact-Laufzeit bzw. ohne Internetzugriff (Tesseract-Nachladen)
   bleibt der OCR-Text trotzdem erkennbar, nur die KI-Zuordnung entfällt.
 - **Output MD Tickets / Output PDF Tickets** – bereinigte Tickets als

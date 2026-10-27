@@ -115,6 +115,12 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   await wait(100);
   check("Kapitel-Bereich nach Auswahl sichtbar", doc.getElementById("edito-chapters-section").hidden === false);
 
+  // ===================== Gesamtdokument ohne erzeugte Kapitel =====================
+  fire(doc.getElementById("edito-merge-btn"), "click");
+  await wait(50);
+  check("Gesamtdokument-Button ohne erzeugte Kapitel zeigt Hinweis statt Absturz", doc.getElementById("toast").textContent.includes("noch kein Kapitel erzeugt"));
+  check("Gesamtdokument-Vorschau bleibt dabei versteckt", doc.getElementById("edito-merge-preview-section").hidden === true);
+
   function rowFor(chapterTitleSubstring) {
     return Array.from(doc.getElementById("edito-chapters-tbody").querySelectorAll("tr")).find((r) => r.children[1].textContent.includes(chapterTitleSubstring));
   }
@@ -243,6 +249,55 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   fire(doc.getElementById("edito-select-clear-btn"), "click");
   await wait(30);
 
+  // ===================== Gesamtdokument (Punkt 6): mehrere Kapitel zusammenführen =====================
+  check("Gesamtdokument-Status-Hinweis zunächst leer", doc.getElementById("edito-merge-status-note").textContent.trim() === "");
+  check("Gesamtdokument-Vorschau zunächst versteckt", doc.getElementById("edito-merge-preview-section").hidden === true);
+
+  // Kapitel 1 zusätzlich erzeugen (Dealer-Version hat mehr als 2 Kapitel) -
+  // Gesamtdokument muss dann 2 zusammengeführte + mindestens 1
+  // übersprungenes (noch nicht erzeugtes) Kapitel melden.
+  const kap1TitleFull = rowFor("Kapitel 1").children[1].textContent;
+  fire(rowFor("Kapitel 1").querySelector("[data-edito-generate]"), "click");
+  await waitUntil(() => !!rowFor("Kapitel 1").querySelector("[data-edito-view]"), 2000);
+  check("Kapitel 1 zusätzlich erzeugt (für den Gesamtdokument-Test)", !!rowFor("Kapitel 1").querySelector("[data-edito-view]"));
+
+  fire(doc.getElementById("edito-merge-btn"), "click");
+  await waitUntil(() => doc.getElementById("edito-merge-preview-section").hidden === false, 3000);
+  check("Gesamtdokument-Vorschau nach Zusammenführen sichtbar", doc.getElementById("edito-merge-preview-section").hidden === false);
+  check("Gesamtdokument-Status nennt genau 2 zusammengeführte Kapitel", /^2 von \d+ Kapiteln zusammengeführt/.test(doc.getElementById("edito-merge-status-note").textContent));
+  check("Gesamtdokument-Status vermerkt übersprungene (noch nicht erzeugte) Kapitel", doc.getElementById("edito-merge-status-note").textContent.includes("übersprungen"));
+  check("Vorschau enthält den Text von Kapitel 7", doc.getElementById("edito-merge-preview-output").textContent.includes("Testabsatz für die neue EDITO-Fassung"));
+  check("Vorschau nennt beide zusammengeführten Kapitel", doc.getElementById("edito-merge-preview-output").textContent.includes(kap7TitleFull) && doc.getElementById("edito-merge-preview-output").textContent.includes(kap1TitleFull));
+  check("Protokoll vermerkt das Zusammenführen zum Gesamtdokument", doc.getElementById("log-list").textContent.includes("Gesamtdokument"));
+
+  const mergeSavedBefore = savedFiles.length;
+  fire(doc.getElementById("edito-merge-download-btn"), "click");
+  await wait(150);
+  check("Gesamtdokument-Download ausgelöst", savedFiles.length === mergeSavedBefore + 1);
+  const mergedFile = savedFiles[mergeSavedBefore];
+  check("Gesamtdokument-Dateiname endet auf .docx", (mergedFile.filename || "").endsWith(".docx"));
+  const mergedZip = await JSZipNode.loadAsync(Buffer.from(await mergedFile.data.arrayBuffer()));
+  const mergedXml = await mergedZip.file("word/document.xml").async("string");
+  check("Gesamtdokument-DOCX enthält den Titel von Kapitel 7", mergedXml.includes(kap7TitleFull));
+  check("Gesamtdokument-DOCX enthält den Titel von Kapitel 1", mergedXml.includes(kap1TitleFull));
+  check("Gesamtdokument-DOCX enthält einen Seitenumbruch zwischen den Kapiteln", mergedXml.includes('w:br w:type="page"'));
+
+  // Versionswechsel muss die (zur alten Version gehörende) Vorschau leeren
+  versionSelect.value = "dealer";
+  fire(versionSelect, "change");
+  await wait(50);
+  check("Versionswechsel (Re-Auswahl) leert die Gesamtdokument-Vorschau", doc.getElementById("edito-merge-preview-section").hidden === true);
+
+  fire(doc.getElementById("edito-select-clear-btn"), "click");
+  await wait(30);
+
+  // Das Erzeugen von Kapitel 1 oben hat die aktive Vorschau auf Kapitel 1
+  // umgeschaltet (editoShowChapter wird nach jedem Erzeugen aufgerufen) -
+  // fuer die folgenden Schritte (Bearbeitung/Export/Agenten) wieder auf
+  // Kapitel 7 zurueckschalten, wie es der Rest des Tests erwartet.
+  fire(rowFor("Kapitel 7").querySelector("[data-edito-view]"), "click");
+  await wait(30);
+
   // ===================== Manuelle Bearbeitung der Vorschau =====================
   const previewTa = doc.getElementById("edito-preview-output");
   previewTa.value = previewTa.value + "\nManuell ergänzter Satz.";
@@ -330,6 +385,7 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   await wait(50);
   check("Nach „Alle Daten löschen“: Rolle/Sparte-Auswahl zurückgesetzt", doc.getElementById("edito-version-select").value === "");
   check("Nach „Alle Daten löschen“: Kapitel-Bereich wieder versteckt", doc.getElementById("edito-chapters-section").hidden === true);
+  check("Nach „Alle Daten löschen“: Gesamtdokument-Vorschau wieder versteckt", doc.getElementById("edito-merge-preview-section").hidden === true);
 
   const sessionInput = doc.getElementById("session-import-input");
   Object.defineProperty(sessionInput, "files", { value: [new win.File([sessionJson], "sitzung.json", { type: "application/json" })], configurable: true });

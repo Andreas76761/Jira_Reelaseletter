@@ -29,6 +29,9 @@ vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract
 // gegenüber der tatsächlich hinterlegten Gliederung/Stammdaten.
 function sampleImplFactory() {
   return async function (promptText) {
+    if (/Rovo-Wissens-Einträge/.test(promptText || "")) {
+      return { text: "## Vertragsanlage\n- Es gibt Informationen zur Vertragsanlage.\n\n## Allgemein zum Kapitel\n- Weitere allgemeine Hinweise.", truncated: false, modelTierApplied: "default" };
+    }
     var cm = /Verfügbare Gliederungskapitel[^\n]*\n((?:- .+\n?)+)/.exec(promptText || "");
     var firstChapter = "keines";
     if (cm) {
@@ -62,6 +65,14 @@ const dom = new JSDOM(full, {
 });
 
 function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
+async function waitUntil(fn, timeoutMs) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (fn()) return true;
+    await wait(20);
+  }
+  return false;
+}
 function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles: true })); }
 async function confirmViaModal(doc) {
   await wait(30);
@@ -145,6 +156,32 @@ function mockClipboard(win, text) {
   await wait(30);
   check("Erneuter Klick: Ticketnummer in der Jira-Spalte wieder ausgeblendet", !doc.querySelector("#rovo-entries-tbody tr").children[6].textContent.includes("ONESCM-4711"));
 
+  // ===================== Doppelklick öffnet Vollbild-Detailansicht =====================
+  check("Detail-Modal zunächst versteckt", doc.getElementById("rovo-detail-modal-overlay").hidden === true);
+  var detailRow = doc.querySelector("#rovo-entries-tbody tr");
+  fire(detailRow, "dblclick");
+  await wait(50);
+  check("Doppelklick auf Zeile öffnet das Vollbild-Detail-Modal", doc.getElementById("rovo-detail-modal-overlay").hidden === false);
+  check("Detail-Modal zeigt den vollständigen (ungekürzten) Chatverlauf", doc.getElementById("rovo-detail-modal-chat").textContent.includes("Wie exportiere ich eine Version als PDF? Ticket ONESCM-4711 betrifft das."));
+  check("Detail-Modal zeigt die vollständige (ungekürzte) Antwort", doc.getElementById("rovo-detail-modal-answer").textContent.includes("Über den Button 'Als PDF exportieren' im Register Ausgabe."));
+  fire(doc.getElementById("rovo-detail-modal-close"), "click");
+  await wait(30);
+  check("Schließen-Button (X) schließt das Detail-Modal", doc.getElementById("rovo-detail-modal-overlay").hidden === true);
+
+  fire(detailRow, "dblclick");
+  await wait(30);
+  check("Erneuter Doppelklick öffnet das Modal wieder", doc.getElementById("rovo-detail-modal-overlay").hidden === false);
+  doc.dispatchEvent(new win.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  await wait(30);
+  check("Escape schließt das Detail-Modal", doc.getElementById("rovo-detail-modal-overlay").hidden === true);
+
+  // Doppelklick auf ein interaktives Element (Dropdown) in der Zeile darf
+  // NICHT das Modal öffnen (sonst liesse sich die Kapitel-Zuordnung per
+  // Dropdown nicht mehr bequem per Doppelklick bedienen/markieren).
+  fire(detailRow.querySelector(".rovo-chapter-select"), "dblclick");
+  await wait(30);
+  check("Doppelklick auf ein Dropdown öffnet das Modal NICHT", doc.getElementById("rovo-detail-modal-overlay").hidden === true);
+
   // ===================== Zwischenablage (zwei getrennte Buttons) =====================
   mockClipboard(win, "Clipboard-Chatverlauf-Text ohne Antwort.");
   fire(doc.getElementById("rovo-chat-paste-btn"), "click");
@@ -207,6 +244,42 @@ function mockClipboard(win, text) {
   await wait(100);
   check("Erneute KI-Zuordnung ohne offene Einträge meldet „Nichts zu tun“", doc.getElementById("toast").textContent.includes("Alle Einträge haben bereits ein Kapitel"));
 
+  // ===================== Zusammenfassung je Kapitel =====================
+  // Alle 4 Einträge wurden (manuell + per gemocktem KI-Vorschlag, der
+  // immer das ERSTE Kapitel der Liste nennt) demselben einen Kapitel
+  // zugeordnet - die Übersicht zeigt daher genau 1 Zeile mit 4 Einträgen.
+  var summaryChapterTitle = chapterSelectsAfterAi[0].value;
+  check("Zusammenfassungs-Tabelle zeigt genau 1 Kapitel (alle Einträge demselben Kapitel zugeordnet)", doc.getElementById("rovo-chapter-summary-count").textContent === "1");
+  check("Leer-Hinweis der Zusammenfassungs-Tabelle ausgeblendet", doc.getElementById("rovo-chapter-summary-empty").hidden === true);
+  var summaryRow = doc.querySelector("#rovo-chapter-summary-tbody tr");
+  check("Zusammenfassungs-Zeile nennt das Kapitel", summaryRow.children[0].textContent === summaryChapterTitle);
+  check("Zusammenfassungs-Zeile zählt 4 Rovo-Einträge", summaryRow.children[1].textContent.trim() === "4");
+  check("Zusammenfassungs-Status zunächst „Noch nicht erzeugt“", summaryRow.children[2].textContent.includes("Noch nicht erzeugt"));
+  check("Vorschau-Bereich vor Erzeugung versteckt", doc.getElementById("rovo-chapter-summary-preview-section").hidden === true);
+
+  fire(summaryRow.querySelector("[data-rovo-summary-generate]"), "click");
+  await waitUntil(() => !doc.getElementById("rovo-chapter-summary-preview-section").hidden, 2000);
+  check("Nach Erzeugen: Vorschau-Bereich sichtbar", doc.getElementById("rovo-chapter-summary-preview-section").hidden === false);
+  check("Vorschau-Titel nennt das Kapitel", doc.getElementById("rovo-chapter-summary-preview-title").textContent === summaryChapterTitle);
+  check("Vorschau zeigt den (gemockten) Zusammenfassungstext", doc.getElementById("rovo-chapter-summary-preview-output").textContent.includes("Vertragsanlage"));
+  var summaryRowAfterGen = doc.querySelector("#rovo-chapter-summary-tbody tr");
+  check("Status jetzt „Erzeugt“", summaryRowAfterGen.children[2].textContent.includes("Erzeugt"));
+  check("Erzeugen-Button-Beschriftung wechselt zu „Neu erzeugen“", summaryRowAfterGen.querySelector("[data-rovo-summary-generate]").textContent.includes("Neu erzeugen"));
+  check("Protokoll vermerkt die Kapitel-Zusammenfassung", doc.getElementById("log-list").textContent.includes("Zusammenfassung für Kapitel"));
+
+  // "Anzeigen" nach Navigieren weg und zurück
+  doc.querySelector('.nav-item[data-view="dashboard"]').click();
+  await wait(30);
+  doc.querySelector('.nav-item[data-view="rovoknowledge"]').click();
+  await wait(30);
+  check("Nach erneutem Öffnen des Registers: Zusammenfassungs-Zeile weiterhin „Erzeugt“", doc.querySelector("#rovo-chapter-summary-tbody tr").children[2].textContent.includes("Erzeugt"));
+
+  // Sammel-Lauf "Alle Zusammenfassungen erzeugen" (hier nur 1 Kapitel
+  // vorhanden, prüft trotzdem den vollständigen Sammel-Lauf-Pfad).
+  fire(doc.getElementById("rovo-chapter-summary-all-btn"), "click");
+  await waitUntil(() => doc.getElementById("rovo-chapter-summary-all-status-note").textContent.includes("erzeugt"), 2000);
+  check("Sammel-Lauf-Status vermerkt Abschluss", /von \d+ Zusammenfassungen erzeugt/.test(doc.getElementById("rovo-chapter-summary-all-status-note").textContent));
+
   // ===================== Manuelles Nachpflegen von Labels nach der KI-Zuordnung =====================
   var labelRow = doc.querySelector("#rovo-entries-tbody tr");
   check("ROVO-Chip hat KEINEN Entfernen-Button (fest, nicht entfernbar)",
@@ -238,6 +311,7 @@ function mockClipboard(win, text) {
   var sessionJson = savedFiles.filter((f) => (f.filename || "").endsWith(".json")).pop().data;
   var sessionData = JSON.parse(sessionJson);
   check("Gesicherte Sitzung enthält rovoEntries (4 Einträge)", Array.isArray(sessionData.rovoEntries) && sessionData.rovoEntries.length === 4);
+  check("Gesicherte Sitzung enthält rovoChapterSummaries mit der erzeugten Zusammenfassung", !!sessionData.rovoChapterSummaries && !!sessionData.rovoChapterSummaries[summaryChapterTitle]);
 
   var sessionInput = doc.getElementById("session-import-input");
   Object.defineProperty(sessionInput, "files", { value: [new win.File([sessionJson], "sitzung.json", { type: "application/json" })], configurable: true });
@@ -246,6 +320,7 @@ function mockClipboard(win, text) {
   doc.querySelector('.nav-item[data-view="rovoknowledge"]').click();
   await wait(50);
   check("Nach Sitzung-Laden: Rovo-Einträge wiederhergestellt (weiterhin 4)", doc.getElementById("rovo-entries-count").textContent === "4");
+  check("Nach Sitzung-Laden: Kapitel-Zusammenfassung wiederhergestellt (Status weiterhin „Erzeugt“)", doc.querySelector("#rovo-chapter-summary-tbody tr").children[2].textContent.includes("Erzeugt"));
 
   // ===================== ZIP-Export aller Einträge =====================
   var zipSavedBefore = savedFiles.length;
@@ -268,6 +343,8 @@ function mockClipboard(win, text) {
   doc.querySelector('.nav-item[data-view="rovoknowledge"]').click();
   await wait(50);
   check("Nach „Alle Daten löschen“: 0 Rovo-Einträge", doc.getElementById("rovo-entries-count").textContent === "0");
+  check("Nach „Alle Daten löschen“: Zusammenfassungs-Tabelle wieder leer", doc.getElementById("rovo-chapter-summary-count").textContent === "0" && doc.getElementById("rovo-chapter-summary-empty").hidden === false);
+  check("Nach „Alle Daten löschen“: Zusammenfassungs-Vorschau wieder versteckt", doc.getElementById("rovo-chapter-summary-preview-section").hidden === true);
   fire(doc.getElementById("rovo-zip-export-btn"), "click");
   await wait(50);
   check("ZIP-Export ohne Einträge zeigt verständlichen Hinweis statt Absturz", doc.getElementById("toast").textContent.includes("Noch keine Rovo-Einträge"));
