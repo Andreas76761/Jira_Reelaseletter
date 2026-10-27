@@ -2490,7 +2490,7 @@
 
       <!-- ================= Tabelle ================= -->
       <section class="view-panel" data-view-panel="tabellen" hidden>
-        <div class="view-head"><h2>Tabelle</h2><p class="desc">Tabellen, die automatisch aus bei Rovo Knowledge importierten .docx-/.pptx-Dateien extrahiert wurden (Markdown-Dateien liefern einfache <code class="mono">|...|</code>-Tabellen, PDF wird für Tabellen/Bilder nicht unterstützt). Jede Tabelle zeigt ihren Quellverweis (Dateiname + Tabellen-Nr. im Quelldokument) und lässt sich einem Kapitel/Unterkapitel zuordnen.</p></div>
+        <div class="view-head"><h2>Tabelle</h2><p class="desc">Tabellen, die automatisch aus bei Rovo Knowledge importierten .docx-/.pptx-Dateien extrahiert wurden (Markdown-Dateien liefern einfache <code class="mono">|...|</code>-Tabellen, PDF wird für Tabellen/Bilder nicht unterstützt). Jede Tabelle zeigt ihren Quellverweis (Dateiname + Tabellen-Nr. im Quelldokument) und lässt sich einem Kapitel/Unterkapitel zuordnen. Über "Seitenformat" (Hoch-/Querformat, Vorschlag anhand der Spaltenanzahl, jederzeit umschaltbar) lässt sich je Tabelle ein <b>druckbares DIN-A4-PDF oder -Word-Dokument</b> erzeugen – Spaltenbreiten werden automatisch so verteilt, dass die Tabelle ins gewählte Seitenformat passt (Zelltext wird dafür umgebrochen, nicht abgeschnitten). Gedacht zum späteren Einbetten ins Benutzerhandbuch (noch kein automatischer Einbau).</p></div>
 
         <section>
           <p class="section-label">Extrahierte Tabellen (<span id="rovo-tables-count">0</span>)</p>
@@ -5126,7 +5126,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.97.0";
+  var APP_VERSION = "2.98.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -17174,6 +17174,12 @@
       '<span class="spacer"></span>' +
       '<label>Kapitel<select class="rovo-table-chapter-select" data-id="' + t.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapters, t.chapter, "Ohne Kapitel") + "</select></label>" +
       '<label>Unterkapitel<select class="rovo-table-subchapter-select" data-id="' + t.id + '" aria-label="Unterkapitel"' + (t.chapter ? "" : " disabled") + ">" + ragLibraryOptionsHtml(subOptions, t.subchapter, "Ohne Unterkapitel") + "</select></label>" +
+      '<label>Seitenformat<select class="rovo-table-orientation-select" data-id="' + t.id + '" aria-label="Seitenformat">' +
+      '<option value="portrait"' + (t.orientation === "landscape" ? "" : " selected") + ">Hochformat</option>" +
+      '<option value="landscape"' + (t.orientation === "landscape" ? " selected" : "") + ">Querformat</option>" +
+      "</select></label>" +
+      '<button type="button" class="btn ghost btn-tiny" data-rovo-table-pdf="' + t.id + '">Druckbares PDF</button>' +
+      '<button type="button" class="btn ghost btn-tiny" data-rovo-table-docx="' + t.id + '">Druckbares Word</button>' +
       '<button type="button" class="btn danger btn-tiny" data-rovo-table-delete="' + t.id + '">Löschen</button>' +
       "</div>" +
       '<div class="table-wrap" style="max-height:280px; overflow:auto;">' +
@@ -17196,16 +17202,183 @@
     if (subSel) {
       var st = app.rovoTables.filter(function (x) { return x.id === parseInt(subSel.getAttribute("data-id"), 10); })[0];
       if (st) st.subchapter = subSel.value;
+      return;
+    }
+    var orientSel = e.target.closest(".rovo-table-orientation-select");
+    if (orientSel) {
+      var ot = app.rovoTables.filter(function (x) { return x.id === parseInt(orientSel.getAttribute("data-id"), 10); })[0];
+      if (ot) ot.orientation = orientSel.value;
     }
   });
-  els.rovoTablesList.addEventListener("click", function (e) {
+  /* ============ Druckbare DIN-A4-Tabellen (PDF/Word), je Tabelle ============
+     Für das spätere Einbetten ins Handbuch gedacht (noch kein automatischer
+     Einbau - bewusst ein eigener, manuell ausgelöster Export je Tabelle).
+     Spaltenbreiten werden aus der tatsächlichen Zellinhaltslänge proportional
+     berechnet und auf die nutzbare Seitenbreite normiert (abzüglich Rand),
+     damit die Tabelle unabhängig von Spaltenanzahl/-inhalt ins gewählte
+     Seitenformat passt; Zelltext wird dafür umgebrochen statt abgeschnitten. */
+  function rovoTableNumCols(rows) { return rows.reduce(function (m, r) { return Math.max(m, r.length); }, 0); }
+  // Liefert je Spalte ein Gewicht aus der längsten Zelle dieser Spalte und
+  // verteilt die nutzbare Breite proportional dazu, mit einer Mindestbreite
+  // (sonst wuerden viele Spalten mit kurzem Inhalt neben einer sehr langen
+  // Spalte praktisch auf 0 schrumpfen).
+  function rovoTableColumnWeights(rows, numCols) {
+    var weights = [];
+    for (var c = 0; c < numCols; c++) {
+      var maxLen = 1;
+      rows.forEach(function (r) { if (r[c] != null && String(r[c]).length > maxLen) maxLen = String(r[c]).length; });
+      weights.push(maxLen);
+    }
+    return weights;
+  }
+  function rovoTableColumnWidthsMm(rows, usableMm) {
+    var numCols = rovoTableNumCols(rows);
+    var weights = rovoTableColumnWeights(rows, numCols);
+    var totalWeight = weights.reduce(function (a, b) { return a + b; }, 0) || numCols;
+    var minMm = Math.max(14, usableMm / numCols / 3);
+    var raw = weights.map(function (w) { return Math.max(minMm, usableMm * (w / totalWeight)); });
+    var sum = raw.reduce(function (a, b) { return a + b; }, 0);
+    return raw.map(function (w) { return w * (usableMm / sum); });
+  }
+  function rovoTableFontSizeForCols(numCols) {
+    if (numCols <= 4) return 10;
+    if (numCols <= 6) return 9;
+    if (numCols <= 8) return 8;
+    return 7;
+  }
+  async function buildPrintableTablePdfBlob(t) {
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
+    var landscape = t.orientation === "landscape";
+    var pageW = landscape ? 297 : 210, pageH = landscape ? 210 : 297, margin = 15;
+    var doc = new jsPDFCtor({ unit: "mm", format: "a4", orientation: landscape ? "landscape" : "portrait" });
+    var numCols = rovoTableNumCols(t.rows);
+    var colWidths = rovoTableColumnWidthsMm(t.rows, pageW - margin * 2);
+    var fontSize = rovoTableFontSizeForCols(numCols);
+    var cellPad = 1.5, lineHeight = fontSize * 0.42 + 1.4;
+    function colX(i) { var x = margin; for (var k = 0; k < i; k++) x += colWidths[k]; return x; }
+    function measureRow(row) {
+      doc.setFont("helvetica", "normal"); doc.setFontSize(fontSize);
+      var lines = row.map(function (cell, i) { return doc.splitTextToSize(String(cell == null ? "" : cell), Math.max(5, colWidths[i] - cellPad * 2)); });
+      var maxLines = lines.reduce(function (m, l) { return Math.max(m, l.length); }, 1);
+      return { lines: lines, height: maxLines * lineHeight + cellPad * 2 };
+    }
+    var y = margin;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+    doc.text("Quelle: " + t.sourceFile + " – Tabelle " + t.tableNumber, margin, y);
+    y += 8;
+    for (var r = 0; r < t.rows.length; r++) {
+      var measured = measureRow(t.rows[r]);
+      if (y + measured.height > pageH - margin) { doc.addPage(); y = margin; }
+      measured.lines.forEach(function (lines, i) {
+        doc.rect(colX(i), y, colWidths[i], measured.height);
+        doc.text(lines, colX(i) + cellPad, y + lineHeight - cellPad * 0.4);
+      });
+      y += measured.height;
+    }
+    return doc.output("blob");
+  }
+  function rovoTableColumnWidthsTwips(rows, usableTwips) {
+    var numCols = rovoTableNumCols(rows);
+    var weights = rovoTableColumnWeights(rows, numCols);
+    var totalWeight = weights.reduce(function (a, b) { return a + b; }, 0) || numCols;
+    var minTwips = Math.max(720, Math.floor(usableTwips / numCols / 3));
+    var raw = weights.map(function (w) { return Math.max(minTwips, Math.round(usableTwips * (w / totalWeight))); });
+    var sum = raw.reduce(function (a, b) { return a + b; }, 0);
+    return raw.map(function (w) { return Math.round(w * (usableTwips / sum)); });
+  }
+  // Wie docxTableXml(), aber mit EXPLIZITEN, auf die nutzbare Seitenbreite
+  // normierten Spaltenbreiten + festem Tabellenlayout, damit Word die Breiten
+  // nicht selbst neu verteilt (w:tblLayout "autofit" würde das ignorieren) -
+  // Voraussetzung dafür, dass die Tabelle garantiert ins Seitenformat passt.
+  function printableDocxTableXml(rows, colWidthsTwips) {
+    function tc(v, wTwips) {
+      return '<w:tc><w:tcPr><w:tcW w:w="' + wTwips + '" w:type="dxa"/></w:tcPr><w:p><w:r><w:t xml:space="preserve">' + xmlEsc(v) + "</w:t></w:r></w:p></w:tc>";
+    }
+    var borders = ["top", "left", "bottom", "right", "insideH", "insideV"]
+      .map(function (b) { return "<w:" + b + ' w:val="single" w:sz="4" w:color="999999"/>'; }).join("");
+    var gridCols = colWidthsTwips.map(function (w) { return '<w:gridCol w:w="' + w + '"/>'; }).join("");
+    var totalW = colWidthsTwips.reduce(function (a, b) { return a + b; }, 0);
+    var out = ['<w:tbl><w:tblPr><w:tblW w:w="' + totalW + '" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblBorders>' + borders + "</w:tblBorders></w:tblPr><w:tblGrid>" + gridCols + "</w:tblGrid>"];
+    rows.forEach(function (row) {
+      out.push("<w:tr>" + row.map(function (v, i) { return tc(v, colWidthsTwips[i] || colWidthsTwips[colWidthsTwips.length - 1]); }).join("") + "</w:tr>");
+    });
+    out.push("</w:tbl>");
+    return out.join("");
+  }
+  async function buildPrintableTableDocxBlob(t) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek konnte nicht geladen werden.");
+    var landscape = t.orientation === "landscape";
+    var pageWTwips = landscape ? 16838 : 11906, pageHTwips = landscape ? 11906 : 16838, marginTwips = 1440;
+    var colWidths = rovoTableColumnWidthsTwips(t.rows, pageWTwips - marginTwips * 2);
+    var caption = '<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t xml:space="preserve">Quelle: ' + xmlEsc(t.sourceFile) + " – Tabelle " + t.tableNumber + "</w:t></w:r></w:p>";
+    var sectPr = landscape
+      ? '<w:sectPr><w:pgSz w:w="' + pageWTwips + '" w:h="' + pageHTwips + '" w:orient="landscape"/></w:sectPr>'
+      : '<w:sectPr><w:pgSz w:w="' + pageWTwips + '" w:h="' + pageHTwips + '"/></w:sectPr>';
+    var documentXml =
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+      "<w:body>" + caption + printableDocxTableXml(t.rows, colWidths) + sectPr + "</w:body>" +
+      "</w:document>";
+    var zip = new JSZip();
+    zip.file("[Content_Types].xml",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+      "</Types>");
+    zip.file("_rels/.rels",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+      "</Relationships>");
+    zip.file("word/document.xml", documentXml);
+    return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  }
+  els.rovoTablesList.addEventListener("click", async function (e) {
     var delBtn = e.target.closest("[data-rovo-table-delete]");
-    if (!delBtn) return;
-    var id = parseInt(delBtn.getAttribute("data-rovo-table-delete"), 10);
-    app.rovoTables = app.rovoTables.filter(function (x) { return x.id !== id; });
-    renderRovoTables();
-    addLog("Rovo Knowledge: extrahierte Tabelle gelöscht.");
-    showToast("Gelöscht", "Tabelle wurde entfernt.");
+    if (delBtn) {
+      var id = parseInt(delBtn.getAttribute("data-rovo-table-delete"), 10);
+      app.rovoTables = app.rovoTables.filter(function (x) { return x.id !== id; });
+      renderRovoTables();
+      addLog("Rovo Knowledge: extrahierte Tabelle gelöscht.");
+      showToast("Gelöscht", "Tabelle wurde entfernt.");
+      return;
+    }
+    var pdfBtn = e.target.closest("[data-rovo-table-pdf]");
+    if (pdfBtn) {
+      var tp = app.rovoTables.filter(function (x) { return x.id === parseInt(pdfBtn.getAttribute("data-rovo-table-pdf"), 10); })[0];
+      if (!tp) return;
+      try {
+        var pdfBlob = await buildPrintableTablePdfBlob(tp);
+        var pdfName = safeFilename(tp.sourceFile.replace(/\.[^.]+$/, "")) + "_tabelle" + tp.tableNumber + ".pdf";
+        var okPdf = await saveOrWarn(pdfName, pdfBlob);
+        if (okPdf) {
+          addLog("Tabelle: druckbares PDF (" + (tp.orientation === "landscape" ? "Querformat" : "Hochformat") + ") für „" + tp.sourceFile + " – Tabelle " + tp.tableNumber + "“ erzeugt.");
+          showToast("Erzeugt", "Druckbares PDF wurde heruntergeladen.");
+        }
+      } catch (err) {
+        showToast("Fehlgeschlagen", (err && err.message) || "PDF konnte nicht erzeugt werden.", true);
+      }
+      return;
+    }
+    var docxBtn = e.target.closest("[data-rovo-table-docx]");
+    if (docxBtn) {
+      var td = app.rovoTables.filter(function (x) { return x.id === parseInt(docxBtn.getAttribute("data-rovo-table-docx"), 10); })[0];
+      if (!td) return;
+      try {
+        var docxBlob = await buildPrintableTableDocxBlob(td);
+        var docxName = safeFilename(td.sourceFile.replace(/\.[^.]+$/, "")) + "_tabelle" + td.tableNumber + ".docx";
+        var okDocx = await saveOrWarn(docxName, docxBlob);
+        if (okDocx) {
+          addLog("Tabelle: druckbares Word-Dokument (" + (td.orientation === "landscape" ? "Querformat" : "Hochformat") + ") für „" + td.sourceFile + " – Tabelle " + td.tableNumber + "“ erzeugt.");
+          showToast("Erzeugt", "Druckbares Word-Dokument wurde heruntergeladen.");
+        }
+      } catch (err) {
+        showToast("Fehlgeschlagen", (err && err.message) || "Word-Dokument konnte nicht erzeugt werden.", true);
+      }
+    }
   });
   // Vollbild-Ansicht eines einzelnen Eintrags per Doppelklick auf die Zeile
   // (ausser auf interaktiven Elementen wie Dropdowns/Buttons) - zeigt
@@ -17298,7 +17471,14 @@
     });
   }
   function rovoAddExtractedTable(table, sourceFile, idx) {
-    app.rovoTables.unshift({ id: nextRovoTableId++, sourceFile: sourceFile, tableNumber: idx + 1, rows: table.rows, chapter: "", subchapter: "", when: nowLabel() });
+    // Seitenformat-Vorschlag: viele Spalten passen in Hochformat nicht mehr
+    // lesbar auf die Seite - Querformat als Standard, sonst Hochformat.
+    // Bleibt pro Tabelle jederzeit manuell umschaltbar (s. Dropdown).
+    var numCols = table.rows.reduce(function (m, r) { return Math.max(m, r.length); }, 0);
+    app.rovoTables.unshift({
+      id: nextRovoTableId++, sourceFile: sourceFile, tableNumber: idx + 1, rows: table.rows,
+      chapter: "", subchapter: "", when: nowLabel(), orientation: numCols > 4 ? "landscape" : "portrait"
+    });
   }
   async function handleRovoMdFiles(fileList) {
     var files = Array.prototype.filter.call(fileList || [], function (f) { return ROVO_FILE_RE.test(f.name || ""); });

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.97.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.98.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1852,6 +1852,21 @@ zusammenzuführen.
   Fließtext über die bestehende Text-Extraktion), da eine zuverlässige
   Tabellenerkennung aus reinem PDF-Text ohne eine echte Layout-Analyse
   nicht möglich ist.
+  **Druckbare DIN-A4-Exporte** (neu, v2.98.0): je Tabelle lässt sich über
+  ein **Seitenformat**-Dropdown (Hoch-/Querformat, Vorschlag anhand der
+  Spaltenanzahl – mehr als 4 Spalten schlagen Querformat vor, bleibt
+  jederzeit manuell umschaltbar) ein druckfertiges PDF oder Word-Dokument
+  erzeugen. Die Spaltenbreiten werden dafür proportional zur tatsächlichen
+  Zellinhaltslänge berechnet und exakt auf die nutzbare Seitenbreite des
+  gewählten Formats normiert (abzüglich Rand) – Zelltext wird dafür
+  umgebrochen statt abgeschnitten, damit die Tabelle garantiert ins
+  Papierformat passt, auch bei vielen oder langen Spalteninhalten. Das
+  Word-Dokument setzt dazu ein festes Tabellenlayout mit expliziten
+  Spaltenbreiten (`w:tblLayout type="fixed"`), damit Word die berechneten
+  Breiten nicht eigenmächtig neu verteilt. Gedacht als Vorstufe zum
+  späteren Einbetten solcher Tabellen ins Benutzerhandbuch – dieser
+  Export ist bewusst ein eigener, manuell ausgelöster Schritt je Tabelle,
+  noch kein automatischer Einbau in die Handbuch-Generierung.
 - **Output MD Tickets / Output PDF Tickets** – bereinigte Tickets als
   ZIP-Archiv aus Markdown- bzw. PDF-Dateien exportieren (respektiert die
   aktuelle Dashboard-Filterung); PDFs werden clientseitig mit jsPDF

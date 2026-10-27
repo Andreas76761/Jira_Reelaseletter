@@ -14,6 +14,7 @@ const path = require("path");
 const BUILD_HTML = path.join(__dirname, "..", "ticket_cockpit.build.html");
 const { JSDOM, VirtualConsole } = require("jsdom");
 const JSZipNode = require("jszip");
+const { jsPDF } = require("jspdf");
 
 const fragment = fs.readFileSync(BUILD_HTML, "utf-8");
 const full = `<!doctype html><html><head><meta charset="utf-8"></head><body>${fragment}</body></html>`;
@@ -26,7 +27,7 @@ const dom = new JSDOM(full, {
   runScripts: "dangerously", resources: "usable", pretendToBeVisual: true, url: "https://example.com/t", virtualConsole: vc,
   beforeParse(window) {
     window.JSZip = JSZipNode;
-    window.jspdf = { jsPDF: function () {} };
+    window.jspdf = { jsPDF: jsPDF };
     window.claude = {
       use: function (name) {
         if (name === "downloads") return Promise.resolve({ save: function (req) { savedFiles.push(req); return Promise.resolve({ status: "saved" }); } });
@@ -262,6 +263,63 @@ async function buildPptxWithTableAndImage() {
   check("Löschen-Button für eine Tabelle vorhanden", delBtn !== null);
   if (delBtn) { fire(delBtn, "click"); await wait(100); }
   check("Nach Löschen einer Tabelle: nur noch 2 übrig", doc.getElementById("rovo-tables-count").textContent === "2");
+
+  // ===================== Druckbare DIN-A4-Exporte (PDF/Word) =====================
+  doc.querySelector('.nav-item[data-view="tabellen"]').click();
+  await wait(100);
+  const orientSelects = doc.querySelectorAll(".rovo-table-orientation-select");
+  check("Seitenformat-Vorschlag für 2-spaltige Tabellen: Hochformat (beide verbliebenen Tabellen)",
+    orientSelects.length === 2 && Array.from(orientSelects).every((s) => s.value === "portrait"));
+
+  // Karten-Reihenfolge (neueste zuerst, s. unshift): [0] = rollout.pptx, [1] = wissen.docx.
+  const pdfBtnRollout = doc.querySelectorAll("[data-rovo-table-pdf]")[0];
+  const savedBeforePdf = savedFiles.length;
+  fire(pdfBtnRollout, "click");
+  await wait(150);
+  check("PDF-Export (Hochformat) ausgelöst", savedFiles.length === savedBeforePdf + 1);
+  const pdfFilePortrait = savedFiles[savedBeforePdf];
+  check("PDF-Dateiname entspricht Quelle + Tabellen-Nr.", pdfFilePortrait.filename === "rollout_tabelle1.pdf");
+  check("PDF-Datei ist nicht leer", pdfFilePortrait.data && pdfFilePortrait.data.size > 0);
+  check("Protokoll vermerkt druckbares PDF (Hochformat)", doc.getElementById("log-list").textContent.includes("druckbares PDF (Hochformat)"));
+
+  // Seitenformat auf Querformat umstellen und erneut als PDF exportieren.
+  orientSelects[0].value = "landscape";
+  fire(orientSelects[0], "change");
+  await wait(50);
+  const savedBeforePdf2 = savedFiles.length;
+  fire(doc.querySelectorAll("[data-rovo-table-pdf]")[0], "click");
+  await wait(150);
+  check("PDF-Export (Querformat) ausgelöst", savedFiles.length === savedBeforePdf2 + 1);
+  check("Protokoll vermerkt druckbares PDF (Querformat)", doc.getElementById("log-list").textContent.includes("druckbares PDF (Querformat)"));
+
+  // Word-Export der zweiten Tabelle (wissen.docx) in Hochformat, dann Inhalt
+  // über JSZip zurücklesen - prüft sowohl Zellinhalt als auch Seitenformat.
+  const docxBtnWissen = doc.querySelectorAll("[data-rovo-table-docx]")[1];
+  const savedBeforeDocx = savedFiles.length;
+  fire(docxBtnWissen, "click");
+  await wait(150);
+  check("Word-Export (Hochformat) ausgelöst", savedFiles.length === savedBeforeDocx + 1);
+  const docxFilePortrait = savedFiles[savedBeforeDocx];
+  check("Word-Dateiname entspricht Quelle + Tabellen-Nr.", docxFilePortrait.filename === "wissen_tabelle1.docx");
+  const docxZipPortrait = await JSZipNode.loadAsync(Buffer.from(await docxFilePortrait.data.arrayBuffer()));
+  const docxXmlPortrait = await docxZipPortrait.file("word/document.xml").async("string");
+  check("Word-Export enthält Quellverweis (Caption)", docxXmlPortrait.includes("Quelle: wissen.docx"));
+  check("Word-Export enthält Zellinhalt „Vertragsnummer“", docxXmlPortrait.includes("Vertragsnummer"));
+  check("Word-Export: Hochformat-Seitengröße (w=11906, kein landscape)", docxXmlPortrait.includes('w:pgSz w:w="11906" w:h="16838"') && !docxXmlPortrait.includes("landscape"));
+  check("Word-Export: Tabellenlayout fest (Breiten werden nicht automatisch neu verteilt)", docxXmlPortrait.includes('w:tblLayout w:type="fixed"'));
+
+  // Dieselbe Tabelle auf Querformat umstellen und erneut exportieren.
+  doc.querySelectorAll(".rovo-table-orientation-select")[1].value = "landscape";
+  fire(doc.querySelectorAll(".rovo-table-orientation-select")[1], "change");
+  await wait(50);
+  const savedBeforeDocx2 = savedFiles.length;
+  fire(doc.querySelectorAll("[data-rovo-table-docx]")[1], "click");
+  await wait(150);
+  const docxFileLandscape = savedFiles[savedBeforeDocx2];
+  const docxZipLandscape = await JSZipNode.loadAsync(Buffer.from(await docxFileLandscape.data.arrayBuffer()));
+  const docxXmlLandscape = await docxZipLandscape.file("word/document.xml").async("string");
+  check("Word-Export: Querformat-Seitengröße (w=16838, orient=landscape)", docxXmlLandscape.includes('w:pgSz w:w="16838" w:h="11906" w:orient="landscape"'));
+  check("Protokoll vermerkt druckbares Word-Dokument (Querformat)", doc.getElementById("log-list").textContent.includes("druckbares Word-Dokument (Querformat)"));
 
   // ===================== Reset =====================
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();
