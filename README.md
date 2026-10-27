@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.96.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.97.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -952,6 +952,18 @@ zusammenzuführen.
   Kapitelerzeugung (s. u.) ist Rovo Knowledge als QUELLE 4 explizit
   vorrangig gegenüber den anderen Quellen markiert; widersprechen sich
   Quellen inhaltlich, ist Rovo Knowledge maßgeblich.
+  **Automatische Bild-/Tabellen-Extraktion** (neu, v2.97.0): aus
+  importierten .docx-/.pptx-Dateien werden zusätzlich enthaltene Bilder
+  automatisch extrahiert und landen im Register "Bilder" (dieselbe
+  Datenstruktur wie beim Screens-Import, inkl. Quelldatei-Kennzeichnung im
+  Dateinamen), während enthaltene Tabellen strukturiert (Zeilen/Zellen,
+  nicht nur Fließtext) ins neue eigenständige Register "Tabelle"
+  übernommen werden; aus .md-Dateien werden zusätzlich einfache
+  Markdown-Pipe-Tabellen (<code>| … |</code>) übernommen. PDF liefert
+  weiterhin nur Fließtext, da es weder eingebettete Bilder noch
+  Tabellenstrukturen zuverlässig liefert. Ein Fehler bei dieser
+  Zusatz-Extraktion blockiert den eigentlichen Text-Import einer Datei
+  nicht.
   Im Text vorkommende Jira-Ticketnummern werden
   automatisch erkannt und lassen sich je Eintrag über einen eigenen
   "Jira"-Button ein-/ausblenden (reiner Anzeige-Umschalter, keine
@@ -1827,6 +1839,19 @@ zusammenzuführen.
   hochaufgelöst; kleinere Bilder bleiben unverändert. Ohne
   Claude-Artifact-Laufzeit bzw. ohne Internetzugriff (Tesseract-Nachladen)
   bleibt der OCR-Text trotzdem erkennbar, nur die KI-Zuordnung entfällt.
+- **Tabelle** (neu, v2.97.0) – eigenständiges Register für Tabellen, die
+  automatisch aus bei Rovo Knowledge importierten .docx-/.pptx-Dateien
+  extrahiert wurden (strukturiert als Zeilen/Zellen, nicht als
+  Fließtext), ergänzt um einfache Markdown-Pipe-Tabellen aus .md-Importen.
+  Es gibt hier keinen eigenen Datei-Upload – Tabellen entstehen
+  ausschließlich als Nebenprodukt des Rovo-Knowledge-Imports (s. o.). Jede
+  Tabelle zeigt ihren **Quellverweis** (Dateiname + Tabellen-Nr. im
+  Quelldokument) sowie **Kapitel/Unterkapitel**-Dropdowns zur manuellen
+  Zuordnung (wörtlich aus der Gliederung, wie bei Rovo-Einträgen/Bildern)
+  und lässt sich einzeln löschen. PDF liefert bewusst keine Tabellen (nur
+  Fließtext über die bestehende Text-Extraktion), da eine zuverlässige
+  Tabellenerkennung aus reinem PDF-Text ohne eine echte Layout-Analyse
+  nicht möglich ist.
 - **Output MD Tickets / Output PDF Tickets** – bereinigte Tickets als
   ZIP-Archiv aus Markdown- bzw. PDF-Dateien exportieren (respektiert die
   aktuelle Dashboard-Filterung); PDFs werden clientseitig mit jsPDF

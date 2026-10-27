@@ -675,6 +675,7 @@
       <li><button class="nav-item" data-view="bildband" type="button">Bildband</button></li>
       <li><button class="nav-item" data-view="edito" type="button">Editor</button></li>
       <li><button class="nav-item" data-view="bilder" type="button">Bilder</button></li>
+      <li><button class="nav-item" data-view="tabellen" type="button">Tabelle</button></li>
       <li class="nav-sep">Output</li>
       <li><button class="nav-item" data-view="output-md" type="button">Output MD Tickets</button></li>
       <li><button class="nav-item" data-view="output-pdf" type="button">Output PDF Tickets</button></li>
@@ -1134,7 +1135,7 @@
 
       <!-- ================= Rovo Knowledge ================= -->
       <section class="view-panel" data-view-panel="rovoknowledge" hidden>
-        <div class="view-head"><h2>Rovo Knowledge</h2><p class="desc">Textschnipsel aus Rovo-KI-Chats (Chatverlauf + Antwort) sammeln &ndash; per Zwischenablage oder als Datei-Upload (.md/.markdown, .docx/.doc, .pdf oder .pptx; eine eigene Zeile <code class="mono">---</code> im extrahierten Text trennt Chatverlauf von Antwort; fehlt sie, landet der gesamte Inhalt im Chatverlauf). Neu importierte Einträge werden nach dem Hochladen kurz hervorgehoben und die Übersicht dorthin gescrollt. Jeder Eintrag wird fest mit dem hervorgehobenen Label <b>ROVO</b> markiert und einem Kapitel, Unterkapitel sowie beliebigen weiteren Labels zugeordnet (von Hand oder per KI-Vorschlag). Diese Daten stammen direkt aus dem Rovo-Quellsystem und gelten daher bei der EDITO-Kapitelerzeugung als <b>vorrangige Quelle</b> gegenüber den anderen Quellen (Tickets, RAG-Bibliothek, bestehender Handbuchtext). Per KI-Zuordnung lässt sich zusätzlich ein Kapitel/Unterkapitel sowie bis zu 3 passende Labels vorschlagen (wörtlich aus der vorhandenen Gliederung/Labels-Liste, nie erfunden). Im Text enthaltene Jira-Ticketnummern werden automatisch erkannt und bleiben standardmäßig ausgeblendet &ndash; je Eintrag über den Button "Jira" ein-/ausblendbar.</p></div>
+        <div class="view-head"><h2>Rovo Knowledge</h2><p class="desc">Textschnipsel aus Rovo-KI-Chats (Chatverlauf + Antwort) sammeln &ndash; per Zwischenablage oder als Datei-Upload (.md/.markdown, .docx/.doc, .pdf oder .pptx; eine eigene Zeile <code class="mono">---</code> im extrahierten Text trennt Chatverlauf von Antwort; fehlt sie, landet der gesamte Inhalt im Chatverlauf). Neu importierte Einträge werden nach dem Hochladen kurz hervorgehoben und die Übersicht dorthin gescrollt. Aus .docx-/.pptx-Dateien werden dabei zusätzlich automatisch enthaltene Bilder (landen im Register <b>Bilder</b>) und Tabellen (landen im neuen Register <b>Tabelle</b>, mit Quellverweis auf Dateiname und Kapitel/Unterkapitel) extrahiert. Jeder Eintrag wird fest mit dem hervorgehobenen Label <b>ROVO</b> markiert und einem Kapitel, Unterkapitel sowie beliebigen weiteren Labels zugeordnet (von Hand oder per KI-Vorschlag). Diese Daten stammen direkt aus dem Rovo-Quellsystem und gelten daher bei der EDITO-Kapitelerzeugung als <b>vorrangige Quelle</b> gegenüber den anderen Quellen (Tickets, RAG-Bibliothek, bestehender Handbuchtext). Per KI-Zuordnung lässt sich zusätzlich ein Kapitel/Unterkapitel sowie bis zu 3 passende Labels vorschlagen (wörtlich aus der vorhandenen Gliederung/Labels-Liste, nie erfunden). Im Text enthaltene Jira-Ticketnummern werden automatisch erkannt und bleiben standardmäßig ausgeblendet &ndash; je Eintrag über den Button "Jira" ein-/ausblendbar.</p></div>
 
         <section>
           <p class="section-label">Neuer Eintrag</p>
@@ -2485,6 +2486,17 @@
 
         <div class="gallery" id="gallery"></div>
         <div class="empty-hint" id="gallery-empty">Noch keine Bilder vorhanden &ndash; ein Bild hochladen oder unter "Prozessbild" ein Diagramm generieren.</div>
+      </section>
+
+      <!-- ================= Tabelle ================= -->
+      <section class="view-panel" data-view-panel="tabellen" hidden>
+        <div class="view-head"><h2>Tabelle</h2><p class="desc">Tabellen, die automatisch aus bei Rovo Knowledge importierten .docx-/.pptx-Dateien extrahiert wurden (Markdown-Dateien liefern einfache <code class="mono">|...|</code>-Tabellen, PDF wird für Tabellen/Bilder nicht unterstützt). Jede Tabelle zeigt ihren Quellverweis (Dateiname + Tabellen-Nr. im Quelldokument) und lässt sich einem Kapitel/Unterkapitel zuordnen.</p></div>
+
+        <section>
+          <p class="section-label">Extrahierte Tabellen (<span id="rovo-tables-count">0</span>)</p>
+          <div id="rovo-tables-list"></div>
+          <div class="empty-hint" id="rovo-tables-empty">Noch keine Tabellen extrahiert &ndash; bei Rovo Knowledge eine .docx-, .pptx- oder .md-Datei mit Tabelle(n) hochladen.</div>
+        </section>
       </section>
 
       <!-- ================= Output MD ================= -->
@@ -5114,7 +5126,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.96.0";
+  var APP_VERSION = "2.97.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6686,6 +6698,7 @@
     "rovo-chapter-summary-all-status-note", "rovo-chapter-summary-table", "rovo-chapter-summary-tbody",
     "rovo-chapter-summary-empty", "rovo-chapter-summary-preview-section", "rovo-chapter-summary-preview-title",
     "rovo-chapter-summary-preview-output",
+    "rovo-tables-count", "rovo-tables-list", "rovo-tables-empty",
     "bildband-table", "bildband-tbody", "bildband-empty",
     "edito-version-select", "edito-chapters-section", "edito-chapters-count",
     "edito-generate-all-btn", "edito-generate-all-spinner", "edito-generate-all-status-note",
@@ -6737,6 +6750,12 @@
     // Unterkapitel vorliegen" - unabhaengig von rovoEntries selbst, wird
     // nicht automatisch neu erzeugt, wenn sich Eintraege aendern.
     rovoChapterSummaries: {},
+    // Aus Rovo-Dateien (.docx/.pptx) automatisch extrahierte Tabellen -
+    // eigenständiges Register "Tabelle", je Eintrag mit Quellverweis
+    // (Dateiname + Tabellen-Nr. im Quelldokument) sowie manuell zuweisbarem
+    // Kapitel/Unterkapitel. Extrahierte Bilder landen dagegen direkt in
+    // uploadedImages (s. o.) - dieselbe Datenstruktur wie bei Screens-Import.
+    rovoTables: [],
     // EDITO: neue Fassung des Benutzerhandbuchs je Rolle/Sparte (eine der 6
     // bestehenden Gliederungsversionen, s. OUTLINE_VERSIONS), synthetisiert
     // aus Tickets, RAG-Bibliothek, bestehendem Benutzerhandbuch-Text, Rovo
@@ -7255,6 +7274,7 @@
     app.massFiles = [];
     app.rovoEntries = [];
     app.rovoChapterSummaries = {};
+    app.rovoTables = [];
     app.editoVersionKey = "";
     app.editoChapters = {};
     editoSelectedChapters = {};
@@ -7351,6 +7371,7 @@
     app.massFiles = [];
     app.rovoEntries = [];
     app.rovoChapterSummaries = {};
+    app.rovoTables = [];
     app.editoVersionKey = "";
     app.editoChapters = {};
     editoSelectedChapters = {};
@@ -7420,6 +7441,7 @@
       editorFiles: app.editorFiles,
       rovoEntries: app.rovoEntries,
       rovoChapterSummaries: app.rovoChapterSummaries,
+      rovoTables: app.rovoTables,
       editoVersionKey: app.editoVersionKey,
       editoChapters: app.editoChapters,
       selectedKeys: app.selectedKeys,
@@ -7486,6 +7508,7 @@
     app.editorFiles = data.editorFiles || [];
     app.rovoEntries = data.rovoEntries || [];
     app.rovoChapterSummaries = (data.rovoChapterSummaries && typeof data.rovoChapterSummaries === "object") ? data.rovoChapterSummaries : {};
+    app.rovoTables = data.rovoTables || [];
     if (typeof data.editoVersionKey === "string") app.editoVersionKey = data.editoVersionKey;
     if (data.editoChapters && typeof data.editoChapters === "object") app.editoChapters = data.editoChapters;
     app.selectedKeys = data.selectedKeys || {};
@@ -11085,6 +11108,121 @@
     if (zip.file("word/document.xml")) return { format: "docx", screens: await docxZipToScreens(zip) };
     if (zip.file("ppt/presentation.xml")) return { format: "pptx", screens: await pptxZipToScreens(zip) };
     throw new Error("Datei ist zwar ein ZIP-Archiv, aber weder ein Word- (.docx) noch ein PowerPoint-Dokument (.pptx).");
+  }
+
+  /* ============ Rovo Knowledge: Tabellen-Extraktion aus .docx/.pptx/.md ============
+     Ergänzt die reine Text- und Bild-Extraktion (s. o.) um die STRUKTURIERTE
+     Übernahme enthaltener Tabellen (Zeilen/Zellen statt Tab-getrennter
+     Fließtext-Zeilen wie bei docxXmlToLines) für das eigenständige Register
+     "Tabelle". Nutzt für .docx/.pptx dieselbe bereits geladene ZIP/XML-
+     Infrastruktur wie die Bild- bzw. Text-Extraktion. */
+  // Dieselbe Traversierung wie docxXmlToLines/docxXmlToChapters (nur
+  // direkte w:tbl-Kindelemente von w:body, Wrapper-Zeilen mit verschachtelter
+  // Tabelle überspringen), liefert aber jede Tabelle als Zeilen-Array statt
+  // als Tab-getrennten Fließtext.
+  function docxXmlToTables(xmlText) {
+    var doc = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (doc.querySelector("parsererror")) return [];
+    var body = doc.getElementsByTagName("w:body")[0];
+    if (!body) return [];
+    var tables = [];
+    Array.prototype.forEach.call(body.childNodes, function (node) {
+      if (node.nodeType !== 1 || node.tagName !== "w:tbl") return;
+      var rows = [];
+      Array.prototype.forEach.call(node.getElementsByTagName("w:tr"), function (tr) {
+        if (tr.getElementsByTagName("w:tbl").length > 0) return; // Wrapper-Zeile ueberspringen
+        var cells = Array.prototype.map.call(tr.getElementsByTagName("w:tc"), docxCellText);
+        if (cells.some(function (c) { return c; })) rows.push(cells);
+      });
+      if (rows.length) tables.push({ rows: rows });
+    });
+    return tables;
+  }
+  async function docxZipToTables(zip) {
+    var entry = zip.file("word/document.xml");
+    if (!entry) return [];
+    return docxXmlToTables(await entry.async("string"));
+  }
+  // Zellentext einer PowerPoint-Tabellenzelle (a:tc) - wie docxCellText,
+  // aber über die DrawingML-Textrahmen-Struktur (a:p/a:t) je Zelle.
+  function pptxCellText(tcEl) {
+    var paras = tcEl.getElementsByTagName("a:p");
+    var parts = [];
+    for (var i = 0; i < paras.length; i++) {
+      var runs = paras[i].getElementsByTagName("a:t");
+      var txt = [];
+      for (var j = 0; j < runs.length; j++) txt.push(runs[j].textContent);
+      var joined = txt.join("").trim();
+      if (joined) parts.push(joined);
+    }
+    return parts.join(" ");
+  }
+  function pptxSlideTables(slideDoc) {
+    var tbls = slideDoc.getElementsByTagName("a:tbl");
+    var tables = [];
+    for (var t = 0; t < tbls.length; t++) {
+      var rows = [];
+      var trs = tbls[t].getElementsByTagName("a:tr");
+      for (var r = 0; r < trs.length; r++) {
+        var tcs = trs[r].getElementsByTagName("a:tc");
+        var cells = [];
+        for (var c = 0; c < tcs.length; c++) cells.push(pptxCellText(tcs[c]));
+        if (cells.some(function (c) { return c; })) rows.push(cells);
+      }
+      if (rows.length) tables.push({ rows: rows });
+    }
+    return tables;
+  }
+  async function pptxZipToTables(zip) {
+    var slidePaths = [];
+    zip.forEach(function (relPath) { if (/^ppt\/slides\/slide\d+\.xml$/i.test(relPath)) slidePaths.push(relPath); });
+    slidePaths.sort(function (a, b) { return pptxSlideNumber(a) - pptxSlideNumber(b); });
+    var tables = [];
+    for (var s = 0; s < slidePaths.length; s++) {
+      var slideXml = await zip.file(slidePaths[s]).async("string");
+      var slideDoc = new DOMParser().parseFromString(slideXml, "application/xml");
+      if (slideDoc.querySelector("parsererror")) continue;
+      tables = tables.concat(pptxSlideTables(slideDoc));
+    }
+    return tables;
+  }
+  // Einfache Markdown-Pipe-Tabellen (Kopfzeile + Trennzeile aus "-"/":",
+  // danach Datenzeilen) - fuer .md-Importe, die keine OOXML-Struktur haben.
+  function markdownExtractTables(text) {
+    var lines = (text || "").split(/\r?\n/);
+    var rowRe = /^\s*\|.*\|\s*$/;
+    var sepRe = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/;
+    function splitRow(line) {
+      var t = line.trim();
+      if (t.charAt(0) === "|") t = t.slice(1);
+      if (t.charAt(t.length - 1) === "|") t = t.slice(0, -1);
+      return t.split("|").map(function (c) { return c.trim(); });
+    }
+    var tables = [];
+    var i = 0;
+    while (i < lines.length) {
+      if (rowRe.test(lines[i]) && i + 1 < lines.length && sepRe.test(lines[i + 1])) {
+        var rows = [splitRow(lines[i])];
+        i += 2;
+        while (i < lines.length && rowRe.test(lines[i])) { rows.push(splitRow(lines[i])); i++; }
+        tables.push({ rows: rows });
+      } else {
+        i++;
+      }
+    }
+    return tables;
+  }
+  // Fuer Rovo-Import: liefert Bilder (wie extractScreensFromOfficeFile) UND
+  // Tabellen aus einer .docx/.pptx in einem Durchlauf. Kein echtes OOXML-ZIP
+  // (z. B. altes .doc/.ppt) -> stilles Leerergebnis, der eigentliche Fehler
+  // kommt bereits von der parallel laufenden Text-Extraktion.
+  async function rovoExtractTablesAndImages(buf) {
+    if (classifyWordBuffer(buf) !== "zip" || typeof JSZip === "undefined") return { images: [], tables: [] };
+    var zip;
+    try { zip = await JSZip.loadAsync(buf); } catch (e) { return { images: [], tables: [] }; }
+    if (zip.file("word/document.xml")) return { images: await docxZipToScreens(zip), tables: await docxZipToTables(zip) };
+    if (zip.file("ppt/presentation.xml")) return { images: await pptxZipToScreens(zip), tables: await pptxZipToTables(zip) };
+    return { images: [], tables: [] };
   }
 
   // .xlsx ist wie .docx ein ZIP mit OOXML-Inhalt darin - dieselbe bereits
@@ -17019,6 +17157,56 @@
     // mitlaufen.
     renderRovoChapterSummaries();
   }
+  /* ============ Register "Tabelle": aus Rovo-Dateien extrahierte Tabellen ============
+     Eigenständiger Bestand (app.rovoTables), je Eintrag eine vollständige
+     Tabelle (Zeilen/Zellen) mit Quellverweis (Dateiname + Tabellen-Nr. im
+     Quelldokument) sowie manuell zuweisbarem Kapitel/Unterkapitel -
+     dieselbe Zuordnungs-UX wie bei Rovo-Einträgen/Bildern. */
+  function rovoTableCardHtml(t) {
+    var chapters = massChapterOptionsList();
+    var subOptions = t.chapter ? subchapterOptionsForChapter(t.chapter) : [];
+    var rowsHtml = t.rows.map(function (row) {
+      return "<tr>" + row.map(function (cell) { return "<td>" + escapeHtml(cell) + "</td>"; }).join("") + "</tr>";
+    }).join("");
+    return '<div class="panel" style="margin-bottom:14px; padding:14px;">' +
+      '<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">' +
+      "<b>Quelle: <span class=\"mono\">" + escapeHtml(t.sourceFile) + "</span> – Tabelle " + t.tableNumber + "</b>" +
+      '<span class="spacer"></span>' +
+      '<label>Kapitel<select class="rovo-table-chapter-select" data-id="' + t.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapters, t.chapter, "Ohne Kapitel") + "</select></label>" +
+      '<label>Unterkapitel<select class="rovo-table-subchapter-select" data-id="' + t.id + '" aria-label="Unterkapitel"' + (t.chapter ? "" : " disabled") + ">" + ragLibraryOptionsHtml(subOptions, t.subchapter, "Ohne Unterkapitel") + "</select></label>" +
+      '<button type="button" class="btn danger btn-tiny" data-rovo-table-delete="' + t.id + '">Löschen</button>' +
+      "</div>" +
+      '<div class="table-wrap" style="max-height:280px; overflow:auto;">' +
+      '<table class="simple-table mono" style="font-size:12px;"><tbody>' + rowsHtml + "</tbody></table>" +
+      "</div></div>";
+  }
+  function renderRovoTables() {
+    els.rovoTablesCount.textContent = app.rovoTables.length;
+    els.rovoTablesEmpty.hidden = app.rovoTables.length > 0;
+    els.rovoTablesList.innerHTML = app.rovoTables.map(rovoTableCardHtml).join("");
+  }
+  els.rovoTablesList.addEventListener("change", function (e) {
+    var chapterSel = e.target.closest(".rovo-table-chapter-select");
+    if (chapterSel) {
+      var ct = app.rovoTables.filter(function (x) { return x.id === parseInt(chapterSel.getAttribute("data-id"), 10); })[0];
+      if (ct) { ct.chapter = chapterSel.value; ct.subchapter = ""; renderRovoTables(); }
+      return;
+    }
+    var subSel = e.target.closest(".rovo-table-subchapter-select");
+    if (subSel) {
+      var st = app.rovoTables.filter(function (x) { return x.id === parseInt(subSel.getAttribute("data-id"), 10); })[0];
+      if (st) st.subchapter = subSel.value;
+    }
+  });
+  els.rovoTablesList.addEventListener("click", function (e) {
+    var delBtn = e.target.closest("[data-rovo-table-delete]");
+    if (!delBtn) return;
+    var id = parseInt(delBtn.getAttribute("data-rovo-table-delete"), 10);
+    app.rovoTables = app.rovoTables.filter(function (x) { return x.id !== id; });
+    renderRovoTables();
+    addLog("Rovo Knowledge: extrahierte Tabelle gelöscht.");
+    showToast("Gelöscht", "Tabelle wurde entfernt.");
+  });
   // Vollbild-Ansicht eines einzelnen Eintrags per Doppelklick auf die Zeile
   // (ausser auf interaktiven Elementen wie Dropdowns/Buttons) - zeigt
   // Chatverlauf und Antwort ungekuerzt nebeneinander.
@@ -17094,25 +17282,63 @@
   // Nach dem Import kurz hervorgehobene Zeilen (s. CSS .rovo-row-new) - nur
   // fuer GENAU den naechsten renderRovoEntries()-Aufruf wirksam, s. dort.
   var rovoJustImportedIds = {};
+  var nextRovoTableId = 1;
+  // Legt einen aus einer Rovo-Datei extrahierten Screen als eigenen Eintrag
+  // in app.uploadedImages ab - dieselbe Datenstruktur/Feldlogik wie beim
+  // Screens-Import (sourceFile/imageNumber), damit das Register "Bilder"
+  // ohne doppelte Datenhaltung mitzieht.
+  function rovoAddExtractedImage(screen, sourceFile, idx) {
+    app.uploadedImages.unshift({
+      id: nextImageId++, filename: sourceFile + " - Bild " + (idx + 1), dataUrl: screen.dataUrl,
+      mimeType: (/^data:([^;]+);/.exec(screen.dataUrl) || [])[1] || "unbekannt",
+      sizeBytes: Math.round((screen.dataUrl.length - screen.dataUrl.indexOf(",") - 1) * 0.75), when: nowLabel(),
+      domain: "", processStep: "", chapter: "", subchapter: "", description: screen.caption || "",
+      width: null, height: null, avgColor: null, brightnessPct: null, metadataComputed: false, metadataError: null,
+      ocrText: null, ocrError: null, ocrRanAt: null, imageNumber: idx + 1, sourceFile: sourceFile
+    });
+  }
+  function rovoAddExtractedTable(table, sourceFile, idx) {
+    app.rovoTables.unshift({ id: nextRovoTableId++, sourceFile: sourceFile, tableNumber: idx + 1, rows: table.rows, chapter: "", subchapter: "", when: nowLabel() });
+  }
   async function handleRovoMdFiles(fileList) {
     var files = Array.prototype.filter.call(fileList || [], function (f) { return ROVO_FILE_RE.test(f.name || ""); });
     if (!files.length) { showToast("Keine passende Datei", "Bitte eine .md-, .docx-, .pdf- oder .pptx-Datei auswählen.", true); return; }
-    var added = 0;
+    var added = 0, addedImages = 0, addedTables = 0;
     for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      var lowerName = (file.name || "").toLowerCase();
       try {
-        var text = await rovoExtractFileText(files[i]);
+        var text = await rovoExtractFileText(file);
         var split = rovoSplitChatAnswer(text);
         var entry = rovoAddEntry(split.chat, split.answer);
         if (entry) { added++; rovoJustImportedIds[entry.id] = true; }
+        // Bild-/Tabellen-Extraktion ist eine Ergaenzung, kein Ersatz fuer den
+        // Text-Import - eigenes try/catch, damit ein Fehler hier den bereits
+        // erfolgreich importierten Eintrag nicht nachtraeglich verwirft.
+        try {
+          if (/\.(docx|doc|pptx)$/i.test(lowerName)) {
+            var extracted = await rovoExtractTablesAndImages(await readFileAsArrayBuffer(file));
+            extracted.images.forEach(function (screen, idx) { rovoAddExtractedImage(screen, file.name, idx); addedImages++; });
+            extracted.tables.forEach(function (table, idx) { rovoAddExtractedTable(table, file.name, idx); addedTables++; });
+          } else if (/\.(md|markdown)$/i.test(lowerName)) {
+            markdownExtractTables(text).forEach(function (table, idx) { rovoAddExtractedTable(table, file.name, idx); addedTables++; });
+          }
+        } catch (exErr) {
+          addLog("Rovo Knowledge: Bild-/Tabellen-Extraktion bei „" + file.name + "“ fehlgeschlagen: " + ((exErr && exErr.message) || "Unbekannter Fehler.") + " (Text-Import davon unabhängig.)");
+        }
       } catch (err) {
         showToast("Fehler beim Lesen", files[i].name + ": " + ((err && err.message) || "Unbekannter Fehler."), true);
         addLog("Rovo Knowledge: Import-Fehler bei „" + files[i].name + "“: " + ((err && err.message) || "Unbekannter Fehler."));
       }
     }
     renderRovoEntries();
+    if (addedImages) renderGallery();
+    if (addedTables) renderRovoTables();
     if (added) {
-      addLog("Rovo Knowledge: " + added + " Datei(en) als Einträge importiert.");
-      showToast("Importiert", added + " Eintrag/Einträge hinzugefügt.");
+      addLog("Rovo Knowledge: " + added + " Datei(en) als Einträge importiert." +
+        (addedImages ? " " + addedImages + " Bild(er) ins Register Bilder extrahiert." : "") +
+        (addedTables ? " " + addedTables + " Tabelle(n) ins Register Tabelle extrahiert." : ""));
+      showToast("Importiert", added + " Eintrag/Einträge hinzugefügt." + (addedImages || addedTables ? " (" + addedImages + " Bild(er), " + addedTables + " Tabelle(n) extrahiert)" : ""));
       if (els.rovoEntriesTable.scrollIntoView) els.rovoEntriesTable.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }
@@ -22660,6 +22886,7 @@
     if (name === "bildband") renderBildband();
     if (name === "edito") { renderEditoVersionSelect(); renderEditoChapters(); renderEditoFiles(); }
     if (name === "rovoknowledge") renderRovoEntries();
+    if (name === "tabellen") renderRovoTables();
     if (window.innerWidth <= 900) setSidebar(false);
   }
   navItems.forEach(function (btn) { btn.addEventListener("click", function () { showView(btn.getAttribute("data-view")); }); });
