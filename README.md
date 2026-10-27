@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.99.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.100.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1778,10 +1778,20 @@ zusammenzuführen.
   Auto-Korrektur): **Agent 1** validiert jede fachliche Aussage im
   erzeugten Text gegen die Rovo-/Jira-Quellen (nicht belegte Aussagen/
   Widersprüche), **Agent 2** prüft Grammatik, Sprachstil, Wiederholungen
-  und roten Faden. **Agent 3** (Design: Struktur-Prüfung des exportierten
-  Gesamtdokuments – echte Seitenanzahl, eingebettete Bilder,
-  Inhaltsverzeichnis) sowie zwei weitere Agenten folgen in einem späteren
-  Ausbauschritt. **Gesamtdokument** (neu, v2.94.0, Abschnitt "6."): führt
+  und roten Faden. **Agent 3** (neu, v2.100.0, Struktur-Prüfung des
+  Gesamtdokuments, Abschnitt "6.") läuft bewusst OHNE KI-Aufruf – ein rein
+  deterministischer Befund-Report anhand des tatsächlich gerenderten
+  Gesamtdokument-PDFs (dieselbe Layout-Logik wie beim regulären
+  PDF-Export, nur alle bereits erzeugten Kapitel der Version in EINEM
+  Dokument statt separater Einzel-Exporte): nennt die ECHTE, gerenderte
+  Seitenanzahl (keine Schätzung – Zeilenumbrüche, eingebettete Bilder UND
+  Tabellen fließen genauso ein wie beim echten Export), gleicht je Kapitel
+  die Anzahl [Bild]-/[Tabelle]-Platzhalter gegen die Anzahl tatsächlich
+  zugeordneter Screenshots/Tabellen ab (meldet Kapitel mit Überschuss –
+  mehr Platzhalter als Zuordnungen – explizit mit Warnsymbol) und weist
+  auf das noch fehlende Inhaltsverzeichnis hin. Zwei weitere Agenten
+  folgen in einem späteren Ausbauschritt. **Gesamtdokument** (neu,
+  v2.94.0, Abschnitt "6."): führt
   alle bereits erzeugten Kapitel der oben gewählten Rolle/Sparte in
   Gliederungs-Reihenfolge zu EINEM Word-Dokument zusammen (echter
   Seitenumbruch zwischen den Kapiteln, Bildband-Platzhalter werden wie
@@ -1791,8 +1801,10 @@ zusammenzuführen.
   Rein Sitzungs-Anzeigezustand (nicht Teil von "Sitzung speichern"), wird
   bei Versionswechsel oder erneutem Zusammenführen verworfen bzw. neu
   aufgebaut. Ein generiertes Inhaltsverzeichnis sowie der PDF-Export des
-  Gesamtdokuments folgen zusammen mit Agent 3 in einem späteren
-  Ausbauschritt. **Tabellen-Einbettung** (neu, v2.99.0): dem Kapitel im
+  Gesamtdokuments selbst (als Download) folgen in einem späteren
+  Ausbauschritt – Agent 3 (s. o.) baut sich sein eigenes, nicht
+  herunterladbares PDF intern nur zur Seitenzählung. **Tabellen-Einbettung**
+  (neu, v2.99.0): dem Kapitel im
   Register "Tabelle" zugeordnete, aus Rovo Knowledge extrahierte Tabellen
   (s. o.) werden der KI als eigene QUELLE 6 genannt (je Tabelle mit
   Quelldatei und Zeilen-/Spaltenanzahl) – die KI fügt dafür eine eigene

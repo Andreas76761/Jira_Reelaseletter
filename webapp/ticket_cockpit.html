@@ -2329,7 +2329,7 @@
 
       <!-- ================= EDITO ================= -->
       <section class="view-panel" data-view-panel="edito" hidden>
-        <div class="view-head"><h2>Editor</h2><p class="desc">Erstellt eine neue Fassung des Benutzerhandbuchs je Rolle/Sparte aus mehreren internen Quellen gleichzeitig: importierten Jira-Tickets, der RAG-Bibliothek, dem bereits bestehenden Benutzerhandbuch-Text, Rovo-Knowledge-Textschnipseln, zugeordneten Bildern (Bildband-Platzhalter <code class="mono">[Bild]</code>) sowie zugeordneten, aus Rovo Knowledge extrahierten Tabellen (Platzhalter <code class="mono">[Tabelle]</code>, s. Register "Tabelle" – werden mit automatisch auf die Seitenbreite angepassten Spalten als echte Tabelle eingebettet, nicht als Bild). Drei Prüf-Agenten bewerten anschließend Inhalt, Sprache und Dokument-Struktur (zwei weitere Agenten folgen später). Nach dem Erzeugen wird je Kapitel automatisch ein datiertes Word- und PDF-Dokument abgelegt, siehe Übersicht "4. Alle erzeugten Dokumente" unten.</p></div>
+        <div class="view-head"><h2>Editor</h2><p class="desc">Erstellt eine neue Fassung des Benutzerhandbuchs je Rolle/Sparte aus mehreren internen Quellen gleichzeitig: importierten Jira-Tickets, der RAG-Bibliothek, dem bereits bestehenden Benutzerhandbuch-Text, Rovo-Knowledge-Textschnipseln, zugeordneten Bildern (Bildband-Platzhalter <code class="mono">[Bild]</code>) sowie zugeordneten, aus Rovo Knowledge extrahierten Tabellen (Platzhalter <code class="mono">[Tabelle]</code>, s. Register "Tabelle" – werden mit automatisch auf die Seitenbreite angepassten Spalten als echte Tabelle eingebettet, nicht als Bild). Drei Prüf-Agenten bewerten anschließend Inhalt, Sprache und Dokument-Struktur des Gesamtdokuments (echte Seitenanzahl, eingebettete Bilder/Tabellen, Inhaltsverzeichnis – zwei weitere Agenten folgen später). Nach dem Erzeugen wird je Kapitel automatisch ein datiertes Word- und PDF-Dokument abgelegt, siehe Übersicht "4. Alle erzeugten Dokumente" unten.</p></div>
 
         <section>
           <p class="section-label">1. Rolle/Sparte wählen</p>
@@ -2419,7 +2419,10 @@
           <div class="callout">
             Führt alle bereits erzeugten Kapitel der oben gewählten Rolle/Sparte in der Reihenfolge der Gliederung
             zu einem Word-Gesamtdokument zusammen (mit Seitenumbruch zwischen den Kapiteln). Noch nicht erzeugte
-            Kapitel werden dabei übersprungen.
+            Kapitel werden dabei übersprungen. <b>Agent 3: Struktur-Prüfung</b> prüft anschließend deterministisch
+            (ohne KI, anhand des tatsächlich gerenderten Dokuments) die reale Seitenanzahl sowie, ob alle
+            [Bild]-/[Tabelle]-Platzhalter erfolgreich mit einem zugeordneten Screenshot bzw. einer zugeordneten
+            Tabelle eingebettet werden konnten, und weist auf ein fehlendes Inhaltsverzeichnis hin.
           </div>
           <div class="controls">
             <button class="btn primary" id="edito-merge-btn" type="button">
@@ -2433,6 +2436,16 @@
               <button class="btn ghost" id="edito-merge-download-btn" type="button">Als Word herunterladen</button>
             </div>
             <div class="panel gen-preview" id="edito-merge-preview-output" style="padding:12px 14px; margin-top:10px; max-height:480px; overflow:auto; white-space:pre-wrap;"></div>
+          </div>
+          <div class="controls" style="margin-top:12px;">
+            <button class="btn ghost" id="edito-agent3-btn" type="button">
+              <span class="btn-spinner" id="edito-agent3-spinner" hidden></span>
+              Agent 3: Struktur-Prüfung
+            </button>
+          </div>
+          <p class="step-note" id="edito-agent3-status-note"></p>
+          <div id="edito-agent3-result" hidden>
+            <div class="panel gen-preview" id="edito-agent3-output" style="padding:12px 14px; margin-top:6px; max-height:420px; overflow:auto; white-space:pre-wrap;"></div>
           </div>
         </section>
       </section>
@@ -5126,7 +5139,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.99.0";
+  var APP_VERSION = "2.100.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6712,6 +6725,7 @@
     "edito-files-count", "edito-files-table", "edito-files-tbody", "edito-files-empty",
     "edito-merge-btn", "edito-merge-spinner", "edito-merge-status-note",
     "edito-merge-preview-section", "edito-merge-download-btn", "edito-merge-preview-output",
+    "edito-agent3-btn", "edito-agent3-spinner", "edito-agent3-status-note", "edito-agent3-result", "edito-agent3-output",
     "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
     "modal-overlay", "modal-key", "modal-title", "modal-fields", "modal-desc-wrap", "modal-desc",
@@ -21041,6 +21055,12 @@
   function bildbandCountPlaceholders(text) {
     return manualParseParagraphs(text).filter(manualIsImagePlaceholder).length;
   }
+  // Wie bildbandCountPlaceholders oben, aber fuer den [Tabelle]-Platzhalter -
+  // fuer Agent 3 (Struktur-Pruefung, s. u.), um Platzhalter- gegen
+  // tatsaechlich zugeordnete Tabellenanzahl je Kapitel abzugleichen.
+  function rovoTableCountPlaceholders(text) {
+    return manualParseParagraphs(text).filter(manualIsTablePlaceholder).length;
+  }
   // Erkennt einen Tag IRGENDWO im Absatz (nicht nur am Anfang) - der Prompt
   // weist Claude zwar an, den Tag direkt vor den betreffenden Satz zu
   // stellen, aber ein LLM folgt Formatierungsvorgaben nicht immer exakt;
@@ -21344,15 +21364,16 @@
     return buildDocxBlobFromBodyAndMedia(bodyParts.join(""), allMedia);
   }
   var MANUAL_IMAGE_EXT_TO_JSPDF_FORMAT = { png: "PNG", jpg: "JPEG", gif: "GIF", bmp: "BMP" };
-  async function buildManualChapterPdfDoc(title, text, chapterTitleForImages) {
-    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
-    if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
-    var media = await manualPrepareBildbandMedia(chapterTitleForImages || title);
+  // Schreibt EIN Kapitel (Titel + Fliesstext inkl. [Bild]/[Tabelle]-
+  // Platzhaltern) in ein BEREITS BESTEHENDES jsPDF-Dokument, ab der
+  // uebergebenen y-Position - von buildManualChapterPdfDoc (ein eigenes,
+  // neues Dokument je Kapitel) UND buildMergedEditoPdfDoc (mehrere Kapitel
+  // im SELBEN Dokument, fuer Agent 3s echte Seitenanzahl) gemeinsam genutzt,
+  // damit die Layout-Logik nur an einer Stelle gepflegt werden muss.
+  function manualWriteChapterPdfBody(doc, title, text, media, tables, startY) {
     var mediaIdx = 0;
-    var tables = rovoTablesForChapter(chapterTitleForImages || title);
     var tableIdx = 0;
-    var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
-    var margin = 18, pageW = 210, pageHLimit = 280, y = margin;
+    var margin = 18, pageW = 210, pageHLimit = 280, y = startY;
     doc.setFont("helvetica", "bold"); doc.setFontSize(18);
     var titleLines = doc.splitTextToSize(title, pageW - margin * 2);
     doc.text(titleLines, margin, y); y += titleLines.length * 8 + 6;
@@ -21435,6 +21456,34 @@
       });
       y += isHeading ? 2 : 3;
     });
+    return y;
+  }
+  async function buildManualChapterPdfDoc(title, text, chapterTitleForImages) {
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
+    var media = await manualPrepareBildbandMedia(chapterTitleForImages || title);
+    var tables = rovoTablesForChapter(chapterTitleForImages || title);
+    var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    manualWriteChapterPdfBody(doc, title, text, media, tables, 18);
+    return doc;
+  }
+  // Fuer Agent 3 (Struktur-Pruefung, s. u.): fuehrt mehrere bereits erzeugte
+  // EDITO-Kapitel im SELBEN jsPDF-Dokument zusammen (echter Seitenumbruch
+  // zwischen den Kapiteln ueber doc.addPage()), damit
+  // doc.internal.getNumberOfPages() danach die ECHTE, gerenderte
+  // Seitenanzahl des Gesamtdokuments liefert - anders als ein blosser
+  // Wortanzahl-Schaetzwert beruecksichtigt das Zeilenumbrueche, eingebettete
+  // Bilder UND Tabellen genauso wie beim tatsaechlichen Einzelkapitel-Export.
+  async function buildMergedEditoPdfDoc(chapters) {
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
+    var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    for (var i = 0; i < chapters.length; i++) {
+      if (i > 0) doc.addPage();
+      var media = await manualPrepareBildbandMedia(chapters[i].title);
+      var tables = rovoTablesForChapter(chapters[i].title);
+      manualWriteChapterPdfBody(doc, chapters[i].title, chapters[i].text, media, tables, 18);
+    }
     return doc;
   }
   // MD-Export je Kapitel (anders als DOCX/PDF unten KEINE weitere
@@ -22963,6 +23012,9 @@
     els.editoMergePreviewSection.hidden = true;
     els.editoMergePreviewOutput.textContent = "";
     els.editoMergeStatusNote.textContent = "";
+    els.editoAgent3Result.hidden = true;
+    els.editoAgent3Output.textContent = "";
+    els.editoAgent3StatusNote.textContent = "";
   }
   els.editoMergeBtn.addEventListener("click", async function () {
     if (!app.editoVersionKey) { showToast("Keine Version", "Bitte zuerst oben eine Rolle/Sparte wählen.", true); return; }
@@ -22993,6 +23045,74 @@
     var ok = await saveOrWarn(editoMergedFilename, editoMergedDocxBlob);
     if (ok) addLog("EDITO: Gesamtdokument „" + editoMergedFilename + "“ heruntergeladen.");
   });
+
+  // Agent 3 (Struktur-Pruefung): bewusst OHNE KI-Aufruf (reiner, deterministisch
+  // berechneter Befund) - "echte" Seitenanzahl heisst hier wortwoertlich: aus
+  // der tatsaechlich gerenderten PDF-Fassung (buildMergedEditoPdfDoc), nicht
+  // geschaetzt. Reiner Sitzungs-Anzeigezustand wie das Gesamtdokument selbst
+  // (s. editoResetMergedDocument) - laesst sich jederzeit neu ausfuehren,
+  // unabhaengig davon, ob das Word-Gesamtdokument bereits erzeugt wurde.
+  async function editoRunStructuralCheck() {
+    if (!app.editoVersionKey) { showToast("Keine Version", "Bitte zuerst oben eine Rolle/Sparte wählen.", true); return; }
+    var allChapters = editoChaptersForVersion();
+    var chaptersWithText = editoChaptersWithTextInOrder();
+    if (!chaptersWithText.length) { showToast("Keine Kapitel", "Für diese Version wurde noch kein Kapitel erzeugt.", true); return; }
+    els.editoAgent3Btn.disabled = true;
+    els.editoAgent3Spinner.hidden = false;
+    try {
+      var pdfDoc = await buildMergedEditoPdfDoc(chaptersWithText);
+      var pageCount = pdfDoc.internal.getNumberOfPages();
+
+      var totalImgPh = 0, totalImgAvail = 0, totalImgEmbedded = 0;
+      var totalTblPh = 0, totalTblAvail = 0, totalTblEmbedded = 0;
+      var gapLines = [];
+      chaptersWithText.forEach(function (c) {
+        var imgPh = bildbandCountPlaceholders(c.text), imgAvail = bildbandScreensForChapter(c.title).length;
+        var tblPh = rovoTableCountPlaceholders(c.text), tblAvail = rovoTablesForChapter(c.title).length;
+        totalImgPh += imgPh; totalImgAvail += imgAvail; totalImgEmbedded += Math.min(imgPh, imgAvail);
+        totalTblPh += tblPh; totalTblAvail += tblAvail; totalTblEmbedded += Math.min(tblPh, tblAvail);
+        var issues = [];
+        if (imgPh > imgAvail) issues.push((imgPh - imgAvail) + " Bild-Platzhalter ohne zugeordneten Screenshot");
+        if (tblPh > tblAvail) issues.push((tblPh - tblAvail) + " Tabellen-Platzhalter ohne zugeordnete Tabelle");
+        if (issues.length) gapLines.push("- " + c.title + ": " + issues.join(", "));
+      });
+
+      var lines = [];
+      lines.push("### Seitenanzahl");
+      lines.push("- " + chaptersWithText.length + " von " + allChapters.length + " Kapiteln erzeugt" +
+        (allChapters.length > chaptersWithText.length ? " (" + (allChapters.length - chaptersWithText.length) + " noch nicht erzeugt, nicht Teil dieser Prüfung)" : "") + ".");
+      lines.push("- Gesamtdokument: " + pageCount + " Seite" + (pageCount === 1 ? "" : "n") + " (reale, gerenderte Seitenanzahl der PDF-Fassung, DIN A4 Hochformat).");
+      lines.push("");
+      lines.push("### Eingebettete Bilder");
+      lines.push("- " + totalImgEmbedded + " von " + totalImgPh + " [Bild]-Platzhaltern erfolgreich mit einem Screenshot eingebettet (" + totalImgAvail + " Screenshot(s) insgesamt zugeordnet).");
+      lines.push(totalImgPh > totalImgAvail ? "- ⚠ " + (totalImgPh - totalImgAvail) + " Platzhalter ohne zugeordneten Screenshot." : "- Keine fehlenden Bild-Zuordnungen.");
+      lines.push("");
+      lines.push("### Eingebettete Tabellen");
+      lines.push("- " + totalTblEmbedded + " von " + totalTblPh + " [Tabelle]-Platzhaltern erfolgreich mit einer Tabelle eingebettet (" + totalTblAvail + " Tabelle(n) insgesamt zugeordnet).");
+      lines.push(totalTblPh > totalTblAvail ? "- ⚠ " + (totalTblPh - totalTblAvail) + " Platzhalter ohne zugeordnete Tabelle." : "- Keine fehlenden Tabellen-Zuordnungen.");
+      if (gapLines.length) {
+        lines.push("");
+        lines.push("### Kapitel mit fehlender Zuordnung");
+        lines.push.apply(lines, gapLines);
+      }
+      lines.push("");
+      lines.push("### Inhaltsverzeichnis");
+      lines.push("- Nicht vorhanden - die automatische Erzeugung eines Inhaltsverzeichnisses ist ein späterer Ausbauschritt.");
+
+      els.editoAgent3Output.textContent = lines.join("\n");
+      els.editoAgent3Result.hidden = false;
+      var versionLabel = (editoVersionDef() || {}).label || app.editoVersionKey;
+      els.editoAgent3StatusNote.textContent = "Struktur-Prüfung abgeschlossen (" + nowLabel() + ").";
+      addLog("EDITO: Agent 3 (Struktur-Prüfung) für Version „" + versionLabel + "“ ausgeführt (" + pageCount + " Seite" + (pageCount === 1 ? "" : "n") + ", " + chaptersWithText.length + " Kapitel).");
+      showToast("Struktur-Prüfung abgeschlossen", pageCount + " Seite" + (pageCount === 1 ? "" : "n") + ", " + totalImgEmbedded + " Bild(er), " + totalTblEmbedded + " Tabelle(n) eingebettet.");
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.editoAgent3Btn.disabled = false;
+      els.editoAgent3Spinner.hidden = true;
+    }
+  }
+  els.editoAgent3Btn.addEventListener("click", editoRunStructuralCheck);
 
   var editoActiveChapterTitle = "";
   function editoShowChapter(title) {
