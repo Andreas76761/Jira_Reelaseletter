@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.95.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.96.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -926,10 +926,17 @@ zusammenzuführen.
   Import): eigenständiger Bestand für Textschnipsel aus Rovo-KI-Chats
   (Chatverlauf + Antwort als zwei getrennte Felder), importierbar über
   Zwischenablage (je ein eigener "Aus Zwischenablage einfügen"-Button für
-  Chatverlauf und Antwort) oder durch Hochladen von .md-Dateien – eine
-  eigene Zeile "---" im Dateiinhalt trennt dabei Chatverlauf (davor) von
-  Antwort (danach), ohne Trennzeile landet der gesamte Inhalt im
-  Chatverlauf-Feld. Jeder Eintrag ist fest mit dem Label **"ROVO"**
+  Chatverlauf und Antwort) oder durch Hochladen von Dateien – neben .md
+  jetzt auch **.docx/.doc, .pdf und .pptx** (neu, v2.96.0, Mehrfachauswahl
+  gemischter Formate in einem Rutsch möglich; bei .pptx wird der Text
+  aller Textrahmen je Folie gelesen, nicht nur Bilder/Folientitel wie im
+  Screens-Import) – eine eigene Zeile "---" im extrahierten Text trennt
+  dabei Chatverlauf (davor) von Antwort (danach), ohne Trennzeile landet
+  der gesamte Inhalt im Chatverlauf-Feld. Frisch importierte Zeilen werden
+  kurz farblich hervorgehoben und die Übersicht dorthin gescrollt, damit
+  neue Einträge sofort sichtbar sind; schlägt der Import einer einzelnen
+  Datei fehl (z. B. beschädigte Datei), bricht das die übrigen
+  Dateien im selben Upload nicht ab. Jeder Eintrag ist fest mit dem Label **"ROVO"**
   markiert. Ein Klick auf "KI-Zuordnung" ordnet alle noch offenen Einträge
   per Claude (sample-Capability) einem passenden Kapitel/Unterkapitel
   (wörtlich aus der Gliederung) sowie bis zu 3 weiteren Labels zu, ohne

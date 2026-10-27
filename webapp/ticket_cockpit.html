@@ -264,6 +264,10 @@
      eigener, deutlich abgehobener Chip-Stil statt des neutralen Standard-
      Labels, damit das auf einen Blick erkennbar ist. */
   .label-chip.rovo-priority-chip { border-color: var(--accent); color: var(--accent-text); font-weight: 800; }
+  /* Kurze Hervorhebung frisch importierter Rovo-Eintraege (s. handleRovoMdFiles) -
+     spielt einmalig beim Einfuegen der Zeile ab, kein JS-Timer noetig. */
+  @keyframes rovoRowHighlight { from { background: var(--accent-soft); } to { background: transparent; } }
+  #rovo-entries-tbody tr.rovo-row-new { animation: rovoRowHighlight 2.5s ease-out; }
   .points-value-input { width: 80px; }
   .test-group-row td, .dq-group-row td { background: var(--surface-2); font-weight: 700; color: var(--text); cursor: pointer; }
   .test-group-toggle, .dq-group-toggle {
@@ -1130,7 +1134,7 @@
 
       <!-- ================= Rovo Knowledge ================= -->
       <section class="view-panel" data-view-panel="rovoknowledge" hidden>
-        <div class="view-head"><h2>Rovo Knowledge</h2><p class="desc">Textschnipsel aus Rovo-KI-Chats (Chatverlauf + Antwort) sammeln &ndash; per Zwischenablage oder als Markdown-Datei-Upload (eine eigene Zeile <code class="mono">---</code> trennt Chatverlauf von Antwort; fehlt sie, landet der gesamte Inhalt im Chatverlauf). Jeder Eintrag wird fest mit dem hervorgehobenen Label <b>ROVO</b> markiert und einem Kapitel, Unterkapitel sowie beliebigen weiteren Labels zugeordnet (von Hand oder per KI-Vorschlag). Diese Daten stammen direkt aus dem Rovo-Quellsystem und gelten daher bei der EDITO-Kapitelerzeugung als <b>vorrangige Quelle</b> gegenüber den anderen Quellen (Tickets, RAG-Bibliothek, bestehender Handbuchtext). Per KI-Zuordnung lässt sich zusätzlich ein Kapitel/Unterkapitel sowie bis zu 3 passende Labels vorschlagen (wörtlich aus der vorhandenen Gliederung/Labels-Liste, nie erfunden). Im Text enthaltene Jira-Ticketnummern werden automatisch erkannt und bleiben standardmäßig ausgeblendet &ndash; je Eintrag über den Button "Jira" ein-/ausblendbar.</p></div>
+        <div class="view-head"><h2>Rovo Knowledge</h2><p class="desc">Textschnipsel aus Rovo-KI-Chats (Chatverlauf + Antwort) sammeln &ndash; per Zwischenablage oder als Datei-Upload (.md/.markdown, .docx/.doc, .pdf oder .pptx; eine eigene Zeile <code class="mono">---</code> im extrahierten Text trennt Chatverlauf von Antwort; fehlt sie, landet der gesamte Inhalt im Chatverlauf). Neu importierte Einträge werden nach dem Hochladen kurz hervorgehoben und die Übersicht dorthin gescrollt. Jeder Eintrag wird fest mit dem hervorgehobenen Label <b>ROVO</b> markiert und einem Kapitel, Unterkapitel sowie beliebigen weiteren Labels zugeordnet (von Hand oder per KI-Vorschlag). Diese Daten stammen direkt aus dem Rovo-Quellsystem und gelten daher bei der EDITO-Kapitelerzeugung als <b>vorrangige Quelle</b> gegenüber den anderen Quellen (Tickets, RAG-Bibliothek, bestehender Handbuchtext). Per KI-Zuordnung lässt sich zusätzlich ein Kapitel/Unterkapitel sowie bis zu 3 passende Labels vorschlagen (wörtlich aus der vorhandenen Gliederung/Labels-Liste, nie erfunden). Im Text enthaltene Jira-Ticketnummern werden automatisch erkannt und bleiben standardmäßig ausgeblendet &ndash; je Eintrag über den Button "Jira" ein-/ausblendbar.</p></div>
 
         <section>
           <p class="section-label">Neuer Eintrag</p>
@@ -1150,15 +1154,15 @@
         </section>
 
         <section>
-          <p class="section-label">Markdown-Dateien hochladen</p>
-          <div class="dropzone" id="rovo-md-dropzone" tabindex="0" role="button" aria-label="Markdown-Datei(en) auswählen">
+          <p class="section-label">Dateien hochladen</p>
+          <div class="dropzone" id="rovo-md-dropzone" tabindex="0" role="button" aria-label="Datei(en) auswählen">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
             <span class="txt">
-              <strong>Markdown-Datei(en) hier ablegen</strong>
-              <span>oder klicken zum Auswählen (.md, Mehrfachauswahl möglich)</span>
+              <strong>Datei(en) hier ablegen</strong>
+              <span>oder klicken zum Auswählen (.md, .docx, .pdf, .pptx, Mehrfachauswahl möglich)</span>
             </span>
           </div>
-          <input type="file" id="rovo-md-file-input" accept=".md,.markdown,text/markdown" multiple hidden>
+          <input type="file" id="rovo-md-file-input" accept=".md,.markdown,text/markdown,.docx,.doc,.pdf,.pptx" multiple hidden>
         </section>
 
         <section>
@@ -5110,7 +5114,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.95.0";
+  var APP_VERSION = "2.96.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -11020,6 +11024,47 @@
       for (var j = 0; j < blips.length; j++) screens.push({ dataUrl: blips[j].dataUrl, caption: caption || "" });
     }
     return screens;
+  }
+  // Reine Fliesstext-Extraktion aus einer .pptx (fuer Rovo-Knowledge-Import,
+  // s. u.) - anders als pptxZipToScreens() (nur Bilder + Folientitel als
+  // Bildtext) wird hier JEDER Textrahmen jeder Folie vollstaendig gelesen.
+  function pptxSlideAllText(slideDoc) {
+    var paras = slideDoc.getElementsByTagName("a:p");
+    var lines = [];
+    for (var i = 0; i < paras.length; i++) {
+      var runs = paras[i].getElementsByTagName("a:t");
+      var parts = [];
+      for (var j = 0; j < runs.length; j++) parts.push(runs[j].textContent);
+      var text = parts.join("").trim();
+      if (text) lines.push(text);
+    }
+    return lines;
+  }
+  async function pptxArrayBufferToLines(buf) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek (JSZip) nicht geladen - .pptx kann nicht gelesen werden.");
+    var zip;
+    try { zip = await JSZip.loadAsync(buf); }
+    catch (e) { throw new Error("Datei konnte nicht als .pptx (ZIP) gelesen werden - ist es wirklich eine PowerPoint-Datei?"); }
+    var slidePaths = [];
+    zip.forEach(function (relPath) { if (/^ppt\/slides\/slide\d+\.xml$/i.test(relPath)) slidePaths.push(relPath); });
+    slidePaths.sort(function (a, b) { return pptxSlideNumber(a) - pptxSlideNumber(b); });
+    if (!slidePaths.length) throw new Error("Keine Folien (ppt/slides/*.xml) in der .pptx-Datei gefunden - ist es wirklich eine PowerPoint-Datei?");
+    var allLines = [];
+    for (var s = 0; s < slidePaths.length; s++) {
+      var slideXml = await zip.file(slidePaths[s]).async("string");
+      var slideDoc = new DOMParser().parseFromString(slideXml, "application/xml");
+      if (slideDoc.querySelector("parsererror")) continue;
+      var slideLines = pptxSlideAllText(slideDoc);
+      if (slideLines.length) {
+        allLines.push("Folie " + pptxSlideNumber(slidePaths[s]) + ":");
+        allLines = allLines.concat(slideLines);
+      }
+    }
+    if (!allLines.some(function (l) { return l.trim(); })) throw new Error("Kein Text in der .pptx-Datei gefunden.");
+    return allLines.join("\n");
+  }
+  async function extractTextFromPptx(file) {
+    return pptxArrayBufferToLines(await readFileAsArrayBuffer(file));
   }
   // Gemeinsamer Einstiegspunkt für den Editor-Upload: erkennt anhand des
   // tatsächlichen ZIP-Inhalts (nicht der Dateiendung), ob ein Word- oder
@@ -16950,7 +16995,7 @@
         ? '<button type="button" class="btn ghost btn-tiny" data-rovo-jira-toggle="' + e.id + '">Jira (' + e.jiraKeys.length + (e.jiraVisible ? " ausblenden" : " einblenden") + ")</button>" +
           (e.jiraVisible ? '<div class="mono" style="margin-top:4px; font-size:11.5px;">' + e.jiraKeys.map(escapeHtml).join(", ") + "</div>" : "")
         : "–";
-      return "<tr>" +
+      return "<tr" + (rovoJustImportedIds[e.id] ? ' class="rovo-row-new"' : "") + ">" +
         '<td class="mono">' + escapeHtml(e.when) + "</td>" +
         "<td>" + escapeHtml(rovoTruncatePreview(e.chatText, 160)) + "</td>" +
         "<td>" + escapeHtml(rovoTruncatePreview(e.answerText, 160)) + "</td>" +
@@ -16961,6 +17006,12 @@
         '<td><button type="button" class="btn danger btn-tiny" data-rovo-delete="' + e.id + '">Löschen</button></td>' +
         "</tr>";
     }).join("");
+    // rovoJustImportedIds gilt nur fuer DIESEN einen Render-Aufruf - danach
+    // leeren, damit die Hervorhebung bei einem spaeteren, durch etwas
+    // anderes ausgeloesten Re-Render nicht erneut (und an den falschen
+    // Zeilen) abspielt. Die CSS-Animation selbst laeuft unabhaengig davon
+    // zu Ende, da sie an den gerade eingefuegten DOM-Knoten haengt.
+    rovoJustImportedIds = {};
     // Haengt an jedem renderRovoEntries()-Aufruf mit dran (statt an jeder
     // einzelnen der vielen Stellen, die renderRovoEntries() aufrufen, die
     // Zusammenfassungs-Tabelle separat zu aktualisieren) - sie haengt direkt
@@ -17027,21 +17078,43 @@
     if (dividerIdx === -1) return { chat: text, answer: "" };
     return { chat: lines.slice(0, dividerIdx).join("\n"), answer: lines.slice(dividerIdx + 1).join("\n") };
   }
+  var ROVO_FILE_RE = /\.(md|markdown|docx|doc|pdf|pptx)$/i;
+  // Extrahiert reinen Fliesstext unabhaengig vom Dateityp - nutzt dieselben
+  // Extraktoren wie der Ticket-/Editor-Import (Teil 5), aber als eigener,
+  // Rovo-spezifischer Einstiegspunkt (nicht der gemeinsame
+  // extractTextForBlob() des Ticket-Imports), damit Aenderungen hier den
+  // Ticket-Import nicht beeinflussen.
+  async function rovoExtractFileText(file) {
+    var lowerName = (file.name || "").toLowerCase();
+    if (/\.(docx|doc)$/i.test(lowerName)) return extractTextFromDocx(file);
+    if (/\.pdf$/i.test(lowerName)) return extractTextFromPdf(file);
+    if (/\.pptx$/i.test(lowerName)) return extractTextFromPptx(file);
+    return file.text();
+  }
+  // Nach dem Import kurz hervorgehobene Zeilen (s. CSS .rovo-row-new) - nur
+  // fuer GENAU den naechsten renderRovoEntries()-Aufruf wirksam, s. dort.
+  var rovoJustImportedIds = {};
   async function handleRovoMdFiles(fileList) {
-    var files = Array.prototype.filter.call(fileList || [], function (f) { return /\.(md|markdown)$/i.test(f.name || ""); });
-    if (!files.length) { showToast("Keine passende Datei", "Bitte eine .md-Datei auswählen.", true); return; }
+    var files = Array.prototype.filter.call(fileList || [], function (f) { return ROVO_FILE_RE.test(f.name || ""); });
+    if (!files.length) { showToast("Keine passende Datei", "Bitte eine .md-, .docx-, .pdf- oder .pptx-Datei auswählen.", true); return; }
     var added = 0;
     for (var i = 0; i < files.length; i++) {
       try {
-        var text = await files[i].text();
+        var text = await rovoExtractFileText(files[i]);
         var split = rovoSplitChatAnswer(text);
-        if (rovoAddEntry(split.chat, split.answer)) added++;
+        var entry = rovoAddEntry(split.chat, split.answer);
+        if (entry) { added++; rovoJustImportedIds[entry.id] = true; }
       } catch (err) {
         showToast("Fehler beim Lesen", files[i].name + ": " + ((err && err.message) || "Unbekannter Fehler."), true);
+        addLog("Rovo Knowledge: Import-Fehler bei „" + files[i].name + "“: " + ((err && err.message) || "Unbekannter Fehler."));
       }
     }
     renderRovoEntries();
-    if (added) { addLog("Rovo Knowledge: " + added + " Markdown-Datei(en) als Einträge importiert."); showToast("Importiert", added + " Eintrag/Einträge hinzugefügt."); }
+    if (added) {
+      addLog("Rovo Knowledge: " + added + " Datei(en) als Einträge importiert.");
+      showToast("Importiert", added + " Eintrag/Einträge hinzugefügt.");
+      if (els.rovoEntriesTable.scrollIntoView) els.rovoEntriesTable.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   }
   els.rovoMdDropzone.addEventListener("click", function () { els.rovoMdFileInput.click(); });
   els.rovoMdDropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.rovoMdFileInput.click(); } });
