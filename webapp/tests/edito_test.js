@@ -169,7 +169,7 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   check("Kapitel 7: RAG-Anzahl jetzt 1", kap7RowAfterSources.children[3].textContent.trim() === "1");
   check("Kapitel 7: bestehender Handbuchtext „–“ (noch keiner erzeugt)", kap7RowAfterSources.children[4].textContent.trim() === "–");
   check("Kapitel 7: Rovo-Anzahl jetzt 1", kap7RowAfterSources.children[5].textContent.trim() === "1");
-  check("Kapitel 7: Status „Noch nicht erzeugt“", kap7RowAfterSources.children[7].textContent.includes("Noch nicht erzeugt"));
+  check("Kapitel 7: Status „Noch nicht erzeugt“", kap7RowAfterSources.children[8].textContent.includes("Noch nicht erzeugt"));
 
   // ===================== Einzelnes Kapitel erzeugen =====================
   fire(kap7RowAfterSources.querySelector("[data-edito-generate]"), "click");
@@ -180,7 +180,7 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   check("Kapitel-Prompt kennzeichnet Rovo-Knowledge (Quelle 4) explizit als vorrangige Quelle", lastChapterPromptText.includes("QUELLE 4") && lastChapterPromptText.includes("VORRANGIGE Quelle"));
   check("Hauptprompt nennt den Vorrang von Quelle 4 bei Widersprüchen", lastChapterPromptText.includes("hat QUELLE 4") && lastChapterPromptText.includes("Vorrang"));
   const kap7RowAfterGen = rowFor("Kapitel 7");
-  check("Kapitel 7: Status jetzt „Erzeugt“", kap7RowAfterGen.children[7].textContent.includes("Erzeugt"));
+  check("Kapitel 7: Status jetzt „Erzeugt“", kap7RowAfterGen.children[8].textContent.includes("Erzeugt"));
   check("Erzeugen-Button-Beschriftung wechselt zu „Neu erzeugen“", kap7RowAfterGen.querySelector("[data-edito-generate]").textContent.includes("Neu erzeugen"));
 
   // ===================== Nach Erzeugen: Word+PDF automatisch abgelegt, in Übersicht sichtbar =====================
@@ -234,7 +234,7 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   // der Export muss das erzeugte Kapitel exportieren und das andere
   // überspringen, nicht abstürzen.
   check("Kapitel 1 ist in der Dealer-Version vorhanden (Vergleichskapitel ohne Text)", !!rowFor("Kapitel 1"));
-  check("Kapitel 1 hat noch keinen erzeugten Text", rowFor("Kapitel 1").children[7].textContent.includes("Noch nicht erzeugt"));
+  check("Kapitel 1 hat noch keinen erzeugten Text", rowFor("Kapitel 1").children[8].textContent.includes("Noch nicht erzeugt"));
   chapterCheckbox("Kapitel 7").checked = true;
   fire(chapterCheckbox("Kapitel 7"), "change");
   chapterCheckbox("Kapitel 1").checked = true;
@@ -358,7 +358,7 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   await waitUntil(() => doc.getElementById("edito-generate-all-status-note").textContent.includes("erzeugt"), 3000);
   check("Sammel-Lauf-Status vermerkt Abschluss", /von \d+ Kapiteln erzeugt/.test(doc.getElementById("edito-generate-all-status-note").textContent));
   const allChapterRows = Array.from(doc.getElementById("edito-chapters-tbody").querySelectorAll("tr"));
-  check("Sammel-Lauf: alle Kapitel der Dealer-Version zeigen Status „Erzeugt“", allChapterRows.every((r) => r.children[7].textContent.includes("Erzeugt")));
+  check("Sammel-Lauf: alle Kapitel der Dealer-Version zeigen Status „Erzeugt“", allChapterRows.every((r) => r.children[8].textContent.includes("Erzeugt")));
   check("Dokumenten-Übersicht enthält nach Sammel-Lauf für jedes erzeugte Kapitel eine Zeile (eine je Kapitel, unabhängig von der Version)", doc.getElementById("edito-files-tbody").querySelectorAll("tr").length === allChapterRows.length);
   check("Dokumenten-Übersicht-Zähler stimmt mit Zeilenanzahl überein", parseInt(doc.getElementById("edito-files-count").textContent, 10) === allChapterRows.length);
 

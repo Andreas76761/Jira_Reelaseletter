@@ -2329,7 +2329,7 @@
 
       <!-- ================= EDITO ================= -->
       <section class="view-panel" data-view-panel="edito" hidden>
-        <div class="view-head"><h2>Editor</h2><p class="desc">Erstellt eine neue Fassung des Benutzerhandbuchs je Rolle/Sparte aus mehreren internen Quellen gleichzeitig: importierten Jira-Tickets, der RAG-Bibliothek, dem bereits bestehenden Benutzerhandbuch-Text, Rovo-Knowledge-Textschnipseln sowie zugeordneten Bildern (Bildband-Platzhalter <code class="mono">[Bild]</code>). Drei Prüf-Agenten bewerten anschließend Inhalt, Sprache und Dokument-Struktur (zwei weitere Agenten folgen später). Nach dem Erzeugen wird je Kapitel automatisch ein datiertes Word- und PDF-Dokument abgelegt, siehe Übersicht "4. Alle erzeugten Dokumente" unten.</p></div>
+        <div class="view-head"><h2>Editor</h2><p class="desc">Erstellt eine neue Fassung des Benutzerhandbuchs je Rolle/Sparte aus mehreren internen Quellen gleichzeitig: importierten Jira-Tickets, der RAG-Bibliothek, dem bereits bestehenden Benutzerhandbuch-Text, Rovo-Knowledge-Textschnipseln, zugeordneten Bildern (Bildband-Platzhalter <code class="mono">[Bild]</code>) sowie zugeordneten, aus Rovo Knowledge extrahierten Tabellen (Platzhalter <code class="mono">[Tabelle]</code>, s. Register "Tabelle" – werden mit automatisch auf die Seitenbreite angepassten Spalten als echte Tabelle eingebettet, nicht als Bild). Drei Prüf-Agenten bewerten anschließend Inhalt, Sprache und Dokument-Struktur (zwei weitere Agenten folgen später). Nach dem Erzeugen wird je Kapitel automatisch ein datiertes Word- und PDF-Dokument abgelegt, siehe Übersicht "4. Alle erzeugten Dokumente" unten.</p></div>
 
         <section>
           <p class="section-label">1. Rolle/Sparte wählen</p>
@@ -2355,7 +2355,7 @@
           <p class="step-note" id="edito-generate-all-status-note"></p>
           <div class="table-wrap">
             <table class="simple-table" id="edito-chapters-table">
-              <thead><tr><th></th><th>Kapitel</th><th>Tickets</th><th>RAG</th><th>Bestehendes Handbuch</th><th>Rovo</th><th>Bilder</th><th>Status</th><th>Aktion</th></tr></thead>
+              <thead><tr><th></th><th>Kapitel</th><th>Tickets</th><th>RAG</th><th>Bestehendes Handbuch</th><th>Rovo</th><th>Bilder</th><th>Tabellen</th><th>Status</th><th>Aktion</th></tr></thead>
               <tbody id="edito-chapters-tbody"></tbody>
             </table>
           </div>
@@ -2490,7 +2490,7 @@
 
       <!-- ================= Tabelle ================= -->
       <section class="view-panel" data-view-panel="tabellen" hidden>
-        <div class="view-head"><h2>Tabelle</h2><p class="desc">Tabellen, die automatisch aus bei Rovo Knowledge importierten .docx-/.pptx-Dateien extrahiert wurden (Markdown-Dateien liefern einfache <code class="mono">|...|</code>-Tabellen, PDF wird für Tabellen/Bilder nicht unterstützt). Jede Tabelle zeigt ihren Quellverweis (Dateiname + Tabellen-Nr. im Quelldokument) und lässt sich einem Kapitel/Unterkapitel zuordnen. Über "Seitenformat" (Hoch-/Querformat, Vorschlag anhand der Spaltenanzahl, jederzeit umschaltbar) lässt sich je Tabelle ein <b>druckbares DIN-A4-PDF oder -Word-Dokument</b> erzeugen – Spaltenbreiten werden automatisch so verteilt, dass die Tabelle ins gewählte Seitenformat passt (Zelltext wird dafür umgebrochen, nicht abgeschnitten). Gedacht zum späteren Einbetten ins Benutzerhandbuch (noch kein automatischer Einbau).</p></div>
+        <div class="view-head"><h2>Tabelle</h2><p class="desc">Tabellen, die automatisch aus bei Rovo Knowledge importierten .docx-/.pptx-Dateien extrahiert wurden (Markdown-Dateien liefern einfache <code class="mono">|...|</code>-Tabellen, PDF wird für Tabellen/Bilder nicht unterstützt). Jede Tabelle zeigt ihren Quellverweis (Dateiname + Tabellen-Nr. im Quelldokument) und lässt sich einem Kapitel/Unterkapitel zuordnen. Über "Seitenformat" (Hoch-/Querformat, Vorschlag anhand der Spaltenanzahl, jederzeit umschaltbar) lässt sich je Tabelle ein <b>druckbares DIN-A4-PDF oder -Word-Dokument</b> erzeugen – Spaltenbreiten werden automatisch so verteilt, dass die Tabelle ins gewählte Seitenformat passt (Zelltext wird dafür umgebrochen, nicht abgeschnitten). Über die Kapitel-Zuordnung hinaus lässt sich eine Tabelle direkt ins Benutzerhandbuch (Register "Editor") einbetten: im generierten Kapiteltext eine eigene Zeile <code class="mono">[Tabelle]</code> einfügen (die KI tut das bei der Erzeugung bereits automatisch für zugeordnete Tabellen) – beim Export (Word/PDF, einzeln oder im Gesamtdokument) wird der Platzhalter durch die echte, auf die Seitenbreite angepasste Tabelle ersetzt.</p></div>
 
         <section>
           <p class="section-label">Extrahierte Tabellen (<span id="rovo-tables-count">0</span>)</p>
@@ -5126,7 +5126,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.98.0";
+  var APP_VERSION = "2.99.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -18045,7 +18045,7 @@
     manualChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender (erfahrene Nutzer im operativen Tagesgeschäft). Schreibe für das unten genannte Kapitel einen sachlichen, professionellen Fließtext im Stil eines Softwarehandbuchs auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform - z. B. \"Der Nutzer öffnet die Maske und trägt die Daten ein\", NICHT Präteritum/Futur wie \"öffnete\"/\"wird öffnen\"), mindestens 3, idealerweise bis zu 12 DIN-A4-Seiten Umfang (ca. 500-600 Wörter je Seite). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen (roter Faden), gefolgt von zusammenhängenden Abschnitten statt einer reinen Aufzählung. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, deutlich mit den Tags \"[Nur PKW]\", \"[Nur Van]\" bzw. \"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz. Kennzeichne außerdem, wo inhaltlich wirklich zutreffend (nicht erzwingen), wichtige Sicherheitshinweise/Warnungen mit \"[Warnung]\", hilfreiche Zusatzinformationen mit \"[Hinweis]\", praktische Tipps für den Arbeitsalltag mit \"[Tipp]\" sowie Querverweise auf andere Kapitel/Abschnitte mit \"[Verweis]\" - ebenfalls jeweils direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Retail\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\" (Market Operation) und weise explizit darauf hin, wenn ein Feature dem Retail NICHT zur Verfügung steht. Nutze ausschließlich Informationen aus den Ticket-Rohdaten unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text.",
     manualChapterSynthesis: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM), Zielgruppe: Fachanwender. Die folgenden Teiltexte sind Abschnitte desselben Kapitels, aus technischen Gründen in mehreren Durchläufen aus unterschiedlichen Ausschnitten derselben Ticket-Rohdaten erzeugt. Verschmelze sie zu EINEM einzigen, zusammenhängenden Kapiteltext auf Deutsch, DURCHGÄNGIG IM PRÄSENS (Gegenwartsform, auch wenn ein Teiltext abweicht - dann beim Verschmelzen ins Präsens korrigieren) (roter Faden, mindestens 3 DIN-A4-Seiten, sachlicher Softwarehandbuch-Stil), ohne Hinweise auf \"Teiltexte\" oder \"Batches\". Erhalte dabei die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\"/\"[Warnung]\"/\"[Hinweis]\"/\"[Tipp]\"/\"[Verweis]\" sowie die Zwischenüberschriften \"## Retail\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" aus den Teiltexten. Entferne Redundanzen zwischen den Teiltexten, erfinde nichts hinzu:",
     refCompare: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen zwei Fassungen desselben Kapitels: der ALTE STAND (aus einem bestehenden, bereits veröffentlichten Word-Handbuch) und der NEUE STAND (frisch aus aktuellen Jira-Tickets erzeugter Text). Vergleiche beide Fassungen inhaltlich und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Features\n- (ein Stichpunkt je im neuen Stand beschriebenem Inhalt, der im alten Stand fehlt oder dort erkennbar anders/noch nicht vorhanden war)\n\n### Widersprüche\n- (ein Stichpunkt je Aussage im alten Stand, die dem neuen Stand inhaltlich widerspricht oder durch ihn überholt/ungültig wird)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den beiden Texten unten, erfinde nichts hinzu:",
-    editoChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Erstelle eine NEUE, konsolidierte Fassung des unten genannten Kapitels für die angegebene Zielversion (Rolle/Sparte), DURCHGÄNGIG IM PRÄSENS, im Stil eines professionellen Softwarehandbuchs (zusammenhängende Absätze, keine reine Aufzählung). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, mit \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz, wichtige Sicherheitshinweise mit \"[Warnung]\", hilfreiche Zusatzinformationen mit \"[Hinweis]\", praktische Tipps mit \"[Tipp]\" sowie Querverweise auf andere Kapitel mit \"[Verweis]\" - jeweils direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Retail\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\". Füge an inhaltlich passenden Stellen im Text eine eigene Zeile \"[Bild]\" als Bild-Platzhalter ein, wenn ein zugeordneter Screenshot (s. u.) dort sinnvoll ist - nie mehr [Bild]-Platzhalter als zugeordnete Screenshots vorhanden sind. Nutze AUSSCHLIESSLICH Informationen aus den Quellen unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Widersprechen sich Quellen inhaltlich, hat QUELLE 4 (Rovo-Knowledge, Daten direkt aus dem Rovo-Quellsystem) Vorrang vor den anderen Quellen. Keine Ticket-Schlüssel/-Referenzen im Text.",
+    editoChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Erstelle eine NEUE, konsolidierte Fassung des unten genannten Kapitels für die angegebene Zielversion (Rolle/Sparte), DURCHGÄNGIG IM PRÄSENS, im Stil eines professionellen Softwarehandbuchs (zusammenhängende Absätze, keine reine Aufzählung). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, mit \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz, wichtige Sicherheitshinweise mit \"[Warnung]\", hilfreiche Zusatzinformationen mit \"[Hinweis]\", praktische Tipps mit \"[Tipp]\" sowie Querverweise auf andere Kapitel mit \"[Verweis]\" - jeweils direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Retail\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\". Füge an inhaltlich passenden Stellen im Text eine eigene Zeile \"[Bild]\" als Bild-Platzhalter ein, wenn ein zugeordneter Screenshot (s. u.) dort sinnvoll ist - nie mehr [Bild]-Platzhalter als zugeordnete Screenshots vorhanden sind. Füge ebenso an inhaltlich passenden Stellen eine eigene Zeile \"[Tabelle]\" als Tabellen-Platzhalter ein, wenn eine zugeordnete Tabelle (s. u.) dort sinnvoll ist - nie mehr [Tabelle]-Platzhalter als zugeordnete Tabellen vorhanden sind. Nutze AUSSCHLIESSLICH Informationen aus den Quellen unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Widersprechen sich Quellen inhaltlich, hat QUELLE 4 (Rovo-Knowledge, Daten direkt aus dem Rovo-Quellsystem) Vorrang vor den anderen Quellen. Keine Ticket-Schlüssel/-Referenzen im Text.",
     editoAgent1: "Du prüfst einen Benutzerhandbuch-Kapiteltext (neue, aus mehreren Quellen synthetisierte Fassung) auf inhaltliche Richtigkeit. Prüfe JEDE fachliche Aussage im Kapiteltext darauf, ob sie durch die unten angegebenen Quellen (Jira-Tickets, Rovo-Wissens-Notizen) gedeckt ist. Gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Nicht belegte Aussagen\n- (ein Stichpunkt je Aussage im Kapiteltext, die durch keine der Quellen gedeckt ist)\n\n### Widersprüche zu den Quellen\n- (ein Stichpunkt je Aussage im Kapiteltext, die einer Quelle widerspricht)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
     editoAgent2: "Du bist Lektor für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Prüfe den folgenden Kapiteltext und gib AUSSCHLIESSLICH die folgenden vier Abschnitte aus, in genau diesem Format:\n\n### Grammatikfehler\n- (ein Stichpunkt je Grammatik-/Rechtschreib-/Zeitform-Fehler - insbesondere Abweichungen vom geforderten Präsens -, mit kurzem Zitat der betroffenen Stelle)\n\n### Sprachstil-Unstimmigkeiten\n- (ein Stichpunkt je Stilbruch, uneinheitlicher Terminologie oder unpassendem Ton)\n\n### Wiederholungen\n- (ein Stichpunkt je auffälliger Wort-/Formulierungs-Wiederholung)\n\n### Roter Faden\n- (ein Stichpunkt je Stelle, an der der Text den inhaltlichen Zusammenhang/Lesefluss verliert oder unlogisch springt)\n\nIst eine der vier Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
     manualQualityCheck: "Du bist Lektor/Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Prüfe den folgenden Kapiteltext und gib AUSSCHLIESSLICH die folgenden drei Abschnitte aus, in genau diesem Format:\n\n### Grammatikfehler\n- (ein Stichpunkt je Grammatik-/Rechtschreib-/Zeitform-Fehler - insbesondere Abweichungen vom geforderten Präsens -, mit kurzem Zitat der betroffenen Stelle)\n\n### Lücken\n- (ein Stichpunkt je inhaltlicher Lücke, unklarer oder unvollständiger Stelle)\n\n### Verbesserungsvorschläge\n- (ein Stichpunkt je Vorschlag zur Verständlichkeit/Lesbarkeit/Struktur)\n\nIst eine der drei Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
@@ -21023,6 +21023,21 @@
         return (a.imageNumber || 0) - (b.imageNumber || 0);
       });
   }
+  // Wie der [Bild]-Platzhalter oben, aber fuer aus Rovo Knowledge
+  // extrahierte Tabellen (s. Register "Tabelle") - dieselbe Mechanik: eine
+  // eigene Zeile "[Tabelle]" im Kapiteltext wird bei Vorschau/Export durch
+  // die naechste, diesem Kapitel zugeordnete Tabelle ersetzt (Reihenfolge
+  // wie im Register "Tabelle": Quelldatei, dann Tabellen-Nr.).
+  var MANUAL_TABLE_PLACEHOLDER = "[Tabelle]";
+  function manualIsTablePlaceholder(line) { return line.trim() === MANUAL_TABLE_PLACEHOLDER; }
+  function rovoTablesForChapter(chapterTitle) {
+    if (!chapterTitle) return [];
+    return app.rovoTables.filter(function (t) { return t.chapter === chapterTitle; })
+      .slice().sort(function (a, b) {
+        if (a.sourceFile !== b.sourceFile) return a.sourceFile < b.sourceFile ? -1 : 1;
+        return (a.tableNumber || 0) - (b.tableNumber || 0);
+      });
+  }
   function bildbandCountPlaceholders(text) {
     return manualParseParagraphs(text).filter(manualIsImagePlaceholder).length;
   }
@@ -21079,15 +21094,37 @@
       '<figcaption class="step-note" style="margin-top:4px;">Abbildung ' + screen.imageNumber + ": " + escapeHtml(screen.description || screen.sourceFile) + "</figcaption>" +
       "</figure>";
   }
+  // Wie manualImagePlaceholderHtml oben, aber fuer den [Tabelle]-Platzhalter -
+  // rein read-only Darstellung derselben Zeilen/Zellen wie im Register
+  // "Tabelle" (ohne dessen Kapitel-/Seitenformat-Steuerelemente).
+  function rovoTablePreviewHtml(table) {
+    if (!table) {
+      return '<div class="callout warn" style="margin:0 0 12px;"><b>⚠ [Tabelle]</b>: keine zugeordnete Tabelle - im Register „Tabelle“ diesem Kapitel eine Tabelle zuordnen.</div>';
+    }
+    var rowsHtml = table.rows.map(function (row) {
+      return "<tr>" + row.map(function (cell) { return '<td style="border:1px solid var(--border); padding:4px 7px;">' + escapeHtml(cell) + "</td>"; }).join("") + "</tr>";
+    }).join("");
+    return '<figure style="margin:0 0 14px;">' +
+      '<div style="overflow:auto;"><table style="border-collapse:collapse; font-size:13px; width:100%;"><tbody>' + rowsHtml + "</tbody></table></div>" +
+      '<figcaption class="step-note" style="margin-top:4px;">Tabelle ' + table.tableNumber + ": " + escapeHtml(table.sourceFile) + "</figcaption>" +
+      "</figure>";
+  }
   function manualRenderPreviewHtml(text, chapterTitle) {
     var html = '<div style="font-size:15px; line-height:1.7; color:var(--text); max-width:720px;">';
     var roleBoxOpen = false;
     var bildbandQueue = bildbandScreensForChapter(chapterTitle);
     var bildbandIdx = 0;
+    var rovoTableQueue = rovoTablesForChapter(chapterTitle);
+    var rovoTableIdx = 0;
     manualParseParagraphs(text).forEach(function (line) {
       if (manualIsImagePlaceholder(line)) {
         html += manualImagePlaceholderHtml(bildbandQueue[bildbandIdx]);
         bildbandIdx++;
+        return;
+      }
+      if (manualIsTablePlaceholder(line)) {
+        html += rovoTablePreviewHtml(rovoTableQueue[rovoTableIdx]);
+        rovoTableIdx++;
         return;
       }
       if (manualIsHeading(line)) {
@@ -21182,16 +21219,37 @@
   // getrennt von manualChapterDocumentXml(), damit mehrere Kapitel zu
   // einem Gesamtdokument zusammengefuehrt werden koennen (s.
   // buildMergedEditoDocxBlob), ohne die Einzel-Kapitel-Logik zu duplizieren.
-  function manualChapterBodyXml(title, text, media) {
+  // Nutzbare Seitenbreite einer Benutzerhandbuch-Kapitelseite (Hochformat,
+  // s. manualDocumentWrapperXml w:pgSz w="11906") abzueglich Word-
+  // Standardraender (je 1440 Twips) - Grundlage fuer die Spaltenbreiten
+  // eingebetteter [Tabelle]-Platzhalter, dieselbe Fit-Logik wie beim
+  // eigenstaendigen druckbaren Tabellen-Export (s. rovoTableColumnWidthsTwips/
+  // printableDocxTableXml im Register "Tabelle").
+  var MANUAL_CHAPTER_TABLE_USABLE_TWIPS = 11906 - 1440 * 2;
+  function manualTableDrawingXml(table) {
+    var colWidths = rovoTableColumnWidthsTwips(table.rows, MANUAL_CHAPTER_TABLE_USABLE_TWIPS);
+    return printableDocxTableXml(table.rows, colWidths) +
+      '<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:i/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">' +
+      xmlEsc("Tabelle " + table.tableNumber + ": " + table.sourceFile) + "</w:t></w:r></w:p>";
+  }
+  function manualChapterBodyXml(title, text, media, tables) {
     var body = '<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>' + xmlEsc(title) + "</w:t></w:r></w:p>";
     var roleShd = null;
     var mediaIdx = 0;
+    var tableIdx = 0;
     manualParseParagraphs(text).forEach(function (line) {
       if (manualIsImagePlaceholder(line)) {
         var m = (media || [])[mediaIdx];
         mediaIdx++;
         body += m ? manualImageDrawingParagraphXml(m) :
           '<w:p><w:r><w:rPr><w:i/></w:rPr><w:t xml:space="preserve">[Bild: kein Screen zugeordnet]</w:t></w:r></w:p>';
+        return;
+      }
+      if (manualIsTablePlaceholder(line)) {
+        var tb = (tables || [])[tableIdx];
+        tableIdx++;
+        body += tb ? manualTableDrawingXml(tb) :
+          '<w:p><w:r><w:rPr><w:i/></w:rPr><w:t xml:space="preserve">[Tabelle: keine Tabelle zugeordnet]</w:t></w:r></w:p>';
         return;
       }
       if (manualIsHeading(line)) {
@@ -21259,7 +21317,8 @@
   // bei den Verbesserungs-Varianten in manualExportImprovedDocx).
   async function buildManualChapterDocxBlob(title, text, chapterTitleForImages) {
     var media = await manualPrepareBildbandMedia(chapterTitleForImages || title);
-    return buildDocxBlobFromBodyAndMedia(manualChapterBodyXml(title, text, media), media);
+    var tables = rovoTablesForChapter(chapterTitleForImages || title);
+    return buildDocxBlobFromBodyAndMedia(manualChapterBodyXml(title, text, media, tables), media);
   }
   // Fuehrt mehrere bereits erzeugte EDITO-Kapitel zu EINEM Word-Dokument
   // zusammen (Seitenumbruch zwischen den Kapiteln, Reihenfolge wie
@@ -21278,7 +21337,8 @@
       });
       nextMediaNum += renumbered.length;
       allMedia = allMedia.concat(renumbered);
-      bodyParts.push(manualChapterBodyXml(chapters[i].title, chapters[i].text, renumbered));
+      var tablesForChapter = rovoTablesForChapter(chapters[i].title);
+      bodyParts.push(manualChapterBodyXml(chapters[i].title, chapters[i].text, renumbered, tablesForChapter));
       if (i < chapters.length - 1) bodyParts.push(manualPageBreakParagraphXml());
     }
     return buildDocxBlobFromBodyAndMedia(bodyParts.join(""), allMedia);
@@ -21289,6 +21349,8 @@
     if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
     var media = await manualPrepareBildbandMedia(chapterTitleForImages || title);
     var mediaIdx = 0;
+    var tables = rovoTablesForChapter(chapterTitleForImages || title);
+    var tableIdx = 0;
     var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
     var margin = 18, pageW = 210, pageHLimit = 280, y = margin;
     doc.setFont("helvetica", "bold"); doc.setFontSize(18);
@@ -21319,6 +21381,38 @@
           y += 5;
         });
         y += 3;
+        return;
+      }
+      if (manualIsTablePlaceholder(line)) {
+        var tb = tables[tableIdx];
+        tableIdx++;
+        if (!tb) {
+          doc.setFont("helvetica", "italic"); doc.setFontSize(11); doc.setTextColor(0, 0, 0);
+          if (y > pageHLimit) { doc.addPage(); y = margin; }
+          doc.text("[Tabelle: keine Tabelle zugeordnet]", margin, y);
+          y += 7;
+          return;
+        }
+        var tableColWidths = rovoTableColumnWidthsMm(tb.rows, pageW - margin * 2);
+        var tableFontSize = rovoTableFontSizeForCols(rovoTableNumCols(tb.rows));
+        var cellPad = 1.5, lineHeight = tableFontSize * 0.42 + 1.4;
+        function tableColX(i) { var x = margin; for (var k = 0; k < i; k++) x += tableColWidths[k]; return x; }
+        tb.rows.forEach(function (row) {
+          doc.setFont("helvetica", "normal"); doc.setFontSize(tableFontSize); doc.setTextColor(0, 0, 0);
+          var cellLines = row.map(function (cell, i) { return doc.splitTextToSize(String(cell == null ? "" : cell), Math.max(5, tableColWidths[i] - cellPad * 2)); });
+          var rowH = cellLines.reduce(function (mx, l) { return Math.max(mx, l.length); }, 1) * lineHeight + cellPad * 2;
+          if (y + rowH > pageHLimit) { doc.addPage(); y = margin; }
+          cellLines.forEach(function (lines, i) {
+            doc.rect(tableColX(i), y, tableColWidths[i], rowH);
+            doc.text(lines, tableColX(i) + cellPad, y + lineHeight - cellPad * 0.4);
+          });
+          y += rowH;
+        });
+        y += 2;
+        doc.setFont("helvetica", "italic"); doc.setFontSize(9); doc.setTextColor(0, 0, 0);
+        if (y > pageHLimit) { doc.addPage(); y = margin; }
+        doc.text("Tabelle " + tb.tableNumber + ": " + tb.sourceFile, margin, y);
+        y += 7;
         return;
       }
       var isHeading = manualIsHeading(line);
@@ -22636,13 +22730,17 @@
   function editoImagesForChapter(chapterTitle) {
     return bildbandScreensForChapter(chapterTitle);
   }
+  function editoTablesForChapter(chapterTitle) {
+    return rovoTablesForChapter(chapterTitle);
+  }
   function editoSourceCounts(chapterTitle) {
     return {
       tickets: editoTicketsForChapter(chapterTitle).length,
       rag: editoRagEntriesForChapter(chapterTitle).length,
       manual: editoExistingManualText(chapterTitle) ? 1 : 0,
       rovo: editoRovoEntriesForChapter(chapterTitle).length,
-      images: editoImagesForChapter(chapterTitle).length
+      images: editoImagesForChapter(chapterTitle).length,
+      tables: editoTablesForChapter(chapterTitle).length
     };
   }
   // editoSelectedChapters: transiente, NICHT in der Sitzung gespeicherte
@@ -22676,6 +22774,7 @@
         '<td class="mono">' + (counts.manual ? "✓" : "–") + "</td>" +
         '<td class="mono">' + counts.rovo + "</td>" +
         '<td class="mono">' + counts.images + "</td>" +
+        '<td class="mono">' + counts.tables + "</td>" +
         "<td>" + (hasText ? "Erzeugt (" + escapeHtml(entry.generatedAt) + ")" : "Noch nicht erzeugt") + "</td>" +
         '<td><button type="button" class="btn ghost btn-tiny" data-edito-generate="' + escapeHtml(c.title) + '">' + (hasText ? "Neu erzeugen" : "Erzeugen") + "</button>" +
         (hasText ? ' <button type="button" class="btn ghost btn-tiny" data-edito-view="' + escapeHtml(c.title) + '">Anzeigen</button>' : "") +
@@ -22694,6 +22793,7 @@
     var rovoList = editoRovoEntriesForChapter(chapterTitle);
     var existingText = editoExistingManualText(chapterTitle);
     var images = editoImagesForChapter(chapterTitle);
+    var tables = editoTablesForChapter(chapterTitle);
     var version = editoVersionDef();
     var parts = [ragPromptFor("editoChapter")];
     parts.push("\n\nZielversion (Rolle/Sparte): " + (version ? version.label : "") +
@@ -22709,6 +22809,8 @@
       (rovoList.length ? rovoList.map(function (e) { return "- Chatverlauf: " + truncate(e.chatText, 600) + "\n  Antwort: " + truncate(e.answerText, 600); }).join("\n") : "(keine zugeordnet)"));
     parts.push("\n\nQUELLE 5 – Zugeordnete Screenshots: " + images.length +
       (images.length ? " (" + images.map(function (i) { return i.description || i.sourceFile; }).join(", ") + ") – höchstens so viele [Bild]-Platzhalter einfügen" : " (keine – keine [Bild]-Platzhalter einfügen)"));
+    parts.push("\n\nQUELLE 6 – Zugeordnete Tabellen (aus Rovo Knowledge): " + tables.length +
+      (tables.length ? " (" + tables.map(function (t) { return "Tabelle " + t.tableNumber + " aus " + t.sourceFile + " (" + t.rows.length + " Zeilen x " + (t.rows[0] ? t.rows[0].length : 0) + " Spalten)"; }).join(", ") + ") – höchstens so viele [Tabelle]-Platzhalter einfügen, an der inhaltlich passenden Stelle" : " (keine – keine [Tabelle]-Platzhalter einfügen)"));
     return parts.join("");
   }
   async function editoGenerateChapter(chapterTitle) {

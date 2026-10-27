@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.98.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.99.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1737,13 +1737,16 @@ zusammenzuführen.
   in v2.90.0 – das vorherige Register "Editor" heißt seitdem
   "Screens-Import", s. o., damit es nicht zwei gleichnamige
   Navigationspunkte gibt) – erstellt eine NEUE Fassung des
-  Benutzerhandbuchs je Rolle/Sparte aus 5 internen Quellen gleichzeitig:
+  Benutzerhandbuchs je Rolle/Sparte aus 6 internen Quellen gleichzeitig:
   importierten Jira-Tickets, der RAG-Bibliothek, dem bereits bestehenden
   Benutzerhandbuch-Text, Rovo-Knowledge-Textschnipseln (als QUELLE 4 im
   Prompt explizit als vorrangige Quelle markiert, neu v2.95.0 – diese
   Daten stammen direkt aus dem Rovo-Quellsystem und sind bei
-  inhaltlichen Widersprüchen zu den anderen Quellen maßgeblich) sowie
-  zugeordneten Bildern (Bildband-Platzhalter `[Bild]`) – ein eigener, von
+  inhaltlichen Widersprüchen zu den anderen Quellen maßgeblich),
+  zugeordneten Bildern (Bildband-Platzhalter `[Bild]`) sowie
+  zugeordneten, aus Rovo Knowledge extrahierten **Tabellen** (neu,
+  v2.99.0, Platzhalter `[Tabelle]`, QUELLE 6 im Prompt – s. u. "Tabellen-
+  Einbettung") – ein eigener, von
   `app.manualChapters` unabhängiger Bestand, existiert also bewusst
   parallel zum bestehenden Stand. Nutzt für die Rolle/Sparte-Auswahl
   dieselben 6 Gliederungsversionen wie "Verarbeitung → Gliederung-
@@ -1789,7 +1792,23 @@ zusammenzuführen.
   bei Versionswechsel oder erneutem Zusammenführen verworfen bzw. neu
   aufgebaut. Ein generiertes Inhaltsverzeichnis sowie der PDF-Export des
   Gesamtdokuments folgen zusammen mit Agent 3 in einem späteren
-  Ausbauschritt.
+  Ausbauschritt. **Tabellen-Einbettung** (neu, v2.99.0): dem Kapitel im
+  Register "Tabelle" zugeordnete, aus Rovo Knowledge extrahierte Tabellen
+  (s. o.) werden der KI als eigene QUELLE 6 genannt (je Tabelle mit
+  Quelldatei und Zeilen-/Spaltenanzahl) – die KI fügt dafür eine eigene
+  Zeile `[Tabelle]` an passender Stelle ein, genau wie beim bestehenden
+  `[Bild]`-Platzhalter, nie mehr Platzhalter als zugeordnete Tabellen.
+  Beim Export (Einzelkapitel wie Gesamtdokument, Word UND PDF) wird der
+  Platzhalter durch die ECHTE Tabelle ersetzt – als strukturierte
+  Word-Tabelle mit festem, auf die Seitenbreite normiertem Spaltenlayout
+  bzw. als gezeichnete PDF-Tabelle (dieselbe Spalten-Fit-Logik wie beim
+  eigenständigen druckbaren Tabellen-Export im Register "Tabelle"), nicht
+  als Bild. Der Platzhalter-Mechanismus ist dabei bewusst allgemein
+  gehalten (dieselben gemeinsam genutzten Export-Funktionen wie beim
+  Benutzerhandbuch-Kapitel-Generator) – eine Zeile `[Tabelle]` im
+  Kapiteltext wird daher auch bei manuell bearbeitetem oder von Hand
+  geschriebenem Text ersetzt, unabhängig davon, ob sie von der KI oder
+  von Hand eingefügt wurde.
 - **Bilder** – Tabelle **und** Kachel-Galerie aller in der Sitzung
   erzeugten Prozessdiagramme sowie eigener Bild-Uploads, jeweils mit
   Datum. Beschreibungen lassen sich für beide Bildarten direkt in der
@@ -1863,10 +1882,11 @@ zusammenzuführen.
   Papierformat passt, auch bei vielen oder langen Spalteninhalten. Das
   Word-Dokument setzt dazu ein festes Tabellenlayout mit expliziten
   Spaltenbreiten (`w:tblLayout type="fixed"`), damit Word die berechneten
-  Breiten nicht eigenmächtig neu verteilt. Gedacht als Vorstufe zum
-  späteren Einbetten solcher Tabellen ins Benutzerhandbuch – dieser
-  Export ist bewusst ein eigener, manuell ausgelöster Schritt je Tabelle,
-  noch kein automatischer Einbau in die Handbuch-Generierung.
+  Breiten nicht eigenmächtig neu verteilt. Dieser eigenständige Export
+  bleibt ein manuell ausgelöster Schritt je Tabelle – zusätzlich lässt
+  sich eine zugeordnete Tabelle jetzt auch automatisch ins Benutzerhandbuch
+  (Register "Editor") einbetten: siehe dort "Tabellen-Einbettung" (neu,
+  v2.99.0).
 - **Output MD Tickets / Output PDF Tickets** – bereinigte Tickets als
   ZIP-Archiv aus Markdown- bzw. PDF-Dateien exportieren (respektiert die
   aktuelle Dashboard-Filterung); PDFs werden clientseitig mit jsPDF
