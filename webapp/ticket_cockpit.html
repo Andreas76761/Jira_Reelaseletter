@@ -1962,6 +1962,27 @@
           </div>
         </div>
 
+        <section style="margin-top:22px;">
+          <p class="section-label">Mit RAG-Kontext anreichern (KI)</p>
+          <div class="callout">
+            Nutzt zusätzlich zum obigen (deterministischen) Entwurf passende Textschnipsel aus der RAG-Bibliothek
+            (Verarbeitung → 7. RAG, nach Gliederungskapitel der enthaltenen Tickets zugeordnet, inkl. automatisch
+            erzeugter Chunks) und erstellt per Klick eine ZUSÄTZLICHE, separat angezeigte Fassung darunter &ndash;
+            der obige Entwurf bleibt davon unverändert und ist weiterhin der Haupt-Export. Automatisch erzeugter
+            Text &ndash; vor Verwendung redaktionell prüfen.
+          </div>
+          <div class="controls">
+            <button class="btn ghost" id="releaseletter-rag-enrich-btn" type="button">
+              <span class="btn-spinner" id="releaseletter-rag-enrich-spinner" hidden></span>
+              Mit RAG-Kontext anreichern (KI)
+            </button>
+          </div>
+          <p class="step-note" id="releaseletter-rag-enrich-status-note"></p>
+          <div id="releaseletter-rag-enrich-result" hidden>
+            <div class="panel gen-preview" id="releaseletter-rag-enrich-output" style="padding:12px 14px; margin-top:6px; max-height:420px; overflow:auto; white-space:pre-wrap;"></div>
+          </div>
+        </section>
+
         <section style="margin-top:26px;">
           <p class="section-label">Handbuch-Änderung nach Kapitel (Vergleich mit Referenz-Handbuch)</p>
           <div class="callout">
@@ -2310,6 +2331,27 @@
             <div class="gen-preview" id="clickanweisung-preview">Noch kein Entwurf generiert.</div>
           </div>
         </div>
+
+        <section style="margin-top:22px;">
+          <p class="section-label">Mit RAG-Kontext anreichern (KI)</p>
+          <div class="callout">
+            Nutzt zusätzlich zum obigen (deterministischen) Entwurf passende Textschnipsel aus der RAG-Bibliothek
+            (Verarbeitung → 7. RAG, nach Gliederungskapitel der enthaltenen Tickets zugeordnet, inkl. automatisch
+            erzeugter Chunks) und erstellt per Klick eine ZUSÄTZLICHE, separat angezeigte Fassung darunter &ndash;
+            der obige Entwurf bleibt davon unverändert und ist weiterhin der Haupt-Export. Automatisch erzeugter
+            Text &ndash; vor Verwendung redaktionell prüfen.
+          </div>
+          <div class="controls">
+            <button class="btn ghost" id="clickanweisung-rag-enrich-btn" type="button">
+              <span class="btn-spinner" id="clickanweisung-rag-enrich-spinner" hidden></span>
+              Mit RAG-Kontext anreichern (KI)
+            </button>
+          </div>
+          <p class="step-note" id="clickanweisung-rag-enrich-status-note"></p>
+          <div id="clickanweisung-rag-enrich-result" hidden>
+            <div class="panel gen-preview" id="clickanweisung-rag-enrich-output" style="padding:12px 14px; margin-top:6px; max-height:420px; overflow:auto; white-space:pre-wrap;"></div>
+          </div>
+        </section>
       </section>
 
       <!-- ================= Editor ================= -->
@@ -5233,7 +5275,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.104.0";
+  var APP_VERSION = "2.105.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -15324,6 +15366,40 @@
     return tickets;
   }
 
+  // RAG-Anbindung fuer Releaseletter/Clickanweisung (Teil 9b Punkt 8, s.
+  // genRagEnrichPrompt/wireTextGenerator weiter unten): Releaseletter UND
+  // Clickanweisung bleiben vollstaendig deterministisch (s. o., KEIN
+  // KI-Aufruf im eigentlichen Entwurf) - die Anreicherung ist bewusst ein
+  // SEPARATER, zusaetzlicher Claude-Call auf Basis des bereits fertigen
+  // Entwurfs + passender RAG-Bibliothek-Chunks, der NICHT den Entwurf
+  // selbst ersetzt. computeAutoOutline(t) arbeitet direkt auf den rohen
+  // Ticket-Dicts, die resolveGeneratorTickets() liefert (dieselbe Form wie
+  // app.tickets[].raw) - kein Nachschlagen in app.tickets noetig.
+  function genChaptersForTickets(tickets) {
+    var seen = {};
+    tickets.forEach(function (t) {
+      computeAutoOutline(t).forEach(function (c) { seen[c] = true; });
+    });
+    return Object.keys(seen);
+  }
+  function genRagContextForTickets(tickets) {
+    var seenIds = {};
+    var entries = [];
+    genChaptersForTickets(tickets).forEach(function (chapterTitle) {
+      editoRagEntriesForChapter(chapterTitle).forEach(function (e) {
+        if (!seenIds[e.id]) { seenIds[e.id] = true; entries.push(e); }
+      });
+    });
+    return entries;
+  }
+  function genRagEnrichPrompt(kind, draftText, ragEntries) {
+    return ragPromptFor(kind + "RagEnrich") + "\n\nBESTEHENDER ENTWURF:\n" + truncate(draftText, 6000) +
+      "\n\nQUELLEN AUS DER RAG-BIBLIOTHEK (" + ragEntries.length + "):\n" +
+      (ragEntries.length ? truncate(ragEntries.map(function (e) {
+        return "### " + e.label + (e.chapterTitle ? " (Kapitel: " + e.chapterTitle + ")" : "") + "\n" + truncate(e.text || "", 1200);
+      }).join("\n\n"), 30000) : "(keine passenden Quellen in der RAG-Bibliothek gefunden)");
+  }
+
   // Zweisprachige Vorlagentexte (Überschriften/Feldbezeichnungen) für die
   // drei Text-Generatoren. Ticket-Freitext (Zusammenfassung/Beschreibung)
   // wird NIE übersetzt (Risiko fachlicher Verfälschung) und erscheint in
@@ -16177,6 +16253,11 @@
     var lastContent = "";
     var lastTickets = [];
     var lastTitle = "Release";
+    // Nur bei releaseletter/clickanweisung belegt (s. u.) - bleibt sonst
+    // null, damit der Reset im generateBtn-Handler unten gefahrlos per
+    // "if (ragEnrichResult)" arbeiten kann (gilt dank Closure auch dann
+    // korrekt, wenn die eigentliche Zuweisung textuell SPAETER erfolgt).
+    var ragEnrichResult = null, ragEnrichOutput = null, ragEnrichStatusNote = null;
     function applyVariant(v) {
       currentVariant = v;
       lastContent = contentByVariant[v];
@@ -16205,6 +16286,7 @@
       downloadDocxBtn.disabled = false;
       downloadPdfBtn.disabled = false;
       downloadXlsxBtn.disabled = false;
+      if (ragEnrichResult) { ragEnrichResult.hidden = true; ragEnrichOutput.textContent = ""; ragEnrichStatusNote.textContent = ""; lastRagEnrichText = ""; }
       addLog(kind + ": Entwurf für " + tickets.length + " Tickets erzeugt (Deutsch + English).");
     });
     function variantSuffix() { return "_" + currentVariant; }
@@ -16284,6 +16366,58 @@
           if (ok) showToast("Gespeichert", "PDF (Design: " + theme.name + ") heruntergeladen.");
         } catch (err) {
           showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+        }
+      });
+    }
+    // RAG-Anbindung (Teil 9b Punkt 8): bewusst NUR releaseletter/
+    // clickanweisung, NICHT benutzerhandbuch - dieses einfache,
+    // deterministische Rohgerüst ist nur ein schlankes Gegenstück zu
+    // Releaseletter (s. GENERATORS oben); das eigentliche, deutlich
+    // reichhaltigere Benutzerhandbuch hat seinen eigenen Kapitel-Generator
+    // samt "Verbesserte Fassung" (manualImprove*) an anderer Stelle, s. o.
+    if (kind === "releaseletter" || kind === "clickanweisung") {
+      var ragEnrichBtn = document.getElementById(kind + "-rag-enrich-btn");
+      var ragEnrichSpinner = document.getElementById(kind + "-rag-enrich-spinner");
+      var lastRagEnrichText = "";
+      ragEnrichStatusNote = document.getElementById(kind + "-rag-enrich-status-note");
+      ragEnrichResult = document.getElementById(kind + "-rag-enrich-result");
+      ragEnrichOutput = document.getElementById(kind + "-rag-enrich-output");
+      // Dieselbe Negativlisten-Hervorhebung wie beim deterministischen
+      // Entwurf oben (nur releaseletter, s. highlightsNegativeWords) -
+      // Clickanweisung bleibt bewusst aussen vor (Klickschritte, kein
+      // Fliesstext). Refresher-Registrierung wie bei applyVariant(), damit
+      // eine bereits sichtbare angereicherte Fassung bei Aenderung der
+      // Negativliste sofort mitaktualisiert wird.
+      if (highlightsNegativeWords) negativeWordsPreviewRefreshers.push(function () {
+        if (lastRagEnrichText) ragEnrichOutput.innerHTML = highlightNegativeWordsHtml(lastRagEnrichText);
+      });
+      ragEnrichBtn.addEventListener("click", async function () {
+        if (!lastContent) { showToast("Kein Entwurf", "Bitte zuerst oben einen Entwurf generieren.", true); return; }
+        if (!sampleApi) {
+          showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+          return;
+        }
+        var ragEntries = genRagContextForTickets(lastTickets);
+        ragEnrichBtn.disabled = true;
+        ragEnrichSpinner.hidden = false;
+        ragEnrichResult.hidden = false;
+        lastRagEnrichText = "";
+        ragEnrichOutput.textContent = "Wird erzeugt …";
+        try {
+          var result = await sampleApi(genRagEnrichPrompt(kind, lastContent, ragEntries), { modelTier: "default", cache: false });
+          lastRagEnrichText = result.text || "";
+          if (highlightsNegativeWords) ragEnrichOutput.innerHTML = highlightNegativeWordsHtml(lastRagEnrichText);
+          else ragEnrichOutput.textContent = lastRagEnrichText;
+          ragEnrichStatusNote.textContent = ragEntries.length +
+            (ragEntries.length === 1 ? " passende Quelle" : " passende Quellen") + " aus der RAG-Bibliothek genutzt (" + nowLabel() + ").";
+          addLog(kind + ": Mit RAG-Kontext angereicherte Fassung erstellt (" + ragEntries.length + " Quelle(n)).");
+          showToast("Angereichert", "Zusätzliche, mit RAG-Kontext angereicherte Fassung erstellt.");
+        } catch (err) {
+          ragEnrichOutput.textContent = "";
+          showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+        } finally {
+          ragEnrichBtn.disabled = false;
+          ragEnrichSpinner.hidden = true;
         }
       });
     }
@@ -18454,7 +18588,9 @@
     manualImproveEnduser: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Schreibe den unten stehenden Kapiteltext aus Sicht eines ENDANWENDERS neu: flüssiger und kompakter formuliert, OHNE Floskeln, OHNE technische Deep-Dives/Implementierungsdetails - der Nutzen für den Anwender (was kann ich damit tun, was bringt es mir) steht im Fokus. Arbeite dabei, soweit inhaltlich zutreffend, die unten angegebenen Verbesserungsvorschläge aus der Qualitätsprüfung ein. Erhalte die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\"/\"[Warnung]\"/\"[Hinweis]\"/\"[Tipp]\"/\"[Verweis]\" sowie die Zwischenüberschriften \"## Retail\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" an den fachlich passenden Stellen, damit die handbuchgerechte farbliche Kennzeichnung/Icon-Darstellung erhalten bleibt. Präsens durchgängig. Gib ausschließlich den neuen Kapiteltext aus, keine Erklärungen dazu:",
     manualImproveFachtext: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Schreibe den unten stehenden Kapiteltext als PRÄZISEN FACHTEXT für erfahrene Power-User/Administratoren neu: technisch genau, mit allen relevanten Details, Feldnamen, Systemverhalten und Rahmenbedingungen - kurze, stichpunktnahe Sätze sind erlaubt. Arbeite dabei, soweit inhaltlich zutreffend, die unten angegebenen Verbesserungsvorschläge aus der Qualitätsprüfung ein. Erhalte die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\"/\"[Warnung]\"/\"[Hinweis]\"/\"[Tipp]\"/\"[Verweis]\" sowie die Zwischenüberschriften \"## Retail\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" an den fachlich passenden Stellen. Präsens durchgängig. Gib ausschließlich den neuen Kapiteltext aus, keine Erklärungen dazu:",
     manualImproveKurzfassung: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Fasse den unten stehenden Kapiteltext als STARK KOMPRIMIERTE MANAGEMENT-ZUSAMMENFASSUNG zusammen (max. ca. ein Viertel der ursprünglichen Länge - nur die wichtigsten Kernaussagen, Entscheidungsrelevantes und Auswirkungen, keine Bedienungsdetails). Arbeite dabei, soweit inhaltlich zutreffend, die unten angegebenen Verbesserungsvorschläge aus der Qualitätsprüfung ein. Setze \"[Warnung]\"/\"[Hinweis]\" nur, wenn wirklich zentral - lasse die Pkw/Van/Markt-Scope-Tags sowie die Rollen-Zwischenüberschriften weg, da die Kurzfassung rollenübergreifend gilt. Präsens durchgängig. Gib ausschließlich die neue Kurzfassung aus, keine Erklärungen dazu:",
-    ragAnalysis: "Du bist Wissensanalyst für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Unten stehen alle aktuell in der RAG-Bibliothek gesammelten Textschnipsel (Chunks) aus verschiedenen Quellen (Jira-Tickets, Rovo-Wissens-Notizen, Tabellen, Bildbeschreibungen, Benutzerhandbuch-Text) - je Chunk mit Bezeichnung und, soweit vorhanden, zugeordneter Domäne/Kapitel. Analysiere den GESAMTEN Chunk-Bestand und gib AUSSCHLIESSLICH die folgenden vier Abschnitte aus, in genau diesem Format:\n\n### Zusammenhänge\n- (ein Stichpunkt je inhaltlichem Zusammenhang/Überlappung zwischen mehreren Chunks, auch über Kapitel-/Domänengrenzen hinweg, mit kurzer Nennung der betroffenen Chunk-Bezeichnungen)\n\n### Genauigkeit\n- (ein Stichpunkt je Chunk oder Chunk-Gruppe, deren Angaben vage, unvollständig oder mit anderen Chunks widersprüchlich sind)\n\n### Priorität\n- (ein Stichpunkt je Chunk oder Themenbereich, der aus fachlicher Sicht vorrangig für Benutzerhandbuch/EDITO, Releaseletter oder Clickanweisung aufbereitet werden sollte, mit kurzer Begründung)\n\n### Klärungsbedarf\n- (ein Stichpunkt je offener Frage/Lücke, die vor einer Verwendung der Informationen fachlich geklärt werden sollte)\n\nIst eine der vier Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den Chunks unten, erfinde nichts hinzu:"
+    ragAnalysis: "Du bist Wissensanalyst für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Unten stehen alle aktuell in der RAG-Bibliothek gesammelten Textschnipsel (Chunks) aus verschiedenen Quellen (Jira-Tickets, Rovo-Wissens-Notizen, Tabellen, Bildbeschreibungen, Benutzerhandbuch-Text) - je Chunk mit Bezeichnung und, soweit vorhanden, zugeordneter Domäne/Kapitel. Analysiere den GESAMTEN Chunk-Bestand und gib AUSSCHLIESSLICH die folgenden vier Abschnitte aus, in genau diesem Format:\n\n### Zusammenhänge\n- (ein Stichpunkt je inhaltlichem Zusammenhang/Überlappung zwischen mehreren Chunks, auch über Kapitel-/Domänengrenzen hinweg, mit kurzer Nennung der betroffenen Chunk-Bezeichnungen)\n\n### Genauigkeit\n- (ein Stichpunkt je Chunk oder Chunk-Gruppe, deren Angaben vage, unvollständig oder mit anderen Chunks widersprüchlich sind)\n\n### Priorität\n- (ein Stichpunkt je Chunk oder Themenbereich, der aus fachlicher Sicht vorrangig für Benutzerhandbuch/EDITO, Releaseletter oder Clickanweisung aufbereitet werden sollte, mit kurzer Begründung)\n\n### Klärungsbedarf\n- (ein Stichpunkt je offener Frage/Lücke, die vor einer Verwendung der Informationen fachlich geklärt werden sollte)\n\nIst eine der vier Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den Chunks unten, erfinde nichts hinzu:",
+    releaseletterRagEnrich: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Unten steht ein bereits fertiger, deterministisch aus den Ticket-Rohdaten erzeugter Releaseletter-Entwurf, danach zusätzliche, thematisch passende Textschnipsel aus der RAG-Bibliothek (Jira-Tickets, Rovo-Wissens-Notizen, Tabellen, Bildbeschreibungen, Benutzerhandbuch-Text zu denselben Gliederungskapiteln). Erstelle eine ZUSÄTZLICHE, inhaltlich angereicherte Fassung des Releaseletters auf Deutsch, DURCHGÄNGIG IM PRÄSENS: ergänze, wo fachlich sinnvoll, kurze zusätzliche Hintergrundinformationen aus der RAG-Bibliothek (z. B. Zusammenhänge zu anderen Funktionen, Voraussetzungen, nützliche Hinweise), OHNE bereits vorhandene Aussagen des Entwurfs zu entfernen oder ihnen zu widersprechen. Nutze ausschließlich Informationen aus dem Entwurf und den Quellen unten, erfinde nichts hinzu - fehlen passende Quellen, gib den Entwurf nahezu unverändert zurück statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text. Gib ausschließlich den neuen Text aus, keine Erklärungen dazu:",
+    clickanweisungRagEnrich: "Du bist Technischer Redakteur für die Klickanweisung (Quick Reference) eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten steht ein bereits fertiger, deterministisch aus den Ticket-Rohdaten erzeugter Klickanweisungs-Entwurf (Schritt-für-Schritt-Anleitung), danach zusätzliche, thematisch passende Textschnipsel aus der RAG-Bibliothek. Erstelle eine ZUSÄTZLICHE, ergänzte Fassung: füge, wo fachlich sinnvoll, zusätzliche Klickschritte oder Hinweise aus der RAG-Bibliothek hinzu (z. B. fehlende Zwischenschritte, Voraussetzungen, Folgeschritte), OHNE die vorhandenen Schritte zu entfernen oder umzusortieren. Nutze ausschließlich Informationen aus dem Entwurf und den Quellen unten, erfinde nichts hinzu - fehlen passende Quellen, gib den Entwurf nahezu unverändert zurück statt zu spekulieren. Gib ausschließlich den neuen Text aus, keine Erklärungen dazu:"
   };
   var RAG_PROMPT_LABELS = {
     summary: "Zusammenfassung erzeugen",
@@ -18479,7 +18615,9 @@
     manualImproveEnduser: "Verbesserte Fassung: Enduser-Text",
     manualImproveFachtext: "Verbesserte Fassung: Fachtext",
     manualImproveKurzfassung: "Verbesserte Fassung: Kurzfassung",
-    ragAnalysis: "RAG-Analyse: Gesamtbericht über den Chunk-Bestand"
+    ragAnalysis: "RAG-Analyse: Gesamtbericht über den Chunk-Bestand",
+    releaseletterRagEnrich: "Releaseletter: Mit RAG-Kontext anreichern",
+    clickanweisungRagEnrich: "Clickanweisung: Mit RAG-Kontext anreichern"
   };
   function ragPromptFor(promptKey) {
     var override = app.ragPrompts[promptKey];

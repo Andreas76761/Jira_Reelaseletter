@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.104.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.105.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -372,12 +372,29 @@ EDITO, Releaseletter oder Clickanweisung aufbereitet werden sollte) und
 Klärungsbedarf (offene Fachfragen) – Ergebnis samt Erstellungsdatum und
 Chunk-Anzahl sitzungsübergreifend gesichert (`app.ragAnalysis`), Prompt unter
 Einstellungen → RAG-Prompts editierbar ("RAG-Analyse: Gesamtbericht über den
-Chunk-Bestand"). Releaseletter und Clickanweisung bleiben dabei bewusst
-außen vor: beide werden vollständig deterministisch direkt aus den
-Ticket-Rohdaten erzeugt (`renderMarkdown()`), ohne eigenen KI-Prompt-Schritt
-– eine RAG-Anbindung wäre dort kein kleiner Zusatz, sondern müsste diesen
-Erzeugungsweg grundlegend umbauen, und bleibt daher einem möglichen späteren
-Ausbauschritt vorbehalten.
+Chunk-Bestand"). **RAG-Anbindung für Releaseletter/Clickanweisung** (neu,
+v2.105.0): Releaseletter und Clickanweisung selbst bleiben bewusst
+vollständig deterministisch (direkt aus den Ticket-Rohdaten erzeugt,
+`renderMarkdown()`, ohne eigenen KI-Prompt-Schritt im Entwurf selbst – eine
+RAG-Anbindung DORT wäre kein kleiner Zusatz, sondern ein grundlegender
+Umbau des Erzeugungswegs). Stattdessen gibt es bei beiden Generatoren einen
+zusätzlichen, rein optionalen Button "Mit RAG-Kontext anreichern (KI)": EIN
+Claude-Call nimmt den bereits fertigen, deterministischen Entwurf sowie die
+dazu passenden Textschnipsel aus der RAG-Bibliothek (nach den
+Gliederungskapiteln der im Entwurf enthaltenen Tickets zugeordnet, inkl. der
+automatisch erzeugten Chunks aus Punkt 6) und erzeugt eine ZUSÄTZLICHE,
+separat angezeigte, inhaltlich angereicherte Fassung darunter (ergänzt
+Hintergrundinfos bzw. zusätzliche Klickschritte, ohne vorhandene Aussagen zu
+entfernen oder zu widersprechen) – der deterministische Original-Entwurf
+bleibt unverändert der Haupt-Export für Markdown/DOCX/PDF/XLSX. Bei
+Releaseletter gilt dieselbe Negativlisten-Hervorhebung wie beim Original-
+Entwurf (live aktualisiert); bei Clickanweisung bewusst nicht (wie beim
+Original-Entwurf dort ebenfalls ausgenommen, da es um Klickschritte statt
+Fließtext geht). Reiner Sitzungs-Anzeigezustand (wie Agent 3-5 bei EDITO),
+wird bei erneutem "Entwurf generieren" zurückgesetzt und ist NICHT Teil von
+"Sitzung speichern". Prompts unter Einstellungen → RAG-Prompts editierbar
+("Releaseletter: Mit RAG-Kontext anreichern" / "Clickanweisung: Mit
+RAG-Kontext anreichern").
 
 - **Dashboard** – zusammengeführter, aktueller Stand aller importierten
   Tickets: Status-Kacheln, ein **Typ-Schnellfilter** (Chips je Tickettyp,
