@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.103.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.104.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1814,7 +1814,7 @@ Ausbauschritt vorbehalten.
   der Dokumenten-Übersicht ab – Kapitel ohne bereits erzeugten Text werden
   dabei übersprungen (Hinweis statt Absturz). Die Auswahl ist reiner
   Sitzungs-Anzeigezustand (nicht Teil von "Sitzung speichern") und wird bei
-  Versionswechsel geleert. Drei Prüf-Agenten (reine Befund-Reports, keine
+  Versionswechsel geleert. Fünf Prüf-Agenten (reine Befund-Reports, keine
   Auto-Korrektur): **Agent 1** validiert jede fachliche Aussage im
   erzeugten Text gegen die Rovo-/Jira-Quellen (nicht belegte Aussagen/
   Widersprüche), **Agent 2** prüft Grammatik, Sprachstil, Wiederholungen
@@ -1829,21 +1829,36 @@ Ausbauschritt vorbehalten.
   die Anzahl [Bild]-/[Tabelle]-Platzhalter gegen die Anzahl tatsächlich
   zugeordneter Screenshots/Tabellen ab (meldet Kapitel mit Überschuss –
   mehr Platzhalter als Zuordnungen – explizit mit Warnsymbol) und weist
-  auf das noch fehlende Inhaltsverzeichnis hin. Zwei weitere Agenten
-  folgen in einem späteren Ausbauschritt. **Gesamtdokument** (neu,
-  v2.94.0, Abschnitt "6."): führt
-  alle bereits erzeugten Kapitel der oben gewählten Rolle/Sparte in
-  Gliederungs-Reihenfolge zu EINEM Word-Dokument zusammen (echter
-  Seitenumbruch zwischen den Kapiteln, Bildband-Platzhalter werden wie
-  beim Einzel-Export eingebettet); noch nicht erzeugte Kapitel werden
-  übersprungen, der Status-Hinweis nennt die Anzahl. Die zusammengeführte
-  Fassung wird vor dem Download zusätzlich als Lesevorschau angezeigt.
-  Rein Sitzungs-Anzeigezustand (nicht Teil von "Sitzung speichern"), wird
-  bei Versionswechsel oder erneutem Zusammenführen verworfen bzw. neu
-  aufgebaut. Ein generiertes Inhaltsverzeichnis sowie der PDF-Export des
-  Gesamtdokuments selbst (als Download) folgen in einem späteren
-  Ausbauschritt – Agent 3 (s. o.) baut sich sein eigenes, nicht
-  herunterladbares PDF intern nur zur Seitenzählung. **Tabellen-Einbettung**
+  auf das Inhaltsverzeichnis hin (Umfang + Seitenanzahl, s. u.). **Agent 4**
+  und **Agent 5** (beide neu, v2.104.0, ebenfalls Abschnitt "6.", EIN
+  Claude-Call über ALLE bereits erzeugten Kapitel der Version zusammen,
+  anders als Agent 1/2 die je EINZELNES Kapitel prüfen): **Agent 4**
+  vergleicht die Kapitel UNTEREINANDER und meldet Widersprüche bzw.
+  inhaltliche Redundanzen zwischen verschiedenen Kapiteln (benötigt
+  mindestens 2 bereits erzeugte Kapitel); **Agent 5** prüft je Kapitel, ob
+  die ihm zugeordneten Jira-Tickets erkennbar im Kapiteltext aufgegriffen
+  werden, und meldet nicht abgedeckte Tickets (bereits ab 1 erzeugtem
+  Kapitel nutzbar). Beide sind reine Befund-Reports (keine Auto-Korrektur)
+  und wie Agent 3 reiner Sitzungs-Anzeigezustand, der bei Versionswechsel
+  zurückgesetzt wird. **Gesamtdokument** (neu, v2.94.0, Abschnitt "6."):
+  führt alle bereits erzeugten Kapitel der oben gewählten Rolle/Sparte in
+  Gliederungs-Reihenfolge zu EINEM Dokument zusammen – als Word UND
+  (neu, v2.104.0) als PDF, echter Seitenumbruch zwischen den Kapiteln,
+  Bildband-Platzhalter werden wie beim Einzel-Export eingebettet; noch
+  nicht erzeugte Kapitel werden übersprungen, der Status-Hinweis nennt die
+  Anzahl. Beide Fassungen erhalten (neu, v2.104.0) automatisch ein
+  vorangestelltes Inhaltsverzeichnis: in der PDF-Fassung mit der REALEN,
+  tatsächlich gerenderten Seitenzahl je Kapitel (dafür werden zunächst
+  genug Seiten für das Verzeichnis reserviert, dann alle Kapitel gerendert
+  und zuletzt per Rücksprung auf die reservierten Seiten die echten
+  Startseiten eingetragen – keine Schätzung), in der Word-Fassung nur mit
+  der Kapitel-Reihenfolge (Word berechnet Seitenzahlen erst beim Öffnen
+  selbst, abhängig von Schriftart/Zoom/Drucker des Lesers – eine erfundene
+  Seitenzahl wäre dort nicht ehrlich). Die zusammengeführte Fassung wird
+  vor dem Download zusätzlich als Lesevorschau angezeigt. Rein
+  Sitzungs-Anzeigezustand (nicht Teil von "Sitzung speichern"), wird bei
+  Versionswechsel oder erneutem Zusammenführen verworfen bzw. neu
+  aufgebaut. **Tabellen-Einbettung**
   (neu, v2.99.0): dem Kapitel im
   Register "Tabelle" zugeordnete, aus Rovo Knowledge extrahierte Tabellen
   (s. o.) werden der KI als eigene QUELLE 6 genannt (je Tabelle mit

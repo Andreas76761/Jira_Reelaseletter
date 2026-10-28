@@ -2382,7 +2382,7 @@
 
       <!-- ================= EDITO ================= -->
       <section class="view-panel" data-view-panel="edito" hidden>
-        <div class="view-head"><h2>Editor</h2><p class="desc">Erstellt eine neue Fassung des Benutzerhandbuchs je Rolle/Sparte aus mehreren internen Quellen gleichzeitig: importierten Jira-Tickets, der RAG-Bibliothek, dem bereits bestehenden Benutzerhandbuch-Text, Rovo-Knowledge-Textschnipseln, zugeordneten Bildern (Bildband-Platzhalter <code class="mono">[Bild]</code>) sowie zugeordneten, aus Rovo Knowledge extrahierten Tabellen (Platzhalter <code class="mono">[Tabelle]</code>, s. Register "Tabelle" – werden mit automatisch auf die Seitenbreite angepassten Spalten als echte Tabelle eingebettet, nicht als Bild). Drei Prüf-Agenten bewerten anschließend Inhalt, Sprache und Dokument-Struktur des Gesamtdokuments (echte Seitenanzahl, eingebettete Bilder/Tabellen, Inhaltsverzeichnis – zwei weitere Agenten folgen später). Nach dem Erzeugen wird je Kapitel automatisch ein datiertes Word- und PDF-Dokument abgelegt, siehe Übersicht "4. Alle erzeugten Dokumente" unten.</p></div>
+        <div class="view-head"><h2>Editor</h2><p class="desc">Erstellt eine neue Fassung des Benutzerhandbuchs je Rolle/Sparte aus mehreren internen Quellen gleichzeitig: importierten Jira-Tickets, der RAG-Bibliothek, dem bereits bestehenden Benutzerhandbuch-Text, Rovo-Knowledge-Textschnipseln, zugeordneten Bildern (Bildband-Platzhalter <code class="mono">[Bild]</code>) sowie zugeordneten, aus Rovo Knowledge extrahierten Tabellen (Platzhalter <code class="mono">[Tabelle]</code>, s. Register "Tabelle" – werden mit automatisch auf die Seitenbreite angepassten Spalten als echte Tabelle eingebettet, nicht als Bild). Fünf Prüf-Agenten bewerten anschließend Inhalt, Sprache, Dokument-Struktur (echte Seitenanzahl, eingebettete Bilder/Tabellen, Inhaltsverzeichnis), kapitelübergreifende Konsistenz und Vollständigkeit/Abdeckung des Gesamtdokuments. Nach dem Erzeugen wird je Kapitel automatisch ein datiertes Word- und PDF-Dokument abgelegt, siehe Übersicht "4. Alle erzeugten Dokumente" unten.</p></div>
 
         <section>
           <p class="section-label">1. Rolle/Sparte wählen</p>
@@ -2471,11 +2471,15 @@
           <p class="section-label">6. Gesamtdokument</p>
           <div class="callout">
             Führt alle bereits erzeugten Kapitel der oben gewählten Rolle/Sparte in der Reihenfolge der Gliederung
-            zu einem Word-Gesamtdokument zusammen (mit Seitenumbruch zwischen den Kapiteln). Noch nicht erzeugte
-            Kapitel werden dabei übersprungen. <b>Agent 3: Struktur-Prüfung</b> prüft anschließend deterministisch
-            (ohne KI, anhand des tatsächlich gerenderten Dokuments) die reale Seitenanzahl sowie, ob alle
-            [Bild]-/[Tabelle]-Platzhalter erfolgreich mit einem zugeordneten Screenshot bzw. einer zugeordneten
-            Tabelle eingebettet werden konnten, und weist auf ein fehlendes Inhaltsverzeichnis hin.
+            zu einem Gesamtdokument zusammen (als Word <b>und</b> als PDF, jeweils mit Seitenumbruch zwischen den
+            Kapiteln und einem automatisch vorangestellten Inhaltsverzeichnis). Noch nicht erzeugte Kapitel werden
+            dabei übersprungen. Im Inhaltsverzeichnis der PDF-Fassung steht zu jedem Kapitel die reale, tatsächlich
+            gerenderte Seitenzahl (in der Word-Fassung nur die Kapitel-Reihenfolge, da Word die Seitenzahlen erst
+            beim Öffnen selbst berechnet). <b>Agent 3: Struktur-Prüfung</b> prüft anschließend deterministisch
+            (ohne KI, anhand der tatsächlich gerenderten PDF-Fassung) die reale Seitenanzahl, ob alle
+            [Bild]-/[Tabelle]-Platzhalter erfolgreich eingebettet werden konnten, sowie den Umfang des
+            Inhaltsverzeichnisses. <b>Agent 4</b> und <b>Agent 5</b> prüfen zusätzlich kapitelübergreifende
+            Konsistenz bzw. Vollständigkeit/Abdeckung (s. u.).
           </div>
           <div class="controls">
             <button class="btn primary" id="edito-merge-btn" type="button">
@@ -2487,6 +2491,7 @@
           <div id="edito-merge-preview-section" hidden>
             <div class="controls" style="margin-top:4px;">
               <button class="btn ghost" id="edito-merge-download-btn" type="button">Als Word herunterladen</button>
+              <button class="btn ghost" id="edito-merge-download-pdf-btn" type="button">Als PDF herunterladen</button>
             </div>
             <div class="panel gen-preview" id="edito-merge-preview-output" style="padding:12px 14px; margin-top:10px; max-height:480px; overflow:auto; white-space:pre-wrap;"></div>
           </div>
@@ -2495,10 +2500,28 @@
               <span class="btn-spinner" id="edito-agent3-spinner" hidden></span>
               Agent 3: Struktur-Prüfung
             </button>
+            <button class="btn ghost" id="edito-agent4-btn" type="button">
+              <span class="btn-spinner" id="edito-agent4-spinner" hidden></span>
+              Agent 4: Kapitelübergreifende Konsistenz
+            </button>
+            <button class="btn ghost" id="edito-agent5-btn" type="button">
+              <span class="btn-spinner" id="edito-agent5-spinner" hidden></span>
+              Agent 5: Vollständigkeit &amp; Abdeckung
+            </button>
           </div>
           <p class="step-note" id="edito-agent3-status-note"></p>
           <div id="edito-agent3-result" hidden>
             <div class="panel gen-preview" id="edito-agent3-output" style="padding:12px 14px; margin-top:6px; max-height:420px; overflow:auto; white-space:pre-wrap;"></div>
+          </div>
+          <p class="step-note" id="edito-agent4-status-note"></p>
+          <div id="edito-agent4-result" hidden>
+            <p class="section-label" style="margin-top:0;">Agent 4: Kapitelübergreifende Konsistenz</p>
+            <div class="panel gen-preview" id="edito-agent4-output" style="padding:12px 14px; margin-top:6px; max-height:420px; overflow:auto; white-space:pre-wrap;"></div>
+          </div>
+          <p class="step-note" id="edito-agent5-status-note"></p>
+          <div id="edito-agent5-result" hidden>
+            <p class="section-label" style="margin-top:0;">Agent 5: Vollständigkeit &amp; Abdeckung</p>
+            <div class="panel gen-preview" id="edito-agent5-output" style="padding:12px 14px; margin-top:6px; max-height:420px; overflow:auto; white-space:pre-wrap;"></div>
           </div>
         </section>
       </section>
@@ -5210,7 +5233,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.103.0";
+  var APP_VERSION = "2.104.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6802,8 +6825,10 @@
     "edito-agent2-btn", "edito-agent2-spinner", "edito-agent2-result", "edito-agent2-output",
     "edito-files-count", "edito-files-table", "edito-files-tbody", "edito-files-empty",
     "edito-merge-btn", "edito-merge-spinner", "edito-merge-status-note",
-    "edito-merge-preview-section", "edito-merge-download-btn", "edito-merge-preview-output",
+    "edito-merge-preview-section", "edito-merge-download-btn", "edito-merge-download-pdf-btn", "edito-merge-preview-output",
     "edito-agent3-btn", "edito-agent3-spinner", "edito-agent3-status-note", "edito-agent3-result", "edito-agent3-output",
+    "edito-agent4-btn", "edito-agent4-spinner", "edito-agent4-status-note", "edito-agent4-result", "edito-agent4-output",
+    "edito-agent5-btn", "edito-agent5-spinner", "edito-agent5-status-note", "edito-agent5-result", "edito-agent5-output",
     "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
     "modal-overlay", "modal-key", "modal-title", "modal-fields", "modal-desc-wrap", "modal-desc",
@@ -18418,6 +18443,8 @@
     editoChapter: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Erstelle eine NEUE, konsolidierte Fassung des unten genannten Kapitels für die angegebene Zielversion (Rolle/Sparte), DURCHGÄNGIG IM PRÄSENS, im Stil eines professionellen Softwarehandbuchs (zusammenhängende Absätze, keine reine Aufzählung). Beginne mit 2-3 einleitenden Sätzen, die das Kapitel in den Gesamtprozess einordnen. Markiere Inhalte, die AUSSCHLIESSLICH für PKW, AUSSCHLIESSLICH für Van oder AUSSCHLIESSLICH für einen bestimmten Marktumfang gelten, mit \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\" direkt vor dem betreffenden Satz/Absatz, wichtige Sicherheitshinweise mit \"[Warnung]\", hilfreiche Zusatzinformationen mit \"[Hinweis]\", praktische Tipps mit \"[Tipp]\" sowie Querverweise auf andere Kapitel mit \"[Verweis]\" - jeweils direkt vor dem betreffenden Satz/Absatz. Wo sich die Bedienung je nach Rolle unterscheidet, gliedere mit eigenen Zwischenüberschriften \"## Retail\", \"## Markt\", \"## HQ\", \"## Sparte\" bzw. \"## MO\". Füge an inhaltlich passenden Stellen im Text eine eigene Zeile \"[Bild]\" als Bild-Platzhalter ein, wenn ein zugeordneter Screenshot (s. u.) dort sinnvoll ist - nie mehr [Bild]-Platzhalter als zugeordnete Screenshots vorhanden sind. Füge ebenso an inhaltlich passenden Stellen eine eigene Zeile \"[Tabelle]\" als Tabellen-Platzhalter ein, wenn eine zugeordnete Tabelle (s. u.) dort sinnvoll ist - nie mehr [Tabelle]-Platzhalter als zugeordnete Tabellen vorhanden sind. Nutze AUSSCHLIESSLICH Informationen aus den Quellen unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Widersprechen sich Quellen inhaltlich, hat QUELLE 4 (Rovo-Knowledge, Daten direkt aus dem Rovo-Quellsystem) Vorrang vor den anderen Quellen. Keine Ticket-Schlüssel/-Referenzen im Text.",
     editoAgent1: "Du prüfst einen Benutzerhandbuch-Kapiteltext (neue, aus mehreren Quellen synthetisierte Fassung) auf inhaltliche Richtigkeit. Prüfe JEDE fachliche Aussage im Kapiteltext darauf, ob sie durch die unten angegebenen Quellen (Jira-Tickets, Rovo-Wissens-Notizen) gedeckt ist. Gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Nicht belegte Aussagen\n- (ein Stichpunkt je Aussage im Kapiteltext, die durch keine der Quellen gedeckt ist)\n\n### Widersprüche zu den Quellen\n- (ein Stichpunkt je Aussage im Kapiteltext, die einer Quelle widerspricht)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
     editoAgent2: "Du bist Lektor für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Prüfe den folgenden Kapiteltext und gib AUSSCHLIESSLICH die folgenden vier Abschnitte aus, in genau diesem Format:\n\n### Grammatikfehler\n- (ein Stichpunkt je Grammatik-/Rechtschreib-/Zeitform-Fehler - insbesondere Abweichungen vom geforderten Präsens -, mit kurzem Zitat der betroffenen Stelle)\n\n### Sprachstil-Unstimmigkeiten\n- (ein Stichpunkt je Stilbruch, uneinheitlicher Terminologie oder unpassendem Ton)\n\n### Wiederholungen\n- (ein Stichpunkt je auffälliger Wort-/Formulierungs-Wiederholung)\n\n### Roter Faden\n- (ein Stichpunkt je Stelle, an der der Text den inhaltlichen Zusammenhang/Lesefluss verliert oder unlogisch springt)\n\nIst eine der vier Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
+    editoAgent4: "Du bist Lektor für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen ALLE Kapitel des aktuellen Gesamtdokuments (je Kapitel mit Überschrift \"## \"). Vergleiche die Kapitel UNTEREINANDER (nicht gegen externe Quellen) und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Widersprüche zwischen Kapiteln\n- (ein Stichpunkt je Aussage, die sich zwischen zwei oder mehr Kapiteln widerspricht, mit Nennung der betroffenen Kapitel)\n\n### Redundanzen zwischen Kapiteln\n- (ein Stichpunkt je inhaltlich stark überlappender Aussage, die in mehreren Kapiteln nahezu gleich wiederholt wird, mit Nennung der betroffenen Kapitel)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
+    editoAgent5: "Du bist Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen ALLE Kapitel des aktuellen Gesamtdokuments, je Kapitel mit den ihm zugeordneten Jira-Tickets (Schlüssel + Kurzbeschreibung) und dem Kapiteltext. Prüfe JE KAPITEL, ob der Inhalt der zugeordneten Tickets im Kapiteltext erkennbar aufgegriffen wird. Gib AUSSCHLIESSLICH den folgenden Abschnitt aus, in genau diesem Format:\n\n### Nicht abgedeckte Tickets\n- (ein Stichpunkt je Kapitel MIT mindestens einem Ticket, dessen Inhalt im Kapiteltext nicht erkennbar aufgegriffen wird - Kapitel nennen, betroffene(s) Ticket(s) mit Kurzbeschreibung)\n\nIst die Liste leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
     manualQualityCheck: "Du bist Lektor/Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Prüfe den folgenden Kapiteltext und gib AUSSCHLIESSLICH die folgenden drei Abschnitte aus, in genau diesem Format:\n\n### Grammatikfehler\n- (ein Stichpunkt je Grammatik-/Rechtschreib-/Zeitform-Fehler - insbesondere Abweichungen vom geforderten Präsens -, mit kurzem Zitat der betroffenen Stelle)\n\n### Lücken\n- (ein Stichpunkt je inhaltlicher Lücke, unklarer oder unvollständiger Stelle)\n\n### Verbesserungsvorschläge\n- (ein Stichpunkt je Vorschlag zur Verständlichkeit/Lesbarkeit/Struktur)\n\nIst eine der drei Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
     fileviewTranslateToDe: "Übersetze den folgenden Text sinngemäß ins Deutsche, ohne Inhalte hinzuzufügen oder wegzulassen und ohne zusätzliche Erklärungen oder Anmerkungen. Gib ausschließlich den übersetzten Text aus:",
     fileviewSummaryDe: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Fasse den folgenden Dateiinhalt (bereinigte Ticket-Rohdaten aus einem Jira-Export) in einer prägnanten, verständlichen Zusammenfassung auf Deutsch zusammen (ca. 150-300 Wörter, sachlich, ohne Aufzählungszeichen). Nutze ausschließlich Informationen aus dem Text unten, erfinde nichts hinzu:",
@@ -18441,6 +18468,8 @@
     editoChapter: "EDITO: Neue Kapitelfassung aus mehreren Quellen erzeugen",
     editoAgent1: "EDITO Agent 1: Inhalt gegen Rovo/Jira-Quellen prüfen",
     editoAgent2: "EDITO Agent 2: Grammatik, Sprachstil & roter Faden prüfen",
+    editoAgent4: "EDITO Agent 4: Kapitelübergreifende Konsistenz prüfen",
+    editoAgent5: "EDITO Agent 5: Vollständigkeit & Abdeckung prüfen",
     manualQualityCheck: "Qualitätsprüfung (Grammatik/Lücken/Verbesserungen)",
     fileviewTranslateToDe: "Dateiansicht: Übersetzen (→ DE)",
     fileviewSummaryDe: "Dateiansicht: Zusammenfassung (Deutsch)",
@@ -21850,9 +21879,22 @@
   // fortlaufend neu nummeriert (nicht je Kapitel bei 1 neu beginnend), da
   // sie sonst innerhalb des EINEN zusammengefuehrten Dokuments kollidieren
   // wuerden.
+  // Statisches Inhaltsverzeichnis (nur Kapitel-Reihenfolge, OHNE Seitenzahl)
+  // fuer die Word-Fassung des Gesamtdokuments: Word berechnet Seitenzahlen
+  // erst beim tatsaechlichen Oeffnen/Rendern (abhaengig von Schriftart/
+  // Zoom/Druckertreiber des Lesers) - anders als bei der PDF-Fassung (s.
+  // editoWriteTocPages), die wir selbst vollstaendig rendern und daher die
+  // REALE Seitenzahl kennen, ist eine Seitenzahl hier nicht ehrlich moeglich.
+  function editoMergedTocBodyXml(chapters) {
+    var body = '<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>Inhaltsverzeichnis</w:t></w:r></w:p>';
+    chapters.forEach(function (c, idx) {
+      body += '<w:p><w:r><w:t xml:space="preserve">' + xmlEsc((idx + 1) + ". " + c.title) + "</w:t></w:r></w:p>";
+    });
+    return body + manualPageBreakParagraphXml();
+  }
   async function buildMergedEditoDocxBlob(chapters) {
     var allMedia = [];
-    var bodyParts = [];
+    var bodyParts = [editoMergedTocBodyXml(chapters)];
     var nextMediaNum = 1;
     for (var i = 0; i < chapters.length; i++) {
       var localMedia = await manualPrepareBildbandMedia(chapters[i].title);
@@ -21978,17 +22020,55 @@
   // Seitenanzahl des Gesamtdokuments liefert - anders als ein blosser
   // Wortanzahl-Schaetzwert beruecksichtigt das Zeilenumbrueche, eingebettete
   // Bilder UND Tabellen genauso wie beim tatsaechlichen Einzelkapitel-Export.
-  async function buildMergedEditoPdfDoc(chapters) {
+  // Reale Seitenzahl je Kapitel ist erst NACH dem Rendern aller Kapitel
+  // bekannt (abhaengig von Zeilenumbruechen/Bildern/Tabellen) - deshalb
+  // zuerst genug TOC-Seiten reservieren (addPage), dann alle Kapitel
+  // rendern UND dabei je Kapitel die tatsaechliche Startseite merken, und
+  // erst danach per doc.setPage() auf die reservierten TOC-Seiten
+  // zurueckspringen und dort Titel + reale Seitenzahl eintragen. So bleibt
+  // die Seitenzahl im Inhaltsverzeichnis "ehrlich" (keine Schaetzung).
+  var EDITO_TOC_LINES_PER_PAGE = 15;
+  function editoMergedTocPageCount(chapters) {
+    return Math.max(1, Math.ceil(chapters.length / EDITO_TOC_LINES_PER_PAGE));
+  }
+  function editoWriteTocPages(doc, chapters, chapterStartPages, tocPageCount) {
+    var margin = 18, pageW = 210, pageHLimit = 280;
+    var page = 1, y = margin;
+    doc.setPage(page);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(18);
+    doc.text("Inhaltsverzeichnis", margin, y); y += 12;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
+    chapters.forEach(function (c, idx) {
+      var pageLabel = String(chapterStartPages[idx]);
+      var titleLines = doc.splitTextToSize(c.title, pageW - margin * 2 - 14);
+      if (y > pageHLimit && page < tocPageCount) { page++; doc.setPage(page); y = margin; }
+      doc.text(titleLines[0], margin, y);
+      doc.text(pageLabel, pageW - margin - doc.getTextWidth(pageLabel), y);
+      for (var li = 1; li < titleLines.length; li++) {
+        y += 6;
+        if (y > pageHLimit && page < tocPageCount) { page++; doc.setPage(page); y = margin; }
+        doc.text(titleLines[li], margin, y);
+      }
+      y += 8;
+    });
+  }
+  async function buildMergedEditoPdfDoc(chapters, opts) {
     var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
     if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
     var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    var includeToc = !opts || opts.toc !== false;
+    var tocPageCount = includeToc ? editoMergedTocPageCount(chapters) : 0;
+    for (var t = 1; t < tocPageCount; t++) doc.addPage();
+    var chapterStartPages = [];
     for (var i = 0; i < chapters.length; i++) {
-      if (i > 0) doc.addPage();
+      doc.addPage();
+      chapterStartPages.push(doc.internal.getNumberOfPages());
       var media = await manualPrepareBildbandMedia(chapters[i].title);
       var tables = rovoTablesForChapter(chapters[i].title);
       manualWriteChapterPdfBody(doc, chapters[i].title, chapters[i].text, media, tables, 18);
     }
-    return doc;
+    if (includeToc) editoWriteTocPages(doc, chapters, chapterStartPages, tocPageCount);
+    return { doc: doc, tocPageCount: tocPageCount, chapterStartPages: chapterStartPages };
   }
   // MD-Export je Kapitel (anders als DOCX/PDF unten KEINE weitere
   // Konvertierung noetig - der gespeicherte Text ist bereits Markdown-
@@ -23510,15 +23590,25 @@
   }
   var editoMergedDocxBlob = null;
   var editoMergedFilename = "";
+  var editoMergedPdfBlob = null;
+  var editoMergedPdfFilename = "";
   function editoResetMergedDocument() {
     editoMergedDocxBlob = null;
     editoMergedFilename = "";
+    editoMergedPdfBlob = null;
+    editoMergedPdfFilename = "";
     els.editoMergePreviewSection.hidden = true;
     els.editoMergePreviewOutput.textContent = "";
     els.editoMergeStatusNote.textContent = "";
     els.editoAgent3Result.hidden = true;
     els.editoAgent3Output.textContent = "";
     els.editoAgent3StatusNote.textContent = "";
+    els.editoAgent4Result.hidden = true;
+    els.editoAgent4Output.textContent = "";
+    els.editoAgent4StatusNote.textContent = "";
+    els.editoAgent5Result.hidden = true;
+    els.editoAgent5Output.textContent = "";
+    els.editoAgent5StatusNote.textContent = "";
   }
   els.editoMergeBtn.addEventListener("click", async function () {
     if (!app.editoVersionKey) { showToast("Keine Version", "Bitte zuerst oben eine Rolle/Sparte wählen.", true); return; }
@@ -23528,9 +23618,13 @@
     els.editoMergeBtn.disabled = true;
     els.editoMergeSpinner.hidden = false;
     try {
-      editoMergedDocxBlob = await buildMergedEditoDocxBlob(chaptersWithText);
       var version = editoVersionDef();
-      editoMergedFilename = "Editor_Gesamtdokument_" + safeFilename((version || {}).label || app.editoVersionKey) + "_" + dateStampForFilename() + ".docx";
+      var baseFilename = "Editor_Gesamtdokument_" + safeFilename((version || {}).label || app.editoVersionKey) + "_" + dateStampForFilename();
+      editoMergedDocxBlob = await buildMergedEditoDocxBlob(chaptersWithText);
+      editoMergedFilename = baseFilename + ".docx";
+      var mergedPdf = await buildMergedEditoPdfDoc(chaptersWithText);
+      editoMergedPdfBlob = mergedPdf.doc.output("blob");
+      editoMergedPdfFilename = baseFilename + ".pdf";
       var skipped = allChapters.length - chaptersWithText.length;
       els.editoMergeStatusNote.textContent = chaptersWithText.length + " von " + allChapters.length + " Kapiteln zusammengeführt" + (skipped ? " (" + skipped + " noch nicht erzeugt, übersprungen)" : "") + ".";
       els.editoMergePreviewSection.hidden = false;
@@ -23549,6 +23643,11 @@
     var ok = await saveOrWarn(editoMergedFilename, editoMergedDocxBlob);
     if (ok) addLog("EDITO: Gesamtdokument „" + editoMergedFilename + "“ heruntergeladen.");
   });
+  els.editoMergeDownloadPdfBtn.addEventListener("click", async function () {
+    if (!editoMergedPdfBlob) return;
+    var ok = await saveOrWarn(editoMergedPdfFilename, editoMergedPdfBlob);
+    if (ok) addLog("EDITO: Gesamtdokument „" + editoMergedPdfFilename + "“ heruntergeladen.");
+  });
 
   // Agent 3 (Struktur-Pruefung): bewusst OHNE KI-Aufruf (reiner, deterministisch
   // berechneter Befund) - "echte" Seitenanzahl heisst hier wortwoertlich: aus
@@ -23564,8 +23663,8 @@
     els.editoAgent3Btn.disabled = true;
     els.editoAgent3Spinner.hidden = false;
     try {
-      var pdfDoc = await buildMergedEditoPdfDoc(chaptersWithText);
-      var pageCount = pdfDoc.internal.getNumberOfPages();
+      var merged = await buildMergedEditoPdfDoc(chaptersWithText);
+      var pageCount = merged.doc.internal.getNumberOfPages();
 
       var totalImgPh = 0, totalImgAvail = 0, totalImgEmbedded = 0;
       var totalTblPh = 0, totalTblAvail = 0, totalTblEmbedded = 0;
@@ -23601,7 +23700,7 @@
       }
       lines.push("");
       lines.push("### Inhaltsverzeichnis");
-      lines.push("- Nicht vorhanden - die automatische Erzeugung eines Inhaltsverzeichnisses ist ein späterer Ausbauschritt.");
+      lines.push("- Vorhanden (" + merged.tocPageCount + " Seite" + (merged.tocPageCount === 1 ? "" : "n") + " am Anfang des Gesamtdokuments, mit allen " + chaptersWithText.length + " Kapiteln und realer Seitenzahl).");
 
       els.editoAgent3Output.textContent = lines.join("\n");
       els.editoAgent3Result.hidden = false;
@@ -23617,6 +23716,82 @@
     }
   }
   els.editoAgent3Btn.addEventListener("click", editoRunStructuralCheck);
+
+  // Agent 4 (kapitelübergreifende Konsistenz) + Agent 5 (Vollständigkeit/
+  // Abdeckung): anders als Agent 1/2 (je EINZELNES Kapitel, s.
+  // editoAgent1Prompt/editoAgent2Prompt oben) und wie Agent 3 bewusst EIN
+  // Claude-Call über ALLE bereits erzeugten Kapitel der aktuellen Version
+  // zusammen - ein Befund-Report, der nur im Zusammenspiel mehrerer
+  // Kapitel ueberhaupt sinnvoll ist. Reiner Sitzungs-Anzeigezustand wie
+  // Agent 3 (s. editoResetMergedDocument), nicht Teil von "Sitzung
+  // speichern".
+  function editoAgent4Prompt(chaptersWithText) {
+    return ragPromptFor("editoAgent4") + "\n\n" +
+      truncate(chaptersWithText.map(function (c) { return "## " + c.title + "\n" + truncate(c.text, 3000); }).join("\n\n"), 40000);
+  }
+  function editoAgent5Prompt(chaptersWithText) {
+    return ragPromptFor("editoAgent5") + "\n\n" +
+      truncate(chaptersWithText.map(function (c) {
+        var tickets = editoTicketsForChapter(c.title);
+        return "## " + c.title + "\nZugeordnete Tickets (" + tickets.length + "):\n" +
+          (tickets.length ? tickets.map(function (t) { return "- " + (t.key || "") + ": " + (t.summary || ""); }).join("\n") : "(keine)") +
+          "\n\nKapiteltext:\n" + truncate(c.text, 2500);
+      }).join("\n\n"), 40000);
+  }
+  els.editoAgent4Btn.addEventListener("click", async function () {
+    if (!app.editoVersionKey) { showToast("Keine Version", "Bitte zuerst oben eine Rolle/Sparte wählen.", true); return; }
+    var chaptersWithText = editoChaptersWithTextInOrder();
+    if (chaptersWithText.length < 2) { showToast("Zu wenig Kapitel", "Für diese Prüfung werden mindestens 2 erzeugte Kapitel benötigt.", true); return; }
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    els.editoAgent4Btn.disabled = true;
+    els.editoAgent4Spinner.hidden = false;
+    els.editoAgent4Result.hidden = false;
+    els.editoAgent4Output.textContent = "Wird geprüft …";
+    try {
+      var result = await sampleApi(editoAgent4Prompt(chaptersWithText), { modelTier: "default", cache: false });
+      els.editoAgent4Output.textContent = result.text || "";
+      var versionLabel = (editoVersionDef() || {}).label || app.editoVersionKey;
+      els.editoAgent4StatusNote.textContent = "Konsistenzprüfung über " + chaptersWithText.length + " Kapitel abgeschlossen (" + nowLabel() + ").";
+      addLog("EDITO: Agent 4 (Kapitelübergreifende Konsistenz) für Version „" + versionLabel + "“ ausgeführt (" + chaptersWithText.length + " Kapitel).");
+      showToast("Konsistenzprüfung abgeschlossen", chaptersWithText.length + " Kapitel geprüft.");
+    } catch (err) {
+      els.editoAgent4Output.textContent = "";
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.editoAgent4Btn.disabled = false;
+      els.editoAgent4Spinner.hidden = true;
+    }
+  });
+  els.editoAgent5Btn.addEventListener("click", async function () {
+    if (!app.editoVersionKey) { showToast("Keine Version", "Bitte zuerst oben eine Rolle/Sparte wählen.", true); return; }
+    var chaptersWithText = editoChaptersWithTextInOrder();
+    if (!chaptersWithText.length) { showToast("Keine Kapitel", "Für diese Version wurde noch kein Kapitel erzeugt.", true); return; }
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    els.editoAgent5Btn.disabled = true;
+    els.editoAgent5Spinner.hidden = false;
+    els.editoAgent5Result.hidden = false;
+    els.editoAgent5Output.textContent = "Wird geprüft …";
+    try {
+      var result2 = await sampleApi(editoAgent5Prompt(chaptersWithText), { modelTier: "default", cache: false });
+      els.editoAgent5Output.textContent = result2.text || "";
+      var versionLabel2 = (editoVersionDef() || {}).label || app.editoVersionKey;
+      els.editoAgent5StatusNote.textContent = "Vollständigkeitsprüfung über " + chaptersWithText.length + " Kapitel abgeschlossen (" + nowLabel() + ").";
+      addLog("EDITO: Agent 5 (Vollständigkeit & Abdeckung) für Version „" + versionLabel2 + "“ ausgeführt (" + chaptersWithText.length + " Kapitel).");
+      showToast("Vollständigkeitsprüfung abgeschlossen", chaptersWithText.length + " Kapitel geprüft.");
+    } catch (err) {
+      els.editoAgent5Output.textContent = "";
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.editoAgent5Btn.disabled = false;
+      els.editoAgent5Spinner.hidden = true;
+    }
+  });
 
   var editoActiveChapterTitle = "";
   function editoShowChapter(title) {

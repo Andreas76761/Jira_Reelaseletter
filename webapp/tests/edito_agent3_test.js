@@ -3,7 +3,7 @@
 // tatsächlich gerenderten Gesamtdokument-PDFs) die reale Seitenanzahl
 // sowie, ob alle [Bild]-/[Tabelle]-Platzhalter mit einem zugeordneten
 // Screenshot bzw. einer zugeordneten Tabelle eingebettet werden konnten,
-// und weist auf ein (noch) fehlendes Inhaltsverzeichnis hin. Prüft:
+// und nennt den Umfang des automatisch erzeugten Inhaltsverzeichnisses. Prüft:
 // Guard ohne Version/ohne erzeugtes Kapitel, korrekte Zählung bei
 // Platzhalter-Überschuss (mehr [Bild] als zugeordnete Screenshots) UND bei
 // exaktem Treffer ([Tabelle] == zugeordnete Tabellen), Protokoll/Toast,
@@ -203,7 +203,7 @@ async function buildDocxWithTable() {
   check("Tabellen: 1 von 1 Platzhaltern erfolgreich eingebettet (exakter Treffer)", reportText.includes("1 von 1 [Tabelle]-Platzhaltern erfolgreich mit einer Tabelle eingebettet (1 Tabelle(n) insgesamt zugeordnet)"));
   check("Tabellen: keine fehlende Zuordnung gemeldet", reportText.includes("Keine fehlenden Tabellen-Zuordnungen."));
   check("Kapitel-Liste nennt Kapitel 7 mit dem fehlenden Bild-Platzhalter", new RegExp(kap7TitleFull.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ".*Bild-Platzhalter ohne zugeordneten Screenshot").test(reportText));
-  check("Weist auf fehlendes Inhaltsverzeichnis hin", reportText.includes("Inhaltsverzeichnis") && reportText.includes("Nicht vorhanden"));
+  check("Nennt das vorhandene Inhaltsverzeichnis mit Kapitelanzahl", reportText.includes("Inhaltsverzeichnis") && reportText.includes("Vorhanden") && reportText.includes("1 Kapitel"));
   check("Statuszeile vermerkt Abschluss", doc.getElementById("edito-agent3-status-note").textContent.includes("abgeschlossen"));
   check("Protokoll vermerkt Agent-3-Lauf", doc.getElementById("log-list").textContent.includes("Agent 3"));
 
