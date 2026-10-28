@@ -1895,6 +1895,31 @@
               <button class="btn ghost" id="rag-merge-download-btn" type="button" disabled>Als Markdown speichern</button>
             </div>
           </section>
+
+          <section>
+            <p class="section-label">6. Automatische Chunk-Erzeugung</p>
+            <p class="desc">Erzeugt automatisch Textschnipsel für die Bibliothek (Schritt 3/4) aus ALLEN bereits vorhandenen Quellen je Gliederungskapitel &ndash; Jira-Tickets, Rovo-Wissens-Notizen, Tabellen (Register Tabelle), Bildbeschreibungen (Register Bilder) und bereits erzeugtem Benutzerhandbuch-Text. Domäne/Kapitel sind bei diesen Chunks bereits vorbelegt. Ein erneuter Lauf ersetzt nur die zuvor automatisch erzeugten Chunks &ndash; manuell gespeicherte oder importierte Einträge bleiben unverändert.</p>
+            <div class="job-export-row">
+              <button class="btn primary" id="rag-auto-generate-btn" type="button">Chunks aus allen Quellen erzeugen</button>
+            </div>
+            <p class="step-note" id="rag-auto-status-note"></p>
+            <div class="stat-line" id="rag-auto-summary" style="margin-top:6px;" hidden></div>
+          </section>
+
+          <section>
+            <p class="section-label">7. RAG-Analyse (gesamter Chunk-Bestand)</p>
+            <p class="desc">Ein einzelner, auf den gesamten aktuellen Chunk-Bestand der Bibliothek bezogener Bericht (Claude) &ndash; unabhängig von Kapitel oder EDITO. Fasst Zusammenhänge zwischen den Chunks zusammen und benennt Genauigkeit, Priorität und Klärungsbedarf der enthaltenen Informationen. Hilfestellung bei der Erstellung von Benutzerhandbuch/EDITO, Releaseletter und Clickanweisung &ndash; automatisch erzeugter Text, vor Verwendung redaktionell prüfen.</p>
+            <div class="job-export-row">
+              <button class="btn ghost" id="rag-analysis-run-btn" type="button">RAG-Analyse erstellen</button>
+              <span class="btn-spinner" id="rag-analysis-spinner" hidden></span>
+            </div>
+            <p class="step-note" id="rag-analysis-status-note"></p>
+            <div class="empty-hint" id="rag-analysis-empty">Noch keine Analyse erstellt.</div>
+            <div id="rag-analysis-result" hidden>
+              <p class="step-note" id="rag-analysis-meta"></p>
+              <div class="gen-preview" id="rag-analysis-output"></div>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -5185,7 +5210,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.102.0";
+  var APP_VERSION = "2.103.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6703,6 +6728,9 @@
     "rag-library-save-btn", "rag-library-import-btn", "rag-library-import-input", "rag-library-import-note",
     "rag-library-empty", "rag-library-table-wrap", "rag-library-tbody", "rag-library-zip-row", "rag-library-zip-btn",
     "rag-merge-btn", "rag-merge-status-note", "rag-merge-output", "rag-merge-download-btn",
+    "rag-auto-generate-btn", "rag-auto-status-note", "rag-auto-summary",
+    "rag-analysis-run-btn", "rag-analysis-spinner", "rag-analysis-status-note",
+    "rag-analysis-empty", "rag-analysis-result", "rag-analysis-meta", "rag-analysis-output",
     "settings-current-tickets", "settings-current-imports", "delete-all-data-btn",
     "session-export-btn", "session-import-btn", "session-import-input",
     "autosave-enabled-cb", "autosave-status", "autosave-delete-btn",
@@ -7099,6 +7127,12 @@
     // manuelle Nacharbeiten (Ueberschriften/Uebergaenge) nicht verloren
     // gehen.
     ragMergedDoc: "",
+    // Gesamtbericht (KI) ueber den kompletten Chunk-Bestand der
+    // RAG-Bibliothek (Abschnitte Zusammenhaenge/Genauigkeit/Prioritaet/
+    // Klaerungsbedarf, s. ragRunAnalysis) - bewusst EIN einzelner Bericht
+    // ueber ALLE Chunks, nicht je Kapitel und nicht in EDITO integriert.
+    // Sitzungsdatensatz wie ragLibrary (reset/speichern/laden gleich).
+    ragAnalysis: null,
     // Massenverarbeitung (eigener Navigationspunkt vor Verarbeitung): bewusst
     // EIGENSTÄNDIGER Datenbestand, unabhängig von app.ragLibrary (RAG-
     // Bibliothek, Teil 9b) - beide Funktionen sollen unabhängig voneinander
@@ -7331,7 +7365,9 @@
     renderUploadedOutlines();
     app.ragLibrary = [];
     app.ragMergedDoc = "";
+    app.ragAnalysis = null;
     renderRagLibrary();
+    renderRagAnalysis();
     els.ragMergeOutput.value = "";
     els.ragMergeDownloadBtn.disabled = true;
     els.ragMergeStatusNote.textContent = "";
@@ -7428,7 +7464,9 @@
     renderUploadedOutlines();
     app.ragLibrary = [];
     app.ragMergedDoc = "";
+    app.ragAnalysis = null;
     renderRagLibrary();
+    renderRagAnalysis();
     els.ragMergeOutput.value = "";
     els.ragMergeDownloadBtn.disabled = true;
     els.ragMergeStatusNote.textContent = "";
@@ -7550,6 +7588,7 @@
       outlineCompareActiveId: app.outlineCompareActiveId,
       ragLibrary: app.ragLibrary,
       ragMergedDoc: app.ragMergedDoc,
+      ragAnalysis: app.ragAnalysis,
       massFiles: app.massFiles,
       massMergedDoc: app.massMergedDoc,
       massDomainDocs: app.massDomainDocs,
@@ -7622,6 +7661,7 @@
     if (data.outlineCompareActiveId !== undefined) app.outlineCompareActiveId = data.outlineCompareActiveId;
     if (Array.isArray(data.ragLibrary)) app.ragLibrary = data.ragLibrary;
     if (typeof data.ragMergedDoc === "string") app.ragMergedDoc = data.ragMergedDoc;
+    if (data.ragAnalysis && typeof data.ragAnalysis === "object") app.ragAnalysis = data.ragAnalysis;
     if (Array.isArray(data.massFiles)) app.massFiles = data.massFiles;
     if (typeof data.massMergedDoc === "string") app.massMergedDoc = data.massMergedDoc;
     if (data.massDomainDocs && typeof data.massDomainDocs === "object") app.massDomainDocs = data.massDomainDocs;
@@ -7672,6 +7712,7 @@
     renderRefCompareMapping();
     renderUploadedOutlines();
     renderRagLibrary();
+    renderRagAnalysis();
     els.ragMergeOutput.value = app.ragMergedDoc;
     els.ragMergeDownloadBtn.disabled = !app.ragMergedDoc;
     renderMassFiles();
@@ -18385,7 +18426,8 @@
     fileviewSummarySynthesisEn: "You are an editor for an IT release team at a fleet/contract management system (oneSCM). The following partial texts are summaries of different excerpts of the same file (generated in multiple passes for technical reasons). Merge them into ONE single, concise overall summary in English (approx. 150-300 words, factual, no bullet points, no references to 'partial texts'). Remove redundancy, do not invent anything:",
     manualImproveEnduser: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Schreibe den unten stehenden Kapiteltext aus Sicht eines ENDANWENDERS neu: flüssiger und kompakter formuliert, OHNE Floskeln, OHNE technische Deep-Dives/Implementierungsdetails - der Nutzen für den Anwender (was kann ich damit tun, was bringt es mir) steht im Fokus. Arbeite dabei, soweit inhaltlich zutreffend, die unten angegebenen Verbesserungsvorschläge aus der Qualitätsprüfung ein. Erhalte die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\"/\"[Warnung]\"/\"[Hinweis]\"/\"[Tipp]\"/\"[Verweis]\" sowie die Zwischenüberschriften \"## Retail\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" an den fachlich passenden Stellen, damit die handbuchgerechte farbliche Kennzeichnung/Icon-Darstellung erhalten bleibt. Präsens durchgängig. Gib ausschließlich den neuen Kapiteltext aus, keine Erklärungen dazu:",
     manualImproveFachtext: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Schreibe den unten stehenden Kapiteltext als PRÄZISEN FACHTEXT für erfahrene Power-User/Administratoren neu: technisch genau, mit allen relevanten Details, Feldnamen, Systemverhalten und Rahmenbedingungen - kurze, stichpunktnahe Sätze sind erlaubt. Arbeite dabei, soweit inhaltlich zutreffend, die unten angegebenen Verbesserungsvorschläge aus der Qualitätsprüfung ein. Erhalte die Tags \"[Nur PKW]\"/\"[Nur Van]\"/\"[Nur Markt]\"/\"[Warnung]\"/\"[Hinweis]\"/\"[Tipp]\"/\"[Verweis]\" sowie die Zwischenüberschriften \"## Retail\"/\"## Markt\"/\"## HQ\"/\"## Sparte\"/\"## MO\" an den fachlich passenden Stellen. Präsens durchgängig. Gib ausschließlich den neuen Kapiteltext aus, keine Erklärungen dazu:",
-    manualImproveKurzfassung: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Fasse den unten stehenden Kapiteltext als STARK KOMPRIMIERTE MANAGEMENT-ZUSAMMENFASSUNG zusammen (max. ca. ein Viertel der ursprünglichen Länge - nur die wichtigsten Kernaussagen, Entscheidungsrelevantes und Auswirkungen, keine Bedienungsdetails). Arbeite dabei, soweit inhaltlich zutreffend, die unten angegebenen Verbesserungsvorschläge aus der Qualitätsprüfung ein. Setze \"[Warnung]\"/\"[Hinweis]\" nur, wenn wirklich zentral - lasse die Pkw/Van/Markt-Scope-Tags sowie die Rollen-Zwischenüberschriften weg, da die Kurzfassung rollenübergreifend gilt. Präsens durchgängig. Gib ausschließlich die neue Kurzfassung aus, keine Erklärungen dazu:"
+    manualImproveKurzfassung: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Fasse den unten stehenden Kapiteltext als STARK KOMPRIMIERTE MANAGEMENT-ZUSAMMENFASSUNG zusammen (max. ca. ein Viertel der ursprünglichen Länge - nur die wichtigsten Kernaussagen, Entscheidungsrelevantes und Auswirkungen, keine Bedienungsdetails). Arbeite dabei, soweit inhaltlich zutreffend, die unten angegebenen Verbesserungsvorschläge aus der Qualitätsprüfung ein. Setze \"[Warnung]\"/\"[Hinweis]\" nur, wenn wirklich zentral - lasse die Pkw/Van/Markt-Scope-Tags sowie die Rollen-Zwischenüberschriften weg, da die Kurzfassung rollenübergreifend gilt. Präsens durchgängig. Gib ausschließlich die neue Kurzfassung aus, keine Erklärungen dazu:",
+    ragAnalysis: "Du bist Wissensanalyst für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Unten stehen alle aktuell in der RAG-Bibliothek gesammelten Textschnipsel (Chunks) aus verschiedenen Quellen (Jira-Tickets, Rovo-Wissens-Notizen, Tabellen, Bildbeschreibungen, Benutzerhandbuch-Text) - je Chunk mit Bezeichnung und, soweit vorhanden, zugeordneter Domäne/Kapitel. Analysiere den GESAMTEN Chunk-Bestand und gib AUSSCHLIESSLICH die folgenden vier Abschnitte aus, in genau diesem Format:\n\n### Zusammenhänge\n- (ein Stichpunkt je inhaltlichem Zusammenhang/Überlappung zwischen mehreren Chunks, auch über Kapitel-/Domänengrenzen hinweg, mit kurzer Nennung der betroffenen Chunk-Bezeichnungen)\n\n### Genauigkeit\n- (ein Stichpunkt je Chunk oder Chunk-Gruppe, deren Angaben vage, unvollständig oder mit anderen Chunks widersprüchlich sind)\n\n### Priorität\n- (ein Stichpunkt je Chunk oder Themenbereich, der aus fachlicher Sicht vorrangig für Benutzerhandbuch/EDITO, Releaseletter oder Clickanweisung aufbereitet werden sollte, mit kurzer Begründung)\n\n### Klärungsbedarf\n- (ein Stichpunkt je offener Frage/Lücke, die vor einer Verwendung der Informationen fachlich geklärt werden sollte)\n\nIst eine der vier Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den Chunks unten, erfinde nichts hinzu:"
   };
   var RAG_PROMPT_LABELS = {
     summary: "Zusammenfassung erzeugen",
@@ -18407,7 +18449,8 @@
     fileviewSummarySynthesisEn: "Dateiansicht: Zusammenfassung zusammenführen (Englisch, Batch-Modus)",
     manualImproveEnduser: "Verbesserte Fassung: Enduser-Text",
     manualImproveFachtext: "Verbesserte Fassung: Fachtext",
-    manualImproveKurzfassung: "Verbesserte Fassung: Kurzfassung"
+    manualImproveKurzfassung: "Verbesserte Fassung: Kurzfassung",
+    ragAnalysis: "RAG-Analyse: Gesamtbericht über den Chunk-Bestand"
   };
   function ragPromptFor(promptKey) {
     var override = app.ragPrompts[promptKey];
@@ -18884,6 +18927,15 @@
     var chapter = (app.outline || []).filter(function (c) { return c.title === chapterTitle; })[0];
     return chapter ? chapter.subs.map(function (s) { return s.title; }) : [];
   }
+  // "auto" (Teil 9b Punkt 6, s. ragAutoGenerateChunks) ist eine dritte
+  // Quellenart neben "generated"/"imported" - eigene Beschriftung statt
+  // faelschlich als "Generiert" (= aus einem RAG-Lauf, Schritt 2) angezeigt
+  // zu werden.
+  function ragSourceLabel(source) {
+    if (source === "imported") return "Importiert";
+    if (source === "auto") return "Automatisch";
+    return "Generiert";
+  }
   function renderRagLibrary() {
     var list = app.ragLibrary;
     els.ragLibraryEmpty.hidden = list.length > 0;
@@ -18901,7 +18953,7 @@
         '<td><select class="rag-library-subchapter-select" data-id="' + e.id + '" aria-label="Unterkapitel">' +
         ragLibraryOptionsHtml(subchapterOptionsForChapter(e.chapterTitle), e.subTitle || "", "– keine –") + "</select></td>" +
         "<td class=\"mono\">" + (e.ticketCount != null ? e.ticketCount : "&ndash;") + "</td>" +
-        "<td>" + (e.source === "imported" ? "Importiert" : "Generiert") + "</td>" +
+        "<td>" + ragSourceLabel(e.source) + "</td>" +
         "<td class=\"mono\">" + escapeHtml(e.savedAt) + "</td>" +
         '<td><button type="button" class="btn danger rag-library-delete-btn" data-id="' + e.id + '">Löschen</button></td>' +
         "</tr>";
@@ -19142,6 +19194,143 @@
     if (ok) showToast("Gespeichert", "Gesamtdokument heruntergeladen.");
   });
   renderRagLibrary();
+
+  /* ============ Teil 9b Punkt 6+7: Automatische Chunk-Erzeugung + RAG-Analyse ============
+     Baut die RAG-Bibliothek automatisiert aus ALLEN bereits an anderer Stelle
+     vorhandenen Quellen je Gliederungskapitel auf (Tickets, Rovo-Wissens-
+     Notizen, Tabellen, Bildbeschreibungen, bereits erzeugter Benutzerhandbuch-
+     Text) - heuristisches Chunking (ein Chunk je Quelle/Kapitel-Kombination,
+     KEINE Vektoreinbettung). Darauf aufbauend EIN einzelner, Claude-basierter
+     Gesamtbericht (Zusammenhaenge/Genauigkeit/Prioritaet/Klaerungsbedarf) ueber
+     den KOMPLETTEN aktuellen Chunk-Bestand - bewusst NICHT je Kapitel und NICHT
+     in EDITO Agent 1 integriert, s. Nutzerentscheidung. */
+  function rovoTableRowsToPlainText(rows) {
+    return (rows || []).map(function (row) { return row.join(" | "); }).join("\n");
+  }
+  function ragAutoChunkPush(opts) {
+    app.ragLibrary.push({
+      id: nextRagLibraryId++, kind: opts.kind, domain: "", chapterTitle: opts.chapterTitle, subTitle: opts.subTitle || "",
+      label: opts.label, text: opts.text, ticketCount: (opts.ticketCount != null ? opts.ticketCount : null),
+      source: "auto", sourceKind: opts.sourceKind, savedAt: nowLabel()
+    });
+  }
+  // Idempotent: entfernt vor dem Neuaufbau NUR zuvor automatisch erzeugte
+  // Chunks (source:"auto") - manuell gespeicherte ("generated")/importierte
+  // ("imported") Einträge bleiben unberührt (bewusst vom Nutzer kuratiert).
+  function ragAutoGenerateChunks() {
+    app.ragLibrary = app.ragLibrary.filter(function (e) { return e.source !== "auto"; });
+    var counts = { ticket: 0, handbuch: 0, rovo: 0, table: 0, image: 0 };
+    allOutlineChapterTitles().forEach(function (chapterTitle) {
+      var tickets = manualRowsForChapter(chapterTitle);
+      if (tickets.length) {
+        ragAutoChunkPush({
+          kind: "auto-tickets", chapterTitle: chapterTitle, sourceKind: "ticket", ticketCount: tickets.length,
+          label: "Tickets: " + chapterTitle, text: truncate(tickets.map(manualTicketBlock).join("\n"), 8000)
+        });
+        counts.ticket++;
+      }
+      var manualText = editoExistingManualText(chapterTitle);
+      if (manualText) {
+        ragAutoChunkPush({
+          kind: "auto-handbuch", chapterTitle: chapterTitle, sourceKind: "handbuch",
+          label: "Handbuchtext: " + chapterTitle, text: truncate(manualText, 8000)
+        });
+        counts.handbuch++;
+      }
+      editoRovoEntriesForChapter(chapterTitle).forEach(function (e) {
+        ragAutoChunkPush({
+          kind: "auto-rovo", chapterTitle: chapterTitle, subTitle: e.subchapter || "", sourceKind: "rovo",
+          label: "Rovo: " + truncate(e.chatText || e.answerText || "(ohne Titel)", 60),
+          text: truncate("Chatverlauf: " + (e.chatText || "") + "\n\nAntwort: " + (e.answerText || ""), 4000)
+        });
+        counts.rovo++;
+      });
+      editoTablesForChapter(chapterTitle).forEach(function (t) {
+        ragAutoChunkPush({
+          kind: "auto-table", chapterTitle: chapterTitle, subTitle: t.subchapter || "", sourceKind: "table",
+          label: "Tabelle " + t.tableNumber + ": " + t.sourceFile, text: truncate(rovoTableRowsToPlainText(t.rows), 4000)
+        });
+        counts.table++;
+      });
+      editoImagesForChapter(chapterTitle).forEach(function (img) {
+        if (!img.description && !img.ocrText) return;
+        ragAutoChunkPush({
+          kind: "auto-image", chapterTitle: chapterTitle, subTitle: img.subchapter || "", sourceKind: "image",
+          label: "Bild: " + (img.description || img.filename || "ohne Titel"),
+          text: truncate((img.description ? img.description + "\n\n" : "") + (img.ocrText || ""), 4000)
+        });
+        counts.image++;
+      });
+    });
+    renderRagLibrary();
+    renderAllJobSteps();
+    return counts;
+  }
+  function ragAutoSummaryHtml(counts, total) {
+    function chip(n, label) { return '<div class="chip"><b class="mono">' + n + "</b> " + label + "</div>"; }
+    return chip(counts.ticket, "Ticket-Kapitel") + chip(counts.handbuch, "Handbuch-Kapitel") +
+      chip(counts.rovo, "Rovo-Notizen") + chip(counts.table, "Tabellen") + chip(counts.image, "Bilder") +
+      chip(total, "Chunks gesamt (automatisch)");
+  }
+  els.ragAutoGenerateBtn.addEventListener("click", function () {
+    var counts = ragAutoGenerateChunks();
+    var total = counts.ticket + counts.handbuch + counts.rovo + counts.table + counts.image;
+    els.ragAutoSummary.hidden = false;
+    els.ragAutoSummary.innerHTML = ragAutoSummaryHtml(counts, total);
+    els.ragAutoStatusNote.textContent = total
+      ? total + " Chunk(s) automatisch erzeugt (Domäne/Kapitel lassen sich in Schritt 4 weiter anpassen)."
+      : "Keine Quellen mit zugeordnetem Gliederungskapitel gefunden - bitte zuerst Tickets/Rovo-Einträge/Tabellen/Bilder einem Kapitel zuordnen.";
+    addLog("RAG-Bibliothek: automatische Chunk-Erzeugung ausgeführt (" + total + " Chunk(s) aus allen Quellen).");
+    showToast(total ? "Chunks erzeugt" : "Keine Chunks", total ? total + " Chunk(s) automatisch in die Bibliothek übernommen." : "Keine passenden Quellen gefunden.", !total);
+  });
+
+  // RAG-Analyse (Teil 9b Punkt 7): EIN Claude-Call ueber den gesamten
+  // aktuellen Chunk-Bestand (app.ragLibrary) - je Chunk Bezeichnung +
+  // Domäne/Kapitel (soweit zugeordnet) + Text, zur Kuerzung bei vielen
+  // Chunks je Chunk gekappt statt den gesamten Bestand wegzulassen.
+  function ragAnalysisChunkBlock(e) {
+    var meta = [];
+    if (e.domain) meta.push("Domäne: " + e.domain);
+    if (e.chapterTitle) meta.push("Kapitel: " + e.chapterTitle + (e.subTitle ? " / " + e.subTitle : ""));
+    return "### " + e.label + (meta.length ? " (" + meta.join(", ") + ")" : "") + "\n" + truncate(e.text || "", 1200);
+  }
+  function ragAnalysisPrompt() {
+    return ragPromptFor("ragAnalysis") + "\n\nCHUNKS (" + app.ragLibrary.length + "):\n\n" +
+      truncate(app.ragLibrary.map(ragAnalysisChunkBlock).join("\n\n"), 40000);
+  }
+  function renderRagAnalysis() {
+    var has = !!(app.ragAnalysis && app.ragAnalysis.text);
+    els.ragAnalysisEmpty.hidden = has;
+    els.ragAnalysisResult.hidden = !has;
+    if (!has) return;
+    els.ragAnalysisMeta.textContent = "Erstellt am " + app.ragAnalysis.generatedAt + " aus " + app.ragAnalysis.chunkCount + " Chunk(s).";
+    els.ragAnalysisOutput.textContent = app.ragAnalysis.text;
+  }
+  els.ragAnalysisRunBtn.addEventListener("click", async function () {
+    if (!app.ragLibrary.length) { showToast("Bibliothek leer", "Bitte zuerst Chunks erzeugen (Schritt 6), speichern oder importieren (Schritt 3).", true); return; }
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    els.ragAnalysisRunBtn.disabled = true;
+    els.ragAnalysisSpinner.hidden = false;
+    els.ragAnalysisStatusNote.textContent = "Analyse wird erstellt …";
+    try {
+      var result = await sampleApi(ragAnalysisPrompt(), { modelTier: "default", cache: false });
+      app.ragAnalysis = { text: result.text || "", generatedAt: nowLabel(), chunkCount: app.ragLibrary.length };
+      renderRagAnalysis();
+      els.ragAnalysisStatusNote.textContent = "Analyse über " + app.ragLibrary.length + " Chunk(s) erstellt.";
+      addLog("RAG-Analyse: Gesamtbericht über " + app.ragLibrary.length + " Chunk(s) erstellt.");
+      showToast("Analyse erstellt", "Gesamtbericht über den Chunk-Bestand wurde erstellt.");
+    } catch (err) {
+      els.ragAnalysisStatusNote.textContent = "";
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.ragAnalysisRunBtn.disabled = false;
+      els.ragAnalysisSpinner.hidden = true;
+    }
+  });
+  renderRagAnalysis();
 
   // "Übersetzen"-Umschalter: Deutsch -> Englisch ruft Claude einmal auf und
   // cacht das Ergebnis nicht extra (das Original bleibt in

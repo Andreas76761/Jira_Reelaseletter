@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.102.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.103.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -346,6 +346,38 @@ gesamte Bibliothek unverändert als ZIP-Archiv herunterladen (eine
 fortlaufend nummeriert) – für externe Weiterverarbeitung oder Weitergabe,
 ohne die einzelnen Textschnipsel erst zu einem Gesamtdokument
 zusammenzuführen.
+
+**RAG: Automatische Chunk-Erzeugung + RAG-Analyse (Verarbeitung → 7. RAG,
+Punkte 6-7, neu, v2.103.0):** Punkt 6 füllt die RAG-Bibliothek
+(Punkte 3-5, s. o.) auf Knopfdruck automatisiert mit Textschnipseln ("Chunks")
+aus ALLEN bereits an anderer Stelle der App vorhandenen Quellen je
+Gliederungskapitel – ein Chunk je Quelle/Kapitel-Kombination (heuristisches
+Chunking, keine Vektoreinbettung): zugeordnete Jira-Tickets
+(`manualRowsForChapter`/`manualTicketBlock`, wie im Benutzerhandbuch-
+Kapitel-Generator), zugeordnete Rovo-Wissens-Notizen, zugeordnete Tabellen
+(Register Tabelle), Bildbeschreibungen zugeordneter Screenshots (Register
+Bilder/Editor) sowie bereits erzeugter Benutzerhandbuch-Kapiteltext. Domäne/
+Kapitel sind bei diesen Chunks bereits aus der Quelle vorbelegt, bleiben aber
+wie jeder Bibliothekseintrag manuell überschreibbar. Ein erneuter Lauf ist
+idempotent: er entfernt zunächst nur die zuvor automatisch erzeugten Chunks
+(eigene Kennzeichnung "Automatisch" in der Quelle-Spalte, getrennt von
+"Generiert"/"Importiert") und baut sie neu auf – manuell gespeicherte oder
+importierte Einträge bleiben davon unberührt. Punkt 7 erstellt anschließend
+EINEN einzelnen, Claude-basierten Gesamtbericht über den **kompletten
+aktuellen Chunk-Bestand** der Bibliothek (bewusst nicht je Kapitel und nicht
+in die EDITO-Agenten integriert) mit vier Abschnitten: Zusammenhänge zwischen
+den Chunks (auch über Kapitel-/Domänengrenzen hinweg), Genauigkeit
+(vage/widersprüchliche Angaben), Priorität (was vorrangig für Benutzerhandbuch/
+EDITO, Releaseletter oder Clickanweisung aufbereitet werden sollte) und
+Klärungsbedarf (offene Fachfragen) – Ergebnis samt Erstellungsdatum und
+Chunk-Anzahl sitzungsübergreifend gesichert (`app.ragAnalysis`), Prompt unter
+Einstellungen → RAG-Prompts editierbar ("RAG-Analyse: Gesamtbericht über den
+Chunk-Bestand"). Releaseletter und Clickanweisung bleiben dabei bewusst
+außen vor: beide werden vollständig deterministisch direkt aus den
+Ticket-Rohdaten erzeugt (`renderMarkdown()`), ohne eigenen KI-Prompt-Schritt
+– eine RAG-Anbindung wäre dort kein kleiner Zusatz, sondern müsste diesen
+Erzeugungsweg grundlegend umbauen, und bleibt daher einem möglichen späteren
+Ausbauschritt vorbehalten.
 
 - **Dashboard** – zusammengeführter, aktueller Stand aller importierten
   Tickets: Status-Kacheln, ein **Typ-Schnellfilter** (Chips je Tickettyp,
