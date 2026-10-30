@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.105.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.106.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1893,6 +1893,64 @@ RAG-Kontext anreichern").
   Kapiteltext wird daher auch bei manuell bearbeitetem oder von Hand
   geschriebenem Text ersetzt, unabhängig davon, ob sie von der KI oder
   von Hand eingefügt wurde.
+
+- **Unterkapitel** (neu, v2.106.0) – eigener Bereich, baut bewusst auf
+  EDITO auf (teilt sich dieselbe Rolle/Sparte-Auswahl und denselben
+  Quellen-Bestand, `app.editoVersionKey` geteilter Zustand, an einer
+  Stelle geändert überall aktuell), arbeitet aber auf UNTERKAPITEL-Ebene
+  mit einem eigenen, iterativen Workflow statt nur je ganzem Kapitel.
+  Nach Kapitel-/Unterkapitel-Auswahl zeigt die **Quellen-Übersicht**, was
+  diesem Unterkapitel bereits zugeordnet ist: zugeordnete Jira-Tickets
+  (nur auf Kapitel-Ebene möglich, da Tickets keine Unterkapitel-Zuordnung
+  kennen – im UI klar ausgewiesen), sowie RAG-Bibliothek-Einträge,
+  Rovo-Wissens-Notizen, Bilder und Tabellen, die zusätzlich zur
+  Kapitel- auch mit einer Unterkapitel-Zuordnung versehen wurden (`.subTitle`
+  bzw. `.subchapter`-Feld, dieselben Dropdowns wie in den jeweiligen
+  Registern). Darunter ein **Eingabe-Formular** für eigene Vorgaben je
+  Unterkapitel: Kurzbeschreibung, relevante Stichwörter, explizit
+  auszuschließende Stichwörter/Inhalte sowie Formatregeln. Ein Klick auf
+  **"Bearbeiten"** erzeugt per Claude-Aufruf eine neue Fassung dieses
+  EINEN Unterkapitels aus den obigen Vorgaben + Quellen (Prompt editierbar
+  unter Einstellungen → RAG-Prompts, "Unterkapitel-Werkstatt") und
+  vergleicht sie automatisch mit der vorherigen eigenen Fassung – ein
+  selbst geschriebener, leichtgewichtiger zeilenbasierter Diff (LCS-Algorithmus,
+  kein externes Diff-Utility im Code vorhanden) zeigt hinzugefügte/entfernte
+  Zeilen farblich markiert an. Vorgaben anpassen und erneut auf
+  "Bearbeiten" klicken wiederholt den Zyklus beliebig oft (Loop) – jede
+  vorherige Fassung bleibt im Versionsverlauf des Unterkapitels erhalten.
+  Ein **Freigabe-Status** (Entwurf / Zur Prüfung / Genehmigt) lässt sich
+  je Unterkapitel UND je Rolle/Sparte-Version UNABHÄNGIG setzen (eigener
+  Eintrag pro Rolle/Sparte-Version, anders als bei den EDITO-Kapiteln,
+  wo nur die zuletzt erzeugte Fassung gehalten wird) – eine Übersichtstabelle
+  listet alle bereits erzeugten Unterkapitel mit Status und erlaubt direktes
+  Zurückspringen. **Export**: je Unterkapitel einzeln als Word/PDF, sowie
+  "Alle genehmigten Unterkapitel zusammenführen" als Gesamtdokument für die
+  aktuell gewählte Rolle/Sparte-Version (Word **und** PDF, Seitenumbruch
+  zwischen den Unterkapiteln, Sortierung nach Gliederungsreihenfolge) – beide
+  Export-Wege mit einem Schalter **"Bilder einbetten"**: ausgeschaltet werden
+  `[Bild]`-Platzhalterzeilen vor dem Export entfernt und keine Bilddateien
+  eingebettet (Tabellen bleiben davon unberührt), für schlanke Text-Only-Fassungen.
+  **Professionelles Druckerzeugnis** (neu, v2.106.0, gilt für BEIDE Gesamtdokument-
+  Exporte – EDITO-Benutzerhandbuch UND Unterkapitel-Werkstatt, jeweils Word **und**
+  PDF): ein **Deckblatt** (Titel, Rolle/Sparte-Version als Untertitel, Erstellungsdatum,
+  zentriert) wird jetzt automatisch VOR das Inhaltsverzeichnis gesetzt. Jede Seite
+  erhält eine **Kopf-/Fußzeile**: in der PDF-Fassung ein kleiner Dokumenttitel oben
+  links und "Seite X von Y" unten rechts (nachträglich über alle bereits gerenderten
+  Seiten gezeichnet, da die Gesamtseitenzahl erst nach dem vollständigen Rendern
+  feststeht); in der Word-Fassung ein natives **Seitenzahl-Feld** (`PAGE`/`NUMPAGES`,
+  zentriert, über eine eigene `footer1.xml` referenziert) – Word berechnet den
+  angezeigten Wert selbst beim Rendern/Drucken, genau wie bei jedem regulären
+  Word-Dokument. Zusätzlich bekommt die PDF-Fassung echte, im PDF-Reader anklickbare
+  **Lesezeichen** zum Inhaltsverzeichnis (jsPDF-Outline-API, `doc.outline.add()`,
+  keine Simulation) – ein Klick auf ein Kapitel/Unterkapitel im Lesezeichen-Panel
+  springt direkt zur passenden Seite. Alle drei Merkmale sind standardmäßig aktiv,
+  aber über optionale Parameter der jeweiligen Builder-Funktionen (`buildMergedEditoPdfDoc`/
+  `buildMergedEditoDocxBlob`/`buildSubchapterMergedPdfDoc`/`buildSubchapterMergedDocxBlob`)
+  einzeln abschaltbar. Word-Fußzeile und Deckblatt sind bewusst über eigene,
+  separate Builder-Funktionen umgesetzt (nicht in der für Einzelkapitel/-unterkapitel
+  gemeinsam genutzten Export-Grundfunktion) – der Einzelkapitel-/Einzelunterkapitel-Export
+  bleibt dadurch unverändert.
+
 - **Bilder** – Tabelle **und** Kachel-Galerie aller in der Sitzung
   erzeugten Prozessdiagramme sowie eigener Bild-Uploads, jeweils mit
   Datum. Beschreibungen lassen sich für beide Bildarten direkt in der

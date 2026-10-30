@@ -16,6 +16,7 @@ const BUILD_HTML = path.join(__dirname, "..", "ticket_cockpit.build.html");
 const { JSDOM, VirtualConsole } = require("jsdom");
 const JSZipNode = require("jszip");
 const { jsPDF } = require("jspdf");
+const { PDFParse } = require("pdf-parse");
 
 const fragment = fs.readFileSync(BUILD_HTML, "utf-8");
 const full = `<!doctype html><html><head><meta charset="utf-8"></head><body>${fragment}</body></html>`;
@@ -173,6 +174,11 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   const docxZip = await JSZipNode.loadAsync(Buffer.from(await savedFiles[savedFiles.length - 1].data.arrayBuffer()));
   const docxXml = await docxZip.file("word/document.xml").async("text");
   check("Word-Gesamtdokument enthält ein Inhaltsverzeichnis mit beiden Kapiteln", docxXml.includes("Inhaltsverzeichnis") && docxXml.includes("Kapitel 4") && docxXml.includes("Kapitel 7"));
+  check("Word-Gesamtdokument enthält ein Deckblatt VOR dem Inhaltsverzeichnis", docxXml.includes("Benutzerhandbuch") && docxXml.indexOf("Benutzerhandbuch") < docxXml.indexOf("Inhaltsverzeichnis"));
+  check("Word-Gesamtdokument referenziert eine Fußzeile (footerReference)", docxXml.includes("w:footerReference"));
+  const footerXml = await docxZip.file("word/footer1.xml").async("text");
+  check("Word-Fußzeile enthält natives PAGE-Feld", footerXml.includes("PAGE") && footerXml.includes("NUMPAGES"));
+  check("Word-Fußzeile nennt den Dokumenttitel", footerXml.includes("Benutzerhandbuch"));
 
   const savedBeforePdf = savedFiles.length;
   fire(doc.getElementById("edito-merge-download-pdf-btn"), "click");
@@ -181,6 +187,12 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   check("PDF-Dateiname endet auf .pdf", savedFiles[savedFiles.length - 1].filename.endsWith(".pdf"));
   const pdfBuf = await blobToBuffer(savedFiles[savedFiles.length - 1].data);
   check("PDF beginnt mit %PDF-Signatur", pdfBuf.slice(0, 4).toString() === "%PDF");
+  const pdfParsed = await new PDFParse({ data: pdfBuf }).getText();
+  check("PDF-Deckblatt enthält den Dokumenttitel", pdfParsed.text.includes("Benutzerhandbuch"));
+  check("PDF-Fußzeile nennt Seite X von Y auf mind. einer Seite", /Seite \d+ von \d+/.test(pdfParsed.text));
+  const pdfRaw = pdfBuf.toString("latin1");
+  check("PDF enthält Lesezeichen (Outlines)", pdfRaw.includes("/Outlines"));
+  check("PDF-Lesezeichen nennen beide Kapitel", pdfRaw.includes("Kapitel 4") && pdfRaw.includes("Kapitel 7"));
 
   // ===================== Agent 3: Inhaltsverzeichnis jetzt über 2 Kapitel =====================
   fire(doc.getElementById("edito-agent3-btn"), "click");

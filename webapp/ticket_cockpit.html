@@ -695,6 +695,7 @@
       <li><button class="nav-item" data-view="editor" type="button">Screens-Import</button></li>
       <li><button class="nav-item" data-view="bildband" type="button">Bildband</button></li>
       <li><button class="nav-item" data-view="edito" type="button">Editor</button></li>
+      <li><button class="nav-item" data-view="unterkapitel" type="button">Unterkapitel</button></li>
       <li><button class="nav-item" data-view="bilder" type="button">Bilder</button></li>
       <li><button class="nav-item" data-view="tabellen" type="button">Tabelle</button></li>
       <li class="nav-sep">Output</li>
@@ -2564,6 +2565,110 @@
           <div id="edito-agent5-result" hidden>
             <p class="section-label" style="margin-top:0;">Agent 5: Vollständigkeit &amp; Abdeckung</p>
             <div class="panel gen-preview" id="edito-agent5-output" style="padding:12px 14px; margin-top:6px; max-height:420px; overflow:auto; white-space:pre-wrap;"></div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= Unterkapitel ================= -->
+      <section class="view-panel" data-view-panel="unterkapitel" hidden>
+        <div class="view-head"><h2>Unterkapitel</h2><p class="desc">Baut auf dem Register "Editor" (EDITO) auf &ndash; dieselbe Rolle/Sparte-Auswahl und dieselben Quellen, aber auf UNTERKAPITEL-Ebene: eigene Vorgaben je Unterkapitel (Kurzbeschreibung, Stichwörter, auszuschließende Inhalte, Formatregeln), iterative Erzeugung mit automatischem Vergleich zur vorherigen eigenen Fassung, Freigabe-Status je Rolle/Sparte-Version sowie Export einzeln oder als Gesamtdokument aller genehmigten Unterkapitel &ndash; jeweils mit oder ohne eingebettete Bilder.</p></div>
+
+        <section>
+          <p class="section-label">1. Rolle/Sparte-Auswahl</p>
+          <div class="callout">Geteilter Zustand mit dem Register "Editor" (EDITO) &ndash; an einer Stelle geändert, überall aktuell.</div>
+          <label for="subchapter-version-select" style="font-weight:500;">Rolle/Sparte</label>
+          <select id="subchapter-version-select" aria-label="Rolle/Sparte"></select>
+        </section>
+
+        <section>
+          <p class="section-label">2. Kapitel &amp; Unterkapitel wählen</p>
+          <label for="subchapter-chapter-select">Kapitel</label>
+          <select id="subchapter-chapter-select" aria-label="Kapitel" disabled><option value="">– Rolle/Sparte zuerst wählen –</option></select>
+          <label for="subchapter-select">Unterkapitel</label>
+          <select id="subchapter-select" aria-label="Unterkapitel" disabled><option value="">– Kapitel zuerst wählen –</option></select>
+        </section>
+
+        <p class="empty-hint" id="subchapter-detail-empty">Bitte Rolle/Sparte, Kapitel und Unterkapitel wählen.</p>
+        <div id="subchapter-detail-section" hidden>
+          <section>
+            <p class="section-label">3. Quellen-Übersicht</p>
+            <p class="step-note">Tickets sind nur auf Kapitel-Ebene zugeordnet (keine Unterkapitel-Zuordnung möglich). RAG-Bibliothek, Rovo-Notizen, Bilder und Tabellen werden, soweit dort dem Unterkapitel zugeordnet, gefiltert gezeigt.</p>
+            <div class="stat-line" id="subchapter-sources-output"></div>
+            <p class="section-label" style="margin-top:14px;">Aktueller Entwurf (letzte erzeugte Fassung)</p>
+            <div class="panel gen-preview" id="subchapter-current-draft-output" style="padding:12px 14px; max-height:260px; overflow:auto; white-space:pre-wrap;"></div>
+          </section>
+
+          <section>
+            <p class="section-label">4. Vorgaben für dieses Unterkapitel</p>
+            <label for="subchapter-spec-kurzbeschreibung">Kurzbeschreibung</label>
+            <textarea id="subchapter-spec-kurzbeschreibung" rows="3" placeholder="Worum geht es in diesem Unterkapitel?"></textarea>
+            <label for="subchapter-spec-keywords">Relevante Stichwörter</label>
+            <textarea id="subchapter-spec-keywords" rows="2" placeholder="z. B. Vertragsänderung, Kündigung, Fristen"></textarea>
+            <label for="subchapter-spec-exclude">Nicht nennen (Stichwörter/Inhalte)</label>
+            <textarea id="subchapter-spec-exclude" rows="2" placeholder="z. B. interne Prozesse, technische Feldnamen"></textarea>
+            <label for="subchapter-spec-format">Formatregeln</label>
+            <textarea id="subchapter-spec-format" rows="2" placeholder="z. B. max. 1 Seite, nur Stichpunkte, Präsens"></textarea>
+            <div class="controls" style="margin-top:10px;">
+              <button class="btn primary" id="subchapter-edit-btn" type="button">
+                <span class="btn-spinner" id="subchapter-edit-spinner" hidden></span>
+                Bearbeiten
+              </button>
+            </div>
+            <p class="step-note">Jeder Klick erzeugt eine neue Fassung auf Basis der obigen Vorgaben + Quellen und vergleicht sie mit der vorherigen eigenen Fassung (s. u.) &ndash; Vorgaben anpassen und erneut klicken, um iterativ zu verfeinern (Loop).</p>
+          </section>
+
+          <section>
+            <p class="section-label">5. Vergleich zur vorherigen Fassung</p>
+            <div id="subchapter-diff-result" hidden>
+              <p class="step-note" id="subchapter-diff-meta"></p>
+              <div class="panel" id="subchapter-diff-output" style="padding:12px 14px; max-height:360px; overflow:auto; font-family:monospace; font-size:13px;"></div>
+            </div>
+            <p class="step-note" id="subchapter-diff-empty-note">Noch kein Vergleich möglich (noch keine vorherige Fassung).</p>
+          </section>
+
+          <section>
+            <p class="section-label">6. Freigabe-Status (je Rolle/Sparte unabhängig)</p>
+            <select id="subchapter-status-select" aria-label="Freigabe-Status" disabled></select>
+            <p class="step-note" id="subchapter-status-note"></p>
+          </section>
+
+          <section>
+            <p class="section-label">7. Export (dieses Unterkapitel)</p>
+            <div class="checkbox-row"><input type="checkbox" id="subchapter-export-images-cb" checked><label for="subchapter-export-images-cb" style="font-weight:500;">Bilder einbetten</label></div>
+            <div class="controls">
+              <button class="btn ghost" id="subchapter-export-docx-btn" type="button" disabled>Als Word</button>
+              <button class="btn ghost" id="subchapter-export-pdf-btn" type="button" disabled>Als PDF</button>
+            </div>
+          </section>
+        </div>
+
+        <section>
+          <p class="section-label">8. Übersicht aller erzeugten Unterkapitel</p>
+          <div class="empty-hint" id="subchapter-overview-empty">Noch keine Unterkapitel erzeugt.</div>
+          <div class="table-wrap" id="subchapter-overview-wrap" hidden>
+            <table class="simple-table" id="subchapter-overview-table">
+              <thead><tr><th>Kapitel</th><th>Unterkapitel</th><th>Rolle/Sparte</th><th>Status</th><th>Erzeugt am</th><th></th></tr></thead>
+              <tbody id="subchapter-overview-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">9. Gesamtdokument der genehmigten Unterkapitel (aktuelle Rolle/Sparte)</p>
+          <p class="step-note" id="subchapter-merge-count-note"></p>
+          <div class="checkbox-row"><input type="checkbox" id="subchapter-merge-images-cb" checked><label for="subchapter-merge-images-cb" style="font-weight:500;">Bilder einbetten</label></div>
+          <div class="controls">
+            <button class="btn primary" id="subchapter-merge-btn" type="button">
+              <span class="btn-spinner" id="subchapter-merge-spinner" hidden></span>
+              Alle genehmigten Unterkapitel zusammenführen
+            </button>
+          </div>
+          <p class="step-note" id="subchapter-merge-status-note"></p>
+          <div id="subchapter-merge-result" hidden>
+            <div class="controls">
+              <button class="btn ghost" id="subchapter-merge-download-docx-btn" type="button">Als Word herunterladen</button>
+              <button class="btn ghost" id="subchapter-merge-download-pdf-btn" type="button">Als PDF herunterladen</button>
+            </div>
           </div>
         </section>
       </section>
@@ -5275,7 +5380,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.105.0";
+  var APP_VERSION = "2.106.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6871,6 +6976,17 @@
     "edito-agent3-btn", "edito-agent3-spinner", "edito-agent3-status-note", "edito-agent3-result", "edito-agent3-output",
     "edito-agent4-btn", "edito-agent4-spinner", "edito-agent4-status-note", "edito-agent4-result", "edito-agent4-output",
     "edito-agent5-btn", "edito-agent5-spinner", "edito-agent5-status-note", "edito-agent5-result", "edito-agent5-output",
+    "subchapter-version-select", "subchapter-chapter-select", "subchapter-select",
+    "subchapter-detail-empty", "subchapter-detail-section",
+    "subchapter-sources-output", "subchapter-current-draft-output",
+    "subchapter-spec-kurzbeschreibung", "subchapter-spec-keywords", "subchapter-spec-exclude", "subchapter-spec-format",
+    "subchapter-edit-btn", "subchapter-edit-spinner",
+    "subchapter-diff-result", "subchapter-diff-meta", "subchapter-diff-output", "subchapter-diff-empty-note",
+    "subchapter-status-select", "subchapter-status-note",
+    "subchapter-export-images-cb", "subchapter-export-docx-btn", "subchapter-export-pdf-btn",
+    "subchapter-overview-empty", "subchapter-overview-wrap", "subchapter-overview-tbody",
+    "subchapter-merge-count-note", "subchapter-merge-images-cb", "subchapter-merge-btn", "subchapter-merge-spinner",
+    "subchapter-merge-status-note", "subchapter-merge-result", "subchapter-merge-download-docx-btn", "subchapter-merge-download-pdf-btn",
     "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
     "modal-overlay", "modal-key", "modal-title", "modal-fields", "modal-desc-wrap", "modal-desc",
@@ -6924,6 +7040,16 @@
     // da "neue Fassung" bewusst parallel zum bestehenden Stand existiert.
     editoVersionKey: "",
     editoChapters: {},
+    // Unterkapitel-Werkstatt (eigener Bereich, baut auf EDITO auf - teilt
+    // sich editoVersionKey/app.outline/app.editoChapters als Quellen,
+    // arbeitet aber auf UNTERKAPITEL-Ebene mit eigenem Freigabe-Workflow).
+    // Schluessel = subchapterKey(Kapitel, Unterkapitel, Version) - JE
+    // Rolle/Sparte-Version ein EIGENER Eintrag (nicht wie editoChapters nur
+    // "letzte erzeugte Version"), damit der Freigabe-Status wirklich je
+    // Rolle unabhaengig gesetzt werden kann. history haelt die vorherigen
+    // Fassungen (aelteste zuerst) fuer den Vergleich "neue vs. vorherige
+    // Fassung" bei jedem erneuten Klick auf "Bearbeiten" (Loop).
+    subchapterDrafts: {},
     tickets: [],
     view: { bucket: "all", domain: "", label: "", query: "", issueType: "", excludeTypes: {}, sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
@@ -7444,8 +7570,10 @@
     app.rovoTables = [];
     app.editoVersionKey = "";
     app.editoChapters = {};
+    app.subchapterDrafts = {};
     editoSelectedChapters = {};
     editoResetMergedDocument();
+    renderSubchapterPanel();
     massSelectedIds = {};
     renderMassFiles();
     renderMassTicketSourceWrap();
@@ -7543,8 +7671,10 @@
     app.rovoTables = [];
     app.editoVersionKey = "";
     app.editoChapters = {};
+    app.subchapterDrafts = {};
     editoSelectedChapters = {};
     editoResetMergedDocument();
+    renderSubchapterPanel();
     massSelectedIds = {};
     renderMassFiles();
     renderMassTicketSourceWrap();
@@ -7613,6 +7743,7 @@
       rovoTables: app.rovoTables,
       editoVersionKey: app.editoVersionKey,
       editoChapters: app.editoChapters,
+      subchapterDrafts: app.subchapterDrafts,
       selectedKeys: app.selectedKeys,
       savedLists: app.savedLists,
       nextSavedListId: app.nextSavedListId,
@@ -7681,6 +7812,7 @@
     app.rovoTables = data.rovoTables || [];
     if (typeof data.editoVersionKey === "string") app.editoVersionKey = data.editoVersionKey;
     if (data.editoChapters && typeof data.editoChapters === "object") app.editoChapters = data.editoChapters;
+    if (data.subchapterDrafts && typeof data.subchapterDrafts === "object") app.subchapterDrafts = data.subchapterDrafts;
     app.selectedKeys = data.selectedKeys || {};
     app.savedLists = data.savedLists || [];
     app.nextSavedListId = data.nextSavedListId || 1;
@@ -18590,7 +18722,8 @@
     manualImproveKurzfassung: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Fasse den unten stehenden Kapiteltext als STARK KOMPRIMIERTE MANAGEMENT-ZUSAMMENFASSUNG zusammen (max. ca. ein Viertel der ursprünglichen Länge - nur die wichtigsten Kernaussagen, Entscheidungsrelevantes und Auswirkungen, keine Bedienungsdetails). Arbeite dabei, soweit inhaltlich zutreffend, die unten angegebenen Verbesserungsvorschläge aus der Qualitätsprüfung ein. Setze \"[Warnung]\"/\"[Hinweis]\" nur, wenn wirklich zentral - lasse die Pkw/Van/Markt-Scope-Tags sowie die Rollen-Zwischenüberschriften weg, da die Kurzfassung rollenübergreifend gilt. Präsens durchgängig. Gib ausschließlich die neue Kurzfassung aus, keine Erklärungen dazu:",
     ragAnalysis: "Du bist Wissensanalyst für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Unten stehen alle aktuell in der RAG-Bibliothek gesammelten Textschnipsel (Chunks) aus verschiedenen Quellen (Jira-Tickets, Rovo-Wissens-Notizen, Tabellen, Bildbeschreibungen, Benutzerhandbuch-Text) - je Chunk mit Bezeichnung und, soweit vorhanden, zugeordneter Domäne/Kapitel. Analysiere den GESAMTEN Chunk-Bestand und gib AUSSCHLIESSLICH die folgenden vier Abschnitte aus, in genau diesem Format:\n\n### Zusammenhänge\n- (ein Stichpunkt je inhaltlichem Zusammenhang/Überlappung zwischen mehreren Chunks, auch über Kapitel-/Domänengrenzen hinweg, mit kurzer Nennung der betroffenen Chunk-Bezeichnungen)\n\n### Genauigkeit\n- (ein Stichpunkt je Chunk oder Chunk-Gruppe, deren Angaben vage, unvollständig oder mit anderen Chunks widersprüchlich sind)\n\n### Priorität\n- (ein Stichpunkt je Chunk oder Themenbereich, der aus fachlicher Sicht vorrangig für Benutzerhandbuch/EDITO, Releaseletter oder Clickanweisung aufbereitet werden sollte, mit kurzer Begründung)\n\n### Klärungsbedarf\n- (ein Stichpunkt je offener Frage/Lücke, die vor einer Verwendung der Informationen fachlich geklärt werden sollte)\n\nIst eine der vier Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den Chunks unten, erfinde nichts hinzu:",
     releaseletterRagEnrich: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Unten steht ein bereits fertiger, deterministisch aus den Ticket-Rohdaten erzeugter Releaseletter-Entwurf, danach zusätzliche, thematisch passende Textschnipsel aus der RAG-Bibliothek (Jira-Tickets, Rovo-Wissens-Notizen, Tabellen, Bildbeschreibungen, Benutzerhandbuch-Text zu denselben Gliederungskapiteln). Erstelle eine ZUSÄTZLICHE, inhaltlich angereicherte Fassung des Releaseletters auf Deutsch, DURCHGÄNGIG IM PRÄSENS: ergänze, wo fachlich sinnvoll, kurze zusätzliche Hintergrundinformationen aus der RAG-Bibliothek (z. B. Zusammenhänge zu anderen Funktionen, Voraussetzungen, nützliche Hinweise), OHNE bereits vorhandene Aussagen des Entwurfs zu entfernen oder ihnen zu widersprechen. Nutze ausschließlich Informationen aus dem Entwurf und den Quellen unten, erfinde nichts hinzu - fehlen passende Quellen, gib den Entwurf nahezu unverändert zurück statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text. Gib ausschließlich den neuen Text aus, keine Erklärungen dazu:",
-    clickanweisungRagEnrich: "Du bist Technischer Redakteur für die Klickanweisung (Quick Reference) eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten steht ein bereits fertiger, deterministisch aus den Ticket-Rohdaten erzeugter Klickanweisungs-Entwurf (Schritt-für-Schritt-Anleitung), danach zusätzliche, thematisch passende Textschnipsel aus der RAG-Bibliothek. Erstelle eine ZUSÄTZLICHE, ergänzte Fassung: füge, wo fachlich sinnvoll, zusätzliche Klickschritte oder Hinweise aus der RAG-Bibliothek hinzu (z. B. fehlende Zwischenschritte, Voraussetzungen, Folgeschritte), OHNE die vorhandenen Schritte zu entfernen oder umzusortieren. Nutze ausschließlich Informationen aus dem Entwurf und den Quellen unten, erfinde nichts hinzu - fehlen passende Quellen, gib den Entwurf nahezu unverändert zurück statt zu spekulieren. Gib ausschließlich den neuen Text aus, keine Erklärungen dazu:"
+    clickanweisungRagEnrich: "Du bist Technischer Redakteur für die Klickanweisung (Quick Reference) eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten steht ein bereits fertiger, deterministisch aus den Ticket-Rohdaten erzeugter Klickanweisungs-Entwurf (Schritt-für-Schritt-Anleitung), danach zusätzliche, thematisch passende Textschnipsel aus der RAG-Bibliothek. Erstelle eine ZUSÄTZLICHE, ergänzte Fassung: füge, wo fachlich sinnvoll, zusätzliche Klickschritte oder Hinweise aus der RAG-Bibliothek hinzu (z. B. fehlende Zwischenschritte, Voraussetzungen, Folgeschritte), OHNE die vorhandenen Schritte zu entfernen oder umzusortieren. Nutze ausschließlich Informationen aus dem Entwurf und den Quellen unten, erfinde nichts hinzu - fehlen passende Quellen, gib den Entwurf nahezu unverändert zurück statt zu spekulieren. Gib ausschließlich den neuen Text aus, keine Erklärungen dazu:",
+    subchapterDraft: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Erstelle oder aktualisiere die Fassung des unten genannten EINEN Unterkapitels für die angegebene Zielversion (Rolle/Sparte), DURCHGÄNGIG IM PRÄSENS, im Stil eines professionellen Softwarehandbuchs (zusammenhängende Absätze, keine reine Aufzählung, sofern die Formatregeln unten nichts anderes vorgeben). Halte dich STRENG an die vom Nutzer vorgegebene Kurzbeschreibung, die relevanten Stichwörter, die auszuschließenden Stichwörter/Inhalte (diese NIEMALS erwähnen, auch nicht indirekt) sowie die Formatregeln. Füge an inhaltlich passenden Stellen eine eigene Zeile \"[Bild]\" als Bild-Platzhalter ein, wenn ein zugeordneter Screenshot (s. u.) dort sinnvoll ist - nie mehr [Bild]-Platzhalter als zugeordnete Screenshots vorhanden sind. Füge ebenso eine eigene Zeile \"[Tabelle]\" ein, wenn eine zugeordnete Tabelle dort sinnvoll ist - nie mehr [Tabelle]-Platzhalter als zugeordnete Tabellen vorhanden sind. Nutze AUSSCHLIESSLICH Informationen aus den Quellen unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Widersprechen sich Quellen inhaltlich, hat die Rovo-Knowledge-Quelle (direkt aus dem Rovo-Quellsystem) Vorrang vor den anderen Quellen. Keine Ticket-Schlüssel/-Referenzen im Text. Gib ausschließlich den neuen Unterkapiteltext aus, keine Erklärungen dazu:"
   };
   var RAG_PROMPT_LABELS = {
     summary: "Zusammenfassung erzeugen",
@@ -18617,7 +18750,8 @@
     manualImproveKurzfassung: "Verbesserte Fassung: Kurzfassung",
     ragAnalysis: "RAG-Analyse: Gesamtbericht über den Chunk-Bestand",
     releaseletterRagEnrich: "Releaseletter: Mit RAG-Kontext anreichern",
-    clickanweisungRagEnrich: "Clickanweisung: Mit RAG-Kontext anreichern"
+    clickanweisungRagEnrich: "Clickanweisung: Mit RAG-Kontext anreichern",
+    subchapterDraft: "Unterkapitel-Werkstatt: Unterkapitel erzeugen/aktualisieren"
   };
   function ragPromptFor(promptKey) {
     var override = app.ragPrompts[promptKey];
@@ -21877,8 +22011,12 @@
   // - gemeinsam von DOCX- und PDF-Export genutzt, damit beide dieselbe
   // Reihenfolge/Nummerierung (Abbildung 1, 2, ...) verwenden.
   var MANUAL_IMAGE_TARGET_WIDTH_EMU = 5040000; // 140mm (36000 EMU/mm)
-  async function manualPrepareBildbandMedia(chapterTitle) {
-    var screens = bildbandScreensForChapter(chapterTitle);
+  // Aus einer BEREITS GEFILTERTEN Screen-Liste die fuer DOCX/PDF noetigen
+  // Bildmasse ermitteln - herausgeloest aus manualPrepareBildbandMedia(),
+  // damit auch die Unterkapitel-Werkstatt (feinere Filterung nach
+  // .subchapter, s. subchapterImagesFor) dieselbe Logik ohne Duplikation
+  // nutzen kann.
+  async function manualPrepareMediaForScreens(screens) {
     // Alle Bildmasse PARALLEL decodieren statt sequenziell - sonst summiert
     // sich der bis zu 2s lange Timeout-Fallback von loadImageNaturalSize()
     // je Bild (z. B. 10 Screens => bis zu 20s statt ~2s Gesamtwartezeit).
@@ -21890,6 +22028,9 @@
       var heightEmu = Math.round(widthEmu * (naturalH / naturalW));
       return { num: i + 1, rId: "rIdBild" + (i + 1), screen: s, ext: manualImageExtFromDataUrl(s.dataUrl), widthEmu: widthEmu, heightEmu: heightEmu };
     });
+  }
+  function manualPrepareBildbandMedia(chapterTitle) {
+    return manualPrepareMediaForScreens(bildbandScreensForChapter(chapterTitle));
   }
   function manualImageDrawingParagraphXml(m) {
     var caption = m.screen.description || m.screen.sourceFile || "";
@@ -22002,6 +22143,75 @@
     zip.file("word/document.xml", manualDocumentWrapperXml(bodyXml));
     return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
   }
+  function manualDocumentWrapperXmlWithFooter(bodyXml) {
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      "<w:body>" + bodyXml + '<w:sectPr><w:footerReference w:type="default" r:id="rIdFooter1"/><w:pgSz w:w="11906" w:h="16838"/></w:sectPr></w:body></w:document>';
+  }
+  function manualFooterRunXml(text) {
+    return '<w:r><w:rPr><w:sz w:val="16"/><w:color w:val="808080"/></w:rPr>' + text + "</w:r>";
+  }
+  // Natives Word-Seitenzahl-Feld (PAGE/NUMPAGES) - Word berechnet den
+  // angezeigten Wert selbst beim Rendern/Drucken (layoutabhaengig, daher
+  // anders als bei der PDF-Fassung nicht von uns vorab berechenbar, s.
+  // Kommentar bei editoMergedTocBodyXml) - "1"/"1" sind nur Platzhalter-
+  // Fallbacks, die Word beim Anzeigen sofort durch die echten Werte ersetzt.
+  function manualFooterXml(footerTitle) {
+    return '<w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+      '<w:p><w:pPr><w:jc w:val="center"/></w:pPr>' +
+      (footerTitle ? manualFooterRunXml('<w:t xml:space="preserve">' + xmlEsc(footerTitle) + " – Seite </w:t>") : manualFooterRunXml('<w:t xml:space="preserve">Seite </w:t>')) +
+      manualFooterRunXml('<w:fldChar w:fldCharType="begin"/>') +
+      manualFooterRunXml('<w:instrText xml:space="preserve"> PAGE </w:instrText>') +
+      manualFooterRunXml('<w:fldChar w:fldCharType="separate"/>') +
+      manualFooterRunXml("<w:t>1</w:t>") +
+      manualFooterRunXml('<w:fldChar w:fldCharType="end"/>') +
+      manualFooterRunXml('<w:t xml:space="preserve"> von </w:t>') +
+      manualFooterRunXml('<w:fldChar w:fldCharType="begin"/>') +
+      manualFooterRunXml('<w:instrText xml:space="preserve"> NUMPAGES </w:instrText>') +
+      manualFooterRunXml('<w:fldChar w:fldCharType="separate"/>') +
+      manualFooterRunXml("<w:t>1</w:t>") +
+      manualFooterRunXml('<w:fldChar w:fldCharType="end"/>') +
+      "</w:p></w:ftr>";
+  }
+  // Wie buildDocxBlobFromBodyAndMedia, aber zusaetzlich mit einer echten
+  // Word-Fusszeile (natives Seitenzahl-Feld) - bewusst als EIGENE Funktion
+  // statt buildDocxBlobFromBodyAndMedia selbst zu aendern, damit der
+  // bestehende Einzelkapitel-/Einzelunterkapitel-Export (und dessen
+  // Tests) unberuehrt bleiben. Nur fuer die beiden Gesamtdokument-Builder
+  // (EDITO/Unterkapitel) genutzt.
+  async function buildDocxBlobWithFooter(bodyXml, media, footerTitle) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek konnte nicht geladen werden.");
+    var zip = new JSZip();
+    zip.file("[Content_Types].xml",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Default Extension="png" ContentType="image/png"/>' +
+      '<Default Extension="jpg" ContentType="image/jpeg"/>' +
+      '<Default Extension="gif" ContentType="image/gif"/>' +
+      '<Default Extension="bmp" ContentType="image/bmp"/>' +
+      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+      '<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>' +
+      "</Types>");
+    zip.file("_rels/.rels",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+      "</Relationships>");
+    zip.file("word/_rels/document.xml.rels",
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rIdFooter1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>' +
+      media.map(function (m) { return '<Relationship Id="' + m.rId + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/bild' + m.num + "." + m.ext + '"/>'; }).join("") +
+      "</Relationships>");
+    media.forEach(function (m) {
+      zip.file("word/media/bild" + m.num + "." + m.ext, m.screen.dataUrl.split(",")[1], { base64: true });
+    });
+    zip.file("word/footer1.xml", manualFooterXml(footerTitle));
+    zip.file("word/document.xml", manualDocumentWrapperXmlWithFooter(bodyXml));
+    return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  }
   // chapterTitleForImages: optionaler abweichender Kapiteltitel fuer die
   // Bildband-Zuordnung, falls der Anzeigetitel (erster Parameter) vom
   // echten Gliederungskapitel abweicht (z. B. "<Kapitel> (Enduser-Text)"
@@ -22030,9 +22240,22 @@
     });
     return body + manualPageBreakParagraphXml();
   }
-  async function buildMergedEditoDocxBlob(chapters) {
+  // Deckblatt (Titelseite) fuer die Word-Fassung eines Gesamtdokuments -
+  // zentriert, grosse Titelschrift, Untertitel (z. B. Rolle/Sparte) und
+  // Datum, gefolgt von einem Seitenumbruch. Gemeinsam genutzt von EDITO-
+  // und Unterkapitel-Gesamtdokument.
+  function docxCoverPageXml(title, subtitle, dateLabel) {
+    return '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="2400"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="56"/></w:rPr><w:t xml:space="preserve">' + xmlEsc(title || "Dokument") + "</w:t></w:r></w:p>" +
+      (subtitle ? '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="400"/></w:pPr><w:r><w:rPr><w:sz w:val="28"/></w:rPr><w:t xml:space="preserve">' + xmlEsc(subtitle) + "</w:t></w:r></w:p>" : "") +
+      '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="6000"/></w:pPr><w:r><w:rPr><w:sz w:val="20"/><w:color w:val="808080"/></w:rPr><w:t xml:space="preserve">' + xmlEsc(dateLabel || nowLabel()) + "</w:t></w:r></w:p>" +
+      manualPageBreakParagraphXml();
+  }
+  async function buildMergedEditoDocxBlob(chapters, opts) {
+    opts = opts || {};
     var allMedia = [];
-    var bodyParts = [editoMergedTocBodyXml(chapters)];
+    var bodyParts = [];
+    if (opts.cover !== false) bodyParts.push(docxCoverPageXml(opts.coverTitle || "Benutzerhandbuch", opts.coverSubtitle || "", opts.coverDate));
+    bodyParts.push(editoMergedTocBodyXml(chapters));
     var nextMediaNum = 1;
     for (var i = 0; i < chapters.length; i++) {
       var localMedia = await manualPrepareBildbandMedia(chapters[i].title);
@@ -22045,7 +22268,8 @@
       bodyParts.push(manualChapterBodyXml(chapters[i].title, chapters[i].text, renumbered, tablesForChapter));
       if (i < chapters.length - 1) bodyParts.push(manualPageBreakParagraphXml());
     }
-    return buildDocxBlobFromBodyAndMedia(bodyParts.join(""), allMedia);
+    if (opts.footer === false) return buildDocxBlobFromBodyAndMedia(bodyParts.join(""), allMedia);
+    return buildDocxBlobWithFooter(bodyParts.join(""), allMedia, opts.footerTitle || "");
   }
   var MANUAL_IMAGE_EXT_TO_JSPDF_FORMAT = { png: "PNG", jpg: "JPEG", gif: "GIF", bmp: "BMP" };
   // Schreibt EIN Kapitel (Titel + Fliesstext inkl. [Bild]/[Tabelle]-
@@ -22169,9 +22393,10 @@
   function editoMergedTocPageCount(chapters) {
     return Math.max(1, Math.ceil(chapters.length / EDITO_TOC_LINES_PER_PAGE));
   }
-  function editoWriteTocPages(doc, chapters, chapterStartPages, tocPageCount) {
+  function editoWriteTocPages(doc, chapters, chapterStartPages, startPage, tocPageCount) {
     var margin = 18, pageW = 210, pageHLimit = 280;
-    var page = 1, y = margin;
+    var page = startPage, y = margin;
+    var lastPage = startPage + tocPageCount - 1;
     doc.setPage(page);
     doc.setFont("helvetica", "bold"); doc.setFontSize(18);
     doc.text("Inhaltsverzeichnis", margin, y); y += 12;
@@ -22179,24 +22404,72 @@
     chapters.forEach(function (c, idx) {
       var pageLabel = String(chapterStartPages[idx]);
       var titleLines = doc.splitTextToSize(c.title, pageW - margin * 2 - 14);
-      if (y > pageHLimit && page < tocPageCount) { page++; doc.setPage(page); y = margin; }
+      if (y > pageHLimit && page < lastPage) { page++; doc.setPage(page); y = margin; }
       doc.text(titleLines[0], margin, y);
       doc.text(pageLabel, pageW - margin - doc.getTextWidth(pageLabel), y);
       for (var li = 1; li < titleLines.length; li++) {
         y += 6;
-        if (y > pageHLimit && page < tocPageCount) { page++; doc.setPage(page); y = margin; }
+        if (y > pageHLimit && page < lastPage) { page++; doc.setPage(page); y = margin; }
         doc.text(titleLines[li], margin, y);
       }
       y += 8;
     });
   }
+  // Deckblatt (Titelseite) fuer die PDF-Fassung eines Gesamtdokuments -
+  // wird auf der von jsPDF automatisch angelegten Seite 1 gezeichnet.
+  function writePdfCoverPage(doc, title, subtitle, dateLabel) {
+    var pageW = 210, pageH = 297;
+    doc.setPage(1);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(26);
+    var titleLines = doc.splitTextToSize(title || "Dokument", pageW - 60);
+    doc.text(titleLines, pageW / 2, 120, { align: "center" });
+    if (subtitle) {
+      doc.setFont("helvetica", "normal"); doc.setFontSize(14);
+      doc.text(subtitle, pageW / 2, 120 + titleLines.length * 10 + 12, { align: "center" });
+    }
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    doc.setTextColor(120, 120, 120);
+    doc.text(dateLabel || nowLabel(), pageW / 2, pageH - 30, { align: "center" });
+    doc.setDrawColor(190, 190, 190);
+    doc.line(60, 100, pageW - 60, 100);
+    doc.line(60, pageH - 60, pageW - 60, pageH - 60);
+    doc.setTextColor(0, 0, 0);
+  }
+  // Kopf-/Fusszeile mit "Seite X von Y" auf JEDER bereits erzeugten
+  // Seite - erst NACH dem vollstaendigen Rendern aufrufbar, da die
+  // Gesamtseitenzahl vorher nicht feststeht.
+  function addPdfPageNumbers(doc, headerTitle) {
+    var pageCount = doc.internal.getNumberOfPages();
+    var margin = 14, pageW = 210, pageH = 297;
+    for (var p = 1; p <= pageCount; p++) {
+      doc.setPage(p);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+      doc.setTextColor(130, 130, 130);
+      if (headerTitle) doc.text(headerTitle, margin, 10);
+      doc.text("Seite " + p + " von " + pageCount, pageW - margin, pageH - 8, { align: "right" });
+      doc.setTextColor(0, 0, 0);
+    }
+  }
+  // PDF-Lesezeichen (Outline/Bookmarks) passend zum Inhaltsverzeichnis -
+  // jsPDF-eigene Outline-API (doc.outline), erzeugt echte, im PDF-Reader
+  // klickbare Lesezeichen (kein Bild/keine Simulation).
+  function addPdfBookmarks(doc, chapters, startPages) {
+    if (!doc.outline) return;
+    chapters.forEach(function (c, idx) {
+      doc.outline.add(null, c.title, { pageNumber: startPages[idx] });
+    });
+  }
   async function buildMergedEditoPdfDoc(chapters, opts) {
     var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
     if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
+    opts = opts || {};
     var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
-    var includeToc = !opts || opts.toc !== false;
+    var includeToc = opts.toc !== false;
+    var includeCover = opts.cover !== false;
+    var coverPages = includeCover ? 1 : 0;
     var tocPageCount = includeToc ? editoMergedTocPageCount(chapters) : 0;
-    for (var t = 1; t < tocPageCount; t++) doc.addPage();
+    var totalFrontPages = coverPages + tocPageCount;
+    for (var t = 1; t < totalFrontPages; t++) doc.addPage();
     var chapterStartPages = [];
     for (var i = 0; i < chapters.length; i++) {
       doc.addPage();
@@ -22205,8 +22478,11 @@
       var tables = rovoTablesForChapter(chapters[i].title);
       manualWriteChapterPdfBody(doc, chapters[i].title, chapters[i].text, media, tables, 18);
     }
-    if (includeToc) editoWriteTocPages(doc, chapters, chapterStartPages, tocPageCount);
-    return { doc: doc, tocPageCount: tocPageCount, chapterStartPages: chapterStartPages };
+    if (includeCover) writePdfCoverPage(doc, opts.coverTitle || "Benutzerhandbuch", opts.coverSubtitle || "", opts.coverDate);
+    if (includeToc) editoWriteTocPages(doc, chapters, chapterStartPages, coverPages + 1, tocPageCount);
+    if (opts.bookmarks !== false) addPdfBookmarks(doc, chapters, chapterStartPages);
+    if (opts.pageNumbers !== false) addPdfPageNumbers(doc, opts.headerTitle || "");
+    return { doc: doc, tocPageCount: tocPageCount, chapterStartPages: chapterStartPages, coverPages: coverPages };
   }
   // MD-Export je Kapitel (anders als DOCX/PDF unten KEINE weitere
   // Konvertierung noetig - der gespeicherte Text ist bereits Markdown-
@@ -23757,10 +24033,15 @@
     els.editoMergeSpinner.hidden = false;
     try {
       var version = editoVersionDef();
-      var baseFilename = "Editor_Gesamtdokument_" + safeFilename((version || {}).label || app.editoVersionKey) + "_" + dateStampForFilename();
-      editoMergedDocxBlob = await buildMergedEditoDocxBlob(chaptersWithText);
+      var versionLabelForDoc = (version || {}).label || app.editoVersionKey;
+      var baseFilename = "Editor_Gesamtdokument_" + safeFilename(versionLabelForDoc) + "_" + dateStampForFilename();
+      editoMergedDocxBlob = await buildMergedEditoDocxBlob(chaptersWithText, {
+        coverTitle: "Benutzerhandbuch", coverSubtitle: versionLabelForDoc, footerTitle: "Benutzerhandbuch – " + versionLabelForDoc
+      });
       editoMergedFilename = baseFilename + ".docx";
-      var mergedPdf = await buildMergedEditoPdfDoc(chaptersWithText);
+      var mergedPdf = await buildMergedEditoPdfDoc(chaptersWithText, {
+        coverTitle: "Benutzerhandbuch", coverSubtitle: versionLabelForDoc, headerTitle: "Benutzerhandbuch – " + versionLabelForDoc
+      });
       editoMergedPdfBlob = mergedPdf.doc.output("blob");
       editoMergedPdfFilename = baseFilename + ".pdf";
       var skipped = allChapters.length - chaptersWithText.length;
@@ -24093,6 +24374,462 @@
     }
   });
 
+  /* ============ Teil 9d: Unterkapitel-Werkstatt ============
+     Eigener Bereich, baut bewusst auf EDITO auf (teilt sich
+     app.editoVersionKey/app.outline/app.editoChapters als Quellen statt
+     einen zweiten, parallelen Rolle/Sparte-Auswahl-Mechanismus zu
+     erfinden), arbeitet aber auf UNTERKAPITEL-Ebene mit einem eigenen,
+     iterativen Workflow: Quellen je Unterkapitel ansehen, Vorgaben
+     (Kurzbeschreibung/Stichwörter/Ausschluss/Formatregeln) eintragen,
+     per "Bearbeiten" erzeugen/aktualisieren (vergleicht automatisch mit
+     der vorherigen eigenen Fassung - wiederholbar in Loops, Vorgaben
+     zwischendurch anpassen), je Rolle/Sparte-Version unabhängig
+     freigeben (Entwurf/Zur Prüfung/Genehmigt) und einzeln oder als
+     Gesamtdokument der genehmigten Unterkapitel exportieren (mit/ohne
+     Bilder). app.subchapterDrafts ist ein eigener Datenbestand (NICHT
+     dasselbe wie app.editoChapters), da hier je Rolle/Sparte-Version ein
+     EIGENER Eintrag gehalten wird statt nur "zuletzt erzeugte Version". */
+  var SUBCHAPTER_STATUS_VALUES = [
+    { id: "entwurf", label: "Entwurf" },
+    { id: "pruefung", label: "Zur Prüfung" },
+    { id: "genehmigt", label: "Genehmigt" }
+  ];
+  var SUBCHAPTER_STATUS_LABELS = {};
+  SUBCHAPTER_STATUS_VALUES.forEach(function (s) { SUBCHAPTER_STATUS_LABELS[s.id] = s.label; });
+  els.subchapterStatusSelect.innerHTML = SUBCHAPTER_STATUS_VALUES.map(function (s) { return '<option value="' + s.id + '">' + escapeHtml(s.label) + "</option>"; }).join("");
+  var SUBCHAPTER_KEY_SEP = "‖";
+  function subchapterKey(chapterTitle, subchapterTitle, versionKey) {
+    return chapterTitle + SUBCHAPTER_KEY_SEP + subchapterTitle + SUBCHAPTER_KEY_SEP + versionKey;
+  }
+  function subchapterEntry(chapterTitle, subchapterTitle, versionKey, create) {
+    var key = subchapterKey(chapterTitle, subchapterTitle, versionKey);
+    var entry = app.subchapterDrafts[key];
+    if (!entry && create) {
+      entry = {
+        chapterTitle: chapterTitle, subchapterTitle: subchapterTitle, versionKey: versionKey,
+        spec: { kurzbeschreibung: "", keywords: "", excludeKeywords: "", formatRules: "" },
+        text: "", generatedAt: "", history: [], status: "entwurf", statusChangedAt: ""
+      };
+      app.subchapterDrafts[key] = entry;
+    }
+    return entry;
+  }
+
+  // Quellen-Aggregation auf UNTERKAPITEL-Ebene: filtert die bereits
+  // bestehenden Kapitel-Funktionen zusätzlich nach .subchapter/.subTitle.
+  // Tickets bleiben bewusst Kapitel-Ebene (editoTicketsForChapter direkt
+  // wiederverwendet) - es gibt keine Unterkapitel-Zuordnung fuer Tickets
+  // (computeAutoOutline liefert nur Kapitel-Titel), das wird in der UI
+  // als Hinweis ausgewiesen statt stillschweigend falsch zu filtern.
+  function subchapterImagesFor(chapterTitle, subchapterTitle) {
+    return bildbandScreensForChapter(chapterTitle).filter(function (i) { return i.subchapter === subchapterTitle; });
+  }
+  function subchapterTablesFor(chapterTitle, subchapterTitle) {
+    return rovoTablesForChapter(chapterTitle).filter(function (t) { return t.subchapter === subchapterTitle; });
+  }
+  function subchapterRovoEntriesFor(chapterTitle, subchapterTitle) {
+    return editoRovoEntriesForChapter(chapterTitle).filter(function (e) { return e.subchapter === subchapterTitle; });
+  }
+  function subchapterRagEntriesFor(chapterTitle, subchapterTitle) {
+    return editoRagEntriesForChapter(chapterTitle).filter(function (e) { return e.subTitle === subchapterTitle; });
+  }
+
+  // Leichtgewichtiger, selbst geschriebener Zeilen-Diff (LCS-basiert, kein
+  // bestehendes Diff-Utility im Code gefunden) - ausreichend performant
+  // fuer die hier typischen Textlaengen (ein Unterkapitel, nicht ein
+  // ganzes Kapitel). Liefert eine Liste {type: "same"|"added"|"removed", text}.
+  function diffLines(oldText, newText) {
+    var a = (oldText || "").split("\n");
+    var b = (newText || "").split("\n");
+    var n = a.length, m = b.length;
+    var lcs = [];
+    for (var i = 0; i <= n; i++) lcs.push(new Array(m + 1).fill(0));
+    for (i = n - 1; i >= 0; i--) {
+      for (var j = m - 1; j >= 0; j--) {
+        lcs[i][j] = a[i] === b[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+      }
+    }
+    var result = [];
+    i = 0; j = 0;
+    while (i < n && j < m) {
+      if (a[i] === b[j]) { result.push({ type: "same", text: a[i] }); i++; j++; }
+      else if (lcs[i + 1][j] >= lcs[i][j + 1]) { result.push({ type: "removed", text: a[i] }); i++; }
+      else { result.push({ type: "added", text: b[j] }); j++; }
+    }
+    while (i < n) { result.push({ type: "removed", text: a[i] }); i++; }
+    while (j < m) { result.push({ type: "added", text: b[j] }); j++; }
+    return result;
+  }
+  function diffLinesHtml(oldText, newText) {
+    return diffLines(oldText, newText).map(function (d) {
+      if (d.type === "added") return '<div style="padding:1px 4px; background:#e3f7e8; color:#1e7a34;">+ ' + escapeHtml(d.text) + "</div>";
+      if (d.type === "removed") return '<div style="padding:1px 4px; background:#fbe4e4; color:#a3312b; text-decoration:line-through;">- ' + escapeHtml(d.text) + "</div>";
+      return '<div style="padding:1px 4px;">' + escapeHtml(d.text) + "</div>";
+    }).join("");
+  }
+
+  function subchapterBuildPrompt(chapterTitle, subchapterTitle, versionKey, entry) {
+    var version = OUTLINE_VERSIONS.filter(function (v) { return v.key === versionKey; })[0];
+    var tickets = editoTicketsForChapter(chapterTitle);
+    var ragEntries = subchapterRagEntriesFor(chapterTitle, subchapterTitle);
+    var rovoList = subchapterRovoEntriesFor(chapterTitle, subchapterTitle);
+    var images = subchapterImagesFor(chapterTitle, subchapterTitle);
+    var tables = subchapterTablesFor(chapterTitle, subchapterTitle);
+    var existingChapterText = editoExistingManualText(chapterTitle);
+    var spec = entry.spec || {};
+    var parts = [ragPromptFor("subchapterDraft")];
+    parts.push("\n\nZielversion (Rolle/Sparte): " + (version ? version.label : versionKey) +
+      "\nKapitel: " + chapterTitle + "\nUnterkapitel: " + subchapterTitle);
+    if (version) parts.push(manualRoleInstruction(version.key));
+    parts.push("\n\nVORGABEN FÜR DIESES UNTERKAPITEL (vom Nutzer):" +
+      "\nKurzbeschreibung: " + (spec.kurzbeschreibung || "(keine)") +
+      "\nRelevante Stichwörter: " + (spec.keywords || "(keine)") +
+      "\nNICHT nennen (Stichwörter/Inhalte): " + (spec.excludeKeywords || "(keine)") +
+      "\nFormatregeln: " + (spec.formatRules || "(keine)"));
+    parts.push("\n\nQUELLE 1 – Vorherige eigene Fassung dieses Unterkapitels (falls vorhanden, als Ausgangspunkt nutzen und gemäß den obigen Vorgaben sowie den weiteren Quellen aktualisieren):\n" +
+      (entry.text ? truncate(entry.text, 4000) : "(noch keine vorherige Fassung)"));
+    parts.push("\n\nQUELLE 2 – Bestehender Benutzerhandbuch-Text des GESAMTEN Kapitels (zur Einordnung, nicht 1:1 übernehmen):\n" +
+      (existingChapterText ? truncate(existingChapterText, 3000) : "(keiner vorhanden)"));
+    parts.push("\n\nQUELLE 3 – Jira-Tickets des Kapitels (nur auf Kapitel-Ebene zugeordnet, keine Unterkapitel-Zuordnung möglich) (" + tickets.length + "):\n" +
+      (tickets.length ? truncate(tickets.map(manualTicketBlock).join("\n"), 6000) : "(keine zugeordnet)"));
+    parts.push("\n\nQUELLE 4 – RAG-Bibliothek, diesem Unterkapitel zugeordnet (" + ragEntries.length + "):\n" +
+      (ragEntries.length ? ragEntries.map(function (e) { return "- " + e.label + ":\n" + truncate(e.text, 1200); }).join("\n\n") : "(keine zugeordnet)"));
+    parts.push("\n\nQUELLE 5 – Rovo-Knowledge-Textschnipsel, diesem Unterkapitel zugeordnet, VORRANGIGE Quelle (" + rovoList.length + "):\n" +
+      (rovoList.length ? rovoList.map(function (e) { return "- Chatverlauf: " + truncate(e.chatText, 500) + "\n  Antwort: " + truncate(e.answerText, 500); }).join("\n") : "(keine zugeordnet)"));
+    parts.push("\n\nQUELLE 6 – Zugeordnete Screenshots: " + images.length +
+      (images.length ? " (" + images.map(function (i) { return i.description || i.sourceFile; }).join(", ") + ") – höchstens so viele [Bild]-Platzhalter einfügen" : " (keine – keine [Bild]-Platzhalter einfügen)"));
+    parts.push("\n\nQUELLE 7 – Zugeordnete Tabellen: " + tables.length +
+      (tables.length ? " (" + tables.map(function (t) { return "Tabelle " + t.tableNumber + " aus " + t.sourceFile; }).join(", ") + ") – höchstens so viele [Tabelle]-Platzhalter einfügen" : " (keine – keine [Tabelle]-Platzhalter einfügen)"));
+    return parts.join("");
+  }
+
+  function subchapterTitleForExport(chapterTitle, subchapterTitle) {
+    return chapterTitle + " – " + subchapterTitle;
+  }
+  function subchapterStripImagePlaceholders(text) {
+    return (text || "").split("\n").filter(function (l) { return !manualIsImagePlaceholder(l); }).join("\n");
+  }
+  async function buildSubchapterDocxBlob(chapterTitle, subchapterTitle, text, includeImages) {
+    var images = includeImages ? subchapterImagesFor(chapterTitle, subchapterTitle) : [];
+    var media = await manualPrepareMediaForScreens(images);
+    var tables = subchapterTablesFor(chapterTitle, subchapterTitle);
+    var body = manualChapterBodyXml(subchapterTitleForExport(chapterTitle, subchapterTitle), includeImages ? text : subchapterStripImagePlaceholders(text), media, tables);
+    return buildDocxBlobFromBodyAndMedia(body, media);
+  }
+  async function buildSubchapterPdfDoc(chapterTitle, subchapterTitle, text, includeImages) {
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
+    var images = includeImages ? subchapterImagesFor(chapterTitle, subchapterTitle) : [];
+    var media = await manualPrepareMediaForScreens(images);
+    var tables = subchapterTablesFor(chapterTitle, subchapterTitle);
+    var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    manualWriteChapterPdfBody(doc, subchapterTitleForExport(chapterTitle, subchapterTitle), includeImages ? text : subchapterStripImagePlaceholders(text), media, tables, 18);
+    return doc;
+  }
+  function subchapterApprovedEntriesForVersion(versionKey) {
+    return Object.keys(app.subchapterDrafts).map(function (k) { return app.subchapterDrafts[k]; })
+      .filter(function (e) { return e.versionKey === versionKey && e.status === "genehmigt" && e.text; })
+      .sort(function (a, b) {
+        var ca = app.outline.filter(function (c) { return c.title === a.chapterTitle; })[0];
+        var cb = app.outline.filter(function (c) { return c.title === b.chapterTitle; })[0];
+        var ia = ca ? app.outline.indexOf(ca) : -1, ib = cb ? app.outline.indexOf(cb) : -1;
+        if (ia !== ib) return ia - ib;
+        var sa = ca ? ca.subs.map(function (s) { return s.title; }).indexOf(a.subchapterTitle) : 0;
+        var sb = cb ? cb.subs.map(function (s) { return s.title; }).indexOf(b.subchapterTitle) : 0;
+        return sa - sb;
+      });
+  }
+  async function buildSubchapterMergedDocxBlob(entries, includeImages, opts) {
+    opts = opts || {};
+    var tocChapters = entries.map(function (e) { return { title: subchapterTitleForExport(e.chapterTitle, e.subchapterTitle) }; });
+    var allMedia = [];
+    var bodyParts = [];
+    if (opts.cover !== false) bodyParts.push(docxCoverPageXml(opts.coverTitle || "Unterkapitel-Gesamtdokument", opts.coverSubtitle || "", opts.coverDate));
+    bodyParts.push(editoMergedTocBodyXml(tocChapters));
+    var nextMediaNum = 1;
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i];
+      var images = includeImages ? subchapterImagesFor(e.chapterTitle, e.subchapterTitle) : [];
+      var localMedia = await manualPrepareMediaForScreens(images);
+      var renumbered = localMedia.map(function (m, idx) {
+        return { num: nextMediaNum + idx, rId: "rIdBild" + (nextMediaNum + idx), screen: m.screen, ext: m.ext, widthEmu: m.widthEmu, heightEmu: m.heightEmu };
+      });
+      nextMediaNum += renumbered.length;
+      allMedia = allMedia.concat(renumbered);
+      var tables = subchapterTablesFor(e.chapterTitle, e.subchapterTitle);
+      var text = includeImages ? e.text : subchapterStripImagePlaceholders(e.text);
+      bodyParts.push(manualChapterBodyXml(subchapterTitleForExport(e.chapterTitle, e.subchapterTitle), text, renumbered, tables));
+      if (i < entries.length - 1) bodyParts.push(manualPageBreakParagraphXml());
+    }
+    if (opts.footer === false) return buildDocxBlobFromBodyAndMedia(bodyParts.join(""), allMedia);
+    return buildDocxBlobWithFooter(bodyParts.join(""), allMedia, opts.footerTitle || "");
+  }
+  async function buildSubchapterMergedPdfDoc(entries, includeImages, opts) {
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
+    opts = opts || {};
+    var tocChapters = entries.map(function (e) { return { title: subchapterTitleForExport(e.chapterTitle, e.subchapterTitle) }; });
+    var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    var includeToc = opts.toc !== false;
+    var includeCover = opts.cover !== false;
+    var coverPages = includeCover ? 1 : 0;
+    var tocPageCount = includeToc ? editoMergedTocPageCount(tocChapters) : 0;
+    var totalFrontPages = coverPages + tocPageCount;
+    for (var t = 1; t < totalFrontPages; t++) doc.addPage();
+    var startPages = [];
+    for (var i = 0; i < entries.length; i++) {
+      doc.addPage();
+      startPages.push(doc.internal.getNumberOfPages());
+      var e = entries[i];
+      var images = includeImages ? subchapterImagesFor(e.chapterTitle, e.subchapterTitle) : [];
+      var media = await manualPrepareMediaForScreens(images);
+      var tables = subchapterTablesFor(e.chapterTitle, e.subchapterTitle);
+      var text = includeImages ? e.text : subchapterStripImagePlaceholders(e.text);
+      manualWriteChapterPdfBody(doc, subchapterTitleForExport(e.chapterTitle, e.subchapterTitle), text, media, tables, 18);
+    }
+    if (includeCover) writePdfCoverPage(doc, opts.coverTitle || "Unterkapitel-Gesamtdokument", opts.coverSubtitle || "", opts.coverDate);
+    if (includeToc) editoWriteTocPages(doc, tocChapters, startPages, coverPages + 1, tocPageCount);
+    if (opts.bookmarks !== false) addPdfBookmarks(doc, tocChapters, startPages);
+    if (opts.pageNumbers !== false) addPdfPageNumbers(doc, opts.headerTitle || "");
+    return doc;
+  }
+
+  function renderSubchapterVersionSelect() {
+    els.subchapterVersionSelect.innerHTML = '<option value="">– Rolle/Sparte wählen –</option>' +
+      OUTLINE_VERSIONS.map(function (v) { return '<option value="' + v.key + '"' + (v.key === app.editoVersionKey ? " selected" : "") + ">" + escapeHtml(v.label) + "</option>"; }).join("");
+  }
+  els.subchapterVersionSelect.addEventListener("change", function () {
+    app.editoVersionKey = els.subchapterVersionSelect.value;
+    editoSelectedChapters = {};
+    editoResetMergedDocument();
+    renderSubchapterPanel();
+  });
+  function renderSubchapterChapterSelect() {
+    var chapters = editoChaptersForVersion();
+    var prevChapter = els.subchapterChapterSelect.value;
+    els.subchapterChapterSelect.innerHTML = '<option value="">– Kapitel wählen –</option>' +
+      chapters.map(function (c) { return '<option value="' + escapeHtml(c.title) + '"' + (c.title === prevChapter ? " selected" : "") + ">" + escapeHtml(c.title) + "</option>"; }).join("");
+    els.subchapterChapterSelect.disabled = !app.editoVersionKey;
+    if (!chapters.some(function (c) { return c.title === prevChapter; })) els.subchapterChapterSelect.value = "";
+  }
+  function renderSubchapterSubSelect() {
+    var chapterTitle = els.subchapterChapterSelect.value;
+    var subs = chapterTitle ? subchapterOptionsForChapter(chapterTitle) : [];
+    var prevSub = els.subchapterSelect.value;
+    els.subchapterSelect.innerHTML = '<option value="">– Unterkapitel wählen –</option>' +
+      subs.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (s === prevSub ? " selected" : "") + ">" + escapeHtml(s) + "</option>"; }).join("");
+    els.subchapterSelect.disabled = !chapterTitle || !subs.length;
+    if (subs.indexOf(prevSub) === -1) els.subchapterSelect.value = "";
+  }
+  els.subchapterChapterSelect.addEventListener("change", function () {
+    renderSubchapterSubSelect();
+    renderSubchapterDetail();
+  });
+  els.subchapterSelect.addEventListener("change", renderSubchapterDetail);
+
+  function renderSubchapterDetail() {
+    var chapterTitle = els.subchapterChapterSelect.value;
+    var subchapterTitle = els.subchapterSelect.value;
+    var hasSelection = !!(app.editoVersionKey && chapterTitle && subchapterTitle);
+    els.subchapterDetailEmpty.hidden = hasSelection;
+    els.subchapterDetailSection.hidden = !hasSelection;
+    if (!hasSelection) return;
+    var entry = subchapterEntry(chapterTitle, subchapterTitle, app.editoVersionKey, false);
+    var tickets = editoTicketsForChapter(chapterTitle);
+    var ragEntries = subchapterRagEntriesFor(chapterTitle, subchapterTitle);
+    var rovoList = subchapterRovoEntriesFor(chapterTitle, subchapterTitle);
+    var images = subchapterImagesFor(chapterTitle, subchapterTitle);
+    var tables = subchapterTablesFor(chapterTitle, subchapterTitle);
+    els.subchapterSourcesOutput.innerHTML =
+      '<div class="chip"><b class="mono">' + tickets.length + "</b> Tickets (Kapitel-Ebene)</div>" +
+      '<div class="chip"><b class="mono">' + ragEntries.length + "</b> RAG-Bibliothek</div>" +
+      '<div class="chip"><b class="mono">' + rovoList.length + "</b> Rovo-Notizen</div>" +
+      '<div class="chip"><b class="mono">' + images.length + "</b> Bilder</div>" +
+      '<div class="chip"><b class="mono">' + tables.length + "</b> Tabellen</div>";
+    els.subchapterCurrentDraftOutput.textContent = (entry && entry.text) ? entry.text : "Noch keine Fassung erzeugt.";
+    var spec = (entry && entry.spec) || { kurzbeschreibung: "", keywords: "", excludeKeywords: "", formatRules: "" };
+    els.subchapterSpecKurzbeschreibung.value = spec.kurzbeschreibung || "";
+    els.subchapterSpecKeywords.value = spec.keywords || "";
+    els.subchapterSpecExclude.value = spec.excludeKeywords || "";
+    els.subchapterSpecFormat.value = spec.formatRules || "";
+    els.subchapterStatusSelect.value = (entry && entry.status) || "entwurf";
+    els.subchapterStatusSelect.disabled = !(entry && entry.text);
+    els.subchapterStatusNote.textContent = (entry && entry.statusChangedAt) ? "Zuletzt geändert: " + entry.statusChangedAt : "";
+    var hasHistory = !!(entry && entry.history && entry.history.length);
+    els.subchapterDiffResult.hidden = !hasHistory;
+    els.subchapterDiffEmptyNote.hidden = hasHistory;
+    if (hasHistory) {
+      var prev = entry.history[entry.history.length - 1];
+      els.subchapterDiffOutput.innerHTML = diffLinesHtml(prev.text, entry.text);
+      els.subchapterDiffMeta.textContent = "Vergleich: vorherige Fassung vom " + prev.generatedAt + " vs. aktuelle Fassung vom " + entry.generatedAt + ".";
+    }
+    var hasText = !!(entry && entry.text);
+    els.subchapterExportDocxBtn.disabled = !hasText;
+    els.subchapterExportPdfBtn.disabled = !hasText;
+  }
+
+  function renderSubchapterStatusOverview() {
+    var entries = Object.keys(app.subchapterDrafts).map(function (k) { return app.subchapterDrafts[k]; })
+      .filter(function (e) { return e.text; })
+      .sort(function (a, b) { return (a.chapterTitle + a.subchapterTitle + a.versionKey).localeCompare(b.chapterTitle + b.subchapterTitle + b.versionKey); });
+    els.subchapterOverviewEmpty.hidden = entries.length > 0;
+    els.subchapterOverviewWrap.hidden = entries.length === 0;
+    els.subchapterOverviewTbody.innerHTML = entries.map(function (e) {
+      var versionLabel = (OUTLINE_VERSIONS.filter(function (v) { return v.key === e.versionKey; })[0] || {}).label || e.versionKey;
+      return "<tr>" +
+        "<td>" + escapeHtml(e.chapterTitle) + "</td>" +
+        "<td>" + escapeHtml(e.subchapterTitle) + "</td>" +
+        "<td>" + escapeHtml(versionLabel) + "</td>" +
+        "<td>" + escapeHtml(SUBCHAPTER_STATUS_LABELS[e.status] || e.status) + "</td>" +
+        '<td class="mono">' + escapeHtml(e.generatedAt) + "</td>" +
+        '<td><button type="button" class="btn ghost btn-tiny" data-subchapter-open="' + escapeHtml(subchapterKey(e.chapterTitle, e.subchapterTitle, e.versionKey)) + '">Öffnen</button></td>' +
+        "</tr>";
+    }).join("");
+    var approvedCount = entries.filter(function (e) { return e.status === "genehmigt" && e.versionKey === app.editoVersionKey; }).length;
+    els.subchapterMergeCountNote.textContent = app.editoVersionKey ? (approvedCount + " genehmigte(s) Unterkapitel für die aktuelle Rolle/Sparte-Version.") : "Bitte zuerst oben eine Rolle/Sparte wählen.";
+  }
+  els.subchapterOverviewTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-subchapter-open]");
+    if (!btn) return;
+    var parts = btn.getAttribute("data-subchapter-open").split(SUBCHAPTER_KEY_SEP);
+    app.editoVersionKey = parts[2];
+    renderSubchapterVersionSelect();
+    els.subchapterVersionSelect.value = parts[2];
+    renderSubchapterChapterSelect();
+    els.subchapterChapterSelect.value = parts[0];
+    renderSubchapterSubSelect();
+    els.subchapterSelect.value = parts[1];
+    renderSubchapterDetail();
+  });
+
+  function renderSubchapterPanel() {
+    renderSubchapterChapterSelect();
+    renderSubchapterSubSelect();
+    renderSubchapterDetail();
+    renderSubchapterStatusOverview();
+  }
+
+  els.subchapterEditBtn.addEventListener("click", async function () {
+    var chapterTitle = els.subchapterChapterSelect.value;
+    var subchapterTitle = els.subchapterSelect.value;
+    if (!app.editoVersionKey) { showToast("Keine Version", "Bitte zuerst oben eine Rolle/Sparte wählen.", true); return; }
+    if (!chapterTitle || !subchapterTitle) { showToast("Kein Unterkapitel", "Bitte zuerst Kapitel und Unterkapitel wählen.", true); return; }
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    var entry = subchapterEntry(chapterTitle, subchapterTitle, app.editoVersionKey, true);
+    entry.spec = {
+      kurzbeschreibung: els.subchapterSpecKurzbeschreibung.value,
+      keywords: els.subchapterSpecKeywords.value,
+      excludeKeywords: els.subchapterSpecExclude.value,
+      formatRules: els.subchapterSpecFormat.value
+    };
+    els.subchapterEditBtn.disabled = true;
+    els.subchapterEditSpinner.hidden = false;
+    try {
+      var previousText = entry.text;
+      var previousGeneratedAt = entry.generatedAt;
+      var result = await sampleApi(subchapterBuildPrompt(chapterTitle, subchapterTitle, app.editoVersionKey, entry), { modelTier: "default", cache: false });
+      if (previousText) entry.history.push({ text: previousText, generatedAt: previousGeneratedAt });
+      entry.text = result.text || "";
+      entry.generatedAt = nowLabel();
+      renderSubchapterDetail();
+      renderSubchapterStatusOverview();
+      var versionLabel = (editoVersionDef() || {}).label || app.editoVersionKey;
+      addLog("Unterkapitel „" + subchapterTitle + "“ (Kapitel „" + chapterTitle + "“, " + versionLabel + ") erzeugt/aktualisiert.");
+      showToast("Erzeugt", "Unterkapitel-Fassung erzeugt" + (previousText ? " - Vergleich zur vorherigen Fassung unten sichtbar." : "."));
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.subchapterEditBtn.disabled = false;
+      els.subchapterEditSpinner.hidden = true;
+    }
+  });
+
+  els.subchapterStatusSelect.addEventListener("change", function () {
+    var chapterTitle = els.subchapterChapterSelect.value, subchapterTitle = els.subchapterSelect.value;
+    if (!chapterTitle || !subchapterTitle || !app.editoVersionKey) return;
+    var entry = subchapterEntry(chapterTitle, subchapterTitle, app.editoVersionKey, true);
+    if (!entry.text) return;
+    entry.status = els.subchapterStatusSelect.value;
+    entry.statusChangedAt = nowLabel();
+    els.subchapterStatusNote.textContent = "Zuletzt geändert: " + entry.statusChangedAt;
+    addLog("Unterkapitel „" + subchapterTitle + "“ (" + ((editoVersionDef() || {}).label || app.editoVersionKey) + "): Status auf „" + SUBCHAPTER_STATUS_LABELS[entry.status] + "“ gesetzt.");
+    renderSubchapterStatusOverview();
+  });
+
+  els.subchapterExportDocxBtn.addEventListener("click", async function () {
+    var chapterTitle = els.subchapterChapterSelect.value, subchapterTitle = els.subchapterSelect.value;
+    var entry = subchapterEntry(chapterTitle, subchapterTitle, app.editoVersionKey, false);
+    if (!entry || !entry.text) { showToast("Kein Text", "Für dieses Unterkapitel wurde noch keine Fassung erzeugt.", true); return; }
+    try {
+      var includeImages = els.subchapterExportImagesCb.checked;
+      var blob = await buildSubchapterDocxBlob(chapterTitle, subchapterTitle, entry.text, includeImages);
+      var filename = safeFilename(subchapterTitleForExport(chapterTitle, subchapterTitle)) + (includeImages ? "" : "_ohne_bilder") + ".docx";
+      var ok = await saveOrWarn(filename, blob);
+      if (ok) addLog("Unterkapitel „" + subchapterTitle + "“ als Word exportiert" + (includeImages ? "" : " (ohne Bilder)") + ".");
+    } catch (err) {
+      showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    }
+  });
+  els.subchapterExportPdfBtn.addEventListener("click", async function () {
+    var chapterTitle = els.subchapterChapterSelect.value, subchapterTitle = els.subchapterSelect.value;
+    var entry = subchapterEntry(chapterTitle, subchapterTitle, app.editoVersionKey, false);
+    if (!entry || !entry.text) { showToast("Kein Text", "Für dieses Unterkapitel wurde noch keine Fassung erzeugt.", true); return; }
+    try {
+      var includeImages = els.subchapterExportImagesCb.checked;
+      var doc = await buildSubchapterPdfDoc(chapterTitle, subchapterTitle, entry.text, includeImages);
+      var blob = doc.output("blob");
+      var filename = safeFilename(subchapterTitleForExport(chapterTitle, subchapterTitle)) + (includeImages ? "" : "_ohne_bilder") + ".pdf";
+      var ok = await saveOrWarn(filename, blob);
+      if (ok) addLog("Unterkapitel „" + subchapterTitle + "“ als PDF exportiert" + (includeImages ? "" : " (ohne Bilder)") + ".");
+    } catch (err) {
+      showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    }
+  });
+
+  var subchapterMergedDocxBlob = null, subchapterMergedDocxFilename = "";
+  var subchapterMergedPdfBlob = null, subchapterMergedPdfFilename = "";
+  els.subchapterMergeBtn.addEventListener("click", async function () {
+    if (!app.editoVersionKey) { showToast("Keine Version", "Bitte zuerst oben eine Rolle/Sparte wählen.", true); return; }
+    var entries = subchapterApprovedEntriesForVersion(app.editoVersionKey);
+    if (!entries.length) { showToast("Keine genehmigten Unterkapitel", "Für diese Rolle/Sparte-Version wurde noch kein Unterkapitel genehmigt.", true); return; }
+    els.subchapterMergeBtn.disabled = true;
+    els.subchapterMergeSpinner.hidden = false;
+    els.subchapterMergeResult.hidden = true;
+    try {
+      var includeImages = els.subchapterMergeImagesCb.checked;
+      var versionLabel = (editoVersionDef() || {}).label || app.editoVersionKey;
+      var base = "Unterkapitel_Gesamtdokument_" + safeFilename(versionLabel) + "_" + dateStampForFilename() + (includeImages ? "" : "_ohne_bilder");
+      var mergeOpts = { coverTitle: "Unterkapitel-Gesamtdokument", coverSubtitle: versionLabel, footerTitle: "Unterkapitel-Gesamtdokument – " + versionLabel, headerTitle: "Unterkapitel-Gesamtdokument – " + versionLabel };
+      subchapterMergedDocxBlob = await buildSubchapterMergedDocxBlob(entries, includeImages, mergeOpts);
+      subchapterMergedDocxFilename = base + ".docx";
+      var pdfDoc = await buildSubchapterMergedPdfDoc(entries, includeImages, mergeOpts);
+      subchapterMergedPdfBlob = pdfDoc.output("blob");
+      subchapterMergedPdfFilename = base + ".pdf";
+      els.subchapterMergeStatusNote.textContent = entries.length + " genehmigte(s) Unterkapitel zu einem Gesamtdokument zusammengeführt" + (includeImages ? "" : " (ohne Bilder)") + ".";
+      els.subchapterMergeResult.hidden = false;
+      addLog("Unterkapitel-Werkstatt: " + entries.length + " genehmigte(s) Unterkapitel (" + versionLabel + ") zu einem Gesamtdokument zusammengeführt" + (includeImages ? "" : ", ohne Bilder") + ".");
+      showToast("Zusammengeführt", entries.length + " genehmigte(s) Unterkapitel zusammengeführt.");
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.subchapterMergeBtn.disabled = false;
+      els.subchapterMergeSpinner.hidden = true;
+    }
+  });
+  els.subchapterMergeDownloadDocxBtn.addEventListener("click", async function () {
+    if (!subchapterMergedDocxBlob) return;
+    var ok = await saveOrWarn(subchapterMergedDocxFilename, subchapterMergedDocxBlob);
+    if (ok) addLog("Unterkapitel-Gesamtdokument „" + subchapterMergedDocxFilename + "“ heruntergeladen.");
+  });
+  els.subchapterMergeDownloadPdfBtn.addEventListener("click", async function () {
+    if (!subchapterMergedPdfBlob) return;
+    var ok = await saveOrWarn(subchapterMergedPdfFilename, subchapterMergedPdfBlob);
+    if (ok) addLog("Unterkapitel-Gesamtdokument „" + subchapterMergedPdfFilename + "“ heruntergeladen.");
+  });
+
   /* ============ Teil 10: Navigation ============ */
 
   var viewPanels = document.querySelectorAll("[data-view-panel]");
@@ -24104,6 +24841,7 @@
     if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); renderBildband(); }
     if (name === "bildband") renderBildband();
     if (name === "edito") { renderEditoVersionSelect(); renderEditoChapters(); renderEditoFiles(); }
+    if (name === "unterkapitel") { renderSubchapterVersionSelect(); renderSubchapterPanel(); }
     if (name === "rovoknowledge") renderRovoEntries();
     if (name === "tabellen") renderRovoTables();
     if (window.innerWidth <= 900) setSidebar(false);
