@@ -2671,6 +2671,31 @@
             </div>
           </div>
         </section>
+
+        <section>
+          <p class="section-label">10. Konsistenz- &amp; Vollständigkeitsprüfung (genehmigte Unterkapitel)</p>
+          <p class="desc">Prüft, analog zu EDITO Agent 4/5, ALLE genehmigten Unterkapitel der aktuellen Rolle/Sparte-Version mit KI: <b>Agent 4</b> vergleicht die Unterkapitel untereinander auf Widersprüche/Redundanzen, <b>Agent 5</b> prüft je Unterkapitel, ob die zugeordneten Quellen (Tickets, RAG-Bibliothek, Rovo-Notizen) im Text erkennbar aufgegriffen wurden.</p>
+          <div class="controls">
+            <button class="btn ghost" id="subchapter-agent4-btn" type="button">
+              <span class="btn-spinner" id="subchapter-agent4-spinner" hidden></span>
+              Agent 4: Unterkapitelübergreifende Konsistenz
+            </button>
+            <button class="btn ghost" id="subchapter-agent5-btn" type="button">
+              <span class="btn-spinner" id="subchapter-agent5-spinner" hidden></span>
+              Agent 5: Vollständigkeit &amp; Abdeckung
+            </button>
+          </div>
+          <p class="step-note" id="subchapter-agent4-status-note"></p>
+          <div id="subchapter-agent4-result" hidden>
+            <p class="section-label" style="margin-top:0;">Agent 4: Unterkapitelübergreifende Konsistenz</p>
+            <div class="panel gen-preview" id="subchapter-agent4-output" style="padding:12px 14px; margin-top:6px; max-height:420px; overflow:auto; white-space:pre-wrap;"></div>
+          </div>
+          <p class="step-note" id="subchapter-agent5-status-note"></p>
+          <div id="subchapter-agent5-result" hidden>
+            <p class="section-label" style="margin-top:0;">Agent 5: Vollständigkeit &amp; Abdeckung</p>
+            <div class="panel gen-preview" id="subchapter-agent5-output" style="padding:12px 14px; margin-top:6px; max-height:420px; overflow:auto; white-space:pre-wrap;"></div>
+          </div>
+        </section>
       </section>
 
       <!-- ================= Bilder ================= -->
@@ -5380,7 +5405,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.106.0";
+  var APP_VERSION = "2.107.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6987,6 +7012,8 @@
     "subchapter-overview-empty", "subchapter-overview-wrap", "subchapter-overview-tbody",
     "subchapter-merge-count-note", "subchapter-merge-images-cb", "subchapter-merge-btn", "subchapter-merge-spinner",
     "subchapter-merge-status-note", "subchapter-merge-result", "subchapter-merge-download-docx-btn", "subchapter-merge-download-pdf-btn",
+    "subchapter-agent4-btn", "subchapter-agent4-spinner", "subchapter-agent4-status-note", "subchapter-agent4-result", "subchapter-agent4-output",
+    "subchapter-agent5-btn", "subchapter-agent5-spinner", "subchapter-agent5-status-note", "subchapter-agent5-result", "subchapter-agent5-output",
     "output-md-count", "output-md-total", "output-md-export-btn", "output-md-export-spinner", "output-md-export-icon", "output-md-export-label",
     "output-pdf-count", "output-pdf-total", "output-pdf-export-btn", "output-pdf-export-spinner", "output-pdf-export-icon", "output-pdf-export-label",
     "modal-overlay", "modal-key", "modal-title", "modal-fields", "modal-desc-wrap", "modal-desc",
@@ -7573,6 +7600,7 @@
     app.subchapterDrafts = {};
     editoSelectedChapters = {};
     editoResetMergedDocument();
+    subchapterResetAgentResults();
     renderSubchapterPanel();
     massSelectedIds = {};
     renderMassFiles();
@@ -7674,6 +7702,7 @@
     app.subchapterDrafts = {};
     editoSelectedChapters = {};
     editoResetMergedDocument();
+    subchapterResetAgentResults();
     renderSubchapterPanel();
     massSelectedIds = {};
     renderMassFiles();
@@ -18723,7 +18752,9 @@
     ragAnalysis: "Du bist Wissensanalyst für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Unten stehen alle aktuell in der RAG-Bibliothek gesammelten Textschnipsel (Chunks) aus verschiedenen Quellen (Jira-Tickets, Rovo-Wissens-Notizen, Tabellen, Bildbeschreibungen, Benutzerhandbuch-Text) - je Chunk mit Bezeichnung und, soweit vorhanden, zugeordneter Domäne/Kapitel. Analysiere den GESAMTEN Chunk-Bestand und gib AUSSCHLIESSLICH die folgenden vier Abschnitte aus, in genau diesem Format:\n\n### Zusammenhänge\n- (ein Stichpunkt je inhaltlichem Zusammenhang/Überlappung zwischen mehreren Chunks, auch über Kapitel-/Domänengrenzen hinweg, mit kurzer Nennung der betroffenen Chunk-Bezeichnungen)\n\n### Genauigkeit\n- (ein Stichpunkt je Chunk oder Chunk-Gruppe, deren Angaben vage, unvollständig oder mit anderen Chunks widersprüchlich sind)\n\n### Priorität\n- (ein Stichpunkt je Chunk oder Themenbereich, der aus fachlicher Sicht vorrangig für Benutzerhandbuch/EDITO, Releaseletter oder Clickanweisung aufbereitet werden sollte, mit kurzer Begründung)\n\n### Klärungsbedarf\n- (ein Stichpunkt je offener Frage/Lücke, die vor einer Verwendung der Informationen fachlich geklärt werden sollte)\n\nIst eine der vier Listen leer, schreibe darunter \"Keine gefunden.\" Nutze ausschließlich Informationen aus den Chunks unten, erfinde nichts hinzu:",
     releaseletterRagEnrich: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Unten steht ein bereits fertiger, deterministisch aus den Ticket-Rohdaten erzeugter Releaseletter-Entwurf, danach zusätzliche, thematisch passende Textschnipsel aus der RAG-Bibliothek (Jira-Tickets, Rovo-Wissens-Notizen, Tabellen, Bildbeschreibungen, Benutzerhandbuch-Text zu denselben Gliederungskapiteln). Erstelle eine ZUSÄTZLICHE, inhaltlich angereicherte Fassung des Releaseletters auf Deutsch, DURCHGÄNGIG IM PRÄSENS: ergänze, wo fachlich sinnvoll, kurze zusätzliche Hintergrundinformationen aus der RAG-Bibliothek (z. B. Zusammenhänge zu anderen Funktionen, Voraussetzungen, nützliche Hinweise), OHNE bereits vorhandene Aussagen des Entwurfs zu entfernen oder ihnen zu widersprechen. Nutze ausschließlich Informationen aus dem Entwurf und den Quellen unten, erfinde nichts hinzu - fehlen passende Quellen, gib den Entwurf nahezu unverändert zurück statt zu spekulieren. Keine Ticket-Schlüssel/-Referenzen im Text. Gib ausschließlich den neuen Text aus, keine Erklärungen dazu:",
     clickanweisungRagEnrich: "Du bist Technischer Redakteur für die Klickanweisung (Quick Reference) eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten steht ein bereits fertiger, deterministisch aus den Ticket-Rohdaten erzeugter Klickanweisungs-Entwurf (Schritt-für-Schritt-Anleitung), danach zusätzliche, thematisch passende Textschnipsel aus der RAG-Bibliothek. Erstelle eine ZUSÄTZLICHE, ergänzte Fassung: füge, wo fachlich sinnvoll, zusätzliche Klickschritte oder Hinweise aus der RAG-Bibliothek hinzu (z. B. fehlende Zwischenschritte, Voraussetzungen, Folgeschritte), OHNE die vorhandenen Schritte zu entfernen oder umzusortieren. Nutze ausschließlich Informationen aus dem Entwurf und den Quellen unten, erfinde nichts hinzu - fehlen passende Quellen, gib den Entwurf nahezu unverändert zurück statt zu spekulieren. Gib ausschließlich den neuen Text aus, keine Erklärungen dazu:",
-    subchapterDraft: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Erstelle oder aktualisiere die Fassung des unten genannten EINEN Unterkapitels für die angegebene Zielversion (Rolle/Sparte), DURCHGÄNGIG IM PRÄSENS, im Stil eines professionellen Softwarehandbuchs (zusammenhängende Absätze, keine reine Aufzählung, sofern die Formatregeln unten nichts anderes vorgeben). Halte dich STRENG an die vom Nutzer vorgegebene Kurzbeschreibung, die relevanten Stichwörter, die auszuschließenden Stichwörter/Inhalte (diese NIEMALS erwähnen, auch nicht indirekt) sowie die Formatregeln. Füge an inhaltlich passenden Stellen eine eigene Zeile \"[Bild]\" als Bild-Platzhalter ein, wenn ein zugeordneter Screenshot (s. u.) dort sinnvoll ist - nie mehr [Bild]-Platzhalter als zugeordnete Screenshots vorhanden sind. Füge ebenso eine eigene Zeile \"[Tabelle]\" ein, wenn eine zugeordnete Tabelle dort sinnvoll ist - nie mehr [Tabelle]-Platzhalter als zugeordnete Tabellen vorhanden sind. Nutze AUSSCHLIESSLICH Informationen aus den Quellen unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Widersprechen sich Quellen inhaltlich, hat die Rovo-Knowledge-Quelle (direkt aus dem Rovo-Quellsystem) Vorrang vor den anderen Quellen. Keine Ticket-Schlüssel/-Referenzen im Text. Gib ausschließlich den neuen Unterkapiteltext aus, keine Erklärungen dazu:"
+    subchapterDraft: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Erstelle oder aktualisiere die Fassung des unten genannten EINEN Unterkapitels für die angegebene Zielversion (Rolle/Sparte), DURCHGÄNGIG IM PRÄSENS, im Stil eines professionellen Softwarehandbuchs (zusammenhängende Absätze, keine reine Aufzählung, sofern die Formatregeln unten nichts anderes vorgeben). Halte dich STRENG an die vom Nutzer vorgegebene Kurzbeschreibung, die relevanten Stichwörter, die auszuschließenden Stichwörter/Inhalte (diese NIEMALS erwähnen, auch nicht indirekt) sowie die Formatregeln. Füge an inhaltlich passenden Stellen eine eigene Zeile \"[Bild]\" als Bild-Platzhalter ein, wenn ein zugeordneter Screenshot (s. u.) dort sinnvoll ist - nie mehr [Bild]-Platzhalter als zugeordnete Screenshots vorhanden sind. Füge ebenso eine eigene Zeile \"[Tabelle]\" ein, wenn eine zugeordnete Tabelle dort sinnvoll ist - nie mehr [Tabelle]-Platzhalter als zugeordnete Tabellen vorhanden sind. Nutze AUSSCHLIESSLICH Informationen aus den Quellen unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Widersprechen sich Quellen inhaltlich, hat die Rovo-Knowledge-Quelle (direkt aus dem Rovo-Quellsystem) Vorrang vor den anderen Quellen. Keine Ticket-Schlüssel/-Referenzen im Text. Gib ausschließlich den neuen Unterkapiteltext aus, keine Erklärungen dazu:",
+    subchapterAgent4: "Du bist Lektor für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen ALLE genehmigten Unterkapitel der aktuellen Rolle/Sparte-Version (je Unterkapitel mit Überschrift \"## \"). Vergleiche die Unterkapitel UNTEREINANDER (nicht gegen externe Quellen) und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Widersprüche zwischen Unterkapiteln\n- (ein Stichpunkt je Aussage, die sich zwischen zwei oder mehr Unterkapiteln widerspricht, mit Nennung der betroffenen Unterkapitel)\n\n### Redundanzen zwischen Unterkapiteln\n- (ein Stichpunkt je inhaltlich stark überlappender Aussage, die in mehreren Unterkapiteln nahezu gleich wiederholt wird, mit Nennung der betroffenen Unterkapitel)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
+    subchapterAgent5: "Du bist Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen ALLE genehmigten Unterkapitel der aktuellen Rolle/Sparte-Version, je Unterkapitel mit den ihm zugeordneten Quellen (Jira-Tickets des übergeordneten Kapitels, RAG-Bibliothek-Einträge und Rovo-Knowledge-Notizen, jeweils diesem Unterkapitel zugeordnet) und dem Unterkapiteltext. Prüfe JE UNTERKAPITEL, ob der Inhalt der zugeordneten Quellen im Unterkapiteltext erkennbar aufgegriffen wird. Gib AUSSCHLIESSLICH den folgenden Abschnitt aus, in genau diesem Format:\n\n### Nicht abgedeckte Quellen\n- (ein Stichpunkt je Unterkapitel MIT mindestens einer zugeordneten Quelle, deren Inhalt im Unterkapiteltext nicht erkennbar aufgegriffen wird - Unterkapitel nennen, betroffene Quelle(n) kurz beschreiben)\n\nIst die Liste leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:"
   };
   var RAG_PROMPT_LABELS = {
     summary: "Zusammenfassung erzeugen",
@@ -18751,7 +18782,9 @@
     ragAnalysis: "RAG-Analyse: Gesamtbericht über den Chunk-Bestand",
     releaseletterRagEnrich: "Releaseletter: Mit RAG-Kontext anreichern",
     clickanweisungRagEnrich: "Clickanweisung: Mit RAG-Kontext anreichern",
-    subchapterDraft: "Unterkapitel-Werkstatt: Unterkapitel erzeugen/aktualisieren"
+    subchapterDraft: "Unterkapitel-Werkstatt: Unterkapitel erzeugen/aktualisieren",
+    subchapterAgent4: "Unterkapitel-Werkstatt Agent 4: Unterkapitelübergreifende Konsistenz prüfen",
+    subchapterAgent5: "Unterkapitel-Werkstatt Agent 5: Vollständigkeit & Abdeckung prüfen"
   };
   function ragPromptFor(promptKey) {
     var override = app.ragPrompts[promptKey];
@@ -24602,6 +24635,7 @@
     app.editoVersionKey = els.subchapterVersionSelect.value;
     editoSelectedChapters = {};
     editoResetMergedDocument();
+    subchapterResetAgentResults();
     renderSubchapterPanel();
   });
   function renderSubchapterChapterSelect() {
@@ -24828,6 +24862,94 @@
     if (!subchapterMergedPdfBlob) return;
     var ok = await saveOrWarn(subchapterMergedPdfFilename, subchapterMergedPdfBlob);
     if (ok) addLog("Unterkapitel-Gesamtdokument „" + subchapterMergedPdfFilename + "“ heruntergeladen.");
+  });
+
+  // Unterkapitel-Agenten (analog EDITO Agent 4/5, s. editoAgent4Prompt/
+  // editoAgent5Prompt oben): EIN Claude-Call über ALLE genehmigten
+  // Unterkapitel der aktuellen Rolle/Sparte-Version zusammen - ein
+  // Befund-Report, der nur im Zusammenspiel mehrerer Unterkapitel
+  // ueberhaupt sinnvoll ist. Reiner Sitzungs-Anzeigezustand (s.
+  // subchapterResetAgentResults), nicht Teil von "Sitzung speichern".
+  function subchapterAgent4Prompt(entries) {
+    return ragPromptFor("subchapterAgent4") + "\n\n" +
+      truncate(entries.map(function (e) { return "## " + subchapterTitleForExport(e.chapterTitle, e.subchapterTitle) + "\n" + truncate(e.text, 3000); }).join("\n\n"), 40000);
+  }
+  function subchapterAgent5Prompt(entries) {
+    return ragPromptFor("subchapterAgent5") + "\n\n" +
+      truncate(entries.map(function (e) {
+        var tickets = editoTicketsForChapter(e.chapterTitle);
+        var ragEntries = subchapterRagEntriesFor(e.chapterTitle, e.subchapterTitle);
+        var rovoList = subchapterRovoEntriesFor(e.chapterTitle, e.subchapterTitle);
+        var sourceBlocks = [];
+        if (tickets.length) sourceBlocks.push("Jira-Tickets des Kapitels (" + tickets.length + "):\n" + tickets.map(function (t) { return "- " + (t.key || "") + ": " + (t.summary || ""); }).join("\n"));
+        if (ragEntries.length) sourceBlocks.push("RAG-Bibliothek, diesem Unterkapitel zugeordnet (" + ragEntries.length + "):\n" + ragEntries.map(function (r) { return "- " + r.label; }).join("\n"));
+        if (rovoList.length) sourceBlocks.push("Rovo-Knowledge-Notizen, diesem Unterkapitel zugeordnet (" + rovoList.length + "):\n" + rovoList.map(function (r) { return "- " + truncate(r.answerText, 200); }).join("\n"));
+        return "## " + subchapterTitleForExport(e.chapterTitle, e.subchapterTitle) + "\nZugeordnete Quellen:\n" +
+          (sourceBlocks.length ? sourceBlocks.join("\n") : "(keine)") +
+          "\n\nUnterkapiteltext:\n" + truncate(e.text, 2500);
+      }).join("\n\n"), 40000);
+  }
+  function subchapterResetAgentResults() {
+    els.subchapterAgent4Result.hidden = true;
+    els.subchapterAgent4Output.textContent = "";
+    els.subchapterAgent4StatusNote.textContent = "";
+    els.subchapterAgent5Result.hidden = true;
+    els.subchapterAgent5Output.textContent = "";
+    els.subchapterAgent5StatusNote.textContent = "";
+  }
+  els.subchapterAgent4Btn.addEventListener("click", async function () {
+    if (!app.editoVersionKey) { showToast("Keine Version", "Bitte zuerst oben eine Rolle/Sparte wählen.", true); return; }
+    var entries = subchapterApprovedEntriesForVersion(app.editoVersionKey);
+    if (entries.length < 2) { showToast("Zu wenig Unterkapitel", "Für diese Prüfung werden mindestens 2 genehmigte Unterkapitel benötigt.", true); return; }
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    els.subchapterAgent4Btn.disabled = true;
+    els.subchapterAgent4Spinner.hidden = false;
+    els.subchapterAgent4Result.hidden = false;
+    els.subchapterAgent4Output.textContent = "Wird geprüft …";
+    try {
+      var result = await sampleApi(subchapterAgent4Prompt(entries), { modelTier: "default", cache: false });
+      els.subchapterAgent4Output.textContent = result.text || "";
+      var versionLabel = (editoVersionDef() || {}).label || app.editoVersionKey;
+      els.subchapterAgent4StatusNote.textContent = "Konsistenzprüfung über " + entries.length + " genehmigte Unterkapitel abgeschlossen (" + nowLabel() + ").";
+      addLog("Unterkapitel-Werkstatt: Agent 4 (Unterkapitelübergreifende Konsistenz) für Version „" + versionLabel + "“ ausgeführt (" + entries.length + " Unterkapitel).");
+      showToast("Konsistenzprüfung abgeschlossen", entries.length + " Unterkapitel geprüft.");
+    } catch (err) {
+      els.subchapterAgent4Output.textContent = "";
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.subchapterAgent4Btn.disabled = false;
+      els.subchapterAgent4Spinner.hidden = true;
+    }
+  });
+  els.subchapterAgent5Btn.addEventListener("click", async function () {
+    if (!app.editoVersionKey) { showToast("Keine Version", "Bitte zuerst oben eine Rolle/Sparte wählen.", true); return; }
+    var entries2 = subchapterApprovedEntriesForVersion(app.editoVersionKey);
+    if (!entries2.length) { showToast("Keine genehmigten Unterkapitel", "Für diese Rolle/Sparte-Version wurde noch kein Unterkapitel genehmigt.", true); return; }
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    els.subchapterAgent5Btn.disabled = true;
+    els.subchapterAgent5Spinner.hidden = false;
+    els.subchapterAgent5Result.hidden = false;
+    els.subchapterAgent5Output.textContent = "Wird geprüft …";
+    try {
+      var result2 = await sampleApi(subchapterAgent5Prompt(entries2), { modelTier: "default", cache: false });
+      els.subchapterAgent5Output.textContent = result2.text || "";
+      var versionLabel2 = (editoVersionDef() || {}).label || app.editoVersionKey;
+      els.subchapterAgent5StatusNote.textContent = "Vollständigkeitsprüfung über " + entries2.length + " genehmigte Unterkapitel abgeschlossen (" + nowLabel() + ").";
+      addLog("Unterkapitel-Werkstatt: Agent 5 (Vollständigkeit & Abdeckung) für Version „" + versionLabel2 + "“ ausgeführt (" + entries2.length + " Unterkapitel).");
+      showToast("Vollständigkeitsprüfung abgeschlossen", entries2.length + " Unterkapitel geprüft.");
+    } catch (err) {
+      els.subchapterAgent5Output.textContent = "";
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.subchapterAgent5Btn.disabled = false;
+      els.subchapterAgent5Spinner.hidden = true;
+    }
   });
 
   /* ============ Teil 10: Navigation ============ */

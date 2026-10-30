@@ -10,7 +10,10 @@
 // exportieren (mit/ohne Bilder). Prüft: Guards, Quellen-Filterung auf
 // Unterkapitel-Ebene, Prompt-Inhalt, Diff-Anzeige über 2 Iterationen,
 // Status-Freigabe, Einzel-Export mit/ohne Bilder (echte Medien-Prüfung
-// im DOCX), Gesamtdokument-Export, Reset bei "Alle Daten löschen".
+// im DOCX), Gesamtdokument-Export, Agent 4 (unterkapitelübergreifende
+// Konsistenz) und Agent 5 (Vollständigkeit/Abdeckung) über die genehmigten
+// Unterkapitel der aktuellen Version, Reset bei Versionswechsel/"Alle
+// Daten löschen".
 const fs = require("fs");
 const path = require("path");
 const BUILD_HTML = path.join(__dirname, "..", "ticket_cockpit.build.html");
@@ -271,6 +274,53 @@ async function buildDocxWithTable() {
   check("Übersichtstabelle zeigt genehmigtes Unterkapitel", doc.getElementById("subchapter-overview-tbody").textContent.includes("Genehmigt"));
   check("Gesamtdokument-Hinweis nennt 1 genehmigtes Unterkapitel", doc.getElementById("subchapter-merge-count-note").textContent.includes("1 genehmigte"));
 
+  // ===================== Agent 4/5 (Konsistenz-/Vollständigkeitsprüfung über genehmigte Unterkapitel) =====================
+  fire(doc.getElementById("subchapter-agent4-btn"), "click");
+  await wait(50);
+  check("Agent 4 mit nur 1 genehmigtem Unterkapitel: Hinweis statt Absturz", doc.getElementById("toast").textContent.includes("Zu wenig Unterkapitel"));
+  check("Agent 4 Ergebnis bleibt bei zu wenig Unterkapiteln versteckt", doc.getElementById("subchapter-agent4-result").hidden === true);
+
+  sampleCalls = [];
+  fire(doc.getElementById("subchapter-agent5-btn"), "click");
+  await waitUntil(() => doc.getElementById("subchapter-agent5-status-note").textContent.length > 0, 2000);
+  check("Agent 5 mit 1 genehmigtem Unterkapitel läuft (sample() einmal aufgerufen)", sampleCalls.length === 1);
+  check("Agent 5 Prompt nennt das Unterkapitel", sampleCalls[0].input.includes(KAP7) && sampleCalls[0].input.includes(SUB71));
+  check("Agent 5 Prompt nennt die zugeordneten Quellen (Ticket/RAG/Rovo)", sampleCalls[0].input.includes("SKW-1") &&
+    sampleCalls[0].input.includes("RAG-Bibliothek, diesem Unterkapitel zugeordnet") &&
+    sampleCalls[0].input.includes("Rovo-Knowledge-Notizen, diesem Unterkapitel zugeordnet"));
+  check("Agent 5 Statuszeile nennt 1 genehmigtes Unterkapitel", doc.getElementById("subchapter-agent5-status-note").textContent.includes("1 genehmigte"));
+  check("Agent 5 Ausgabe befüllt", doc.getElementById("subchapter-agent5-output").textContent.length > 0);
+
+  // Zweites Unterkapitel (7.2) im selben Kapitel erzeugen + genehmigen, damit Agent 4 (min. 2 genehmigte) testbar ist
+  subSelect.value = "7.2 Kündigung";
+  fire(subSelect, "change");
+  await wait(50);
+  sampleCalls = [];
+  fire(doc.getElementById("subchapter-edit-btn"), "click");
+  await waitUntil(() => doc.getElementById("subchapter-current-draft-output").textContent.includes("Erste Fassung"), 2000);
+  statusSelect.value = "genehmigt";
+  fire(statusSelect, "change");
+  await wait(50);
+  check("Gesamtdokument-Hinweis nennt jetzt 2 genehmigte Unterkapitel", doc.getElementById("subchapter-merge-count-note").textContent.includes("2 genehmigte"));
+
+  sampleCalls = [];
+  fire(doc.getElementById("subchapter-agent4-btn"), "click");
+  await waitUntil(() => doc.getElementById("subchapter-agent4-status-note").textContent.length > 0, 2000);
+  check("Agent 4 mit 2 genehmigten Unterkapiteln läuft (sample() einmal aufgerufen)", sampleCalls.length === 1);
+  check("Agent 4 Prompt nennt beide Unterkapitel", sampleCalls[0].input.includes(SUB71) && sampleCalls[0].input.includes("7.2 Kündigung"));
+  check("Agent 4 Statuszeile nennt 2 genehmigte Unterkapitel", doc.getElementById("subchapter-agent4-status-note").textContent.includes("2 genehmigte"));
+  check("Agent 4 Ausgabe befüllt", doc.getElementById("subchapter-agent4-output").textContent.length > 0);
+
+  // 7.2 wieder auf Entwurf setzen (nur 7.1 soll fuer die nachfolgende
+  // Gesamtdokument-/Export-Pruefung genehmigt bleiben) und zurueck auf 7.1
+  statusSelect.value = "entwurf";
+  fire(statusSelect, "change");
+  await wait(50);
+  subSelect.value = SUB71;
+  fire(subSelect, "change");
+  await wait(50);
+  check("Gesamtdokument-Hinweis nach Zurücksetzen von 7.2 wieder bei 1 genehmigtem Unterkapitel", doc.getElementById("subchapter-merge-count-note").textContent.includes("1 genehmigte"));
+
   // ===================== Einzel-Export MIT Bildern (echte Medien-Prüfung) =====================
   let savedBefore = savedFiles.length;
   fire(doc.getElementById("subchapter-export-docx-btn"), "click");
@@ -328,6 +378,11 @@ async function buildDocxWithTable() {
   await wait(100);
   check("Nach Versionswechsel: Übersichtstabelle weiterhin mit Eintrag (versionübergreifend gespeichert)", doc.getElementById("subchapter-overview-tbody").textContent.includes(SUB71));
   check("Nach Versionswechsel: Gesamtdokument-Hinweis für neue Version 0 genehmigte Unterkapitel", doc.getElementById("subchapter-merge-count-note").textContent.includes("0 genehmigte"));
+  check("Nach Versionswechsel: Agent-4-Ergebnis zurückgesetzt (versteckt)", doc.getElementById("subchapter-agent4-result").hidden === true);
+  check("Nach Versionswechsel: Agent-5-Ergebnis zurückgesetzt (versteckt)", doc.getElementById("subchapter-agent5-result").hidden === true);
+  fire(doc.getElementById("subchapter-agent5-btn"), "click");
+  await wait(50);
+  check("Agent 5 für neue Version ohne genehmigte Unterkapitel: Hinweis statt Absturz", doc.getElementById("toast").textContent.includes("Keine genehmigten Unterkapitel"));
 
   // ===================== "Alle Daten löschen" leert die Unterkapitel-Werkstatt =====================
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();

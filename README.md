@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.106.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.107.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1949,7 +1949,19 @@ RAG-Kontext anreichern").
   einzeln abschaltbar. Word-Fußzeile und Deckblatt sind bewusst über eigene,
   separate Builder-Funktionen umgesetzt (nicht in der für Einzelkapitel/-unterkapitel
   gemeinsam genutzten Export-Grundfunktion) – der Einzelkapitel-/Einzelunterkapitel-Export
-  bleibt dadurch unverändert.
+  bleibt dadurch unverändert. **Konsistenz- & Vollständigkeitsprüfung** (neu, v2.107.0,
+  analog zu EDITO Agent 4/5): zwei weitere Prüf-Buttons laufen über ALLE genehmigten
+  Unterkapitel der aktuell gewählten Rolle/Sparte-Version zusammen (ein Befund-Report, der
+  nur im Zusammenspiel mehrerer Unterkapitel sinnvoll ist – deshalb EIN Claude-Aufruf über
+  den gesamten Bestand statt je Unterkapitel einzeln, Prompts editierbar unter
+  Einstellungen → RAG-Prompts). **Agent 4** vergleicht die genehmigten Unterkapitel
+  UNTEREINANDER auf Widersprüche und Redundanzen (mindestens 2 genehmigte Unterkapitel
+  nötig). **Agent 5** prüft JE Unterkapitel, ob dessen eigene zugeordnete Quellen (Jira-
+  Tickets des übergeordneten Kapitels, RAG-Bibliothek-Einträge, Rovo-Wissens-Notizen –
+  dieselbe Quellen-Zuordnung wie im Eingabe-Formular oben) im erzeugten Text erkennbar
+  aufgegriffen wurden (mindestens 1 genehmigtes Unterkapitel nötig). Beide Ergebnisse sind
+  reiner Sitzungs-Anzeigezustand (nicht Teil von "Sitzung speichern", wie bei EDITO Agent
+  4/5) und werden bei Rolle/Sparte-Versionswechsel sowie "Alle Daten löschen" zurückgesetzt.
 
 - **Bilder** – Tabelle **und** Kachel-Galerie aller in der Sitzung
   erzeugten Prozessdiagramme sowie eigener Bild-Uploads, jeweils mit
