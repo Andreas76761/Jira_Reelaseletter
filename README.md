@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.109.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.110.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,33 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Performance-Fix (v2.110.0): Dashboard-Register bei großen Ticketmengen** – bei
+  mehreren tausend geladenen Tickets konnte ein Wechsel zurück zum Dashboard-Register
+  (dort leben sowohl die Haupttabelle als auch die „Jira Zuordnung"-Tabelle) mehrere
+  Sekunden bis spürbar über zehn Sekunden blockieren und wirkte dadurch wie ein
+  hängendes/nicht reagierendes Register. Ursache: Beide Tabellen hängten bislang ALLE
+  Treffer unbegrenzt als `<tr>` ins DOM – die „Jira Zuordnung"-Tabelle kann dabei sogar
+  deutlich mehr Zeilen als Tickets erzeugen, da ein Ticket je nach Label-Kategorien/
+  Gliederungskapiteln in mehreren Gruppen gleichzeitig erscheint (bei 6.000 Test-Tickets
+  z. B. über 20.000 Zeilen). Sobald das zuvor unsichtbare (`display:none`) Dashboard-Panel
+  wieder sichtbar wird, muss der Browser dieses sehr große DOM einmalig komplett layouten
+  – das ist der eigentliche Bremsklotz, nicht die Logik des Registerwechsels selbst. Fix
+  (zwei unabhängige Maßnahmen, beide ausschließlich bei großen Datenmengen wirksam, für
+  normale Importgrößen unverändertes Verhalten):
+  - **„Jira Zuordnung"**: Gruppen sind ab 200 Gesamt-Treffern standardmäßig eingeklappt
+    (`assignmentExpanded`/`ASSIGNMENT_AUTO_COLLAPSE_LIMIT`, dieselbe Auf-/Zuklapp-Technik
+    wie bereits bei Datenqualität/Testergebnissen) – Zeilen bleiben zur Kompatibilität mit
+    bestehenden Tests im DOM, sind bis zum Aufklappen aber `hidden` (kein Layout-Aufwand).
+    Je Gruppe zusätzlich auf `ASSIGNMENT_ITEM_LIMIT` (300) begrenzt mit „… und N weitere"-
+    Hinweiszeile als Obergrenze auch im aufgeklappten Zustand.
+  - **Haupttabelle**: Ab `TABLE_ROW_RENDER_LIMIT` (500) Treffern werden nur noch die ersten
+    500 tatsächlich als Zeilen gerendert, mit Hinweistext zum weiteren Eingrenzen der
+    Suche/Filter. `lastRenderedFiltered` bleibt dabei die VOLLSTÄNDIGE gefilterte Liste –
+    „Alle sichtbaren auswählen" und die Auswahl-Exporte (Jira-Nummern/XLSX) wirken daher
+    unverändert auf alle Treffer, nicht nur auf die gerenderten 500.
+  Ergebnis (Playwright-Lasttest, 6.000 synthetische Tickets): Dashboard-Klick nach
+  Registerwechsel vorher ca. 10–11 Sekunden, danach unter 0,5 Sekunden.
 
 - **Bilder** – Tabelle **und** Kachel-Galerie aller in der Sitzung
   erzeugten Prozessdiagramme sowie eigener Bild-Uploads, jeweils mit
