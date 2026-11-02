@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.112.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.113.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,30 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Performance und Fehlerkorrekturen (v2.113.0)**:
+  - **Unsichtbare Register werden nicht mehr mitgerendert**: `refreshDashboard` baut
+    Verarbeitung (Release-Tabelle, Jira-Liste, Domänen, Job-Schritte), Listenauswahl,
+    Ticket Graph, Trend und Datenqualität nur noch auf, wenn das Register sichtbar ist –
+    sonst wird der Aufbau vorgemerkt und beim Öffnen nachgeholt (`renderWhenVisible`/
+    `flushDeferredRenders`). Die Klassifizierung rendert die Tabelle nicht mehr doppelt.
+  - **Render-Grenzen**: Vergleichstabelle max. 300 geänderte Tickets, Listenauswahl-Vorschau
+    max. 300 Zeilen (gespeichert wird weiterhin die vollständige Auswahl), Massenverarbeitung
+    max. 200 Zeilen je Domäne mit „Alle anzeigen“, Protokoll zeigt die neuesten 200 Einträge
+    (gespeichert höchstens 2000; neue Einträge werden inkrementell oben eingefügt), Ticket
+    Graph als Netzwerk max. 300 Knoten (sonst Ebenen-Layout), Prozessbild max. 60 Schritte.
+    Jeweils mit Hinweis auf die Gesamtzahl.
+  - **Weniger Neuaufbau**: Kapitelwechsel in Bilder-Galerie, Editor, Rovo Knowledge und
+    Tabellen aktualisiert nur das Unterkapitel-Dropdown der betroffenen Zeile/Karte; die
+    Prozessbild-Galerie legt identische Diagramme nicht mehr doppelt an; das automatische
+    Speichern behält nur den letzten Massenverarbeitungs-Checkpoint.
+  - **Rovo Knowledge**: KI-Zuordnung mit **Stop**-Button (bricht den laufenden Aufruf ab).
+  - **Fehlerkorrekturen**: Löschen einer Editor-Datei entfernt nur die Screens genau dieser
+    Datei (nicht mehr die einer gleichnamigen anderen Datei); gelöschte Bilder verschwinden
+    auch aus Editor-Screens, Bildband und FINAL; „Zur Negativliste“ öffnet den Unter-Tab
+    „KI-Texterzeugung“ und fokussiert das Eingabefeld; der Zugriff auf IndexedDB ist
+    abgesichert (App startet auch, wenn der Browser ihn blockiert); `<meta charset="utf-8">`
+    ergänzt (Umlaute beim lokalen Öffnen).
 
 - **FINAL – Erweiterungen (v2.112.0)**:
   - **Auswahllisten**: Rolle zusätzlich „HQ“; Sparte nur noch „Pkw“ und „Van“ (leere Auswahl

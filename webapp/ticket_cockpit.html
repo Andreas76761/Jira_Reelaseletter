@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>ONESCM Ticket-Cockpit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1219,6 +1220,7 @@
               <span class="btn-spinner" id="rovo-ai-assign-spinner" hidden></span>
               KI-Zuordnung (Kapitel/Unterkapitel/Labels)
             </button>
+            <button class="btn ghost btn-tiny" id="rovo-ai-stop-btn" type="button" hidden>Stop</button>
             <button class="btn ghost btn-tiny" id="rovo-zip-export-btn" type="button">Alle als ZIP exportieren</button>
           </div>
           <p class="step-note" id="rovo-ai-status-note"></p>
@@ -5666,7 +5668,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.112.0";
+  var APP_VERSION = "2.113.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7234,7 +7236,7 @@
     "editor-ocr-batch-btn", "editor-ocr-batch-spinner", "editor-ocr-batch-status-note",
     "editor-ai-assign-btn", "editor-ai-assign-spinner", "editor-ai-status-note",
     "rovo-chat-textarea", "rovo-answer-textarea", "rovo-chat-paste-btn", "rovo-answer-paste-btn", "rovo-add-entry-btn",
-    "rovo-md-dropzone", "rovo-md-file-input", "rovo-entries-count", "rovo-ai-assign-btn", "rovo-ai-assign-spinner",
+    "rovo-md-dropzone", "rovo-md-file-input", "rovo-entries-count", "rovo-ai-assign-btn", "rovo-ai-assign-spinner", "rovo-ai-stop-btn",
     "rovo-zip-export-btn", "rovo-ai-status-note", "rovo-entries-table", "rovo-entries-tbody", "rovo-entries-empty",
     "rovo-detail-modal-overlay", "rovo-detail-modal-key", "rovo-detail-modal-title", "rovo-detail-modal-close",
     "rovo-detail-modal-meta", "rovo-detail-modal-chat", "rovo-detail-modal-answer", "rovo-detail-modal-cancel-btn",
@@ -7708,9 +7710,23 @@
     fileviewSummaries: {}
   };
 
+  // Protokoll: gespeichert werden höchstens LOG_STORE_LIMIT Einträge, angezeigt
+  // die neuesten LOG_DISPLAY_LIMIT. Neue Einträge werden inkrementell oben
+  // eingefügt statt die gesamte Liste bei jeder Meldung neu aufzubauen.
+  var LOG_DISPLAY_LIMIT = 200, LOG_STORE_LIMIT = 2000;
+  function logEntryHtml(l) {
+    return "<li><time>" + escapeHtml(l.when) + "</time><span>" + escapeHtml(l.message) + "</span></li>";
+  }
   function addLog(message) {
-    app.log.unshift({ when: nowLabel(), message: message });
-    renderLog();
+    var entry = { when: nowLabel(), message: message };
+    app.log.unshift(entry);
+    if (app.log.length > LOG_STORE_LIMIT) app.log.length = LOG_STORE_LIMIT;
+    var shownCount = els.logList ? els.logList.querySelectorAll("li:not(.log-truncated-hint)").length : 0;
+    // Vollständig neu aufbauen nur, wenn die Anzeige nicht zum Datenstand passt
+    // (z. B. erstes Element, Laden einer Sitzung) oder das Limit erreicht wird.
+    if (!els.logList || shownCount !== Math.min(app.log.length - 1, LOG_DISPLAY_LIMIT) || app.log.length > LOG_DISPLAY_LIMIT) { renderLog(); return; }
+    els.logEmpty.hidden = true;
+    els.logList.insertAdjacentHTML("afterbegin", logEntryHtml(entry));
   }
 
   var TRACKED_DIFF_FIELDS = [
@@ -8194,7 +8210,7 @@
     app.ticketStore = new Map(data.ticketStoreEntries);
     app.imports = data.imports || [];
     app.changes = data.changes || [];
-    app.log = data.log || [];
+    app.log = (data.log || []).slice(0, LOG_STORE_LIMIT);
     app.generatedImages = data.generatedImages || [];
     app.uploadedImages = data.uploadedImages || [];
     app.editorFiles = data.editorFiles || [];
@@ -8402,7 +8418,10 @@
   // sinnlos einen Timer (neu) starten, der ohnehin nie etwas speichern
   // kann (openAutoSaveDb() liefert dann immer null). Einmalig zur
   // Skript-Ladezeit geprueft, nicht bei jedem Aufruf neu.
-  var autoSaveAvailable = !!window.indexedDB;
+  // Zugriff auf window.indexedDB kann in Sandbox-iframes/bei blockiertem
+  // Speicher selbst schon eine SecurityError werfen - daher abgesichert.
+  function safeIndexedDb() { try { return window.indexedDB || null; } catch (e) { return null; } }
+  var autoSaveAvailable = !!safeIndexedDb();
   var autoSaveEnabled = true;
   var autoSaveDbPromise = null;
   var autoSaveTimer = null;
@@ -8412,9 +8431,10 @@
   function openAutoSaveDb() {
     if (autoSaveDbPromise) return autoSaveDbPromise;
     autoSaveDbPromise = new Promise(function (resolve) {
-      if (!window.indexedDB) { resolve(null); return; }
+      var idb = safeIndexedDb();
+      if (!idb) { resolve(null); return; }
       var req;
-      try { req = window.indexedDB.open(AUTOSAVE_DB_NAME, 1); }
+      try { req = idb.open(AUTOSAVE_DB_NAME, 1); }
       catch (e) { resolve(null); return; }
       req.onupgradeneeded = function () {
         if (!req.result.objectStoreNames.contains(AUTOSAVE_STORE)) req.result.createObjectStore(AUTOSAVE_STORE);
@@ -8464,6 +8484,9 @@
       var db = await openAutoSaveDb();
       if (!db) { els.autosaveStatus.textContent = "Automatisches Speichern in dieser Umgebung nicht verfügbar."; return; }
       var data = serializeSessionState();
+      // Im Autosave nur die juengste Massenverarbeitungs-Zwischenversion -
+      // jede ist eine vollstaendige Kopie aller Eintraege.
+      if (Array.isArray(data.massCheckpoints) && data.massCheckpoints.length > 1) data.massCheckpoints = data.massCheckpoints.slice(-1);
       var ok = await autoSaveWrite(db, data);
       els.autosaveStatus.textContent = ok
         ? "Zuletzt automatisch gespeichert: " + nowLabel() + " (" + app.tickets.length + " Tickets)."
@@ -10717,6 +10740,22 @@
     return result;
   }
 
+  // Performance: aufwendige Darstellungen unsichtbarer Register (Graph,
+  // Trend, Datenqualitaet, Listenauswahl, Verarbeitung) werden nicht bei
+  // jedem Import/jeder Aenderung neu gezeichnet, sondern nur vorgemerkt und
+  // beim naechsten Oeffnen des Registers (showView) einmal nachgeholt.
+  var deferredViewRenders = {};
+  function renderWhenVisible(view, key, fn) {
+    var panel = document.querySelector('[data-view-panel="' + view + '"]');
+    if (panel && !panel.hidden) { fn(); return; }
+    (deferredViewRenders[view] = deferredViewRenders[view] || {})[key] = fn;
+  }
+  function flushDeferredRenders(view) {
+    var pending = deferredViewRenders[view];
+    if (!pending) return;
+    delete deferredViewRenders[view];
+    Object.keys(pending).forEach(function (k) { pending[k](); });
+  }
   function refreshDashboard(resetFilters) {
     // Tickets ausschliesslich inaktiv gesetzter Importe (Dateiverwaltung,
     // app.appliedInactiveImportIds) werden hier - und damit ueberall, was
@@ -10800,23 +10839,23 @@
     buildDomainChart();
     buildFormatCallout();
     render();
-    renderReleaseversionTable();
-    renderJiraListe();
-    renderDomainOverview();
-    renderAllJobSteps();
+    renderWhenVisible("verarbeitung", "releaseversion", renderReleaseversionTable);
+    renderWhenVisible("verarbeitung", "jiraliste", renderJiraListe);
+    renderWhenVisible("verarbeitung", "domainoverview", renderDomainOverview);
+    renderWhenVisible("verarbeitung", "jobsteps", renderAllJobSteps);
     ragPopulateSelects();
     manualPopulateSelects();
     renderRefCompareMapping();
     glPopulateSelects();
     renderSavedLists();
-    buildListenauswahlTypeChips();
-    renderListenauswahlPreview();
+    renderWhenVisible("listenauswahl", "typechips", buildListenauswahlTypeChips);
+    renderWhenVisible("listenauswahl", "preview", renderListenauswahlPreview);
     renderAssignmentPanel();
     populateOutlineDomainDatalist();
     graphPopulateSelects();
-    renderTicketGraph();
-    renderTrend();
-    renderDataQuality();
+    renderWhenVisible("ticketgraph", "graph", renderTicketGraph);
+    renderWhenVisible("trend", "trend", renderTrend);
+    renderWhenVisible("dataquality", "dq", renderDataQuality);
     renderFileviewImportSelect();
     renderImportStatsSelect();
     renderDomainColorsTable();
@@ -11160,7 +11199,6 @@
     if (select.value === auto) delete app.ticketClassificationOverrides[key];
     else app.ticketClassificationOverrides[key] = select.value;
     refreshDashboard(false);
-    render();
     addLog("Klassifizierung von " + key + " geändert: " + (CLASSIFICATION_LABELS[select.value] || select.value) + ".");
   });
 
@@ -11187,8 +11225,8 @@
       cb.checked = !!app.selectedKeys[cb.getAttribute("data-key")];
     });
     els.listenauswahlCurrentCount.textContent = "Im Dashboard sind aktuell " + n + (n === 1 ? " Ticket" : " Tickets") + " ausgewählt.";
-    buildListenauswahlTypeChips();
-    renderListenauswahlPreview();
+    renderWhenVisible("listenauswahl", "typechips", buildListenauswahlTypeChips);
+    renderWhenVisible("listenauswahl", "preview", renderListenauswahlPreview);
   }
 
   // Auswahl-Export (Dashboard): entweder nur die reinen Jira-Nummern (.txt,
@@ -11355,7 +11393,6 @@
     if (select.value === auto) delete app.ticketClassificationOverrides[key];
     else app.ticketClassificationOverrides[key] = select.value;
     refreshDashboard(false);
-    render();
     addLog("Klassifizierung von " + key + " geändert: " + (CLASSIFICATION_LABELS[select.value] || select.value) + ".");
     var updated = app.tickets.filter(function (t) { return t.key === key; })[0];
     if (updated) currentModalTicket = updated;
@@ -13597,16 +13634,22 @@
       btn.classList.toggle("active", active);
     });
   }
+  var LISTEN_PREVIEW_ROW_LIMIT = 300;
   function renderListenauswahlPreview() {
     var all = selectedTickets();
     var filtered = all.filter(matchesListPreviewFilter);
     els.listenauswahlPreviewCount.textContent = filtered.length;
     els.listenauswahlPreviewTotal.textContent = all.length;
     els.listenauswahlPreviewEmpty.hidden = filtered.length > 0;
-    els.listenauswahlPreviewTbody.innerHTML = filtered.map(function (t) {
+    // Vorschau zeigt höchstens LISTEN_PREVIEW_ROW_LIMIT Zeilen; gespeichert wird
+    // weiterhin die vollständige gefilterte Auswahl.
+    els.listenauswahlPreviewTbody.innerHTML = filtered.slice(0, LISTEN_PREVIEW_ROW_LIMIT).map(function (t) {
       return "<tr><td class=\"mono\">" + escapeHtml(t.key) + "</td><td>" + escapeHtml(descriptionDisplayText(t)) +
         "</td><td>" + escapeHtml(t.issueType || "–") + "</td><td>" + escapeHtml(t.status || "–") + "</td></tr>";
-    }).join("");
+    }).join("") + (filtered.length > LISTEN_PREVIEW_ROW_LIMIT
+      ? '<tr class="listenauswahl-preview-truncated"><td colspan="4" style="color:var(--text-muted);font-style:italic">Vorschau zeigt die ersten ' +
+        LISTEN_PREVIEW_ROW_LIMIT + " von " + filtered.length + " Tickets – gespeichert werden alle " + filtered.length + ".</td></tr>"
+      : "");
     els.listenauswahlSaveBtn.disabled = filtered.length === 0;
   }
 
@@ -13711,9 +13754,12 @@
     }
   });
 
+  // Begrenzt die Vergleichstabelle (wird in Dateiverwaltung UND Verarbeitung
+  // gerendert) auf die ersten CHANGES_RENDER_LIMIT geänderten Tickets.
+  var CHANGES_RENDER_LIMIT = 300;
   function renderChangesTable() {
     var rowsHtml = [];
-    app.changes.forEach(function (c, idx) {
+    app.changes.slice(0, CHANGES_RENDER_LIMIT).forEach(function (c, idx) {
       c.diffs.forEach(function (d, i) {
         rowsHtml.push(
           "<tr>" +
@@ -13728,6 +13774,10 @@
         );
       });
     });
+    if (app.changes.length > CHANGES_RENDER_LIMIT) {
+      rowsHtml.push('<tr class="changes-truncated-hint"><td colspan="7" style="color:var(--text-muted);font-style:italic">Angezeigt werden die ersten ' + CHANGES_RENDER_LIMIT +
+        " von " + app.changes.length + " geänderten Tickets.</td></tr>");
+    }
     var html = rowsHtml.join("");
     // Identischer Vergleich wird in Dateiverwaltung UND Verarbeitung ("2. Vergleich Jira Tickets") angezeigt.
     [[els.changesTbody, els.changesEmpty], [els.changesTbodyVerarbeitung, els.changesEmptyVerarbeitung]].forEach(function (pair) {
@@ -13828,9 +13878,12 @@
   function renderLog() {
     if (!app.log.length) { els.logList.innerHTML = ""; els.logEmpty.hidden = false; return; }
     els.logEmpty.hidden = true;
-    els.logList.innerHTML = app.log.map(function (l) {
-      return "<li><time>" + escapeHtml(l.when) + "</time><span>" + escapeHtml(l.message) + "</span></li>";
-    }).join("");
+    var shown = app.log.slice(0, LOG_DISPLAY_LIMIT);
+    els.logList.innerHTML = shown.map(logEntryHtml).join("") +
+      (app.log.length > shown.length
+        ? '<li class="log-truncated-hint" style="color:var(--text-muted);font-style:italic"><span>Angezeigt werden die neuesten ' + shown.length + " von " + app.log.length +
+          " Einträgen – das vollständige Protokoll ist im Export (XLSX/DOCX/PDF) enthalten.</span></li>"
+        : "");
   }
 
   // Leert NUR das Protokoll (anders als "Alle Daten löschen"/"Sitzung
@@ -14706,6 +14759,7 @@
   // ergibt. Rechenaufwand ist O(Knoten^2) je Iteration; bei sehr vielen
   // Knoten wird die Iterationszahl reduziert, um die Ansicht responsiv zu
   // halten (auf Kosten eines etwas weniger "eingeschwungenen" Layouts).
+  var GRAPH_NETWORK_MAX_NODES = 300;
   function graphComputeForceLayout(nodes, edges) {
     if (!nodes.length) return { positions: {}, width: GRAPH_NODE_W + 60, height: GRAPH_NODE_H + 60 };
     var keys = nodes.map(function (n) { return n.key; });
@@ -15020,8 +15074,13 @@
       graphLastLayout = null;
       els.graphSvgContainer.innerHTML = graphRenderMatrix(data.nodes, data.edges);
     } else {
+      // Das Kraeftelayout ist O(Knoten^2) je Iteration - ab
+      // GRAPH_NETWORK_MAX_NODES Knoten wuerde es die Seite blockieren, dann
+      // stattdessen die Schichten-Ansicht (mit Hinweis).
+      var networkTooBig = graphViewMode === "network" && data.nodes.length > GRAPH_NETWORK_MAX_NODES;
+      if (networkTooBig) showToast("Netzwerk-Ansicht zu groß", data.nodes.length + " Tickets – die Netzwerk-Ansicht ist auf " + GRAPH_NETWORK_MAX_NODES + " begrenzt. Angezeigt wird die Schichten-Ansicht; bitte Filter eingrenzen.");
       var layout = graphViewMode === "tree" ? graphComputeTreeLayout(data.nodes, data.edges)
-        : graphViewMode === "network" ? graphComputeForceLayout(data.nodes, data.edges)
+        : graphViewMode === "network" && !networkTooBig ? graphComputeForceLayout(data.nodes, data.edges)
         : graphViewMode === "timeline" ? graphComputeTimelineLayout(data.nodes, data.edges)
         : graphComputeLayout(data.nodes, data.edges);
       graphLastLayout = layout;
@@ -17177,6 +17236,7 @@
     var generateBtn = document.getElementById(kind + "-generate-btn");
     var lastSteps = [];
     var lastName = "Release";
+    var PROZESSBILD_MAX_STEPS = 60;
     populateProzessbildSelects();
     function stepTableSections() {
       return [{
@@ -17193,18 +17253,25 @@
       var name = nameInput.value.trim() || "Release";
       lastName = name;
       lastSteps = buildProcessSteps(tickets);
+      // Das Diagramm zeigt hoechstens PROZESSBILD_MAX_STEPS Schritte (sonst
+      // tausende Knoten/Karten im DOM); die Tabellen-Exporte enthalten alle.
+      var diagramTickets = tickets.slice(0, PROZESSBILD_MAX_STEPS);
+      var diagramSteps = lastSteps.slice(0, PROZESSBILD_MAX_STEPS);
+      if (tickets.length > PROZESSBILD_MAX_STEPS) {
+        showToast("Diagramm gekürzt", "Das Diagramm zeigt die ersten " + PROZESSBILD_MAX_STEPS + " von " + tickets.length + " Tickets – XLSX/Word/PDF enthalten alle Schritte. Für ein vollständiges Bild bitte die Auswahl eingrenzen.");
+      }
       var layout = currentProzessbildLayout();
       var theme = currentProzessbildTheme();
       renderBox.innerHTML = "";
       var galleryEntry;
       var lastResult;
       if (layout.kind === "mermaid") {
-        var source = renderProcessDiagramSource(tickets);
+        var source = renderProcessDiagramSource(diagramTickets);
         insertMermaid(renderBox, source);
         lastResult = { kind: "mermaid", source: source, name: name };
         galleryEntry = { id: nextImageId++, title: name + " (" + tickets.length + " Tickets)", when: nowLabel(), kind: "mermaid", source: source, description: "" };
       } else {
-        var svg = layout.build(lastSteps, theme, name);
+        var svg = layout.build(diagramSteps, theme, name);
         renderBox.innerHTML = svg;
         var details = document.createElement("details");
         details.className = "mermaid-source-details";
@@ -17233,6 +17300,11 @@
       downloadXlsxBtn.disabled = false;
       downloadDocxBtn.disabled = false;
       downloadPdfBtn.disabled = false;
+      // Identisches Diagramm nicht mehrfach in der Galerie (und damit in jeder
+      // Sitzung/jedem Autosave) ablegen - nur nach vorn holen.
+      app.generatedImages = app.generatedImages.filter(function (g) {
+        return !(g.kind === galleryEntry.kind && (g.kind === "mermaid" ? g.source === galleryEntry.source : g.svg === galleryEntry.svg));
+      });
       app.generatedImages.unshift(galleryEntry);
       renderGallery();
       addLog("Prozessbild: " + layout.name + " (" + theme.name + ") für " + tickets.length + " Tickets erzeugt.");
@@ -17448,6 +17520,11 @@
     if (kind === "uploaded") { app.uploadedImages = app.uploadedImages.filter(function (i) { return i.id !== id; }); addLog('Hochgeladenes Bild „' + label + '“ gelöscht.'); }
     else { app.generatedImages = app.generatedImages.filter(function (i) { return i.id !== id; }); addLog('Generiertes Bild „' + label + '“ gelöscht.'); }
     renderGallery();
+    // Gelöschte Bilder auch aus Editor-Screens, Bildband und FINAL entfernen
+    // (jeweils beim nächsten Öffnen bzw. sofort, falls sichtbar).
+    renderWhenVisible("editor", "screens", renderEditorScreens);
+    renderWhenVisible("bildband", "bildband", renderBildband);
+    renderWhenVisible("final", "final", renderFinal);
     showToast("Gelöscht", (kind === "uploaded" ? "Bild" : "Generiertes Bild") + " „" + label + "“ wurde entfernt.");
   }
 
@@ -17479,8 +17556,19 @@
       if (img) {
         img.chapter = chapterSel.value;
         img.subchapter = ""; // Unterkapitel-Liste haengt vom Kapitel ab - bei Kapitelwechsel zuruecksetzen
-        renderGallery();
-        if (img.sourceFile) { renderEditorScreens(); renderBildband(); }
+        // Nur die Unterkapitel-Auswahl dieser Karte aktualisieren statt alle
+        // Karten (mit Bildern in voller Aufloesung) neu aufzubauen.
+        var cardSub = els.gallery.querySelector('.image-subchapter-select[data-id="' + img.id + '"]');
+        if (cardSub) {
+          cardSub.innerHTML = ragLibraryOptionsHtml(subchapterOptionsForChapter(img.chapter), "", "Ohne Unterkapitel");
+          cardSub.disabled = !img.chapter;
+        } else {
+          renderGallery();
+        }
+        if (img.sourceFile) {
+          renderWhenVisible("editor", "screens", renderEditorScreens);
+          renderWhenVisible("bildband", "bildband", renderBildband);
+        }
       }
       return;
     }
@@ -18114,7 +18202,7 @@
               id: nextImageId++, filename: file.name + " - Screen " + (idx + 1), dataUrl: screen.dataUrl, mimeType: (/^data:([^;]+);/.exec(screen.dataUrl) || [])[1] || "unbekannt",
               sizeBytes: Math.round((screen.dataUrl.length - screen.dataUrl.indexOf(",") - 1) * 0.75), when: nowLabel(), domain: domain, processStep: "", chapter: "", subchapter: "", description: screen.caption || "",
               width: null, height: null, avgColor: null, brightnessPct: null, metadataComputed: false, metadataError: null,
-              ocrText: null, ocrError: null, ocrRanAt: null, imageNumber: idx + 1, sourceFile: file.name
+              ocrText: null, ocrError: null, ocrRanAt: null, imageNumber: idx + 1, sourceFile: file.name, editorFileId: entry.id
             });
           });
           entry.status = "Verarbeitet";
@@ -18150,11 +18238,21 @@
     var file = app.editorFiles.filter(function (f) { return f.id === id; })[0];
     if (!file) return;
     app.editorFiles = app.editorFiles.filter(function (f) { return f.id !== id; });
-    var removedCount = app.uploadedImages.filter(function (i) { return i.sourceFile === file.filename; }).length;
-    app.uploadedImages = app.uploadedImages.filter(function (i) { return i.sourceFile !== file.filename; });
+    // Screens gehören über editorFileId genau zu DIESER Datei. Ältere Sitzungen
+    // ohne editorFileId: per Dateiname nur, wenn keine weitere gleichnamige
+    // Editor-Datei existiert (sonst würden deren Screens mitgelöscht).
+    var sameNameLeft = app.editorFiles.some(function (f) { return f.filename === file.filename; });
+    var belongsToFile = function (i) {
+      if (i.editorFileId != null) return i.editorFileId === id;
+      return !sameNameLeft && i.sourceFile === file.filename;
+    };
+    var removedCount = app.uploadedImages.filter(belongsToFile).length;
+    app.uploadedImages = app.uploadedImages.filter(function (i) { return !belongsToFile(i); });
     renderEditorFiles();
     renderEditorScreens();
     renderGallery();
+    renderWhenVisible("bildband", "bildband", renderBildband);
+    renderWhenVisible("final", "final", renderFinal);
     addLog("Editor: Datei „" + file.filename + "“ und " + removedCount + " zugehörige(r) Screen(s) gelöscht.");
     showToast("Gelöscht", 'Datei „' + file.filename + '“ wurde entfernt.');
   });
@@ -18165,8 +18263,13 @@
       if (img) {
         img.chapter = chapterSel.value;
         img.subchapter = ""; // Unterkapitel-Liste haengt vom Kapitel ab - bei Kapitelwechsel zuruecksetzen
-        renderEditorScreens();
-        renderBildband();
+        var rowSub = chapterSel.closest("tr").querySelector(".editor-screen-subchapter-select");
+        if (rowSub) {
+          rowSub.innerHTML = ragLibraryOptionsHtml(subchapterOptionsForChapter(img.chapter), "", "Ohne Unterkapitel");
+          rowSub.disabled = !img.chapter;
+        }
+        renderWhenVisible("bildband", "bildband", renderBildband);
+        renderWhenVisible("bilder", "gallery", renderGallery);
       }
       return;
     }
@@ -18482,7 +18585,14 @@
     var chapterSel = e.target.closest(".rovo-table-chapter-select");
     if (chapterSel) {
       var ct = app.rovoTables.filter(function (x) { return x.id === parseInt(chapterSel.getAttribute("data-id"), 10); })[0];
-      if (ct) { ct.chapter = chapterSel.value; ct.subchapter = ""; renderRovoTables(); }
+      if (ct) {
+        ct.chapter = chapterSel.value; ct.subchapter = "";
+        var cardSub = chapterSel.closest(".panel") && chapterSel.closest(".panel").querySelector(".rovo-table-subchapter-select");
+        if (cardSub) {
+          cardSub.innerHTML = ragLibraryOptionsHtml(ct.chapter ? subchapterOptionsForChapter(ct.chapter) : [], "", "Ohne Unterkapitel");
+          cardSub.disabled = !ct.chapter;
+        } else renderRovoTables();
+      }
       return;
     }
     var subSel = e.target.closest(".rovo-table-subchapter-select");
@@ -18852,7 +18962,17 @@
     var chapterSel = e.target.closest(".rovo-chapter-select");
     if (chapterSel) {
       var ce = app.rovoEntries.filter(function (x) { return x.id === parseInt(chapterSel.getAttribute("data-id"), 10); })[0];
-      if (ce) { ce.chapter = chapterSel.value; ce.subchapter = ""; renderRovoEntries(); }
+      if (ce) {
+        ce.chapter = chapterSel.value; ce.subchapter = "";
+        // Nur das Unterkapitel-Dropdown dieser Zeile aktualisieren statt die
+        // gesamte Tabelle neu aufzubauen (Fokus/Scrollposition bleiben erhalten).
+        var rowSub = chapterSel.closest("tr") && chapterSel.closest("tr").querySelector(".rovo-subchapter-select");
+        if (rowSub) {
+          rowSub.innerHTML = ragLibraryOptionsHtml(ce.chapter ? subchapterOptionsForChapter(ce.chapter) : [], "", "Ohne Unterkapitel");
+          rowSub.disabled = !ce.chapter;
+          renderRovoChapterSummaries();
+        } else renderRovoEntries();
+      }
       return;
     }
     var subSel = e.target.closest(".rovo-subchapter-select");
@@ -18917,12 +19037,16 @@
     var labelOptions = rovoLabelOptionsList();
     els.rovoAiAssignBtn.disabled = true;
     els.rovoAiAssignSpinner.hidden = false;
-    var updated = 0, skippedErrors = 0;
+    rovoAiAbortController = new AbortController();
+    var signal = rovoAiAbortController.signal;
+    els.rovoAiStopBtn.hidden = false;
+    var updated = 0, skippedErrors = 0, stopped = false;
     for (var i = 0; i < targets.length; i++) {
+      if (signal.aborted) { stopped = true; break; }
       var entry = targets[i];
       els.rovoAiStatusNote.textContent = "KI-Zuordnung: Eintrag " + (i + 1) + " von " + targets.length + " …";
       try {
-        var result = await sampleApi(rovoBuildAiAssignmentPrompt(entry, labelOptions), { modelTier: "default", cache: false });
+        var result = await sampleApi(rovoBuildAiAssignmentPrompt(entry, labelOptions), { modelTier: "default", cache: false, signal: signal });
         var suggestion = rovoParseAiAssignment(result.text, chapters, labelOptions);
         if (suggestion.chapterTitle) {
           entry.chapter = suggestion.chapterTitle;
@@ -18931,16 +19055,21 @@
           updated++;
         }
       } catch (err) {
+        if (signal.aborted || (err && err.code === "cancelled")) { stopped = true; break; }
         skippedErrors++;
       }
     }
+    rovoAiAbortController = null;
+    els.rovoAiStopBtn.hidden = true;
     renderRovoEntries();
-    els.rovoAiStatusNote.textContent = updated + " von " + targets.length + " Einträgen per KI zugeordnet." + (skippedErrors ? " (" + skippedErrors + " fehlgeschlagen.)" : "");
-    addLog("Rovo Knowledge: KI-Zuordnung abgeschlossen - " + updated + " von " + targets.length + " Einträgen zugeordnet" + (skippedErrors ? ", " + skippedErrors + " fehlgeschlagen" : "") + ".");
+    els.rovoAiStatusNote.textContent = (stopped ? "Gestoppt – " : "") + updated + " von " + targets.length + " Einträgen per KI zugeordnet." + (skippedErrors ? " (" + skippedErrors + " fehlgeschlagen.)" : "");
+    addLog("Rovo Knowledge: KI-Zuordnung " + (stopped ? "gestoppt" : "abgeschlossen") + " - " + updated + " von " + targets.length + " Einträgen zugeordnet" + (skippedErrors ? ", " + skippedErrors + " fehlgeschlagen" : "") + ".");
     els.rovoAiAssignBtn.disabled = false;
     els.rovoAiAssignSpinner.hidden = true;
   }
+  var rovoAiAbortController = null;
   els.rovoAiAssignBtn.addEventListener("click", rovoRunAiAssignment);
+  els.rovoAiStopBtn.addEventListener("click", function () { if (rovoAiAbortController) rovoAiAbortController.abort(); });
 
   // Zusammenfassung je Kapitel ("welche Informationen zu welchem
   // Unterkapitel gibt es"): je Kapitel mit mind. 1 zugeordnetem Rovo-
@@ -19537,7 +19666,9 @@
   els.negativeWordsInput && els.negativeWordsInput.addEventListener("input", function () {
     app.negativeWordsRaw = els.negativeWordsInput.value;
     renderNegativeWordsBox();
-    renderManualChapters();
+    // Kapitelkarten liegen im Register Benutzerhandbuch - während der Eingabe in
+    // den Einstellungen erst beim nächsten Öffnen neu aufbauen statt je Tastendruck.
+    renderWhenVisible("benutzerhandbuch", "manualChapters", renderManualChapters);
     negativeWordsPreviewRefreshers.forEach(function (fn) { fn(); });
   });
   els.negativeWordsInput && els.negativeWordsInput.addEventListener("change", function () {
@@ -19549,6 +19680,9 @@
   // Einstellungen und fokussiert direkt die Negativliste-Textarea.
   function goToNegativeWordsSettings() {
     showView("einstellungen");
+    // Die Negativliste liegt im Unter-Tab "KI-Texterzeugung" - ohne dessen
+    // Aktivierung bliebe die Textarea verborgen und focus() wirkungslos.
+    if (typeof showEinstellungenSub === "function") showEinstellungenSub("ki-text");
     if (els.negativeWordsInput) {
       if (typeof els.negativeWordsInput.scrollIntoView === "function") els.negativeWordsInput.scrollIntoView({ block: "center" });
       els.negativeWordsInput.focus();
@@ -20562,6 +20696,10 @@
     els.massSelectionCount.textContent = n + (n === 1 ? " ausgewählt" : " ausgewählt");
     els.massBulkAssignBtn.disabled = n === 0;
   }
+  // Performance: je Domaenen-Gruppe zunaechst hoechstens so viele Zeilen
+  // (jede mit vier Auswahllisten) - der Rest auf Klick ("Alle anzeigen").
+  var MASS_GROUP_ROW_LIMIT = 200;
+  var massGroupShowAll = {};
   function renderMassFiles() {
     var list = app.massFiles;
     els.massEmpty.hidden = list.length > 0;
@@ -20578,9 +20716,17 @@
     });
     var domainNames = Object.keys(groups).filter(function (d) { return d !== ""; }).sort();
     if (groups[""]) domainNames.push("");
+    // Kapitel-Reihenfolge einmal je Render statt je Sortiervergleich berechnen.
+    var chapterOrder = {};
+    chapterOptions.forEach(function (t, i) { if (!(t in chapterOrder)) chapterOrder[t] = i; });
+    function orderOf(title) { return title && (title in chapterOrder) ? chapterOrder[title] : app.outline.length; }
     els.massGroups.innerHTML = domainNames.map(function (d) {
-      var entries = groups[d].slice().sort(function (a, b) { return massChapterOrderIndex(a.chapterTitle) - massChapterOrderIndex(b.chapterTitle); });
-      var rows = entries.map(function (e) {
+      var entries = groups[d].slice().sort(function (a, b) { return orderOf(a.chapterTitle) - orderOf(b.chapterTitle); });
+      var shown = massGroupShowAll[d] ? entries : entries.slice(0, MASS_GROUP_ROW_LIMIT);
+      var moreRow = entries.length > shown.length
+        ? '<tr><td colspan="12" style="font-style:italic; color:var(--text-muted);">… und ' + (entries.length - shown.length) + ' weitere Einträge. <button type="button" class="btn ghost btn-tiny mass-group-show-all-btn" data-domain="' + escapeHtml(d) + '">Alle anzeigen</button></td></tr>'
+        : "";
+      var rows = shown.map(function (e) {
         var isOpen = !!massExpandedIds[e.id];
         var textCell = isOpen
           ? '<div style="white-space:pre-wrap; max-height:260px; overflow:auto;">' + escapeHtml(e.text) + "</div>"
@@ -20612,10 +20758,16 @@
         "</div>" +
         '<div class="table-wrap" style="max-height:400px; overflow:auto;"><table class="simple-table">' +
         "<thead><tr><th></th><th>Bezeichnung</th><th>Domäne</th><th>Kapitel</th><th>Status</th><th>Unterkapitel</th><th>Ref.-Nr.</th><th>Klassifizierung</th><th>Quelle</th><th>Tickets</th><th>Textschnipsel</th><th></th></tr></thead>" +
-        "<tbody>" + rows + "</tbody></table></div></div>";
+        "<tbody>" + rows + moreRow + "</tbody></table></div></div>";
     }).join("");
     massUpdateSelectionUI();
   }
+  els.massGroups.addEventListener("click", function (e) {
+    var btn = e.target.closest(".mass-group-show-all-btn");
+    if (!btn) return;
+    massGroupShowAll[btn.getAttribute("data-domain")] = true;
+    renderMassFiles();
+  });
   els.massImportBtn.addEventListener("click", function () { els.massImportInput.click(); });
   els.massImportInput.addEventListener("change", async function () {
     var file = els.massImportInput.files && els.massImportInput.files[0];
@@ -20794,7 +20946,7 @@
   // herstellen stehen die bestehenden Download-Buttons (Punkt 2/3) zur
   // Verfügung, ein zweiter Download-Weg waere redundant.
   var MASS_RUN_CHECKPOINT_INTERVAL = 50;
-  var MASS_RUN_CHECKPOINT_LIMIT = 10;
+  var MASS_RUN_CHECKPOINT_LIMIT = 3;
   function massSaveRunCheckpoint(afterCount) {
     var snapshot = JSON.parse(JSON.stringify(app.massFiles));
     if (!snapshot.length) return;
@@ -26864,6 +27016,7 @@
   function showView(name) {
     viewPanels.forEach(function (p) { p.hidden = p.getAttribute("data-view-panel") !== name; });
     navItems.forEach(function (btn) { btn.classList.toggle("active", btn.getAttribute("data-view") === name); });
+    flushDeferredRenders(name);
     if (name === "output-md" || name === "output-pdf") renderOutputCounts();
     if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); renderBildband(); }
     if (name === "bildband") renderBildband();
