@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.114.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.115.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,27 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **FINAL – Ergebnis im Vollbild, Gesamtes Dokument (v2.115.0, Schritt 7)**:
+  - **Gesamtes Dokument**: Die Kapitel-Auswahl in Schritt 7 bietet an erster Stelle
+    „— Gesamtes Dokument —“ – Quellversion und neue Zusammenführung zeigen dann alle Kapitel
+    des Masters nacheinander, jeweils mit Kapitelüberschrift. Vorausgewählt bleibt das erste
+    Kapitel.
+  - **Vollbild-Fenster**: Je Spalte ein Button „Vollbild“ (Quellversion bzw. neue
+    Zusammenführung) sowie „Beide im Vollbild“ (zwei Fenster nebeneinander; in der Ansicht
+    über „Nur aktives Fenster“/„Beide Fenster“ umschaltbar). Die Ansicht füllt das ganze
+    Fenster und fordert zusätzlich den Browser-Vollbildmodus an (in eingebetteten Ansichten
+    ggf. nicht erlaubt – dann bleibt es beim fensterfüllenden Overlay). Die neue
+    Zusammenführung zeigt die Screens dort als Bilder mit Bildunterschrift statt als
+    „[Bild: …]“-Hinweis.
+  - **Je Fenster unabhängig**: eigene Kapitel-Auswahl (inkl. „Gesamtes Dokument“), Blättern
+    „Zurück“/„Weiter“ (Kapitel für Kapitel; im Gesamtdokument Sprung zur vorigen/nächsten
+    Kapitelüberschrift) mit Positionsanzeige „Kapitel 2 von 5“, Zoom 50–300 % (−/+, Klick auf
+    die Prozentanzeige setzt auf 100 % zurück, Strg + Mausrad). Tastatur im zuletzt bedienten
+    Fenster: ←/→ bzw. Bild↑/Bild↓ blättern, +/−/0 zoomen, Esc schließt.
+  - **Fix**: Das Master-Dokument bettet die Screens eines Kapitels jetzt in der Seitenreihenfolge
+    der Quelle ein (vorher in Upload-/Zuordnungsreihenfolge, neueste zuerst) – gilt für Ergebnis,
+    Word, PDF und PowerPoint.
 
 - **FINAL – Screens in Seitenreihenfolge der Quelle (v2.114.0)**:
   - **Seite je Screen**: Beim Hochladen einer Screens-Datei (Schritt 4) wird für jedes Bild die
