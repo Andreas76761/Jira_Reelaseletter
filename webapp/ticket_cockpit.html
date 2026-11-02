@@ -10348,7 +10348,10 @@
      ueber den Platzhalter __TEST_RESULTS__ ein. Laeuft NICHT live in diesem Browser - reiner
      Bericht des letzten Verifikationslaufs waehrend der Entwicklung. */
 
-  var TEST_RESULTS = JSON.parse(document.getElementById("test-results-data").textContent) || {};
+  // Ohne Build-Schritt steht hier noch der Platzhalter statt JSON - darf nicht
+  // das gesamte Start-Skript (inkl. Navigation) abbrechen.
+  var TEST_RESULTS = {};
+  try { TEST_RESULTS = JSON.parse(document.getElementById("test-results-data").textContent) || {}; } catch (e) { TEST_RESULTS = {}; }
   var TEST_RESULTS_FILES = TEST_RESULTS.files || [];
   function formatDuration(ms) {
     if (ms == null) return "–";
