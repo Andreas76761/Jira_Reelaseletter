@@ -156,6 +156,8 @@
     background: var(--surface); padding: 18px; display: flex; align-items: center; gap: 14px;
     cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;
   }
+  /* FINAL: Ablageflaechen kompakt (sonst wird flex-basis 320px in der Spalte zur Hoehe). */
+  [data-view-panel="final"] .dropzone { flex: 0 0 auto; }
   .dropzone:hover, .dropzone.dragover { border-color: var(--accent); background: var(--accent-soft); }
   .dropzone.processing { cursor: wait; opacity: 0.85; }
   .dropzone svg { flex: none; color: var(--accent); }
@@ -493,6 +495,11 @@
   .final-improvements-box ul { margin: 0; padding-left: 18px; }
   .final-improvements-box li { margin: 3px 0; }
   .final-match { font-size: 12px; white-space: nowrap; }
+  .final-imp-status { font-size: 12px; padding: 1px 4px; margin-left: 6px; }
+  .final-imp-badge { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+  .final-imp-open { background: #fef3c7; color: #92400e; }
+  .final-imp-done { background: #dcfce7; color: #166534; }
+  .final-imp-rejected { background: #fee2e2; color: #991b1b; }
   .final-match-none { color: #b45309; }
   .final-version-active td { background: color-mix(in srgb, var(--accent, #0e7490) 7%, transparent); }
   .final-status-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
@@ -2620,6 +2627,9 @@
           <select id="edito-version-select">
             <option value="">– Rolle/Sparte wählen –</option>
           </select>
+          <label for="edito-base-doc-select" style="margin-top:10px;">Grundlage „bestehender Text“ (Quelle 1)</label>
+          <select id="edito-base-doc-select" aria-label="Grundlage für Quelle 1"></select>
+          <p class="step-note" id="edito-base-doc-note"></p>
         </section>
 
         <section id="edito-chapters-section" hidden>
@@ -3025,6 +3035,7 @@
             <div><label for="final-build-screens-select">Screens-Datei</label><select id="final-build-screens-select" aria-label="Screens-Datei für den Stand"></select></div>
             <div><label for="final-build-name-input">Name des Stands</label><input class="text-input" id="final-build-name-input" type="text" placeholder="z. B. EN – Retail – Pkw"></div>
           </div>
+          <label class="checkbox-label"><input type="checkbox" id="final-build-improvements-inline-cb"> Verbesserungen ohne Agent direkt als interne Vermerke (gelb) ans Kapitelende übernehmen – sie erscheinen im Export, solange interne Vermerke eingeblendet sind</label>
           <div class="controls" style="flex-wrap:wrap;">
             <div><label for="final-filter-rolle-select">Rolle</label><select id="final-filter-rolle-select" aria-label="Rolle-Filter"><option value="">– egal –</option></select></div>
             <div><label for="final-filter-sparte-select">Sparte</label><select id="final-filter-sparte-select" aria-label="Sparte-Filter"><option value="">– egal –</option></select></div>
@@ -3046,6 +3057,11 @@
           </div>
           <div id="final-versions-block" hidden>
             <p class="section-label final-sub-label"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg><span>Stände (erzeugte Outputs)</span></p>
+            <div class="controls">
+              <label for="final-reviewer-input">Bearbeiter für Prüfung/Freigabe</label>
+              <input class="text-input" id="final-reviewer-input" type="text" placeholder="Name (Pflicht für „Geprüft“ und „Veröffentlicht“)" style="min-width:280px; max-width:380px;">
+              <span class="step-note">Veröffentlichte Stände sind gesperrt (nicht löschbar); zum Zurücksetzen des Status ist eine Bestätigung nötig.</span>
+            </div>
             <div class="table-wrap">
               <table class="simple-table" id="final-versions-table">
                 <thead><tr><th>Stand</th><th>Erstellt</th><th>Quelle · Verbesserungen · Screens</th><th>Kapitel / Screens</th><th>Status</th><th></th></tr></thead>
@@ -5832,7 +5848,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.116.0";
+  var APP_VERSION = "2.117.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7433,7 +7449,7 @@
     "final-preview-manual-select", "final-preview-improvements-select", "final-preview-improvements", "final-screens-file-filter-select",
     "final-build-manual-select", "final-build-improvements-select", "final-build-screens-select", "final-build-name-input",
     "final-versions-block", "final-versions-tbody", "final-result-version-select", "final-result-version-status",
-    "final-design-version-select", "final-design-version-status",
+    "final-design-version-select", "final-design-version-status", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
     "edito-final-agent-spinner", "edito-final-agent-status", "edito-final-chapters-tbody", "edito-final-compare", "edito-final-compare-title",
@@ -7564,8 +7580,10 @@
     // Outputs mit Status Entwurf/Geprueft/Veroeffentlicht; master = aktiver
     // Stand), Auswahl je Schritt (preview*/screensFileFilter/build*).
     final: finalNormalizeState(null),
-    // Register Editor: ausgewaehltes internes Dokument (FINAL-Stand).
+    // Register Editor: ausgewaehltes internes Dokument (FINAL-Stand) und
+    // optionale Grundlage fuer Quelle 1 der Kapitelerzeugung.
     editoFinalDocId: null,
+    editoBaseDocId: null,
     tickets: [],
     view: { bucket: "all", domain: "", label: "", query: "", issueType: "", excludeTypes: {}, sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
@@ -8102,6 +8120,7 @@
     renderRovoSummary();
     app.final = finalNormalizeState(null);
     app.editoFinalDocId = null;
+    app.editoBaseDocId = null;
     editoFinalWork = null;
     els.finalAssignImagesStatusNote.textContent = "";
     renderFinal();
@@ -8211,6 +8230,7 @@
     renderRovoSummary();
     app.final = finalNormalizeState(null);
     app.editoFinalDocId = null;
+    app.editoBaseDocId = null;
     editoFinalWork = null;
     els.finalAssignImagesStatusNote.textContent = "";
     renderFinal();
@@ -8293,6 +8313,7 @@
       rovoSummary: app.rovoSummary,
       final: app.final,
       editoFinalDocId: app.editoFinalDocId,
+      editoBaseDocId: app.editoBaseDocId,
       selectedKeys: app.selectedKeys,
       savedLists: app.savedLists,
       nextSavedListId: app.nextSavedListId,
@@ -8398,6 +8419,7 @@
     };
     app.final = finalNormalizeState(data.final);
     app.editoFinalDocId = typeof data.editoFinalDocId === "number" ? data.editoFinalDocId : null;
+    app.editoBaseDocId = typeof data.editoBaseDocId === "number" ? data.editoBaseDocId : null;
     app.selectedKeys = data.selectedKeys || {};
     app.savedLists = data.savedLists || [];
     app.nextSavedListId = data.nextSavedListId || 1;
@@ -24687,6 +24709,14 @@
     els.editoVersionSelect.innerHTML = '<option value="">– Rolle/Sparte wählen –</option>' +
       OUTLINE_VERSIONS.map(function (v) { return '<option value="' + v.key + '"' + (v.key === app.editoVersionKey ? " selected" : "") + ">" + escapeHtml(v.label) + "</option>"; }).join("");
   }
+  els.editoBaseDocSelect.addEventListener("change", function () {
+    var id = parseInt(els.editoBaseDocSelect.value, 10);
+    app.editoBaseDocId = isNaN(id) ? null : id;
+    var doc = editoBaseDoc();
+    addLog("Editor: Grundlage für Quelle 1 = " + (doc ? "internes Dokument „" + doc.name + "“" : "bestehender Benutzerhandbuch-Text") + ".");
+    renderEditoBaseDocSelect();
+    renderEditoChapters();
+  });
   els.editoVersionSelect.addEventListener("change", function () {
     app.editoVersionKey = els.editoVersionSelect.value;
     els.editoPreviewSection.hidden = true;
@@ -24724,9 +24754,34 @@
   function editoRovoEntriesForChapter(chapterTitle) {
     return app.rovoEntries.filter(function (e) { return e.chapter === chapterTitle; });
   }
+  // Quelle 1 der Kapitelerzeugung: optional ein internes Dokument (FINAL-Stand)
+  // statt des bestehenden Benutzerhandbuch-Texts - Kapitel per Titel (gleich
+  // oder aehnlich) zugeordnet; ohne Treffer gilt der bisherige Text.
+  function editoBaseDoc() { return app.editoBaseDocId ? finalVersionById(app.editoBaseDocId) : null; }
+  function editoBaseDocChapter(chapterTitle) {
+    var doc = editoBaseDoc();
+    if (!doc) return null;
+    var norm = normalizeChapterTitleForMatch(chapterTitle);
+    var exact = doc.chapters.filter(function (c) { return c.title === chapterTitle || (norm && normalizeChapterTitleForMatch(c.title) === norm); })[0];
+    if (exact) return exact;
+    var best = null, bestScore = 0;
+    doc.chapters.forEach(function (c) { var sc = chapterTitleSimilarity(chapterTitle, c.title); if (sc > bestScore) { best = c; bestScore = sc; } });
+    return bestScore >= CHAPTER_MATCH_THRESHOLD ? best : null;
+  }
   function editoExistingManualText(chapterTitle) {
+    var fromDoc = editoBaseDocChapter(chapterTitle);
+    if (fromDoc) return fromDoc.text.split("\n").filter(function (l) { return l.trim() !== "[Bild]"; }).join("\n").trim();
     var entry = app.manualChapters[chapterTitle];
     return (entry && entry.de) || "";
+  }
+  function renderEditoBaseDocSelect() {
+    if (app.editoBaseDocId && !finalVersionById(app.editoBaseDocId)) app.editoBaseDocId = null;
+    els.editoBaseDocSelect.innerHTML = '<option value="">Bestehender Benutzerhandbuch-Text (Register Benutzerhandbuch)</option>' +
+      app.final.versions.slice().reverse().map(function (v) {
+        return '<option value="' + v.id + '"' + (v.id === app.editoBaseDocId ? " selected" : "") + ">Internes Dokument: " + escapeHtml(v.name) + " – " + escapeHtml(v.status) + " (" + escapeHtml(v.createdAt) + ")</option>";
+      }).join("");
+    var doc = editoBaseDoc();
+    els.editoBaseDocNote.textContent = doc ? "Quelle 1 = Kapiteltext aus „" + doc.name + "“ (" + doc.status + "); Kapitel ohne passenden Titel nutzen den bestehenden Benutzerhandbuch-Text." : "";
   }
   function editoImagesForChapter(chapterTitle) {
     return bildbandScreensForChapter(chapterTitle);
@@ -24800,7 +24855,8 @@
     parts.push("\n\nZielversion (Rolle/Sparte): " + (version ? version.label : "") +
       "\nKapitel: " + chapterTitle + (editoOutlineChapterSubsText(chapterTitle) ? "\n" + editoOutlineChapterSubsText(chapterTitle) : ""));
     if (version) parts.push(manualRoleInstruction(version.key));
-    parts.push("\n\nQUELLE 1 – Bestehender Benutzerhandbuch-Text (bereits vorhandene Fassung, als fachliche Grundlage nutzen, mit den weiteren Quellen aktualisieren/ergänzen):\n" +
+    var baseDocCh = editoBaseDocChapter(chapterTitle);
+    parts.push("\n\nQUELLE 1 – " + (baseDocCh ? "Internes Dokument „" + editoBaseDoc().name + "“ (" + editoBaseDoc().status + "), Kapitel „" + baseDocCh.title + "“" : "Bestehender Benutzerhandbuch-Text") + " (bereits vorhandene Fassung, als fachliche Grundlage nutzen, mit den weiteren Quellen aktualisieren/ergänzen):\n" +
       (existingText ? truncate(existingText, 6000) : "(keine vorhanden)"));
     parts.push("\n\nQUELLE 2 – Jira-Tickets (" + tickets.length + "):\n" +
       (tickets.length ? truncate(tickets.map(manualTicketBlock).join("\n"), 8000) : "(keine zugeordnet)"));
@@ -26126,7 +26182,8 @@
       previewManualId: idOrNull(d.previewManualId), previewImprovementFileId: idOrNull(d.previewImprovementFileId),
       improvementsViewFileId: idOrNull(d.improvementsViewFileId),
       screensFileFilter: idOrNull(d.screensFileFilter),
-      buildManualId: idOrNull(d.buildManualId), buildImprovementFileId: idOrNull(d.buildImprovementFileId), buildScreensFileId: idOrNull(d.buildScreensFileId)
+      buildManualId: idOrNull(d.buildManualId), buildImprovementFileId: idOrNull(d.buildImprovementFileId), buildScreensFileId: idOrNull(d.buildScreensFileId),
+      buildInlineImprovements: !!d.buildInlineImprovements, reviewerName: str(d.reviewerName)
     };
     if (!st.versions.length && st.master.chapters.length) {
       st.versions.push({
@@ -26686,7 +26743,7 @@
     var active = finalActiveVersion();
     function one(title) {
       if (kind === "source") return finalResultSourceHtml(title);
-      return finalResultMasterHtml(title, withImages) + finalImprovementsBoxHtml(active && active.improvements ? active.improvements[title] : null, "Verbesserungen aus ROVO (noch einzuarbeiten)");
+      return finalResultMasterHtml(title, withImages) + finalImprovementsBoxHtml(active && active.improvements ? active.improvements[title] : null, "Verbesserungen aus ROVO", { version: active, title: title, interactive: !withImages });
     }
     if (value !== FINAL_RESULT_ALL) return one(value);
     return finalResultTitles().map(function (t, i) {
@@ -27033,10 +27090,31 @@
     return file ? file.rows.filter(function (r) { return r.chapter === title; }) : [];
   }
   function finalImprovementLabel(r) { return (r.priority ? "[" + r.priority + "] " : "") + r.text + (r.status ? " (" + r.status + ")" : ""); }
-  function finalImprovementsBoxHtml(items, heading) {
+  // Bearbeitungsstand je Verbesserung eines Stands.
+  var FINAL_IMP_STATUSES = ["offen", "umgesetzt", "als Vermerk übernommen", "abgelehnt"];
+  function finalImprovementStatusAll(improvements, status) {
+    var out = {};
+    Object.keys(improvements || {}).forEach(function (t) { out[t] = improvements[t].map(function () { return status; }); });
+    return out;
+  }
+  function finalImpStatus(v, title, i) { return (v && v.improvementStatus && v.improvementStatus[title] && v.improvementStatus[title][i]) || "offen"; }
+  // opts: { version, title, interactive } - mit Version: Status je Eintrag
+  // (interaktiv als Auswahl, sonst als Kennzeichnung).
+  function finalImprovementsBoxHtml(items, heading, opts) {
     if (!items || !items.length) return "";
-    return '<div class="final-improvements-box"><b>' + escapeHtml(heading || "Verbesserungen aus ROVO") + " (" + items.length + ")</b><ul>" +
-      items.map(function (t) { return "<li>" + escapeHtml(t) + "</li>"; }).join("") + "</ul></div>";
+    opts = opts || {};
+    var v = opts.version;
+    var open = v ? items.filter(function (_, i) { return finalImpStatus(v, opts.title, i) === "offen"; }).length : items.length;
+    return '<div class="final-improvements-box"><b>' + escapeHtml(heading || "Verbesserungen aus ROVO") + " (" + (v ? open + " offen von " + items.length : items.length) + ")</b><ul>" +
+      items.map(function (t, i) {
+        if (!v) return "<li>" + escapeHtml(t) + "</li>";
+        var st = finalImpStatus(v, opts.title, i);
+        var ctl = opts.interactive
+          ? ' <select class="final-imp-status" data-final-imp-title="' + escapeHtml(opts.title) + '" data-final-imp-idx="' + i + '" aria-label="Status der Verbesserung">' +
+            FINAL_IMP_STATUSES.map(function (x) { return '<option value="' + x + '"' + (x === st ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select>"
+          : ' <span class="final-imp-badge final-imp-' + (st === "offen" ? "open" : st === "abgelehnt" ? "rejected" : "done") + '">' + escapeHtml(st) + "</span>";
+        return '<li data-final-imp-status-value="' + escapeHtml(st) + '">' + escapeHtml(t) + ctl + "</li>";
+      }).join("") + "</ul></div>";
   }
 
   // ---- Auswahl-Selects (Quelldatei / Verbesserungen / Screens-Datei) ----
@@ -27191,7 +27269,8 @@
     var v = {
       id: nextFinalVersionId++, name: opts.name || ("Stand " + (app.final.versions.length + 1)), createdAt: nowLabel(),
       status: "Entwurf", statusChangedAt: nowLabel(), history: [{ status: "Entwurf", when: nowLabel() }],
-      config: opts.config || {}, chapters: chapters, improvements: opts.improvements || {}, origin: opts.origin || "FINAL", basedOnId: opts.basedOnId || null
+      config: opts.config || {}, chapters: chapters, improvements: opts.improvements || {}, origin: opts.origin || "FINAL", basedOnId: opts.basedOnId || null,
+      improvementStatus: opts.improvementStatus || finalImprovementStatusAll(opts.improvements || {}, "offen")
     };
     app.final.versions.push(v);
     finalSetActiveVersion(v.id);
@@ -27199,6 +27278,8 @@
   }
   function renderFinalVersions() {
     var versions = app.final.versions;
+    if (document.activeElement !== els.finalReviewerInput) els.finalReviewerInput.value = app.final.reviewerName || "";
+    els.finalBuildImprovementsInlineCb.checked = !!app.final.buildInlineImprovements;
     els.finalVersionsBlock.hidden = versions.length === 0;
     els.finalVersionsTbody.innerHTML = versions.map(function (v) {
       var screens = v.chapters.reduce(function (n, c) { return n + (c.screenIds || []).length; }, 0);
@@ -27209,11 +27290,13 @@
         "<td>" + escapeHtml(v.createdAt) + "</td><td>" + escapeHtml(finalVersionConfigLabel(v.config)) + "</td>" +
         "<td>" + v.chapters.length + " / " + screens + "</td>" +
         "<td>" + finalStatusPill(v.status) + '<div><select data-final-version-status="' + v.id + '" aria-label="Status von ' + escapeHtml(v.name) + '">' + opts + "</select></div>" +
-        '<div class="step-note">seit ' + escapeHtml(v.statusChangedAt || v.createdAt) + "</div></td>" +
+        '<div class="step-note">seit ' + escapeHtml(v.statusChangedAt || v.createdAt) + (v.statusBy ? " · von " + escapeHtml(v.statusBy) : "") + "</div></td>" +
         '<td><div class="final-row-actions">' +
         (isActive ? "" : '<button class="btn ghost btn-tiny" data-final-version-activate="' + v.id + '" type="button">Anzeigen</button>') +
         '<button class="btn ghost btn-tiny" data-final-version-editor="' + v.id + '" type="button">Im Editor optimieren</button>' +
-        '<button class="btn ghost btn-tiny final-btn-danger" data-final-version-delete="' + v.id + '" type="button">' + finalIcon("trash") + "Löschen</button></div></td></tr>";
+        (v.status === "Veröffentlicht"
+          ? '<button class="btn ghost btn-tiny" data-final-version-delete="' + v.id + '" type="button" disabled title="Veröffentlichte Stände sind gesperrt – zuerst den Status zurücksetzen.">' + finalIcon("trash") + "Gesperrt</button>"
+          : '<button class="btn ghost btn-tiny final-btn-danger" data-final-version-delete="' + v.id + '" type="button">' + finalIcon("trash") + "Löschen</button>") + "</div></td></tr>";
     }).join("");
   }
   function renderFinalVersionSelects() {
@@ -27224,17 +27307,32 @@
       pair[1].innerHTML = active ? finalStatusPill(active.status) : "";
     });
   }
-  function finalSetVersionStatus(v, status) {
-    if (!v || v.status === status || FINAL_VERSION_STATUSES.indexOf(status) === -1) return;
+  // Statuswechsel: "Geprueft"/"Veroeffentlicht" nur mit Bearbeiter-Namen;
+  // einen veroeffentlichten Stand zuruecksetzen nur nach Bestaetigung.
+  async function finalSetVersionStatus(v, status) {
+    if (!v || v.status === status || FINAL_VERSION_STATUSES.indexOf(status) === -1) return false;
+    var by = (app.final.reviewerName || "").trim();
+    if (status !== "Entwurf" && !by) {
+      showToast("Bearbeiter fehlt", "Für „" + status + "“ bitte zuerst den Namen unter „Bearbeiter für Prüfung/Freigabe“ eintragen.", true);
+      els.finalReviewerInput.focus();
+      return false;
+    }
+    if (v.status === "Veröffentlicht") {
+      var ok = await confirmDialog("Stand „" + v.name + "“ ist veröffentlicht. Status wirklich auf „" + status + "“ zurücksetzen (Freigabe zurückziehen)?", "Zurücksetzen");
+      if (!ok) return false;
+    }
     v.status = status;
     v.statusChangedAt = nowLabel();
-    (v.history = v.history || []).push({ status: status, when: v.statusChangedAt });
-    addLog("FINAL: Stand „" + v.name + "“ auf Status „" + status + "“ gesetzt.");
+    v.statusBy = by;
+    (v.history = v.history || []).push({ status: status, when: v.statusChangedAt, by: by });
+    addLog("FINAL: Stand „" + v.name + "“ auf Status „" + status + "“ gesetzt" + (by ? " (von " + by + ")" : "") + ".");
+    return true;
   }
-  els.finalVersionsTbody.addEventListener("change", function (e) {
+  els.finalReviewerInput.addEventListener("input", function () { app.final.reviewerName = els.finalReviewerInput.value; });
+  els.finalVersionsTbody.addEventListener("change", async function (e) {
     var sel = e.target.closest("[data-final-version-status]");
     if (!sel) return;
-    finalSetVersionStatus(finalVersionById(parseInt(sel.getAttribute("data-final-version-status"), 10)), sel.value);
+    await finalSetVersionStatus(finalVersionById(parseInt(sel.getAttribute("data-final-version-status"), 10)), sel.value);
     renderFinalVersions();
     renderFinalVersionSelects();
     renderWhenVisible("edito", "finalDocs", renderEditoFinalDocs);
@@ -27247,7 +27345,7 @@
     var del = e.target.closest("[data-final-version-delete]");
     if (!del) return;
     var v = finalVersionById(parseInt(del.getAttribute("data-final-version-delete"), 10));
-    if (!v) return;
+    if (!v || v.status === "Veröffentlicht") return;
     var ok = await confirmDialog("Stand „" + v.name + "“ (" + v.status + ") wirklich löschen?" + (v.status === "Veröffentlicht" ? " Er ist bereits veröffentlicht." : ""), "Löschen");
     if (!ok) return;
     app.final.versions = app.final.versions.filter(function (x) { return x.id !== v.id; });
@@ -27255,6 +27353,21 @@
     if (app.final.activeVersionId === v.id) { var last = app.final.versions[app.final.versions.length - 1]; finalSetActiveVersion(last ? last.id : null); }
     addLog("FINAL: Stand „" + v.name + "“ gelöscht.");
     renderFinal();
+  });
+  els.finalResultMasterOutput.addEventListener("change", function (e) {
+    var sel = e.target.closest(".final-imp-status");
+    var v = finalActiveVersion();
+    if (!sel || !v) return;
+    var title = sel.getAttribute("data-final-imp-title"), idx = parseInt(sel.getAttribute("data-final-imp-idx"), 10);
+    v.improvementStatus = v.improvementStatus || {};
+    var list = v.improvementStatus[title] = v.improvementStatus[title] || (v.improvements[title] || []).map(function () { return "offen"; });
+    list[idx] = sel.value;
+    sel.closest("li").setAttribute("data-final-imp-status-value", sel.value);
+    var box = sel.closest(".final-improvements-box");
+    var open = list.filter(function (x) { return x === "offen"; }).length;
+    if (box) box.querySelector("b").textContent = "Verbesserungen aus ROVO (" + open + " offen von " + list.length + ")";
+    addLog("FINAL: Verbesserung in „" + title + "“ (Stand „" + v.name + "“) auf „" + sel.value + "“ gesetzt.");
+    renderWhenVisible("edito", "finalDocs", renderEditoFinalDocs);
   });
   [els.finalResultVersionSelect, els.finalDesignVersionSelect].forEach(function (sel) {
     sel.addEventListener("change", function () { finalSetActiveVersion(finalSelId(sel)); renderFinal(); });
@@ -27270,14 +27383,31 @@
     app.editoFinalDocId = id;
     renderEditoFinalDocs();
   }
+  // Kapiteltext MIT Markierungen interner Vermerke (FINAL_MARK_START/END).
   function editoFinalChapterText(title) {
     if (editoFinalWork && editoFinalWork.chapters[title] && editoFinalWork.chapters[title].text != null) return editoFinalWork.chapters[title].text;
     var c = (editoFinalDoc() || { chapters: [] }).chapters.filter(function (x) { return x.title === title; })[0];
-    return c ? c.text : "";
+    return c ? (typeof c.markedText === "string" ? c.markedText : c.text) : "";
   }
   function editoFinalBildCount(text) { return (String(text || "").match(/^\s*\[Bild\]\s*$/gm) || []).length; }
+  // Interne Vermerke werden fuer den Agenten als sichtbare Tags kodiert und
+  // danach zurueckgewandelt; Jira-Nummern muessen vollstaendig erhalten bleiben.
+  var EDITO_INTERN_OPEN = "⟦INTERN⟧", EDITO_INTERN_CLOSE = "⟦/INTERN⟧";
+  function editoFinalEncodeMarks(t) { return String(t || "").split(FINAL_MARK_START).join(EDITO_INTERN_OPEN).split(FINAL_MARK_END).join(EDITO_INTERN_CLOSE); }
+  function editoFinalDecodeMarks(t) { return String(t || "").split(EDITO_INTERN_OPEN).join(FINAL_MARK_START).split(EDITO_INTERN_CLOSE).join(FINAL_MARK_END); }
+  function editoFinalJiraKeys(t) { return (String(t || "").match(ROVO_JIRA_KEY_RE) || []).filter(function (k, i, a) { return a.indexOf(k) === i; }); }
+  // Grund, warum eine Agenten-Antwort verworfen wird ("" = in Ordnung).
+  function editoFinalRejectReason(before, after) {
+    if (editoFinalBildCount(after) !== editoFinalBildCount(before)) return "Bild-Platzhalter verändert";
+    var count = function (t, x) { return String(t).split(x).length - 1; };
+    if (count(after, FINAL_MARK_START) !== count(before, FINAL_MARK_START) || count(after, FINAL_MARK_END) !== count(before, FINAL_MARK_END)) return "interne Vermerke verändert";
+    var missing = editoFinalJiraKeys(before).filter(function (k) { return after.indexOf(k) === -1; });
+    if (missing.length) return "Jira-Nummer(n) fehlen: " + missing.join(", ");
+    return "";
+  }
   function renderEditoFinalDocs() {
     var versions = app.final.versions;
+    renderEditoBaseDocSelect();
     els.editoFinalDocsEmpty.hidden = versions.length > 0;
     if (app.editoFinalDocId && !finalVersionById(app.editoFinalDocId)) { app.editoFinalDocId = null; editoFinalWork = null; }
     els.editoFinalDocsTbody.innerHTML = versions.slice().reverse().map(function (v) {
@@ -27291,8 +27421,9 @@
     els.editoFinalWork.hidden = !doc;
     if (!doc) return;
     var impTotal = Object.keys(doc.improvements || {}).reduce(function (n, k) { return n + doc.improvements[k].length; }, 0);
-    els.editoFinalSelectedNote.textContent = "Ausgewählt: „" + doc.name + "“ – " + doc.status + ", " + doc.chapters.length + " Kapitel, " + impTotal + " Verbesserung(en) aus ROVO hinterlegt.";
-    els.editoFinalAgentImproveBtn.disabled = !impTotal || !!editoFinalAbort;
+    var impOpen = Object.keys(doc.improvements || {}).reduce(function (n, k) { return n + doc.improvements[k].filter(function (_, i) { return finalImpStatus(doc, k, i) === "offen"; }).length; }, 0);
+    els.editoFinalSelectedNote.textContent = "Ausgewählt: „" + doc.name + "“ – " + doc.status + ", " + doc.chapters.length + " Kapitel, " + impTotal + " Verbesserung(en) aus ROVO hinterlegt (" + impOpen + " offen).";
+    els.editoFinalAgentImproveBtn.disabled = !impOpen || !!editoFinalAbort;
     els.editoFinalAgentStyleBtn.disabled = !!editoFinalAbort;
     els.editoFinalAgentReviewBtn.disabled = !!editoFinalAbort;
     var changed = editoFinalWork ? Object.keys(editoFinalWork.chapters).filter(function (t) { return editoFinalWork.chapters[t].status === "optimiert"; }).length : 0;
@@ -27302,10 +27433,11 @@
     els.editoFinalChaptersTbody.innerHTML = doc.chapters.map(function (c) {
       var w = editoFinalWork && editoFinalWork.chapters[c.title];
       var imps = (doc.improvements || {})[c.title] || [];
+      var openCount = imps.filter(function (_, i) { return finalImpStatus(doc, c.title, i) === "offen"; }).length;
       var status = !w ? '<span class="step-note">unverändert</span>'
         : w.status === "optimiert" ? '<span class="pill done">optimiert</span>' + (w.agent ? ' <span class="step-note">' + escapeHtml(w.agent) + "</span>" : "")
         : '<span class="pill progress">' + escapeHtml(w.status) + "</span>" + (w.note ? '<div class="step-note">' + escapeHtml(w.note) + "</div>" : "");
-      return '<tr data-edito-final-chapter-row="' + escapeHtml(c.title) + '"><td>' + escapeHtml(c.title) + "</td><td>" + imps.length + '</td><td class="edito-final-col-status">' + status + "</td>" +
+      return '<tr data-edito-final-chapter-row="' + escapeHtml(c.title) + '"><td>' + escapeHtml(c.title) + '</td><td class="edito-final-col-imps">' + (imps.length ? openCount + " offen / " + imps.length : "–") + '</td><td class="edito-final-col-status">' + status + "</td>" +
         "<td>" + (w && w.status === "optimiert" ? '<button class="btn ghost btn-tiny" data-edito-final-compare="' + escapeHtml(c.title) + '" type="button">Vergleich</button>' : "") + "</td></tr>";
     }).join("");
     renderEditoFinalCompare();
@@ -27318,7 +27450,7 @@
     if (els.editoFinalCompare.hidden) return;
     var c = editoFinalDoc().chapters.filter(function (x) { return x.title === editoFinalCompareTitle; })[0];
     els.editoFinalCompareTitle.textContent = "Vergleich: " + editoFinalCompareTitle;
-    els.editoFinalCompareOld.innerHTML = finalMarkedTextToHtml(c ? c.text : "");
+    els.editoFinalCompareOld.innerHTML = finalMarkedTextToHtml(c ? (typeof c.markedText === "string" ? c.markedText : c.text) : "");
     els.editoFinalCompareNew.innerHTML = finalMarkedTextToHtml(w.text);
   }
   function editoFinalSetBusy(busy, note) {
@@ -27334,8 +27466,11 @@
     if (!doc) return;
     if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
     var label = kind === "improve" ? "Verbesserungen einarbeiten" : "Sprache & Stil";
-    var targets = doc.chapters.filter(function (c) { return kind !== "improve" || ((doc.improvements || {})[c.title] || []).length; });
-    if (!targets.length) { showToast("Nichts zu tun", "Für diesen Stand sind keine Verbesserungen hinterlegt.", true); return; }
+    var targets = doc.chapters.filter(function (c) {
+      if (kind !== "improve") return true;
+      return ((doc.improvements || {})[c.title] || []).some(function (_, i) { return finalImpStatus(doc, c.title, i) === "offen"; });
+    });
+    if (!targets.length) { showToast("Nichts zu tun", "Für diesen Stand sind keine offenen Verbesserungen hinterlegt.", true); return; }
     editoFinalWork = editoFinalWork || { versionId: doc.id, chapters: {}, report: "" };
     editoFinalAbort = new AbortController();
     var signal = editoFinalAbort.signal;
@@ -27346,20 +27481,27 @@
       var c = targets[i];
       els.editoFinalAgentStatus.textContent = "Agent „" + label + "“: Kapitel " + (i + 1) + " von " + targets.length + " – " + c.title + " …";
       var before = editoFinalChapterText(c.title);
-      var prompt = ragPromptFor(kind === "improve" ? "finalAgentImprove" : "finalAgentStyle") + "\n\nKAPITEL: " + c.title +
-        (kind === "improve" ? "\n\nVERBESSERUNGEN AUS ROVO:\n" + doc.improvements[c.title].map(function (t) { return "- " + t; }).join("\n") : "") +
-        "\n\nKAPITELTEXT:\n" + truncate(before, 20000);
+      var openImps = kind === "improve" ? doc.improvements[c.title].filter(function (_, i) { return finalImpStatus(doc, c.title, i) === "offen"; }) : [];
+      var prompt = ragPromptFor(kind === "improve" ? "finalAgentImprove" : "finalAgentStyle") +
+        "\n\nTECHNISCHE REGELN (zwingend): Zeilen mit nur [Bild] unverändert und in gleicher Anzahl übernehmen. Text zwischen " + EDITO_INTERN_OPEN + " und " + EDITO_INTERN_CLOSE +
+        " ist ein interner Vermerk: beide Markierungen unverändert und in gleicher Anzahl übernehmen. Jira-Nummern (z. B. ONESCM-123) unverändert übernehmen." +
+        "\n\nKAPITEL: " + c.title +
+        (kind === "improve" ? "\n\nVERBESSERUNGEN AUS ROVO:\n" + openImps.map(function (t) { return "- " + t; }).join("\n") : "") +
+        "\n\nKAPITELTEXT:\n" + truncate(editoFinalEncodeMarks(before), 20000);
       try {
         var res = await sampleApi(prompt, { modelTier: "default", cache: false, signal: signal });
-        var text = String((res && res.text) || "").trim();
+        var text = editoFinalDecodeMarks(String((res && res.text) || "").trim());
         if (!text) { failed++; editoFinalWork.chapters[c.title] = Object.assign({}, editoFinalWork.chapters[c.title], { status: "fehlgeschlagen", note: "leere Antwort" }); continue; }
-        if (editoFinalBildCount(text) !== editoFinalBildCount(before)) {
+        var reason = editoFinalRejectReason(before, text);
+        if (reason) {
           rejected++;
           var prev = editoFinalWork.chapters[c.title];
-          editoFinalWork.chapters[c.title] = prev && prev.status === "optimiert" ? prev : { text: null, status: "verworfen", note: "Bild-Platzhalter verändert – Kapitel bleibt wie bisher" };
+          editoFinalWork.chapters[c.title] = prev && prev.status === "optimiert" ? prev : { text: null, status: "verworfen", note: reason + " – Kapitel bleibt wie bisher" };
           continue;
         }
-        editoFinalWork.chapters[c.title] = { text: text, status: "optimiert", agent: label, note: "" };
+        var prevW = editoFinalWork.chapters[c.title];
+        editoFinalWork.chapters[c.title] = { text: text, status: "optimiert", agent: prevW && prevW.status === "optimiert" && prevW.agent !== label ? prevW.agent + " + " + label : label, note: "",
+          improved: kind === "improve" || !!(prevW && prevW.improved) };
         done++;
       } catch (err) {
         if (signal.aborted || (err && err.code === "cancelled")) { stopped = true; break; }
@@ -27368,7 +27510,7 @@
     }
     editoFinalAbort = null;
     var summary = (stopped ? "Gestoppt – " : "") + "Agent „" + label + "“: " + done + " von " + targets.length + " Kapitel optimiert" +
-      (rejected ? ", " + rejected + " verworfen (Bild-Platzhalter verändert)" : "") + (failed ? ", " + failed + " fehlgeschlagen" : "") + ".";
+      (rejected ? ", " + rejected + " verworfen (Platzhalter, Vermerke oder Jira-Nummern verändert)" : "") + (failed ? ", " + failed + " fehlgeschlagen" : "") + ".";
     addLog("Editor: " + summary.replace(/^Gestoppt – /, "Gestoppt: ") + " Dokument „" + doc.name + "“.");
     editoFinalSetBusy(false, summary);
   }
@@ -27423,10 +27565,16 @@
       var w = editoFinalWork.chapters[c.title];
       if (!(w && w.status === "optimiert")) return Object.assign({}, c);
       changed++;
-      return { title: c.title, level: c.level, text: w.text, markedText: w.text, screenIds: (c.screenIds || []).slice() };
+      return { title: c.title, level: c.level, text: w.text.replace(FINAL_MARK_RE, ""), markedText: w.text, screenIds: (c.screenIds || []).slice() };
+    });
+    // Verbesserungen optimierter Kapitel (Agent "Verbesserungen einarbeiten") gelten als umgesetzt.
+    var impStatus = JSON.parse(JSON.stringify(doc.improvementStatus || finalImprovementStatusAll(doc.improvements, "offen")));
+    Object.keys(doc.improvements || {}).forEach(function (t) {
+      var w = editoFinalWork.chapters[t];
+      impStatus[t] = (impStatus[t] || doc.improvements[t].map(function () { return "offen"; })).map(function (st) { return w && w.status === "optimiert" && w.improved && st === "offen" ? "umgesetzt" : st; });
     });
     var name = els.editoFinalSaveNameInput.value.trim() || (doc.name + " – optimiert");
-    var v = finalCreateVersion(chapters, { name: name, config: Object.assign({}, doc.config), improvements: doc.improvements, origin: "Editor", basedOnId: doc.id });
+    var v = finalCreateVersion(chapters, { name: name, config: Object.assign({}, doc.config), improvements: doc.improvements, improvementStatus: impStatus, origin: "Editor", basedOnId: doc.id });
     addLog("Editor: „" + doc.name + "“ mit " + changed + " optimierten Kapitel(n) als neuer Stand „" + v.name + "“ (Entwurf) nach FINAL übernommen.");
     showToast("Neuer Stand", "„" + v.name + "“ als Entwurf in FINAL (Schritt 6) gespeichert.");
     els.editoFinalSaveNameInput.value = "";
@@ -27472,6 +27620,10 @@
       var entry = finalChapterEntryFor(title, config.manualId);
       var screens = finalScreensForChapter(title, config.screensFileId).map(function (img) { return Object.assign({}, img, { description: finalScreenCaption(img) }); });
       var placeholders = screens.length ? "\n" + screens.map(function () { return "[Bild]"; }).join("\n") : "";
+      // Optional: Verbesserungen ohne Agent als interner Vermerk ans Kapitelende.
+      var inline = config.inlineImprovements && config.improvementFileId && app.final.showInternal
+        ? finalImprovementsFor(config.improvementFileId, title).map(finalImprovementLabel) : [];
+      if (inline.length) marked += "\n" + FINAL_MARK_START + inline.map(function (t) { return "Verbesserung (ROVO): " + t; }).join("\n") + FINAL_MARK_END;
       return { title: title, level: entry ? entry.level : 1, text: marked.replace(FINAL_MARK_RE, "") + placeholders, markedText: marked + placeholders, screens: screens };
     });
   }
@@ -28089,8 +28241,10 @@
         improvementFileId: cfgImp ? cfgImp.id : null, improvementName: cfgImp ? cfgImp.filename : "",
         screensFileId: cfgScreens ? cfgScreens.id : null, screensName: cfgScreens ? cfgScreens.filename : "",
         filterRolle: app.final.filterRolle, filterSparte: app.final.filterSparte, filterSprache: app.final.filterSprache, filterMarkt: app.final.filterMarkt,
-        showInternal: app.final.showInternal, hideJira: app.final.hideJira
+        showInternal: app.final.showInternal, hideJira: app.final.hideJira,
+        inlineImprovements: !!(cfgImp && els.finalBuildImprovementsInlineCb.checked)
       };
+      app.final.buildInlineImprovements = els.finalBuildImprovementsInlineCb.checked;
       var chapters = buildFinalMasterChapters(config);
       if (!chapters.length) throw new Error("Die gewählte Quelldatei enthält keine Kapitel.");
       // Verbesserungen je Kapitel werden mit dem Stand gespeichert (Anzeige in
@@ -28107,7 +28261,8 @@
       var autoName = "Stand " + (app.final.versions.length + 1) + " – " + [cfgManual ? cfgManual.filename : "Alle Quelldateien", cfgScreens ? cfgScreens.filename : ""].filter(Boolean).join(" · ");
       var version = finalCreateVersion(
         chapters.map(function (c) { return { title: c.title, level: c.level, text: c.text, markedText: c.markedText, screenIds: c.screens.map(function (s) { return s.id; }) }; }),
-        { name: els.finalBuildNameInput.value.trim() || autoName, config: config, improvements: improvements, origin: "FINAL" });
+        { name: els.finalBuildNameInput.value.trim() || autoName, config: config, improvements: improvements, origin: "FINAL",
+          improvementStatus: config.inlineImprovements && app.final.showInternal ? finalImprovementStatusAll(improvements, "als Vermerk übernommen") : null });
       els.finalBuildNameInput.value = "";
       finalMasterPdfBlob = null;
       var totalScreens = chapters.reduce(function (n, c) { return n + c.screens.length; }, 0);
@@ -28239,7 +28394,7 @@
     if (name === "output-md" || name === "output-pdf") renderOutputCounts();
     if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); renderBildband(); }
     if (name === "bildband") renderBildband();
-    if (name === "edito") { renderEditoVersionSelect(); renderEditoChapters(); renderEditoFiles(); renderEditoFinalDocs(); }
+    if (name === "edito") { renderEditoVersionSelect(); renderEditoBaseDocSelect(); renderEditoChapters(); renderEditoFiles(); renderEditoFinalDocs(); }
     if (name === "unterkapitel") { renderSubchapterVersionSelect(); renderSubchapterPanel(); }
     if (name === "rovoknowledge") renderRovoEntries();
     if (name === "rovosummary") renderRovoSummary();

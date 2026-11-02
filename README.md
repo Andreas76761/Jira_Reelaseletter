@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.116.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.117.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,27 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **FINAL/Editor – Freigabe, Sperre, Verbesserungen ohne Agent, geschützte Vermerke (v2.117.0)**:
+  - **Verbesserungen ohne Agent**: Option in Schritt 6 „Verbesserungen … direkt als interne Vermerke
+    übernehmen“ – die zugeordneten ROVO-Verbesserungen werden je Kapitel als gelber interner Vermerk
+    („Verbesserung (ROVO): …“) vor den Screens angefügt und erscheinen im Export, solange interne
+    Vermerke eingeblendet sind.
+  - **Status je Verbesserung**: offen / umgesetzt / als Vermerk übernommen / abgelehnt – in Schritt 7
+    je Eintrag wählbar (Zähler „x offen von n“), im Vollbild als Kennzeichnung, im Editor je Kapitel
+    „x offen / n“. Der Agent „Verbesserungen einarbeiten“ bekommt nur offene Verbesserungen; nach
+    „Als neuen Stand übernehmen“ gelten sie in optimierten Kapiteln als „umgesetzt“.
+  - **Freigabe**: Feld „Bearbeiter für Prüfung/Freigabe“; „Geprüft“ und „Veröffentlicht“ nur mit
+    Namen (steht als „von …“ am Status und in der Historie). Veröffentlichte Stände sind gesperrt
+    (nicht löschbar); den Status zurückzusetzen verlangt eine Bestätigung.
+  - **Agenten schützen Vermerke und Jira-Nummern**: Interne Vermerke gehen als
+    `⟦INTERN⟧…⟦/INTERN⟧` an den Agenten und werden danach wieder als Vermerk markiert; Antworten,
+    die Bild-Platzhalter, Vermerk-Markierungen oder Jira-Nummern verändern bzw. verlieren, werden mit
+    Begründung verworfen. Zusätzliche, nicht editierbare technische Regeln im Prompt.
+  - **Editor – Kapitelerzeugung mit internem Dokument**: In Schritt 1 des Editors lässt sich als
+    Grundlage für Quelle 1 ein interner FINAL-Stand wählen (Kapitel per gleichem/ähnlichem Titel;
+    ohne Treffer gilt weiterhin der bestehende Benutzerhandbuch-Text).
+  - FINAL: Ablageflächen kompakt.
 
 - **FINAL – mehrere Quelldateien, Verbesserungen aus ROVO, Stände; Editor-Agenten (v2.116.0)**:
   - **Quelldateien mit Merkmalen (Schritt 1)**: Je hochgeladener Benutzerhandbuch-Datei werden

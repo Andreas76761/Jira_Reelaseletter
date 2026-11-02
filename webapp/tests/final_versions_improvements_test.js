@@ -215,10 +215,11 @@ const EN1 = "Chapter 1: Contracts", EN2 = "Chapter 2: Termination";
   check("DE-Stand ist jetzt aktiv (Tabelle + Schritt 8)", versionRows()[0].classList.contains("final-version-active") && doc.getElementById("final-design-version-select").selectedOptions[0].textContent.startsWith("DE – Retail"));
 
   // ===================== Status-Workflow =====================
+  setVal("final-reviewer-input", "Test Prüfer");
   const statusSel = (i) => versionRows()[i].querySelector("[data-final-version-status]");
-  let st = statusSel(0); st.value = "Geprüft"; fire(st, "change");
+  let st = statusSel(0); st.value = "Geprüft"; fire(st, "change"); await wait(30);
   check("Status Entwurf → Geprüft", versionRows()[0].querySelector(".final-status-pill").textContent === "Geprüft");
-  st = statusSel(0); st.value = "Veröffentlicht"; fire(st, "change");
+  st = statusSel(0); st.value = "Veröffentlicht"; fire(st, "change"); await wait(30);
   check("Status Geprüft → Veröffentlicht", versionRows()[0].querySelector(".final-status-pill").textContent === "Veröffentlicht" && doc.getElementById("final-result-version-status").textContent === "Veröffentlicht");
 
   // ===================== Schritt 8: Export des gewaehlten Stands =====================
