@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.115.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.116.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,33 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **FINAL – mehrere Quelldateien, Verbesserungen aus ROVO, Stände; Editor-Agenten (v2.116.0)**:
+  - **Quelldateien mit Merkmalen (Schritt 1)**: Je hochgeladener Benutzerhandbuch-Datei werden
+    Rolle, Sparte, Sprache und Markt gespeichert (z. B. eine deutsche und eine englische Fassung,
+    Fassungen je Rolle/Markt) und in der Tabelle angezeigt.
+  - **Verbesserungen aus ROVO (Excel, Schritt 1)**: .xlsx-Upload; Spalten über die Kopfzeile
+    erkannt („Kapitel“/„Unterkapitel“, „Verbesserung“/„Vorschlag“/„Empfehlung“, optional
+    „Priorität“/„Status“; sonst A = Kapitel, B = Verbesserung). Jede Zeile wird automatisch einem
+    Kapitel der Quelldatei zugeordnet, die die meisten Treffer liefert (gleicher Titel ohne
+    „Kapitel n:“, gleiche Kapitelnummer, sonst ähnlichster Titel ab 34 % Wortüberschneidung) –
+    Quelldatei je Excel umstellbar, Zuordnung je Zeile änderbar („manuell“), Trefferart sichtbar.
+  - **Auswahl je Schritt**: Schritt 3 Quelldatei + Verbesserungen (Vorschau zeigt die
+    Verbesserungen des Kapitels), Schritt 5 Screens-Datei (Filter der Übersicht), Schritt 6
+    Quelldatei, Verbesserungen, Screens-Datei und Name des Stands, Schritt 7 und 8 der Stand.
+  - **Stände (Outputs)**: Jede Zusammenführung in Schritt 6 erzeugt einen eigenen Stand mit
+    Konfiguration (Quelle · Verbesserungen · Screens, Rolle/Sparte/Sprache/Markt-Filter), Kapiteln,
+    Screens und den zugeordneten Verbesserungen. Status Entwurf → Geprüft → Veröffentlicht mit
+    Zeitpunkt und Historie; „Anzeigen“ macht einen Stand aktiv (Ergebnis, Word/PDF/PowerPoint).
+    Ältere Sitzungen: ein vorhandener Master wird als „Stand 1“ (Entwurf) übernommen.
+  - **Register Editor – interne Dokumente**: Liste aller Stände mit Datum und Status. Für das
+    gewählte Dokument laufen Agenten kapitelweise (mit Stop): „Verbesserungen einarbeiten“
+    (nur Kapitel mit hinterlegten ROVO-Verbesserungen), „Sprache & Stil optimieren“ und
+    „Prüfbericht“. Antworten, die die Zahl der `[Bild]`-Platzhalter verändern, werden verworfen
+    (Kapitel bleibt unverändert, Screens bleiben korrekt zugeordnet). Vergleich Bisher/Optimiert
+    je Kapitel; „Als neuen Stand übernehmen“ legt einen neuen Entwurf in FINAL an (aktiv, mit
+    Vermerk „im Editor optimiert“). Aus der Stände-Tabelle führt „Im Editor optimieren“ direkt
+    dorthin. Drei neue editierbare Prompts (insgesamt 34).
 
 - **FINAL – Ergebnis im Vollbild, Gesamtes Dokument (v2.115.0, Schritt 7)**:
   - **Gesamtes Dokument**: Die Kapitel-Auswahl in Schritt 7 bietet an erster Stelle
