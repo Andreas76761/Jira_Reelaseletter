@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.118.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.119.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,27 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **FINAL – Team-Arbeit an gemeinsamen Ständen (v2.119.0)**: nutzt die geteilte Datenhaltung des
+  Artifacts (Fähigkeit `db`, Standardrechte: alle mit Zugriff lesen, ab „Contributor“ schreiben).
+  - **Im Team teilen**: Ein lokaler Stand wird als Team-Stand veröffentlicht (Sammlung
+    `teamstands`, ein Dokument je Stand, max. ca. 240 KB Text). Bilddaten werden nicht geteilt – je
+    Screen nur Referenz und Bildunterschrift; gespeichert werden nur Konto-IDs, Namen werden beim
+    Anzeigen über `user.profiles()` aufgelöst. „Team-Stand aktualisieren“ schreibt eine neue Fassung
+    (auch eine im Editor optimierte) zurück; Status und Historie des Team-Stands bleiben dabei
+    maßgeblich.
+  - **Live für alle**: Liste der Team-Stände mit „geteilt von … am …“, Status (gemeinsam setzbar, mit
+    Historie und Konto-ID; Regeln wie lokal: Bearbeiter nötig, Veröffentlichen nur mit
+    Bearbeitungsrecht, Zurücksetzen mit Bestätigung), Bearbeitungsstand und Kommentaren
+    (`teamstands/<id>/comments`, live). Verknüpfte lokale Stände übernehmen den Team-Status automatisch.
+  - **Bearbeitungssperre**: „Bearbeitung übernehmen“ holt eine kurze Lease (2 min, automatisch
+    verlängert) und markiert den Stand für alle als „wird bearbeitet von …“; andere können dann weder
+    Status setzen noch überschreiben. „Bearbeitung beenden“ gibt den Hinweis frei, die Lease läuft
+    spätestens nach zwei Minuten ab (auch wenn die App einfach geschlossen wird).
+  - **Übernehmen**: holt einen Team-Stand als lokalen Stand (Status, Historie, Verbesserungen,
+    Prüfberichte); Screens werden über eigene Bilder zugeordnet, sonst als „(Screen: Bildunterschrift)“.
+  - Ohne geteilte Datenhaltung (lokal geöffnet) bleibt der Bereich mit Hinweis deaktiviert.
+  - Test mit zwei gleichzeitigen Nutzern (zwei Browser-Instanzen, gemeinsame simulierte Datenhaltung).
 
 - **FINAL/Editor – Anmeldung, Prüfbericht-Ablage, Stände vergleichen (v2.118.0)**:
   - **Bearbeiter aus dem claude.ai-Konto**: Die App fragt über die Artifact-Fähigkeit `user`

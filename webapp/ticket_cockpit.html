@@ -495,6 +495,12 @@
   .final-improvements-box ul { margin: 0; padding-left: 18px; }
   .final-improvements-box li { margin: 3px 0; }
   .final-match { font-size: 12px; white-space: nowrap; }
+  .final-team-comment-list { list-style: none; margin: 0 0 8px; padding: 0; max-height: 260px; overflow: auto; }
+  .final-team-comment-list li { padding: 6px 2px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .final-team-comment-list .who { font-weight: 600; margin-right: 6px; }
+  .final-team-lock { font-size: 12px; }
+  .final-team-lock-busy { color: #b45309; font-weight: 600; }
+  .final-team-lock-mine { color: #15803d; font-weight: 600; }
   .final-imp-status { font-size: 12px; padding: 1px 4px; margin-left: 6px; }
   .final-imp-badge { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
   .final-imp-open { background: #fef3c7; color: #92400e; }
@@ -3098,6 +3104,26 @@
               <div id="final-compare-ai-wrap" hidden>
                 <p class="section-label">Inhaltlicher Vergleich (KI)</p>
                 <div class="panel gen-preview" id="final-compare-ai-output" style="white-space:pre-wrap; padding:12px 14px;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="final-subblock" id="final-team-block">
+            <p class="section-label final-sub-label"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M14.5 20a4.5 4.5 0 0 1 7-3.7"/></svg><span>Team: gemeinsame Stände</span></p>
+            <p class="desc">Lokale Stände lassen sich „Im Team teilen“ – alle, die diese App öffnen dürfen, sehen sie dann live mit Status, Historie und Kommentaren. Status gemeinsam setzen; „Bearbeitung übernehmen“ sperrt einen Team-Stand für andere, solange du daran arbeitest (die Sperre verlängert sich automatisch und läuft wenige Minuten nach „Bearbeitung beenden“ bzw. dem Schließen der App ab). Bilddaten werden nicht geteilt, nur die Bildunterschriften; „Übernehmen“ holt einen Team-Stand als lokalen Stand (Screens werden über die eigenen Bilder zugeordnet).</p>
+            <p class="step-note" id="final-team-status-note">Team-Funktionen sind nur in der veröffentlichten App (geteilte Datenhaltung) verfügbar.</p>
+            <div class="table-wrap" id="final-team-table-wrap" hidden>
+              <table class="simple-table" id="final-team-table">
+                <thead><tr><th>Team-Stand</th><th>Geteilt</th><th>Status</th><th>Bearbeitung</th><th>Kommentare</th><th></th></tr></thead>
+                <tbody id="final-team-tbody"></tbody>
+              </table>
+              <div class="empty-hint" id="final-team-empty">Noch keine Team-Stände – einen lokalen Stand über „Im Team teilen“ freigeben.</div>
+            </div>
+            <div id="final-team-comments" hidden>
+              <p class="section-label" id="final-team-comments-title"></p>
+              <ul class="final-team-comment-list" id="final-team-comments-list"></ul>
+              <div class="controls">
+                <input class="text-input" id="final-team-comment-input" type="text" placeholder="Kommentar zum Team-Stand" style="min-width:320px;">
+                <button class="btn ghost btn-tiny" id="final-team-comment-send-btn" type="button">Kommentar senden</button>
               </div>
             </div>
           </div>
@@ -5880,7 +5906,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.118.0";
+  var APP_VERSION = "2.119.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7483,7 +7509,8 @@
     "final-versions-block", "final-versions-tbody", "final-result-version-select", "final-result-version-status",
     "final-design-version-select", "final-design-version-status", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
-    "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note",
+    "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
     "edito-final-agent-spinner", "edito-final-agent-status", "edito-final-chapters-tbody", "edito-final-compare", "edito-final-compare-title",
@@ -27322,7 +27349,8 @@
       var isActive = v.id === app.final.activeVersionId;
       var opts = FINAL_VERSION_STATUSES.map(function (st) { return '<option value="' + st + '"' + (st === v.status ? " selected" : "") + ">" + st + "</option>"; }).join("");
       return '<tr data-final-version-row="' + v.id + '"' + (isActive ? ' class="final-version-active"' : "") + "><td><b>" + escapeHtml(v.name) + "</b>" +
-        (isActive ? ' <span class="step-note">(aktiv)</span>' : "") + (v.origin === "Editor" ? '<div class="step-note">im Editor optimiert</div>' : "") + "</td>" +
+        (isActive ? ' <span class="step-note">(aktiv)</span>' : "") + (v.origin === "Editor" ? '<div class="step-note">im Editor optimiert</div>' : "") +
+        (v.teamDocId && teamDocById(v.teamDocId) ? '<div class="step-note">im Team geteilt</div>' : v.origin === "Team" ? '<div class="step-note">aus dem Team übernommen</div>' : "") + "</td>" +
         "<td>" + escapeHtml(v.createdAt) + "</td><td>" + escapeHtml(finalVersionConfigLabel(v.config)) + "</td>" +
         "<td>" + v.chapters.length + " / " + screens + "</td>" +
         "<td>" + finalStatusPill(v.status) + '<div><select data-final-version-status="' + v.id + '" aria-label="Status von ' + escapeHtml(v.name) + '">' + opts + "</select></div>" +
@@ -27331,6 +27359,7 @@
         (isActive ? "" : '<button class="btn ghost btn-tiny" data-final-version-activate="' + v.id + '" type="button">Anzeigen</button>') +
         '<button class="btn ghost btn-tiny" data-final-version-editor="' + v.id + '" type="button">Im Editor optimieren</button>' +
         ((v.reviews || []).length ? '<button class="btn ghost btn-tiny" data-final-version-report="' + v.id + '" type="button" title="Letzten Prüfbericht als Word herunterladen">Prüfbericht (' + v.reviews.length + ")</button>" : "") +
+        (teamDb ? '<button class="btn ghost btn-tiny" data-final-version-share="' + v.id + '" type="button">' + (v.teamDocId && teamDocById(v.teamDocId) ? "Team-Stand aktualisieren" : "Im Team teilen") + "</button>" : "") +
         (v.status === "Veröffentlicht"
           ? '<button class="btn ghost btn-tiny" data-final-version-delete="' + v.id + '" type="button" disabled title="Veröffentlichte Stände sind gesperrt – zuerst den Status zurücksetzen.">' + finalIcon("trash") + "Gesperrt</button>"
           : '<button class="btn ghost btn-tiny final-btn-danger" data-final-version-delete="' + v.id + '" type="button">' + finalIcon("trash") + "Löschen</button>") + "</div></td></tr>";
@@ -27621,6 +27650,8 @@
     });
     var name = els.editoFinalSaveNameInput.value.trim() || (doc.name + " – optimiert");
     var v = finalCreateVersion(chapters, { name: name, config: Object.assign({}, doc.config), improvements: doc.improvements, improvementStatus: impStatus, origin: "Editor", basedOnId: doc.id });
+    // Verknuepfung zum Team-Stand behalten: "Team-Stand aktualisieren" schreibt die optimierte Fassung zurueck.
+    if (doc.teamDocId) v.teamDocId = doc.teamDocId;
     addLog("Editor: „" + doc.name + "“ mit " + changed + " optimierten Kapitel(n) als neuer Stand „" + v.name + "“ (Entwurf) nach FINAL übernommen.");
     showToast("Neuer Stand", "„" + v.name + "“ als Entwurf in FINAL (Schritt 6) gespeichert.");
     els.editoFinalSaveNameInput.value = "";
@@ -27805,6 +27836,289 @@
     }
   });
 
+  // ===================== v2.119: Team-Arbeit (geteilte Staende ueber die db-Faehigkeit) =====================
+  // Team-Staende liegen in der Sammlung "teamstands" (ein Dokument je Stand,
+  // ohne Bilddaten), Kommentare in "teamstands/<id>/comments". Gespeichert
+  // werden nur Konto-IDs, Namen werden beim Anzeigen ueber user.profiles()
+  // aufgeloest. Bearbeitungssperre: kurze Lease (acquire, automatisch
+  // verlaengert) plus Hinweisfeld "editing" fuer die Anzeige bei allen.
+  var teamDb = null, teamUnsub = null, teamDocs = [], teamLoaded = false;
+  var teamSelectedId = null, teamCommentsUnsub = null, teamComments = [];
+  var teamTabId = "tab-" + Math.random().toString(36).slice(2, 10);
+  var teamEditing = null;
+  var TEAM_LEASE_MS = 120000, TEAM_RENEW_MS = 60000, TEAM_EDIT_HINT_MS = 30 * 60000, TEAM_MAX_BYTES = 240000;
+  function teamMyId() { return finalUser && finalUser.id ? finalUser.id : null; }
+  function teamHolder() { return teamMyId() || teamTabId; }
+  function teamNowIso() { return new Date().toISOString(); }
+  function teamFmt(iso) { var d = new Date(iso); return isNaN(d.getTime()) ? String(iso || "") : d.toLocaleString("de-DE"); }
+  function teamRef(id) { return teamDb.doc("teamstands/" + id); }
+  function teamDocById(id) { return teamDocs.filter(function (d) { return d._id === id; })[0] || null; }
+  function teamLockOf(d) { var e = d && d.editing; return e && e.until && Date.parse(e.until) > Date.now() ? e : null; }
+  function teamLockMine(lock) { return !!lock && lock.holder === teamHolder(); }
+  if (window.claude && window.claude.use) {
+    window.claude.use("db").then(function (db) {
+      if (!db) return;
+      teamDb = db;
+      teamSubscribe();
+      renderFinalTeam();
+    }).catch(function () { /* ohne geteilte Datenhaltung: Team-Bereich bleibt deaktiviert */ });
+  }
+  function teamSubscribe() {
+    if (teamUnsub || !teamDb) return;
+    teamUnsub = teamDb.collection("teamstands").orderBy("sharedAt", "desc").limit(200).onSnapshot(function (snap) {
+      teamDocs = snap.docs.map(function (d) { return Object.assign({ _id: d.id }, d.data()); });
+      teamLoaded = true;
+      // Verknuepfte lokale Staende uebernehmen den (gemeinsamen) Team-Status.
+      app.final.versions.forEach(function (v) {
+        var td = v.teamDocId ? teamDocById(v.teamDocId) : null;
+        if (td && td.status && td.status !== v.status) { v.status = td.status; v.statusChangedAt = teamFmt(td.statusChangedAt); v.statusById = td.statusById || null; v.history = (td.history || []).slice(); }
+      });
+      renderFinalTeam();
+      renderFinalVersions();
+    }, function (err) {
+      teamUnsub = null;
+      els.finalTeamStatusNote.textContent = "Team-Stände derzeit nicht verfügbar (" + ((err && err.code) || "Fehler") + ").";
+    });
+  }
+  function teamPersonHtml(id, fallback, selfWord) {
+    if (id && id === teamMyId()) return selfWord || "du";
+    return id ? '<span data-team-person="' + escapeHtml(id) + '">' + escapeHtml(fallback || "Teammitglied") + "</span>" : escapeHtml(fallback || "unbekannt");
+  }
+  function teamResolvePeople(root) {
+    if (!finalUser || !finalUser.ns || typeof finalUser.ns.profiles !== "function") return;
+    var spans = root.querySelectorAll("[data-team-person]");
+    var ids = Array.prototype.map.call(spans, function (sp) { return sp.getAttribute("data-team-person"); });
+    if (!ids.length) return;
+    Promise.resolve(finalUser.ns.profiles(ids)).then(function (ps) {
+      Array.prototype.forEach.call(spans, function (sp) { var p = ps && ps[sp.getAttribute("data-team-person")]; if (p && p.name) sp.textContent = p.name; });
+    }).catch(function () {});
+  }
+  // Lokaler Stand -> Team-Dokument (ohne Bilddaten; Screens als Referenz + Bildunterschrift).
+  function teamStandBody(v) {
+    return {
+      name: v.name, configLabel: finalVersionConfigLabel(v.config), createdAt: v.createdAt,
+      status: v.status, statusChangedAt: teamNowIso(), statusById: teamMyId(),
+      history: (v.history || []).map(function (h) { return { status: h.status, when: h.when, byId: h.byId || null }; }).slice(-50),
+      chapters: v.chapters.map(function (c) {
+        return { title: c.title, level: c.level || 1, text: c.text, markedText: typeof c.markedText === "string" ? c.markedText : c.text,
+          screens: (c.screenIds || []).map(function (id) { var img = app.uploadedImages.filter(function (i) { return i.id === id; })[0]; return { id: id, caption: img ? finalScreenCaption(img) : "" }; }) };
+      }),
+      improvements: v.improvements || {}, improvementStatus: v.improvementStatus || {},
+      reviews: (v.reviews || []).map(function (r) { return { text: r.text, at: r.at, byId: r.byId || null }; }).slice(-20),
+      updatedAt: teamNowIso(), updatedById: teamMyId()
+    };
+  }
+  function teamTooBig(body) { return JSON.stringify(body).length > TEAM_MAX_BYTES; }
+  async function teamShareVersion(v) {
+    if (!teamDb) return;
+    var body = teamStandBody(v);
+    if (teamTooBig(body)) { showToast("Zu groß zum Teilen", "Der Stand „" + v.name + "“ überschreitet die Größe eines Team-Dokuments (ca. 240 KB Text).", true); return; }
+    var existing = v.teamDocId ? teamDocById(v.teamDocId) : null;
+    try {
+      if (existing) {
+        var lock = teamLockOf(existing);
+        if (lock && !teamLockMine(lock)) { showToast("Gesperrt", "Der Team-Stand wird gerade von jemand anderem bearbeitet.", true); return; }
+        // Kurze Lease als Abstimmung mit gleichzeitigen Aenderungen anderer.
+        if (!teamLockMine(lock)) {
+          var res = await teamRef(existing._id).acquire({ holder: teamHolder(), ttlMs: 5000 });
+          if (!res.acquired) { showToast("Gerade in Bearbeitung", "Bitte nach " + teamFmt(res.expiresAt) + " erneut versuchen.", true); return; }
+        }
+        // Status/Historie bleiben beim Team-Stand massgeblich (koennen von anderen gesetzt worden sein).
+        delete body.status; delete body.statusChangedAt; delete body.statusById; delete body.history;
+        await teamRef(existing._id).update(body);
+        addLog("Team: Team-Stand „" + v.name + "“ aktualisiert.");
+        showToast("Aktualisiert", "Team-Stand „" + v.name + "“ aktualisiert.");
+      } else {
+        var ref = teamDb.collection("teamstands").doc();
+        await ref.set(Object.assign(body, { sharedById: teamMyId(), sharedAt: teamNowIso(), editing: null }));
+        v.teamDocId = ref.id;
+        addLog("Team: Stand „" + v.name + "“ im Team geteilt.");
+        showToast("Geteilt", "„" + v.name + "“ ist jetzt für das Team sichtbar.");
+      }
+    } catch (err) {
+      showToast("Teilen fehlgeschlagen", err && err.code === "invalid_argument" ? "Keine Schreibberechtigung für Team-Daten (Freigabe mindestens „Contributor“ nötig)." : ((err && err.message) || "Unbekannter Fehler."), true);
+    }
+    renderFinalVersions();
+  }
+  // Team-Stand als lokalen Stand uebernehmen; [Bild]-Zeilen ohne eigenes
+  // Bild werden zu "(Screen: Bildunterschrift)".
+  function teamImportAsLocal(d, quiet) {
+    var screens = finalAllScreens();
+    var chapters = (d.chapters || []).map(function (c) {
+      var refs = c.screens || [], ids = [], k = 0;
+      function mapLines(t) {
+        var i = 0;
+        return String(t || "").split("\n").map(function (line) {
+          if (line.trim() !== "[Bild]") return line;
+          var ref = refs[i++] || {};
+          var local = screens.filter(function (img) { return img.id === ref.id && finalScreenCaption(img) === ref.caption; })[0] ||
+            screens.filter(function (img) { return ref.caption && finalScreenCaption(img) === ref.caption; })[0];
+          return local ? line : "(Screen: " + (ref.caption || "ohne Bildunterschrift") + ")";
+        }).join("\n");
+      }
+      refs.forEach(function (ref) {
+        var local = screens.filter(function (img) { return img.id === ref.id && finalScreenCaption(img) === ref.caption; })[0] ||
+          screens.filter(function (img) { return ref.caption && finalScreenCaption(img) === ref.caption; })[0];
+        if (local) ids.push(local.id); k++;
+      });
+      return { title: c.title, level: c.level || 1, text: mapLines(c.text), markedText: mapLines(c.markedText), screenIds: ids };
+    });
+    var v = finalCreateVersion(chapters, { name: d.name, config: { manualName: d.configLabel || "Team" }, improvements: d.improvements || {}, improvementStatus: d.improvementStatus || {}, origin: "Team" });
+    v.status = d.status || "Entwurf";
+    v.statusChangedAt = teamFmt(d.statusChangedAt);
+    v.history = (d.history || []).slice();
+    v.reviews = (d.reviews || []).slice();
+    v.teamDocId = d._id;
+    if (!quiet) { addLog("Team: Team-Stand „" + d.name + "“ als lokalen Stand übernommen."); showToast("Übernommen", "„" + d.name + "“ ist jetzt als lokaler Stand aktiv."); }
+    return v;
+  }
+  async function teamSetStatus(d, status) {
+    var lock = teamLockOf(d);
+    if (lock && !teamLockMine(lock)) { showToast("Gesperrt", "Der Team-Stand wird gerade von jemand anderem bearbeitet.", true); return false; }
+    if (status !== "Entwurf" && !finalReviewerName()) { showToast("Bearbeiter fehlt", "Für „" + status + "“ bitte zuerst den Bearbeiter eintragen.", true); return false; }
+    if (finalUser && status === "Veröffentlicht" && !finalUser.canEdit) { showToast("Keine Berechtigung", "Veröffentlichen dürfen nur Personen mit Bearbeitungsrecht an dieser App.", true); return false; }
+    if (d.status === "Veröffentlicht" && !(await confirmDialog("Team-Stand „" + d.name + "“ ist veröffentlicht. Status wirklich auf „" + status + "“ zurücksetzen?", "Zurücksetzen"))) return false;
+    // Ganze Historie wird ersetzt (Arrays mergen nicht) - bei gleichzeitigen
+    // Statuswechseln gewinnt der letzte; die Lease oben stimmt Bearbeiter ab.
+    var history = (d.history || []).concat([{ status: status, when: nowLabel(), byId: teamMyId() }]).slice(-50);
+    try {
+      await teamRef(d._id).update({ status: status, statusChangedAt: teamNowIso(), statusById: teamMyId(), history: history });
+      addLog("Team: Team-Stand „" + d.name + "“ auf „" + status + "“ gesetzt.");
+      app.final.versions.forEach(function (v) {
+        if (v.teamDocId === d._id) { v.status = status; v.statusChangedAt = nowLabel(); v.statusById = teamMyId(); v.statusBy = finalReviewerName(); v.history = history.slice(); }
+      });
+      return true;
+    } catch (err) {
+      showToast("Status nicht gespeichert", (err && err.message) || "Unbekannter Fehler.", true);
+      return false;
+    }
+  }
+  async function teamStartEditing(d) {
+    if (teamEditing && teamEditing.docId !== d._id) await teamStopEditing(true);
+    var ref = teamRef(d._id);
+    var res;
+    try { res = await ref.acquire({ holder: teamHolder(), ttlMs: TEAM_LEASE_MS }); }
+    catch (err) { showToast("Sperre fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); return; }
+    if (!res.acquired) { showToast("Wird bearbeitet", "Jemand anderes bearbeitet „" + d.name + "“ gerade – frei frühestens ab " + teamFmt(res.expiresAt) + ".", true); return; }
+    try {
+      await ref.update({ editing: { byId: teamMyId(), holder: teamHolder(), since: teamNowIso(), until: new Date(Date.now() + TEAM_EDIT_HINT_MS).toISOString() } });
+    } catch (err) { showToast("Sperre fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); return; }
+    var renew = setInterval(function () {
+      // Nur die Lease verlaengern (kein Dokument-Schreiben im Takt).
+      ref.acquire({ holder: teamHolder(), ttlMs: TEAM_LEASE_MS }).catch(function () {});
+    }, TEAM_RENEW_MS);
+    teamEditing = { docId: d._id, timer: renew };
+    var local = app.final.versions.filter(function (v) { return v.teamDocId === d._id; })[0] || teamImportAsLocal(d, true);
+    finalSetActiveVersion(local.id);
+    addLog("Team: Bearbeitung von „" + d.name + "“ übernommen (für andere gesperrt).");
+    showToast("Bearbeitung übernommen", "„" + d.name + "“ ist für andere gesperrt, bis du die Bearbeitung beendest.");
+    renderFinal();
+  }
+  async function teamStopEditing(quiet) {
+    if (!teamEditing) return;
+    var cur = teamEditing;
+    clearInterval(cur.timer);
+    teamEditing = null;
+    try { await teamRef(cur.docId).update({ editing: null }); } catch (err) { /* Hinweis laeuft ohnehin ab */ }
+    if (!quiet) { addLog("Team: Bearbeitung beendet."); showToast("Bearbeitung beendet", "Die Sperre läuft in spätestens zwei Minuten ab."); }
+    renderFinalTeam();
+  }
+  function renderFinalTeam() {
+    if (!els.finalTeamTbody) return;
+    var avail = !!teamDb;
+    els.finalTeamTableWrap.hidden = !avail;
+    if (avail && teamUnsub) els.finalTeamStatusNote.textContent = "Live verbunden – Änderungen anderer erscheinen automatisch." + (finalUser ? " Angemeldet als " + finalUser.name + "." : " Ohne Konto-Identität werden Änderungen keiner Person zugeordnet.");
+    if (!avail) { els.finalTeamComments.hidden = true; return; }
+    els.finalTeamEmpty.hidden = teamDocs.length > 0;
+    els.finalTeamTbody.innerHTML = teamDocs.map(function (d) {
+      var lock = teamLockOf(d), mine = teamLockMine(lock), busy = lock && !mine;
+      var opts = FINAL_VERSION_STATUSES.map(function (st) { return '<option value="' + st + '"' + (st === d.status ? " selected" : "") + ">" + st + "</option>"; }).join("");
+      var lockHtml = !lock ? '<span class="final-team-lock">frei</span>'
+        : mine ? '<span class="final-team-lock final-team-lock-mine">von dir in Bearbeitung</span>'
+        : '<span class="final-team-lock final-team-lock-busy">wird bearbeitet von ' + teamPersonHtml(lock.byId) + "</span><div class=\"step-note\">seit " + escapeHtml(teamFmt(lock.since)) + "</div>";
+      var hasLocal = app.final.versions.some(function (v) { return v.teamDocId === d._id; });
+      return '<tr data-team-row="' + escapeHtml(d._id) + '"' + (teamSelectedId === d._id ? ' class="final-version-active"' : "") + "><td><b>" + escapeHtml(d.name || "") + '</b><div class="step-note">' + escapeHtml(d.configLabel || "") + " · " + (d.chapters || []).length + " Kapitel</div></td>" +
+        "<td>" + teamPersonHtml(d.sharedById) + '<div class="step-note">' + escapeHtml(teamFmt(d.sharedAt)) + (d.updatedAt && d.updatedAt !== d.sharedAt ? " · aktualisiert " + escapeHtml(teamFmt(d.updatedAt)) : "") + "</div></td>" +
+        "<td>" + finalStatusPill(d.status) + '<div><select data-team-status="' + escapeHtml(d._id) + '"' + (busy ? " disabled" : "") + ' aria-label="Team-Status">' + opts + "</select></div>" +
+        (d.statusById ? '<div class="step-note">von ' + teamPersonHtml(d.statusById, null, "dir") + "</div>" : "") + "</td>" +
+        '<td class="final-team-col-lock">' + lockHtml + "</td>" +
+        '<td><button class="btn ghost btn-tiny" type="button" data-team-comments="' + escapeHtml(d._id) + '">Kommentare</button>' +
+        (d.lastCommentAt ? '<div class="step-note">zuletzt ' + escapeHtml(teamFmt(d.lastCommentAt)) + "</div>" : "") + "</td>" +
+        '<td><div class="final-row-actions">' +
+        '<button class="btn ghost btn-tiny" type="button" data-team-import="' + escapeHtml(d._id) + '">' + (hasLocal ? "Erneut übernehmen" : "Übernehmen") + "</button>" +
+        (mine ? '<button class="btn ghost btn-tiny" type="button" data-team-unlock="' + escapeHtml(d._id) + '">Bearbeitung beenden</button>'
+          : '<button class="btn ghost btn-tiny" type="button" data-team-lock="' + escapeHtml(d._id) + '"' + (busy ? ' title="Wird gerade bearbeitet – Übernahme versucht die Sperre zu erhalten"' : "") + ">Bearbeitung übernehmen</button>") +
+        (d.sharedById && d.sharedById !== teamMyId() ? "" : '<button class="btn ghost btn-tiny final-btn-danger" type="button" data-team-remove="' + escapeHtml(d._id) + '"' + (busy || d.status === "Veröffentlicht" ? " disabled" : "") + ">Entfernen</button>") +
+        "</div></td></tr>";
+    }).join("");
+    teamResolvePeople(els.finalTeamTbody);
+    renderTeamComments();
+  }
+  function renderTeamComments() {
+    var d = teamSelectedId ? teamDocById(teamSelectedId) : null;
+    els.finalTeamComments.hidden = !d;
+    if (!d) return;
+    els.finalTeamCommentsTitle.textContent = "Kommentare zu „" + d.name + "“ (" + teamComments.length + ")";
+    els.finalTeamCommentsList.innerHTML = teamComments.length ? teamComments.map(function (c) {
+      return '<li><span class="who">' + teamPersonHtml(c.byId) + '</span><span class="step-note">' + escapeHtml(teamFmt(c.at)) + "</span><div>" + escapeHtml(c.text || "") + "</div></li>";
+    }).join("") : '<li class="step-note">Noch keine Kommentare.</li>';
+    teamResolvePeople(els.finalTeamCommentsList);
+  }
+  function teamOpenComments(id) {
+    if (teamCommentsUnsub) { teamCommentsUnsub(); teamCommentsUnsub = null; }
+    teamSelectedId = id;
+    teamComments = [];
+    teamCommentsUnsub = teamRef(id).collection("comments").orderBy("at", "asc").limit(500).onSnapshot(function (snap) {
+      teamComments = snap.docs.map(function (x) { return x.data(); });
+      renderTeamComments();
+    }, function () { teamCommentsUnsub = null; });
+    renderFinalTeam();
+  }
+  els.finalTeamCommentSendBtn.addEventListener("click", async function () {
+    var text = els.finalTeamCommentInput.value.trim();
+    if (!text || !teamSelectedId || !teamDb) return;
+    els.finalTeamCommentSendBtn.disabled = true;
+    try {
+      var at = teamNowIso();
+      await teamRef(teamSelectedId).collection("comments").add({ text: text, at: at, byId: teamMyId() });
+      await teamRef(teamSelectedId).update({ lastCommentAt: at });
+      els.finalTeamCommentInput.value = "";
+    } catch (err) {
+      showToast("Kommentar nicht gesendet", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally { els.finalTeamCommentSendBtn.disabled = false; }
+  });
+  els.finalTeamTbody.addEventListener("change", async function (e) {
+    var sel = e.target.closest("[data-team-status]");
+    if (!sel) return;
+    var d = teamDocById(sel.getAttribute("data-team-status"));
+    if (d) await teamSetStatus(d, sel.value);
+    renderFinalTeam();
+    renderFinalVersions();
+  });
+  els.finalTeamTbody.addEventListener("click", async function (e) {
+    var b;
+    if ((b = e.target.closest("[data-team-import]"))) { var di = teamDocById(b.getAttribute("data-team-import")); if (di) { teamImportAsLocal(di); renderFinal(); } return; }
+    if ((b = e.target.closest("[data-team-lock]"))) { var dl = teamDocById(b.getAttribute("data-team-lock")); if (dl) await teamStartEditing(dl); return; }
+    if ((b = e.target.closest("[data-team-unlock]"))) { await teamStopEditing(); return; }
+    if ((b = e.target.closest("[data-team-comments]"))) { teamOpenComments(b.getAttribute("data-team-comments")); return; }
+    if ((b = e.target.closest("[data-team-remove]"))) {
+      var dr = teamDocById(b.getAttribute("data-team-remove"));
+      if (!dr || !(await confirmDialog("Team-Stand „" + dr.name + "“ für alle entfernen? Lokale Stände bleiben erhalten.", "Entfernen"))) return;
+      try {
+        await teamRef(dr._id).delete();
+        app.final.versions.forEach(function (v) { if (v.teamDocId === dr._id) v.teamDocId = null; });
+        if (teamSelectedId === dr._id) { if (teamCommentsUnsub) teamCommentsUnsub(); teamCommentsUnsub = null; teamSelectedId = null; }
+        addLog("Team: Team-Stand „" + dr.name + "“ entfernt.");
+      } catch (err) { showToast("Entfernen fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+    }
+  });
+  els.finalVersionsTbody.addEventListener("click", async function (e) {
+    var btn = e.target.closest("[data-final-version-share]");
+    if (!btn) return;
+    var v = finalVersionById(parseInt(btn.getAttribute("data-final-version-share"), 10));
+    if (v) await teamShareVersion(v);
+  });
+
   function renderFinal() {
     finalPopulateRolleSparteSelects();
     els.finalHideInternalCb.checked = !app.final.showInternal;
@@ -27826,6 +28140,7 @@
     renderFinalVersions();
     renderFinalReviewer();
     renderFinalCompareSelects();
+    renderFinalTeam();
     renderFinalVersionSelects();
     renderFinalResultChapterOptions();
     updateFinalResult();
