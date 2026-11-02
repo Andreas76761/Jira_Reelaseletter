@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.108.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.109.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1995,6 +1995,41 @@ RAG-Kontext anreichern").
   aufgegriffen wurden (mindestens 1 genehmigtes Unterkapitel nötig). Beide Ergebnisse sind
   reiner Sitzungs-Anzeigezustand (nicht Teil von "Sitzung speichern", wie bei EDITO Agent
   4/5) und werden bei Rolle/Sparte-Versionswechsel sowie "Alle Daten löschen" zurückgesetzt.
+
+- **FINAL** (neu, v2.109.0, eigener Navigationspunkt direkt nach Unterkapitel – letzter
+  Schritt vor der Ablieferung): **mehrere** Benutzerhandbuch-.docx-Dateien hochladen,
+  Kapitel werden je Datei über dieselbe Formatvorlagen-Erkennung wie beim bestehenden
+  Referenz-Handbuch-Import gefunden (`docxXmlToFinalChapters`, eine neue, eigenständige
+  Variante von `docxXmlToChapters` – der bestehende Referenz-Handbuch-Import bleibt
+  dadurch unverändert). **Interne Vermerke erkennen**: anders als reine Textmarkierungen
+  erwartet FINAL ECHTE Word-Kommentare (Überprüfen → Kommentar) – der per Kommentar
+  markierte Textbereich (`w:commentRangeStart`/`w:commentRangeEnd` in der OOXML-Struktur,
+  der Kommentarinhalt selbst wird bewusst nicht gelesen, nur die Bereichsmarkierung) gilt
+  als „intern" und lässt sich über die Option „Interne Vermerke ausblenden" aus der
+  bereinigten Fassung herausnehmen; eine zweite, unabhängige Option „Jira-Nummern
+  ausblenden" entfernt zusätzlich erkannte Ticket-Schlüssel (dieselbe Erkennung wie bei
+  Rovo Knowledge, `ROVO_JIRA_KEY_RE`) samt dadurch leer gewordener Klammern. Eine
+  Live-Vorschau je Kapitel zeigt sofort, wie sich beide Schalter auswirken. **Mehrfach
+  vorkommende Kapitel** (derselbe Titel in mehreren hochgeladenen Dateien) erscheinen in
+  einer eigenen Tabelle – dort wird je Kapitel manuell gewählt, welche Datei die
+  maßgebliche Fassung für das Master-Dokument liefert. **Screens-Datei hochladen**: eine
+  zusätzliche, separate .docx-/.pptx-Datei mit eingebetteten Bildschirmscreens je Rolle/
+  Sparte/Sprache/Markt (Rolle/Sparte als Dropdown mit den bestehenden Werten aus
+  `OUTLINE_VERSIONS`, Sprache/Markt als freie Textfelder – beides komplett neue
+  Zuordnungs-Achsen, die extrahierten Screens landen – wie bei Editor/Rovo Knowledge
+  üblich – in der gemeinsamen Bilder-Liste, zusätzlich markiert mit den vier neuen
+  Feldern); jeder extrahierte Screen wird anschließend einem erkannten Kapitel
+  zugeordnet (dieselbe Liste wie bei den Benutzerhandbuch-Kapiteln – Word-Unterkapitel-
+  Überschriften erscheinen darin automatisch als eigene Einträge). **Master
+  zusammenführen**: baut EIN Gesamtdokument (Word **und** PDF, mit Deckblatt/
+  Inhaltsverzeichnis/Fußzeile/Lesezeichen – dieselben generischen Bausteine wie bei
+  EDITO/Unterkapitel-Werkstatt) aus der je Kapitel gewählten Quelle in der aktuellen
+  Bereinigungsstufe, ergänzt um die zur gewählten Rolle/Sparte/Sprache/Markt passenden
+  Screens als eingebettete Bilder (ein leeres Filterfeld passt auf jede Ausprägung dieser
+  Achse). **Ergebnis am Ende**: Quellversion (vollständiger, unbereinigter Originaltext
+  der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
+  lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
+  zum Vergleich.
 
 - **Bilder** – Tabelle **und** Kachel-Galerie aller in der Sitzung
   erzeugten Prozessdiagramme sowie eigener Bild-Uploads, jeweils mit

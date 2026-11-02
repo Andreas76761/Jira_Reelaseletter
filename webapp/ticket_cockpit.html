@@ -697,6 +697,7 @@
       <li><button class="nav-item" data-view="bildband" type="button">Bildband</button></li>
       <li><button class="nav-item" data-view="edito" type="button">Editor</button></li>
       <li><button class="nav-item" data-view="unterkapitel" type="button">Unterkapitel</button></li>
+      <li><button class="nav-item" data-view="final" type="button">FINAL</button></li>
       <li><button class="nav-item" data-view="bilder" type="button">Bilder</button></li>
       <li><button class="nav-item" data-view="tabellen" type="button">Tabelle</button></li>
       <li class="nav-sep">Output</li>
@@ -2772,6 +2773,125 @@
           <div id="subchapter-agent5-result" hidden>
             <p class="section-label" style="margin-top:0;">Agent 5: Vollständigkeit &amp; Abdeckung</p>
             <div class="panel gen-preview" id="subchapter-agent5-output" style="padding:12px 14px; margin-top:6px; max-height:420px; overflow:auto; white-space:pre-wrap;"></div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= FINAL ================= -->
+      <section class="view-panel" data-view-panel="final" hidden>
+        <div class="view-head"><h2>FINAL</h2><p class="desc">Letzter Schritt vor der Ablieferung: mehrere Benutzerhandbuch-.docx-Dateien hochladen (mit oder ohne interne Vermerke/Jira-Nummern), die bereinigte Fassung ansehen, Screens aus einer separaten Datei je Rolle/Sparte/Sprache/Markt den Kapiteln/Unterkapiteln zuordnen und alles zu einem Master-Dokument zusammenführen – am Ende Quellversion und neue Zusammenführung inkl. Screens im Vergleich.</p></div>
+
+        <section>
+          <p class="section-label">1. Benutzerhandbuch-Dateien hochladen</p>
+          <p class="desc">Echte .docx-Dateien, Kapitel werden anhand der Word-Formatvorlagen (Überschrift 1/2/…) erkannt. Interne Vermerke müssen dafür als ECHTE Word-Kommentare (Überprüfen → Kommentar) auf den betroffenen Textstellen angebracht sein – der kommentierte Bereich gilt dann als intern.</p>
+          <div class="dropzone" id="final-manual-dropzone" tabindex="0" role="button" aria-label="Benutzerhandbuch-Datei(en) auswählen">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span class="txt"><strong>Datei(en) hier ablegen</strong><span>oder klicken zum Auswählen (.docx, Mehrfachauswahl möglich)</span></span>
+          </div>
+          <input type="file" id="final-manual-file-input" accept=".docx" multiple hidden>
+          <div class="table-wrap">
+            <table class="simple-table" id="final-manuals-table">
+              <thead><tr><th>Datei</th><th>Kapitel</th><th>Hochgeladen am</th><th></th></tr></thead>
+              <tbody id="final-manuals-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="final-manuals-empty">Noch keine Benutzerhandbuch-Datei hochgeladen.</div>
+          </div>
+        </section>
+
+        <section id="final-conflicts-section" hidden>
+          <p class="section-label">2. Mehrfach vorkommende Kapitel: Quelle wählen</p>
+          <p class="desc">Diese Kapitel stehen in mehr als einer hochgeladenen Datei – wähle je Kapitel, welche Fassung ins Master-Dokument übernommen wird.</p>
+          <div class="table-wrap">
+            <table class="simple-table" id="final-conflicts-table">
+              <thead><tr><th>Kapitel</th><th>Datei (Quelle für Master)</th></tr></thead>
+              <tbody id="final-conflicts-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="final-preview-section" hidden>
+          <p class="section-label">3. Anzeige-Optionen &amp; Vorschau</p>
+          <div class="controls">
+            <label class="checkbox-label"><input type="checkbox" id="final-hide-internal-cb"> Interne Vermerke ausblenden</label>
+            <label class="checkbox-label"><input type="checkbox" id="final-hide-jira-cb"> Jira-Nummern ausblenden</label>
+          </div>
+          <label for="final-preview-chapter-select">Kapitel</label>
+          <select id="final-preview-chapter-select" aria-label="Kapitel für Vorschau"></select>
+          <div class="panel gen-preview" id="final-preview-output" style="padding:12px 14px; margin-top:8px; white-space:pre-wrap;"></div>
+        </section>
+
+        <section>
+          <p class="section-label">4. Screens-Datei hochladen (je Rolle/Sparte/Sprache/Markt)</p>
+          <p class="desc">Eine .docx-/.pptx-Datei mit eingebetteten Bildschirmscreens – die vier Felder unten gelten für ALLE darin enthaltenen Screens dieser Datei.</p>
+          <div class="controls" style="flex-wrap:wrap;">
+            <div><label for="final-screens-rolle-select">Rolle</label><select id="final-screens-rolle-select" aria-label="Rolle"><option value="">– unspezifisch –</option></select></div>
+            <div><label for="final-screens-sparte-select">Sparte</label><select id="final-screens-sparte-select" aria-label="Sparte"><option value="">– unspezifisch –</option></select></div>
+            <div><label for="final-screens-sprache-input">Sprache</label><input class="text-input" id="final-screens-sprache-input" type="text" placeholder="z. B. DE, EN"></div>
+            <div><label for="final-screens-markt-input">Markt</label><input class="text-input" id="final-screens-markt-input" type="text" placeholder="z. B. Deutschland"></div>
+          </div>
+          <div class="dropzone" id="final-screens-dropzone" tabindex="0" role="button" aria-label="Screens-Datei auswählen" style="margin-top:10px;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span class="txt"><strong>Datei hier ablegen</strong><span>oder klicken zum Auswählen (.docx, .pptx)</span></span>
+          </div>
+          <input type="file" id="final-screens-file-input" accept=".docx,.doc,.pptx" hidden>
+          <div class="table-wrap">
+            <table class="simple-table" id="final-screens-files-table">
+              <thead><tr><th>Datei</th><th>Rolle</th><th>Sparte</th><th>Sprache</th><th>Markt</th><th>Screens</th><th>Hochgeladen am</th></tr></thead>
+              <tbody id="final-screens-files-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="final-screens-files-empty">Noch keine Screens-Datei hochgeladen.</div>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">5. Screens zuordnen (<span id="final-screens-count">0</span>)</p>
+          <p class="desc">Die Kapitel-Auswahl listet alle in den hochgeladenen Benutzerhandbuch-Dateien erkannten Überschriften (Word erkennt dabei automatisch auch Unterkapitel-Überschriften als eigene Einträge).</p>
+          <div class="table-wrap">
+            <table class="simple-table" id="final-screens-table">
+              <thead><tr><th>Vorschau</th><th>Rolle/Sparte/Sprache/Markt</th><th>Kapitel/Unterkapitel</th></tr></thead>
+              <tbody id="final-screens-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="final-screens-empty">Noch keine Screens aus einer Screens-Datei extrahiert.</div>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">6. Master zusammenführen</p>
+          <p class="desc">Nur Screens, die zur unten gewählten Rolle/Sparte/Sprache/Markt passen, werden ins Master-Dokument übernommen (leeres Feld = passt auf jede Ausprägung dieser Achse).</p>
+          <div class="controls" style="flex-wrap:wrap;">
+            <div><label for="final-filter-rolle-select">Rolle</label><select id="final-filter-rolle-select" aria-label="Rolle-Filter"><option value="">– egal –</option></select></div>
+            <div><label for="final-filter-sparte-select">Sparte</label><select id="final-filter-sparte-select" aria-label="Sparte-Filter"><option value="">– egal –</option></select></div>
+            <div><label for="final-filter-sprache-input">Sprache</label><input class="text-input" id="final-filter-sprache-input" type="text" placeholder="z. B. DE"></div>
+            <div><label for="final-filter-markt-input">Markt</label><input class="text-input" id="final-filter-markt-input" type="text" placeholder="z. B. Deutschland"></div>
+          </div>
+          <div class="controls" style="margin-top:10px;">
+            <button class="btn primary" id="final-build-master-btn" type="button">
+              <span class="btn-spinner" id="final-build-master-spinner" hidden></span>
+              Master zusammenführen
+            </button>
+          </div>
+          <p class="step-note" id="final-build-master-status-note"></p>
+          <div id="final-master-export-section" hidden>
+            <div class="controls">
+              <button class="btn ghost" id="final-master-download-docx-btn" type="button">Als Word herunterladen</button>
+              <button class="btn ghost" id="final-master-download-pdf-btn" type="button">Als PDF herunterladen</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="final-result-section" hidden>
+          <p class="section-label">7. Ergebnis: Quellversion vs. neue Zusammenführung</p>
+          <label for="final-result-chapter-select">Kapitel</label>
+          <select id="final-result-chapter-select" aria-label="Kapitel für Ergebnis-Vergleich"></select>
+          <div class="rovo-detail-cols" style="margin-top:10px;">
+            <div class="rovo-detail-col">
+              <h3>Quellversion</h3>
+              <div class="rovo-detail-col-text" id="final-result-source-output"></div>
+            </div>
+            <div class="rovo-detail-col">
+              <h3>Neue Zusammenführung (Master, inkl. Screens)</h3>
+              <div class="rovo-detail-col-text" id="final-result-master-output"></div>
+            </div>
           </div>
         </section>
       </section>
@@ -5483,7 +5603,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.108.0";
+  var APP_VERSION = "2.109.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7069,6 +7189,16 @@
     "rovo-summary-merge-output", "rovo-summary-merge-download-btn",
     "rovo-summary-compare-btn", "rovo-summary-compare-spinner", "rovo-summary-compare-status-note",
     "rovo-summary-compare-result", "rovo-summary-compare-output", "rovo-summary-compare-download-btn",
+    "final-manual-dropzone", "final-manual-file-input", "final-manuals-table", "final-manuals-tbody", "final-manuals-empty",
+    "final-conflicts-section", "final-conflicts-tbody",
+    "final-preview-section", "final-hide-internal-cb", "final-hide-jira-cb", "final-preview-chapter-select", "final-preview-output",
+    "final-screens-rolle-select", "final-screens-sparte-select", "final-screens-sprache-input", "final-screens-markt-input",
+    "final-screens-dropzone", "final-screens-file-input", "final-screens-files-tbody", "final-screens-files-empty",
+    "final-screens-count", "final-screens-tbody", "final-screens-empty",
+    "final-filter-rolle-select", "final-filter-sparte-select", "final-filter-sprache-input", "final-filter-markt-input",
+    "final-build-master-btn", "final-build-master-spinner", "final-build-master-status-note",
+    "final-master-export-section", "final-master-download-docx-btn", "final-master-download-pdf-btn",
+    "final-result-section", "final-result-chapter-select", "final-result-source-output", "final-result-master-output",
     "rovo-tables-count", "rovo-tables-list", "rovo-tables-empty",
     "bildband-table", "bildband-tbody", "bildband-empty",
     "edito-version-select", "edito-chapters-section", "edito-chapters-count",
@@ -7172,6 +7302,30 @@
     // pruefen. sources: [{id, kind: "datei"|"einfügen", filename, title,
     // text, addedAt}].
     rovoSummary: { sources: [], mergedDoc: "", mergedAt: "", comparisonResult: "", comparisonAt: "" },
+    // FINAL (eigenes Register, letzter Schritt vor der Ablieferung): mehrere
+    // Benutzerhandbuch-.docx-Dateien hochladen (jede mit eigener Kapitel-
+    // erkennung, s. docxXmlToFinalChapters), interne Vermerke (ECHTE Word-
+    // Kommentarbereiche) und/oder Jira-Nummern wahlweise ausblenden, dazu
+    // eine separate Screens-Datei je Rolle/Sparte/Sprache/Markt hochladen
+    // und deren Screens Kapitel/Unterkapitel zuordnen. "Master zusammen-
+    // führen" baut daraus EIN Gesamtdokument: je Kapitel der Text der
+    // gewaehlten Quelldatei (manualChapterSource) in der gewaehlten
+    // Bereinigungsstufe, ergaenzt um die zur aktuellen Rolle/Sparte/
+    // Sprache/Markt-Auswahl passenden Screens als [Bild]-Platzhalter.
+    // manuals: [{id, filename, chapters: [{level, title, fullText,
+    // cleanText}], addedAt}]. manualChapterSource: Kapiteltitel -> manualId
+    // (nur bei Mehrfachvorkommen relevant, manuell gewaehlt). screensFiles:
+    // [{id, filename, rolle, sparte, sprache, markt, addedAt}] (Metadaten
+    // je Datei; die extrahierten Screens selbst landen - wie bei Editor/
+    // Rovo Knowledge ueblich - in app.uploadedImages, zusaetzlich markiert
+    // mit finalScreensFileId + rolle/sparte/sprache/markt).
+    final: {
+      manuals: [], manualChapterSource: {},
+      showInternal: true, hideJira: false,
+      screensFiles: [],
+      filterRolle: "", filterSparte: "", filterSprache: "", filterMarkt: "",
+      master: { chapters: [], builtAt: "" }
+    },
     tickets: [],
     view: { bucket: "all", domain: "", label: "", query: "", issueType: "", excludeTypes: {}, sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
@@ -7692,6 +7846,12 @@
     app.rovoTables = [];
     app.rovoSummary = { sources: [], mergedDoc: "", mergedAt: "", comparisonResult: "", comparisonAt: "" };
     renderRovoSummary();
+    app.final = {
+      manuals: [], manualChapterSource: {}, showInternal: true, hideJira: false,
+      screensFiles: [], filterRolle: "", filterSparte: "", filterSprache: "", filterMarkt: "",
+      master: { chapters: [], builtAt: "" }
+    };
+    renderFinal();
     app.editoVersionKey = "";
     app.editoChapters = {};
     app.subchapterDrafts = {};
@@ -7796,6 +7956,12 @@
     app.rovoTables = [];
     app.rovoSummary = { sources: [], mergedDoc: "", mergedAt: "", comparisonResult: "", comparisonAt: "" };
     renderRovoSummary();
+    app.final = {
+      manuals: [], manualChapterSource: {}, showInternal: true, hideJira: false,
+      screensFiles: [], filterRolle: "", filterSparte: "", filterSprache: "", filterMarkt: "",
+      master: { chapters: [], builtAt: "" }
+    };
+    renderFinal();
     app.editoVersionKey = "";
     app.editoChapters = {};
     app.subchapterDrafts = {};
@@ -7873,6 +8039,7 @@
       editoChapters: app.editoChapters,
       subchapterDrafts: app.subchapterDrafts,
       rovoSummary: app.rovoSummary,
+      final: app.final,
       selectedKeys: app.selectedKeys,
       savedLists: app.savedLists,
       nextSavedListId: app.nextSavedListId,
@@ -7946,6 +8113,15 @@
       sources: Array.isArray(data.rovoSummary.sources) ? data.rovoSummary.sources : [],
       mergedDoc: data.rovoSummary.mergedDoc || "", mergedAt: data.rovoSummary.mergedAt || "",
       comparisonResult: data.rovoSummary.comparisonResult || "", comparisonAt: data.rovoSummary.comparisonAt || ""
+    };
+    if (data.final && typeof data.final === "object") app.final = {
+      manuals: Array.isArray(data.final.manuals) ? data.final.manuals : [],
+      manualChapterSource: data.final.manualChapterSource && typeof data.final.manualChapterSource === "object" ? data.final.manualChapterSource : {},
+      showInternal: data.final.showInternal !== false, hideJira: !!data.final.hideJira,
+      screensFiles: Array.isArray(data.final.screensFiles) ? data.final.screensFiles : [],
+      filterRolle: data.final.filterRolle || "", filterSparte: data.final.filterSparte || "",
+      filterSprache: data.final.filterSprache || "", filterMarkt: data.final.filterMarkt || "",
+      master: data.final.master && typeof data.final.master === "object" ? data.final.master : { chapters: [], builtAt: "" }
     };
     app.selectedKeys = data.selectedKeys || {};
     app.savedLists = data.savedLists || [];
@@ -8049,6 +8225,7 @@
     els.ragMergeOutput.value = app.ragMergedDoc;
     els.ragMergeDownloadBtn.disabled = !app.ragMergedDoc;
     renderRovoSummary();
+    renderFinal();
     renderMassFiles();
     renderMassTicketSourceWrap();
     els.massMergeOutput.value = app.massMergedDoc;
@@ -11353,6 +11530,115 @@
       "Endung), da die Kapitelerkennung auf den Word-Formatvorlagen (Überschrift 1/2/…) aufbaut. Bitte die Datei " +
       "in Word über „Speichern unter“ als .docx speichern und erneut hochladen."
     );
+  }
+
+  // Register "FINAL": Kapitel-Erkennung wie extractReferenceManualChapters,
+  // zusaetzlich aber kommentarbereich-bewusst - "interne Vermerke" werden
+  // dort als ECHTE Word-Kommentare erwartet (Ueberpruefen -> Kommentar):
+  // der kommentierte Textbereich selbst gilt als intern und wird in der
+  // bereinigten Fassung entfernt. OOXML haelt das als Geschwister-Elemente
+  // von <w:r> innerhalb eines <w:p>: <w:commentRangeStart w:id="N"/> ...
+  // <w:commentRangeEnd w:id="N"/> umschliessen die kommentierten <w:r>-
+  // Laeufe; der Kommentartext selbst (word/comments.xml) wird bewusst NICHT
+  // gelesen - es geht nur um "diesen Bereich entfernen", nicht um die
+  // Kommentarinhalte. Ein einfacher Tiefenzaehler genuegt, da sich
+  // Kommentarbereiche in der Praxis nicht ueberlappen.
+  function docxParagraphTextParts(pEl) {
+    var fullParts = [], cleanParts = [];
+    var commentDepth = 0;
+    Array.prototype.forEach.call(pEl.childNodes, function (node) {
+      if (node.nodeType !== 1) return;
+      var tag = node.tagName;
+      if (tag === "w:commentRangeStart") { commentDepth++; return; }
+      if (tag === "w:commentRangeEnd") { commentDepth = Math.max(0, commentDepth - 1); return; }
+      if (tag === "w:r") {
+        var ts = node.getElementsByTagName("w:t");
+        var runText = "";
+        for (var i = 0; i < ts.length; i++) runText += ts[i].textContent;
+        if (!runText) return;
+        fullParts.push(runText);
+        if (commentDepth === 0) cleanParts.push(runText);
+      }
+    });
+    return { full: fullParts.join("").trim(), clean: cleanParts.join("").replace(/ {2,}/g, " ").trim() };
+  }
+  function docxXmlToFinalChapters(xmlText) {
+    var doc = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (doc.querySelector("parsererror")) throw new Error("word/document.xml konnte nicht gelesen werden (beschädigte .docx-Datei?).");
+    var body = doc.getElementsByTagName("w:body")[0];
+    if (!body) throw new Error("Kein Dokumentinhalt (w:body) in der .docx-Datei gefunden.");
+    var chapters = [];
+    var current = { level: 0, title: "Vorspann (Text vor der ersten Überschrift)", fullParas: [], cleanParas: [] };
+    chapters.push(current);
+    Array.prototype.forEach.call(body.childNodes, function (node) {
+      if (node.nodeType !== 1) return;
+      var tag = node.tagName;
+      if (tag === "w:p") {
+        var level = docxHeadingLevel(docxParagraphStyleId(node));
+        var parts = docxParagraphTextParts(node);
+        if (!parts.full) return;
+        if (level > 0) {
+          current = { level: level, title: parts.full, fullParas: [], cleanParas: [] };
+          chapters.push(current);
+        } else {
+          current.fullParas.push(parts.full);
+          if (parts.clean) current.cleanParas.push(parts.clean);
+        }
+      } else if (tag === "w:tbl") {
+        // Tabellenzellen werden nicht auf Kommentarbereiche geprueft (selten
+        // in der Praxis) - derselbe Text in beiden Fassungen.
+        Array.prototype.forEach.call(node.getElementsByTagName("w:tr"), function (tr) {
+          if (tr.getElementsByTagName("w:tbl").length > 0) return;
+          var cells = Array.prototype.map.call(tr.getElementsByTagName("w:tc"), docxCellText);
+          if (cells.some(function (c) { return c; })) {
+            var rowText = cells.join("\t");
+            current.fullParas.push(rowText);
+            current.cleanParas.push(rowText);
+          }
+        });
+      }
+    });
+    if (chapters.length > 1 && chapters[0].fullParas.length === 0) chapters.shift();
+    return chapters.map(function (c) {
+      return { level: c.level, title: c.title, fullText: c.fullParas.join("\n"), cleanText: c.cleanParas.join("\n") };
+    });
+  }
+  async function docxArrayBufferToFinalChapters(buf) {
+    if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek (JSZip) nicht geladen - .docx kann nicht gelesen werden.");
+    var zip;
+    try { zip = await JSZip.loadAsync(buf); }
+    catch (e) { throw new Error("Datei konnte nicht als .docx (ZIP) gelesen werden - ist es wirklich ein Word-Dokument?"); }
+    var docXmlEntry = zip.file("word/document.xml");
+    if (!docXmlEntry) throw new Error("Kein word/document.xml in der .docx-Datei gefunden - ist es wirklich ein Word-Dokument?");
+    var xmlText = await docXmlEntry.async("string");
+    return docxXmlToFinalChapters(xmlText);
+  }
+  async function extractFinalManualChapters(buf) {
+    var kind = classifyWordBuffer(buf);
+    if (kind === "zip") return docxArrayBufferToFinalChapters(buf);
+    if (kind === "ole") {
+      throw new Error(
+        "Altes .doc-Format (vor Word 2007, binäres Format) wird nicht unterstützt. Bitte die Datei in Word über " +
+        "„Speichern unter“ als .docx speichern und erneut hochladen."
+      );
+    }
+    throw new Error(
+      "Nur echte .docx-Dateien werden unterstützt (keine HTML-/RTF-Exporte mit .doc/.docx-Endung), da die " +
+      "Kapitelerkennung auf den Word-Formatvorlagen (Überschrift 1/2/…) aufbaut. Bitte die Datei in Word über " +
+      "„Speichern unter“ als .docx speichern und erneut hochladen."
+    );
+  }
+  // Jira-Nummern aus Fließtext entfernen (fuer die bereinigte FINAL-Fassung) -
+  // nutzt bewusst dieselbe Erkennung wie Rovo Knowledge (ROVO_JIRA_KEY_RE,
+  // weiter unten definiert; als function-Deklaration sicher nutzbar, da erst
+  // bei einem Button-Klick aufgerufen, nie beim Laden), raeumt dabei leer
+  // gewordene Klammern/doppelte Leerzeichen durch das Entfernen mit auf.
+  function finalStripJiraKeys(text) {
+    return (text || "")
+      .replace(ROVO_JIRA_KEY_RE, "")
+      .replace(/\(\s*\)/g, "").replace(/\[\s*\]/g, "")
+      .replace(/[ \t]{2,}/g, " ").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n")
+      .trim();
   }
 
   // ===================== Editor: Screens aus Word/PowerPoint extrahieren =====================
@@ -25275,6 +25561,385 @@
     if (ok) addLog("Rovo Summary: Vergleichsergebnis heruntergeladen.");
   });
 
+  /* ============ Teil 9f: FINAL ============
+     Letzter Schritt vor der Ablieferung: mehrere Benutzerhandbuch-.docx-
+     Dateien hochladen (Kapitelerkennung + Kommentarbereich-Erkennung s.
+     docxXmlToFinalChapters oben), interne Vermerke/Jira-Nummern wahlweise
+     ausblenden, eine separate Screens-Datei je Rolle/Sparte/Sprache/Markt
+     hochladen und deren Screens Kapiteln zuordnen (reuses die bereits
+     vorhandene Bilder-Infrastruktur: Screens landen in app.uploadedImages,
+     zusaetzlich markiert mit finalScreensFileId + den 4 neuen Feldern -
+     dieselbe Technik wie Editor/Rovo Knowledge, s. rovoAddExtractedImage),
+     und daraus EIN Master-Dokument zusammenfuehren (Word+PDF, reuses
+     dieselben generischen Gesamtdokument-Bausteine wie EDITO/Unterkapitel-
+     Werkstatt: docxCoverPageXml/editoMergedTocBodyXml/manualChapterBodyXml/
+     buildDocxBlobWithFooter bzw. writePdfCoverPage/editoWriteTocPages/
+     manualWriteChapterPdfBody/addPdfBookmarks/addPdfPageNumbers). */
+  var FINAL_ROLE_OPTIONS = ["Markt", "MO", "Retail", "IT"];
+  var FINAL_SPARTE_OPTIONS = ["Markt", "Van", "Pkw"];
+  var nextFinalManualId = 1;
+  var nextFinalScreensFileId = 1;
+
+  function finalMasterChapterTitles() {
+    var seen = {}, titles = [];
+    app.final.manuals.forEach(function (m) {
+      m.chapters.forEach(function (c) {
+        if (!seen[c.title]) { seen[c.title] = true; titles.push(c.title); }
+      });
+    });
+    return titles;
+  }
+  function finalManualsForChapter(title) {
+    return app.final.manuals.filter(function (m) { return m.chapters.some(function (c) { return c.title === title; }); });
+  }
+  function finalWinningManualId(title) {
+    var chosen = app.final.manualChapterSource[title];
+    var candidates = finalManualsForChapter(title);
+    if (chosen && candidates.some(function (m) { return m.id === chosen; })) return chosen;
+    return candidates.length ? candidates[0].id : null;
+  }
+  function finalChapterEntry(title) {
+    var manualId = finalWinningManualId(title);
+    var manual = app.final.manuals.filter(function (m) { return m.id === manualId; })[0];
+    if (!manual) return null;
+    return manual.chapters.filter(function (c) { return c.title === title; })[0] || null;
+  }
+  function finalChapterDisplayText(title) {
+    var entry = finalChapterEntry(title);
+    if (!entry) return "";
+    var text = app.final.showInternal ? entry.fullText : entry.cleanText;
+    if (app.final.hideJira) text = finalStripJiraKeys(text);
+    return text;
+  }
+  function finalScreenMatchesFilter(img) {
+    function matches(filterVal, screenVal) { return !filterVal || !screenVal || filterVal === screenVal; }
+    return matches(app.final.filterRolle, img.rolle) && matches(app.final.filterSparte, img.sparte) &&
+      matches(app.final.filterSprache, img.sprache) && matches(app.final.filterMarkt, img.markt);
+  }
+  function finalScreensForChapter(title) {
+    return app.uploadedImages.filter(function (img) { return img.finalScreensFileId && img.chapter === title && finalScreenMatchesFilter(img); });
+  }
+  function finalAllScreens() {
+    return app.uploadedImages.filter(function (img) { return !!img.finalScreensFileId; });
+  }
+
+  async function handleFinalManualFiles(fileList) {
+    var files = Array.prototype.filter.call(fileList || [], function (f) { return /\.docx$/i.test(f.name || ""); });
+    if (!files.length) { showToast("Keine passende Datei", "Bitte eine .docx-Datei auswählen.", true); return; }
+    var added = 0;
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      try {
+        var buf = await readFileAsArrayBuffer(file);
+        var chapters = await extractFinalManualChapters(buf);
+        app.final.manuals.push({ id: nextFinalManualId++, filename: file.name, chapters: chapters, addedAt: nowLabel() });
+        added++;
+      } catch (err) {
+        showToast("Fehler beim Lesen", file.name + ": " + ((err && err.message) || "Unbekannter Fehler."), true);
+        addLog("FINAL: Import-Fehler bei „" + file.name + "“: " + ((err && err.message) || "Unbekannter Fehler."));
+      }
+    }
+    if (added) {
+      addLog("FINAL: " + added + " Benutzerhandbuch-Datei(en) hochgeladen.");
+      showToast("Hochgeladen", added + " Datei(en) hochgeladen.");
+    }
+    renderFinal();
+  }
+  function finalRemoveManual(id) {
+    app.final.manuals = app.final.manuals.filter(function (m) { return m.id !== id; });
+    Object.keys(app.final.manualChapterSource).forEach(function (title) {
+      if (app.final.manualChapterSource[title] === id) delete app.final.manualChapterSource[title];
+    });
+    renderFinal();
+  }
+
+  function finalAddExtractedImage(screen, sourceFile, idx, filesFileId, rolle, sparte, sprache, markt) {
+    app.uploadedImages.unshift({
+      id: nextImageId++, filename: sourceFile + " - Bild " + (idx + 1), dataUrl: screen.dataUrl,
+      mimeType: (/^data:([^;]+);/.exec(screen.dataUrl) || [])[1] || "unbekannt",
+      sizeBytes: Math.round((screen.dataUrl.length - screen.dataUrl.indexOf(",") - 1) * 0.75), when: nowLabel(),
+      domain: "", processStep: "", chapter: "", subchapter: "", description: screen.caption || "",
+      width: null, height: null, avgColor: null, brightnessPct: null, metadataComputed: false, metadataError: null,
+      ocrText: null, ocrError: null, ocrRanAt: null, imageNumber: idx + 1, sourceFile: sourceFile,
+      finalScreensFileId: filesFileId, rolle: rolle, sparte: sparte, sprache: sprache, markt: markt
+    });
+  }
+  async function handleFinalScreensFile(file) {
+    if (!file) return;
+    var rolle = els.finalScreensRolleSelect.value, sparte = els.finalScreensSparteSelect.value;
+    var sprache = els.finalScreensSpracheInput.value.trim(), markt = els.finalScreensMarktInput.value.trim();
+    try {
+      var buf = await readFileAsArrayBuffer(file);
+      var extracted = await rovoExtractTablesAndImages(buf);
+      var filesFileId = nextFinalScreensFileId++;
+      extracted.images.forEach(function (screen, idx) { finalAddExtractedImage(screen, file.name, idx, filesFileId, rolle, sparte, sprache, markt); });
+      app.final.screensFiles.push({ id: filesFileId, filename: file.name, rolle: rolle, sparte: sparte, sprache: sprache, markt: markt, screenCount: extracted.images.length, addedAt: nowLabel() });
+      addLog("FINAL: Screens-Datei „" + file.name + "“ hochgeladen (" + extracted.images.length + " Screen(s), Rolle „" + (rolle || "–") + "“, Sparte „" + (sparte || "–") + "“, Sprache „" + (sprache || "–") + "“, Markt „" + (markt || "–") + "“).");
+      showToast("Hochgeladen", extracted.images.length + " Screen(s) extrahiert.");
+    } catch (err) {
+      showToast("Fehler beim Lesen", file.name + ": " + ((err && err.message) || "Unbekannter Fehler."), true);
+      addLog("FINAL: Import-Fehler bei Screens-Datei „" + file.name + "“: " + ((err && err.message) || "Unbekannter Fehler."));
+    }
+    renderFinal();
+  }
+
+  function finalPopulateRolleSparteSelects() {
+    var roleOpts = FINAL_ROLE_OPTIONS.map(function (r) { return '<option value="' + r + '">' + r + "</option>"; }).join("");
+    var sparteOpts = FINAL_SPARTE_OPTIONS.map(function (s) { return '<option value="' + s + '">' + s + "</option>"; }).join("");
+    [[els.finalScreensRolleSelect, "– unspezifisch –"], [els.finalFilterRolleSelect, "– egal –"]].forEach(function (pair) {
+      var prev = pair[0].value;
+      pair[0].innerHTML = '<option value="">' + pair[1] + "</option>" + roleOpts;
+      pair[0].value = prev;
+    });
+    [[els.finalScreensSparteSelect, "– unspezifisch –"], [els.finalFilterSparteSelect, "– egal –"]].forEach(function (pair) {
+      var prev = pair[0].value;
+      pair[0].innerHTML = '<option value="">' + pair[1] + "</option>" + sparteOpts;
+      pair[0].value = prev;
+    });
+  }
+
+  function renderFinalManuals() {
+    var manuals = app.final.manuals;
+    els.finalManualsEmpty.hidden = manuals.length > 0;
+    els.finalManualsTbody.innerHTML = manuals.map(function (m) {
+      return "<tr><td>" + escapeHtml(m.filename) + "</td><td>" + m.chapters.length + "</td><td>" + escapeHtml(m.addedAt) + "</td>" +
+        '<td><button class="btn ghost btn-tiny" data-final-manual-remove="' + m.id + '" type="button">Entfernen</button></td></tr>';
+    }).join("");
+  }
+  function renderFinalConflicts() {
+    var titles = finalMasterChapterTitles().filter(function (t) { return finalManualsForChapter(t).length > 1; });
+    els.finalConflictsSection.hidden = titles.length === 0;
+    els.finalConflictsTbody.innerHTML = titles.map(function (title) {
+      var candidates = finalManualsForChapter(title);
+      var winning = finalWinningManualId(title);
+      var options = candidates.map(function (m) { return '<option value="' + m.id + '"' + (m.id === winning ? " selected" : "") + ">" + escapeHtml(m.filename) + "</option>"; }).join("");
+      return "<tr><td>" + escapeHtml(title) + '</td><td><select data-final-conflict-chapter="' + escapeHtml(title) + '">' + options + "</select></td></tr>";
+    }).join("");
+  }
+  function renderFinalPreviewChapterOptions() {
+    var titles = finalMasterChapterTitles();
+    els.finalPreviewSection.hidden = titles.length === 0;
+    var prev = els.finalPreviewChapterSelect.value;
+    els.finalPreviewChapterSelect.innerHTML = titles.map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + "</option>"; }).join("");
+    if (titles.indexOf(prev) !== -1) els.finalPreviewChapterSelect.value = prev;
+  }
+  function updateFinalPreview() {
+    var title = els.finalPreviewChapterSelect.value;
+    els.finalPreviewOutput.textContent = title ? (finalChapterDisplayText(title) || "(leer)") : "";
+  }
+  function renderFinalScreensFilesTable() {
+    var files = app.final.screensFiles;
+    els.finalScreensFilesEmpty.hidden = files.length > 0;
+    els.finalScreensFilesTbody.innerHTML = files.map(function (f) {
+      return "<tr><td>" + escapeHtml(f.filename) + "</td><td>" + escapeHtml(f.rolle || "–") + "</td><td>" + escapeHtml(f.sparte || "–") + "</td>" +
+        "<td>" + escapeHtml(f.sprache || "–") + "</td><td>" + escapeHtml(f.markt || "–") + "</td><td>" + f.screenCount + "</td><td>" + escapeHtml(f.addedAt) + "</td></tr>";
+    }).join("");
+  }
+  function renderFinalScreensTable() {
+    var screens = finalAllScreens();
+    els.finalScreensCount.textContent = screens.length;
+    els.finalScreensEmpty.hidden = screens.length > 0;
+    var titles = finalMasterChapterTitles();
+    function chapterOptsFor(selectedTitle) {
+      return '<option value=""' + (selectedTitle ? "" : " selected") + ">– nicht zugeordnet –</option>" +
+        titles.map(function (t) { return '<option value="' + escapeHtml(t) + '"' + (t === selectedTitle ? " selected" : "") + ">" + escapeHtml(t) + "</option>"; }).join("");
+    }
+    els.finalScreensTbody.innerHTML = screens.map(function (img) {
+      return "<tr><td><img src=\"" + img.dataUrl + "\" style=\"width:60px;height:60px;object-fit:cover;border-radius:6px;\" alt=\"\"></td>" +
+        "<td>" + escapeHtml([img.rolle, img.sparte, img.sprache, img.markt].filter(function (v) { return v; }).join(" / ") || "–") + "</td>" +
+        '<td><select data-final-screen-chapter="' + img.id + '">' + chapterOptsFor(img.chapter) + "</select></td></tr>";
+    }).join("");
+  }
+  function renderFinalMasterExportState() {
+    els.finalMasterExportSection.hidden = !app.final.master.chapters.length;
+  }
+  function renderFinalResultChapterOptions() {
+    var titles = app.final.master.chapters.map(function (c) { return c.title; });
+    els.finalResultSection.hidden = titles.length === 0;
+    var prev = els.finalResultChapterSelect.value;
+    els.finalResultChapterSelect.innerHTML = titles.map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + "</option>"; }).join("");
+    if (titles.indexOf(prev) !== -1) els.finalResultChapterSelect.value = prev;
+  }
+  function updateFinalResult() {
+    var title = els.finalResultChapterSelect.value;
+    if (!title) { els.finalResultSourceOutput.textContent = ""; els.finalResultMasterOutput.textContent = ""; return; }
+    var entry = finalChapterEntry(title);
+    els.finalResultSourceOutput.textContent = entry ? entry.fullText : "(Quelle nicht mehr vorhanden)";
+    var masterChapter = app.final.master.chapters.filter(function (c) { return c.title === title; })[0];
+    if (!masterChapter) { els.finalResultMasterOutput.textContent = ""; return; }
+    var screenObjs = (masterChapter.screenIds || []).map(function (id) { return app.uploadedImages.filter(function (i) { return i.id === id; })[0]; });
+    var bildCount = 0;
+    var readable = masterChapter.text.split("\n").map(function (line) {
+      if (line.trim() !== "[Bild]") return line;
+      var screen = screenObjs[bildCount];
+      bildCount++;
+      return "[Bild: " + (screen ? (screen.description || screen.sourceFile) : "?") + "]";
+    }).join("\n");
+    els.finalResultMasterOutput.textContent = readable;
+  }
+  function renderFinal() {
+    finalPopulateRolleSparteSelects();
+    els.finalHideInternalCb.checked = !app.final.showInternal;
+    els.finalHideJiraCb.checked = app.final.hideJira;
+    els.finalFilterRolleSelect.value = app.final.filterRolle;
+    els.finalFilterSparteSelect.value = app.final.filterSparte;
+    els.finalFilterSpracheInput.value = app.final.filterSprache;
+    els.finalFilterMarktInput.value = app.final.filterMarkt;
+    renderFinalManuals();
+    renderFinalConflicts();
+    renderFinalPreviewChapterOptions();
+    updateFinalPreview();
+    renderFinalScreensFilesTable();
+    renderFinalScreensTable();
+    renderFinalMasterExportState();
+    renderFinalResultChapterOptions();
+    updateFinalResult();
+  }
+
+  function buildFinalMasterChapters() {
+    return finalMasterChapterTitles().map(function (title) {
+      var text = finalChapterDisplayText(title);
+      var screens = finalScreensForChapter(title);
+      var withPlaceholders = text + (screens.length ? "\n" + screens.map(function () { return "[Bild]"; }).join("\n") : "");
+      return { title: title, text: withPlaceholders, screens: screens };
+    });
+  }
+  async function buildFinalMasterDocxBlob(chapters, opts) {
+    opts = opts || {};
+    var tocChapters = chapters.map(function (c) { return { title: c.title }; });
+    var allMedia = [];
+    var bodyParts = [];
+    if (opts.cover !== false) bodyParts.push(docxCoverPageXml(opts.coverTitle || "FINAL-Gesamtdokument", opts.coverSubtitle || "", opts.coverDate));
+    bodyParts.push(editoMergedTocBodyXml(tocChapters));
+    var nextMediaNum = 1;
+    for (var i = 0; i < chapters.length; i++) {
+      var c = chapters[i];
+      var localMedia = await manualPrepareMediaForScreens(c.screens);
+      var renumbered = localMedia.map(function (m, idx) {
+        return { num: nextMediaNum + idx, rId: "rIdBild" + (nextMediaNum + idx), screen: m.screen, ext: m.ext, widthEmu: m.widthEmu, heightEmu: m.heightEmu };
+      });
+      nextMediaNum += renumbered.length;
+      allMedia = allMedia.concat(renumbered);
+      bodyParts.push(manualChapterBodyXml(c.title, c.text, renumbered, []));
+      if (i < chapters.length - 1) bodyParts.push(manualPageBreakParagraphXml());
+    }
+    if (opts.footer === false) return buildDocxBlobFromBodyAndMedia(bodyParts.join(""), allMedia);
+    return buildDocxBlobWithFooter(bodyParts.join(""), allMedia, opts.footerTitle || "");
+  }
+  async function buildFinalMasterPdfDoc(chapters, opts) {
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDFCtor) throw new Error("PDF-Bibliothek nicht geladen.");
+    opts = opts || {};
+    var tocChapters = chapters.map(function (c) { return { title: c.title }; });
+    var doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    var includeToc = opts.toc !== false;
+    var includeCover = opts.cover !== false;
+    var coverPages = includeCover ? 1 : 0;
+    var tocPageCount = includeToc ? editoMergedTocPageCount(tocChapters) : 0;
+    var totalFrontPages = coverPages + tocPageCount;
+    for (var t = 1; t < totalFrontPages; t++) doc.addPage();
+    var startPages = [];
+    for (var i = 0; i < chapters.length; i++) {
+      doc.addPage();
+      startPages.push(doc.internal.getNumberOfPages());
+      var c = chapters[i];
+      var media = await manualPrepareMediaForScreens(c.screens);
+      manualWriteChapterPdfBody(doc, c.title, c.text, media, [], 18);
+    }
+    if (includeCover) writePdfCoverPage(doc, opts.coverTitle || "FINAL-Gesamtdokument", opts.coverSubtitle || "", opts.coverDate);
+    if (includeToc) editoWriteTocPages(doc, tocChapters, startPages, coverPages + 1, tocPageCount);
+    if (opts.bookmarks !== false) addPdfBookmarks(doc, tocChapters, startPages);
+    if (opts.pageNumbers !== false) addPdfPageNumbers(doc, opts.headerTitle || "");
+    return doc;
+  }
+
+  // ===================== Event-Wiring =====================
+  els.finalManualDropzone.addEventListener("click", function () { els.finalManualFileInput.click(); });
+  els.finalManualDropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.finalManualFileInput.click(); } });
+  els.finalManualFileInput.addEventListener("change", function () { handleFinalManualFiles(els.finalManualFileInput.files); els.finalManualFileInput.value = ""; });
+  ["dragenter", "dragover"].forEach(function (evt) { els.finalManualDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.finalManualDropzone.classList.add("dragover"); }); });
+  ["dragleave", "drop"].forEach(function (evt) { els.finalManualDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.finalManualDropzone.classList.remove("dragover"); }); });
+  els.finalManualDropzone.addEventListener("drop", function (e) { var files = e.dataTransfer && e.dataTransfer.files; if (files && files.length) handleFinalManualFiles(files); });
+
+  els.finalManualsTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-final-manual-remove]");
+    if (btn) finalRemoveManual(parseInt(btn.getAttribute("data-final-manual-remove"), 10));
+  });
+  els.finalConflictsTbody.addEventListener("change", function (e) {
+    var sel = e.target.closest("[data-final-conflict-chapter]");
+    if (!sel) return;
+    app.final.manualChapterSource[sel.getAttribute("data-final-conflict-chapter")] = parseInt(sel.value, 10);
+    renderFinal();
+  });
+  els.finalHideInternalCb.addEventListener("change", function () { app.final.showInternal = !els.finalHideInternalCb.checked; updateFinalPreview(); });
+  els.finalHideJiraCb.addEventListener("change", function () { app.final.hideJira = els.finalHideJiraCb.checked; updateFinalPreview(); });
+  els.finalPreviewChapterSelect.addEventListener("change", updateFinalPreview);
+
+  els.finalScreensDropzone.addEventListener("click", function () { els.finalScreensFileInput.click(); });
+  els.finalScreensDropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.finalScreensFileInput.click(); } });
+  els.finalScreensFileInput.addEventListener("change", function () { handleFinalScreensFile(els.finalScreensFileInput.files[0]); els.finalScreensFileInput.value = ""; });
+  ["dragenter", "dragover"].forEach(function (evt) { els.finalScreensDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.finalScreensDropzone.classList.add("dragover"); }); });
+  ["dragleave", "drop"].forEach(function (evt) { els.finalScreensDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.finalScreensDropzone.classList.remove("dragover"); }); });
+  els.finalScreensDropzone.addEventListener("drop", function (e) { var files = e.dataTransfer && e.dataTransfer.files; if (files && files.length) handleFinalScreensFile(files[0]); });
+
+  els.finalScreensTbody.addEventListener("change", function (e) {
+    var sel = e.target.closest("[data-final-screen-chapter]");
+    if (!sel) return;
+    var img = app.uploadedImages.filter(function (i) { return i.id === parseInt(sel.getAttribute("data-final-screen-chapter"), 10); })[0];
+    if (img) img.chapter = sel.value;
+  });
+
+  els.finalFilterRolleSelect.addEventListener("change", function () { app.final.filterRolle = els.finalFilterRolleSelect.value; });
+  els.finalFilterSparteSelect.addEventListener("change", function () { app.final.filterSparte = els.finalFilterSparteSelect.value; });
+  els.finalFilterSpracheInput.addEventListener("input", function () { app.final.filterSprache = els.finalFilterSpracheInput.value.trim(); });
+  els.finalFilterMarktInput.addEventListener("input", function () { app.final.filterMarkt = els.finalFilterMarktInput.value.trim(); });
+
+  var finalMasterDocxBlob = null, finalMasterDocxFilename = "";
+  var finalMasterPdfBlob = null, finalMasterPdfFilename = "";
+  els.finalBuildMasterBtn.addEventListener("click", async function () {
+    if (!app.final.manuals.length) { showToast("Keine Benutzerhandbuch-Datei", "Bitte zuerst mindestens eine Benutzerhandbuch-Datei hochladen.", true); return; }
+    els.finalBuildMasterBtn.disabled = true;
+    els.finalBuildMasterSpinner.hidden = false;
+    try {
+      var chapters = buildFinalMasterChapters();
+      var base = "FINAL_Gesamtdokument_" + dateStampForFilename();
+      finalMasterDocxBlob = await buildFinalMasterDocxBlob(chapters, {});
+      finalMasterDocxFilename = base + ".docx";
+      var pdfDoc = await buildFinalMasterPdfDoc(chapters, {});
+      finalMasterPdfBlob = pdfDoc.output("blob");
+      finalMasterPdfFilename = base + ".pdf";
+      // Persistierter Zustand haelt nur Bild-IDs statt der vollen
+      // Bildobjekte (Screens liegen bereits vollstaendig in
+      // app.uploadedImages) - sonst wuerde jede dataUrl doppelt im
+      // Sitzung-Export landen.
+      app.final.master = {
+        chapters: chapters.map(function (c) { return { title: c.title, text: c.text, screenIds: c.screens.map(function (s) { return s.id; }) }; }),
+        builtAt: nowLabel()
+      };
+      var totalScreens = chapters.reduce(function (n, c) { return n + c.screens.length; }, 0);
+      els.finalBuildMasterStatusNote.textContent = chapters.length + " Kapitel, " + totalScreens + " Screen(s) zu einem Master-Dokument zusammengeführt (" + app.final.master.builtAt + ").";
+      addLog("FINAL: Master-Dokument aus " + chapters.length + " Kapitel(n) und " + totalScreens + " Screen(s) zusammengeführt.");
+      showToast("Zusammengeführt", chapters.length + " Kapitel zusammengeführt.");
+      renderFinal();
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.finalBuildMasterBtn.disabled = false;
+      els.finalBuildMasterSpinner.hidden = true;
+    }
+  });
+  els.finalMasterDownloadDocxBtn.addEventListener("click", async function () {
+    if (!finalMasterDocxBlob) return;
+    var ok = await saveOrWarn(finalMasterDocxFilename, finalMasterDocxBlob);
+    if (ok) addLog("FINAL: Master-Dokument „" + finalMasterDocxFilename + "“ heruntergeladen.");
+  });
+  els.finalMasterDownloadPdfBtn.addEventListener("click", async function () {
+    if (!finalMasterPdfBlob) return;
+    var ok = await saveOrWarn(finalMasterPdfFilename, finalMasterPdfBlob);
+    if (ok) addLog("FINAL: Master-Dokument „" + finalMasterPdfFilename + "“ heruntergeladen.");
+  });
+  els.finalResultChapterSelect.addEventListener("change", updateFinalResult);
+
   /* ============ Teil 10: Navigation ============ */
 
   var viewPanels = document.querySelectorAll("[data-view-panel]");
@@ -25289,6 +25954,7 @@
     if (name === "unterkapitel") { renderSubchapterVersionSelect(); renderSubchapterPanel(); }
     if (name === "rovoknowledge") renderRovoEntries();
     if (name === "rovosummary") renderRovoSummary();
+    if (name === "final") renderFinal();
     if (name === "tabellen") renderRovoTables();
     if (window.innerWidth <= 900) setSidebar(false);
   }
