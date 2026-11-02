@@ -236,6 +236,26 @@
      --warn-soft o.ae.), damit die Markierung in Hell- UND Dunkelmodus
      gleich auffaellig bleibt. */
   mark.negword-hit { background: #fff176; color: #3a2d00; border-radius: 2px; padding: 0 2px; }
+  /* FINAL: Schritt-Icons, Markierungen (intern = gelb, Jira = blau, bewusst
+     feste Farben fuer Hell-/Dunkelmodus), Design-Karten (Schritt 8). */
+  .final-step-label { display: flex; align-items: center; gap: 8px; }
+  .final-step-badge { display: inline-flex; width: 24px; height: 24px; border-radius: 7px; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent-text); flex: none; }
+  .btn .final-ico { flex: none; }
+  mark.final-mark-internal { background: #fff3a3; color: #3a2d00; border-radius: 2px; padding: 0 2px; }
+  mark.final-mark-jira { background: #d6e8ff; color: #0b3a75; border-radius: 2px; padding: 0 2px; }
+  .final-legend { display: inline-flex; gap: 8px; font-size: 12px; align-items: center; }
+  .final-bulk-bar { margin-top: 4px; }
+  .final-btn-danger { color: var(--blocked); }
+  .final-row-actions { display: flex; gap: 4px; }
+  .final-design-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .final-design-card { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+  .final-design-card .btn.primary { align-self: flex-start; }
+  .final-design-card select { max-width: none; width: 100%; }
+  .final-bulk-bar select { max-width: 340px; }
+  .final-design-title { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 14.5px; }
+  .final-design-icon { display: inline-flex; width: 34px; height: 34px; border-radius: 8px; align-items: center; justify-content: center; color: #fff; flex: none; }
+  .final-design-icon-word { background: #2b579a; }
+  .final-design-icon-ppt { background: #c43e1c; }
   .domain-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
   .domain-group-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
   .fileview-wrap { margin-top: 8px; padding: 12px; max-height: 640px; overflow: auto; }
@@ -2780,19 +2800,19 @@
 
       <!-- ================= FINAL ================= -->
       <section class="view-panel" data-view-panel="final" hidden>
-        <div class="view-head"><h2>FINAL</h2><p class="desc">Letzter Schritt vor der Ablieferung: mehrere Benutzerhandbuch-.docx-Dateien hochladen (mit oder ohne interne Vermerke/Jira-Nummern), die bereinigte Fassung ansehen, Screens aus einer separaten Datei je Rolle/Sparte/Sprache/Markt den Kapiteln/Unterkapiteln zuordnen und alles zu einem Master-Dokument zusammenführen – am Ende Quellversion und neue Zusammenführung inkl. Screens im Vergleich.</p></div>
+        <div class="view-head"><h2>FINAL</h2><p class="desc">Letzter Schritt vor der Ablieferung: mehrere Benutzerhandbuch-.docx-Dateien hochladen (mit oder ohne interne Vermerke/Jira-Nummern), die bereinigte Fassung ansehen, Screens aus einer separaten Datei je Rolle/Sparte/Sprache/Markt den Kapiteln/Unterkapiteln zuordnen, alles zu einem Master-Dokument zusammenführen und im gewünschten Design (Original-Design der Handbuch-Datei, eigene Vorlage oder App-Design) als Word, PDF oder PowerPoint ausgeben.</p></div>
 
         <section>
-          <p class="section-label">1. Benutzerhandbuch-Dateien hochladen</p>
-          <p class="desc">Echte .docx-Dateien, Kapitel werden anhand der Word-Formatvorlagen (Überschrift 1/2/…) erkannt. Interne Vermerke müssen dafür als ECHTE Word-Kommentare (Überprüfen → Kommentar) auf den betroffenen Textstellen angebracht sein – der kommentierte Bereich gilt dann als intern.</p>
+          <p class="section-label final-step-label"><span class="final-step-badge"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg></span><span>1. Benutzerhandbuch-Dateien hochladen</span></p>
+          <p class="desc">Echte .docx-Dateien, Kapitel werden anhand der Word-Formatvorlagen (Überschrift 1/2/…) erkannt. Interne Vermerke müssen dafür als ECHTE Word-Kommentare (Überprüfen → Kommentar) auf den betroffenen Textstellen angebracht sein – der kommentierte Bereich gilt dann als intern. Das Design der Datei (Formatvorlagen, Schriften, Farben, Seitenformat) wird mitgespeichert und ist für den Word-Export voreingestellt – änderbar in Schritt 8.</p>
           <div class="dropzone" id="final-manual-dropzone" tabindex="0" role="button" aria-label="Benutzerhandbuch-Datei(en) auswählen">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
             <span class="txt"><strong>Datei(en) hier ablegen</strong><span>oder klicken zum Auswählen (.docx, Mehrfachauswahl möglich)</span></span>
           </div>
           <input type="file" id="final-manual-file-input" accept=".docx" multiple hidden>
           <div class="table-wrap">
             <table class="simple-table" id="final-manuals-table">
-              <thead><tr><th>Datei</th><th>Kapitel</th><th>Hochgeladen am</th><th></th></tr></thead>
+              <thead><tr><th>Datei</th><th>Kapitel</th><th>Design</th><th>Hochgeladen am</th><th></th></tr></thead>
               <tbody id="final-manuals-tbody"></tbody>
             </table>
             <div class="empty-hint" id="final-manuals-empty">Noch keine Benutzerhandbuch-Datei hochgeladen.</div>
@@ -2800,7 +2820,7 @@
         </section>
 
         <section id="final-conflicts-section" hidden>
-          <p class="section-label">2. Mehrfach vorkommende Kapitel: Quelle wählen</p>
+          <p class="section-label final-step-label"><span class="final-step-badge"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="9" r="2.5"/><path d="M6 8.5v7"/><path d="M8.5 6h4.5a5 5 0 0 1 5 3"/></svg></span><span>2. Mehrfach vorkommende Kapitel: Quelle wählen</span></p>
           <p class="desc">Diese Kapitel stehen in mehr als einer hochgeladenen Datei – wähle je Kapitel, welche Fassung ins Master-Dokument übernommen wird.</p>
           <div class="table-wrap">
             <table class="simple-table" id="final-conflicts-table">
@@ -2811,10 +2831,11 @@
         </section>
 
         <section id="final-preview-section" hidden>
-          <p class="section-label">3. Anzeige-Optionen &amp; Vorschau</p>
+          <p class="section-label final-step-label"><span class="final-step-badge"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span>3. Anzeige-Optionen &amp; Vorschau</span></p>
           <div class="controls">
             <label class="checkbox-label"><input type="checkbox" id="final-hide-internal-cb"> Interne Vermerke ausblenden</label>
             <label class="checkbox-label"><input type="checkbox" id="final-hide-jira-cb"> Jira-Nummern ausblenden</label>
+            <span class="final-legend"><mark class="final-mark-internal">Interner Vermerk</mark><mark class="final-mark-jira">Jira-Nummer</mark></span>
           </div>
           <label for="final-preview-chapter-select">Kapitel</label>
           <select id="final-preview-chapter-select" aria-label="Kapitel für Vorschau"></select>
@@ -2822,22 +2843,22 @@
         </section>
 
         <section>
-          <p class="section-label">4. Screens-Datei hochladen (je Rolle/Sparte/Sprache/Markt)</p>
+          <p class="section-label final-step-label"><span class="final-step-badge"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span><span>4. Screens-Datei hochladen (je Rolle/Sparte/Sprache/Markt)</span></p>
           <p class="desc">Eine .docx-/.pptx-Datei mit eingebetteten Bildschirmscreens – die vier Felder unten gelten für ALLE darin enthaltenen Screens dieser Datei.</p>
           <div class="controls" style="flex-wrap:wrap;">
             <div><label for="final-screens-rolle-select">Rolle</label><select id="final-screens-rolle-select" aria-label="Rolle"><option value="">– unspezifisch –</option></select></div>
-            <div><label for="final-screens-sparte-select">Sparte</label><select id="final-screens-sparte-select" aria-label="Sparte"><option value="">– unspezifisch –</option></select></div>
+            <div><label for="final-screens-sparte-select">Sparte</label><select id="final-screens-sparte-select" aria-label="Sparte"><option value="">Pkw und Van (beide)</option></select></div>
             <div><label for="final-screens-sprache-input">Sprache</label><input class="text-input" id="final-screens-sprache-input" type="text" placeholder="z. B. DE, EN"></div>
             <div><label for="final-screens-markt-input">Markt</label><input class="text-input" id="final-screens-markt-input" type="text" placeholder="z. B. Deutschland"></div>
           </div>
           <div class="dropzone" id="final-screens-dropzone" tabindex="0" role="button" aria-label="Screens-Datei auswählen" style="margin-top:10px;">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
             <span class="txt"><strong>Datei hier ablegen</strong><span>oder klicken zum Auswählen (.docx, .pptx)</span></span>
           </div>
           <input type="file" id="final-screens-file-input" accept=".docx,.doc,.pptx" hidden>
           <div class="table-wrap">
             <table class="simple-table" id="final-screens-files-table">
-              <thead><tr><th>Datei</th><th>Rolle</th><th>Sparte</th><th>Sprache</th><th>Markt</th><th>Screens</th><th>Hochgeladen am</th></tr></thead>
+              <thead><tr><th>Datei</th><th>Rolle</th><th>Sparte</th><th>Sprache</th><th>Markt</th><th>Screens</th><th>Hochgeladen am</th><th></th></tr></thead>
               <tbody id="final-screens-files-tbody"></tbody>
             </table>
             <div class="empty-hint" id="final-screens-files-empty">Noch keine Screens-Datei hochgeladen.</div>
@@ -2845,16 +2866,22 @@
         </section>
 
         <section>
-          <p class="section-label">5. Screens zuordnen (<span id="final-screens-count">0</span>)</p>
-          <p class="desc">Die Kapitel-Auswahl listet alle in den hochgeladenen Benutzerhandbuch-Dateien erkannten Überschriften (Word erkennt dabei automatisch auch Unterkapitel-Überschriften als eigene Einträge). „Bilder zuordnen“ lässt Claude jeden Screen interpretieren: Claude schlägt einen Untertitel und das passende Kapitel/Unterkapitel vor (Status „Entwurf“). Entwürfe lassen sich danach einem anderen Kapitel zuordnen oder löschen; manuell geänderte Zuordnungen überschreibt ein erneuter Lauf nicht. Der Navigationstext zu jedem Bild aus der Screens-Datei (oneSCM-Navigation) wird mitgeladen und als Teil der Bildunterschrift übernommen. Doppelklick auf ein Vorschaubild öffnet es groß in einem eigenen Fenster.</p>
+          <p class="section-label final-step-label"><span class="final-step-badge"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="14" height="12" rx="2"/><path d="M7 21h12a2 2 0 0 0 2-2V9"/><circle cx="8" cy="9" r="1.5"/><path d="M17 14l-3.5-3.5L6 17"/></svg></span><span>5. Screens zuordnen (<span id="final-screens-count">0</span>)</span></p>
+          <p class="desc">Die Kapitel-Auswahl listet alle in den hochgeladenen Benutzerhandbuch-Dateien erkannten Überschriften (Word erkennt dabei automatisch auch Unterkapitel-Überschriften als eigene Einträge). „Bilder zuordnen“ lässt Claude jeden Screen interpretieren: Claude schlägt einen Untertitel und das passende Kapitel/Unterkapitel vor (Status „Entwurf“). Entwürfe lassen sich danach einem anderen Kapitel zuordnen, bearbeiten oder löschen – einzeln oder für alle markierten Screens gemeinsam; manuell geänderte Zuordnungen überschreibt ein erneuter Lauf nicht. Der Navigationstext zu jedem Bild aus der Screens-Datei (oneSCM-Navigation) wird mitgeladen und als Teil der Bildunterschrift übernommen. Doppelklick auf ein Vorschaubild öffnet es groß in einem eigenen Fenster.</p>
           <div class="controls">
-            <button class="btn primary" id="final-assign-images-btn" type="button"><span class="btn-spinner" id="final-assign-images-spinner" hidden></span>Bilder zuordnen</button>
-            <button class="btn ghost" id="final-assign-images-stop-btn" type="button" hidden>Abbrechen</button>
+            <button class="btn primary" id="final-assign-images-btn" type="button"><span class="btn-spinner" id="final-assign-images-spinner" hidden></span><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z"/><path d="M19 14.5l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z"/></svg>Bilder zuordnen</button>
+            <button class="btn ghost" id="final-assign-images-stop-btn" type="button" hidden><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>Abbrechen</button>
             <span class="step-note" id="final-assign-images-status-note"></span>
+          </div>
+          <div class="controls final-bulk-bar" id="final-bulk-bar">
+            <span class="result-count" id="final-selected-count">0 markiert</span>
+            <select id="final-bulk-chapter-select" aria-label="Kapitel für markierte Screens"></select>
+            <button class="btn ghost btn-tiny" id="final-bulk-assign-btn" type="button" disabled><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Kapitel zuweisen</button>
+            <button class="btn ghost btn-tiny final-btn-danger" id="final-bulk-delete-btn" type="button" disabled><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg>Markierte löschen</button>
           </div>
           <div class="table-wrap">
             <table class="simple-table" id="final-screens-table">
-              <thead><tr><th>Vorschau</th><th>Untertitel</th><th>oneSCM-Navigation</th><th>Rolle/Sparte/Sprache/Markt</th><th>Kapitel/Unterkapitel</th><th>Status</th><th></th></tr></thead>
+              <thead><tr><th><input type="checkbox" id="final-screens-select-all-cb" aria-label="Alle Screens markieren"></th><th>Vorschau</th><th>Untertitel</th><th>oneSCM-Navigation</th><th>Rolle/Sparte/Sprache/Markt</th><th>Kapitel/Unterkapitel</th><th>Status</th><th></th></tr></thead>
               <tbody id="final-screens-tbody"></tbody>
             </table>
             <div class="empty-hint" id="final-screens-empty">Noch keine Screens aus einer Screens-Datei extrahiert.</div>
@@ -2862,7 +2889,7 @@
         </section>
 
         <section>
-          <p class="section-label">6. Master zusammenführen</p>
+          <p class="section-label final-step-label"><span class="final-step-badge"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></span><span>6. Master zusammenführen</span></p>
           <p class="desc">Nur Screens, die zur unten gewählten Rolle/Sparte/Sprache/Markt passen, werden ins Master-Dokument übernommen (leeres Feld = passt auf jede Ausprägung dieser Achse).</p>
           <div class="controls" style="flex-wrap:wrap;">
             <div><label for="final-filter-rolle-select">Rolle</label><select id="final-filter-rolle-select" aria-label="Rolle-Filter"><option value="">– egal –</option></select></div>
@@ -2873,20 +2900,20 @@
           <div class="controls" style="margin-top:10px;">
             <button class="btn primary" id="final-build-master-btn" type="button">
               <span class="btn-spinner" id="final-build-master-spinner" hidden></span>
-              Master zusammenführen
+              <svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>Master zusammenführen
             </button>
           </div>
           <p class="step-note" id="final-build-master-status-note"></p>
           <div id="final-master-export-section" hidden>
             <div class="controls">
-              <button class="btn ghost" id="final-master-download-docx-btn" type="button">Als Word herunterladen</button>
-              <button class="btn ghost" id="final-master-download-pdf-btn" type="button">Als PDF herunterladen</button>
+              <button class="btn ghost" id="final-master-download-docx-btn" type="button"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 12l1.5 5 2-4 2 4 1.5-5"/></svg>Als Word herunterladen</button>
+              <button class="btn ghost" id="final-master-download-pdf-btn" type="button"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 15h1.5a1.5 1.5 0 0 0 0-3H9v5"/></svg>Als PDF herunterladen</button>
             </div>
           </div>
         </section>
 
         <section id="final-result-section" hidden>
-          <p class="section-label">7. Ergebnis: Quellversion vs. neue Zusammenführung</p>
+          <p class="section-label final-step-label"><span class="final-step-badge"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg></span><span>7. Ergebnis: Quellversion vs. neue Zusammenführung</span></p>
           <label for="final-result-chapter-select">Kapitel</label>
           <select id="final-result-chapter-select" aria-label="Kapitel für Ergebnis-Vergleich"></select>
           <div class="rovo-detail-cols" style="margin-top:10px;">
@@ -2899,6 +2926,36 @@
               <div class="rovo-detail-col-text" id="final-result-master-output"></div>
             </div>
           </div>
+        </section>
+
+        <section id="final-design-section">
+          <p class="section-label final-step-label"><span class="final-step-badge"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16" cy="10" r="1.2"/><path d="M12 21a3 3 0 0 1 0-6h2a3 3 0 0 0 3-3"/></svg></span><span>8. Design auswählen (Word / PowerPoint)</span></p>
+          <p class="desc">Wähle das Design für die Ausgabe. Word: das Original-Design einer hochgeladenen Benutzerhandbuch-Datei (voreingestellt), eine eigene Word-Vorlage (.dotx/.docx) oder ein App-Design. PowerPoint: eigene PowerPoint-Vorlage (.potx/.pptx – deren Folienmaster, Layouts und Farben werden übernommen) oder ein App-Design. Grundlage ist immer das zuletzt zusammengeführte Master-Dokument (Schritt 6); die Word-Ausgabe in Schritt 6 nutzt dasselbe Word-Design.</p>
+          <div class="final-design-grid">
+            <div class="panel final-design-card">
+              <h3 class="final-design-title"><span class="final-design-icon final-design-icon-word"><svg class="final-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 12l1.5 5 2-4 2 4 1.5-5"/></svg></span>Word</h3>
+              <label for="final-word-design-select">Design</label>
+              <select id="final-word-design-select" aria-label="Word-Design"></select>
+              <p class="step-note" id="final-word-design-note"></p>
+              <div class="controls">
+                <button class="btn ghost btn-tiny" id="final-word-template-btn" type="button"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Word-Vorlage hochladen</button>
+                <input type="file" id="final-word-template-input" accept=".dotx,.docx" hidden>
+              </div>
+              <button class="btn primary" id="final-design-docx-btn" type="button" disabled><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>Word herunterladen</button>
+            </div>
+            <div class="panel final-design-card">
+              <h3 class="final-design-title"><span class="final-design-icon final-design-icon-ppt"><svg class="final-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/><path d="M9 13V8h2.5a2 2 0 0 1 0 4H9"/></svg></span>PowerPoint</h3>
+              <label for="final-ppt-design-select">Design</label>
+              <select id="final-ppt-design-select" aria-label="PowerPoint-Design"></select>
+              <p class="step-note" id="final-ppt-design-note"></p>
+              <div class="controls">
+                <button class="btn ghost btn-tiny" id="final-ppt-template-btn" type="button"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>PowerPoint-Vorlage hochladen</button>
+                <input type="file" id="final-ppt-template-input" accept=".potx,.pptx" hidden>
+              </div>
+              <button class="btn primary" id="final-design-pptx-btn" type="button" disabled><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>PowerPoint herunterladen</button>
+            </div>
+          </div>
+          <p class="step-note" id="final-design-status-note">Zuerst in Schritt 6 das Master-Dokument zusammenführen.</p>
         </section>
       </section>
 
@@ -5609,7 +5666,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.111.0";
+  var APP_VERSION = "2.112.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7200,7 +7257,7 @@
     "final-preview-section", "final-hide-internal-cb", "final-hide-jira-cb", "final-preview-chapter-select", "final-preview-output",
     "final-screens-rolle-select", "final-screens-sparte-select", "final-screens-sprache-input", "final-screens-markt-input",
     "final-screens-dropzone", "final-screens-file-input", "final-screens-files-tbody", "final-screens-files-empty",
-    "final-screens-count", "final-screens-tbody", "final-screens-empty", "final-assign-images-btn", "final-assign-images-spinner", "final-assign-images-stop-btn", "final-assign-images-status-note",
+    "final-screens-count", "final-screens-tbody", "final-screens-empty", "final-assign-images-btn", "final-assign-images-spinner", "final-assign-images-stop-btn", "final-assign-images-status-note", "final-selected-count", "final-bulk-chapter-select", "final-bulk-assign-btn", "final-bulk-delete-btn", "final-screens-select-all-cb", "final-word-design-select", "final-word-design-note", "final-word-template-btn", "final-word-template-input", "final-design-docx-btn", "final-ppt-design-select", "final-ppt-design-note", "final-ppt-template-btn", "final-ppt-template-input", "final-design-pptx-btn", "final-design-status-note",
     "final-filter-rolle-select", "final-filter-sparte-select", "final-filter-sprache-input", "final-filter-markt-input",
     "final-build-master-btn", "final-build-master-spinner", "final-build-master-status-note",
     "final-master-export-section", "final-master-download-docx-btn", "final-master-download-pdf-btn",
@@ -7330,7 +7387,8 @@
       showInternal: true, hideJira: false,
       screensFiles: [],
       filterRolle: "", filterSparte: "", filterSprache: "", filterMarkt: "",
-      master: { chapters: [], builtAt: "" }
+      master: { chapters: [], builtAt: "" },
+      wordDesign: "", pptDesign: "", wordTemplate: null, pptTemplate: null
     },
     tickets: [],
     view: { bucket: "all", domain: "", label: "", query: "", issueType: "", excludeTypes: {}, sortKey: "created", sortDir: "desc" },
@@ -7855,7 +7913,8 @@
     app.final = {
       manuals: [], manualChapterSource: {}, showInternal: true, hideJira: false,
       screensFiles: [], filterRolle: "", filterSparte: "", filterSprache: "", filterMarkt: "",
-      master: { chapters: [], builtAt: "" }
+      master: { chapters: [], builtAt: "" },
+      wordDesign: "", pptDesign: "", wordTemplate: null, pptTemplate: null
     };
     els.finalAssignImagesStatusNote.textContent = "";
     renderFinal();
@@ -7966,7 +8025,8 @@
     app.final = {
       manuals: [], manualChapterSource: {}, showInternal: true, hideJira: false,
       screensFiles: [], filterRolle: "", filterSparte: "", filterSprache: "", filterMarkt: "",
-      master: { chapters: [], builtAt: "" }
+      master: { chapters: [], builtAt: "" },
+      wordDesign: "", pptDesign: "", wordTemplate: null, pptTemplate: null
     };
     els.finalAssignImagesStatusNote.textContent = "";
     renderFinal();
@@ -8156,7 +8216,11 @@
       screensFiles: Array.isArray(data.final.screensFiles) ? data.final.screensFiles : [],
       filterRolle: data.final.filterRolle || "", filterSparte: data.final.filterSparte || "",
       filterSprache: data.final.filterSprache || "", filterMarkt: data.final.filterMarkt || "",
-      master: data.final.master && typeof data.final.master === "object" ? data.final.master : { chapters: [], builtAt: "" }
+      master: data.final.master && typeof data.final.master === "object" ? data.final.master : { chapters: [], builtAt: "" },
+      wordDesign: typeof data.final.wordDesign === "string" ? data.final.wordDesign : "",
+      pptDesign: typeof data.final.pptDesign === "string" ? data.final.pptDesign : "",
+      wordTemplate: data.final.wordTemplate && typeof data.final.wordTemplate === "object" ? data.final.wordTemplate : null,
+      pptTemplate: data.final.pptTemplate && typeof data.final.pptTemplate === "object" ? data.final.pptTemplate : null
     };
     app.selectedKeys = data.selectedKeys || {};
     app.savedLists = data.savedLists || [];
@@ -11634,9 +11698,13 @@
   // gelesen - es geht nur um "diesen Bereich entfernen", nicht um die
   // Kommentarinhalte. Ein einfacher Tiefenzaehler genuegt, da sich
   // Kommentarbereiche in der Praxis nicht ueberlappen.
+  // Unsichtbare Markierungszeichen fuer intern kommentierte Textbereiche
+  // (nur fuer die gelbe Hervorhebung in Vorschau/Ergebnis, nie im Export).
+  var FINAL_MARK_START = "\u0001", FINAL_MARK_END = "\u0002";
+  var FINAL_MARK_RE = /[\u0001\u0002]/g;
   function docxParagraphTextParts(pEl) {
-    var fullParts = [], cleanParts = [];
-    var commentDepth = 0;
+    var fullParts = [], cleanParts = [], markedParts = [];
+    var commentDepth = 0, inMark = false;
     Array.prototype.forEach.call(pEl.childNodes, function (node) {
       if (node.nodeType !== 1) return;
       var tag = node.tagName;
@@ -11649,9 +11717,14 @@
         if (!runText) return;
         fullParts.push(runText);
         if (commentDepth === 0) cleanParts.push(runText);
+        var internal = commentDepth > 0;
+        if (internal !== inMark) { markedParts.push(internal ? FINAL_MARK_START : FINAL_MARK_END); inMark = internal; }
+        markedParts.push(runText);
       }
     });
-    return { full: fullParts.join("").trim(), clean: cleanParts.join("").replace(/ {2,}/g, " ").trim() };
+    if (inMark) markedParts.push(FINAL_MARK_END);
+    var marked = markedParts.join("").trim().replace(new RegExp(FINAL_MARK_START + FINAL_MARK_END, "g"), "");
+    return { full: fullParts.join("").trim(), clean: cleanParts.join("").replace(/ {2,}/g, " ").trim(), marked: marked };
   }
   function docxXmlToFinalChapters(xmlText) {
     var doc = new DOMParser().parseFromString(xmlText, "application/xml");
@@ -11659,7 +11732,7 @@
     var body = doc.getElementsByTagName("w:body")[0];
     if (!body) throw new Error("Kein Dokumentinhalt (w:body) in der .docx-Datei gefunden.");
     var chapters = [];
-    var current = { level: 0, title: "Vorspann (Text vor der ersten Überschrift)", fullParas: [], cleanParas: [] };
+    var current = { level: 0, title: "Vorspann (Text vor der ersten Überschrift)", fullParas: [], cleanParas: [], markedParas: [] };
     chapters.push(current);
     Array.prototype.forEach.call(body.childNodes, function (node) {
       if (node.nodeType !== 1) return;
@@ -11669,10 +11742,11 @@
         var parts = docxParagraphTextParts(node);
         if (!parts.full) return;
         if (level > 0) {
-          current = { level: level, title: parts.full, fullParas: [], cleanParas: [] };
+          current = { level: level, title: parts.full, fullParas: [], cleanParas: [], markedParas: [] };
           chapters.push(current);
         } else {
           current.fullParas.push(parts.full);
+          current.markedParas.push(parts.marked);
           if (parts.clean) current.cleanParas.push(parts.clean);
         }
       } else if (tag === "w:tbl") {
@@ -11684,6 +11758,7 @@
           if (cells.some(function (c) { return c; })) {
             var rowText = cells.join("\t");
             current.fullParas.push(rowText);
+            current.markedParas.push(rowText);
             current.cleanParas.push(rowText);
           }
         });
@@ -11691,7 +11766,7 @@
     });
     if (chapters.length > 1 && chapters[0].fullParas.length === 0) chapters.shift();
     return chapters.map(function (c) {
-      return { level: c.level, title: c.title, fullText: c.fullParas.join("\n"), cleanText: c.cleanParas.join("\n") };
+      return { level: c.level, title: c.title, fullText: c.fullParas.join("\n"), cleanText: c.cleanParas.join("\n"), markedText: c.markedParas.join("\n") };
     });
   }
   async function docxArrayBufferToFinalChapters(buf) {
@@ -11727,6 +11802,7 @@
   function finalStripJiraKeys(text) {
     return (text || "")
       .replace(ROVO_JIRA_KEY_RE, "")
+      .replace(/\u0001\s*\u0002/g, "")
       .replace(/\(\s*\)/g, "").replace(/\[\s*\]/g, "")
       .replace(/[ \t]{2,}/g, " ").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n")
       .trim();
@@ -25708,8 +25784,8 @@
      Werkstatt: docxCoverPageXml/editoMergedTocBodyXml/manualChapterBodyXml/
      buildDocxBlobWithFooter bzw. writePdfCoverPage/editoWriteTocPages/
      manualWriteChapterPdfBody/addPdfBookmarks/addPdfPageNumbers). */
-  var FINAL_ROLE_OPTIONS = ["Markt", "MO", "Retail", "IT"];
-  var FINAL_SPARTE_OPTIONS = ["Markt", "Van", "Pkw"];
+  var FINAL_ROLE_OPTIONS = ["Markt", "MO", "Retail", "IT", "HQ"];
+  var FINAL_SPARTE_OPTIONS = ["Pkw", "Van"];
   var nextFinalManualId = 1;
   var nextFinalScreensFileId = 1;
 
@@ -25737,12 +25813,25 @@
     if (!manual) return null;
     return manual.chapters.filter(function (c) { return c.title === title; })[0] || null;
   }
-  function finalChapterDisplayText(title) {
+  // Text eines Kapitels in der aktuellen Bereinigungsstufe, intern
+  // kommentierte Bereiche mit FINAL_MARK_START/END umschlossen (fuer die
+  // gelbe Hervorhebung) - finalChapterDisplayText liefert denselben Text ohne
+  // Markierungszeichen (Export).
+  function finalChapterMarkedText(title) {
     var entry = finalChapterEntry(title);
     if (!entry) return "";
-    var text = app.final.showInternal ? entry.fullText : entry.cleanText;
+    var text = app.final.showInternal ? (typeof entry.markedText === "string" ? entry.markedText : entry.fullText) : entry.cleanText;
     if (app.final.hideJira) text = finalStripJiraKeys(text);
     return text;
+  }
+  function finalChapterDisplayText(title) {
+    return finalChapterMarkedText(title).replace(FINAL_MARK_RE, "");
+  }
+  // HTML fuer Vorschau/Ergebnis: interne Vermerke gelb, Jira-Nummern blau.
+  function finalMarkedTextToHtml(text) {
+    return escapeHtml(text || "")
+      .replace(ROVO_JIRA_KEY_RE, function (key) { return '<mark class="final-mark-jira">' + key + "</mark>"; })
+      .replace(/\u0001/g, '<mark class="final-mark-internal">').replace(/\u0002/g, "</mark>");
   }
   function finalScreenMatchesFilter(img) {
     function matches(filterVal, screenVal) { return !filterVal || !screenVal || filterVal === screenVal; }
@@ -25765,7 +25854,8 @@
       try {
         var buf = await readFileAsArrayBuffer(file);
         var chapters = await extractFinalManualChapters(buf);
-        app.final.manuals.push({ id: nextFinalManualId++, filename: file.name, chapters: chapters, addedAt: nowLabel() });
+        var design = await finalExtractWordDesignFromBuffer(buf);
+        app.final.manuals.push({ id: nextFinalManualId++, filename: file.name, chapters: chapters, design: design, addedAt: nowLabel() });
         added++;
       } catch (err) {
         showToast("Fehler beim Lesen", file.name + ": " + ((err && err.message) || "Unbekannter Fehler."), true);
@@ -25910,7 +26000,7 @@
       pair[0].innerHTML = '<option value="">' + pair[1] + "</option>" + roleOpts;
       pair[0].value = prev;
     });
-    [[els.finalScreensSparteSelect, "– unspezifisch –"], [els.finalFilterSparteSelect, "– egal –"]].forEach(function (pair) {
+    [[els.finalScreensSparteSelect, "Pkw und Van (beide)"], [els.finalFilterSparteSelect, "– egal –"]].forEach(function (pair) {
       var prev = pair[0].value;
       pair[0].innerHTML = '<option value="">' + pair[1] + "</option>" + sparteOpts;
       pair[0].value = prev;
@@ -25921,8 +26011,8 @@
     var manuals = app.final.manuals;
     els.finalManualsEmpty.hidden = manuals.length > 0;
     els.finalManualsTbody.innerHTML = manuals.map(function (m) {
-      return "<tr><td>" + escapeHtml(m.filename) + "</td><td>" + m.chapters.length + "</td><td>" + escapeHtml(m.addedAt) + "</td>" +
-        '<td><button class="btn ghost btn-tiny" data-final-manual-remove="' + m.id + '" type="button">Entfernen</button></td></tr>';
+      return "<tr><td>" + escapeHtml(m.filename) + "</td><td>" + m.chapters.length + "</td><td>" + (m.design ? "Original-Design gespeichert" : "–") + "</td><td>" + escapeHtml(m.addedAt) + "</td>" +
+        '<td><button class="btn ghost btn-tiny" data-final-manual-remove="' + m.id + '" type="button">' + finalIcon("trash") + "Entfernen</button></td></tr>";
     }).join("");
   }
   function renderFinalConflicts() {
@@ -25944,14 +26034,16 @@
   }
   function updateFinalPreview() {
     var title = els.finalPreviewChapterSelect.value;
-    els.finalPreviewOutput.textContent = title ? (finalChapterDisplayText(title) || "(leer)") : "";
+    var marked = title ? finalChapterMarkedText(title) : "";
+    els.finalPreviewOutput.innerHTML = title ? (marked.replace(FINAL_MARK_RE, "") ? finalMarkedTextToHtml(marked) : "(leer)") : "";
   }
   function renderFinalScreensFilesTable() {
     var files = app.final.screensFiles;
     els.finalScreensFilesEmpty.hidden = files.length > 0;
     els.finalScreensFilesTbody.innerHTML = files.map(function (f) {
       return "<tr><td>" + escapeHtml(f.filename) + "</td><td>" + escapeHtml(f.rolle || "–") + "</td><td>" + escapeHtml(f.sparte || "–") + "</td>" +
-        "<td>" + escapeHtml(f.sprache || "–") + "</td><td>" + escapeHtml(f.markt || "–") + "</td><td>" + f.screenCount + "</td><td>" + escapeHtml(f.addedAt) + "</td></tr>";
+        "<td>" + escapeHtml(f.sprache || "–") + "</td><td>" + escapeHtml(f.markt || "–") + "</td><td>" + f.screenCount + "</td><td>" + escapeHtml(f.addedAt) + "</td>" +
+        '<td><button class="btn ghost btn-tiny final-btn-danger" data-final-screens-file-remove="' + f.id + '" type="button">' + finalIcon("trash") + "Löschen</button></td></tr>";
     }).join("");
   }
   function renderFinalScreensTable() {
@@ -25967,13 +26059,15 @@
       var status = img.finalStatus === "Entwurf" ? '<span class="pill progress">Entwurf</span>'
         : img.finalStatus === "Manuell" ? '<span class="pill done">Manuell</span>'
         : '<span class="step-note">' + (img.chapter ? "Zugeordnet" : "Offen") + "</span>";
-      return "<tr><td><img src=\"" + img.dataUrl + "\" data-final-screen-view=\"" + img.id + "\" title=\"Doppelklick: groß anzeigen\" style=\"width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:zoom-in;\" alt=\"\"></td>" +
+      return '<tr><td><input type="checkbox" data-final-screen-select="' + img.id + '"' + (finalSelectedScreens[img.id] ? " checked" : "") + ' aria-label="Screen markieren"></td>' +
+        "<td><img src=\"" + img.dataUrl + "\" data-final-screen-view=\"" + img.id + "\" title=\"Doppelklick: groß anzeigen\" style=\"width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:zoom-in;\" alt=\"\"></td>" +
         '<td><input type="text" class="text-input" data-final-screen-caption="' + img.id + '" value="' + escapeHtml(img.description || "") + '" placeholder="Untertitel" style="min-width:180px;"></td>' +
         "<td>" + escapeHtml(img.finalNavText || "–") + "</td>" +
         "<td>" + escapeHtml([img.rolle, img.sparte, img.sprache, img.markt].filter(function (v) { return v; }).join(" / ") || "–") + "</td>" +
         '<td><select data-final-screen-chapter="' + img.id + '">' + chapterOptsFor(img.chapter) + "</select></td>" +
         "<td>" + status + "</td>" +
-        '<td><button class="btn ghost btn-tiny" data-final-screen-delete="' + img.id + '" type="button">Löschen</button></td></tr>';
+        '<td><div class="final-row-actions"><button class="btn ghost btn-tiny" data-final-screen-edit="' + img.id + '" type="button" title="Untertitel bearbeiten">' + finalIcon("pencil") + "Bearbeiten</button>" +
+        '<button class="btn ghost btn-tiny final-btn-danger" data-final-screen-delete="' + img.id + '" type="button" title="Screen löschen">' + finalIcon("trash") + "Löschen</button></div></td></tr>";
     }).join("");
   }
   function renderFinalMasterExportState() {
@@ -25990,18 +26084,19 @@
     var title = els.finalResultChapterSelect.value;
     if (!title) { els.finalResultSourceOutput.textContent = ""; els.finalResultMasterOutput.textContent = ""; return; }
     var entry = finalChapterEntry(title);
-    els.finalResultSourceOutput.textContent = entry ? entry.fullText : "(Quelle nicht mehr vorhanden)";
+    if (entry) els.finalResultSourceOutput.innerHTML = finalMarkedTextToHtml(typeof entry.markedText === "string" ? entry.markedText : entry.fullText);
+    else els.finalResultSourceOutput.textContent = "(Quelle nicht mehr vorhanden)";
     var masterChapter = app.final.master.chapters.filter(function (c) { return c.title === title; })[0];
     if (!masterChapter) { els.finalResultMasterOutput.textContent = ""; return; }
     var screenObjs = (masterChapter.screenIds || []).map(function (id) { return app.uploadedImages.filter(function (i) { return i.id === id; })[0]; });
     var bildCount = 0;
-    var readable = masterChapter.text.split("\n").map(function (line) {
+    var readable = (typeof masterChapter.markedText === "string" ? masterChapter.markedText : masterChapter.text).split("\n").map(function (line) {
       if (line.trim() !== "[Bild]") return line;
       var screen = screenObjs[bildCount];
       bildCount++;
       return "[Bild: " + (screen ? finalScreenCaption(screen) : "?") + "]";
     }).join("\n");
-    els.finalResultMasterOutput.textContent = readable;
+    els.finalResultMasterOutput.innerHTML = finalMarkedTextToHtml(readable);
   }
   function renderFinal() {
     finalPopulateRolleSparteSelects();
@@ -26017,17 +26112,20 @@
     updateFinalPreview();
     renderFinalScreensFilesTable();
     renderFinalScreensTable();
+    renderFinalBulkBar();
     renderFinalMasterExportState();
     renderFinalResultChapterOptions();
     updateFinalResult();
+    renderFinalDesign();
   }
 
   function buildFinalMasterChapters() {
     return finalMasterChapterTitles().map(function (title) {
-      var text = finalChapterDisplayText(title);
+      var marked = finalChapterMarkedText(title);
+      var entry = finalChapterEntry(title);
       var screens = finalScreensForChapter(title).map(function (img) { return Object.assign({}, img, { description: finalScreenCaption(img) }); });
-      var withPlaceholders = text + (screens.length ? "\n" + screens.map(function () { return "[Bild]"; }).join("\n") : "");
-      return { title: title, text: withPlaceholders, screens: screens };
+      var placeholders = screens.length ? "\n" + screens.map(function () { return "[Bild]"; }).join("\n") : "";
+      return { title: title, level: entry ? entry.level : 1, text: marked.replace(FINAL_MARK_RE, "") + placeholders, markedText: marked + placeholders, screens: screens };
     });
   }
   async function buildFinalMasterDocxBlob(chapters, opts) {
@@ -26046,7 +26144,7 @@
       });
       nextMediaNum += renumbered.length;
       allMedia = allMedia.concat(renumbered);
-      bodyParts.push(manualChapterBodyXml(c.title, c.text, renumbered, []));
+      bodyParts.push(manualChapterBodyXml(c.title, c.text, renumbered, []).replace('<w:pStyle w:val="Title"/>', '<w:pStyle w:val="Heading' + Math.min(Math.max(c.level || 1, 1), 3) + '"/>'));
       if (i < chapters.length - 1) bodyParts.push(manualPageBreakParagraphXml());
     }
     if (opts.footer === false) return buildDocxBlobFromBodyAndMedia(bodyParts.join(""), allMedia);
@@ -26077,6 +26175,384 @@
     if (opts.bookmarks !== false) addPdfBookmarks(doc, tocChapters, startPages);
     if (opts.pageNumbers !== false) addPdfPageNumbers(doc, opts.headerTitle || "");
     return doc;
+  }
+
+  // ===================== Design (Schritt 1 + 8): Word-Formatvorlagen & PowerPoint =====================
+  var FINAL_ICON_PATHS = {
+    trash: '<path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/>',
+    pencil: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>'
+  };
+  function finalIcon(name) {
+    return '<svg class="final-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + FINAL_ICON_PATHS[name] + "</svg>";
+  }
+
+  // App-Designs: dieselben drei Paletten fuer Word (generierte Formatvorlagen)
+  // und PowerPoint (Theme-Farbe/-Schriften der Basisvorlage).
+  var FINAL_APP_DESIGNS = [
+    { key: "app:standard", label: "App-Design „Standard“ – Calibri, Petrol", font: "Calibri", headFont: "Calibri", color: "0E7490" },
+    { key: "app:klassisch", label: "App-Design „Klassisch“ – Cambria, Anthrazit", font: "Cambria", headFont: "Cambria", color: "3A3F47" },
+    { key: "app:modern", label: "App-Design „Modern“ – Segoe UI, Blau", font: "Segoe UI", headFont: "Segoe UI Semibold", color: "1F4E79" }
+  ];
+  function finalAppDesign(key) { return FINAL_APP_DESIGNS.filter(function (d) { return d.key === key; })[0] || FINAL_APP_DESIGNS[0]; }
+  function finalAppStylesXml(p) {
+    function fonts(f) { return '<w:rFonts w:ascii="' + xmlEsc(f) + '" w:hAnsi="' + xmlEsc(f) + '" w:cs="' + xmlEsc(f) + '" w:eastAsia="' + xmlEsc(f) + '"/>'; }
+    function heading(id, name, level, size, before) {
+      return '<w:style w:type="paragraph" w:styleId="' + id + '"><w:name w:val="' + name + '"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/>' +
+        '<w:pPr><w:keepNext/><w:spacing w:before="' + before + '" w:after="120"/><w:outlineLvl w:val="' + level + '"/></w:pPr>' +
+        "<w:rPr>" + fonts(p.headFont) + '<w:b/><w:color w:val="' + p.color + '"/><w:sz w:val="' + size + '"/><w:szCs w:val="' + size + '"/></w:rPr></w:style>';
+    }
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+      "<w:docDefaults><w:rPrDefault><w:rPr>" + fonts(p.font) + '<w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="de-DE"/></w:rPr></w:rPrDefault>' +
+      '<w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>' +
+      '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>' +
+      '<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="240"/></w:pPr>' +
+      "<w:rPr>" + fonts(p.headFont) + '<w:b/><w:color w:val="' + p.color + '"/><w:sz w:val="48"/><w:szCs w:val="48"/></w:rPr></w:style>' +
+      heading("Heading1", "heading 1", 0, 32, 360) + heading("Heading2", "heading 2", 1, 26, 240) + heading("Heading3", "heading 3", 2, 24, 200) +
+      "</w:styles>";
+  }
+  function finalAppWordDesign(key) {
+    return { styles: finalAppStylesXml(finalAppDesign(key)), pgMar: '<w:pgMar w:top="1417" w:right="1417" w:bottom="1134" w:left="1417" w:header="708" w:footer="708" w:gutter="0"/>' };
+  }
+  // Design-Bestandteile einer .docx/.dotx: Formatvorlagen, Theme (Farben/
+  // Schriften), Schriftartentabelle, Nummerierung und Seitenformat - genug,
+  // damit Ueberschriften, Fliesstext und Seite im Master wie im Original
+  // aussehen. Eingebettete Schriften werden nicht uebernommen.
+  async function finalExtractWordDesign(zip) {
+    async function read(path) { var f = zip.file(path); return f ? await f.async("string") : ""; }
+    var styles = await read("word/styles.xml");
+    if (!styles) return null;
+    var themePath = Object.keys(zip.files).filter(function (p) { return /^word\/theme\/theme\d*\.xml$/.test(p); }).sort()[0];
+    var docXml = await read("word/document.xml");
+    var lastSect = docXml.lastIndexOf("<w:sectPr");
+    var sect = lastSect !== -1 ? docXml.slice(lastSect, docXml.indexOf("</w:sectPr>", lastSect) + 11) : "";
+    return {
+      styles: styles,
+      theme: themePath ? await read(themePath) : "",
+      fontTable: (await read("word/fontTable.xml")).replace(/<w:embed(Regular|Bold|Italic|BoldItalic)\b[^>]*\/>/g, ""),
+      numbering: await read("word/numbering.xml"),
+      pgSz: (/<w:pgSz\b[^>]*\/>/.exec(sect) || [""])[0],
+      pgMar: (/<w:pgMar\b[^>]*\/>/.exec(sect) || [""])[0]
+    };
+  }
+  async function finalExtractWordDesignFromBuffer(buf) {
+    try { return await finalExtractWordDesign(await JSZip.loadAsync(buf)); } catch (e) { return null; }
+  }
+  // Word speichert eingebaute Formatvorlagen unter englischem Namen
+  // ("heading 1"), die styleId ist aber lokalisiert ("berschrift1") - daher
+  // ueber den Namen zuordnen.
+  function finalStyleIdMap(stylesXml) {
+    var map = {};
+    try {
+      var doc = new DOMParser().parseFromString(stylesXml, "application/xml");
+      var byName = {};
+      Array.prototype.forEach.call(doc.getElementsByTagName("w:style"), function (st) {
+        if (st.getAttribute("w:type") !== "paragraph") return;
+        var nameEl = st.getElementsByTagName("w:name")[0];
+        var name = nameEl ? String(nameEl.getAttribute("w:val") || "").toLowerCase() : "";
+        if (name && !byName[name]) byName[name] = st.getAttribute("w:styleId");
+      });
+      if (byName.title) map.Title = byName.title;
+      for (var i = 1; i <= 9; i++) if (byName["heading " + i]) map["Heading" + i] = byName["heading " + i];
+      if (!map.Title && map.Heading1) map.Title = map.Heading1;
+    } catch (e) { /* unlesbare styles.xml: Standard-IDs behalten */ }
+    return map;
+  }
+  async function finalApplyWordDesign(blob, design) {
+    if (!design || !design.styles) return blob;
+    var zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    var map = finalStyleIdMap(design.styles);
+    var docXml = await zip.file("word/document.xml").async("string");
+    docXml = docXml.replace(/<w:pStyle w:val="(Title|Heading[1-9])"\/>/g, function (all, id) { return '<w:pStyle w:val="' + xmlEsc(map[id] || id) + '"/>'; });
+    docXml = docXml.replace(/<w:pgSz\b[^>]*\/>/, (design.pgSz || '<w:pgSz w:w="11906" w:h="16838"/>') + (design.pgMar || ""));
+    zip.file("word/document.xml", docXml);
+    var relsPath = "word/_rels/document.xml.rels";
+    var rels = zip.file(relsPath) ? await zip.file(relsPath).async("string") :
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>';
+    var ct = await zip.file("[Content_Types].xml").async("string");
+    [["styles", "word/styles.xml", "styles.xml", "wordprocessingml.styles+xml", design.styles],
+     ["theme", "word/theme/theme1.xml", "theme/theme1.xml", "theme+xml", design.theme],
+     ["fontTable", "word/fontTable.xml", "fontTable.xml", "wordprocessingml.fontTable+xml", design.fontTable],
+     ["numbering", "word/numbering.xml", "numbering.xml", "wordprocessingml.numbering+xml", design.numbering]].forEach(function (part, i) {
+      if (!part[4]) return;
+      zip.file(part[1], part[4]);
+      rels = rels.replace("</Relationships>", '<Relationship Id="rIdDesign' + i + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/' + part[0] + '" Target="' + part[2] + '"/></Relationships>');
+      ct = ct.replace("</Types>", '<Override PartName="/' + part[1] + '" ContentType="application/vnd.openxmlformats-officedocument.' + part[3] + '"/></Types>');
+    });
+    zip.file(relsPath, rels);
+    zip.file("[Content_Types].xml", ct);
+    return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  }
+  function finalWordDesignOptions() {
+    var opts = app.final.manuals.map(function (m) {
+      return { key: "orig:" + m.id, label: "Original-Design: " + m.filename + (m.design ? "" : " (keine Formatvorlagen gefunden)"), design: m.design || null,
+        note: m.design ? "Formatvorlagen, Schriften, Farben und Seitenformat aus „" + m.filename + "“." : "„" + m.filename + "“ enthält keine Formatvorlagen – es wird das App-Design „Standard“ verwendet." };
+    });
+    if (app.final.wordTemplate) opts.push({ key: "tpl", label: "Eigene Vorlage: " + app.final.wordTemplate.filename, design: app.final.wordTemplate.design,
+      note: "Formatvorlagen, Schriften, Farben und Seitenformat aus der Vorlage „" + app.final.wordTemplate.filename + "“." });
+    FINAL_APP_DESIGNS.forEach(function (d) { opts.push({ key: d.key, label: d.label, design: finalAppWordDesign(d.key), note: "Von der App mitgeliefertes Design (Schrift " + d.font + ")." }); });
+    return opts;
+  }
+  function finalEffectiveWordDesignKey(opts) {
+    if (opts.some(function (o) { return o.key === app.final.wordDesign; })) return app.final.wordDesign;
+    var orig = opts.filter(function (o) { return o.key.indexOf("orig:") === 0 && o.design; })[0];
+    return orig ? orig.key : "app:standard";
+  }
+  function finalResolveWordDesign() {
+    var opts = finalWordDesignOptions();
+    var key = finalEffectiveWordDesignKey(opts);
+    var opt = opts.filter(function (o) { return o.key === key; })[0];
+    return (opt && opt.design) || finalAppWordDesign("app:standard");
+  }
+  function finalPptDesignOptions() {
+    var opts = [];
+    if (app.final.pptTemplate) opts.push({ key: "tpl", label: "Eigene Vorlage: " + app.final.pptTemplate.filename, note: "Folienmaster, Layouts, Farben und Schriften aus „" + app.final.pptTemplate.filename + "“." });
+    FINAL_APP_DESIGNS.forEach(function (d) { opts.push({ key: d.key, label: d.label, note: "Von der App mitgeliefertes Design (Akzentfarbe #" + d.color + ", Schrift " + d.font + ")." }); });
+    return opts;
+  }
+  function finalEffectivePptDesignKey(opts) {
+    if (opts.some(function (o) { return o.key === app.final.pptDesign; })) return app.final.pptDesign;
+    return app.final.pptTemplate ? "tpl" : "app:standard";
+  }
+
+  // Basis-PowerPoint-Vorlage (aus python-pptx 1.0.2, MIT-Lizenz, Copyright (c)
+  // 2013 Steve Canny; Vorschaubild und Druckereinstellungen entfernt) - Grundlage
+  // fuer die App-Designs; eine eigene Vorlage ersetzt sie vollstaendig.
+  var FINAL_PPTX_BASE64 = "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";
+  function finalBase64ToBytes(b64) {
+    var bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+  function finalBytesToBase64(buf) {
+    var bytes = new Uint8Array(buf), bin = "";
+    for (var i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+  var PPT_NS = 'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"';
+  var PPT_REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/";
+  function pptXfrm(x, y, cx, cy) { return '<a:xfrm><a:off x="' + Math.round(x) + '" y="' + Math.round(y) + '"/><a:ext cx="' + Math.round(cx) + '" cy="' + Math.round(cy) + '"/></a:xfrm>'; }
+  function pptParas(lines, rPr, pPr) {
+    if (!lines.length) return '<a:p><a:endParaRPr lang="de-DE"/></a:p>';
+    return lines.map(function (l) { return "<a:p>" + (pPr || "") + '<a:r><a:rPr lang="de-DE" dirty="0"' + (rPr || "/>") + "<a:t>" + xmlEsc(l) + "</a:t></a:r></a:p>"; }).join("");
+  }
+  function pptPlaceholder(id, name, ph, xfrm, bodyPr, paras) {
+    return '<p:sp><p:nvSpPr><p:cNvPr id="' + id + '" name="' + name + '"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr>' + ph + "</p:nvPr></p:nvSpPr>" +
+      "<p:spPr>" + (xfrm || "") + "</p:spPr><p:txBody>" + (bodyPr || "<a:bodyPr/>") + "<a:lstStyle/>" + paras + "</p:txBody></p:sp>";
+  }
+  function pptSlideXml(shapes) {
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld ' + PPT_NS + '><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>' +
+      '<p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>' + shapes +
+      "</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>";
+  }
+  // Baut eine .pptx auf Basis einer Vorlage: vorhandene Folien der Vorlage
+  // werden entfernt, Folienmaster/Layouts/Theme bleiben erhalten; neue Folien
+  // nutzen die Platzhalter der Vorlagen-Layouts (Titel, Titel+Inhalt) und
+  // erben so deren Gestaltung.
+  async function finalBuildPptxBlob(chapters, opts) {
+    var zip = await JSZip.loadAsync(opts.templateBytes);
+    if (!zip.file("ppt/presentation.xml")) throw new Error("Die Datei ist keine PowerPoint-Präsentation/-Vorlage.");
+    var ct = await zip.file("[Content_Types].xml").async("string");
+    var presXml = await zip.file("ppt/presentation.xml").async("string");
+    var presRelsPath = "ppt/_rels/presentation.xml.rels";
+    var presRels = await zip.file(presRelsPath).async("string");
+    presRels = presRels.replace(/<Relationship\b[^>]*\/>/g, function (rel) { return /\/relationships\/slide"/.test(rel) ? "" : rel; });
+    presXml = presXml.replace(/<p:sldIdLst>[\s\S]*?<\/p:sldIdLst>/, "").replace(/<p:sldIdLst\s*\/>/, "").replace(/<p:custShowLst>[\s\S]*?<\/p:custShowLst>/, "")
+      .replace(/<p:ext\b[^>]*>(?:(?!<\/p:ext>)[\s\S])*?sectionLst[\s\S]*?<\/p:ext>/g, "");
+    Object.keys(zip.files).forEach(function (path) { if (/^ppt\/(slides|notesSlides)\//.test(path)) zip.remove(path); });
+    ct = ct.replace(/<Override PartName="\/ppt\/(slides|notesSlides)\/[^"]*"[^>]*\/>/g, "").replace("presentationml.template.main+xml", "presentationml.presentation.main+xml");
+    [["png", "image/png"], ["jpeg", "image/jpeg"], ["jpg", "image/jpeg"], ["gif", "image/gif"], ["bmp", "image/bmp"]].forEach(function (pair) {
+      if (ct.indexOf('Extension="' + pair[0] + '"') === -1) ct = ct.replace("</Types>", '<Default Extension="' + pair[0] + '" ContentType="' + pair[1] + '"/></Types>');
+    });
+    var layouts = [];
+    var layoutPaths = Object.keys(zip.files).filter(function (p) { return /^ppt\/slideLayouts\/slideLayout\d+\.xml$/.test(p); })
+      .sort(function (a, b) { return parseInt(a.replace(/\D+/g, ""), 10) - parseInt(b.replace(/\D+/g, ""), 10); });
+    for (var li = 0; li < layoutPaths.length; li++) {
+      var lx = await zip.file(layoutPaths[li]).async("string");
+      layouts.push({ file: layoutPaths[li].split("/").pop(), type: (/<p:sldLayout\b[^>]*\btype="([^"]+)"/.exec(lx) || [])[1] || "", xml: lx });
+    }
+    if (!layouts.length) throw new Error("Die PowerPoint-Vorlage enthält keine Folienlayouts.");
+    function pick(types, fallback) {
+      for (var t = 0; t < types.length; t++) { var hit = layouts.filter(function (l) { return l.type === types[t]; })[0]; if (hit) return hit; }
+      return fallback;
+    }
+    var titleLayout = pick(["title"], layouts[0]);
+    var contentLayout = pick(["obj", "tx", "txAndObj"], layouts[1] || layouts[0]);
+    var imageLayout = pick(["titleOnly"], contentLayout);
+    var size = /<p:sldSz\b[^>]*\bcx="(\d+)"[^>]*\bcy="(\d+)"/.exec(presXml);
+    var W = size ? parseInt(size[1], 10) : 9144000, H = size ? parseInt(size[2], 10) : 6858000;
+    function hasPh(layout, re) { return re.test(layout.xml); }
+    var preset = opts.preset || null;
+    if (preset) {
+      var themePath = Object.keys(zip.files).filter(function (p) { return /^ppt\/theme\/theme\d+\.xml$/.test(p); }).sort()[0];
+      if (themePath) {
+        var theme = await zip.file(themePath).async("string");
+        theme = theme.replace(/(<a:accent1>)[\s\S]*?(<\/a:accent1>)/, '$1<a:srgbClr val="' + preset.color + '"/>$2')
+          .replace(/(<a:majorFont>\s*<a:latin typeface=")[^"]*(")/, "$1" + xmlEsc(preset.headFont) + "$2")
+          .replace(/(<a:minorFont>\s*<a:latin typeface=")[^"]*(")/, "$1" + xmlEsc(preset.font) + "$2");
+        zip.file(themePath, theme);
+      }
+    }
+    var accentBar = preset ? '<p:sp><p:nvSpPr><p:cNvPr id="90" name="Akzentleiste"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr>' + pptXfrm(0, 0, W, H * 0.025) +
+      '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:solidFill><a:schemeClr val="accent1"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr></p:sp>' : "";
+    var titleRPr = preset ? '><a:solidFill><a:schemeClr val="accent1"/></a:solidFill></a:rPr>' : "/>";
+    var titleBox = pptXfrm(W * 0.06, H * 0.05, W * 0.88, H * 0.15), bodyBox = pptXfrm(W * 0.06, H * 0.22, W * 0.88, H * 0.68);
+
+    var slides = [{ kind: "title" }];
+    for (var ci = 0; ci < chapters.length; ci++) {
+      var c = chapters[ci];
+      var lines = c.text.split("\n").map(function (l) { return l.trim(); }).filter(function (l) { return l && l !== "[Bild]"; });
+      var chunks = [], cur = [], len = 0;
+      lines.forEach(function (l) {
+        if (cur.length && (cur.length >= 7 || len + l.length > 750)) { chunks.push(cur); cur = []; len = 0; }
+        cur.push(l); len += l.length;
+      });
+      if (cur.length || !chunks.length) chunks.push(cur);
+      chunks.forEach(function (chunk, i) { slides.push({ kind: "content", title: c.title + (i ? " (Fortsetzung)" : ""), lines: chunk }); });
+      var media = await manualPrepareMediaForScreens(c.screens);
+      media.forEach(function (m) { slides.push({ kind: "image", title: c.title, media: m }); });
+    }
+
+    var sldIds = "", presRelAdd = "", imageNum = 0;
+    slides.forEach(function (sl, idx) {
+      var n = idx + 1, layout, shapes = accentBar;
+      var rels = '<Relationship Id="rId1" Type="' + PPT_REL + 'slideLayout" Target="../slideLayouts/LAYOUT"/>';
+      if (sl.kind === "title") {
+        layout = titleLayout;
+        var ctr = hasPh(layout, /type="ctrTitle"/) ? '<p:ph type="ctrTitle"/>' : '<p:ph type="title"/>';
+        shapes += pptPlaceholder(2, "Titel 1", ctr, hasPh(layout, /type="(ctrTitle|title)"/) ? "" : titleBox, "", pptParas([opts.coverTitle], titleRPr));
+        shapes += pptPlaceholder(3, "Untertitel 2", '<p:ph type="subTitle" idx="1"/>', hasPh(layout, /type="subTitle"/) ? "" : bodyBox, "", pptParas(opts.coverSubtitle ? [opts.coverSubtitle] : []));
+      } else if (sl.kind === "content") {
+        layout = contentLayout;
+        shapes += pptPlaceholder(2, "Titel 1", '<p:ph type="title"/>', hasPh(layout, /type="title"/) ? "" : titleBox, "", pptParas([sl.title], titleRPr));
+        shapes += pptPlaceholder(3, "Inhalt 2", '<p:ph idx="1"/>', hasPh(layout, /idx="1"/) ? "" : bodyBox, "<a:bodyPr><a:normAutofit/></a:bodyPr>", pptParas(sl.lines));
+      } else {
+        layout = imageLayout;
+        imageNum++;
+        var m = sl.media;
+        var mediaName = "final_bild" + imageNum + "." + m.ext;
+        zip.file("ppt/media/" + mediaName, m.screen.dataUrl.split(",")[1], { base64: true });
+        rels += '<Relationship Id="rId2" Type="' + PPT_REL + 'image" Target="../media/' + mediaName + '"/>';
+        var boxX = W * 0.06, boxY = H * 0.22, boxW = W * 0.88, boxH = H * 0.6;
+        var scale = Math.min(boxW / m.widthEmu, boxH / m.heightEmu);
+        var pw = m.widthEmu * scale, ph = m.heightEmu * scale;
+        var px = boxX + (boxW - pw) / 2, py = boxY + (boxH - ph) / 2;
+        shapes += pptPlaceholder(2, "Titel 1", '<p:ph type="title"/>', hasPh(layout, /type="title"/) ? "" : titleBox, "", pptParas([sl.title], titleRPr));
+        shapes += '<p:pic><p:nvPicPr><p:cNvPr id="3" name="Bild ' + imageNum + '"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr>' +
+          '<p:blipFill><a:blip r:embed="rId2"/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr>' + pptXfrm(px, py, pw, ph) + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>';
+        shapes += '<p:sp><p:nvSpPr><p:cNvPr id="4" name="Bildunterschrift"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr><p:spPr>' + pptXfrm(boxX, boxY + boxH + H * 0.015, boxW, H * 0.08) +
+          '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/></p:spPr><p:txBody><a:bodyPr wrap="square"><a:normAutofit/></a:bodyPr><a:lstStyle/>' +
+          pptParas(["Abbildung " + imageNum + ": " + (m.screen.description || m.screen.sourceFile || "")], ' sz="1400" i="1"/>', '<a:pPr algn="ctr"/>') + "</p:txBody></p:sp>";
+      }
+      zip.file("ppt/slides/slide" + n + ".xml", pptSlideXml(shapes));
+      zip.file("ppt/slides/_rels/slide" + n + ".xml.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        rels.replace("LAYOUT", layout.file) + "</Relationships>");
+      ct = ct.replace("</Types>", '<Override PartName="/ppt/slides/slide' + n + '.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/></Types>');
+      presRelAdd += '<Relationship Id="rIdFinalSlide' + n + '" Type="' + PPT_REL + 'slide" Target="slides/slide' + n + '.xml"/>';
+      sldIds += '<p:sldId id="' + (255 + n) + '" r:id="rIdFinalSlide' + n + '"/>';
+    });
+    var anchor = ["</p:handoutMasterIdLst>", "</p:notesMasterIdLst>", "</p:sldMasterIdLst>"].filter(function (t) { return presXml.indexOf(t) !== -1; })[0];
+    presXml = presXml.replace(anchor, anchor + "<p:sldIdLst>" + sldIds + "</p:sldIdLst>");
+    zip.file("ppt/presentation.xml", presXml);
+    zip.file(presRelsPath, presRels.replace("</Relationships>", presRelAdd + "</Relationships>"));
+    zip.file("[Content_Types].xml", ct);
+    return { blob: await zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation" }), slideCount: slides.length };
+  }
+
+  // Master-Kapitel aus dem gespeicherten Master-Stand (funktioniert auch nach
+  // dem Laden einer Sitzung, wenn kein frisch gebautes Blob mehr existiert).
+  function finalMasterChaptersForExport() {
+    return app.final.master.chapters.map(function (c) {
+      var screens = (c.screenIds || []).map(function (id) { return app.uploadedImages.filter(function (i) { return i.id === id; })[0]; })
+        .filter(Boolean).map(function (img) { return Object.assign({}, img, { description: finalScreenCaption(img) }); });
+      return { title: c.title, level: c.level || 1, text: c.text, screens: screens };
+    });
+  }
+  async function finalDownloadWord() {
+    if (!app.final.master.chapters.length) return;
+    try {
+      var blob = await buildFinalMasterDocxBlob(finalMasterChaptersForExport(), {});
+      blob = await finalApplyWordDesign(blob, finalResolveWordDesign());
+      var filename = "FINAL_Gesamtdokument_" + dateStampForFilename() + ".docx";
+      var ok = await saveOrWarn(filename, blob);
+      if (ok) {
+        els.finalDesignStatusNote.textContent = "Word-Dokument „" + filename + "“ im Design „" + els.finalWordDesignSelect.selectedOptions[0].textContent + "“ erzeugt.";
+        addLog("FINAL: Master-Dokument „" + filename + "“ (Word, Design: " + finalEffectiveWordDesignKey(finalWordDesignOptions()) + ") heruntergeladen.");
+      }
+    } catch (err) {
+      showToast("Word-Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    }
+  }
+  async function finalDownloadPptx() {
+    if (!app.final.master.chapters.length) return;
+    var key = finalEffectivePptDesignKey(finalPptDesignOptions());
+    els.finalDesignPptxBtn.disabled = true;
+    try {
+      var result = await finalBuildPptxBlob(finalMasterChaptersForExport(), {
+        templateBytes: key === "tpl" ? finalBase64ToBytes(app.final.pptTemplate.base64) : finalBase64ToBytes(FINAL_PPTX_BASE64),
+        preset: key === "tpl" ? null : finalAppDesign(key),
+        coverTitle: "FINAL-Gesamtdokument",
+        coverSubtitle: "Stand " + (app.final.master.builtAt || nowLabel())
+      });
+      var filename = "FINAL_Gesamtdokument_" + dateStampForFilename() + ".pptx";
+      var ok = await saveOrWarn(filename, result.blob);
+      if (ok) {
+        els.finalDesignStatusNote.textContent = "PowerPoint „" + filename + "“ mit " + result.slideCount + " Folien im Design „" + els.finalPptDesignSelect.selectedOptions[0].textContent + "“ erzeugt.";
+        addLog("FINAL: Master als PowerPoint „" + filename + "“ (" + result.slideCount + " Folien, Design: " + key + ") heruntergeladen.");
+      }
+    } catch (err) {
+      showToast("PowerPoint-Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.finalDesignPptxBtn.disabled = !app.final.master.chapters.length;
+    }
+  }
+  function renderFinalDesign() {
+    var wordOpts = finalWordDesignOptions(), wordKey = finalEffectiveWordDesignKey(wordOpts);
+    els.finalWordDesignSelect.innerHTML = wordOpts.map(function (o) { return '<option value="' + escapeHtml(o.key) + '"' + (o.key === wordKey ? " selected" : "") + ">" + escapeHtml(o.label) + "</option>"; }).join("");
+    els.finalWordDesignNote.textContent = (wordOpts.filter(function (o) { return o.key === wordKey; })[0] || {}).note || "";
+    var pptOpts = finalPptDesignOptions(), pptKey = finalEffectivePptDesignKey(pptOpts);
+    els.finalPptDesignSelect.innerHTML = pptOpts.map(function (o) { return '<option value="' + escapeHtml(o.key) + '"' + (o.key === pptKey ? " selected" : "") + ">" + escapeHtml(o.label) + "</option>"; }).join("");
+    els.finalPptDesignNote.textContent = (pptOpts.filter(function (o) { return o.key === pptKey; })[0] || {}).note || "";
+    var hasMaster = app.final.master.chapters.length > 0;
+    els.finalDesignDocxBtn.disabled = !hasMaster;
+    els.finalDesignPptxBtn.disabled = !hasMaster;
+    if (!hasMaster) els.finalDesignStatusNote.textContent = "Zuerst in Schritt 6 das Master-Dokument zusammenführen.";
+    else if (els.finalDesignStatusNote.textContent.indexOf("Zuerst") === 0) els.finalDesignStatusNote.textContent = "";
+  }
+
+  // ===================== Screens markieren / Sammelaktionen (Schritt 5) =====================
+  var finalSelectedScreens = {};
+  function finalPruneSelection() {
+    var alive = {};
+    finalAllScreens().forEach(function (img) { alive[img.id] = true; });
+    Object.keys(finalSelectedScreens).forEach(function (id) { if (!alive[id]) delete finalSelectedScreens[id]; });
+  }
+  function finalSelectedIds() { return Object.keys(finalSelectedScreens).map(function (id) { return parseInt(id, 10); }); }
+  function renderFinalBulkBar() {
+    finalPruneSelection();
+    var n = finalSelectedIds().length, total = finalAllScreens().length;
+    els.finalSelectedCount.textContent = n + " markiert";
+    els.finalBulkAssignBtn.disabled = n === 0 || !els.finalBulkChapterSelect.value;
+    els.finalBulkDeleteBtn.disabled = n === 0;
+    els.finalScreensSelectAllCb.checked = total > 0 && n === total;
+    els.finalScreensSelectAllCb.indeterminate = n > 0 && n < total;
+    var prev = els.finalBulkChapterSelect.value;
+    els.finalBulkChapterSelect.innerHTML = '<option value="">– Kapitel für Markierte wählen –</option><option value="__none__">– Zuordnung entfernen –</option>' +
+      finalMasterChapterTitles().map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + "</option>"; }).join("");
+    els.finalBulkChapterSelect.value = prev;
+    if (els.finalBulkChapterSelect.value !== prev) els.finalBulkChapterSelect.value = "";
+    els.finalBulkAssignBtn.disabled = n === 0 || !els.finalBulkChapterSelect.value;
+  }
+  async function finalDeleteScreens(ids, question) {
+    if (!ids.length) return;
+    var ok = await confirmDialog(question, "Löschen");
+    if (!ok) return;
+    var idSet = {};
+    ids.forEach(function (id) { idSet[id] = true; });
+    app.uploadedImages = app.uploadedImages.filter(function (i) { return !(i.finalScreensFileId && idSet[i.id]); });
+    ids.forEach(function (id) { delete finalSelectedScreens[id]; });
+    addLog("FINAL: " + ids.length + " Screen(s) gelöscht.");
+    renderFinal();
+    renderGallery();
   }
 
   // ===================== Event-Wiring =====================
@@ -26127,7 +26603,7 @@
       // Nur die Statuszelle aktualisieren - ein Neuaufbau der Tabelle wuerde
       // dem Eingabefeld den Fokus nehmen.
       img.finalStatus = "Manuell";
-      var statusCell = input.closest("tr").children[5];
+      var statusCell = input.closest("tr").children[6];
       if (statusCell) statusCell.innerHTML = '<span class="pill done">Manuell</span>';
     }
   });
@@ -26250,7 +26726,6 @@
   els.finalFilterSpracheInput.addEventListener("input", function () { app.final.filterSprache = els.finalFilterSpracheInput.value.trim(); });
   els.finalFilterMarktInput.addEventListener("input", function () { app.final.filterMarkt = els.finalFilterMarktInput.value.trim(); });
 
-  var finalMasterDocxBlob = null, finalMasterDocxFilename = "";
   var finalMasterPdfBlob = null, finalMasterPdfFilename = "";
   els.finalBuildMasterBtn.addEventListener("click", async function () {
     if (!app.final.manuals.length) { showToast("Keine Benutzerhandbuch-Datei", "Bitte zuerst mindestens eine Benutzerhandbuch-Datei hochladen.", true); return; }
@@ -26259,8 +26734,6 @@
     try {
       var chapters = buildFinalMasterChapters();
       var base = "FINAL_Gesamtdokument_" + dateStampForFilename();
-      finalMasterDocxBlob = await buildFinalMasterDocxBlob(chapters, {});
-      finalMasterDocxFilename = base + ".docx";
       var pdfDoc = await buildFinalMasterPdfDoc(chapters, {});
       finalMasterPdfBlob = pdfDoc.output("blob");
       finalMasterPdfFilename = base + ".pdf";
@@ -26269,7 +26742,7 @@
       // app.uploadedImages) - sonst wuerde jede dataUrl doppelt im
       // Sitzung-Export landen.
       app.final.master = {
-        chapters: chapters.map(function (c) { return { title: c.title, text: c.text, screenIds: c.screens.map(function (s) { return s.id; }) }; }),
+        chapters: chapters.map(function (c) { return { title: c.title, level: c.level, text: c.text, markedText: c.markedText, screenIds: c.screens.map(function (s) { return s.id; }) }; }),
         builtAt: nowLabel()
       };
       var totalScreens = chapters.reduce(function (n, c) { return n + c.screens.length; }, 0);
@@ -26284,17 +26757,105 @@
       els.finalBuildMasterSpinner.hidden = true;
     }
   });
-  els.finalMasterDownloadDocxBtn.addEventListener("click", async function () {
-    if (!finalMasterDocxBlob) return;
-    var ok = await saveOrWarn(finalMasterDocxFilename, finalMasterDocxBlob);
-    if (ok) addLog("FINAL: Master-Dokument „" + finalMasterDocxFilename + "“ heruntergeladen.");
-  });
+  els.finalMasterDownloadDocxBtn.addEventListener("click", finalDownloadWord);
   els.finalMasterDownloadPdfBtn.addEventListener("click", async function () {
     if (!finalMasterPdfBlob) return;
     var ok = await saveOrWarn(finalMasterPdfFilename, finalMasterPdfBlob);
     if (ok) addLog("FINAL: Master-Dokument „" + finalMasterPdfFilename + "“ heruntergeladen.");
   });
   els.finalResultChapterSelect.addEventListener("change", updateFinalResult);
+
+  // Schritt 4: ganze Screens-Datei samt ihrer Screens loeschen
+  els.finalScreensFilesTbody.addEventListener("click", async function (e) {
+    var btn = e.target.closest("[data-final-screens-file-remove]");
+    if (!btn) return;
+    var id = parseInt(btn.getAttribute("data-final-screens-file-remove"), 10);
+    var file = app.final.screensFiles.filter(function (f) { return f.id === id; })[0];
+    if (!file) return;
+    var count = app.uploadedImages.filter(function (i) { return i.finalScreensFileId === id; }).length;
+    var ok = await confirmDialog("Screens-Datei „" + file.filename + "“ und ihre " + count + " Screen(s) wirklich löschen?", "Löschen");
+    if (!ok) return;
+    app.final.screensFiles = app.final.screensFiles.filter(function (f) { return f.id !== id; });
+    app.uploadedImages = app.uploadedImages.filter(function (i) { return i.finalScreensFileId !== id; });
+    addLog("FINAL: Screens-Datei „" + file.filename + "“ mit " + count + " Screen(s) gelöscht.");
+    renderFinal();
+    renderGallery();
+  });
+  // Schritt 5: markieren (einzeln/alle), Sammel-Zuordnung, Sammel-Loeschen, Bearbeiten
+  els.finalScreensTbody.addEventListener("change", function (e) {
+    var cb = e.target.closest("[data-final-screen-select]");
+    if (!cb) return;
+    var id = cb.getAttribute("data-final-screen-select");
+    if (cb.checked) finalSelectedScreens[id] = true; else delete finalSelectedScreens[id];
+    renderFinalBulkBar();
+  });
+  els.finalScreensTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-final-screen-edit]");
+    if (!btn) return;
+    var input = btn.closest("tr").querySelector("[data-final-screen-caption]");
+    if (input) { input.focus(); input.select(); }
+  });
+  els.finalScreensSelectAllCb.addEventListener("change", function () {
+    finalSelectedScreens = {};
+    if (els.finalScreensSelectAllCb.checked) finalAllScreens().forEach(function (img) { finalSelectedScreens[img.id] = true; });
+    renderFinalScreensTable();
+    renderFinalBulkBar();
+  });
+  els.finalBulkChapterSelect.addEventListener("change", renderFinalBulkBar);
+  els.finalBulkAssignBtn.addEventListener("click", function () {
+    var value = els.finalBulkChapterSelect.value;
+    var ids = finalSelectedIds();
+    if (!value || !ids.length) return;
+    ids.forEach(function (id) {
+      var img = finalScreenById(id);
+      if (!img) return;
+      img.chapter = value === "__none__" ? "" : value;
+      img.finalStatus = "Manuell";
+    });
+    addLog("FINAL: " + ids.length + " markierte(n) Screen(s) " + (value === "__none__" ? "von ihrem Kapitel gelöst" : "„" + value + "“ zugeordnet") + ".");
+    showToast("Zugeordnet", ids.length + " Screen(s) " + (value === "__none__" ? "ohne Kapitel" : "„" + value + "“ zugeordnet") + ".");
+    els.finalBulkChapterSelect.value = "";
+    renderFinalScreensTable();
+    renderFinalBulkBar();
+  });
+  els.finalBulkDeleteBtn.addEventListener("click", function () {
+    var ids = finalSelectedIds();
+    finalDeleteScreens(ids, ids.length + " markierte(n) Screen(s) wirklich löschen? Sie werden aus FINAL und aus der Bilder-Liste entfernt.");
+  });
+
+  // Schritt 8: Design waehlen, Vorlagen hochladen, Word/PowerPoint ausgeben
+  els.finalWordDesignSelect.addEventListener("change", function () { app.final.wordDesign = els.finalWordDesignSelect.value; renderFinalDesign(); });
+  els.finalPptDesignSelect.addEventListener("change", function () { app.final.pptDesign = els.finalPptDesignSelect.value; renderFinalDesign(); });
+  els.finalWordTemplateBtn.addEventListener("click", function () { els.finalWordTemplateInput.click(); });
+  els.finalPptTemplateBtn.addEventListener("click", function () { els.finalPptTemplateInput.click(); });
+  els.finalWordTemplateInput.addEventListener("change", async function () {
+    var file = els.finalWordTemplateInput.files[0];
+    els.finalWordTemplateInput.value = "";
+    if (!file) return;
+    var design = await finalExtractWordDesignFromBuffer(await readFileAsArrayBuffer(file));
+    if (!design) { showToast("Keine Word-Vorlage", "„" + file.name + "“ enthält keine Formatvorlagen (word/styles.xml).", true); return; }
+    app.final.wordTemplate = { filename: file.name, design: design, addedAt: nowLabel() };
+    app.final.wordDesign = "tpl";
+    addLog("FINAL: Word-Vorlage „" + file.name + "“ hochgeladen.");
+    showToast("Vorlage übernommen", "Word-Design aus „" + file.name + "“ ausgewählt.");
+    renderFinalDesign();
+  });
+  els.finalPptTemplateInput.addEventListener("change", async function () {
+    var file = els.finalPptTemplateInput.files[0];
+    els.finalPptTemplateInput.value = "";
+    if (!file) return;
+    var buf = await readFileAsArrayBuffer(file);
+    var valid = false;
+    try { var z = await JSZip.loadAsync(buf); valid = !!z.file("ppt/presentation.xml") && Object.keys(z.files).some(function (p) { return /^ppt\/slideLayouts\/slideLayout\d+\.xml$/.test(p); }); } catch (e) { valid = false; }
+    if (!valid) { showToast("Keine PowerPoint-Vorlage", "„" + file.name + "“ ist keine gültige .pptx/.potx mit Folienlayouts.", true); return; }
+    app.final.pptTemplate = { filename: file.name, base64: finalBytesToBase64(buf), addedAt: nowLabel() };
+    app.final.pptDesign = "tpl";
+    addLog("FINAL: PowerPoint-Vorlage „" + file.name + "“ hochgeladen.");
+    showToast("Vorlage übernommen", "PowerPoint-Design aus „" + file.name + "“ ausgewählt.");
+    renderFinalDesign();
+  });
+  els.finalDesignDocxBtn.addEventListener("click", finalDownloadWord);
+  els.finalDesignPptxBtn.addEventListener("click", finalDownloadPptx);
 
   /* ============ Teil 10: Navigation ============ */
 

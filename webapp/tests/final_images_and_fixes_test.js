@@ -110,7 +110,7 @@ async function buildDocx(bodyXml, imageCount) {
     fire(input, "change");
   }
   const rows = () => Array.from(doc.querySelectorAll("#final-screens-tbody tr"));
-  const rowFor = (navPart) => rows().find((r) => r.children[2].textContent.includes(navPart));
+  const rowFor = (navPart) => rows().find((r) => r.children[3].textContent.includes(navPart));
 
   // ===================== Tickets (fuer Reset-Guard, F2, F6) =====================
   doc.querySelector('.nav-item[data-view="import"]').click();
@@ -153,11 +153,11 @@ async function buildDocx(bodyXml, imageCount) {
   await uploadTo("final-screens-file-input", await buildDocx(screensBody, 3), "screens.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
   await waitUntil(() => rows().length === 3, 5000);
   check("3 Screens extrahiert", rows().length === 3);
-  check("Navigation aus Textfeld gelesen (doppelte Ablage mc:Choice/mc:Fallback nur einmal)", !!rowFor("Verträge > Vertrag ändern") && rowFor("Verträge > Vertrag ändern").children[2].textContent === "Verträge > Vertrag ändern");
+  check("Navigation aus Textfeld gelesen (doppelte Ablage mc:Choice/mc:Fallback nur einmal)", !!rowFor("Verträge > Vertrag ändern") && rowFor("Verträge > Vertrag ändern").children[3].textContent === "Verträge > Vertrag ändern");
   check("Navigation aus Nachbarzelle der Tabellenzeile gelesen", !!rowFor("Kündigung > Fristen anzeigen"));
   check("Navigation aus folgendem Absatz gelesen", !!rowFor("Stammdaten > Händler"));
   check("Untertitel ist mit dem Navigationstext vorbelegt", rowFor("Stammdaten > Händler").querySelector("[data-final-screen-caption]").value === "Stammdaten > Händler");
-  check("Status anfangs 'Offen'", rows().every((r) => r.children[5].textContent.includes("Offen")));
+  check("Status anfangs 'Offen'", rows().every((r) => r.children[6].textContent.includes("Offen")));
   check("Spalten Untertitel + oneSCM-Navigation im Tabellenkopf", doc.querySelector("#final-screens-table thead").textContent.includes("Untertitel") && doc.querySelector("#final-screens-table thead").textContent.includes("oneSCM-Navigation"));
 
   // ===================== Bilder zuordnen (mit Bildern) =====================
@@ -173,14 +173,14 @@ async function buildDocx(bodyXml, imageCount) {
   check("Screen 2 -> Unterkapitel 2.1 (Groß-/Kleinschreibung toleriert)", rowFor("Fristen anzeigen").querySelector("select").value === KAP21);
   check("Unbekanntes Kapitel aus Claude-Antwort wird NICHT übernommen", rowFor("Händler").querySelector("select").value === "");
   check("Untertitel von Claude übernommen", rowFor("Vertrag ändern").querySelector("[data-final-screen-caption]").value === "Maske zum Ändern eines Vertrags");
-  check("Status 'Entwurf' nach der Zuordnung", rows().every((r) => r.children[5].textContent.includes("Entwurf")));
+  check("Status 'Entwurf' nach der Zuordnung", rows().every((r) => r.children[6].textContent.includes("Entwurf")));
   check("Statuszeile meldet 2 von 3 zugeordnet", doc.getElementById("final-assign-images-status-note").textContent.includes("3 Screen(s) interpretiert, 2 einem Kapitel"));
 
   // ===================== Entwurf manuell umhaengen -> "Manuell", erneuter Lauf laesst ihn aus =====================
   let sel = rowFor("Händler").querySelector("select");
   sel.value = KAP2;
   fire(sel, "change");
-  check("Manuelle Änderung setzt Status 'Manuell'", rowFor("Händler").children[5].textContent.includes("Manuell"));
+  check("Manuelle Änderung setzt Status 'Manuell'", rowFor("Händler").children[6].textContent.includes("Manuell"));
   state.imagesEnabled = false;
   sampleCalls.length = 0;
   doc.getElementById("final-assign-images-status-note").textContent = "";
@@ -197,7 +197,7 @@ async function buildDocx(bodyXml, imageCount) {
   capInput.value = "Vertragsmaske (bearbeitet)";
   fire(capInput, "input");
   check("Untertitel-Eingabe wird übernommen", rowFor("Vertrag ändern").querySelector("[data-final-screen-caption]").value === "Vertragsmaske (bearbeitet)");
-  check("Bearbeiteter Untertitel setzt Status 'Manuell' (erneuter Lauf überschreibt ihn nicht)", rowFor("Vertrag ändern").children[5].textContent.includes("Manuell"));
+  check("Bearbeiteter Untertitel setzt Status 'Manuell' (erneuter Lauf überschreibt ihn nicht)", rowFor("Vertrag ändern").children[6].textContent.includes("Manuell"));
   const thumb = rowFor("Vertrag ändern").querySelector("[data-final-screen-view]");
   thumb.dispatchEvent(new win.MouseEvent("dblclick", { bubbles: true }));
   await waitUntil(() => !doc.getElementById("image-viewer-window").hidden, 3000);

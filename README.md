@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.111.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.112.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,39 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **FINAL – Erweiterungen (v2.112.0)**:
+  - **Auswahllisten**: Rolle zusätzlich „HQ“; Sparte nur noch „Pkw“ und „Van“ (leere Auswahl
+    beim Screens-Upload = „Pkw und Van (beide)“) – „Markt“ ist als Sparte entfallen.
+  - **Markierungen** in Vorschau (Schritt 3) und Ergebnis (Schritt 7, Quellversion und
+    Master): interne Vermerke (echte Word-Kommentarbereiche) mit **gelbem**, Jira-Nummern mit
+    **blauem** Hintergrund. Intern über unsichtbare Markierungszeichen im eingelesenen Text
+    (`markedText`), die nie in Word/PDF/PowerPoint landen.
+  - **Screens verwalten**: In Schritt 4 lässt sich eine ganze Screens-Datei samt ihrer Screens
+    löschen. In Schritt 5 Screens einzeln oder über „alle markieren“ auswählen und für alle
+    Markierten gemeinsam ein Kapitel zuweisen (oder die Zuordnung entfernen) bzw. löschen;
+    je Zeile „Bearbeiten“ (springt ins Untertitel-Feld) und „Löschen“.
+  - **Original-Design**: Beim Hochladen in Schritt 1 werden Formatvorlagen (`styles.xml`),
+    Theme (Farben/Schriften), Schriftartentabelle, Nummerierung und Seitenformat (Größe,
+    Ausrichtung, Ränder) der Datei gespeichert und im Word-Export verwendet. Da Word
+    eingebaute Formatvorlagen mit lokalisierter ID speichert (z. B. „berschrift1“), werden
+    Überschriften/Titel über den englischen Vorlagennamen („heading 1“, „Title“) zugeordnet
+    (`finalStyleIdMap`). Kapitelüberschriften im Master folgen jetzt der Gliederungsebene
+    (Überschrift 1/2/3) statt einheitlich „Titel“.
+  - **Schritt 8 – Design auswählen (Word / PowerPoint)**: Word-Design = Original-Design einer
+    hochgeladenen Handbuch-Datei (voreingestellt), eigene Word-Vorlage (.dotx/.docx) oder eines
+    von drei App-Designs („Standard“ Calibri/Petrol, „Klassisch“ Cambria/Anthrazit, „Modern“
+    Segoe UI/Blau, als generierte Formatvorlagen). Der Word-Export in Schritt 6 nutzt dasselbe
+    Design. **PowerPoint-Export** (`finalBuildPptxBlob`): Titelfolie, je Kapitel Textfolien
+    (bei langen Kapiteln mit „(Fortsetzung)“) und je Screen eine Bildfolie mit Bildunterschrift.
+    Grundlage ist eine eigene PowerPoint-Vorlage (.potx/.pptx – deren vorhandene Folien werden
+    entfernt, Folienmaster/Layouts/Theme bleiben; die neuen Folien nutzen die Platzhalter der
+    Layouts „Titel“ und „Titel und Inhalt“) oder für die App-Designs eine eingebettete
+    Basisvorlage (aus python-pptx 1.0.2, MIT-Lizenz), deren Theme-Akzentfarbe und Schriften
+    angepasst werden. Word und PowerPoint werden jetzt beim Herunterladen aus dem gespeicherten
+    Master-Stand gebaut – das funktioniert damit auch nach dem Laden einer Sitzung.
+  - **Icons**: Die acht Schritte und die wichtigsten Buttons im FINAL-Register haben
+    einheitliche Linien-Icons (Inline-SVG, keine externe Bibliothek).
 
 - **FINAL – Bilder zuordnen (neu, v2.111.0, Abschnitt 5)**: Beim Hochladen einer
   Screens-Datei (.docx) wird je Bild zusätzlich der **oneSCM-Navigationstext** gelesen
