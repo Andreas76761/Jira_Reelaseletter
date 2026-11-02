@@ -681,6 +681,7 @@
       <li><button class="nav-item" data-view="dataquality" type="button">Datenqualität</button></li>
       <li><button class="nav-item" data-view="import" type="button">Import</button></li>
       <li><button class="nav-item" data-view="rovoknowledge" type="button">Rovo Knowledge</button></li>
+      <li><button class="nav-item" data-view="rovosummary" type="button">Rovo Summary</button></li>
       <li><button class="nav-item" data-view="dateiverwaltung" type="button">Dateiverwaltung<span class="count-badge" id="nav-badge-changes" hidden>0</span></button></li>
       <li><button class="nav-item" data-view="listenauswahl" type="button">Listenauswahl<span class="count-badge" id="nav-badge-lists" hidden>0</span></button></li>
       <li><button class="nav-item" data-view="gliederung" type="button">Gliederung</button></li>
@@ -1233,6 +1234,83 @@
           <div id="rovo-chapter-summary-preview-section" hidden>
             <p class="section-label" style="margin-top:14px;">Zusammenfassung: <span id="rovo-chapter-summary-preview-title"></span></p>
             <div class="panel gen-preview" id="rovo-chapter-summary-preview-output" style="padding:12px 14px; white-space:pre-wrap;"></div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= Rovo Summary ================= -->
+      <section class="view-panel" data-view-panel="rovosummary" hidden>
+        <div class="view-head"><h2>Rovo Summary</h2><p class="desc">Beliebig viele Quelldokumente (Word .docx/.doc, echtes HTML oder aus der Zwischenablage eingefügter Text) hochladen bzw. einfügen – Claude ordnet und verschmilzt ihre Inhalte zu EINEM frei strukturierten Gesamtdokument (keine feste Kapitelzuordnung wie bei der RAG-Bibliothek) und vergleicht dieses anschließend mit ALLEN bereits vorhandenen Informationen (Tickets, RAG-Bibliothek, Rovo-Bibliothek, Benutzerhandbuch): zeigt neue Inhalte und Widersprüche zum bestehenden Wissensstand.</p></div>
+
+        <section>
+          <p class="section-label">1. Quellen hinzufügen</p>
+          <div class="dropzone" id="rovo-summary-dropzone" tabindex="0" role="button" aria-label="Datei(en) auswählen">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span class="txt">
+              <strong>Datei(en) hier ablegen</strong>
+              <span>oder klicken zum Auswählen (.docx, .doc, .html/.htm, Mehrfachauswahl möglich)</span>
+            </span>
+          </div>
+          <input type="file" id="rovo-summary-file-input" accept=".docx,.doc,.html,.htm" multiple hidden>
+
+          <div class="controls" style="flex-wrap:wrap; gap:16px; align-items:flex-start; margin-top:10px;">
+            <div style="flex:1; min-width:260px;">
+              <label for="rovo-summary-paste-title">Titel der Quelle (optional)</label>
+              <input class="text-input" id="rovo-summary-paste-title" type="text" placeholder="z. B. E-Mail vom Fachbereich">
+              <label for="rovo-summary-paste-textarea" style="margin-top:8px; display:block;">Text einfügen</label>
+              <textarea class="text-input" id="rovo-summary-paste-textarea" rows="6" placeholder="Text hier einfügen (Strg+V) oder über den Button unten aus der Zwischenablage holen …" style="width:100%; font-family:inherit;"></textarea>
+              <div class="controls" style="margin-top:6px;">
+                <button class="btn ghost btn-tiny" id="rovo-summary-paste-clipboard-btn" type="button">Aus Zwischenablage einfügen</button>
+                <button class="btn primary btn-tiny" id="rovo-summary-paste-add-btn" type="button">Als Quelle hinzufügen</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">2. Quellen-Übersicht (<span id="rovo-summary-sources-count">0</span>)</p>
+          <div class="table-wrap">
+            <table class="simple-table" id="rovo-summary-sources-table">
+              <thead><tr><th>Titel/Dateiname</th><th>Art</th><th>Zeichen</th><th>Hinzugefügt am</th><th></th></tr></thead>
+              <tbody id="rovo-summary-sources-tbody"></tbody>
+            </table>
+            <div class="empty-hint" id="rovo-summary-sources-empty">Noch keine Quellen hinzugefügt.</div>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">3. Gesamtdokument erzeugen</p>
+          <p class="desc">Ein Claude-Aufruf über ALLE oben hinzugefügten Quellen zusammen – Claude wählt die Gliederung/Zwischenüberschriften des Ergebnisses selbst, passend zu den tatsächlichen Inhalten.</p>
+          <div class="controls">
+            <button class="btn primary" id="rovo-summary-merge-btn" type="button">
+              <span class="btn-spinner" id="rovo-summary-merge-spinner" hidden></span>
+              Gesamtdokument erzeugen
+            </button>
+          </div>
+          <p class="step-note" id="rovo-summary-merge-status-note"></p>
+          <div class="gen-preview-wrap">
+            <textarea class="text-input" id="rovo-summary-merge-output" rows="14" placeholder="Noch kein Gesamtdokument erzeugt." style="width:100%; font-family:inherit; white-space:pre-wrap;"></textarea>
+            <div class="controls">
+              <button class="btn ghost" id="rovo-summary-merge-download-btn" type="button" disabled>Als Text herunterladen</button>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <p class="section-label">4. Mit vorhandenen Informationen vergleichen</p>
+          <p class="desc">Vergleicht das oben erzeugte Gesamtdokument mit ALLEN vorhandenen Informationen (Jira-Tickets, RAG-Bibliothek, Rovo-Bibliothek, bestehender Benutzerhandbuch-Text) – zeigt, was neu ist und was dem bestehenden Wissensstand widerspricht.</p>
+          <div class="controls">
+            <button class="btn primary" id="rovo-summary-compare-btn" type="button">
+              <span class="btn-spinner" id="rovo-summary-compare-spinner" hidden></span>
+              Vergleichen
+            </button>
+          </div>
+          <p class="step-note" id="rovo-summary-compare-status-note"></p>
+          <div id="rovo-summary-compare-result" hidden>
+            <div class="panel gen-preview" id="rovo-summary-compare-output" style="padding:12px 14px; white-space:pre-wrap;"></div>
+            <div class="controls" style="margin-top:8px;">
+              <button class="btn ghost" id="rovo-summary-compare-download-btn" type="button">Als Text herunterladen</button>
+            </div>
           </div>
         </section>
       </section>
@@ -5405,7 +5483,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.107.0";
+  var APP_VERSION = "2.108.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6984,6 +7062,13 @@
     "rovo-chapter-summary-all-status-note", "rovo-chapter-summary-table", "rovo-chapter-summary-tbody",
     "rovo-chapter-summary-empty", "rovo-chapter-summary-preview-section", "rovo-chapter-summary-preview-title",
     "rovo-chapter-summary-preview-output",
+    "rovo-summary-dropzone", "rovo-summary-file-input",
+    "rovo-summary-paste-title", "rovo-summary-paste-textarea", "rovo-summary-paste-clipboard-btn", "rovo-summary-paste-add-btn",
+    "rovo-summary-sources-count", "rovo-summary-sources-tbody", "rovo-summary-sources-empty",
+    "rovo-summary-merge-btn", "rovo-summary-merge-spinner", "rovo-summary-merge-status-note",
+    "rovo-summary-merge-output", "rovo-summary-merge-download-btn",
+    "rovo-summary-compare-btn", "rovo-summary-compare-spinner", "rovo-summary-compare-status-note",
+    "rovo-summary-compare-result", "rovo-summary-compare-output", "rovo-summary-compare-download-btn",
     "rovo-tables-count", "rovo-tables-list", "rovo-tables-empty",
     "bildband-table", "bildband-tbody", "bildband-empty",
     "edito-version-select", "edito-chapters-section", "edito-chapters-count",
@@ -7077,6 +7162,16 @@
     // Fassungen (aelteste zuerst) fuer den Vergleich "neue vs. vorherige
     // Fassung" bei jedem erneuten Klick auf "Bearbeiten" (Loop).
     subchapterDrafts: {},
+    // Rovo Summary (eigenes Register, direkt nach Rovo Knowledge): beliebig
+    // viele Quelldokumente (.docx/.doc, echtes .html, Zwischenablage-Text)
+    // hochladen/einfuegen, per Claude zu EINEM frei strukturierten
+    // Gesamtdokument ordnen (keine Kapitel-Zuordnung, anders als RAG-
+    // Bibliothek/Rovo Knowledge) und dieses Gesamtdokument anschliessend
+    // gegen ALLE vorhandenen Quellen (Tickets, RAG-Bibliothek, Rovo-
+    // Bibliothek, Benutzerhandbuch) auf neue Informationen/Widersprueche
+    // pruefen. sources: [{id, kind: "datei"|"einfügen", filename, title,
+    // text, addedAt}].
+    rovoSummary: { sources: [], mergedDoc: "", mergedAt: "", comparisonResult: "", comparisonAt: "" },
     tickets: [],
     view: { bucket: "all", domain: "", label: "", query: "", issueType: "", excludeTypes: {}, sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
@@ -7595,6 +7690,8 @@
     app.rovoEntries = [];
     app.rovoChapterSummaries = {};
     app.rovoTables = [];
+    app.rovoSummary = { sources: [], mergedDoc: "", mergedAt: "", comparisonResult: "", comparisonAt: "" };
+    renderRovoSummary();
     app.editoVersionKey = "";
     app.editoChapters = {};
     app.subchapterDrafts = {};
@@ -7697,6 +7794,8 @@
     app.rovoEntries = [];
     app.rovoChapterSummaries = {};
     app.rovoTables = [];
+    app.rovoSummary = { sources: [], mergedDoc: "", mergedAt: "", comparisonResult: "", comparisonAt: "" };
+    renderRovoSummary();
     app.editoVersionKey = "";
     app.editoChapters = {};
     app.subchapterDrafts = {};
@@ -7773,6 +7872,7 @@
       editoVersionKey: app.editoVersionKey,
       editoChapters: app.editoChapters,
       subchapterDrafts: app.subchapterDrafts,
+      rovoSummary: app.rovoSummary,
       selectedKeys: app.selectedKeys,
       savedLists: app.savedLists,
       nextSavedListId: app.nextSavedListId,
@@ -7842,6 +7942,11 @@
     if (typeof data.editoVersionKey === "string") app.editoVersionKey = data.editoVersionKey;
     if (data.editoChapters && typeof data.editoChapters === "object") app.editoChapters = data.editoChapters;
     if (data.subchapterDrafts && typeof data.subchapterDrafts === "object") app.subchapterDrafts = data.subchapterDrafts;
+    if (data.rovoSummary && typeof data.rovoSummary === "object") app.rovoSummary = {
+      sources: Array.isArray(data.rovoSummary.sources) ? data.rovoSummary.sources : [],
+      mergedDoc: data.rovoSummary.mergedDoc || "", mergedAt: data.rovoSummary.mergedAt || "",
+      comparisonResult: data.rovoSummary.comparisonResult || "", comparisonAt: data.rovoSummary.comparisonAt || ""
+    };
     app.selectedKeys = data.selectedKeys || {};
     app.savedLists = data.savedLists || [];
     app.nextSavedListId = data.nextSavedListId || 1;
@@ -7943,6 +8048,7 @@
     renderRagAnalysis();
     els.ragMergeOutput.value = app.ragMergedDoc;
     els.ragMergeDownloadBtn.disabled = !app.ragMergedDoc;
+    renderRovoSummary();
     renderMassFiles();
     renderMassTicketSourceWrap();
     els.massMergeOutput.value = app.massMergedDoc;
@@ -18754,7 +18860,9 @@
     clickanweisungRagEnrich: "Du bist Technischer Redakteur für die Klickanweisung (Quick Reference) eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten steht ein bereits fertiger, deterministisch aus den Ticket-Rohdaten erzeugter Klickanweisungs-Entwurf (Schritt-für-Schritt-Anleitung), danach zusätzliche, thematisch passende Textschnipsel aus der RAG-Bibliothek. Erstelle eine ZUSÄTZLICHE, ergänzte Fassung: füge, wo fachlich sinnvoll, zusätzliche Klickschritte oder Hinweise aus der RAG-Bibliothek hinzu (z. B. fehlende Zwischenschritte, Voraussetzungen, Folgeschritte), OHNE die vorhandenen Schritte zu entfernen oder umzusortieren. Nutze ausschließlich Informationen aus dem Entwurf und den Quellen unten, erfinde nichts hinzu - fehlen passende Quellen, gib den Entwurf nahezu unverändert zurück statt zu spekulieren. Gib ausschließlich den neuen Text aus, keine Erklärungen dazu:",
     subchapterDraft: "Du bist Technischer Redakteur für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Erstelle oder aktualisiere die Fassung des unten genannten EINEN Unterkapitels für die angegebene Zielversion (Rolle/Sparte), DURCHGÄNGIG IM PRÄSENS, im Stil eines professionellen Softwarehandbuchs (zusammenhängende Absätze, keine reine Aufzählung, sofern die Formatregeln unten nichts anderes vorgeben). Halte dich STRENG an die vom Nutzer vorgegebene Kurzbeschreibung, die relevanten Stichwörter, die auszuschließenden Stichwörter/Inhalte (diese NIEMALS erwähnen, auch nicht indirekt) sowie die Formatregeln. Füge an inhaltlich passenden Stellen eine eigene Zeile \"[Bild]\" als Bild-Platzhalter ein, wenn ein zugeordneter Screenshot (s. u.) dort sinnvoll ist - nie mehr [Bild]-Platzhalter als zugeordnete Screenshots vorhanden sind. Füge ebenso eine eigene Zeile \"[Tabelle]\" ein, wenn eine zugeordnete Tabelle dort sinnvoll ist - nie mehr [Tabelle]-Platzhalter als zugeordnete Tabellen vorhanden sind. Nutze AUSSCHLIESSLICH Informationen aus den Quellen unten, erfinde nichts hinzu - fehlen Informationen zu einem Aspekt, lass ihn aus statt zu spekulieren. Widersprechen sich Quellen inhaltlich, hat die Rovo-Knowledge-Quelle (direkt aus dem Rovo-Quellsystem) Vorrang vor den anderen Quellen. Keine Ticket-Schlüssel/-Referenzen im Text. Gib ausschließlich den neuen Unterkapiteltext aus, keine Erklärungen dazu:",
     subchapterAgent4: "Du bist Lektor für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen ALLE genehmigten Unterkapitel der aktuellen Rolle/Sparte-Version (je Unterkapitel mit Überschrift \"## \"). Vergleiche die Unterkapitel UNTEREINANDER (nicht gegen externe Quellen) und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Widersprüche zwischen Unterkapiteln\n- (ein Stichpunkt je Aussage, die sich zwischen zwei oder mehr Unterkapiteln widerspricht, mit Nennung der betroffenen Unterkapitel)\n\n### Redundanzen zwischen Unterkapiteln\n- (ein Stichpunkt je inhaltlich stark überlappender Aussage, die in mehreren Unterkapiteln nahezu gleich wiederholt wird, mit Nennung der betroffenen Unterkapitel)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
-    subchapterAgent5: "Du bist Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen ALLE genehmigten Unterkapitel der aktuellen Rolle/Sparte-Version, je Unterkapitel mit den ihm zugeordneten Quellen (Jira-Tickets des übergeordneten Kapitels, RAG-Bibliothek-Einträge und Rovo-Knowledge-Notizen, jeweils diesem Unterkapitel zugeordnet) und dem Unterkapiteltext. Prüfe JE UNTERKAPITEL, ob der Inhalt der zugeordneten Quellen im Unterkapiteltext erkennbar aufgegriffen wird. Gib AUSSCHLIESSLICH den folgenden Abschnitt aus, in genau diesem Format:\n\n### Nicht abgedeckte Quellen\n- (ein Stichpunkt je Unterkapitel MIT mindestens einer zugeordneten Quelle, deren Inhalt im Unterkapiteltext nicht erkennbar aufgegriffen wird - Unterkapitel nennen, betroffene Quelle(n) kurz beschreiben)\n\nIst die Liste leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:"
+    subchapterAgent5: "Du bist Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen ALLE genehmigten Unterkapitel der aktuellen Rolle/Sparte-Version, je Unterkapitel mit den ihm zugeordneten Quellen (Jira-Tickets des übergeordneten Kapitels, RAG-Bibliothek-Einträge und Rovo-Knowledge-Notizen, jeweils diesem Unterkapitel zugeordnet) und dem Unterkapiteltext. Prüfe JE UNTERKAPITEL, ob der Inhalt der zugeordneten Quellen im Unterkapiteltext erkennbar aufgegriffen wird. Gib AUSSCHLIESSLICH den folgenden Abschnitt aus, in genau diesem Format:\n\n### Nicht abgedeckte Quellen\n- (ein Stichpunkt je Unterkapitel MIT mindestens einer zugeordneten Quelle, deren Inhalt im Unterkapiteltext nicht erkennbar aufgegriffen wird - Unterkapitel nennen, betroffene Quelle(n) kurz beschreiben)\n\nIst die Liste leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
+    rovoSummaryMerge: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Unten stehen mehrere, voneinander unabhängige Quelldokumente unterschiedlicher Herkunft (Word-Dateien, HTML-Seiten, aus der Zwischenablage eingefügte Texte). Ordne und verschmelze ihre Inhalte zu EINEM einzigen, gut strukturierten, zusammenhängenden Gesamtdokument auf Deutsch, DURCHGÄNGIG IM PRÄSENS: fasse thematisch zusammengehörige Inhalte unter eigenen, sinnvoll gewählten Zwischenüberschriften (\"## \") zusammen, entferne Redundanzen zwischen den Quellen, löse erkennbare Widersprüche zwischen den Quellen nicht selbst auf, sondern weise an der betreffenden Stelle mit \"[Widerspruch zwischen Quellen]\" darauf hin. Die Struktur/Gliederung des Ergebnisses bestimmst du selbst anhand der tatsächlichen Inhalte - es gibt keine vorgegebene Kapitelstruktur. Nutze AUSSCHLIESSLICH Informationen aus den Quelldokumenten unten, erfinde nichts hinzu. Gib ausschließlich das neue Gesamtdokument aus, keine Erklärungen dazu:",
+    rovoSummaryCompare: "Du bist Wissensanalyst für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Oben steht ein neu erstelltes Gesamtdokument aus mehreren Quelldokumenten, danach alle BEREITS VORHANDENEN Informationen des Systems (Jira-Tickets, RAG-Bibliothek, Rovo-Wissens-Notizen, bestehender Benutzerhandbuch-Text). Vergleiche das neue Gesamtdokument inhaltlich mit den bereits vorhandenen Informationen und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Informationen\n- (ein Stichpunkt je Aussage im neuen Gesamtdokument, die in KEINER der vorhandenen Quellen erkennbar enthalten ist)\n\n### Widersprüche zu bestehenden Quellen\n- (ein Stichpunkt je Aussage im neuen Gesamtdokument, die einer vorhandenen Quelle inhaltlich widerspricht oder sie erkennbar überholt - betroffene Quelle(n) kurz benennen)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:"
   };
   var RAG_PROMPT_LABELS = {
     summary: "Zusammenfassung erzeugen",
@@ -18784,7 +18892,9 @@
     clickanweisungRagEnrich: "Clickanweisung: Mit RAG-Kontext anreichern",
     subchapterDraft: "Unterkapitel-Werkstatt: Unterkapitel erzeugen/aktualisieren",
     subchapterAgent4: "Unterkapitel-Werkstatt Agent 4: Unterkapitelübergreifende Konsistenz prüfen",
-    subchapterAgent5: "Unterkapitel-Werkstatt Agent 5: Vollständigkeit & Abdeckung prüfen"
+    subchapterAgent5: "Unterkapitel-Werkstatt Agent 5: Vollständigkeit & Abdeckung prüfen",
+    rovoSummaryMerge: "Rovo Summary: Quelldokumente zu einem Gesamtdokument ordnen",
+    rovoSummaryCompare: "Rovo Summary: Mit vorhandenen Informationen vergleichen"
   };
   function ragPromptFor(promptKey) {
     var override = app.ragPrompts[promptKey];
@@ -24952,6 +25062,219 @@
     }
   });
 
+  /* ============ Teil 9e: Rovo Summary ============
+     Eigenes Register direkt nach Rovo Knowledge: beliebig viele Quell-
+     dokumente (.docx/.doc, echtes .html/.htm, Zwischenablage-Text)
+     sammeln, per EINEM Claude-Aufruf zu einem frei strukturierten
+     Gesamtdokument ordnen (keine Kapitel-Zuordnung, anders als RAG-
+     Bibliothek/Rovo Knowledge - Claude waehlt die Gliederung selbst) und
+     dieses Gesamtdokument anschliessend gegen ALLE vorhandenen Quellen
+     (Tickets, RAG-Bibliothek, Rovo-Bibliothek, Benutzerhandbuch)
+     vergleichen. Nutzt fuer .docx/.doc/.html/.htm bewusst dieselbe
+     bereits vorhandene, inhaltsbasierte (nicht endungsbasierte)
+     extractTextFromDocx()/extractWordLikeText()-Erkennung wie Rovo
+     Knowledge - ein echtes .doc (binaeres Legacy-Format) bleibt wie dort
+     mit klarer Fehlermeldung abgelehnt (als .docx neu speichern). */
+  var ROVO_SUMMARY_FILE_RE = /\.(docx|doc|html?)$/i;
+  function stripHtmlToPlainText(html) {
+    var cleaned = (html || "")
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/<\/(p|div|h[1-6]|li|tr|section|article)\s*>/gi, "\n")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<li[^>]*>/gi, "- ")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">").replace(/&quot;/gi, '"').replace(/&#39;/gi, "'").replace(/&apos;/gi, "'");
+    return cleaned.split("\n").map(function (l) { return l.trim(); }).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+  async function rovoSummaryExtractFileText(file) {
+    var raw = await extractTextFromDocx(file);
+    if (/^\s*(<!doctype html|<html)/i.test(raw) || /<\/html\s*>/i.test(raw)) return stripHtmlToPlainText(raw);
+    return raw;
+  }
+  var nextRovoSummarySourceId = 1;
+  function rovoSummaryAddSource(kind, filename, title, text) {
+    text = (text || "").trim();
+    if (!text) return null;
+    var entry = { id: nextRovoSummarySourceId++, kind: kind, filename: filename || "", title: title || "", text: text, addedAt: nowLabel() };
+    app.rovoSummary.sources.unshift(entry);
+    renderRovoSummary();
+    return entry;
+  }
+  function rovoSummaryRemoveSource(id) {
+    app.rovoSummary.sources = app.rovoSummary.sources.filter(function (s) { return s.id !== id; });
+    renderRovoSummary();
+  }
+  async function handleRovoSummaryFiles(fileList) {
+    var files = Array.prototype.filter.call(fileList || [], function (f) { return ROVO_SUMMARY_FILE_RE.test(f.name || ""); });
+    if (!files.length) { showToast("Keine passende Datei", "Bitte eine .docx-, .doc- oder .html-/.htm-Datei auswählen.", true); return; }
+    var added = 0;
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      try {
+        var text = await rovoSummaryExtractFileText(file);
+        if (rovoSummaryAddSource("datei", file.name, file.name, text)) added++;
+      } catch (err) {
+        showToast("Fehler beim Lesen", file.name + ": " + ((err && err.message) || "Unbekannter Fehler."), true);
+        addLog("Rovo Summary: Import-Fehler bei „" + file.name + "“: " + ((err && err.message) || "Unbekannter Fehler."));
+      }
+    }
+    if (added) {
+      addLog("Rovo Summary: " + added + " Datei(en) als Quelle(n) hinzugefügt.");
+      showToast("Hinzugefügt", added + " Quelle(n) hinzugefügt.");
+    }
+  }
+  function renderRovoSummary() {
+    var sources = app.rovoSummary.sources;
+    els.rovoSummarySourcesCount.textContent = sources.length;
+    els.rovoSummarySourcesEmpty.hidden = sources.length > 0;
+    els.rovoSummarySourcesTbody.innerHTML = sources.map(function (s) {
+      return "<tr><td>" + escapeHtml(s.title || s.filename || "(ohne Titel)") + "</td>" +
+        "<td>" + (s.kind === "datei" ? "Datei" : "Zwischenablage") + "</td>" +
+        '<td class="mono">' + s.text.length + "</td>" +
+        "<td>" + escapeHtml(s.addedAt) + "</td>" +
+        '<td><button class="btn ghost btn-tiny" data-rovo-summary-remove="' + s.id + '" type="button">Entfernen</button></td></tr>';
+    }).join("");
+    els.rovoSummaryMergeOutput.value = app.rovoSummary.mergedDoc;
+    els.rovoSummaryMergeDownloadBtn.disabled = !app.rovoSummary.mergedDoc.trim();
+    els.rovoSummaryCompareResult.hidden = !app.rovoSummary.comparisonResult;
+    els.rovoSummaryCompareOutput.textContent = app.rovoSummary.comparisonResult;
+  }
+  function rovoSummaryBuildMergePrompt() {
+    return ragPromptFor("rovoSummaryMerge") + "\n\n" +
+      truncate(app.rovoSummary.sources.map(function (s) {
+        return "## Quelle: " + (s.title || s.filename || "(ohne Titel)") + "\n" + truncate(s.text, 8000);
+      }).join("\n\n"), 60000);
+  }
+  // Vergleichsbasis "ALLE vorhandenen Quellen": kompakte Tickets-Liste
+  // (Key+Kurzbeschreibung, volle Beschreibungen wuerden den Prompt
+  // sprengen) + RAG-Bibliothek + Rovo-Bibliothek + Benutzerhandbuch
+  // (sowohl bestehender manualChapters-Text als auch bereits erzeugte
+  // EDITO-Entwuerfe, da beides "vorhandene Informationen" sind) - je
+  // Abschnitt einzeln begrenzt, dazu eine aeussere Sicherheitsgrenze
+  // (gleiches Muster wie editoAgent4Prompt/editoAgent5Prompt oben).
+  function rovoSummaryExistingSourcesBlock() {
+    var tickets = Array.from(app.ticketStore.values()).map(function (v) { return v.current; });
+    var ticketLines = tickets.map(function (t) { return "- " + (t.key || "") + ": " + (t.summary || ""); }).join("\n");
+    var ragLines = app.ragLibrary.map(function (e) { return "- " + e.label + ": " + truncate(e.text, 300); }).join("\n");
+    var rovoLines = app.rovoEntries.map(function (e) { return "- " + truncate(e.chatText, 200) + " / " + truncate(e.answerText, 200); }).join("\n");
+    var manualTitles = Object.keys(app.manualChapters).filter(function (t) { return app.manualChapters[t] && app.manualChapters[t].de; });
+    var editoTitles = Object.keys(app.editoChapters).filter(function (t) { return app.editoChapters[t] && app.editoChapters[t].de; });
+    var manualLines = manualTitles.map(function (t) { return "## " + t + "\n" + truncate(app.manualChapters[t].de, 1500); }).join("\n\n");
+    var editoLines = editoTitles.map(function (t) { return "## " + t + " (EDITO-Entwurf)\n" + truncate(app.editoChapters[t].de, 1500); }).join("\n\n");
+    return "\n\nQUELLE A – Jira-Tickets (" + tickets.length + "):\n" + (ticketLines || "(keine)") +
+      "\n\nQUELLE B – RAG-Bibliothek (" + app.ragLibrary.length + "):\n" + truncate(ragLines || "(keine)", 15000) +
+      "\n\nQUELLE C – Rovo-Bibliothek (" + app.rovoEntries.length + "):\n" + truncate(rovoLines || "(keine)", 15000) +
+      "\n\nQUELLE D – Bestehender Benutzerhandbuch-Text (" + manualTitles.length + " Kapitel):\n" + truncate(manualLines || "(keiner vorhanden)", 20000) +
+      "\n\nQUELLE E – EDITO-Entwürfe (" + editoTitles.length + " Kapitel):\n" + truncate(editoLines || "(keine vorhanden)", 20000);
+  }
+  function rovoSummaryBuildComparePrompt() {
+    return ragPromptFor("rovoSummaryCompare") +
+      "\n\nNEUES GESAMTDOKUMENT:\n" + truncate(app.rovoSummary.mergedDoc, 20000) +
+      truncate(rovoSummaryExistingSourcesBlock(), 70000);
+  }
+  els.rovoSummaryDropzone.addEventListener("click", function () { els.rovoSummaryFileInput.click(); });
+  els.rovoSummaryDropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.rovoSummaryFileInput.click(); } });
+  els.rovoSummaryFileInput.addEventListener("change", function () { handleRovoSummaryFiles(els.rovoSummaryFileInput.files); els.rovoSummaryFileInput.value = ""; });
+  ["dragenter", "dragover"].forEach(function (evt) {
+    els.rovoSummaryDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.rovoSummaryDropzone.classList.add("dragover"); });
+  });
+  ["dragleave", "drop"].forEach(function (evt) {
+    els.rovoSummaryDropzone.addEventListener(evt, function (e) { e.preventDefault(); els.rovoSummaryDropzone.classList.remove("dragover"); });
+  });
+  els.rovoSummaryDropzone.addEventListener("drop", function (e) {
+    var files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length) handleRovoSummaryFiles(files);
+  });
+  els.rovoSummaryPasteClipboardBtn.addEventListener("click", async function () {
+    try {
+      var text = await navigator.clipboard.readText();
+      els.rovoSummaryPasteTextarea.value = text;
+    } catch (err) {
+      showToast("Zwischenablage nicht verfügbar", (err && err.message) || "Bitte Text manuell einfügen (Strg+V).", true);
+    }
+  });
+  els.rovoSummaryPasteAddBtn.addEventListener("click", function () {
+    var text = els.rovoSummaryPasteTextarea.value;
+    if (!text.trim()) { showToast("Kein Text", "Bitte zuerst Text einfügen.", true); return; }
+    var title = els.rovoSummaryPasteTitle.value.trim() || "Eingefügter Text";
+    rovoSummaryAddSource("einfügen", "", title, text);
+    els.rovoSummaryPasteTitle.value = "";
+    els.rovoSummaryPasteTextarea.value = "";
+    addLog("Rovo Summary: Quelle „" + title + "“ aus Zwischenablage/Eingabe hinzugefügt.");
+  });
+  els.rovoSummarySourcesTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-rovo-summary-remove]");
+    if (btn) rovoSummaryRemoveSource(parseInt(btn.getAttribute("data-rovo-summary-remove"), 10));
+  });
+  els.rovoSummaryMergeOutput.addEventListener("input", function () {
+    app.rovoSummary.mergedDoc = els.rovoSummaryMergeOutput.value;
+    els.rovoSummaryMergeDownloadBtn.disabled = !els.rovoSummaryMergeOutput.value.trim();
+  });
+  els.rovoSummaryMergeBtn.addEventListener("click", async function () {
+    if (!app.rovoSummary.sources.length) { showToast("Keine Quellen", "Bitte zuerst mindestens eine Quelle hinzufügen.", true); return; }
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    els.rovoSummaryMergeBtn.disabled = true;
+    els.rovoSummaryMergeSpinner.hidden = false;
+    try {
+      var result = await sampleApi(rovoSummaryBuildMergePrompt(), { modelTier: "default", cache: false });
+      app.rovoSummary.mergedDoc = result.text || "";
+      app.rovoSummary.mergedAt = nowLabel();
+      app.rovoSummary.comparisonResult = "";
+      app.rovoSummary.comparisonAt = "";
+      renderRovoSummary();
+      els.rovoSummaryMergeStatusNote.textContent = "Gesamtdokument aus " + app.rovoSummary.sources.length + " Quelle(n) erzeugt (" + app.rovoSummary.mergedAt + ").";
+      addLog("Rovo Summary: Gesamtdokument aus " + app.rovoSummary.sources.length + " Quelle(n) erzeugt.");
+      showToast("Gesamtdokument erzeugt", app.rovoSummary.sources.length + " Quelle(n) zusammengeführt.");
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.rovoSummaryMergeBtn.disabled = false;
+      els.rovoSummaryMergeSpinner.hidden = true;
+    }
+  });
+  els.rovoSummaryMergeDownloadBtn.addEventListener("click", async function () {
+    if (!app.rovoSummary.mergedDoc.trim()) return;
+    var ok = await saveOrWarn("Rovo_Summary_Gesamtdokument_" + dateStampForFilename() + ".txt", app.rovoSummary.mergedDoc);
+    if (ok) addLog("Rovo Summary: Gesamtdokument heruntergeladen.");
+  });
+  els.rovoSummaryCompareBtn.addEventListener("click", async function () {
+    if (!app.rovoSummary.mergedDoc.trim()) { showToast("Kein Gesamtdokument", "Bitte zuerst ein Gesamtdokument erzeugen.", true); return; }
+    if (!sampleApi) {
+      showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true);
+      return;
+    }
+    els.rovoSummaryCompareBtn.disabled = true;
+    els.rovoSummaryCompareSpinner.hidden = false;
+    els.rovoSummaryCompareResult.hidden = false;
+    els.rovoSummaryCompareOutput.textContent = "Wird verglichen …";
+    try {
+      var result = await sampleApi(rovoSummaryBuildComparePrompt(), { modelTier: "default", cache: false });
+      app.rovoSummary.comparisonResult = result.text || "";
+      app.rovoSummary.comparisonAt = nowLabel();
+      els.rovoSummaryCompareOutput.textContent = app.rovoSummary.comparisonResult;
+      els.rovoSummaryCompareStatusNote.textContent = "Vergleich mit vorhandenen Informationen abgeschlossen (" + app.rovoSummary.comparisonAt + ").";
+      addLog("Rovo Summary: Gesamtdokument mit vorhandenen Informationen verglichen.");
+      showToast("Vergleich abgeschlossen", "Ergebnis unten sichtbar.");
+    } catch (err) {
+      els.rovoSummaryCompareOutput.textContent = "";
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.rovoSummaryCompareBtn.disabled = false;
+      els.rovoSummaryCompareSpinner.hidden = true;
+    }
+  });
+  els.rovoSummaryCompareDownloadBtn.addEventListener("click", async function () {
+    if (!app.rovoSummary.comparisonResult) return;
+    var ok = await saveOrWarn("Rovo_Summary_Vergleich_" + dateStampForFilename() + ".txt", app.rovoSummary.comparisonResult);
+    if (ok) addLog("Rovo Summary: Vergleichsergebnis heruntergeladen.");
+  });
+
   /* ============ Teil 10: Navigation ============ */
 
   var viewPanels = document.querySelectorAll("[data-view-panel]");
@@ -24965,6 +25288,7 @@
     if (name === "edito") { renderEditoVersionSelect(); renderEditoChapters(); renderEditoFiles(); }
     if (name === "unterkapitel") { renderSubchapterVersionSelect(); renderSubchapterPanel(); }
     if (name === "rovoknowledge") renderRovoEntries();
+    if (name === "rovosummary") renderRovoSummary();
     if (name === "tabellen") renderRovoTables();
     if (window.innerWidth <= 900) setSidebar(false);
   }

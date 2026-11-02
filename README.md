@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.107.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.108.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -1032,6 +1032,39 @@ RAG-Kontext anreichern").
   bei erneuter Zuordnung nicht automatisch neu erzeugt. "Alle
   Zusammenfassungen erzeugen" läuft den Sammel-Lauf über alle Kapitel mit
   zugeordneten Einträgen.
+- **Rovo Summary** (neu, v2.108.0, eigener Navigationspunkt direkt nach
+  Rovo Knowledge): nimmt beliebig viele voneinander unabhängige
+  Quelldokumente auf – **.docx/.doc-Dateien, echte .html-/.htm-Dateien**
+  (nutzt dieselbe bereits für Rovo Knowledge vorhandene, inhaltsbasierte
+  statt endungsbasierte Formaterkennung, `extractTextFromDocx`/
+  `extractWordLikeText`; eine echte HTML-Quelle wird zusätzlich von
+  Skript-/Style-Blöcken und Tags befreit, bevor sie in den Prompt geht –
+  ein echtes, binäres Legacy-.doc bleibt wie bei Rovo Knowledge mit
+  klarer Fehlermeldung abgelehnt, als .docx neu speichern) sowie **aus der
+  Zwischenablage eingefügten Text** (Titel optional, beliebig oft
+  nacheinander hinzufügbar, "Aus Zwischenablage einfügen"-Button oder
+  normales Einfügen per Strg+V in die Textarea) – per Datei-Dropzone bzw.
+  Formular, mit Übersichtstabelle (Titel/Dateiname, Art, Zeichenanzahl,
+  Zeitpunkt) und Entfernen-Button je Quelle. **Gesamtdokument erzeugen**:
+  EIN Claude-Aufruf über alle hinzugefügten Quellen zusammen ordnet und
+  verschmilzt deren Inhalte zu einem einzigen, zusammenhängenden Dokument
+  – anders als bei der RAG-Bibliothek/Rovo Knowledge gibt es dabei
+  **keine feste Kapitel-Zuordnung**: Claude wählt die Gliederung/
+  Zwischenüberschriften selbst passend zu den tatsächlichen Inhalten und
+  markiert erkennbare Widersprüche zwischen den Quellen statt sie
+  stillschweigend aufzulösen. Das Ergebnis erscheint in einem frei
+  editierbaren Textfeld (Nachbearbeitung vor dem Vergleich möglich) mit
+  Text-Download. **Mit vorhandenen Informationen vergleichen**: ein
+  zweiter Claude-Aufruf vergleicht das Gesamtdokument mit ALLEN bereits
+  vorhandenen Informationen des Systems – Jira-Tickets (kompakte
+  Schlüssel+Kurzbeschreibung-Liste), RAG-Bibliothek, Rovo-Bibliothek
+  sowie bestehendem Benutzerhandbuch-Text (sowohl bereits veröffentlichter
+  Stand als auch bereits erzeugte EDITO-Entwürfe) – und listet, analog zum
+  bestehenden Handbuch-Vergleich (refCompare), **neue Informationen** und
+  **Widersprüche zu bestehenden Quellen** in zwei getrennten Abschnitten.
+  Beide Prompts sind unter Einstellungen → RAG-Prompts editierbar. Quellen,
+  Gesamtdokument und Vergleichsergebnis werden mit der Sitzung gespeichert
+  und bei "Alle Daten löschen"/"Sitzung zurücksetzen" geleert.
 - **Massenverarbeitung** (neu, eigener Navigationspunkt direkt vor
   Verarbeitung) – bewusst **eigenständige** Funktion, unabhängig von der
   RAG-Bibliothek (Verarbeitung → 7. RAG, s. u.): eigener Datenbestand
