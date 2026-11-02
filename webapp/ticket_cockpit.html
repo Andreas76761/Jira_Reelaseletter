@@ -495,6 +495,15 @@
   .final-improvements-box ul { margin: 0; padding-left: 18px; }
   .final-improvements-box li { margin: 3px 0; }
   .final-match { font-size: 12px; white-space: nowrap; }
+  .final-note { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; background: var(--surface); }
+  .final-note-overdue { border-color: #f59e0b; box-shadow: 0 0 0 2px color-mix(in srgb, #f59e0b 25%, transparent); }
+  .final-note-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+  .final-note-cat { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; background: #ede9fe; color: #5b21b6; }
+  .final-note-due { font-size: 12px; color: var(--text-muted); }
+  .final-note-due.overdue { color: #b45309; font-weight: 700; }
+  .final-note-history { margin: 6px 0 0; padding-left: 18px; font-size: 12px; color: var(--text-muted); }
+  .final-note-new { padding: 10px 12px; margin-top: 6px; }
+  .final-notes-badge { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #fef3c7; color: #92400e; }
   .final-team-comment-list { list-style: none; margin: 0 0 8px; padding: 0; max-height: 260px; overflow: auto; }
   .final-team-comment-list li { padding: 6px 2px; border-bottom: 1px solid var(--border); font-size: 13px; }
   .final-team-comment-list .who { font-weight: 600; margin-right: 6px; }
@@ -2585,7 +2594,7 @@
           <p class="desc">Alle im Register FINAL erzeugten Stände mit Datum und Status. Ein Dokument auswählen und mit Agenten weiter optimieren – „Verbesserungen einarbeiten“ arbeitet die im Stand hinterlegten ROVO-Verbesserungen kapitelweise ein, „Sprache &amp; Stil“ glättet Formulierungen, „Prüfbericht“ bewertet das Dokument. Bild-Platzhalter bleiben dabei unverändert. Das Ergebnis lässt sich je Kapitel mit der bisherigen Fassung vergleichen und als neuer Stand (Entwurf) nach FINAL übernehmen.</p>
           <div class="table-wrap">
             <table class="simple-table" id="edito-final-docs-table">
-              <thead><tr><th>Dokument</th><th>Datum</th><th>Status</th><th>Kapitel</th><th>Quelle</th><th></th></tr></thead>
+              <thead><tr><th>Dokument</th><th>Datum</th><th>Status</th><th>Kapitel</th><th>Interne Mitteilungen</th><th>Quelle</th><th></th></tr></thead>
               <tbody id="edito-final-docs-tbody"></tbody>
             </table>
             <div class="empty-hint" id="edito-final-docs-empty">Noch keine internen Dokumente – im Register FINAL in Schritt 6 einen Stand zusammenführen.</div>
@@ -3080,6 +3089,30 @@
                 <thead><tr><th>Stand</th><th>Erstellt</th><th>Quelle · Verbesserungen · Screens</th><th>Kapitel / Screens</th><th>Status</th><th></th></tr></thead>
                 <tbody id="final-versions-tbody"></tbody>
               </table>
+            </div>
+            <p class="step-note" id="final-notes-due-summary"></p>
+            <div class="final-subblock" id="final-notes-panel" hidden>
+              <p class="section-label final-sub-label"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg><span id="final-notes-title">Interne Mitteilungen</span></p>
+              <p class="desc">Nur intern – interne Mitteilungen erscheinen weder im Dokument (Word, PDF, PowerPoint) noch im Releaseletter. Je Mitteilung lässt sich ein Intervall festlegen; ist die nächste Aktualisierung fällig, wird sie hervorgehoben. „Geprüft – unverändert“ bestätigt die regelmäßige Durchsicht ohne Änderung; jede Änderung landet im Verlauf.</p>
+              <div id="final-notes-list"></div>
+              <div class="panel final-note-new">
+                <p class="section-label" style="margin-top:0;">Neue Mitteilung</p>
+                <div class="controls" style="flex-wrap:wrap;">
+                  <div><label for="final-note-new-category">Kategorie</label><input class="text-input" id="final-note-new-category" list="final-note-categories" type="text" value="Ideenspeicher"></div>
+                  <div><label for="final-note-new-title">Titel</label><input class="text-input" id="final-note-new-title" type="text" placeholder="z. B. Screens Release 2026.4"></div>
+                  <div><label for="final-note-new-interval">Aktualisieren</label><select id="final-note-new-interval" aria-label="Aktualisierungs-Intervall"></select></div>
+                </div>
+                <textarea class="text-input" id="final-note-new-text" rows="3" style="width:100%; font-family:inherit;" placeholder="Inhalt der internen Mitteilung"></textarea>
+                <div class="controls" style="margin-top:6px; flex-wrap:wrap;">
+                  <button class="btn primary btn-tiny" id="final-note-add-btn" type="button">Mitteilung hinzufügen</button>
+                  <span class="spacer"></span>
+                  <label for="final-note-copy-select">Aus Stand kopieren</label>
+                  <select id="final-note-copy-select" aria-label="Mitteilungen aus Stand kopieren"></select>
+                  <button class="btn ghost btn-tiny" id="final-note-copy-btn" type="button">Kopieren</button>
+                  <button class="btn ghost btn-tiny" id="final-notes-close-btn" type="button">Schließen</button>
+                </div>
+              </div>
+              <datalist id="final-note-categories"><option value="Version Screen"></option><option value="Ideenspeicher"></option><option value="Neue Features"></option><option value="Offene Punkte"></option><option value="Sonstiges"></option></datalist>
             </div>
             <div class="final-subblock" id="final-compare-block">
               <p class="section-label final-sub-label"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="7" height="16" rx="1.5"/><rect x="14" y="4" width="7" height="16" rx="1.5"/><path d="M10 9h4M10 15h4"/></svg><span>Stände vergleichen</span></p>
@@ -5906,7 +5939,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.119.0";
+  var APP_VERSION = "2.120.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7510,7 +7543,8 @@
     "final-design-version-select", "final-design-version-status", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
     "edito-final-agent-spinner", "edito-final-agent-status", "edito-final-chapters-tbody", "edito-final-compare", "edito-final-compare-title",
@@ -27358,6 +27392,7 @@
         '<td><div class="final-row-actions">' +
         (isActive ? "" : '<button class="btn ghost btn-tiny" data-final-version-activate="' + v.id + '" type="button">Anzeigen</button>') +
         '<button class="btn ghost btn-tiny" data-final-version-editor="' + v.id + '" type="button">Im Editor optimieren</button>' +
+        '<button class="btn ghost btn-tiny" data-final-version-notes="' + v.id + '" type="button" title="Interne Mitteilungen (erscheinen nicht im Dokument)">Mitteilungen (' + finalNotesCountHtml(v) + ")</button>" +
         ((v.reviews || []).length ? '<button class="btn ghost btn-tiny" data-final-version-report="' + v.id + '" type="button" title="Letzten Prüfbericht als Word herunterladen">Prüfbericht (' + v.reviews.length + ")</button>" : "") +
         (teamDb ? '<button class="btn ghost btn-tiny" data-final-version-share="' + v.id + '" type="button">' + (v.teamDocId && teamDocById(v.teamDocId) ? "Team-Stand aktualisieren" : "Im Team teilen") + "</button>" : "") +
         (v.status === "Veröffentlicht"
@@ -27487,7 +27522,7 @@
       var sel = v.id === app.editoFinalDocId;
       return '<tr data-edito-final-doc-row="' + v.id + '"' + (sel ? ' class="final-version-active"' : "") + "><td><b>" + escapeHtml(v.name) + "</b>" + (v.origin === "Editor" ? '<div class="step-note">im Editor optimiert</div>' : "") + "</td>" +
         "<td>" + escapeHtml(v.createdAt) + (v.statusChangedAt && v.statusChangedAt !== v.createdAt ? '<div class="step-note">Status seit ' + escapeHtml(v.statusChangedAt) + "</div>" : "") + "</td>" +
-        "<td>" + finalStatusPill(v.status) + "</td><td>" + v.chapters.length + "</td><td>" + escapeHtml(finalVersionConfigLabel(v.config)) + "</td>" +
+        "<td>" + finalStatusPill(v.status) + "</td><td>" + v.chapters.length + '</td><td class="edito-final-col-notes">' + finalNotesCountHtml(v) + "</td><td>" + escapeHtml(finalVersionConfigLabel(v.config)) + "</td>" +
         '<td><button class="btn ' + (sel ? "primary" : "ghost") + ' btn-tiny" data-edito-final-select="' + v.id + '" type="button">' + (sel ? "Ausgewählt" : "Auswählen") + "</button></td></tr>";
     }).join("");
     var doc = editoFinalDoc();
@@ -27652,6 +27687,7 @@
     var v = finalCreateVersion(chapters, { name: name, config: Object.assign({}, doc.config), improvements: doc.improvements, improvementStatus: impStatus, origin: "Editor", basedOnId: doc.id });
     // Verknuepfung zum Team-Stand behalten: "Team-Stand aktualisieren" schreibt die optimierte Fassung zurueck.
     if (doc.teamDocId) v.teamDocId = doc.teamDocId;
+    v.notes = JSON.parse(JSON.stringify(doc.notes || []));
     addLog("Editor: „" + doc.name + "“ mit " + changed + " optimierten Kapitel(n) als neuer Stand „" + v.name + "“ (Entwurf) nach FINAL übernommen.");
     showToast("Neuer Stand", "„" + v.name + "“ als Entwurf in FINAL (Schritt 6) gespeichert.");
     els.editoFinalSaveNameInput.value = "";
@@ -27905,6 +27941,11 @@
       }),
       improvements: v.improvements || {}, improvementStatus: v.improvementStatus || {},
       reviews: (v.reviews || []).map(function (r) { return { text: r.text, at: r.at, byId: r.byId || null }; }).slice(-20),
+      // Interne Mitteilungen gehoeren zum Stand (nur Konto-IDs, keine Namen).
+      notes: (v.notes || []).map(function (n) {
+        return { id: n.id, category: n.category, title: n.title, text: n.text, intervalDays: n.intervalDays || 0, createdAt: n.createdAt, updatedAt: n.updatedAt, updatedById: n.updatedById || null,
+          history: (n.history || []).slice(-30).map(function (h) { return { at: h.at, byId: h.byId || null, kind: h.kind, title: h.title, text: h.text }; }) };
+      }),
       updatedAt: teamNowIso(), updatedById: teamMyId()
     };
   }
@@ -27968,6 +28009,7 @@
     v.statusChangedAt = teamFmt(d.statusChangedAt);
     v.history = (d.history || []).slice();
     v.reviews = (d.reviews || []).slice();
+    v.notes = JSON.parse(JSON.stringify(d.notes || []));
     v.teamDocId = d._id;
     if (!quiet) { addLog("Team: Team-Stand „" + d.name + "“ als lokalen Stand übernommen."); showToast("Übernommen", "„" + d.name + "“ ist jetzt als lokaler Stand aktiv."); }
     return v;
@@ -28119,6 +28161,153 @@
     if (v) await teamShareVersion(v);
   });
 
+  // ===================== v2.120: Interne Mitteilungen je Stand =====================
+  // v.notes = [{ id, category, title, text, intervalDays, createdAt, updatedAt (ISO),
+  // updatedBy, updatedById, history: [{ at, by, byId, kind: "geändert"|"geprüft", title, text }] }]
+  // Nie Teil von Word/PDF/PowerPoint oder Releaseletter (Exporte nutzen nur chapters).
+  var FINAL_NOTE_INTERVALS = [
+    { days: 0, label: "ohne Intervall" }, { days: 7, label: "wöchentlich" }, { days: 14, label: "alle 2 Wochen" },
+    { days: 30, label: "monatlich" }, { days: 90, label: "quartalsweise" }
+  ];
+  var finalNotesVersionId = null;
+  var finalNotesHistoryOpen = {};
+  function finalNoteIntervalOptions(sel) {
+    return FINAL_NOTE_INTERVALS.map(function (o) { return '<option value="' + o.days + '"' + (o.days === sel ? " selected" : "") + ">" + o.label + "</option>"; }).join("");
+  }
+  function finalNoteDue(n) {
+    if (!n.intervalDays) return null;
+    var t = Date.parse(n.updatedAt || n.createdAt);
+    return isNaN(t) ? null : new Date(t + n.intervalDays * 86400000);
+  }
+  function finalNoteOverdue(n) { var due = finalNoteDue(n); return !!due && due.getTime() < Date.now(); }
+  function finalNotesOverdueCount(v) { return (v.notes || []).filter(finalNoteOverdue).length; }
+  function finalNotesCountHtml(v) {
+    var n = (v.notes || []).length, od = finalNotesOverdueCount(v);
+    return n + (od ? '<span class="final-notes-badge">' + od + " fällig</span>" : "");
+  }
+  function finalNotesAllOverdue() {
+    var out = [];
+    app.final.versions.forEach(function (v) { (v.notes || []).forEach(function (n) { if (finalNoteOverdue(n)) out.push({ v: v, n: n }); }); });
+    return out;
+  }
+  var nextFinalNoteId = 1;
+  function finalNoteNewId() {
+    var max = 0;
+    app.final.versions.forEach(function (v) { (v.notes || []).forEach(function (n) { if (n.id > max) max = n.id; }); });
+    nextFinalNoteId = Math.max(nextFinalNoteId, max + 1);
+    return nextFinalNoteId++;
+  }
+  function finalNotesVersion() { return finalNotesVersionId ? finalVersionById(finalNotesVersionId) : null; }
+  function renderFinalNotesSummary() {
+    var due = finalNotesAllOverdue();
+    els.finalNotesDueSummary.innerHTML = due.length
+      ? '<span class="final-notes-badge">' + due.length + " fällig</span> Interne Mitteilungen zur Aktualisierung: " +
+        due.slice(0, 6).map(function (x) { return "„" + escapeHtml(x.n.title || x.n.category) + "“ (" + escapeHtml(x.v.name) + ")"; }).join(", ") + (due.length > 6 ? " …" : "")
+      : "";
+  }
+  function renderFinalNotes() {
+    renderFinalNotesSummary();
+    var v = finalNotesVersion();
+    if (finalNotesVersionId && !v) finalNotesVersionId = null;
+    els.finalNotesPanel.hidden = !v;
+    if (!v) return;
+    v.notes = v.notes || [];
+    els.finalNotesTitle.textContent = "Interne Mitteilungen – " + v.name + " (" + v.notes.length + ")";
+    if (!els.finalNoteNewInterval.options.length) els.finalNoteNewInterval.innerHTML = finalNoteIntervalOptions(30);
+    els.finalNoteCopySelect.innerHTML = app.final.versions.filter(function (x) { return x.id !== v.id && (x.notes || []).length; })
+      .map(function (x) { return '<option value="' + x.id + '">' + escapeHtml(x.name) + " (" + x.notes.length + ")</option>"; }).join("") || '<option value="">– kein anderer Stand mit Mitteilungen –</option>';
+    els.finalNoteCopyBtn.disabled = !finalSelId(els.finalNoteCopySelect);
+    els.finalNotesList.innerHTML = v.notes.length ? v.notes.map(function (n) {
+      var due = finalNoteDue(n), od = finalNoteOverdue(n);
+      var dueTxt = !due ? "ohne Aktualisierungs-Intervall" : (od ? "Aktualisierung fällig seit " : "nächste Aktualisierung fällig am ") + due.toLocaleDateString("de-DE");
+      var hist = finalNotesHistoryOpen[n.id] ? '<ol class="final-note-history">' + (n.history || []).slice().reverse().map(function (h) {
+        return "<li>" + escapeHtml(teamFmt(h.at)) + " · " + escapeHtml(h.kind || "geändert") + (h.by ? " von " + escapeHtml(h.by) : "") +
+          (h.kind === "geändert" && h.text != null ? ' – vorher: „' + escapeHtml(truncate(h.text, 140)) + "“" : "") + "</li>";
+      }).join("") + "</ol>" : "";
+      return '<div class="final-note' + (od ? " final-note-overdue" : "") + '" data-note-id="' + n.id + '">' +
+        '<div class="final-note-head"><span class="final-note-cat">' + escapeHtml(n.category || "Sonstiges") + "</span><b>" + escapeHtml(n.title || "") + "</b>" +
+        '<span class="final-note-due' + (od ? " overdue" : "") + '">' + escapeHtml(dueTxt) + "</span>" +
+        '<span class="step-note">zuletzt aktualisiert ' + escapeHtml(teamFmt(n.updatedAt)) + (n.updatedBy ? " von " + escapeHtml(n.updatedBy) : "") + "</span></div>" +
+        '<div class="controls" style="flex-wrap:wrap;">' +
+        '<input class="text-input" data-note-field="category" list="final-note-categories" value="' + escapeHtml(n.category || "") + '" aria-label="Kategorie" style="max-width:200px;">' +
+        '<input class="text-input" data-note-field="title" value="' + escapeHtml(n.title || "") + '" aria-label="Titel" style="max-width:320px;">' +
+        '<select data-note-field="intervalDays" aria-label="Aktualisierungs-Intervall">' + finalNoteIntervalOptions(n.intervalDays || 0) + "</select></div>" +
+        '<textarea class="text-input" data-note-field="text" rows="3" style="width:100%; font-family:inherit; margin-top:6px;" aria-label="Inhalt">' + escapeHtml(n.text || "") + "</textarea>" +
+        '<div class="controls" style="margin-top:6px;">' +
+        '<button class="btn primary btn-tiny" type="button" data-note-save>Speichern</button>' +
+        '<button class="btn ghost btn-tiny" type="button" data-note-confirm title="Durchgesehen, keine Änderung nötig">Geprüft – unverändert</button>' +
+        '<button class="btn ghost btn-tiny" type="button" data-note-history>Verlauf (' + (n.history || []).length + ")</button>" +
+        '<button class="btn ghost btn-tiny final-btn-danger" type="button" data-note-delete>Löschen</button></div>' + hist + "</div>";
+    }).join("") : '<p class="step-note">Noch keine internen Mitteilungen zu diesem Stand.</p>';
+  }
+  function finalOpenNotes(versionId) {
+    finalNotesVersionId = versionId;
+    renderFinalNotes();
+    if (els.finalNotesPanel.scrollIntoView) els.finalNotesPanel.scrollIntoView({ block: "nearest" });
+  }
+  els.finalVersionsTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-final-version-notes]");
+    if (btn) finalOpenNotes(parseInt(btn.getAttribute("data-final-version-notes"), 10));
+  });
+  els.finalNotesCloseBtn.addEventListener("click", function () { finalNotesVersionId = null; renderFinalNotes(); });
+  els.finalNoteAddBtn.addEventListener("click", function () {
+    var v = finalNotesVersion();
+    var text = els.finalNoteNewText.value.trim(), title = els.finalNoteNewTitle.value.trim();
+    if (!v || (!text && !title)) { showToast("Leer", "Bitte Titel oder Inhalt der Mitteilung eingeben.", true); return; }
+    var now = new Date().toISOString();
+    v.notes = v.notes || [];
+    v.notes.push({ id: finalNoteNewId(), category: els.finalNoteNewCategory.value.trim() || "Sonstiges", title: title, text: text,
+      intervalDays: parseInt(els.finalNoteNewInterval.value, 10) || 0, createdAt: now, updatedAt: now,
+      updatedBy: finalReviewerName(), updatedById: finalUser ? finalUser.id : null, history: [{ at: now, by: finalReviewerName(), byId: finalUser ? finalUser.id : null, kind: "angelegt" }] });
+    els.finalNoteNewTitle.value = ""; els.finalNoteNewText.value = "";
+    addLog("FINAL: Interne Mitteilung „" + (title || text.slice(0, 40)) + "“ zu Stand „" + v.name + "“ angelegt.");
+    renderFinalVersions();
+    renderFinalNotes();
+    renderWhenVisible("edito", "finalDocs", renderEditoFinalDocs);
+  });
+  els.finalNotesList.addEventListener("click", async function (e) {
+    var card = e.target.closest("[data-note-id]"), v = finalNotesVersion();
+    if (!card || !v) return;
+    var n = (v.notes || []).filter(function (x) { return x.id === parseInt(card.getAttribute("data-note-id"), 10); })[0];
+    if (!n) return;
+    var now = new Date().toISOString(), by = finalReviewerName(), byId = finalUser ? finalUser.id : null;
+    var field = function (f) { return card.querySelector('[data-note-field="' + f + '"]').value; };
+    if (e.target.closest("[data-note-save]")) {
+      var next = { category: field("category").trim() || "Sonstiges", title: field("title").trim(), text: field("text"), intervalDays: parseInt(field("intervalDays"), 10) || 0 };
+      var changed = next.category !== n.category || next.title !== n.title || next.text !== n.text || next.intervalDays !== (n.intervalDays || 0);
+      if (!changed) { showToast("Keine Änderung", "Zum Bestätigen ohne Änderung „Geprüft – unverändert“ verwenden.", true); return; }
+      (n.history = n.history || []).push({ at: now, by: by, byId: byId, kind: "geändert", title: n.title, text: n.text });
+      Object.assign(n, next, { updatedAt: now, updatedBy: by, updatedById: byId });
+      addLog("FINAL: Interne Mitteilung „" + (n.title || n.category) + "“ (Stand „" + v.name + "“) aktualisiert.");
+    } else if (e.target.closest("[data-note-confirm]")) {
+      (n.history = n.history || []).push({ at: now, by: by, byId: byId, kind: "geprüft" });
+      n.updatedAt = now; n.updatedBy = by; n.updatedById = byId;
+      addLog("FINAL: Interne Mitteilung „" + (n.title || n.category) + "“ (Stand „" + v.name + "“) geprüft – unverändert.");
+    } else if (e.target.closest("[data-note-history]")) {
+      finalNotesHistoryOpen[n.id] = !finalNotesHistoryOpen[n.id];
+    } else if (e.target.closest("[data-note-delete]")) {
+      if (!(await confirmDialog("Interne Mitteilung „" + (n.title || n.category) + "“ löschen?", "Löschen"))) return;
+      v.notes = v.notes.filter(function (x) { return x !== n; });
+      addLog("FINAL: Interne Mitteilung „" + (n.title || n.category) + "“ (Stand „" + v.name + "“) gelöscht.");
+    } else return;
+    renderFinalVersions();
+    renderFinalNotes();
+    renderWhenVisible("edito", "finalDocs", renderEditoFinalDocs);
+  });
+  els.finalNoteCopyBtn.addEventListener("click", function () {
+    var v = finalNotesVersion(), src = finalVersionById(finalSelId(els.finalNoteCopySelect));
+    if (!v || !src) return;
+    var now = new Date().toISOString();
+    v.notes = v.notes || [];
+    (src.notes || []).forEach(function (n) {
+      v.notes.push(Object.assign(JSON.parse(JSON.stringify(n)), { id: finalNoteNewId(),
+        history: (n.history || []).concat([{ at: now, by: finalReviewerName(), byId: finalUser ? finalUser.id : null, kind: "aus „" + src.name + "“ kopiert" }]) }));
+    });
+    addLog("FINAL: " + (src.notes || []).length + " interne Mitteilung(en) aus „" + src.name + "“ nach „" + v.name + "“ kopiert.");
+    renderFinalVersions();
+    renderFinalNotes();
+  });
+
   function renderFinal() {
     finalPopulateRolleSparteSelects();
     els.finalHideInternalCb.checked = !app.final.showInternal;
@@ -28140,6 +28329,7 @@
     renderFinalVersions();
     renderFinalReviewer();
     renderFinalCompareSelects();
+    renderFinalNotes();
     renderFinalTeam();
     renderFinalVersionSelects();
     renderFinalResultChapterOptions();

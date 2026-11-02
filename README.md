@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.119.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.120.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,21 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **FINAL – Interne Mitteilungen je Dokument (v2.120.0)**: Jeder Stand (internes Dokument) hat
+  eigene interne Mitteilungen – z. B. „Version Screen“, „Ideenspeicher“, „Neue Features“, „Offene
+  Punkte“ oder eigene Kategorien –, die **nie** im Dokument (Word, PDF, PowerPoint, Ergebnis in
+  Schritt 7) oder im Releaseletter erscheinen.
+  - „Mitteilungen (n)“ in der Stände-Tabelle öffnet die Liste: Kategorie, Titel, Text und ein
+    Aktualisierungs-Intervall (ohne, wöchentlich, alle 2 Wochen, monatlich, quartalsweise).
+  - Je Mitteilung „zuletzt aktualisiert … von …“ und „nächste Aktualisierung fällig am …“;
+    überfällige Mitteilungen werden hervorgehoben und in einer Übersicht über alle Stände sowie
+    als „x fällig“ am Stand und im Register Editor angezeigt.
+  - „Speichern“ übernimmt Änderungen (der vorherige Text bleibt im Verlauf), „Geprüft – unverändert“
+    bestätigt die regelmäßige Durchsicht ohne Änderung und setzt die Fälligkeit neu.
+  - Mitteilungen lassen sich aus einem anderen Stand kopieren; sie werden beim Optimieren im
+    Editor in den neuen Stand übernommen und im Team (nur mit Konto-IDs) mitgeteilt bzw.
+    beim Übernehmen eines Team-Stands mitgeholt. Gespeichert in der Sitzung.
 
 - **FINAL – Team-Arbeit an gemeinsamen Ständen (v2.119.0)**: nutzt die geteilte Datenhaltung des
   Artifacts (Fähigkeit `db`, Standardrechte: alle mit Zugriff lesen, ab „Contributor“ schreiben).
