@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.113.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.114.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,27 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **FINAL – Screens in Seitenreihenfolge der Quelle (v2.114.0)**:
+  - **Seite je Screen**: Beim Hochladen einer Screens-Datei (Schritt 4) wird für jedes Bild die
+    Seite in der Originalquelle bestimmt (`finalDocxPageWalker`). Word schreibt beim Speichern an
+    jeden tatsächlichen Seitenanfang ein `w:lastRenderedPageBreak` – sind solche Marken vorhanden,
+    zählen nur sie; sonst manuelle Seitenumbrüche, „Seitenumbruch oberhalb“ und Abschnittswechsel
+    mit neuer Seite. Inhaltssteuerelemente (z. B. Inhaltsverzeichnis) werden mitgezählt. Bei
+    .pptx entspricht die Seite der Foliennummer.
+  - **Reihenfolge**: Die Übersicht in Schritt 5 (und damit auch „Bilder zuordnen“ und der
+    Master) ordnet die Screens nach Screens-Datei (Upload-Reihenfolge), Seite und Position auf
+    der Seite – statt wie bisher neueste zuerst.
+  - **Seitenanzahl**: Spalte „Seiten“ in den Tabellen der Handbuch-Dateien (Schritt 1) und der
+    Screens-Dateien (Schritt 4); die Vorschau (Schritt 3) nennt Quelldatei und Seitenanzahl.
+    Grundlage ist `<Pages>` aus `docProps/app.xml`, mindestens aber die gezählten Seiten.
+  - **Überschriften der Quellseite**: Neue Spalten „Seite (Quelle)“ („S. 3 von 12“) und
+    „Überschriften der Seite (Quelle)“ – alle Überschriften dieser Seite (auch bei lokalisierten
+    Formatvorlagen-IDs, über den Vorlagennamen erkannt). Da die Screens in Aufnahme-Reihenfolge
+    abgelegt sind und sich auf die Vorseite beziehen können, steht bei Seiten ohne eigene
+    Überschrift „↳ Vorseite:“ mit der letzten Überschrift davor.
+  - **KI-Zuordnung**: Der Prompt für „Bilder zuordnen“ enthält je Screen die Seite, die
+    Überschriften der Seite (ggf. mit Hinweis „von der Vorseite“) und die Überschriften der Vorseite.
 
 - **Performance und Fehlerkorrekturen (v2.113.0)**:
   - **Unsichtbare Register werden nicht mehr mitgerendert**: `refreshDashboard` baut

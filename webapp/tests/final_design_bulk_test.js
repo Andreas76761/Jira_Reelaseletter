@@ -140,7 +140,7 @@ const KAP2 = "Kapitel 2: Kündigung";
   check("Rolle/Sparte HQ / Van übernommen", rows().some((r) => r.textContent.includes("HQ / Van")));
   check("Zeilen haben Markier-Checkbox, Bearbeiten- und Löschen-Button mit Icon", rows().every((r) => r.querySelector("[data-final-screen-select]") && r.querySelector("[data-final-screen-edit] svg") && r.querySelector("[data-final-screen-delete] svg")));
 
-  const rowByNav = (nav) => rows().find((r) => r.children[3].textContent === nav);
+  const rowByNav = (nav) => rows().find((r) => r.querySelector(".final-col-nav").textContent === nav);
   const cbFor = (nav) => rowByNav(nav).querySelector("[data-final-screen-select]");
   let cb = cbFor("A > Eins"); cb.checked = true; fire(cb, "change");
   cb = cbFor("A > Zwei"); cb.checked = true; fire(cb, "change");
@@ -151,7 +151,7 @@ const KAP2 = "Kapitel 2: Kündigung";
   bulkSel.value = KAP2; fire(bulkSel, "change");
   fire(doc.getElementById("final-bulk-assign-btn"), "click");
   check("Sammel-Zuordnung: beide markierten Screens -> Kapitel 2", rowByNav("A > Eins").querySelector("select").value === KAP2 && rowByNav("A > Zwei").querySelector("select").value === KAP2);
-  check("Sammel-Zuordnung setzt Status 'Manuell'", rowByNav("A > Eins").children[6].textContent.includes("Manuell"));
+  check("Sammel-Zuordnung setzt Status 'Manuell'", rowByNav("A > Eins").querySelector(".final-col-status").textContent.includes("Manuell"));
   check("Nicht markierter Screen unverändert", rowByNav("A > Drei").querySelector("select").value === "");
   check("Markierung bleibt nach der Zuordnung erhalten", cbFor("A > Eins").checked && cbFor("A > Zwei").checked);
   fire(doc.getElementById("final-bulk-delete-btn"), "click");

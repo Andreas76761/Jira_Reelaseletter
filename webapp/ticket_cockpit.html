@@ -2814,7 +2814,7 @@
           <input type="file" id="final-manual-file-input" accept=".docx" multiple hidden>
           <div class="table-wrap">
             <table class="simple-table" id="final-manuals-table">
-              <thead><tr><th>Datei</th><th>Kapitel</th><th>Design</th><th>Hochgeladen am</th><th></th></tr></thead>
+              <thead><tr><th>Datei</th><th>Kapitel</th><th>Seiten</th><th>Design</th><th>Hochgeladen am</th><th></th></tr></thead>
               <tbody id="final-manuals-tbody"></tbody>
             </table>
             <div class="empty-hint" id="final-manuals-empty">Noch keine Benutzerhandbuch-Datei hochgeladen.</div>
@@ -2841,6 +2841,7 @@
           </div>
           <label for="final-preview-chapter-select">Kapitel</label>
           <select id="final-preview-chapter-select" aria-label="Kapitel für Vorschau"></select>
+          <p class="step-note" id="final-preview-source-note"></p>
           <div class="panel gen-preview" id="final-preview-output" style="padding:12px 14px; margin-top:8px; white-space:pre-wrap;"></div>
         </section>
 
@@ -2860,7 +2861,7 @@
           <input type="file" id="final-screens-file-input" accept=".docx,.doc,.pptx" hidden>
           <div class="table-wrap">
             <table class="simple-table" id="final-screens-files-table">
-              <thead><tr><th>Datei</th><th>Rolle</th><th>Sparte</th><th>Sprache</th><th>Markt</th><th>Screens</th><th>Hochgeladen am</th><th></th></tr></thead>
+              <thead><tr><th>Datei</th><th>Rolle</th><th>Sparte</th><th>Sprache</th><th>Markt</th><th>Seiten</th><th>Screens</th><th>Hochgeladen am</th><th></th></tr></thead>
               <tbody id="final-screens-files-tbody"></tbody>
             </table>
             <div class="empty-hint" id="final-screens-files-empty">Noch keine Screens-Datei hochgeladen.</div>
@@ -2883,7 +2884,7 @@
           </div>
           <div class="table-wrap">
             <table class="simple-table" id="final-screens-table">
-              <thead><tr><th><input type="checkbox" id="final-screens-select-all-cb" aria-label="Alle Screens markieren"></th><th>Vorschau</th><th>Untertitel</th><th>oneSCM-Navigation</th><th>Rolle/Sparte/Sprache/Markt</th><th>Kapitel/Unterkapitel</th><th>Status</th><th></th></tr></thead>
+              <thead><tr><th><input type="checkbox" id="final-screens-select-all-cb" aria-label="Alle Screens markieren"></th><th>Vorschau</th><th>Seite (Quelle)</th><th>Untertitel</th><th>Überschriften der Seite (Quelle)</th><th>oneSCM-Navigation</th><th>Rolle/Sparte/Sprache/Markt</th><th>Kapitel/Unterkapitel</th><th>Status</th><th></th></tr></thead>
               <tbody id="final-screens-tbody"></tbody>
             </table>
             <div class="empty-hint" id="final-screens-empty">Noch keine Screens aus einer Screens-Datei extrahiert.</div>
@@ -5668,7 +5669,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.113.0";
+  var APP_VERSION = "2.114.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7256,7 +7257,7 @@
     "rovo-summary-compare-result", "rovo-summary-compare-output", "rovo-summary-compare-download-btn",
     "final-manual-dropzone", "final-manual-file-input", "final-manuals-table", "final-manuals-tbody", "final-manuals-empty",
     "final-conflicts-section", "final-conflicts-tbody",
-    "final-preview-section", "final-hide-internal-cb", "final-hide-jira-cb", "final-preview-chapter-select", "final-preview-output",
+    "final-preview-section", "final-hide-internal-cb", "final-hide-jira-cb", "final-preview-chapter-select", "final-preview-output", "final-preview-source-note",
     "final-screens-rolle-select", "final-screens-sparte-select", "final-screens-sprache-input", "final-screens-markt-input",
     "final-screens-dropzone", "final-screens-file-input", "final-screens-files-tbody", "final-screens-files-empty",
     "final-screens-count", "final-screens-tbody", "final-screens-empty", "final-assign-images-btn", "final-assign-images-spinner", "final-assign-images-stop-btn", "final-assign-images-status-note", "final-selected-count", "final-bulk-chapter-select", "final-bulk-assign-btn", "final-bulk-delete-btn", "final-screens-select-all-cb", "final-word-design-select", "final-word-design-note", "final-word-template-btn", "final-word-template-input", "final-design-docx-btn", "final-ppt-design-select", "final-ppt-design-note", "final-ppt-template-btn", "final-ppt-template-input", "final-design-pptx-btn", "final-design-status-note",
@@ -11974,7 +11975,7 @@
       var relsMap = await loadZipRelationships(zip, relsPath);
       var caption = pptxSlideTitleText(slideDoc);
       var blips = await blipsInNode(slideDoc, relsMap, slidePath, zip);
-      for (var j = 0; j < blips.length; j++) screens.push({ dataUrl: blips[j].dataUrl, caption: caption || "" });
+      for (var j = 0; j < blips.length; j++) screens.push({ dataUrl: blips[j].dataUrl, caption: caption || "", page: pptxSlideNumber(slidePath) });
     }
     return screens;
   }
@@ -19483,7 +19484,7 @@
     subchapterAgent5: "Du bist Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen ALLE genehmigten Unterkapitel der aktuellen Rolle/Sparte-Version, je Unterkapitel mit den ihm zugeordneten Quellen (Jira-Tickets des übergeordneten Kapitels, RAG-Bibliothek-Einträge und Rovo-Knowledge-Notizen, jeweils diesem Unterkapitel zugeordnet) und dem Unterkapiteltext. Prüfe JE UNTERKAPITEL, ob der Inhalt der zugeordneten Quellen im Unterkapiteltext erkennbar aufgegriffen wird. Gib AUSSCHLIESSLICH den folgenden Abschnitt aus, in genau diesem Format:\n\n### Nicht abgedeckte Quellen\n- (ein Stichpunkt je Unterkapitel MIT mindestens einer zugeordneten Quelle, deren Inhalt im Unterkapiteltext nicht erkennbar aufgegriffen wird - Unterkapitel nennen, betroffene Quelle(n) kurz beschreiben)\n\nIst die Liste leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
     rovoSummaryMerge: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Unten stehen mehrere, voneinander unabhängige Quelldokumente unterschiedlicher Herkunft (Word-Dateien, HTML-Seiten, aus der Zwischenablage eingefügte Texte). Ordne und verschmelze ihre Inhalte zu EINEM einzigen, gut strukturierten, zusammenhängenden Gesamtdokument auf Deutsch, DURCHGÄNGIG IM PRÄSENS: fasse thematisch zusammengehörige Inhalte unter eigenen, sinnvoll gewählten Zwischenüberschriften (\"## \") zusammen, entferne Redundanzen zwischen den Quellen, löse erkennbare Widersprüche zwischen den Quellen nicht selbst auf, sondern weise an der betreffenden Stelle mit \"[Widerspruch zwischen Quellen]\" darauf hin. Die Struktur/Gliederung des Ergebnisses bestimmst du selbst anhand der tatsächlichen Inhalte - es gibt keine vorgegebene Kapitelstruktur. Nutze AUSSCHLIESSLICH Informationen aus den Quelldokumenten unten, erfinde nichts hinzu. Gib ausschließlich das neue Gesamtdokument aus, keine Erklärungen dazu:",
     rovoSummaryCompare: "Du bist Wissensanalyst für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Oben steht ein neu erstelltes Gesamtdokument aus mehreren Quelldokumenten, danach alle BEREITS VORHANDENEN Informationen des Systems (Jira-Tickets, RAG-Bibliothek, Rovo-Wissens-Notizen, bestehender Benutzerhandbuch-Text). Vergleiche das neue Gesamtdokument inhaltlich mit den bereits vorhandenen Informationen und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Informationen\n- (ein Stichpunkt je Aussage im neuen Gesamtdokument, die in KEINER der vorhandenen Quellen erkennbar enthalten ist)\n\n### Widersprüche zu bestehenden Quellen\n- (ein Stichpunkt je Aussage im neuen Gesamtdokument, die einer vorhandenen Quelle inhaltlich widerspricht oder sie erkennbar überholt - betroffene Quelle(n) kurz benennen)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
-    finalImageAssign: "Du ordnest Bildschirm-Screenshots (Screens) der Anwendung oneSCM den Kapiteln und Unterkapiteln eines Benutzerhandbuchs zu. Zu jedem Screen bekommst du (falls vorhanden) den Navigationspfad in oneSCM aus der Screens-Datei, die Überschrift, unter der der Screen in der Datei stand, und den bisherigen Untertitel; sind Bilder beigefügt, stehen sie in derselben Reihenfolge wie die Screen-Liste. Interpretiere, was der Screen zeigt, und wähle das inhaltlich passendste Kapitel bzw. Unterkapitel AUSSCHLIESSLICH aus der Kapitel-Liste (Titel exakt übernehmen; passt keines, gib einen leeren Text zurück). Formuliere je Screen einen kurzen deutschen Untertitel (höchstens 12 Wörter), der beschreibt, was der Screen zeigt - ohne den Navigationspfad zu wiederholen und ohne etwas zu erfinden, das weder im Bild noch in den Angaben steht."
+    finalImageAssign: "Du ordnest Bildschirm-Screenshots (Screens) der Anwendung oneSCM den Kapiteln und Unterkapiteln eines Benutzerhandbuchs zu. Zu jedem Screen bekommst du (falls vorhanden) den Navigationspfad in oneSCM aus der Screens-Datei, die Überschrift, unter der der Screen in der Datei stand, und den bisherigen Untertitel, außerdem die Seite in der Quelle sowie die Überschriften dieser Seite und der Vorseite. Die Screens stehen in Aufnahme-Reihenfolge (Seitenreihenfolge der Quelle) und können sich auf die Vorseite beziehen - steht auf ihrer Seite keine eigene Überschrift, gilt die Überschrift der Vorseite; sind Bilder beigefügt, stehen sie in derselben Reihenfolge wie die Screen-Liste. Interpretiere, was der Screen zeigt, und wähle das inhaltlich passendste Kapitel bzw. Unterkapitel AUSSCHLIESSLICH aus der Kapitel-Liste (Titel exakt übernehmen; passt keines, gib einen leeren Text zurück). Formuliere je Screen einen kurzen deutschen Untertitel (höchstens 12 Wörter), der beschreibt, was der Screen zeigt - ohne den Navigationspfad zu wiederholen und ohne etwas zu erfinden, das weder im Bild noch in den Angaben steht."
   };
   var RAG_PROMPT_LABELS = {
     summary: "Zusammenfassung erzeugen",
@@ -25993,10 +25994,47 @@
   function finalScreensForChapter(title) {
     return app.uploadedImages.filter(function (img) { return img.finalScreensFileId && img.chapter === title && finalScreenMatchesFilter(img); });
   }
+  // Screens in der Reihenfolge der Originalquelle: Screens-Dateien in
+  // Upload-Reihenfolge, darin nach Seite und Position (Bildnummer).
   function finalAllScreens() {
-    return app.uploadedImages.filter(function (img) { return !!img.finalScreensFileId; });
+    var fileOrder = {};
+    app.final.screensFiles.forEach(function (f, i) { fileOrder[f.id] = i; });
+    function rank(v) { return typeof v === "number" ? v : Number.MAX_SAFE_INTEGER; }
+    return app.uploadedImages.filter(function (img) { return !!img.finalScreensFileId; }).sort(function (a, b) {
+      return rank(fileOrder[a.finalScreensFileId]) - rank(fileOrder[b.finalScreensFileId]) ||
+        rank(a.finalPage) - rank(b.finalPage) || rank(a.imageNumber) - rank(b.imageNumber) || a.id - b.id;
+    });
+  }
+  // "S. 3 von 12" bzw. "S. 3" / "–".
+  function finalPageLabel(img) {
+    if (!img.finalPage) return "–";
+    var file = app.final.screensFiles.filter(function (f) { return f.id === img.finalScreensFileId; })[0];
+    return "S. " + img.finalPage + (file && file.pageCount ? " von " + file.pageCount : "");
+  }
+  // Ueberschriften der Quellseite fuer die Uebersicht; stammt die Ueberschrift
+  // von einer Vorseite, wird das kenntlich gemacht.
+  function finalPageHeadingsHtml(img) {
+    var heads = img.finalPageHeadings || [];
+    if (!heads.length) return '<span class="step-note">–</span>';
+    var list = heads.map(function (h) { return "<div>" + escapeHtml(h) + "</div>"; }).join("");
+    return img.finalHeadingFromPrevPage ? '<span class="step-note" title="Auf der Seite dieses Screens steht keine Überschrift – gilt die letzte Überschrift davor (Screen bezieht sich vermutlich auf die Vorseite).">↳ Vorseite:</span>' + list : list;
   }
 
+  // Seitenanzahl einer .docx: <Pages> aus docProps/app.xml, mindestens die
+  // Zahl der gezaehlten Seitenanfaenge (s. finalDocxPageWalker).
+  async function finalDocxPageCountFromBuffer(buf) {
+    try {
+      var zip = await JSZip.loadAsync(buf);
+      var entry = zip.file("word/document.xml");
+      if (!entry) return null;
+      var doc = new DOMParser().parseFromString(await entry.async("string"), "application/xml");
+      var body = doc.getElementsByTagName("w:body")[0];
+      var counted = 1;
+      if (body) { var w = finalDocxPageWalker(doc); w.walk(body); counted = Math.max(1, w.current()); }
+      var appPages = await finalDocxAppPages(zip);
+      return appPages && appPages >= counted ? appPages : counted;
+    } catch (e) { return null; }
+  }
   async function handleFinalManualFiles(fileList) {
     var files = Array.prototype.filter.call(fileList || [], function (f) { return /\.docx$/i.test(f.name || ""); });
     if (!files.length) { showToast("Keine passende Datei", "Bitte eine .docx-Datei auswählen.", true); return; }
@@ -26007,7 +26045,8 @@
         var buf = await readFileAsArrayBuffer(file);
         var chapters = await extractFinalManualChapters(buf);
         var design = await finalExtractWordDesignFromBuffer(buf);
-        app.final.manuals.push({ id: nextFinalManualId++, filename: file.name, chapters: chapters, design: design, addedAt: nowLabel() });
+        var pageCount = await finalDocxPageCountFromBuffer(buf);
+        app.final.manuals.push({ id: nextFinalManualId++, filename: file.name, chapters: chapters, design: design, pageCount: pageCount, addedAt: nowLabel() });
         added++;
       } catch (err) {
         showToast("Fehler beim Lesen", file.name + ": " + ((err && err.message) || "Unbekannter Fehler."), true);
@@ -26050,12 +26089,67 @@
     }
     return parts.join("").trim();
   }
+  // Seitenzahl aus docProps/app.xml (<Pages>, von Word beim Speichern
+  // geschrieben) - null, wenn nicht vorhanden/lesbar.
+  async function finalDocxAppPages(zip) {
+    try {
+      var entry = zip.file("docProps/app.xml");
+      if (!entry) return null;
+      var m = /<Pages>\s*(\d+)\s*<\/Pages>/.exec(await entry.async("string"));
+      return m ? parseInt(m[1], 10) : null;
+    } catch (e) { return null; }
+  }
+  // Ordnet jedem Absatz/jeder Tabellenzeile und jedem Bild darin die Seite der
+  // Originalquelle zu. Word schreibt beim Speichern an jeden tatsaechlichen
+  // Seitenanfang ein <w:lastRenderedPageBreak/> - sind solche Marken vorhanden,
+  // werden NUR sie gezaehlt (sie enthalten auch manuelle Umbrueche, die sonst
+  // doppelt zaehlen wuerden). Fehlen sie (z. B. von anderen Programmen erzeugte
+  // Dateien), zaehlen manuelle Seitenumbrueche (w:br w:type="page"),
+  // "Seitenumbruch oberhalb" (w:pageBreakBefore) und Abschnittswechsel mit
+  // neuer Seite.
+  function finalDocxPageWalker(doc) {
+    var useRendered = doc.getElementsByTagName("w:lastRenderedPageBreak").length > 0;
+    var page = 1, pendingAfter = 0;
+    function isOn(el) { var v = el.getAttribute("w:val"); return v === null || !/^(false|0|off)$/i.test(v); }
+    return {
+      useRendered: useRendered,
+      // Laeuft durch einen Block (w:p oder w:tr) und liefert die Seite am
+      // Blockanfang sowie je a:blip (in Dokumentreihenfolge) die Seite.
+      walk: function (blockEl) {
+        page += pendingAfter; pendingAfter = 0;
+        var startPage = null, blipPages = [];
+        var all = blockEl.getElementsByTagName("*");
+        for (var i = 0; i < all.length; i++) {
+          var el = all[i], tag = el.tagName;
+          if (useRendered) {
+            if (tag === "w:lastRenderedPageBreak") page++;
+          } else if (tag === "w:br" && el.getAttribute("w:type") === "page") page++;
+          else if (tag === "w:pageBreakBefore" && isOn(el)) page++;
+          else if (tag === "w:sectPr" && el.parentNode && el.parentNode.tagName === "w:pPr") {
+            var typeEl = el.getElementsByTagName("w:type")[0];
+            var t = typeEl ? typeEl.getAttribute("w:val") : "nextPage";
+            if (t !== "continuous" && t !== "nextColumn") pendingAfter++;
+          }
+          if (startPage === null && (tag === "w:t" || tag === "a:blip")) startPage = page;
+          if (tag === "a:blip") blipPages.push(page);
+        }
+        return { startPage: startPage === null ? page : startPage, blipPages: blipPages };
+      },
+      // Ein Abschnittswechsel ganz am Ende erzeugt ohne folgenden Inhalt keine
+      // weitere Seite - daher ohne pendingAfter.
+      current: function () { return page; }
+    };
+  }
   // Screens-Datei (.docx) fuer FINAL: wie docxZipToScreens, zusaetzlich je Bild
-  // der zugehoerige oneSCM-Navigationstext. Gesucht wird in dieser Reihenfolge:
+  // der zugehoerige oneSCM-Navigationstext, die Seite der Originalquelle und die
+  // Ueberschriften dieser Seite. Navigationstext - gesucht in dieser Reihenfolge:
   // Textfeld im Bild-Absatz bzw. in der Tabellenzeile des Bildes, uebrige
   // Zellen derselben Tabellenzeile, Text im Bild-Absatz selbst, der direkt
   // folgende Absatz (keine Ueberschrift, kein weiteres Bild), der direkt
-  // vorangehende Absatz (ebenso).
+  // vorangehende Absatz (ebenso). Die Screens sind in Aufnahme-Reihenfolge
+  // abgelegt und koennen sich auf die Vorseite beziehen: steht auf der Seite
+  // eines Bildes keine Ueberschrift, gilt die letzte Ueberschrift davor (mit
+  // Kennzeichnung "Vorseite").
   async function finalDocxZipToScreens(zip) {
     var docXmlEntry = zip.file("word/document.xml");
     var xmlText = await docXmlEntry.async("string");
@@ -26064,12 +26158,45 @@
     if (doc.querySelector("parsererror")) throw new Error("word/document.xml konnte nicht gelesen werden (beschädigte .docx-Datei?).");
     var body = doc.getElementsByTagName("w:body")[0];
     if (!body) throw new Error("Kein Dokumentinhalt (w:body) in der .docx-Datei gefunden.");
+    // Lokalisierte Formatvorlagen-IDs (z. B. "berschrift1", "Titre1") ueber
+    // den englischen Vorlagennamen als Ueberschrift erkennen.
+    var headingIds = {};
+    var stylesEntry = zip.file("word/styles.xml");
+    if (stylesEntry) {
+      var idMap = finalStyleIdMap(await stylesEntry.async("string"));
+      Object.keys(idMap).forEach(function (k) { headingIds[idMap[k]] = k === "Title" ? 1 : parseInt(k.replace("Heading", ""), 10); });
+    }
+    function isHeading(pEl) {
+      var id = docxParagraphStyleId(pEl);
+      return !!id && (headingIds[id] > 0 || docxHeadingLevel(id) > 0);
+    }
+    var walker = finalDocxPageWalker(doc);
     var blocks = [];
-    for (var i = 0; i < body.childNodes.length; i++) {
-      var node = body.childNodes[i];
-      if (node.nodeType !== 1) continue;
+    async function pushBlock(el, heading, text, box) {
+      var pos = walker.walk(el);
+      var images = [];
+      var blips = el.getElementsByTagName("a:blip");
+      for (var b = 0; b < blips.length; b++) {
+        var one = await finalBlipImage(blips[b], relsMap, zip);
+        if (one) { one.page = pos.blipPages[b] || pos.startPage; images.push(one); }
+      }
+      blocks.push({ el: el, heading: heading, text: text, box: box, images: images, page: pos.startPage });
+    }
+    // Inhaltssteuerelemente (w:sdt, z. B. Inhaltsverzeichnis) enthalten selbst
+    // Absaetze/Tabellen - mitlaufen, damit deren Seitenumbrueche zaehlen.
+    async function processChildren(parent) {
+      for (var i = 0; i < parent.childNodes.length; i++) {
+        var node = parent.childNodes[i];
+        if (node.nodeType !== 1) continue;
+        if (node.tagName === "w:sdt") {
+          var content = node.getElementsByTagName("w:sdtContent")[0];
+          if (content) await processChildren(content);
+        } else await processNode(node);
+      }
+    }
+    async function processNode(node) {
       if (node.tagName === "w:p") {
-        blocks.push({ el: node, heading: docxHeadingLevel(docxParagraphStyleId(node)) > 0, text: finalPlainParagraphText(node), box: finalTextboxText(node), images: await blipsInNode(node, relsMap, "word/document.xml", zip) });
+        await pushBlock(node, isHeading(node), finalPlainParagraphText(node), finalTextboxText(node));
       } else if (node.tagName === "w:tbl") {
         var rows = node.getElementsByTagName("w:tr");
         for (var r = 0; r < rows.length; r++) {
@@ -26079,10 +26206,17 @@
             var ct = cellBlips ? "" : docxCellText(cells[c]);
             if (ct) cellTexts.push(ct);
           }
-          blocks.push({ el: rows[r], heading: false, text: cellTexts.join(" – "), box: finalTextboxText(rows[r]), images: await blipsInNode(rows[r], relsMap, "word/document.xml", zip) });
+          await pushBlock(rows[r], false, cellTexts.join(" – "), finalTextboxText(rows[r]));
         }
       }
     }
+    await processChildren(body);
+    var countedPages = Math.max(1, walker.current());
+    var appPages = await finalDocxAppPages(zip);
+    // app.xml kann veraltet sein - nie weniger Seiten angeben als gezaehlt.
+    var pageCount = appPages && appPages >= countedPages ? appPages : countedPages;
+    var headingsByPage = {};
+    blocks.forEach(function (b) { if (b.heading && b.text) (headingsByPage[b.page] = headingsByPage[b.page] || []).push(b.text); });
     function usableNeighbour(b) { return b && !b.heading && !b.images.length && (b.box || b.text); }
     var screens = [];
     var lastHeadingText = "";
@@ -26092,17 +26226,47 @@
       var nav = b.box || b.text;
       if (!nav && usableNeighbour(blocks[idx + 1])) nav = blocks[idx + 1].box || blocks[idx + 1].text;
       if (!nav && usableNeighbour(blocks[idx - 1])) nav = blocks[idx - 1].box || blocks[idx - 1].text;
-      b.images.forEach(function (img) { screens.push({ dataUrl: img.dataUrl, caption: lastHeadingText, navText: (nav || "").trim() }); });
+      b.images.forEach(function (img) {
+        var onPage = headingsByPage[img.page] || [];
+        var fromPrev = !onPage.length && !!lastHeadingText;
+        screens.push({
+          dataUrl: img.dataUrl, caption: lastHeadingText, navText: (nav || "").trim(), page: img.page,
+          pageHeadings: onPage.length ? onPage.slice() : (lastHeadingText ? [lastHeadingText] : []),
+          headingFromPrevPage: fromPrev,
+          prevPageHeadings: (headingsByPage[img.page - 1] || []).slice()
+        });
+      });
     });
-    return screens;
+    return { screens: screens, pageCount: pageCount };
   }
+  // Ein einzelnes a:blip als darstellbares Bild (wie blipsInNode, aber je Element).
+  async function finalBlipImage(blip, relsMap, zip) {
+    var rId = blip.getAttribute("r:embed") || blip.getAttribute("r:link");
+    var target = rId && relsMap[rId];
+    var mediaPath = target && resolveZipRelPath("word/document.xml", target);
+    var mediaEntry = mediaPath && zip.file(mediaPath);
+    var mime = mediaEntry && imageMimeFromPath(mediaPath);
+    if (!mime) return null;
+    return { dataUrl: "data:" + mime + ";base64," + (await mediaEntry.async("base64")) };
+  }
+  // Liefert { screens, pageCount }. .pptx: Seite = Foliennummer, Ueberschrift =
+  // Folientitel.
   async function finalExtractScreens(buf) {
     if (classifyWordBuffer(buf) === "zip" && typeof JSZip !== "undefined") {
       var zip = null;
       try { zip = await JSZip.loadAsync(buf); } catch (e) { zip = null; }
       if (zip && zip.file("word/document.xml")) return finalDocxZipToScreens(zip);
+      if (zip && zip.file("ppt/presentation.xml")) {
+        var slideCount = 0;
+        zip.forEach(function (relPath) { if (/^ppt\/slides\/slide\d+\.xml$/i.test(relPath)) slideCount++; });
+        var pptScreens = (await pptxZipToScreens(zip)).map(function (sc) {
+          var titles = sc.caption ? [sc.caption] : [];
+          return { dataUrl: sc.dataUrl, caption: sc.caption, navText: "", page: sc.page || null, pageHeadings: titles, headingFromPrevPage: false, prevPageHeadings: [] };
+        });
+        return { screens: pptScreens, pageCount: slideCount || null };
+      }
     }
-    return (await rovoExtractTablesAndImages(buf)).images;
+    return { screens: (await rovoExtractTablesAndImages(buf)).images, pageCount: null };
   }
   function finalAddExtractedImage(screen, sourceFile, idx, filesFileId, rolle, sparte, sprache, markt) {
     var navText = screen.navText || "";
@@ -26114,7 +26278,9 @@
       width: null, height: null, avgColor: null, brightnessPct: null, metadataComputed: false, metadataError: null,
       ocrText: null, ocrError: null, ocrRanAt: null, imageNumber: idx + 1, sourceFile: sourceFile,
       finalScreensFileId: filesFileId, rolle: rolle, sparte: sparte, sprache: sprache, markt: markt,
-      finalNavText: navText, finalHeading: screen.caption || "", finalStatus: ""
+      finalNavText: navText, finalHeading: screen.caption || "", finalStatus: "",
+      finalPage: screen.page || null, finalPageHeadings: screen.pageHeadings || [],
+      finalHeadingFromPrevPage: !!screen.headingFromPrevPage, finalPrevPageHeadings: screen.prevPageHeadings || []
     });
   }
   // Bildunterschrift im Master: Untertitel plus oneSCM-Navigation (sofern
@@ -26131,11 +26297,12 @@
     var sprache = els.finalScreensSpracheInput.value.trim(), markt = els.finalScreensMarktInput.value.trim();
     try {
       var buf = await readFileAsArrayBuffer(file);
-      var extracted = { images: await finalExtractScreens(buf) };
+      var result = await finalExtractScreens(buf);
+      var extracted = { images: result.screens };
       var filesFileId = nextFinalScreensFileId++;
       extracted.images.forEach(function (screen, idx) { finalAddExtractedImage(screen, file.name, idx, filesFileId, rolle, sparte, sprache, markt); });
-      app.final.screensFiles.push({ id: filesFileId, filename: file.name, rolle: rolle, sparte: sparte, sprache: sprache, markt: markt, screenCount: extracted.images.length, addedAt: nowLabel() });
-      addLog("FINAL: Screens-Datei „" + file.name + "“ hochgeladen (" + extracted.images.length + " Screen(s), Rolle „" + (rolle || "–") + "“, Sparte „" + (sparte || "–") + "“, Sprache „" + (sprache || "–") + "“, Markt „" + (markt || "–") + "“).");
+      app.final.screensFiles.push({ id: filesFileId, filename: file.name, rolle: rolle, sparte: sparte, sprache: sprache, markt: markt, screenCount: extracted.images.length, pageCount: result.pageCount || null, addedAt: nowLabel() });
+      addLog("FINAL: Screens-Datei „" + file.name + "“ hochgeladen (" + extracted.images.length + " Screen(s)" + (result.pageCount ? " auf " + result.pageCount + " Seite(n)" : "") + ", Rolle „" + (rolle || "–") + "“, Sparte „" + (sparte || "–") + "“, Sprache „" + (sprache || "–") + "“, Markt „" + (markt || "–") + "“).");
       showToast("Hochgeladen", extracted.images.length + " Screen(s) extrahiert.");
     } catch (err) {
       showToast("Fehler beim Lesen", file.name + ": " + ((err && err.message) || "Unbekannter Fehler."), true);
@@ -26163,7 +26330,7 @@
     var manuals = app.final.manuals;
     els.finalManualsEmpty.hidden = manuals.length > 0;
     els.finalManualsTbody.innerHTML = manuals.map(function (m) {
-      return "<tr><td>" + escapeHtml(m.filename) + "</td><td>" + m.chapters.length + "</td><td>" + (m.design ? "Original-Design gespeichert" : "–") + "</td><td>" + escapeHtml(m.addedAt) + "</td>" +
+      return "<tr><td>" + escapeHtml(m.filename) + "</td><td>" + m.chapters.length + '</td><td class="final-col-pages">' + (m.pageCount || "–") + "</td><td>" + (m.design ? "Original-Design gespeichert" : "–") + "</td><td>" + escapeHtml(m.addedAt) + "</td>" +
         '<td><button class="btn ghost btn-tiny" data-final-manual-remove="' + m.id + '" type="button">' + finalIcon("trash") + "Entfernen</button></td></tr>";
     }).join("");
   }
@@ -26187,6 +26354,12 @@
   function updateFinalPreview() {
     var title = els.finalPreviewChapterSelect.value;
     var marked = title ? finalChapterMarkedText(title) : "";
+    // Quelle des Kapitels mit Seitenanzahl der Originaldatei.
+    var srcManual = title ? app.final.manuals.filter(function (m) { return m.id === finalWinningManualId(title); })[0] : null;
+    els.finalPreviewSourceNote.textContent = srcManual
+      ? "Quelle: " + srcManual.filename + (srcManual.pageCount ? " · " + srcManual.pageCount + " Seite" + (srcManual.pageCount === 1 ? "" : "n") : "") +
+        " · " + app.final.manuals.length + " Datei(en) hochgeladen"
+      : "";
     els.finalPreviewOutput.innerHTML = title ? (marked.replace(FINAL_MARK_RE, "") ? finalMarkedTextToHtml(marked) : "(leer)") : "";
   }
   function renderFinalScreensFilesTable() {
@@ -26194,7 +26367,7 @@
     els.finalScreensFilesEmpty.hidden = files.length > 0;
     els.finalScreensFilesTbody.innerHTML = files.map(function (f) {
       return "<tr><td>" + escapeHtml(f.filename) + "</td><td>" + escapeHtml(f.rolle || "–") + "</td><td>" + escapeHtml(f.sparte || "–") + "</td>" +
-        "<td>" + escapeHtml(f.sprache || "–") + "</td><td>" + escapeHtml(f.markt || "–") + "</td><td>" + f.screenCount + "</td><td>" + escapeHtml(f.addedAt) + "</td>" +
+        "<td>" + escapeHtml(f.sprache || "–") + "</td><td>" + escapeHtml(f.markt || "–") + '</td><td class="final-col-pages">' + (f.pageCount || "–") + "</td><td>" + f.screenCount + "</td><td>" + escapeHtml(f.addedAt) + "</td>" +
         '<td><button class="btn ghost btn-tiny final-btn-danger" data-final-screens-file-remove="' + f.id + '" type="button">' + finalIcon("trash") + "Löschen</button></td></tr>";
     }).join("");
   }
@@ -26213,11 +26386,13 @@
         : '<span class="step-note">' + (img.chapter ? "Zugeordnet" : "Offen") + "</span>";
       return '<tr><td><input type="checkbox" data-final-screen-select="' + img.id + '"' + (finalSelectedScreens[img.id] ? " checked" : "") + ' aria-label="Screen markieren"></td>' +
         "<td><img src=\"" + img.dataUrl + "\" data-final-screen-view=\"" + img.id + "\" title=\"Doppelklick: groß anzeigen\" style=\"width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:zoom-in;\" alt=\"\"></td>" +
+        '<td class="final-col-page mono" style="white-space:nowrap;">' + escapeHtml(finalPageLabel(img)) + "</td>" +
         '<td><input type="text" class="text-input" data-final-screen-caption="' + img.id + '" value="' + escapeHtml(img.description || "") + '" placeholder="Untertitel" style="min-width:180px;"></td>' +
-        "<td>" + escapeHtml(img.finalNavText || "–") + "</td>" +
+        '<td class="final-col-headings">' + finalPageHeadingsHtml(img) + "</td>" +
+        '<td class="final-col-nav">' + escapeHtml(img.finalNavText || "–") + "</td>" +
         "<td>" + escapeHtml([img.rolle, img.sparte, img.sprache, img.markt].filter(function (v) { return v; }).join(" / ") || "–") + "</td>" +
         '<td><select data-final-screen-chapter="' + img.id + '">' + chapterOptsFor(img.chapter) + "</select></td>" +
-        "<td>" + status + "</td>" +
+        '<td class="final-col-status">' + status + "</td>" +
         '<td><div class="final-row-actions"><button class="btn ghost btn-tiny" data-final-screen-edit="' + img.id + '" type="button" title="Untertitel bearbeiten">' + finalIcon("pencil") + "Bearbeiten</button>" +
         '<button class="btn ghost btn-tiny final-btn-danger" data-final-screen-delete="' + img.id + '" type="button" title="Screen löschen">' + finalIcon("trash") + "Löschen</button></div></td></tr>";
     }).join("");
@@ -26755,7 +26930,7 @@
       // Nur die Statuszelle aktualisieren - ein Neuaufbau der Tabelle wuerde
       // dem Eingabefeld den Fokus nehmen.
       img.finalStatus = "Manuell";
-      var statusCell = input.closest("tr").children[6];
+      var statusCell = input.closest("tr").querySelector(".final-col-status");
       if (statusCell) statusCell.innerHTML = '<span class="pill done">Manuell</span>';
     }
   });
@@ -26796,6 +26971,9 @@
       batch.map(function (img, i) {
         return "[" + (i + 1) + "] Navigation in oneSCM: " + (img.finalNavText || "–") +
           " | Überschrift in der Screens-Datei: " + (img.finalHeading || "–") +
+          (img.finalPage ? " | Seite in der Quelle: " + img.finalPage : "") +
+          ((img.finalPageHeadings || []).length ? " | Überschriften dieser Seite" + (img.finalHeadingFromPrevPage ? " (keine eigene – von der Vorseite)" : "") + ": " + img.finalPageHeadings.join("; ") : "") +
+          ((img.finalPrevPageHeadings || []).length ? " | Überschriften der Vorseite: " + img.finalPrevPageHeadings.join("; ") : "") +
           " | bisheriger Untertitel: " + (img.description || "–");
       }).join("\n") +
       '\n\nAntworte nur mit einem JSON-Array, ein Objekt je Screen: [{"nr": 1, "kapitel": "<exakter Titel aus der Kapitel-Liste oder leer>", "untertitel": "<kurzer Untertitel>"}]';
