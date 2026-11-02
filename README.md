@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.117.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.118.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,22 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **FINAL/Editor – Anmeldung, Prüfbericht-Ablage, Stände vergleichen (v2.118.0)**:
+  - **Bearbeiter aus dem claude.ai-Konto**: Die App fragt über die Artifact-Fähigkeit `user`
+    (Scope „profile“) die angemeldete Person ab. Ist ein Name verfügbar, wird das Bearbeiter-Feld
+    automatisch gefüllt und schreibgeschützt („Angemeldet als …“); Statuswechsel speichern zusätzlich
+    die Konto-ID, die Anzeige „von …“ wird bei jedem Rendern über `profiles()` aufgelöst (gespeicherter
+    Name nur als Rückfall). „Veröffentlicht“ ist nur mit Bearbeitungsrecht am Artifact möglich. Ohne
+    Konto-Identität (lokal geöffnet) bleibt das Namensfeld wie bisher.
+  - **Prüfbericht**: im Register Editor „An den Stand anhängen“ (mehrere Berichte je Stand, mit Datum
+    und Bearbeiter), „Als Word herunterladen“ und „Als Markdown herunterladen“. In der Stände-Tabelle
+    lädt „Prüfbericht (n)“ den neuesten angehängten Bericht als Word.
+  - **Stände vergleichen** (Schritt 6): Stand A/B wählen; Kapitel werden über den Titel zugeordnet,
+    bei gleicher Kapitelzahl (z. B. Deutsch/Englisch) ersatzweise über die Reihenfolge. Je Kapitel
+    „unverändert“, „geändert (+x / −y Zeilen)“, „nur in A/B“, Screens A/B und Zeilenvergleich
+    („Unterschiede“). „Inhaltlicher Vergleich (KI)“ bewertet fehlende/abweichende Inhalte auch über
+    Sprachgrenzen (neuer editierbarer Prompt, insgesamt 35).
 
 - **FINAL/Editor – Freigabe, Sperre, Verbesserungen ohne Agent, geschützte Vermerke (v2.117.0)**:
   - **Verbesserungen ohne Agent**: Option in Schritt 6 „Verbesserungen … direkt als interne Vermerke

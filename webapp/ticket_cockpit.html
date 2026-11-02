@@ -2610,6 +2610,12 @@
             <div id="edito-final-report-wrap" hidden>
               <p class="section-label">Prüfbericht</p>
               <div class="panel gen-preview" id="edito-final-report" style="padding:12px 14px; white-space:pre-wrap;"></div>
+              <div class="controls" style="margin-top:8px;">
+                <button class="btn ghost btn-tiny" id="edito-final-report-attach-btn" type="button">An den Stand anhängen</button>
+                <button class="btn ghost btn-tiny" id="edito-final-report-docx-btn" type="button">Als Word herunterladen</button>
+                <button class="btn ghost btn-tiny" id="edito-final-report-md-btn" type="button">Als Markdown herunterladen</button>
+                <span class="step-note" id="edito-final-report-note"></span>
+              </div>
             </div>
             <div class="controls" style="margin-top:10px; flex-wrap:wrap;">
               <input class="text-input" id="edito-final-save-name-input" type="text" placeholder="Name des neuen Stands" style="min-width:260px;">
@@ -3060,6 +3066,7 @@
             <div class="controls">
               <label for="final-reviewer-input">Bearbeiter für Prüfung/Freigabe</label>
               <input class="text-input" id="final-reviewer-input" type="text" placeholder="Name (Pflicht für „Geprüft“ und „Veröffentlicht“)" style="min-width:280px; max-width:380px;">
+              <span class="step-note" id="final-reviewer-signed-note"></span>
               <span class="step-note">Veröffentlichte Stände sind gesperrt (nicht löschbar); zum Zurücksetzen des Status ist eine Bestätigung nötig.</span>
             </div>
             <div class="table-wrap">
@@ -3067,6 +3074,31 @@
                 <thead><tr><th>Stand</th><th>Erstellt</th><th>Quelle · Verbesserungen · Screens</th><th>Kapitel / Screens</th><th>Status</th><th></th></tr></thead>
                 <tbody id="final-versions-tbody"></tbody>
               </table>
+            </div>
+            <div class="final-subblock" id="final-compare-block">
+              <p class="section-label final-sub-label"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="7" height="16" rx="1.5"/><rect x="14" y="4" width="7" height="16" rx="1.5"/><path d="M10 9h4M10 15h4"/></svg><span>Stände vergleichen</span></p>
+              <p class="desc">Zwei Stände kapitelweise gegenüberstellen: Kapitel werden über den Titel zugeordnet (bei gleicher Kapitelzahl, z. B. Deutsch/Englisch, ersatzweise über die Reihenfolge). „Unterschiede“ zeigt den Zeilenvergleich; der inhaltliche Vergleich (KI) bewertet fehlende oder abweichende Inhalte auch über Sprachgrenzen hinweg.</p>
+              <div class="controls" style="flex-wrap:wrap;">
+                <div><label for="final-compare-a-select">Stand A</label><select id="final-compare-a-select" aria-label="Stand A"></select></div>
+                <div><label for="final-compare-b-select">Stand B</label><select id="final-compare-b-select" aria-label="Stand B"></select></div>
+                <button class="btn ghost" id="final-compare-btn" type="button">Vergleichen</button>
+                <button class="btn ghost" id="final-compare-ai-btn" type="button"><span class="btn-spinner" id="final-compare-ai-spinner" hidden></span>Inhaltlicher Vergleich (KI)</button>
+              </div>
+              <p class="step-note" id="final-compare-summary"></p>
+              <div class="table-wrap" id="final-compare-table-wrap" hidden>
+                <table class="simple-table" id="final-compare-table">
+                  <thead><tr><th>Kapitel (A)</th><th>Kapitel (B)</th><th>Änderung</th><th>Screens A / B</th><th></th></tr></thead>
+                  <tbody id="final-compare-tbody"></tbody>
+                </table>
+              </div>
+              <div id="final-compare-diff" hidden>
+                <p class="section-label" id="final-compare-diff-title"></p>
+                <div class="panel" id="final-compare-diff-body" style="max-height:420px; overflow:auto; font-size:13px; padding:8px;"></div>
+              </div>
+              <div id="final-compare-ai-wrap" hidden>
+                <p class="section-label">Inhaltlicher Vergleich (KI)</p>
+                <div class="panel gen-preview" id="final-compare-ai-output" style="white-space:pre-wrap; padding:12px 14px;"></div>
+              </div>
             </div>
           </div>
         </section>
@@ -5848,7 +5880,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.117.0";
+  var APP_VERSION = "2.118.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7449,7 +7481,9 @@
     "final-preview-manual-select", "final-preview-improvements-select", "final-preview-improvements", "final-screens-file-filter-select",
     "final-build-manual-select", "final-build-improvements-select", "final-build-screens-select", "final-build-name-input",
     "final-versions-block", "final-versions-tbody", "final-result-version-select", "final-result-version-status",
-    "final-design-version-select", "final-design-version-status", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note",
+    "final-design-version-select", "final-design-version-status", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
+    "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
+    "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
     "edito-final-agent-spinner", "edito-final-agent-status", "edito-final-chapters-tbody", "edito-final-compare", "edito-final-compare-title",
@@ -19668,7 +19702,8 @@
     finalImageAssign: "Du ordnest Bildschirm-Screenshots (Screens) der Anwendung oneSCM den Kapiteln und Unterkapiteln eines Benutzerhandbuchs zu. Zu jedem Screen bekommst du (falls vorhanden) den Navigationspfad in oneSCM aus der Screens-Datei, die Überschrift, unter der der Screen in der Datei stand, und den bisherigen Untertitel, außerdem die Seite in der Quelle sowie die Überschriften dieser Seite und der Vorseite. Die Screens stehen in Aufnahme-Reihenfolge (Seitenreihenfolge der Quelle) und können sich auf die Vorseite beziehen - steht auf ihrer Seite keine eigene Überschrift, gilt die Überschrift der Vorseite; sind Bilder beigefügt, stehen sie in derselben Reihenfolge wie die Screen-Liste. Interpretiere, was der Screen zeigt, und wähle das inhaltlich passendste Kapitel bzw. Unterkapitel AUSSCHLIESSLICH aus der Kapitel-Liste (Titel exakt übernehmen; passt keines, gib einen leeren Text zurück). Formuliere je Screen einen kurzen deutschen Untertitel (höchstens 12 Wörter), der beschreibt, was der Screen zeigt - ohne den Navigationspfad zu wiederholen und ohne etwas zu erfinden, das weder im Bild noch in den Angaben steht.",
     finalAgentImprove: "Du bist Technischer Redakteur für das Benutzerhandbuch der Anwendung oneSCM. Arbeite die unten aufgeführten Verbesserungen (aus ROVO) in den Kapiteltext ein. Ändere nur, was die Verbesserungen verlangen oder was für einen stimmigen Text dadurch nötig wird; der übrige Text bleibt wörtlich erhalten. Erfinde keine Inhalte, die weder im Text noch in den Verbesserungen stehen. Jede Zeile, die nur [Bild] enthält, ist ein Bild-Platzhalter: übernimm ALLE diese Zeilen unverändert, in derselben Anzahl und an der inhaltlich passenden Stelle. Behalte Sprache, Absatzstruktur und Zwischenüberschriften bei. Antworte ausschließlich mit dem vollständigen überarbeiteten Kapiteltext - ohne Kapitelüberschrift, ohne Einleitung, ohne Kommentar.",
     finalAgentStyle: "Du bist Lektor für das Benutzerhandbuch der Anwendung oneSCM. Überarbeite den Kapiteltext sprachlich: klare, aktive Sätze im Präsens, einheitliche Begriffe, korrekte Rechtschreibung und Grammatik, roter Faden. Der fachliche Inhalt bleibt vollständig und unverändert, nichts hinzuerfinden, nichts weglassen. Jede Zeile, die nur [Bild] enthält, ist ein Bild-Platzhalter: übernimm ALLE diese Zeilen unverändert und in derselben Anzahl. Behalte die Sprache des Textes bei. Antworte ausschließlich mit dem vollständigen überarbeiteten Kapiteltext - ohne Kapitelüberschrift, ohne Einleitung, ohne Kommentar.",
-    finalAgentReview: "Du prüfst ein internes Dokument (Benutzerhandbuch der Anwendung oneSCM) vor der Veröffentlichung. Bewerte je Kapitel kurz Inhalt (Vollständigkeit, Widersprüche, fehlende Schritte), Sprache (Verständlichkeit, Einheitlichkeit) und - falls angegeben - ob die Verbesserungen aus ROVO bereits umgesetzt sind. Gliedere den Bericht mit einer Zeile je Kapitel (Kapiteltitel), darunter Stichpunkte mit konkreten Fundstellen und Empfehlungen, und schließe mit einer Gesamtempfehlung (Entwurf / Geprüft / Veröffentlichungsreif). Erfinde keine Inhalte."
+    finalAgentReview: "Du prüfst ein internes Dokument (Benutzerhandbuch der Anwendung oneSCM) vor der Veröffentlichung. Bewerte je Kapitel kurz Inhalt (Vollständigkeit, Widersprüche, fehlende Schritte), Sprache (Verständlichkeit, Einheitlichkeit) und - falls angegeben - ob die Verbesserungen aus ROVO bereits umgesetzt sind. Gliedere den Bericht mit einer Zeile je Kapitel (Kapiteltitel), darunter Stichpunkte mit konkreten Fundstellen und Empfehlungen, und schließe mit einer Gesamtempfehlung (Entwurf / Geprüft / Veröffentlichungsreif). Erfinde keine Inhalte.",
+    finalCompareVersions: "Du vergleichst zwei Fassungen (Stand A und Stand B) eines Benutzerhandbuchs der Anwendung oneSCM. Die Fassungen können in unterschiedlichen Sprachen oder für unterschiedliche Rollen/Märkte geschrieben sein - vergleiche den INHALT, nicht den Wortlaut. Gehe Kapitel für Kapitel vor (Kapitel über Titel bzw. Reihenfolge zuordnen) und nenne je Kapitel: Inhalte, die nur in A stehen; Inhalte, die nur in B stehen; inhaltliche Abweichungen oder Widersprüche. Kapitel ohne inhaltlichen Unterschied mit einer Zeile \"keine inhaltlichen Unterschiede\" erwähnen. Schließe mit einer kurzen Gesamteinschätzung. Erfinde nichts."
   };
   var RAG_PROMPT_LABELS = {
     summary: "Zusammenfassung erzeugen",
@@ -19704,7 +19739,8 @@
     finalImageAssign: "FINAL: Bilder interpretieren und Kapiteln zuordnen",
     finalAgentImprove: "Editor (interne Dokumente): Verbesserungen aus ROVO in ein Kapitel einarbeiten",
     finalAgentStyle: "Editor (interne Dokumente): Sprache und Stil eines Kapitels optimieren",
-    finalAgentReview: "Editor (interne Dokumente): Prüfbericht über ein Dokument"
+    finalAgentReview: "Editor (interne Dokumente): Prüfbericht über ein Dokument",
+    finalCompareVersions: "FINAL: Zwei Stände inhaltlich vergleichen"
   };
   function ragPromptFor(promptKey) {
     var override = app.ragPrompts[promptKey];
@@ -27290,10 +27326,11 @@
         "<td>" + escapeHtml(v.createdAt) + "</td><td>" + escapeHtml(finalVersionConfigLabel(v.config)) + "</td>" +
         "<td>" + v.chapters.length + " / " + screens + "</td>" +
         "<td>" + finalStatusPill(v.status) + '<div><select data-final-version-status="' + v.id + '" aria-label="Status von ' + escapeHtml(v.name) + '">' + opts + "</select></div>" +
-        '<div class="step-note">seit ' + escapeHtml(v.statusChangedAt || v.createdAt) + (v.statusBy ? " · von " + escapeHtml(v.statusBy) : "") + "</div></td>" +
+        '<div class="step-note">seit ' + escapeHtml(v.statusChangedAt || v.createdAt) + (v.statusBy ? " · von " + (v.statusById ? '<span data-final-by-id="' + escapeHtml(v.statusById) + '">' + escapeHtml(v.statusBy) + "</span>" : escapeHtml(v.statusBy)) : "") + "</div></td>" +
         '<td><div class="final-row-actions">' +
         (isActive ? "" : '<button class="btn ghost btn-tiny" data-final-version-activate="' + v.id + '" type="button">Anzeigen</button>') +
         '<button class="btn ghost btn-tiny" data-final-version-editor="' + v.id + '" type="button">Im Editor optimieren</button>' +
+        ((v.reviews || []).length ? '<button class="btn ghost btn-tiny" data-final-version-report="' + v.id + '" type="button" title="Letzten Prüfbericht als Word herunterladen">Prüfbericht (' + v.reviews.length + ")</button>" : "") +
         (v.status === "Veröffentlicht"
           ? '<button class="btn ghost btn-tiny" data-final-version-delete="' + v.id + '" type="button" disabled title="Veröffentlichte Stände sind gesperrt – zuerst den Status zurücksetzen.">' + finalIcon("trash") + "Gesperrt</button>"
           : '<button class="btn ghost btn-tiny final-btn-danger" data-final-version-delete="' + v.id + '" type="button">' + finalIcon("trash") + "Löschen</button>") + "</div></td></tr>";
@@ -27311,7 +27348,11 @@
   // einen veroeffentlichten Stand zuruecksetzen nur nach Bestaetigung.
   async function finalSetVersionStatus(v, status) {
     if (!v || v.status === status || FINAL_VERSION_STATUSES.indexOf(status) === -1) return false;
-    var by = (app.final.reviewerName || "").trim();
+    var by = finalReviewerName();
+    if (finalUser && status === "Veröffentlicht" && !finalUser.canEdit) {
+      showToast("Keine Berechtigung", "Veröffentlichen dürfen nur Personen mit Bearbeitungsrecht an dieser App.", true);
+      return false;
+    }
     if (status !== "Entwurf" && !by) {
       showToast("Bearbeiter fehlt", "Für „" + status + "“ bitte zuerst den Namen unter „Bearbeiter für Prüfung/Freigabe“ eintragen.", true);
       els.finalReviewerInput.focus();
@@ -27324,7 +27365,8 @@
     v.status = status;
     v.statusChangedAt = nowLabel();
     v.statusBy = by;
-    (v.history = v.history || []).push({ status: status, when: v.statusChangedAt, by: by });
+    v.statusById = finalUser ? finalUser.id : null;
+    (v.history = v.history || []).push({ status: status, when: v.statusChangedAt, by: by, byId: v.statusById });
     addLog("FINAL: Stand „" + v.name + "“ auf Status „" + status + "“ gesetzt" + (by ? " (von " + by + ")" : "") + ".");
     return true;
   }
@@ -27334,6 +27376,8 @@
     if (!sel) return;
     await finalSetVersionStatus(finalVersionById(parseInt(sel.getAttribute("data-final-version-status"), 10)), sel.value);
     renderFinalVersions();
+    renderFinalReviewer();
+    renderFinalCompareSelects();
     renderFinalVersionSelects();
     renderWhenVisible("edito", "finalDocs", renderEditoFinalDocs);
   });
@@ -27529,6 +27573,8 @@
       var res = await sampleApi(ragPromptFor("finalAgentReview") + "\n\nDOKUMENT: " + doc.name + " (Status: " + doc.status + ")\n\n" + truncate(body, 90000),
         { modelTier: "default", cache: false, signal: editoFinalAbort.signal });
       editoFinalWork.report = String((res && res.text) || "").trim() || "(leere Antwort)";
+      editoFinalWork.reportAt = nowLabel();
+      els.editoFinalReportNote.textContent = "";
       addLog("Editor: Prüfbericht für „" + doc.name + "“ erstellt.");
       editoFinalAbort = null;
       editoFinalSetBusy(false, "Prüfbericht erstellt.");
@@ -27585,6 +27631,180 @@
     renderWhenVisible("final", "final", renderFinal);
   });
 
+  // ===================== v2.118: Anmeldung (claude.ai-Konto), Pruefbericht, Staende vergleichen =====================
+  // Angemeldete Person ueber die user-Faehigkeit (Name nur mit Scope "profile").
+  // Ohne Konto-Identitaet (lokal, Tests) gilt weiter das Namensfeld.
+  var finalUser = null;
+  if (window.claude && window.claude.use) {
+    window.claude.use("user").then(function (ns) {
+      if (!ns || typeof ns.me !== "function") return null;
+      return Promise.resolve(ns.me()).then(function (me) {
+        if (!me || !me.name) return;
+        finalUser = { id: me.id || null, name: me.name, canEdit: !!me.canEdit, ns: ns };
+        renderWhenVisible("final", "final", renderFinal);
+      });
+    }).catch(function () { /* ohne Identitaet weiter mit Namensfeld */ });
+  }
+  function finalReviewerName() { return finalUser ? finalUser.name : (app.final.reviewerName || "").trim(); }
+  function renderFinalReviewer() {
+    els.finalReviewerInput.readOnly = !!finalUser;
+    if (finalUser) els.finalReviewerInput.value = finalUser.name;
+    els.finalReviewerSignedNote.textContent = finalUser
+      ? "Angemeldet als " + finalUser.name + " (claude.ai-Konto)" + (finalUser.canEdit ? "" : " – ohne Bearbeitungsrecht: Veröffentlichen nicht möglich")
+      : "";
+    // Namen zu gespeicherten Konto-IDs aktuell aufloesen (Anzeige), gespeicherter Name als Rueckfall.
+    if (finalUser && finalUser.ns && typeof finalUser.ns.profiles === "function") {
+      var spans = els.finalVersionsTbody.querySelectorAll("[data-final-by-id]");
+      var ids = Array.prototype.map.call(spans, function (sp) { return sp.getAttribute("data-final-by-id"); });
+      if (ids.length) Promise.resolve(finalUser.ns.profiles(ids)).then(function (ps) {
+        Array.prototype.forEach.call(spans, function (sp) { var p = ps && ps[sp.getAttribute("data-final-by-id")]; if (p && p.name) sp.textContent = p.name; });
+      }).catch(function () {});
+    }
+  }
+
+  // ---- Pruefbericht anhaengen / exportieren ----
+  function editoFinalSafeName(name) { return String(name || "Stand").replace(/[^\wäöüÄÖÜß.-]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 60) || "Stand"; }
+  function finalReportMarkdown(v, report) {
+    return "# Prüfbericht – " + v.name + "\n\n" + "- Stand: " + v.name + " (" + v.status + ", erstellt " + v.createdAt + ")\n" +
+      "- Bericht vom: " + report.at + (report.by ? "\n- Angehängt von: " + report.by : "") + "\n\n" + report.text + "\n";
+  }
+  async function finalDownloadReport(v, report, format) {
+    var base = "Pruefbericht_" + editoFinalSafeName(v.name) + "_" + dateStampForFilename();
+    if (format === "md") return saveOrWarn(base + ".md", finalReportMarkdown(v, report));
+    var body = "Stand: " + v.name + " (" + v.status + ", erstellt " + v.createdAt + ")\nBericht vom: " + report.at + (report.by ? " · " + report.by : "") + "\n\n" + report.text;
+    var blob = await buildDocxBlobFromBodyAndMedia(manualChapterBodyXml("Prüfbericht – " + v.name, body, [], []), []);
+    return saveOrWarn(base + ".docx", blob);
+  }
+  function editoFinalCurrentReport() {
+    var doc = editoFinalDoc();
+    if (!doc || !editoFinalWork || !editoFinalWork.report) return null;
+    return { doc: doc, report: { text: editoFinalWork.report, at: editoFinalWork.reportAt || nowLabel(), by: finalReviewerName() } };
+  }
+  els.editoFinalReportAttachBtn.addEventListener("click", function () {
+    var cur = editoFinalCurrentReport();
+    if (!cur) return;
+    cur.doc.reviews = cur.doc.reviews || [];
+    cur.doc.reviews.push({ text: cur.report.text, at: cur.report.at, by: cur.report.by, byId: finalUser ? finalUser.id : null });
+    els.editoFinalReportNote.textContent = "An „" + cur.doc.name + "“ angehängt (" + cur.doc.reviews.length + " Prüfbericht(e)).";
+    addLog("Editor: Prüfbericht an Stand „" + cur.doc.name + "“ angehängt.");
+    renderWhenVisible("final", "final", renderFinal);
+  });
+  els.editoFinalReportDocxBtn.addEventListener("click", async function () {
+    var cur = editoFinalCurrentReport();
+    if (!cur) return;
+    try { if (await finalDownloadReport(cur.doc, cur.report, "docx")) addLog("Editor: Prüfbericht zu „" + cur.doc.name + "“ als Word heruntergeladen."); }
+    catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
+  els.editoFinalReportMdBtn.addEventListener("click", async function () {
+    var cur = editoFinalCurrentReport();
+    if (!cur) return;
+    if (await finalDownloadReport(cur.doc, cur.report, "md")) addLog("Editor: Prüfbericht zu „" + cur.doc.name + "“ als Markdown heruntergeladen.");
+  });
+  els.finalVersionsTbody.addEventListener("click", async function (e) {
+    var btn = e.target.closest("[data-final-version-report]");
+    if (!btn) return;
+    var v = finalVersionById(parseInt(btn.getAttribute("data-final-version-report"), 10));
+    if (!v || !(v.reviews || []).length) return;
+    try { await finalDownloadReport(v, v.reviews[v.reviews.length - 1], "docx"); }
+    catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
+
+  // ---- Staende vergleichen ----
+  var finalComparePairs = [];
+  function finalPairChapters(a, b) {
+    var used = {}, pairs = [];
+    var normB = b.chapters.map(function (c) { return normalizeChapterTitleForMatch(c.title); });
+    a.chapters.forEach(function (ca) {
+      var na = normalizeChapterTitleForMatch(ca.title), j = -1;
+      for (var k = 0; k < b.chapters.length; k++) {
+        if (!used[k] && (b.chapters[k].title === ca.title || (na && normB[k] === na))) { j = k; break; }
+      }
+      if (j >= 0) used[j] = true;
+      pairs.push({ a: ca, b: j >= 0 ? b.chapters[j] : null, how: j >= 0 ? "Titel" : "" });
+    });
+    var restA = pairs.filter(function (p) { return !p.b; });
+    var restB = b.chapters.filter(function (_, k) { return !used[k]; });
+    // Gleiche Kapitelzahl (z. B. Sprachfassungen): Rest ueber die Reihenfolge zuordnen.
+    if (a.chapters.length === b.chapters.length && restA.length === restB.length) restA.forEach(function (p, i) { p.b = restB[i]; p.how = "Position"; });
+    else restB.forEach(function (cb) { pairs.push({ a: null, b: cb, how: "" }); });
+    return pairs;
+  }
+  function finalCompareSelectedVersions() {
+    return { a: finalVersionById(finalSelId(els.finalCompareASelect)), b: finalVersionById(finalSelId(els.finalCompareBSelect)) };
+  }
+  function renderFinalCompareSelects() {
+    var vs = app.final.versions;
+    els.finalCompareBtn.disabled = vs.length < 2;
+    els.finalCompareAiBtn.disabled = vs.length < 2;
+    var prevA = finalSelId(els.finalCompareASelect), prevB = finalSelId(els.finalCompareBSelect);
+    var opts = vs.map(function (v) { return '<option value="' + v.id + '">' + escapeHtml(finalVersionOptionLabel(v)) + "</option>"; }).join("");
+    els.finalCompareASelect.innerHTML = opts;
+    els.finalCompareBSelect.innerHTML = opts;
+    if (!vs.length) return;
+    els.finalCompareASelect.value = String(finalVersionById(prevA) ? prevA : vs[Math.max(0, vs.length - 2)].id);
+    els.finalCompareBSelect.value = String(finalVersionById(prevB) ? prevB : vs[vs.length - 1].id);
+  }
+  function finalRunCompare() {
+    var sel = finalCompareSelectedVersions();
+    if (!sel.a || !sel.b || sel.a.id === sel.b.id) { showToast("Zwei Stände wählen", "Bitte zwei unterschiedliche Stände wählen.", true); return; }
+    finalComparePairs = finalPairChapters(sel.a, sel.b);
+    var same = 0, changed = 0, onlyA = 0, onlyB = 0;
+    els.finalCompareTbody.innerHTML = finalComparePairs.map(function (p, idx) {
+      var label;
+      if (p.a && p.b) {
+        var d = diffLines(p.a.text, p.b.text);
+        var add = d.filter(function (x) { return x.type === "added"; }).length, rem = d.filter(function (x) { return x.type === "removed"; }).length;
+        if (!add && !rem) { same++; label = '<span class="final-imp-badge final-imp-done">unverändert</span>'; }
+        else { changed++; label = '<span class="final-imp-badge final-imp-open">geändert</span> <span class="step-note">+' + add + " / −" + rem + " Zeilen</span>"; }
+        if (p.how === "Position") label += '<div class="step-note">Zuordnung über die Reihenfolge</div>';
+      } else if (p.a) { onlyA++; label = '<span class="final-imp-badge final-imp-rejected">nur in A</span>'; }
+      else { onlyB++; label = '<span class="final-imp-badge final-imp-rejected">nur in B</span>'; }
+      var sc = function (c) { return c ? (c.screenIds || []).length : "–"; };
+      return '<tr data-final-compare-row="' + idx + '"><td>' + (p.a ? escapeHtml(p.a.title) : "–") + "</td><td>" + (p.b ? escapeHtml(p.b.title) : "–") + '</td><td class="final-col-change">' + label + "</td>" +
+        "<td>" + sc(p.a) + " / " + sc(p.b) + "</td>" +
+        '<td><button class="btn ghost btn-tiny" type="button" data-final-compare-diff="' + idx + '">Unterschiede</button></td></tr>';
+    }).join("");
+    els.finalCompareTableWrap.hidden = false;
+    els.finalCompareDiff.hidden = true;
+    els.finalCompareSummary.textContent = "„" + sel.a.name + "“ (A) mit „" + sel.b.name + "“ (B): " + finalComparePairs.length + " Kapitel – " +
+      same + " unverändert, " + changed + " geändert, " + onlyA + " nur in A, " + onlyB + " nur in B.";
+    addLog("FINAL: Stände „" + sel.a.name + "“ und „" + sel.b.name + "“ verglichen (" + changed + " geändert, " + (onlyA + onlyB) + " nur in einem Stand).");
+  }
+  els.finalCompareBtn.addEventListener("click", finalRunCompare);
+  els.finalCompareTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-final-compare-diff]");
+    if (!btn) return;
+    var p = finalComparePairs[parseInt(btn.getAttribute("data-final-compare-diff"), 10)];
+    if (!p) return;
+    els.finalCompareDiffTitle.textContent = "Unterschiede: " + (p.a ? p.a.title : "–") + " ↔ " + (p.b ? p.b.title : "–");
+    els.finalCompareDiffBody.innerHTML = diffLinesHtml(p.a ? p.a.text : "", p.b ? p.b.text : "");
+    els.finalCompareDiff.hidden = false;
+  });
+  els.finalCompareAiBtn.addEventListener("click", async function () {
+    var sel = finalCompareSelectedVersions();
+    if (!sel.a || !sel.b || sel.a.id === sel.b.id) { showToast("Zwei Stände wählen", "Bitte zwei unterschiedliche Stände wählen.", true); return; }
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
+    var docText = function (v) {
+      return v.chapters.map(function (c) { return "## " + c.title + "\n" + c.text.split("\n").filter(function (l) { return l.trim() !== "[Bild]"; }).join("\n"); }).join("\n\n");
+    };
+    els.finalCompareAiBtn.disabled = true;
+    els.finalCompareAiSpinner.hidden = false;
+    try {
+      var res = await sampleApi(ragPromptFor("finalCompareVersions") +
+        "\n\nSTAND A: " + sel.a.name + " (" + finalVersionConfigLabel(sel.a.config) + ")\n" + truncate(docText(sel.a), 45000) +
+        "\n\nSTAND B: " + sel.b.name + " (" + finalVersionConfigLabel(sel.b.config) + ")\n" + truncate(docText(sel.b), 45000),
+        { modelTier: "default", cache: false });
+      els.finalCompareAiOutput.textContent = String((res && res.text) || "").trim() || "(leere Antwort)";
+      els.finalCompareAiWrap.hidden = false;
+      addLog("FINAL: Inhaltlicher Vergleich (KI) von „" + sel.a.name + "“ und „" + sel.b.name + "“ erstellt.");
+    } catch (err) {
+      showToast("Vergleich fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      els.finalCompareAiBtn.disabled = false;
+      els.finalCompareAiSpinner.hidden = true;
+    }
+  });
+
   function renderFinal() {
     finalPopulateRolleSparteSelects();
     els.finalHideInternalCb.checked = !app.final.showInternal;
@@ -27604,6 +27824,8 @@
     renderFinalBulkBar();
     renderFinalMasterExportState();
     renderFinalVersions();
+    renderFinalReviewer();
+    renderFinalCompareSelects();
     renderFinalVersionSelects();
     renderFinalResultChapterOptions();
     updateFinalResult();
