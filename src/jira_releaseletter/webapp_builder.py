@@ -20,6 +20,12 @@ _META_PLACEHOLDER = "__TICKET_META__"
 _TEST_RESULTS_PLACEHOLDER = "__TEST_RESULTS__"
 
 
+def _script_safe_json(value, separators=None) -> str:
+    # "<" als JSON-Escape, damit Ticketinhalte wie "</script>" oder "<!--" das
+    # einbettende <script type="application/json">-Tag nicht vorzeitig beenden.
+    return json.dumps(value, ensure_ascii=False, separators=separators).replace("<", "\\u003c")
+
+
 def build_webapp(
     tickets: list[dict],
     template_path: Path,
@@ -30,14 +36,16 @@ def build_webapp(
     template = template_path.read_text(encoding="utf-8")
     if _DATA_PLACEHOLDER not in template:
         raise ValueError(f"Platzhalter {_DATA_PLACEHOLDER} nicht in {template_path} gefunden.")
-    data_json = json.dumps(tickets, ensure_ascii=False, separators=(",", ":"))
-    meta_json = json.dumps(meta or {}, ensure_ascii=False)
-    test_results_json = json.dumps(test_results or {}, ensure_ascii=False, separators=(",", ":"))
+    data_json = _script_safe_json(tickets, separators=(",", ":"))
+    meta_json = _script_safe_json(meta or {})
+    test_results_json = _script_safe_json(test_results or {}, separators=(",", ":"))
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    # Nur das jeweils erste Vorkommen (das <script>-Tag) ersetzen - weitere
+    # Erwähnungen des Platzhalters, z. B. in Kommentaren, bleiben unverändert.
     content = (
-        template.replace(_DATA_PLACEHOLDER, data_json)
-        .replace(_META_PLACEHOLDER, meta_json)
-        .replace(_TEST_RESULTS_PLACEHOLDER, test_results_json)
+        template.replace(_DATA_PLACEHOLDER, data_json, 1)
+        .replace(_META_PLACEHOLDER, meta_json, 1)
+        .replace(_TEST_RESULTS_PLACEHOLDER, test_results_json, 1)
     )
     output_path.write_text(content, encoding="utf-8")
     return output_path

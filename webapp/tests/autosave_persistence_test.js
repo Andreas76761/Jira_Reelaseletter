@@ -72,8 +72,12 @@ function makeDom(sharedIndexedDb) {
   check("Persistenter-Speicher-Bereich vorhanden", !!doc1.getElementById("autosave-enabled-cb"));
   check("Checkbox 'Automatisches Speichern aktiv' initial aktiviert (IndexedDB verfügbar)", doc1.getElementById("autosave-enabled-cb").checked === true && doc1.getElementById("autosave-enabled-cb").disabled === false);
 
-  // Eine Interaktion loest den entprellten Auto-Save aus.
+  // Reine Navigation loest KEIN Auto-Save aus (kein Sitzungszustand geaendert) ...
   doc1.querySelector('.nav-item[data-view="einstellungen"]').click();
+  await wait(2900);
+  check("Reiner Registerwechsel löst kein Auto-Save aus", (doc1.getElementById("autosave-status").textContent || "").trim() === "");
+  // ... eine echte Interaktion (Filter zuruecksetzen) dagegen schon (entprellt).
+  doc1.getElementById("reset-filter-btn").click();
   await wait(100);
   check("Vor dem Auto-Save: Status-Text noch leer", (doc1.getElementById("autosave-status").textContent || "").trim() === "");
   await wait(2900); // AUTOSAVE_DEBOUNCE_MS (2500ms) + Puffer

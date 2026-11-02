@@ -146,3 +146,23 @@ def test_build_webapp_without_meta_leaves_valid_placeholder(tmp_path):
     out = build_webapp([{"key": "DEMO-1"}], template, tmp_path / "cockpit.html")
     content = out.read_text(encoding="utf-8")
     assert '<script id="initial-ticket-meta" type="application/json">{}</script>' in content
+
+
+def test_build_webapp_escapes_script_breakers_and_replaces_only_script_tag(tmp_path):
+    """Ticketinhalte mit '</script>' dürfen das einbettende <script>-Tag nicht
+    vorzeitig beenden (sonst startet die App nicht); der Platzhalter wird
+    nur im Script-Tag ersetzt, nicht in weiteren Erwähnungen."""
+    import json
+    import re
+
+    template_src = (REPO_ROOT / "webapp" / "ticket_cockpit.html").read_text(encoding="utf-8")
+    template = tmp_path / "template.html"
+    template.write_text(template_src + "\n<!-- Platzhalter-Erwähnung: __TEST_RESULTS__ -->", encoding="utf-8")
+    tickets = [{"key": "DEMO-1", "summary": "Text mit </script><script>alert(1)</script> und <!-- Kommentar"}]
+    out = build_webapp(tickets, template, tmp_path / "cockpit.html", test_results={"note": "a */ b"})
+    content = out.read_text(encoding="utf-8")
+    m = re.search(r'<script id="initial-ticket-data" type="application/json">(.*?)</script>', content, re.S)
+    assert m is not None
+    assert json.loads(m.group(1)) == tickets
+    assert "<script>alert(1)" not in content
+    assert content.count("<!-- Platzhalter-Erwähnung: __TEST_RESULTS__ -->") == 1

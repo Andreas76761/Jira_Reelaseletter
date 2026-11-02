@@ -2846,10 +2846,15 @@
 
         <section>
           <p class="section-label">5. Screens zuordnen (<span id="final-screens-count">0</span>)</p>
-          <p class="desc">Die Kapitel-Auswahl listet alle in den hochgeladenen Benutzerhandbuch-Dateien erkannten Überschriften (Word erkennt dabei automatisch auch Unterkapitel-Überschriften als eigene Einträge).</p>
+          <p class="desc">Die Kapitel-Auswahl listet alle in den hochgeladenen Benutzerhandbuch-Dateien erkannten Überschriften (Word erkennt dabei automatisch auch Unterkapitel-Überschriften als eigene Einträge). „Bilder zuordnen“ lässt Claude jeden Screen interpretieren: Claude schlägt einen Untertitel und das passende Kapitel/Unterkapitel vor (Status „Entwurf“). Entwürfe lassen sich danach einem anderen Kapitel zuordnen oder löschen; manuell geänderte Zuordnungen überschreibt ein erneuter Lauf nicht. Der Navigationstext zu jedem Bild aus der Screens-Datei (oneSCM-Navigation) wird mitgeladen und als Teil der Bildunterschrift übernommen. Doppelklick auf ein Vorschaubild öffnet es groß in einem eigenen Fenster.</p>
+          <div class="controls">
+            <button class="btn primary" id="final-assign-images-btn" type="button"><span class="btn-spinner" id="final-assign-images-spinner" hidden></span>Bilder zuordnen</button>
+            <button class="btn ghost" id="final-assign-images-stop-btn" type="button" hidden>Abbrechen</button>
+            <span class="step-note" id="final-assign-images-status-note"></span>
+          </div>
           <div class="table-wrap">
             <table class="simple-table" id="final-screens-table">
-              <thead><tr><th>Vorschau</th><th>Rolle/Sparte/Sprache/Markt</th><th>Kapitel/Unterkapitel</th></tr></thead>
+              <thead><tr><th>Vorschau</th><th>Untertitel</th><th>oneSCM-Navigation</th><th>Rolle/Sparte/Sprache/Markt</th><th>Kapitel/Unterkapitel</th><th>Status</th><th></th></tr></thead>
               <tbody id="final-screens-tbody"></tbody>
             </table>
             <div class="empty-hint" id="final-screens-empty">Noch keine Screens aus einer Screens-Datei extrahiert.</div>
@@ -5604,7 +5609,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.110.0";
+  var APP_VERSION = "2.111.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7195,7 +7200,7 @@
     "final-preview-section", "final-hide-internal-cb", "final-hide-jira-cb", "final-preview-chapter-select", "final-preview-output",
     "final-screens-rolle-select", "final-screens-sparte-select", "final-screens-sprache-input", "final-screens-markt-input",
     "final-screens-dropzone", "final-screens-file-input", "final-screens-files-tbody", "final-screens-files-empty",
-    "final-screens-count", "final-screens-tbody", "final-screens-empty",
+    "final-screens-count", "final-screens-tbody", "final-screens-empty", "final-assign-images-btn", "final-assign-images-spinner", "final-assign-images-stop-btn", "final-assign-images-status-note",
     "final-filter-rolle-select", "final-filter-sparte-select", "final-filter-sprache-input", "final-filter-markt-input",
     "final-build-master-btn", "final-build-master-spinner", "final-build-master-status-note",
     "final-master-export-section", "final-master-download-docx-btn", "final-master-download-pdf-btn",
@@ -7852,6 +7857,7 @@
       screensFiles: [], filterRolle: "", filterSparte: "", filterSprache: "", filterMarkt: "",
       master: { chapters: [], builtAt: "" }
     };
+    els.finalAssignImagesStatusNote.textContent = "";
     renderFinal();
     app.editoVersionKey = "";
     app.editoChapters = {};
@@ -7962,6 +7968,7 @@
       screensFiles: [], filterRolle: "", filterSparte: "", filterSprache: "", filterMarkt: "",
       master: { chapters: [], builtAt: "" }
     };
+    els.finalAssignImagesStatusNote.textContent = "";
     renderFinal();
     app.editoVersionKey = "";
     app.editoChapters = {};
@@ -8093,6 +8100,33 @@
       fileviewSummaries: app.fileviewSummaries
     };
   }
+  // Nach dem Laden einer Sitzung/eines Autosaves muessen die laufenden
+  // ID-Zaehler hinter die hoechste geladene ID springen - sonst bekommt der
+  // naechste neue Eintrag eine bereits vergebene ID, und Loeschen/Bearbeiten
+  // per ID trifft zwei Eintraege.
+  function nextIdAfter(lists) {
+    var max = 0;
+    lists.forEach(function (list) {
+      (list || []).forEach(function (item) {
+        var n = item && typeof item.id === "number" ? item.id : parseInt(item && item.id, 10);
+        if (n > max) max = n;
+      });
+    });
+    return max + 1;
+  }
+  function recomputeIdCounters() {
+    nextImageId = Math.max(nextImageId, nextIdAfter([app.uploadedImages, app.generatedImages]));
+    nextEditorFileId = Math.max(nextEditorFileId, nextIdAfter([app.editorFiles]));
+    nextRovoId = Math.max(nextRovoId, nextIdAfter([app.rovoEntries]));
+    nextRovoTableId = Math.max(nextRovoTableId, nextIdAfter([app.rovoTables]));
+    nextRagLibraryId = Math.max(nextRagLibraryId, nextIdAfter([app.ragLibrary]));
+    nextMassFileId = Math.max(nextMassFileId, nextIdAfter([app.massFiles]));
+    nextUploadedOutlineId = Math.max(nextUploadedOutlineId, nextIdAfter([app.uploadedOutlines]));
+    nextReferenceManualId = Math.max(nextReferenceManualId, nextIdAfter([app.referenceManuals]));
+    nextRovoSummarySourceId = Math.max(nextRovoSummarySourceId, nextIdAfter([app.rovoSummary && app.rovoSummary.sources]));
+    nextFinalManualId = Math.max(nextFinalManualId, nextIdAfter([app.final && app.final.manuals]));
+    nextFinalScreensFileId = Math.max(nextFinalScreensFileId, nextIdAfter([app.final && app.final.screensFiles]));
+  }
   function restoreSessionState(data) {
     if (!data || typeof data !== "object" || !Array.isArray(data.ticketStoreEntries)) {
       throw new Error("Ungültiges Format – keine gültige Ticket-Cockpit-Sitzungsdatei.");
@@ -8180,6 +8214,7 @@
     if (data.fileviewTranslations && typeof data.fileviewTranslations === "object") app.fileviewTranslations = data.fileviewTranslations;
     if (data.fileviewSummaries && typeof data.fileviewSummaries === "object") app.fileviewSummaries = data.fileviewSummaries;
     app.initialized = true;
+    recomputeIdCounters();
     editingCommentImportId = null;
     if (!els.modalOverlay.hidden) closeModal();
     if (!els.compareModalOverlay.hidden) closeCompareModal();
@@ -8374,8 +8409,12 @@
       if (autoSavePendingAgain) { autoSavePendingAgain = false; autoSaveNow(); }
     }
   }
-  function scheduleAutoSave() {
+  // Reine Navigation aendert keinen Sitzungszustand - kein (teures)
+  // Serialisieren der gesamten Sitzung inkl. Bilder nach einem Registerwechsel.
+  var AUTOSAVE_IGNORE_CLICK_SEL = ".nav-item, #sidebar-toggle, #sidebar-open-btn";
+  function scheduleAutoSave(e) {
     if (!autoSaveEnabled || !autoSaveAvailable) return;
+    if (e && e.type === "click" && e.target && e.target.closest && e.target.closest(AUTOSAVE_IGNORE_CLICK_SEL)) return;
     clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(autoSaveNow, AUTOSAVE_DEBOUNCE_MS);
   }
@@ -10345,7 +10384,7 @@
      Datenquelle: webapp/tests/run-all.js schreibt bei jedem Lauf webapp/tests/test-results.json
      (jeder einzelne check()-Aufruf als eigener Testfall/Schritt, plus Laufzeit je Datei und
      Performance-Erkenntnisse), jira-releaseletter build-webapp bettet das zum Build-Zeitpunkt
-     ueber den Platzhalter __TEST_RESULTS__ ein. Laeuft NICHT live in diesem Browser - reiner
+     ueber den Platzhalter im Script-Tag test-results-data ein. Laeuft NICHT live in diesem Browser - reiner
      Bericht des letzten Verifikationslaufs waehrend der Entwicklung. */
 
   // Ohne Build-Schritt steht hier noch der Platzhalter statt JSON - darf nicht
@@ -12709,7 +12748,8 @@
   });
   els.selectAllCheckbox.addEventListener("change", function () {
     var on = els.selectAllCheckbox.checked;
-    lastRenderedFiltered.forEach(function (t) { setSelected(t.key, on); });
+    lastRenderedFiltered.forEach(function (t) { if (on) app.selectedKeys[t.key] = true; else delete app.selectedKeys[t.key]; });
+    updateSelectionUI();
   });
   els.selectionSelectAllBtn.addEventListener("click", function () {
     lastRenderedFiltered.forEach(function (t) { app.selectedKeys[t.key] = true; });
@@ -17151,11 +17191,48 @@
   }
   wireProcessDiagram();
 
+  // Mermaid (~3 MB) wird erst geladen, wenn tatsaechlich ein Mermaid-Diagramm
+  // angezeigt werden soll; schlaegt das fehl, bleibt der Quelltext sichtbar.
+  var MERMAID_SRC = "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js";
+  var mermaidLoadPromise = null;
+  var mermaidRenderSeq = 0;
+  function loadMermaid() {
+    if (window.mermaid) return Promise.resolve(window.mermaid);
+    if (mermaidLoadPromise) return mermaidLoadPromise;
+    mermaidLoadPromise = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = MERMAID_SRC;
+      s.onload = function () {
+        if (!window.mermaid) { reject(new Error("Mermaid nicht verfügbar")); return; }
+        window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict" });
+        resolve(window.mermaid);
+      };
+      s.onerror = function () { mermaidLoadPromise = null; reject(new Error("Mermaid konnte nicht geladen werden")); };
+      document.head.appendChild(s);
+    });
+    return mermaidLoadPromise;
+  }
+  function renderMermaidInto(pre, source) {
+    loadMermaid().then(function (mermaid) {
+      return mermaid.render("mermaid-svg-" + (++mermaidRenderSeq), source);
+    }).then(function (out) {
+      if (!pre.isConnected) return;
+      pre.innerHTML = out.svg;
+      pre.classList.add("mermaid-rendered");
+    }).catch(function (err) {
+      if (!pre.isConnected) return;
+      var note = document.createElement("p");
+      note.className = "empty-hint";
+      note.textContent = "Diagramm konnte nicht gezeichnet werden (" + ((err && err.message) || "Mermaid nicht verfügbar") + ") – angezeigt wird der Mermaid-Quelltext.";
+      pre.parentNode.insertBefore(note, pre);
+    });
+  }
   function insertMermaid(container, source) {
     var pre = document.createElement("pre");
     pre.className = "mermaid";
     pre.textContent = source;
     container.appendChild(pre);
+    renderMermaidInto(pre, source);
     var details = document.createElement("details");
     details.className = "mermaid-source-details";
     var summary = document.createElement("summary");
@@ -19200,7 +19277,8 @@
     subchapterAgent4: "Du bist Lektor für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen ALLE genehmigten Unterkapitel der aktuellen Rolle/Sparte-Version (je Unterkapitel mit Überschrift \"## \"). Vergleiche die Unterkapitel UNTEREINANDER (nicht gegen externe Quellen) und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Widersprüche zwischen Unterkapiteln\n- (ein Stichpunkt je Aussage, die sich zwischen zwei oder mehr Unterkapiteln widerspricht, mit Nennung der betroffenen Unterkapitel)\n\n### Redundanzen zwischen Unterkapiteln\n- (ein Stichpunkt je inhaltlich stark überlappender Aussage, die in mehreren Unterkapiteln nahezu gleich wiederholt wird, mit Nennung der betroffenen Unterkapitel)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
     subchapterAgent5: "Du bist Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen ALLE genehmigten Unterkapitel der aktuellen Rolle/Sparte-Version, je Unterkapitel mit den ihm zugeordneten Quellen (Jira-Tickets des übergeordneten Kapitels, RAG-Bibliothek-Einträge und Rovo-Knowledge-Notizen, jeweils diesem Unterkapitel zugeordnet) und dem Unterkapiteltext. Prüfe JE UNTERKAPITEL, ob der Inhalt der zugeordneten Quellen im Unterkapiteltext erkennbar aufgegriffen wird. Gib AUSSCHLIESSLICH den folgenden Abschnitt aus, in genau diesem Format:\n\n### Nicht abgedeckte Quellen\n- (ein Stichpunkt je Unterkapitel MIT mindestens einer zugeordneten Quelle, deren Inhalt im Unterkapiteltext nicht erkennbar aufgegriffen wird - Unterkapitel nennen, betroffene Quelle(n) kurz beschreiben)\n\nIst die Liste leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
     rovoSummaryMerge: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Unten stehen mehrere, voneinander unabhängige Quelldokumente unterschiedlicher Herkunft (Word-Dateien, HTML-Seiten, aus der Zwischenablage eingefügte Texte). Ordne und verschmelze ihre Inhalte zu EINEM einzigen, gut strukturierten, zusammenhängenden Gesamtdokument auf Deutsch, DURCHGÄNGIG IM PRÄSENS: fasse thematisch zusammengehörige Inhalte unter eigenen, sinnvoll gewählten Zwischenüberschriften (\"## \") zusammen, entferne Redundanzen zwischen den Quellen, löse erkennbare Widersprüche zwischen den Quellen nicht selbst auf, sondern weise an der betreffenden Stelle mit \"[Widerspruch zwischen Quellen]\" darauf hin. Die Struktur/Gliederung des Ergebnisses bestimmst du selbst anhand der tatsächlichen Inhalte - es gibt keine vorgegebene Kapitelstruktur. Nutze AUSSCHLIESSLICH Informationen aus den Quelldokumenten unten, erfinde nichts hinzu. Gib ausschließlich das neue Gesamtdokument aus, keine Erklärungen dazu:",
-    rovoSummaryCompare: "Du bist Wissensanalyst für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Oben steht ein neu erstelltes Gesamtdokument aus mehreren Quelldokumenten, danach alle BEREITS VORHANDENEN Informationen des Systems (Jira-Tickets, RAG-Bibliothek, Rovo-Wissens-Notizen, bestehender Benutzerhandbuch-Text). Vergleiche das neue Gesamtdokument inhaltlich mit den bereits vorhandenen Informationen und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Informationen\n- (ein Stichpunkt je Aussage im neuen Gesamtdokument, die in KEINER der vorhandenen Quellen erkennbar enthalten ist)\n\n### Widersprüche zu bestehenden Quellen\n- (ein Stichpunkt je Aussage im neuen Gesamtdokument, die einer vorhandenen Quelle inhaltlich widerspricht oder sie erkennbar überholt - betroffene Quelle(n) kurz benennen)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:"
+    rovoSummaryCompare: "Du bist Wissensanalyst für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Oben steht ein neu erstelltes Gesamtdokument aus mehreren Quelldokumenten, danach alle BEREITS VORHANDENEN Informationen des Systems (Jira-Tickets, RAG-Bibliothek, Rovo-Wissens-Notizen, bestehender Benutzerhandbuch-Text). Vergleiche das neue Gesamtdokument inhaltlich mit den bereits vorhandenen Informationen und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Informationen\n- (ein Stichpunkt je Aussage im neuen Gesamtdokument, die in KEINER der vorhandenen Quellen erkennbar enthalten ist)\n\n### Widersprüche zu bestehenden Quellen\n- (ein Stichpunkt je Aussage im neuen Gesamtdokument, die einer vorhandenen Quelle inhaltlich widerspricht oder sie erkennbar überholt - betroffene Quelle(n) kurz benennen)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
+    finalImageAssign: "Du ordnest Bildschirm-Screenshots (Screens) der Anwendung oneSCM den Kapiteln und Unterkapiteln eines Benutzerhandbuchs zu. Zu jedem Screen bekommst du (falls vorhanden) den Navigationspfad in oneSCM aus der Screens-Datei, die Überschrift, unter der der Screen in der Datei stand, und den bisherigen Untertitel; sind Bilder beigefügt, stehen sie in derselben Reihenfolge wie die Screen-Liste. Interpretiere, was der Screen zeigt, und wähle das inhaltlich passendste Kapitel bzw. Unterkapitel AUSSCHLIESSLICH aus der Kapitel-Liste (Titel exakt übernehmen; passt keines, gib einen leeren Text zurück). Formuliere je Screen einen kurzen deutschen Untertitel (höchstens 12 Wörter), der beschreibt, was der Screen zeigt - ohne den Navigationspfad zu wiederholen und ohne etwas zu erfinden, das weder im Bild noch in den Angaben steht."
   };
   var RAG_PROMPT_LABELS = {
     summary: "Zusammenfassung erzeugen",
@@ -19232,7 +19310,8 @@
     subchapterAgent4: "Unterkapitel-Werkstatt Agent 4: Unterkapitelübergreifende Konsistenz prüfen",
     subchapterAgent5: "Unterkapitel-Werkstatt Agent 5: Vollständigkeit & Abdeckung prüfen",
     rovoSummaryMerge: "Rovo Summary: Quelldokumente zu einem Gesamtdokument ordnen",
-    rovoSummaryCompare: "Rovo Summary: Mit vorhandenen Informationen vergleichen"
+    rovoSummaryCompare: "Rovo Summary: Mit vorhandenen Informationen vergleichen",
+    finalImageAssign: "FINAL: Bilder interpretieren und Kapiteln zuordnen"
   };
   function ragPromptFor(promptKey) {
     var override = app.ragPrompts[promptKey];
@@ -25502,7 +25581,9 @@
     var editoTitles = Object.keys(app.editoChapters).filter(function (t) { return app.editoChapters[t] && app.editoChapters[t].de; });
     var manualLines = manualTitles.map(function (t) { return "## " + t + "\n" + truncate(app.manualChapters[t].de, 1500); }).join("\n\n");
     var editoLines = editoTitles.map(function (t) { return "## " + t + " (EDITO-Entwurf)\n" + truncate(app.editoChapters[t].de, 1500); }).join("\n\n");
-    return "\n\nQUELLE A – Jira-Tickets (" + tickets.length + "):\n" + (ticketLines || "(keine)") +
+    // Jede Quelle hat ihr eigenes Budget - sonst verdraengt eine lange
+    // Ticketliste (steht vorn) die Quellen B-E beim Gesamt-Kuerzen komplett.
+    return "\n\nQUELLE A – Jira-Tickets (" + tickets.length + "):\n" + truncate(ticketLines || "(keine)", 15000) +
       "\n\nQUELLE B – RAG-Bibliothek (" + app.ragLibrary.length + "):\n" + truncate(ragLines || "(keine)", 15000) +
       "\n\nQUELLE C – Rovo-Bibliothek (" + app.rovoEntries.length + "):\n" + truncate(rovoLines || "(keine)", 15000) +
       "\n\nQUELLE D – Bestehender Benutzerhandbuch-Text (" + manualTitles.length + " Kapitel):\n" + truncate(manualLines || "(keiner vorhanden)", 20000) +
@@ -25511,7 +25592,7 @@
   function rovoSummaryBuildComparePrompt() {
     return ragPromptFor("rovoSummaryCompare") +
       "\n\nNEUES GESAMTDOKUMENT:\n" + truncate(app.rovoSummary.mergedDoc, 20000) +
-      truncate(rovoSummaryExistingSourcesBlock(), 70000);
+      truncate(rovoSummaryExistingSourcesBlock(), 90000);
   }
   els.rovoSummaryDropzone.addEventListener("click", function () { els.rovoSummaryFileInput.click(); });
   els.rovoSummaryDropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.rovoSummaryFileInput.click(); } });
@@ -25705,16 +25786,102 @@
     renderFinal();
   }
 
+  // Text eines Word-Textfelds (w:txbxContent) im Knoten. Word legt dasselbe
+  // Textfeld oft doppelt ab (mc:Choice + mc:Fallback) - daher nur das erste
+  // nicht-leere Textfeld verwenden.
+  function finalTextboxText(node) {
+    var boxes = node.getElementsByTagName("w:txbxContent");
+    for (var i = 0; i < boxes.length; i++) {
+      var paras = boxes[i].getElementsByTagName("w:p"), parts = [];
+      for (var k = 0; k < paras.length; k++) { var t = docxParagraphText(paras[k]); if (t) parts.push(t); }
+      if (parts.length) return parts.join(" ");
+    }
+    return "";
+  }
+  // Absatztext OHNE den Inhalt eingebetteter Textfelder.
+  function finalPlainParagraphText(pEl) {
+    var runs = pEl.getElementsByTagName("w:t"), parts = [];
+    for (var i = 0; i < runs.length; i++) {
+      var inBox = false;
+      for (var n = runs[i].parentNode; n && n !== pEl; n = n.parentNode) { if (n.tagName === "w:txbxContent") { inBox = true; break; } }
+      if (!inBox) parts.push(runs[i].textContent);
+    }
+    return parts.join("").trim();
+  }
+  // Screens-Datei (.docx) fuer FINAL: wie docxZipToScreens, zusaetzlich je Bild
+  // der zugehoerige oneSCM-Navigationstext. Gesucht wird in dieser Reihenfolge:
+  // Textfeld im Bild-Absatz bzw. in der Tabellenzeile des Bildes, uebrige
+  // Zellen derselben Tabellenzeile, Text im Bild-Absatz selbst, der direkt
+  // folgende Absatz (keine Ueberschrift, kein weiteres Bild), der direkt
+  // vorangehende Absatz (ebenso).
+  async function finalDocxZipToScreens(zip) {
+    var docXmlEntry = zip.file("word/document.xml");
+    var xmlText = await docXmlEntry.async("string");
+    var relsMap = await loadZipRelationships(zip, "word/_rels/document.xml.rels");
+    var doc = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (doc.querySelector("parsererror")) throw new Error("word/document.xml konnte nicht gelesen werden (beschädigte .docx-Datei?).");
+    var body = doc.getElementsByTagName("w:body")[0];
+    if (!body) throw new Error("Kein Dokumentinhalt (w:body) in der .docx-Datei gefunden.");
+    var blocks = [];
+    for (var i = 0; i < body.childNodes.length; i++) {
+      var node = body.childNodes[i];
+      if (node.nodeType !== 1) continue;
+      if (node.tagName === "w:p") {
+        blocks.push({ el: node, heading: docxHeadingLevel(docxParagraphStyleId(node)) > 0, text: finalPlainParagraphText(node), box: finalTextboxText(node), images: await blipsInNode(node, relsMap, "word/document.xml", zip) });
+      } else if (node.tagName === "w:tbl") {
+        var rows = node.getElementsByTagName("w:tr");
+        for (var r = 0; r < rows.length; r++) {
+          var cells = rows[r].getElementsByTagName("w:tc"), cellTexts = [];
+          for (var c = 0; c < cells.length; c++) {
+            var cellBlips = cells[c].getElementsByTagName("a:blip").length;
+            var ct = cellBlips ? "" : docxCellText(cells[c]);
+            if (ct) cellTexts.push(ct);
+          }
+          blocks.push({ el: rows[r], heading: false, text: cellTexts.join(" – "), box: finalTextboxText(rows[r]), images: await blipsInNode(rows[r], relsMap, "word/document.xml", zip) });
+        }
+      }
+    }
+    function usableNeighbour(b) { return b && !b.heading && !b.images.length && (b.box || b.text); }
+    var screens = [];
+    var lastHeadingText = "";
+    blocks.forEach(function (b, idx) {
+      if (b.heading && b.text) lastHeadingText = b.text;
+      if (!b.images.length) return;
+      var nav = b.box || b.text;
+      if (!nav && usableNeighbour(blocks[idx + 1])) nav = blocks[idx + 1].box || blocks[idx + 1].text;
+      if (!nav && usableNeighbour(blocks[idx - 1])) nav = blocks[idx - 1].box || blocks[idx - 1].text;
+      b.images.forEach(function (img) { screens.push({ dataUrl: img.dataUrl, caption: lastHeadingText, navText: (nav || "").trim() }); });
+    });
+    return screens;
+  }
+  async function finalExtractScreens(buf) {
+    if (classifyWordBuffer(buf) === "zip" && typeof JSZip !== "undefined") {
+      var zip = null;
+      try { zip = await JSZip.loadAsync(buf); } catch (e) { zip = null; }
+      if (zip && zip.file("word/document.xml")) return finalDocxZipToScreens(zip);
+    }
+    return (await rovoExtractTablesAndImages(buf)).images;
+  }
   function finalAddExtractedImage(screen, sourceFile, idx, filesFileId, rolle, sparte, sprache, markt) {
+    var navText = screen.navText || "";
     app.uploadedImages.unshift({
       id: nextImageId++, filename: sourceFile + " - Bild " + (idx + 1), dataUrl: screen.dataUrl,
       mimeType: (/^data:([^;]+);/.exec(screen.dataUrl) || [])[1] || "unbekannt",
       sizeBytes: Math.round((screen.dataUrl.length - screen.dataUrl.indexOf(",") - 1) * 0.75), when: nowLabel(),
-      domain: "", processStep: "", chapter: "", subchapter: "", description: screen.caption || "",
+      domain: "", processStep: "", chapter: "", subchapter: "", description: navText || screen.caption || "",
       width: null, height: null, avgColor: null, brightnessPct: null, metadataComputed: false, metadataError: null,
       ocrText: null, ocrError: null, ocrRanAt: null, imageNumber: idx + 1, sourceFile: sourceFile,
-      finalScreensFileId: filesFileId, rolle: rolle, sparte: sparte, sprache: sprache, markt: markt
+      finalScreensFileId: filesFileId, rolle: rolle, sparte: sparte, sprache: sprache, markt: markt,
+      finalNavText: navText, finalHeading: screen.caption || "", finalStatus: ""
     });
+  }
+  // Bildunterschrift im Master: Untertitel plus oneSCM-Navigation (sofern
+  // vorhanden und nicht schon im Untertitel enthalten).
+  function finalScreenCaption(img) {
+    var caption = (img.description || "").trim();
+    var nav = (img.finalNavText || "").trim();
+    if (nav && caption.indexOf(nav) === -1) caption = caption ? caption + " – Navigation: " + nav : "Navigation: " + nav;
+    return caption || img.sourceFile || "";
   }
   async function handleFinalScreensFile(file) {
     if (!file) return;
@@ -25722,7 +25889,7 @@
     var sprache = els.finalScreensSpracheInput.value.trim(), markt = els.finalScreensMarktInput.value.trim();
     try {
       var buf = await readFileAsArrayBuffer(file);
-      var extracted = await rovoExtractTablesAndImages(buf);
+      var extracted = { images: await finalExtractScreens(buf) };
       var filesFileId = nextFinalScreensFileId++;
       extracted.images.forEach(function (screen, idx) { finalAddExtractedImage(screen, file.name, idx, filesFileId, rolle, sparte, sprache, markt); });
       app.final.screensFiles.push({ id: filesFileId, filename: file.name, rolle: rolle, sparte: sparte, sprache: sprache, markt: markt, screenCount: extracted.images.length, addedAt: nowLabel() });
@@ -25797,9 +25964,16 @@
         titles.map(function (t) { return '<option value="' + escapeHtml(t) + '"' + (t === selectedTitle ? " selected" : "") + ">" + escapeHtml(t) + "</option>"; }).join("");
     }
     els.finalScreensTbody.innerHTML = screens.map(function (img) {
-      return "<tr><td><img src=\"" + img.dataUrl + "\" style=\"width:60px;height:60px;object-fit:cover;border-radius:6px;\" alt=\"\"></td>" +
+      var status = img.finalStatus === "Entwurf" ? '<span class="pill progress">Entwurf</span>'
+        : img.finalStatus === "Manuell" ? '<span class="pill done">Manuell</span>'
+        : '<span class="step-note">' + (img.chapter ? "Zugeordnet" : "Offen") + "</span>";
+      return "<tr><td><img src=\"" + img.dataUrl + "\" data-final-screen-view=\"" + img.id + "\" title=\"Doppelklick: groß anzeigen\" style=\"width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:zoom-in;\" alt=\"\"></td>" +
+        '<td><input type="text" class="text-input" data-final-screen-caption="' + img.id + '" value="' + escapeHtml(img.description || "") + '" placeholder="Untertitel" style="min-width:180px;"></td>' +
+        "<td>" + escapeHtml(img.finalNavText || "–") + "</td>" +
         "<td>" + escapeHtml([img.rolle, img.sparte, img.sprache, img.markt].filter(function (v) { return v; }).join(" / ") || "–") + "</td>" +
-        '<td><select data-final-screen-chapter="' + img.id + '">' + chapterOptsFor(img.chapter) + "</select></td></tr>";
+        '<td><select data-final-screen-chapter="' + img.id + '">' + chapterOptsFor(img.chapter) + "</select></td>" +
+        "<td>" + status + "</td>" +
+        '<td><button class="btn ghost btn-tiny" data-final-screen-delete="' + img.id + '" type="button">Löschen</button></td></tr>';
     }).join("");
   }
   function renderFinalMasterExportState() {
@@ -25825,7 +25999,7 @@
       if (line.trim() !== "[Bild]") return line;
       var screen = screenObjs[bildCount];
       bildCount++;
-      return "[Bild: " + (screen ? (screen.description || screen.sourceFile) : "?") + "]";
+      return "[Bild: " + (screen ? finalScreenCaption(screen) : "?") + "]";
     }).join("\n");
     els.finalResultMasterOutput.textContent = readable;
   }
@@ -25851,7 +26025,7 @@
   function buildFinalMasterChapters() {
     return finalMasterChapterTitles().map(function (title) {
       var text = finalChapterDisplayText(title);
-      var screens = finalScreensForChapter(title);
+      var screens = finalScreensForChapter(title).map(function (img) { return Object.assign({}, img, { description: finalScreenCaption(img) }); });
       var withPlaceholders = text + (screens.length ? "\n" + screens.map(function () { return "[Bild]"; }).join("\n") : "");
       return { title: title, text: withPlaceholders, screens: screens };
     });
@@ -25937,8 +26111,138 @@
   els.finalScreensTbody.addEventListener("change", function (e) {
     var sel = e.target.closest("[data-final-screen-chapter]");
     if (!sel) return;
-    var img = app.uploadedImages.filter(function (i) { return i.id === parseInt(sel.getAttribute("data-final-screen-chapter"), 10); })[0];
-    if (img) img.chapter = sel.value;
+    var img = finalScreenById(sel.getAttribute("data-final-screen-chapter"));
+    if (!img) return;
+    img.chapter = sel.value;
+    img.finalStatus = "Manuell";
+    renderFinalScreensTable();
+  });
+  els.finalScreensTbody.addEventListener("input", function (e) {
+    var input = e.target.closest("[data-final-screen-caption]");
+    if (!input) return;
+    var img = finalScreenById(input.getAttribute("data-final-screen-caption"));
+    if (!img) return;
+    img.description = input.value;
+    if (img.finalStatus !== "Manuell") {
+      // Nur die Statuszelle aktualisieren - ein Neuaufbau der Tabelle wuerde
+      // dem Eingabefeld den Fokus nehmen.
+      img.finalStatus = "Manuell";
+      var statusCell = input.closest("tr").children[5];
+      if (statusCell) statusCell.innerHTML = '<span class="pill done">Manuell</span>';
+    }
+  });
+  els.finalScreensTbody.addEventListener("dblclick", function (e) {
+    var thumb = e.target.closest("[data-final-screen-view]");
+    if (thumb) openImageViewer(parseInt(thumb.getAttribute("data-final-screen-view"), 10));
+  });
+  els.finalScreensTbody.addEventListener("click", async function (e) {
+    var btn = e.target.closest("[data-final-screen-delete]");
+    if (!btn) return;
+    var img = finalScreenById(btn.getAttribute("data-final-screen-delete"));
+    if (!img) return;
+    var ok = await confirmDialog("Screen „" + (img.description || img.filename) + "“ wirklich löschen? Er wird aus FINAL und aus der Bilder-Liste entfernt.", "Löschen");
+    if (!ok) return;
+    app.uploadedImages = app.uploadedImages.filter(function (i) { return i.id !== img.id; });
+    addLog("FINAL: Screen „" + img.filename + "“ gelöscht.");
+    renderFinal();
+    renderGallery();
+  });
+
+  // ===================== Bilder zuordnen (Claude interpretiert die Screens) =====================
+  function finalScreenById(id) {
+    var n = parseInt(id, 10);
+    return app.uploadedImages.filter(function (i) { return i.id === n && i.finalScreensFileId; })[0];
+  }
+  function dataUrlToBlob(dataUrl) {
+    var comma = dataUrl.indexOf(",");
+    var mime = (/^data:([^;,]+)/.exec(dataUrl) || [])[1] || "application/octet-stream";
+    var bin = atob(dataUrl.slice(comma + 1));
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  }
+  function finalImageAssignPrompt(batch, titles, withImages) {
+    return ragPromptFor("finalImageAssign") +
+      "\n\nKAPITEL-LISTE:\n" + titles.map(function (t, i) { return (i + 1) + ". " + t; }).join("\n") +
+      "\n\nSCREENS" + (withImages ? " (Bilder in derselben Reihenfolge beigefügt)" : " (keine Bilder beigefügt - nur anhand der Angaben zuordnen)") + ":\n" +
+      batch.map(function (img, i) {
+        return "[" + (i + 1) + "] Navigation in oneSCM: " + (img.finalNavText || "–") +
+          " | Überschrift in der Screens-Datei: " + (img.finalHeading || "–") +
+          " | bisheriger Untertitel: " + (img.description || "–");
+      }).join("\n") +
+      '\n\nAntworte nur mit einem JSON-Array, ein Objekt je Screen: [{"nr": 1, "kapitel": "<exakter Titel aus der Kapitel-Liste oder leer>", "untertitel": "<kurzer Untertitel>"}]';
+  }
+  function finalMatchChapterTitle(answer, titles) {
+    var a = String(answer || "").trim().toLowerCase();
+    if (!a) return "";
+    var exact = titles.filter(function (t) { return t.toLowerCase() === a; })[0];
+    if (exact) return exact;
+    return titles.filter(function (t) { var l = t.toLowerCase(); return l.indexOf(a) !== -1 || a.indexOf(l) !== -1; })[0] || "";
+  }
+  var finalAssignAbort = null;
+  function setFinalAssignBusy(busy) {
+    els.finalAssignImagesBtn.disabled = busy;
+    els.finalAssignImagesSpinner.hidden = !busy;
+    els.finalAssignImagesStopBtn.hidden = !busy;
+  }
+  els.finalAssignImagesStopBtn.addEventListener("click", function () { if (finalAssignAbort) finalAssignAbort.abort(); });
+  els.finalAssignImagesBtn.addEventListener("click", async function () {
+    var titles = finalMasterChapterTitles();
+    var todo = finalAllScreens().filter(function (img) { return img.finalStatus !== "Manuell"; });
+    if (!titles.length) { showToast("Keine Kapitel", "Bitte zuerst mindestens eine Benutzerhandbuch-Datei hochladen (Abschnitt 1).", true); return; }
+    if (!todo.length) { showToast("Keine Screens", "Es gibt keine Screens ohne manuelle Zuordnung.", true); return; }
+    var sample = window.claude && window.claude.use ? await window.claude.use("sample") : null;
+    if (!sample) { showToast("Nicht verfügbar", "Claude steht hier nicht zur Verfügung - das Zuordnen funktioniert nur in der veröffentlichten App.", true); return; }
+    var limits = null;
+    try { limits = sample.limits ? await sample.limits() : null; } catch (e) { limits = null; }
+    var imageLimits = limits && limits.images;
+    var batchSize = imageLimits ? Math.max(1, Math.min(imageLimits.maxCount || 1, 5)) : 25;
+    finalAssignAbort = new AbortController();
+    setFinalAssignBusy(true);
+    var assigned = 0, done = 0, textOnly = !imageLimits;
+    try {
+      for (var start = 0; start < todo.length; start += batchSize) {
+        var batch = todo.slice(start, start + batchSize);
+        els.finalAssignImagesStatusNote.textContent = "Claude interpretiert Screens " + (start + 1) + "–" + (start + batch.length) + " von " + todo.length + " …";
+        var opts = { signal: finalAssignAbort.signal, modelTier: "default" };
+        var withImages = !!imageLimits && batch.every(function (img) { return /^data:image\/(png|jpe?g|gif|webp)/i.test(img.dataUrl); });
+        if (withImages) opts.images = batch.map(function (img) { return dataUrlToBlob(img.dataUrl); });
+        var result;
+        try {
+          result = await sample.json(finalImageAssignPrompt(batch, titles, withImages), opts);
+        } catch (err) {
+          if (!withImages || !err || (err.code !== "images_unavailable" && err.code !== "image_rejected")) throw err;
+          textOnly = true;
+          result = await sample.json(finalImageAssignPrompt(batch, titles, false), { signal: finalAssignAbort.signal, modelTier: "default" });
+        }
+        (Array.isArray(result) ? result : []).forEach(function (row) {
+          var img = batch[(parseInt(row && row.nr, 10) || 0) - 1];
+          if (!img) return;
+          var title = finalMatchChapterTitle(row.kapitel, titles);
+          var caption = String(row.untertitel || "").trim().slice(0, 200);
+          if (caption) img.description = caption;
+          img.chapter = title;
+          img.finalStatus = "Entwurf";
+          if (title) assigned++;
+        });
+        done += batch.length;
+        renderFinalScreensTable();
+      }
+      els.finalAssignImagesStatusNote.textContent = done + " Screen(s) interpretiert, " + assigned + " einem Kapitel zugeordnet (Status „Entwurf“ – bitte prüfen)." +
+        (textOnly ? " Hinweis: Bilder konnten nicht an Claude gesendet werden – Zuordnung nur anhand von Navigationstext/Überschrift." : "");
+      addLog("FINAL: " + done + " Screen(s) per Claude interpretiert, " + assigned + " zugeordnet.");
+      showToast("Bilder zugeordnet", assigned + " von " + done + " Screen(s) einem Kapitel zugeordnet.");
+    } catch (err) {
+      var code = err && err.code;
+      els.finalAssignImagesStatusNote.textContent = code === "cancelled"
+        ? "Abgebrochen nach " + done + " Screen(s)."
+        : "Zuordnung fehlgeschlagen" + (done ? " nach " + done + " Screen(s)" : "") + ": " + ((err && err.message) || code || "Unbekannter Fehler") + ".";
+      if (code !== "cancelled") showToast("Zuordnung fehlgeschlagen", (err && err.message) || code || "Unbekannter Fehler.", true);
+    } finally {
+      finalAssignAbort = null;
+      setFinalAssignBusy(false);
+      renderFinalScreensTable();
+    }
   });
 
   els.finalFilterRolleSelect.addEventListener("change", function () { app.final.filterRolle = els.finalFilterRolleSelect.value; });

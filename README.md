@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.110.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.111.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,53 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **FINAL – Bilder zuordnen (neu, v2.111.0, Abschnitt 5)**: Beim Hochladen einer
+  Screens-Datei (.docx) wird je Bild zusätzlich der **oneSCM-Navigationstext** gelesen
+  (`finalDocxZipToScreens`): zuerst ein Word-Textfeld im Bild-Absatz bzw. in der
+  Tabellenzeile des Bildes (doppelte Ablage als `mc:Choice`/`mc:Fallback` wird nur einmal
+  gezählt), sonst die übrigen Zellen derselben Tabellenzeile, der Text im Bild-Absatz,
+  der direkt folgende oder vorangehende Absatz (keine Überschrift, kein weiteres Bild).
+  Der Navigationstext steht in der Übersicht als eigene Spalte und füllt den Untertitel
+  vor. Der Button **„Bilder zuordnen“** schickt die Screens stapelweise (bis zu 5 je
+  Aufruf) mit Kapitel-Liste, Navigationstext und Überschrift an Claude (`sample.json`,
+  editierbarer Prompt „FINAL: Bilder interpretieren und Kapiteln zuordnen“ unter
+  Einstellungen → RAG-Prompts). Die Bilder selbst gehen nur mit, wenn die veröffentlichte
+  App die Bildfreigabe deklariert (`capabilities: {sample: {images: true}}`) und
+  `sample.limits()` sie meldet – sonst ordnet Claude nur anhand von Navigationstext und
+  Überschrift zu (Hinweis in der Statuszeile). Claude liefert je Screen Untertitel und
+  Kapitel/Unterkapitel; nur exakt (bzw. ohne Groß-/Kleinschreibung) passende Titel aus der
+  Kapitel-Liste werden übernommen. Ergebnis-Status „Entwurf“; Kapitel umhängen oder
+  Untertitel bearbeiten setzt „Manuell“ – solche Screens lässt ein erneuter Lauf aus.
+  Je Screen „Löschen“ (mit Bestätigung, entfernt ihn auch aus der Bilder-Liste);
+  Doppelklick auf das Vorschaubild öffnet es im vorhandenen, frei verschiebbaren
+  Bildbetrachter-Fenster. Laufender Vorgang per „Abbrechen“ stoppbar. Im Master-Dokument
+  (Word/PDF/Ergebnis-Vorschau) lautet die Bildunterschrift „Untertitel – Navigation:
+  <oneSCM-Pfad>“ (`finalScreenCaption`).
+
+- **Fehlerkorrekturen (v2.111.0)**:
+  - **ID-Zähler nach Sitzung-Laden** (`recomputeIdCounters`): Nach dem Laden einer Sitzung
+    oder eines Autosaves springen alle laufenden ID-Zähler (Bilder, Editor-Dateien, Rovo,
+    Rovo-Tabellen, RAG-Bibliothek, Massenverarbeitung, hochgeladene Gliederungen,
+    Referenz-Handbücher, Rovo-Summary-Quellen, FINAL-Handbücher/-Screens-Dateien) hinter
+    die höchste geladene ID. Vorher bekamen neue Einträge bereits vergebene IDs, und
+    „Entfernen“ löschte zwei Einträge.
+  - **Dashboard „Alle auswählen“-Checkbox**: aktualisiert die Auswahl-Anzeige einmal statt
+    einmal je Ticket (vorher Einfrieren bei vielen Tickets).
+  - **Build-Schritt** (`webapp_builder.py`): eingebettetes JSON maskiert `<` als `\u003c`
+    (Ticketinhalte wie `</script>` beenden das Script-Tag nicht mehr vorzeitig), und jeder
+    Platzhalter wird nur im Script-Tag ersetzt – das Testergebnis-JSON landete vorher
+    zusätzlich in einem JS-Kommentar (ca. 0,4 MB Ballast; ein `*/` darin hätte die App
+    lahmgelegt). Zusätzlich bricht ein fehlender Build-Platzhalter das Start-Skript nicht
+    mehr ab.
+  - **Prozessbild/Mermaid**: Das Standard-Layout „Mermaid klassisch“ wird jetzt wirklich als
+    Diagramm gezeichnet – Mermaid 10.9.1 wird erst bei Bedarf von jsDelivr nachgeladen
+    (`loadMermaid`); ist das nicht möglich, bleibt der Quelltext mit Hinweis sichtbar.
+  - **Rovo Summary – Vergleich**: Die Ticketliste hat ein eigenes Budget (15.000 Zeichen),
+    damit sie bei vielen Tickets die Quellen B–E (RAG, Rovo, Handbuch, EDITO) nicht mehr
+    aus dem Prompt verdrängt.
+  - **Autosave**: Reine Navigationsklicks (Register, Seitenleiste) lösen kein Speichern der
+    gesamten Sitzung mehr aus.
 
 - **Performance-Fix (v2.110.0): Dashboard-Register bei großen Ticketmengen** – bei
   mehreren tausend geladenen Tickets konnte ein Wechsel zurück zum Dashboard-Register
