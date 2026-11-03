@@ -101,7 +101,7 @@ const KAP2 = "Kapitel 2: Kündigung";
   check("Rolle bietet HQ an", roles.includes("HQ"));
   check("Sparte bietet nur Pkw und Van (+ beide), kein Markt", spartes.join(",") === "|Pkw und Van (beide),Pkw|Pkw,Van|Van");
   check("Filter-Sparte ohne Markt", !Array.from(doc.querySelectorAll("#final-filter-sparte-select option")).some((o) => o.value === "Markt"));
-  check("Schritt-Überschriften mit Icons (8 Schritte)", doc.querySelectorAll('[data-view-panel="final"] .final-step-label svg').length === 8);
+  check("Schritt-Überschriften mit Icons (9 Schritte)", doc.querySelectorAll('[data-view-panel="final"] .final-step-label svg').length === 9);
 
   // ===================== Handbuch mit Original-Design + Vermerk + Jira =====================
   const manual = await buildDocx(
