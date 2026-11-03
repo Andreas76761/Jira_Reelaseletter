@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.122.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.123.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,6 +2031,20 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **FINAL Schritt 9 – Gesamtdokument & Review mit Agenten (v2.123.0)**: Die Stufe „6. Gesamtdokument“
+  aus dem Register Editor steht jetzt auch am Ende von FINAL. Für den gewählten Stand (Auswahlfeld
+  synchron zu Schritt 7/8) wird ein Gesamtdokument als Word (im gewählten Word-Design) **und** PDF
+  erzeugt – mit Deckblatt, Inhaltsverzeichnis, Seitenzahlen und den zugeordneten Screens; Vorschau
+  aller Kapitel. Danach prüfen frei auswählbare Agenten das Dokument, nacheinander und jederzeit
+  stoppbar: **Struktur-Prüfung** (ohne KI: reale PDF-Seitenzahl, Screens je [Bild]-Platzhalter,
+  leere Kapitel, Screens ohne Untertitel, offene ROVO-Verbesserungen, Inhaltsverzeichnis),
+  **Inhalt & Qualität**, **Sprache & Stil** (Bericht, ohne Umschreiben), **Kapitelübergreifende
+  Konsistenz** und **Vollständigkeit & Abdeckung** (ROVO-Verbesserungen mit Status, Tickets, Lücken
+  im Ablauf). Die Agenten ändern nichts; der Gesamtbericht lässt sich an den Stand anhängen
+  („Prüfbericht (n)“ in den Ständen), als Word/Markdown herunterladen, und der Stand lässt sich
+  direkt im Editor optimieren. Interne Mitteilungen gelangen weder ins Gesamtdokument noch in die
+  Agenten-Prompts. Zwei neue, unter RAG editierbare Prompts (Sprache & Stil, Vollständigkeit).
+  Test: `webapp/tests/final_review_agents_test.js`.
 - **Register „Mitteilungen“ – Übersicht aller internen Mitteilungen (v2.122.0)**: Neues Register
   direkt nach FINAL. Es bündelt die internen Mitteilungen aller FINAL-Stände und der Register
   Releaseletter, Benutzerhandbuch, Prozessbild und Clickanweisung in einer Tabelle (Fälligkeit,

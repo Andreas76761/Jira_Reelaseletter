@@ -497,6 +497,13 @@
   .final-match { font-size: 12px; white-space: nowrap; }
   .final-note { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; background: var(--surface); }
   .final-note-overdue { border-color: #f59e0b; box-shadow: 0 0 0 2px color-mix(in srgb, #f59e0b 25%, transparent); }
+  .final-review-agents { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+  .final-review-agent { display: flex; gap: 8px; align-items: flex-start; border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; background: var(--surface); cursor: pointer; }
+  .final-review-agent input { margin-top: 3px; }
+  .final-review-agent small { display: block; color: var(--text-faint); font-size: 12px; line-height: 1.35; }
+  .final-review-result { border: 1px solid var(--border); border-radius: 10px; margin-top: 8px; background: var(--surface); }
+  .final-review-result > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
+  .final-review-result-body { padding: 0 12px 12px; white-space: pre-wrap; font-size: 13px; max-height: 420px; overflow: auto; }
   .notes-ov-overdue > td { background: color-mix(in srgb, #f59e0b 9%, transparent); }
   .notes-ov-overdue > td:first-child { box-shadow: inset 3px 0 0 #f59e0b; }
   .final-note-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
@@ -3243,6 +3250,42 @@
           </div>
           <p class="step-note" id="final-design-status-note">Zuerst in Schritt 6 das Master-Dokument zusammenführen.</p>
         </section>
+
+        <section class="final-step" id="final-review-step">
+          <p class="section-label final-step-label"><span class="final-step-badge"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span>9. Gesamtdokument &amp; Review mit Agenten</span></p>
+          <p class="desc">Wie die Stufe „6. Gesamtdokument“ im Register Editor: Der gewählte Stand wird zu einem Gesamtdokument (Word <b>und</b> PDF, mit Deckblatt, Inhaltsverzeichnis, Seitenzahlen und den zugeordneten Screens) zusammengeführt und anschließend von verschiedenen Agenten geprüft. Die Agenten ändern das Dokument nicht – sie liefern Prüfberichte. Der Gesamtbericht lässt sich an den Stand anhängen (Schaltfläche „Prüfbericht“ in den Ständen) oder als Word/Markdown herunterladen; zum Überarbeiten den Stand „Im Editor optimieren“. Interne Mitteilungen werden nicht geprüft und erscheinen nicht im Gesamtdokument.</p>
+          <div class="controls" style="margin-bottom:10px;">
+            <label for="final-review-version-select">Stand</label>
+            <select id="final-review-version-select" aria-label="Stand für Gesamtdokument und Review"></select>
+            <span id="final-review-version-status"></span>
+          </div>
+          <div class="controls">
+            <button class="btn primary" id="final-review-merge-btn" type="button" disabled><span class="btn-spinner" id="final-review-merge-spinner" hidden></span>Gesamtdokument zusammenführen</button>
+          </div>
+          <p class="step-note" id="final-review-merge-note"></p>
+          <div id="final-review-merge-section" hidden>
+            <div class="controls" style="margin-top:4px;">
+              <button class="btn ghost" id="final-review-docx-btn" type="button">Als Word herunterladen</button>
+              <button class="btn ghost" id="final-review-pdf-btn" type="button">Als PDF herunterladen</button>
+            </div>
+            <div class="panel gen-preview" id="final-review-merge-preview" style="padding:12px 14px; margin-top:10px; max-height:420px; overflow:auto; white-space:pre-wrap;"></div>
+          </div>
+          <p class="section-label final-sub-label" style="margin-top:14px;">Agenten auswählen</p>
+          <div class="final-review-agents" id="final-review-agents"></div>
+          <div class="controls" style="margin-top:8px;">
+            <button class="btn primary" id="final-review-run-btn" type="button" disabled><span class="btn-spinner" id="final-review-run-spinner" hidden></span>Ausgewählte Agenten starten</button>
+            <button class="btn ghost" id="final-review-stop-btn" type="button" hidden>Stopp</button>
+            <button class="btn ghost btn-tiny" id="final-review-select-all-btn" type="button">Alle auswählen</button>
+          </div>
+          <p class="step-note" id="final-review-status"></p>
+          <div id="final-review-results"></div>
+          <div class="controls" id="final-review-report-actions" hidden style="margin-top:8px; flex-wrap:wrap;">
+            <button class="btn primary btn-tiny" id="final-review-attach-btn" type="button">Gesamtbericht an Stand anhängen</button>
+            <button class="btn ghost btn-tiny" id="final-review-report-docx-btn" type="button">Gesamtbericht als Word</button>
+            <button class="btn ghost btn-tiny" id="final-review-report-md-btn" type="button">Gesamtbericht als Markdown</button>
+            <button class="btn ghost btn-tiny" id="final-review-editor-btn" type="button">Stand im Editor optimieren</button>
+          </div>
+        </section>
       </section>
 
       <!-- ================= Bilder ================= -->
@@ -5973,7 +6016,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.122.0";
+  var APP_VERSION = "2.123.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7574,7 +7617,7 @@
     "final-preview-manual-select", "final-preview-improvements-select", "final-preview-improvements", "final-screens-file-filter-select",
     "final-build-manual-select", "final-build-improvements-select", "final-build-screens-select", "final-build-name-input",
     "final-versions-block", "final-versions-tbody", "final-result-version-select", "final-result-version-status",
-    "final-design-version-select", "final-design-version-status", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
+    "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
     "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
@@ -19805,6 +19848,8 @@
     finalAgentImprove: "Du bist Technischer Redakteur für das Benutzerhandbuch der Anwendung oneSCM. Arbeite die unten aufgeführten Verbesserungen (aus ROVO) in den Kapiteltext ein. Ändere nur, was die Verbesserungen verlangen oder was für einen stimmigen Text dadurch nötig wird; der übrige Text bleibt wörtlich erhalten. Erfinde keine Inhalte, die weder im Text noch in den Verbesserungen stehen. Jede Zeile, die nur [Bild] enthält, ist ein Bild-Platzhalter: übernimm ALLE diese Zeilen unverändert, in derselben Anzahl und an der inhaltlich passenden Stelle. Behalte Sprache, Absatzstruktur und Zwischenüberschriften bei. Antworte ausschließlich mit dem vollständigen überarbeiteten Kapiteltext - ohne Kapitelüberschrift, ohne Einleitung, ohne Kommentar.",
     finalAgentStyle: "Du bist Lektor für das Benutzerhandbuch der Anwendung oneSCM. Überarbeite den Kapiteltext sprachlich: klare, aktive Sätze im Präsens, einheitliche Begriffe, korrekte Rechtschreibung und Grammatik, roter Faden. Der fachliche Inhalt bleibt vollständig und unverändert, nichts hinzuerfinden, nichts weglassen. Jede Zeile, die nur [Bild] enthält, ist ein Bild-Platzhalter: übernimm ALLE diese Zeilen unverändert und in derselben Anzahl. Behalte die Sprache des Textes bei. Antworte ausschließlich mit dem vollständigen überarbeiteten Kapiteltext - ohne Kapitelüberschrift, ohne Einleitung, ohne Kommentar.",
     finalAgentReview: "Du prüfst ein internes Dokument (Benutzerhandbuch der Anwendung oneSCM) vor der Veröffentlichung. Bewerte je Kapitel kurz Inhalt (Vollständigkeit, Widersprüche, fehlende Schritte), Sprache (Verständlichkeit, Einheitlichkeit) und - falls angegeben - ob die Verbesserungen aus ROVO bereits umgesetzt sind. Gliedere den Bericht mit einer Zeile je Kapitel (Kapiteltitel), darunter Stichpunkte mit konkreten Fundstellen und Empfehlungen, und schließe mit einer Gesamtempfehlung (Entwurf / Geprüft / Veröffentlichungsreif). Erfinde keine Inhalte.",
+    finalReviewStyle: "Du bist Lektor für das Benutzerhandbuch der Anwendung oneSCM. Prüfe das unten stehende Gesamtdokument sprachlich, OHNE es umzuschreiben. Gib AUSSCHLIESSLICH die folgenden Abschnitte aus:\n\n### Rechtschreibung & Grammatik\n- (je Fundstelle: Kapitel, fehlerhafte Stelle wörtlich, Korrektur)\n\n### Verständlichkeit & Stil\n- (je Fundstelle: Kapitel, Problem – z. B. Schachtelsatz, Passiv, Füllwörter – und konkreter Verbesserungsvorschlag)\n\n### Einheitliche Begriffe\n- (Begriffe, die für dasselbe uneinheitlich verwendet werden, mit Empfehlung)\n\nIst ein Abschnitt leer, schreibe darunter \"Keine gefunden.\" Zeilen mit nur [Bild] sind Platzhalter für Screens und kein Fehler. Erfinde keine Probleme:",
+    finalReviewCompleteness: "Du bist Qualitätsprüfer für das Benutzerhandbuch der Anwendung oneSCM. Unten stehen alle Kapitel des Gesamtdokuments, je Kapitel mit den Verbesserungen aus ROVO (mit Umsetzungsstatus), den zugeordneten Jira-Tickets (falls vorhanden), der Zahl der zugeordneten Screens und dem Kapiteltext. Gib AUSSCHLIESSLICH die folgenden Abschnitte aus:\n\n### Nicht umgesetzte Verbesserungen\n- (je Kapitel: Verbesserung aus ROVO, die im Kapiteltext nicht erkennbar umgesetzt ist)\n\n### Nicht abgedeckte Tickets\n- (je Kapitel: Ticket, dessen Inhalt im Kapiteltext nicht erkennbar aufgegriffen wird)\n\n### Lücken im Ablauf\n- (je Kapitel: fehlende Schritte, fehlende Voraussetzungen oder Beschreibungen ohne passenden Screen)\n\nIst ein Abschnitt leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme:",
     finalCompareVersions: "Du vergleichst zwei Fassungen (Stand A und Stand B) eines Benutzerhandbuchs der Anwendung oneSCM. Die Fassungen können in unterschiedlichen Sprachen oder für unterschiedliche Rollen/Märkte geschrieben sein - vergleiche den INHALT, nicht den Wortlaut. Gehe Kapitel für Kapitel vor (Kapitel über Titel bzw. Reihenfolge zuordnen) und nenne je Kapitel: Inhalte, die nur in A stehen; Inhalte, die nur in B stehen; inhaltliche Abweichungen oder Widersprüche. Kapitel ohne inhaltlichen Unterschied mit einer Zeile \"keine inhaltlichen Unterschiede\" erwähnen. Schließe mit einer kurzen Gesamteinschätzung. Erfinde nichts."
   };
   var RAG_PROMPT_LABELS = {
@@ -19842,6 +19887,8 @@
     finalAgentImprove: "Editor (interne Dokumente): Verbesserungen aus ROVO in ein Kapitel einarbeiten",
     finalAgentStyle: "Editor (interne Dokumente): Sprache und Stil eines Kapitels optimieren",
     finalAgentReview: "Editor (interne Dokumente): Prüfbericht über ein Dokument",
+    finalReviewStyle: "FINAL Review: Sprache & Stil des Gesamtdokuments prüfen (Bericht)",
+    finalReviewCompleteness: "FINAL Review: Vollständigkeit (ROVO-Verbesserungen, Tickets, Ablauf) prüfen",
     finalCompareVersions: "FINAL: Zwei Stände inhaltlich vergleichen"
   };
   function ragPromptFor(promptKey) {
@@ -27442,7 +27489,7 @@
     }).join("");
   }
   function renderFinalVersionSelects() {
-    [[els.finalResultVersionSelect, els.finalResultVersionStatus], [els.finalDesignVersionSelect, els.finalDesignVersionStatus]].forEach(function (pair) {
+    [[els.finalResultVersionSelect, els.finalResultVersionStatus], [els.finalDesignVersionSelect, els.finalDesignVersionStatus], [els.finalReviewVersionSelect, els.finalReviewVersionStatus]].forEach(function (pair) {
       pair[0].innerHTML = app.final.versions.map(function (v) { return '<option value="' + v.id + '">' + escapeHtml(finalVersionOptionLabel(v)) + "</option>"; }).join("");
       if (app.final.activeVersionId) pair[0].value = String(app.final.activeVersionId);
       var active = finalActiveVersion();
@@ -27518,7 +27565,7 @@
     addLog("FINAL: Verbesserung in „" + title + "“ (Stand „" + v.name + "“) auf „" + sel.value + "“ gesetzt.");
     renderWhenVisible("edito", "finalDocs", renderEditoFinalDocs);
   });
-  [els.finalResultVersionSelect, els.finalDesignVersionSelect].forEach(function (sel) {
+  [els.finalResultVersionSelect, els.finalDesignVersionSelect, els.finalReviewVersionSelect].forEach(function (sel) {
     sel.addEventListener("change", function () { finalSetActiveVersion(finalSelId(sel)); renderFinal(); });
   });
 
@@ -28619,6 +28666,7 @@
     renderFinalResultChapterOptions();
     updateFinalResult();
     renderFinalDesign();
+    renderFinalReview();
     renderWhenVisible("edito", "finalDocs", renderEditoFinalDocs);
   }
 
@@ -29393,6 +29441,219 @@
   });
   els.finalDesignDocxBtn.addEventListener("click", finalDownloadWord);
   els.finalDesignPptxBtn.addEventListener("click", finalDownloadPptx);
+
+  // ===================== v2.123: Schritt 9 – Gesamtdokument & Review mit Agenten (wie Editor, Stufe 6) =====================
+  // Gesamtdokument (Word + PDF) aus dem gewaehlten Stand; Agenten liefern nur Pruefberichte (aendern nichts).
+  // Ergebnisse sind Sitzungs-Anzeigezustand; dauerhaft wird nur der an den Stand angehaengte Gesamtbericht (v.reviews).
+  var FINAL_REVIEW_AGENTS = [
+    { key: "structure", label: "Struktur-Prüfung (ohne KI)", hint: "Reale Seitenzahl der PDF-Fassung, Screens je [Bild]-Platzhalter, leere Kapitel, Screens ohne Untertitel, offene ROVO-Verbesserungen, Inhaltsverzeichnis." },
+    { key: "content", label: "Inhalt & Qualität", hint: "Je Kapitel: Vollständigkeit, Widersprüche, fehlende Schritte; Gesamtempfehlung (Entwurf / Geprüft / Veröffentlichungsreif).", prompt: "finalAgentReview" },
+    { key: "style", label: "Sprache & Stil", hint: "Rechtschreibung, Grammatik, Verständlichkeit und einheitliche Begriffe – als Bericht, ohne Umschreiben.", prompt: "finalReviewStyle" },
+    { key: "consistency", label: "Kapitelübergreifende Konsistenz", hint: "Widersprüche und Redundanzen zwischen den Kapiteln (mind. 2 Kapitel).", prompt: "editoAgent4" },
+    { key: "completeness", label: "Vollständigkeit & Abdeckung", hint: "Nicht umgesetzte ROVO-Verbesserungen, nicht abgedeckte Tickets, Lücken im Ablauf.", prompt: "finalReviewCompleteness" }
+  ];
+  var finalReviewSel = { structure: true, content: true, style: true, consistency: true, completeness: true };
+  var finalReviewState = { versionId: null, results: {}, merged: null };
+  var finalReviewAbort = null, finalReviewBusy = false;
+  function finalReviewEnsure() {
+    var v = finalVersionById(app.final.activeVersionId), id = v ? v.id : null;
+    if (finalReviewState.versionId !== id) finalReviewState = { versionId: id, results: {}, merged: null };
+    return v;
+  }
+  function finalReviewAgentDef(key) { return FINAL_REVIEW_AGENTS.filter(function (a) { return a.key === key; })[0]; }
+  async function finalReviewBuildPdf(chapters, v) {
+    var doc = await buildFinalMasterPdfDoc(chapters, { coverTitle: "Benutzerhandbuch", coverSubtitle: v.name, headerTitle: "Benutzerhandbuch – " + v.name });
+    return { doc: doc, pageCount: doc.internal.getNumberOfPages(), tocPages: editoMergedTocPageCount(chapters.map(function (c) { return { title: c.title }; })) };
+  }
+  function finalReviewCombined() {
+    var res = finalReviewState.results;
+    return FINAL_REVIEW_AGENTS.filter(function (a) { return res[a.key]; }).map(function (a) {
+      return "## " + a.label + " (" + res[a.key].at + ")\n\n" + res[a.key].text;
+    }).join("\n\n");
+  }
+  function renderFinalReview() {
+    if (!els.finalReviewAgents || !FINAL_REVIEW_AGENTS || !finalReviewState) return;
+    var v = finalReviewEnsure(), has = !!(v && v.chapters.length);
+    els.finalReviewMergeBtn.disabled = !has || finalReviewBusy;
+    if (!v) els.finalReviewMergeNote.textContent = "Zuerst in Schritt 6 einen Stand zusammenführen.";
+    else if (!finalReviewState.merged && els.finalReviewMergeNote.textContent.indexOf("Zuerst") === 0) els.finalReviewMergeNote.textContent = "";
+    var m = finalReviewState.merged;
+    els.finalReviewMergeSection.hidden = !m;
+    if (!els.finalReviewAgents.children.length) {
+      els.finalReviewAgents.innerHTML = FINAL_REVIEW_AGENTS.map(function (a) {
+        return '<label class="final-review-agent"><input type="checkbox" data-final-review-agent="' + a.key + '"' + (finalReviewSel[a.key] ? " checked" : "") + "><span><b>" + escapeHtml(a.label) + "</b>" +
+          (a.prompt ? "" : ' <span class="step-note">deterministisch</span>') + "<small>" + escapeHtml(a.hint) + "</small></span></label>";
+      }).join("");
+    }
+    var anySel = FINAL_REVIEW_AGENTS.some(function (a) { return finalReviewSel[a.key]; });
+    els.finalReviewRunBtn.disabled = !has || !anySel || finalReviewBusy;
+    els.finalReviewRunSpinner.hidden = !finalReviewBusy;
+    els.finalReviewStopBtn.hidden = !finalReviewBusy;
+    var res = finalReviewState.results;
+    els.finalReviewResults.innerHTML = FINAL_REVIEW_AGENTS.filter(function (a) { return res[a.key]; }).map(function (a) {
+      var r = res[a.key];
+      return '<details class="final-review-result" open data-final-review-result="' + a.key + '"><summary>' + escapeHtml(a.label) + ' <span class="step-note">· ' + escapeHtml(r.at) +
+        (r.status && r.status !== "ok" ? " · " + escapeHtml(r.status) : "") + '</span></summary><div class="final-review-result-body">' + escapeHtml(r.text) + "</div></details>";
+    }).join("");
+    els.finalReviewReportActions.hidden = !Object.keys(res).length;
+  }
+  els.finalReviewAgents.addEventListener("change", function (e) {
+    var cb = e.target.closest("[data-final-review-agent]");
+    if (!cb) return;
+    finalReviewSel[cb.getAttribute("data-final-review-agent")] = cb.checked;
+    renderFinalReview();
+  });
+  els.finalReviewSelectAllBtn.addEventListener("click", function () {
+    FINAL_REVIEW_AGENTS.forEach(function (a) { finalReviewSel[a.key] = true; });
+    Array.prototype.forEach.call(els.finalReviewAgents.querySelectorAll("[data-final-review-agent]"), function (cb) { cb.checked = true; });
+    renderFinalReview();
+  });
+  els.finalReviewMergeBtn.addEventListener("click", async function () {
+    var v = finalReviewEnsure();
+    if (!v || !v.chapters.length) return;
+    finalReviewBusy = true;
+    els.finalReviewMergeSpinner.hidden = false;
+    renderFinalReview();
+    try {
+      var chapters = finalMasterChaptersForExport();
+      var base = "FINAL_Gesamtdokument_" + editoFinalSafeName(v.name) + "_" + dateStampForFilename();
+      var docx = await buildFinalMasterDocxBlob(chapters, { coverSubtitle: v.name, footerTitle: "Benutzerhandbuch – " + v.name });
+      docx = await finalApplyWordDesign(docx, finalResolveWordDesign());
+      var pdf = await finalReviewBuildPdf(chapters, v);
+      var screens = chapters.reduce(function (n, c) { return n + c.screens.length; }, 0);
+      finalReviewState.merged = { docx: docx, docxName: base + ".docx", pdf: pdf.doc.output("blob"), pdfName: base + ".pdf", pageCount: pdf.pageCount, tocPages: pdf.tocPages, at: nowLabel() };
+      els.finalReviewMergePreview.textContent = chapters.map(function (c) { return "## " + c.title + (c.screens.length ? "  [" + c.screens.length + " Screen(s)]" : "") + "\n\n" + c.text; })
+        .join("\n\n――――――――――――――――――――――――――――――――\n\n");
+      els.finalReviewMergeNote.textContent = chapters.length + " Kapitel mit " + screens + " Screen(s) zu einem Gesamtdokument zusammengeführt – PDF: " + pdf.pageCount + " Seite" + (pdf.pageCount === 1 ? "" : "n") + " (Stand „" + v.name + "“, " + finalReviewState.merged.at + ").";
+      addLog("FINAL: Gesamtdokument für Stand „" + v.name + "“ zusammengeführt (" + chapters.length + " Kapitel, " + pdf.pageCount + " Seiten).");
+      showToast("Zusammengeführt", chapters.length + " Kapitel, " + pdf.pageCount + " Seiten (PDF).");
+    } catch (err) {
+      showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
+    } finally {
+      finalReviewBusy = false;
+      els.finalReviewMergeSpinner.hidden = true;
+      renderFinalReview();
+    }
+  });
+  els.finalReviewDocxBtn.addEventListener("click", async function () {
+    var m = finalReviewState.merged;
+    if (m && await saveOrWarn(m.docxName, m.docx)) addLog("FINAL: Gesamtdokument „" + m.docxName + "“ heruntergeladen.");
+  });
+  els.finalReviewPdfBtn.addEventListener("click", async function () {
+    var m = finalReviewState.merged;
+    if (m && await saveOrWarn(m.pdfName, m.pdf)) addLog("FINAL: Gesamtdokument „" + m.pdfName + "“ heruntergeladen.");
+  });
+  async function finalReviewStructure(v, chapters) {
+    var m = finalReviewState.merged, pages, tocPages;
+    if (m) { pages = m.pageCount; tocPages = m.tocPages; } else { var pdf = await finalReviewBuildPdf(chapters, v); pages = pdf.pageCount; tocPages = pdf.tocPages; }
+    var ph = 0, sc = 0, gaps = [], empty = [], noCap = 0, openImps = 0, impLines = [];
+    chapters.forEach(function (c) {
+      var p = bildbandCountPlaceholders(c.text), n = c.screens.length;
+      ph += p; sc += n;
+      if (!String(c.text || "").replace(/\[Bild\]/g, "").trim()) empty.push(c.title);
+      if (p > n) gaps.push("- " + c.title + ": " + (p - n) + " [Bild]-Platzhalter ohne Screen");
+      else if (n > p) gaps.push("- " + c.title + ": " + (n - p) + " Screen(s) ohne [Bild]-Platzhalter (werden nicht eingebettet)");
+      noCap += c.screens.filter(function (img) { return !String(img.description || "").trim(); }).length;
+      var imps = (v.improvements || {})[c.title] || [], open = imps.filter(function (_, i) { return finalImpStatus(v, c.title, i) === "offen"; }).length;
+      if (open) { openImps += open; impLines.push("- " + c.title + ": " + open + " von " + imps.length + " offen"); }
+    });
+    var L = ["### Umfang", "- Stand „" + v.name + "“ (" + v.status + "): " + chapters.length + " Kapitel.",
+      "- Gesamtdokument: " + pages + " Seite" + (pages === 1 ? "" : "n") + " (reale, gerenderte Seitenanzahl der PDF-Fassung, DIN A4 Hochformat, inkl. Deckblatt und Inhaltsverzeichnis).",
+      empty.length ? "- ⚠ Kapitel ohne Text: " + empty.join(", ") : "- Alle Kapitel enthalten Text.",
+      "", "### Screens", "- " + Math.min(ph, sc) + " von " + ph + " [Bild]-Platzhaltern mit einem Screen belegt (" + sc + " Screen(s) zugeordnet).",
+      gaps.length ? "- ⚠ Abweichungen je Kapitel:" : "- Keine Abweichungen zwischen Platzhaltern und Screens."].concat(gaps).concat([
+      noCap ? "- ⚠ " + noCap + " Screen(s) ohne Bilduntertitel." : "- Alle Screens haben einen Bilduntertitel.",
+      "", "### Verbesserungen aus ROVO", openImps ? "- ⚠ " + openImps + " Verbesserung(en) noch offen:" : "- Keine offenen Verbesserungen."]).concat(impLines).concat([
+      "", "### Inhaltsverzeichnis", "- Vorhanden (" + tocPages + " Seite" + (tocPages === 1 ? "" : "n") + ", alle " + chapters.length + " Kapitel mit realer Seitenzahl)."]);
+    var warn = empty.length + gaps.length + (noCap ? 1 : 0) + (openImps ? 1 : 0);
+    return { text: L.join("\n"), status: warn ? warn + " Hinweis(e)" : "ok" };
+  }
+  function finalReviewPrompt(key, v, chapters) {
+    if (key === "content") return ragPromptFor("finalAgentReview") + "\n\nDOKUMENT: " + v.name + " (Status: " + v.status + ")\n\n" + truncate(chapters.map(function (c) {
+      var imps = (v.improvements || {})[c.title] || [];
+      return "## " + c.title + "\n" + truncate(c.text, 6000) + (imps.length ? "\nVerbesserungen aus ROVO:\n" + imps.map(function (t) { return "- " + t; }).join("\n") : "");
+    }).join("\n\n"), 90000);
+    if (key === "style") return ragPromptFor("finalReviewStyle") + "\n\n" + truncate(chapters.map(function (c) { return "## " + c.title + "\n" + truncate(c.text, 6000); }).join("\n\n"), 60000);
+    if (key === "consistency") return editoAgent4Prompt(chapters);
+    return ragPromptFor("finalReviewCompleteness") + "\n\n" + truncate(chapters.map(function (c) {
+      var imps = (v.improvements || {})[c.title] || [], tickets = editoTicketsForChapter(c.title);
+      return "## " + c.title + "\nVerbesserungen aus ROVO (" + imps.length + "):\n" + (imps.length ? imps.map(function (t, i) { return "- [" + finalImpStatus(v, c.title, i) + "] " + t; }).join("\n") : "(keine)") +
+        "\nZugeordnete Tickets (" + tickets.length + "):\n" + (tickets.length ? tickets.map(function (t) { return "- " + (t.key || "") + ": " + (t.summary || ""); }).join("\n") : "(keine)") +
+        "\nZugeordnete Screens: " + c.screens.length + "\n\nKapiteltext:\n" + truncate(c.text, 2500);
+    }).join("\n\n"), 40000);
+  }
+  els.finalReviewRunBtn.addEventListener("click", async function () {
+    var v = finalReviewEnsure();
+    if (!v || !v.chapters.length || finalReviewBusy) return;
+    var keys = FINAL_REVIEW_AGENTS.filter(function (a) { return finalReviewSel[a.key]; }).map(function (a) { return a.key; });
+    if (!keys.length) return;
+    var aiKeys = keys.filter(function (k) { return finalReviewAgentDef(k).prompt; });
+    if (aiKeys.length && !sampleApi) {
+      showToast("KI nicht verfügbar", "KI-Agenten laufen nur in der veröffentlichten Claude-Artifact-Version – es wird nur die Struktur-Prüfung ausgeführt.", true);
+      keys = keys.filter(function (k) { return !finalReviewAgentDef(k).prompt; });
+      if (!keys.length) return;
+    }
+    var chapters = finalMasterChaptersForExport();
+    finalReviewBusy = true;
+    finalReviewAbort = new AbortController();
+    var signal = finalReviewAbort.signal, done = 0, failed = 0, stopped = false;
+    renderFinalReview();
+    for (var i = 0; i < keys.length; i++) {
+      if (signal.aborted) { stopped = true; break; }
+      var a = finalReviewAgentDef(keys[i]);
+      els.finalReviewStatus.textContent = "Agent " + (i + 1) + " von " + keys.length + ": „" + a.label + "“ läuft …";
+      try {
+        var r;
+        if (a.key === "structure") r = await finalReviewStructure(v, chapters);
+        else if (a.key === "consistency" && chapters.length < 2) r = { text: "Übersprungen – für diese Prüfung werden mindestens 2 Kapitel benötigt.", status: "übersprungen" };
+        else {
+          var res = await sampleApi(finalReviewPrompt(a.key, v, chapters), { modelTier: "default", cache: false, signal: signal });
+          r = { text: String((res && res.text) || "").trim() || "(leere Antwort)", status: "ok" };
+        }
+        finalReviewState.results[a.key] = { text: r.text, status: r.status, at: nowLabel() };
+        done++;
+      } catch (err) {
+        if (signal.aborted || (err && err.code === "cancelled")) { stopped = true; break; }
+        failed++;
+        finalReviewState.results[a.key] = { text: "Fehlgeschlagen: " + ((err && err.message) || "Unbekannter Fehler."), status: "fehlgeschlagen", at: nowLabel() };
+      }
+      renderFinalReview();
+    }
+    finalReviewAbort = null;
+    finalReviewBusy = false;
+    var summary = (stopped ? "Gestoppt – " : "") + done + " von " + keys.length + " Agent(en) ausgeführt" + (failed ? ", " + failed + " fehlgeschlagen" : "") + " (" + nowLabel() + ").";
+    els.finalReviewStatus.textContent = summary;
+    addLog("FINAL: Review für Stand „" + v.name + "“ – " + summary);
+    renderFinalReview();
+  });
+  els.finalReviewStopBtn.addEventListener("click", function () { if (finalReviewAbort) finalReviewAbort.abort(); });
+  function finalReviewReport() {
+    var v = finalReviewEnsure(), text = finalReviewCombined();
+    return v && text ? { v: v, report: { text: text, at: nowLabel(), by: finalReviewerName() } } : null;
+  }
+  els.finalReviewAttachBtn.addEventListener("click", function () {
+    var cur = finalReviewReport();
+    if (!cur) return;
+    cur.v.reviews = cur.v.reviews || [];
+    cur.v.reviews.push({ text: cur.report.text, at: cur.report.at, by: cur.report.by, byId: finalUser ? finalUser.id : null, source: "FINAL-Review" });
+    addLog("FINAL: Gesamtbericht (Review) an Stand „" + cur.v.name + "“ angehängt.");
+    showToast("Angehängt", "Gesamtbericht an Stand „" + cur.v.name + "“ angehängt (" + cur.v.reviews.length + " Prüfbericht(e)).");
+    renderFinalVersions();
+  });
+  els.finalReviewReportDocxBtn.addEventListener("click", async function () {
+    var cur = finalReviewReport();
+    if (cur && await finalDownloadReport(cur.v, cur.report, "docx")) addLog("FINAL: Gesamtbericht (Review) für „" + cur.v.name + "“ als Word heruntergeladen.");
+  });
+  els.finalReviewReportMdBtn.addEventListener("click", async function () {
+    var cur = finalReviewReport();
+    if (cur && await finalDownloadReport(cur.v, cur.report, "md")) addLog("FINAL: Gesamtbericht (Review) für „" + cur.v.name + "“ als Markdown heruntergeladen.");
+  });
+  els.finalReviewEditorBtn.addEventListener("click", function () {
+    var v = finalReviewEnsure();
+    if (!v) return;
+    editoSelectFinalDoc(v.id);
+    showView("edito");
+  });
 
   /* ============ Teil 10: Navigation ============ */
 
