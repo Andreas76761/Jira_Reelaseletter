@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.121.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.122.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,6 +2031,17 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **Register „Mitteilungen“ – Übersicht aller internen Mitteilungen (v2.122.0)**: Neues Register
+  direkt nach FINAL. Es bündelt die internen Mitteilungen aller FINAL-Stände und der Register
+  Releaseletter, Benutzerhandbuch, Prozessbild und Clickanweisung in einer Tabelle (Fälligkeit,
+  Kategorie, Titel/Inhalt, Ort, zuletzt aktualisiert von), fällige zuerst. Filter nach Ort,
+  Kategorie, Fälligkeit (fällig / aktuell / ohne Intervall) und Volltextsuche. Je fälliger Zeile
+  „Geprüft – unverändert“, zusätzlich „Alle angezeigten fälligen: Geprüft – unverändert“ (mit
+  Rückfrage); „Öffnen“ springt an den Ort (FINAL-Stand bzw. Register mit aufgeklappten
+  Mitteilungen). Die gefilterte Liste lässt sich als Excel bzw. Markdown herunterladen –
+  ausdrücklich als interne Liste gekennzeichnet; Dokumente und Releaseletter bleiben unberührt.
+  Ein Zähler am Navigationspunkt zeigt die Zahl der fälligen Mitteilungen.
+  Test: `webapp/tests/notes_overview_test.js`.
 - **Interne Mitteilungen auch in den Registern + Dashboard-Übersicht (v2.121.0)**: Die Register
   Releaseletter, Benutzerhandbuch, Prozessbild und Clickanweisung haben oben einen aufklappbaren
   Abschnitt „Interne Mitteilungen (n)“ mit denselben Funktionen wie in FINAL (Kategorie, Titel,

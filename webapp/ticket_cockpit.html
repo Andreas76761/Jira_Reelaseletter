@@ -497,6 +497,8 @@
   .final-match { font-size: 12px; white-space: nowrap; }
   .final-note { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; background: var(--surface); }
   .final-note-overdue { border-color: #f59e0b; box-shadow: 0 0 0 2px color-mix(in srgb, #f59e0b 25%, transparent); }
+  .notes-ov-overdue > td { background: color-mix(in srgb, #f59e0b 9%, transparent); }
+  .notes-ov-overdue > td:first-child { box-shadow: inset 3px 0 0 #f59e0b; }
   .final-note-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
   .final-note-cat { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; background: #ede9fe; color: #5b21b6; }
   .final-note-due { font-size: 12px; color: var(--text-muted); }
@@ -784,6 +786,7 @@
       <li><button class="nav-item" data-view="edito" type="button">Editor</button></li>
       <li><button class="nav-item" data-view="unterkapitel" type="button">Unterkapitel</button></li>
       <li><button class="nav-item" data-view="final" type="button">FINAL</button></li>
+      <li><button class="nav-item" data-view="mitteilungen" type="button">Mitteilungen<span class="count-badge" id="nav-badge-notes" hidden title="fällige interne Mitteilungen">0</span></button></li>
       <li><button class="nav-item" data-view="bilder" type="button">Bilder</button></li>
       <li><button class="nav-item" data-view="tabellen" type="button">Tabelle</button></li>
       <li class="nav-sep">Output</li>
@@ -3291,6 +3294,27 @@
 
         <div class="gallery" id="gallery"></div>
         <div class="empty-hint" id="gallery-empty">Noch keine Bilder vorhanden &ndash; ein Bild hochladen oder unter "Prozessbild" ein Diagramm generieren.</div>
+      </section>
+
+      <!-- ================= Mitteilungen ================= -->
+      <section class="view-panel" data-view-panel="mitteilungen" hidden>
+        <div class="view-head"><h2>Mitteilungen</h2><p class="desc">Übersicht aller <b>internen Mitteilungen</b> – aus den FINAL-Ständen und den Registern Releaseletter, Benutzerhandbuch, Prozessbild und Clickanweisung. Fällige zuerst. Mitteilungen bleiben intern: sie erscheinen in keinem Dokument und keinem Export der Register; die Excel-/Markdown-Liste hier ist ausdrücklich nur für den internen Gebrauch.</p></div>
+        <div class="panel" style="padding:12px 14px; margin-bottom:14px;">
+          <div class="controls" style="flex-wrap:wrap; align-items:flex-end;">
+            <div><label for="notes-ov-where">Ort</label><select id="notes-ov-where"></select></div>
+            <div><label for="notes-ov-category">Kategorie</label><select id="notes-ov-category"></select></div>
+            <div><label for="notes-ov-due">Fälligkeit</label><select id="notes-ov-due"><option value="">alle</option><option value="overdue">fällig</option><option value="ok">aktuell</option><option value="none">ohne Intervall</option></select></div>
+            <div style="flex:1; min-width:180px;"><label for="notes-ov-search">Suche</label><input class="text-input" id="notes-ov-search" type="search" placeholder="Titel, Inhalt, Kategorie" style="width:100%;"></div>
+          </div>
+          <div class="controls" style="margin-top:8px; flex-wrap:wrap;">
+            <button class="btn ghost btn-tiny" id="notes-ov-xlsx-btn" type="button">Liste als Excel (intern)</button>
+            <button class="btn ghost btn-tiny" id="notes-ov-md-btn" type="button">Liste als Markdown (intern)</button>
+            <button class="btn ghost btn-tiny" id="notes-ov-confirm-due-btn" type="button">Alle angezeigten fälligen: Geprüft – unverändert</button>
+          </div>
+          <p class="step-note" id="notes-ov-summary" style="margin:8px 0 0;"></p>
+        </div>
+        <div class="table-wrap" id="notes-ov-table-wrap"><table class="simple-table"><thead><tr><th>Fälligkeit</th><th>Kategorie</th><th>Mitteilung</th><th>Ort</th><th>Zuletzt aktualisiert</th><th>Aktion</th></tr></thead><tbody id="notes-ov-tbody"></tbody></table></div>
+        <div class="empty-hint" id="notes-ov-empty" hidden>Keine internen Mitteilungen für diese Auswahl &ndash; Mitteilungen in FINAL (Stände) oder in den Registern Releaseletter, Benutzerhandbuch, Prozessbild, Clickanweisung anlegen.</div>
       </section>
 
       <!-- ================= Tabelle ================= -->
@@ -5949,7 +5973,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.121.0";
+  var APP_VERSION = "2.122.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7553,7 +7577,7 @@
     "final-design-version-select", "final-design-version-status", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -28225,6 +28249,7 @@
   }
   function renderFinalNotes() {
     renderFinalNotesSummary();
+    if (typeof renderNotesNavBadge === "function") renderNotesNavBadge();
     var v = finalNotesVersion();
     if (finalNotesVersionId && !v) finalNotesVersionId = null;
     els.finalNotesPanel.hidden = !v;
@@ -28369,8 +28394,9 @@
       body.querySelector(".doc-note-new-category").value = draft.c; body.querySelector(".doc-note-new-title").value = draft.t;
       body.querySelector(".doc-note-new-interval").value = draft.i; body.querySelector(".doc-note-new-text").value = draft.x;
     }
+    renderNotesNavBadge();
   }
-  function renderAllDocNotes() { Object.keys(DOC_NOTE_HOSTS).forEach(renderDocNotes); renderDashboardNotesDue(); }
+  function renderAllDocNotes() { Object.keys(DOC_NOTE_HOSTS).forEach(renderDocNotes); renderDashboardNotesDue(); renderNotesNavBadge(); }
   // Alle faelligen Mitteilungen (FINAL-Staende und Register) fuer das Dashboard.
   function allOverdueNotes() {
     var out = [];
@@ -28389,16 +28415,148 @@
         ' · <span class="final-note-due overdue">fällig seit ' + escapeHtml(d ? d.toLocaleDateString("de-DE") : "") + '</span> <button class="btn ghost btn-tiny" type="button" data-notes-due-open="' + i + '">Öffnen</button></li>';
     }).join("");
     els.dashboardNotesDueList._due = due;
+    renderNotesNavBadge();
   }
   els.dashboardNotesDueList.addEventListener("click", function (e) {
     var btn = e.target.closest("[data-notes-due-open]");
     var due = els.dashboardNotesDueList._due || [];
     var x = btn && due[parseInt(btn.getAttribute("data-notes-due-open"), 10)];
-    if (!x) return;
+    if (x) openNoteLocation(x);
+  });
+  function openNoteLocation(x) {
     showView(x.view);
     if (x.view === "final") { finalOpenNotes(x.versionId); return; }
     var wrap = document.querySelector('[data-doc-notes-wrap="' + x.view + '"]');
     if (wrap) { wrap.open = true; if (wrap.scrollIntoView) wrap.scrollIntoView({ block: "start" }); }
+  }
+
+  // ===================== v2.122: Register "Mitteilungen" – Uebersicht aller internen Mitteilungen =====================
+  // Sammelt FINAL-Staende und Register-Mitteilungen; Filter, Faelligkeit, Sprung an den Ort, interne Excel-/Markdown-Liste.
+  function allNoteEntries() {
+    var out = [];
+    app.final.versions.forEach(function (v) { (v.notes || []).forEach(function (n) { out.push({ where: "FINAL – " + v.name, whereKey: "final:" + v.id, view: "final", versionId: v.id, n: n }); }); });
+    Object.keys(DOC_NOTE_HOSTS).forEach(function (h) { docNotesList(h).forEach(function (n) { out.push({ where: DOC_NOTE_HOSTS[h], whereKey: h, view: h, n: n }); }); });
+    return out;
+  }
+  function noteDueState(n) { return !n.intervalDays ? "none" : (finalNoteOverdue(n) ? "overdue" : "ok"); }
+  function noteSortKey(x) {
+    var st = noteDueState(x.n), due = finalNoteDue(x.n);
+    return [st === "overdue" ? 0 : (st === "ok" ? 1 : 2), due ? due.getTime() : -(Date.parse(x.n.updatedAt) || 0)];
+  }
+  function renderNotesNavBadge() {
+    if (!els.navBadgeNotes) return;
+    var od = allOverdueNotes().length;
+    els.navBadgeNotes.hidden = !od;
+    els.navBadgeNotes.textContent = od;
+  }
+  function notesOvFilter() {
+    return { where: els.notesOvWhere.value, cat: els.notesOvCategory.value, due: els.notesOvDue.value, q: els.notesOvSearch.value.trim().toLowerCase() };
+  }
+  function notesOvFiltered() {
+    var f = notesOvFilter();
+    return allNoteEntries().filter(function (x) {
+      if (f.where && x.whereKey !== f.where) return false;
+      if (f.cat && (x.n.category || "Sonstiges") !== f.cat) return false;
+      if (f.due && noteDueState(x.n) !== f.due) return false;
+      if (f.q && [x.n.title, x.n.text, x.n.category, x.where].join(" ").toLowerCase().indexOf(f.q) === -1) return false;
+      return true;
+    }).sort(function (a, b) { var ka = noteSortKey(a), kb = noteSortKey(b); return ka[0] - kb[0] || ka[1] - kb[1]; });
+  }
+  function notesOvDueText(n) {
+    var due = finalNoteDue(n), st = noteDueState(n);
+    return st === "none" ? "ohne Intervall" : (st === "overdue" ? "fällig seit " : "fällig am ") + due.toLocaleDateString("de-DE");
+  }
+  function notesOvIntervalLabel(n) {
+    var o = FINAL_NOTE_INTERVALS.filter(function (i) { return i.days === (n.intervalDays || 0); })[0];
+    return o ? o.label : n.intervalDays + " Tage";
+  }
+  function setSelectOptions(sel, opts) {
+    var cur = sel.value;
+    sel.innerHTML = opts.map(function (o) { return '<option value="' + escapeHtml(o[0]) + '">' + escapeHtml(o[1]) + "</option>"; }).join("");
+    sel.value = opts.some(function (o) { return o[0] === cur; }) ? cur : "";
+  }
+  function renderNotesOverview() {
+    if (!els.notesOvTbody) return;
+    var all = allNoteEntries();
+    var wheres = [["", "alle Orte"]], seen = {};
+    all.forEach(function (x) { if (!seen[x.whereKey]) { seen[x.whereKey] = 1; wheres.push([x.whereKey, x.where]); } });
+    setSelectOptions(els.notesOvWhere, wheres);
+    var cats = {};
+    all.forEach(function (x) { cats[x.n.category || "Sonstiges"] = 1; });
+    setSelectOptions(els.notesOvCategory, [["", "alle Kategorien"]].concat(Object.keys(cats).sort().map(function (c) { return [c, c]; })));
+    var rows = notesOvFiltered();
+    els.notesOvTbody._rows = rows;
+    var od = all.filter(function (x) { return noteDueState(x.n) === "overdue"; }).length;
+    els.notesOvSummary.textContent = all.length + " interne Mitteilung(en) insgesamt, davon " + od + " fällig" + (rows.length !== all.length ? " · " + rows.length + " angezeigt" : "") + ".";
+    els.notesOvEmpty.hidden = rows.length > 0;
+    els.notesOvTableWrap.hidden = !rows.length;
+    els.notesOvTbody.innerHTML = rows.map(function (x, i) {
+      var st = noteDueState(x.n);
+      return '<tr data-notes-ov-row="' + i + '"' + (st === "overdue" ? ' class="notes-ov-overdue"' : "") + ">" +
+        '<td><span class="final-note-due' + (st === "overdue" ? " overdue" : "") + '">' + escapeHtml(notesOvDueText(x.n)) + '</span><br><span class="step-note">' + escapeHtml(notesOvIntervalLabel(x.n)) + "</span></td>" +
+        '<td><span class="final-note-cat">' + escapeHtml(x.n.category || "Sonstiges") + "</span></td>" +
+        "<td><b>" + escapeHtml(x.n.title || "") + '</b><div class="step-note" style="white-space:pre-wrap;">' + escapeHtml(truncate(x.n.text || "", 240)) + "</div></td>" +
+        "<td>" + escapeHtml(x.where) + "</td>" +
+        "<td>" + escapeHtml(teamFmt(x.n.updatedAt)) + (x.n.updatedBy ? "<br>" + escapeHtml(x.n.updatedBy) : "") + "</td>" +
+        '<td><div class="controls" style="flex-wrap:wrap;">' +
+        (st === "overdue" ? '<button class="btn ghost btn-tiny" type="button" data-notes-ov-confirm="' + i + '" title="Durchgesehen, keine Änderung nötig">Geprüft – unverändert</button>' : "") +
+        '<button class="btn ghost btn-tiny" type="button" data-notes-ov-open="' + i + '">Öffnen</button></div></td></tr>';
+    }).join("");
+    els.notesOvConfirmDueBtn.disabled = !rows.some(function (x) { return noteDueState(x.n) === "overdue"; });
+    els.notesOvXlsxBtn.disabled = els.notesOvMdBtn.disabled = !rows.length;
+    renderNotesNavBadge();
+  }
+  function notesAfterChange(entries) {
+    if (entries.some(function (x) { return x.view === "final"; })) { renderFinalVersions(); renderFinalNotes(); }
+    Object.keys(DOC_NOTE_HOSTS).forEach(function (h) { if (entries.some(function (x) { return x.view === h; })) renderDocNotes(h); });
+    renderDashboardNotesDue();
+    renderNotesOverview();
+  }
+  ["notesOvWhere", "notesOvCategory", "notesOvDue"].forEach(function (k) { els[k].addEventListener("change", renderNotesOverview); });
+  els.notesOvSearch.addEventListener("input", renderNotesOverview);
+  els.notesOvTbody.addEventListener("click", function (e) {
+    var rows = els.notesOvTbody._rows || [];
+    var ob = e.target.closest("[data-notes-ov-open]"), cb = e.target.closest("[data-notes-ov-confirm]");
+    if (ob) { var x = rows[parseInt(ob.getAttribute("data-notes-ov-open"), 10)]; if (x) openNoteLocation(x); return; }
+    if (cb) {
+      var y = rows[parseInt(cb.getAttribute("data-notes-ov-confirm"), 10)];
+      if (!y) return;
+      noteConfirm(y.n);
+      addLog("Mitteilungen: „" + (y.n.title || y.n.category) + "“ (" + y.where + ") geprüft – unverändert.");
+      notesAfterChange([y]);
+    }
+  });
+  els.notesOvConfirmDueBtn.addEventListener("click", async function () {
+    var due = notesOvFiltered().filter(function (x) { return noteDueState(x.n) === "overdue"; });
+    if (!due.length) return;
+    if (!(await confirmDialog(due.length + " fällige Mitteilung(en) als „Geprüft – unverändert“ markieren? Das nächste Fälligkeitsdatum beginnt damit neu.", "Als geprüft markieren"))) return;
+    due.forEach(function (x) { noteConfirm(x.n); });
+    addLog("Mitteilungen: " + due.length + " fällige Mitteilung(en) geprüft – unverändert.");
+    notesAfterChange(due);
+  });
+  function notesOvDateStamp() { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  els.notesOvXlsxBtn.addEventListener("click", async function () {
+    var rows = notesOvFiltered();
+    if (!rows.length) return;
+    try {
+      var blob = await buildXlsxBlob([{ title: "Interne Mitteilungen", headers: ["Ort", "Kategorie", "Titel", "Inhalt", "Intervall", "Fälligkeit", "Zuletzt aktualisiert", "Aktualisiert von", "Angelegt"],
+        rows: rows.map(function (x) { return [x.where, x.n.category || "Sonstiges", x.n.title || "", x.n.text || "", notesOvIntervalLabel(x.n), notesOvDueText(x.n), teamFmt(x.n.updatedAt), x.n.updatedBy || "", teamFmt(x.n.createdAt)]; }) }]);
+      if (await saveOrWarn("Interne_Mitteilungen_" + notesOvDateStamp() + ".xlsx", blob)) showToast("Exportiert", rows.length + " interne Mitteilung(en) als Excel-Liste (nur intern).");
+    } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
+  els.notesOvMdBtn.addEventListener("click", async function () {
+    var rows = notesOvFiltered();
+    if (!rows.length) return;
+    var groups = [], byWhere = {};
+    rows.forEach(function (x) { if (!byWhere[x.where]) { byWhere[x.where] = []; groups.push(x.where); } byWhere[x.where].push(x); });
+    var md = "# Interne Mitteilungen\n\n> Nur für den internen Gebrauch – nicht Teil von Dokumenten oder Releaselettern. Stand: " + new Date().toLocaleString("de-DE") + "\n";
+    groups.forEach(function (g) {
+      md += "\n## " + g + "\n";
+      byWhere[g].forEach(function (x) {
+        md += "\n### " + (x.n.title || x.n.category || "Mitteilung") + "\n\n- Kategorie: " + (x.n.category || "Sonstiges") + "\n- Aktualisierung: " + notesOvIntervalLabel(x.n) + " (" + notesOvDueText(x.n) + ")\n- Zuletzt aktualisiert: " + teamFmt(x.n.updatedAt) + (x.n.updatedBy ? " von " + x.n.updatedBy : "") + "\n" + (x.n.text ? "\n" + x.n.text + "\n" : "");
+      });
+    });
+    if (await saveOrWarn("Interne_Mitteilungen_" + notesOvDateStamp() + ".md", new Blob([md], { type: "text/markdown" }))) showToast("Exportiert", rows.length + " interne Mitteilung(en) als Markdown (nur intern).");
   });
   document.addEventListener("click", async function (e) {
     var body = e.target.closest("[data-doc-notes-host]");
@@ -29254,6 +29412,7 @@
     if (name === "rovoknowledge") renderRovoEntries();
     if (name === "rovosummary") renderRovoSummary();
     if (name === "final") renderFinal();
+    if (name === "mitteilungen") renderNotesOverview();
     if (name === "tabellen") renderRovoTables();
     if (window.innerWidth <= 900) setSidebar(false);
   }
