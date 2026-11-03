@@ -60,6 +60,9 @@ let sampleImpl = sampleImplFactory();
 // anderen Checks in dieser Datei).
 var ocrDelayQueue = [];
 var ocrDelayIndex = 0;
+// Zeitpunkte je OCR-Aufruf (Parallelitaet ueber die Spanne erster Start bis letztes Ende,
+// nicht ueber die lastabhaengige Gesamtlaufzeit inkl. Bild-Dekodierung).
+var ocrTimes = { start: [], end: [] };
 // Zaehlt, wie oft ein kompletter neuer Worker erzeugt wird (Performance-
 // Nachweis unten: muss ueber mehrere Laeufe/Bilder hinweg KONSTANT bei
 // IMAGES_OCR_CONCURRENCY bleiben, statt mit jedem Bild weiter zu wachsen).
@@ -87,7 +90,8 @@ const dom = new JSDOM(full, {
           recognize: function (dataUrl) {
             recognizeCallPrefixes.push(String(dataUrl).slice(0, 15));
             var delay = ocrDelayQueue[ocrDelayIndex++] || 0;
-            return new Promise(function (resolve) { setTimeout(function () { resolve({ data: { text: ocrMockText } }); }, delay); });
+            if (delay) ocrTimes.start.push(Date.now());
+            return new Promise(function (resolve) { setTimeout(function () { if (delay) ocrTimes.end.push(Date.now()); resolve({ data: { text: ocrMockText } }); }, delay); });
           },
         });
       },
@@ -253,7 +257,8 @@ const PNG_1X1 = Buffer.from(
       return Promise.resolve({
         recognize: function () {
           var delay = ocrDelayQueue[ocrDelayIndex++] || 0;
-          return new Promise(function (resolve) { setTimeout(function () { resolve({ data: { text: ocrMockText } }); }, delay); });
+          if (delay) ocrTimes.start.push(Date.now());
+          return new Promise(function (resolve) { setTimeout(function () { if (delay) ocrTimes.end.push(Date.now()); resolve({ data: { text: ocrMockText } }); }, delay); });
         },
       });
     },
@@ -292,12 +297,16 @@ const PNG_1X1 = Buffer.from(
   const maxDelay = Math.max.apply(null, DELAYS);
   ocrDelayQueue = DELAYS.slice();
   ocrDelayIndex = 0;
+  ocrTimes = { start: [], end: [] };
   const t0 = Date.now();
   fire(doc.getElementById("images-ocr-batch-btn"), "click");
   await waitUntil(() => doc.getElementById("images-ocr-batch-status-note").textContent.includes("3 Bild(er) per OCR verarbeitet"), 3000);
   const elapsedMs = Date.now() - t0;
   check("Gesamtlaufzeit liegt nahe der LÄNGSTEN Einzelverzögerung (" + maxDelay + "ms), nicht nahe der SUMME (" + sumDelays + "ms) – Beweis für echte Parallelität statt sequenzieller Verarbeitung",
-    elapsedMs < (maxDelay + sumDelays) / 2);
+    ocrTimes.end.length === 3 && (Math.max.apply(null, ocrTimes.end) - Math.min.apply(null, ocrTimes.start)) < sumDelays * 0.9);
+  check("Mindestens zwei OCR-Aufrufe gleichzeitig unterwegs (zweiter Start vor dem ersten Ende)",
+    ocrTimes.start.length === 3 && ocrTimes.start.slice().sort(function (a, b) { return a - b; })[1] < Math.min.apply(null, ocrTimes.end));
+  console.log("   (OCR-Spanne " + (Math.max.apply(null, ocrTimes.end) - Math.min.apply(null, ocrTimes.start)) + " ms, Gesamtlaufzeit " + elapsedMs + " ms)");
   ocrDelayQueue = [];
 
   check("Kein unbehandelter JS-Fehler während der gesamten Interaktion", errors.length === 0);

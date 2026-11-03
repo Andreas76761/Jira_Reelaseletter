@@ -27,12 +27,19 @@ const resolvedOrder = [];
 // (Batch 2 startet ja erst NACH Batch 1) - bei paralleler Verarbeitung
 // dagegen 3,2,1 (kuerzeste Verzoegerung zuerst fertig).
 const DELAYS = { 1: 220, 2: 140, 3: 60 };
+// Zeitpunkte der Batch-Aufrufe selbst: die Parallelitaet wird an der Spanne
+// vom ersten Batch-Start bis zum letzten Batch-Ende gemessen - nicht an der
+// Gesamtlaufzeit inkl. Zusammenfuehrung, KPI-Bewertung und Rendering, die je
+// nach Rechnerlast stark schwankt.
+const batchTimes = { start: [], end: [] };
 let sampleImpl = async (input) => {
   sampleCalls.push(input);
   const m = /MP-([123])/.exec(input);
   if (m) {
     const key = m[1];
+    batchTimes.start.push(Date.now());
     await new Promise((r) => setTimeout(r, DELAYS[key]));
+    batchTimes.end.push(Date.now());
     resolvedOrder.push(key);
     return { text: "TeilAntwort-" + key, truncated: false, modelTierApplied: "default" };
   }
@@ -145,7 +152,10 @@ async function waitUntil(fn, timeoutMs) {
   const maxDelay = Math.max(DELAYS[1], DELAYS[2], DELAYS[3]);
   const sumDelays = DELAYS[1] + DELAYS[2] + DELAYS[3];
   check("Gesamtlaufzeit liegt nahe der LÄNGSTEN Einzelverzögerung (" + maxDelay + "ms), nicht nahe der SUMME (" + sumDelays + "ms) – Beweis für echte Parallelität statt sequenzieller Verarbeitung",
-    elapsedMs < (maxDelay + sumDelays) / 2);
+    batchTimes.end.length === 3 && (Math.max.apply(null, batchTimes.end) - Math.min.apply(null, batchTimes.start)) < (maxDelay + sumDelays) / 2);
+  check("Alle drei Batch-Aufrufe starten, bevor der erste fertig ist (gleichzeitig unterwegs)",
+    batchTimes.start.length === 3 && Math.max.apply(null, batchTimes.start) <= Math.min.apply(null, batchTimes.end));
+  console.log("   (Batch-Spanne " + (Math.max.apply(null, batchTimes.end) - Math.min.apply(null, batchTimes.start)) + " ms, Gesamtlaufzeit inkl. Zusammenführung " + elapsedMs + " ms)");
   check("Fertigstellungsreihenfolge ist NICHT 1,2,3 (das wäre nur bei sequenzieller Verarbeitung zwingend, da Batch 2 sonst erst nach Batch 1 überhaupt starten würde)",
     resolvedOrder.join(",") !== "1,2,3");
   check("Schnellster Batch (MP-3, 60ms) ist tatsächlich zuerst fertig", resolvedOrder[0] === "3");

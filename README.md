@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.120.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.121.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,16 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Interne Mitteilungen auch in den Registern + Dashboard-Übersicht (v2.121.0)**: Die Register
+  Releaseletter, Benutzerhandbuch, Prozessbild und Clickanweisung haben oben einen aufklappbaren
+  Abschnitt „Interne Mitteilungen (n)“ mit denselben Funktionen wie in FINAL (Kategorie, Titel,
+  Text, Intervall, Speichern mit Verlauf, „Geprüft – unverändert“, Löschen). Die Mitteilungen
+  erscheinen nie in Vorschau oder Exporten dieser Register (Markdown, Word, PDF, Excel). Das
+  Dashboard zeigt alle fälligen Mitteilungen aus Registern und FINAL-Ständen mit „Öffnen“, das
+  direkt ins Register (aufgeklappt) bzw. zum Stand springt. Gespeichert in der Sitzung
+  (`docNotes`); die Karten-Darstellung und die Aktionen sind jetzt eine gemeinsame Komponente
+  für FINAL und Register.
 
 - **FINAL – Interne Mitteilungen je Dokument (v2.120.0)**: Jeder Stand (internes Dokument) hat
   eigene interne Mitteilungen – z. B. „Version Screen“, „Ideenspeicher“, „Neue Features“, „Offene

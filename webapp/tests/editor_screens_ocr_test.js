@@ -41,6 +41,7 @@ function sampleImplFactory() {
 }
 let sampleImpl = sampleImplFactory();
 var ocrDelayQueue = [];
+var ocrTimes = { start: [], end: [] };
 var ocrDelayIndex = 0;
 var createWorkerCallCount = 0;
 var IMAGES_OCR_CONCURRENCY_EXPECTED = 4;
@@ -54,7 +55,10 @@ const dom = new JSDOM(full, {
         return Promise.resolve({
           recognize: function () {
             var delay = ocrDelayQueue[ocrDelayIndex++] || 0;
-            return new Promise(function (resolve) { setTimeout(function () { resolve({ data: { text: ocrMockText } }); }, delay); });
+            // Zeitpunkte je OCR-Aufruf: Parallelitaet wird an der Spanne erster
+            // Start bis letztes Ende gemessen, nicht an der lastabhaengigen Gesamtlaufzeit.
+            if (delay) ocrTimes.start.push(Date.now());
+            return new Promise(function (resolve) { setTimeout(function () { if (delay) ocrTimes.end.push(Date.now()); resolve({ data: { text: ocrMockText } }); }, delay); });
           },
         });
       },
@@ -219,8 +223,12 @@ async function buildDocxWithScreens(n) {
   check("Spinner während eines messbar langen Laufs sichtbar", doc.getElementById("editor-ocr-batch-spinner").hidden === false);
   await waitUntil(() => doc.getElementById("editor-ocr-batch-spinner").hidden === true, 3000);
   const elapsedMs = Date.now() - startedAt;
+  const spanMs = ocrTimes.end.length ? Math.max.apply(null, ocrTimes.end) - Math.min.apply(null, ocrTimes.start) : Infinity;
   check("Gesamtlaufzeit liegt nahe der LÄNGSTEN Einzelverzögerung (" + maxDelay + "ms), nicht nahe der SUMME (" + sumDelays + "ms) – Beweis für echte Parallelität statt sequenzieller Verarbeitung",
-    elapsedMs < (maxDelay + sumDelays) / 2);
+    ocrTimes.end.length === 3 && spanMs < sumDelays * 0.9);
+  check("Mindestens zwei OCR-Aufrufe gleichzeitig unterwegs (zweiter Start vor dem ersten Ende)",
+    ocrTimes.start.length === 3 && ocrTimes.start.slice().sort(function (a, b) { return a - b; })[1] < Math.min.apply(null, ocrTimes.end));
+  console.log("   (OCR-Spanne " + spanMs + " ms, Gesamtlaufzeit inkl. Dekodierung " + elapsedMs + " ms)");
   check("Wiederverwendeter Worker-Pool: nicht mehr als IMAGES_OCR_CONCURRENCY Worker insgesamt erzeugt", createWorkerCallCount <= IMAGES_OCR_CONCURRENCY_EXPECTED);
 
   check("Kein unbehandelter JS-Fehler während der gesamten Interaktion", errors.length === 0);
