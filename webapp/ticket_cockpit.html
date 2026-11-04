@@ -504,6 +504,37 @@
   .final-review-result { border: 1px solid var(--border); border-radius: 10px; margin-top: 8px; background: var(--surface); }
   .final-review-result > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
   .final-review-result-body { padding: 0 12px 12px; white-space: pre-wrap; font-size: 13px; max-height: 420px; overflow: auto; }
+  .variante-step { padding: 12px 14px; margin-bottom: 14px; }
+  .variante-actions { flex-wrap: wrap; min-width: 220px; max-width: 300px; }
+  #variante-table-wrap td, #variante-table-wrap th { white-space: normal; }
+  #variante-table-wrap td:first-child { min-width: 180px; }
+  .variante-domains { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .variante-domain { border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: var(--surface); }
+  .variante-domain b { margin-right: 4px; }
+  .variante-chip { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); border-radius: 999px; padding: 1px 4px 1px 9px; font-size: 12px; background: var(--surface-2); }
+  .variante-chip button, .variante-x { border: 0; background: none; cursor: pointer; color: var(--text-faint); font-size: 14px; line-height: 1; padding: 0 3px; }
+  .variante-domain input.text-input { max-width: 170px; padding: 3px 8px; font-size: 12px; }
+  .variante-matrix-wrap { margin-top: 8px; max-height: 560px; overflow: auto; }
+  .variante-matrix th, .variante-matrix td { text-align: center; }
+  .variante-matrix th:first-child, .variante-matrix td:first-child { text-align: left; }
+  .variante-matrix thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+  .variante-row-dom td { background: color-mix(in srgb, var(--accent, #3b82f6) 9%, transparent); font-weight: 700; }
+  .variante-row-sub td:first-child { padding-left: 22px; font-weight: 600; }
+  .variante-row-ch td:first-child { padding-left: 38px; font-size: 12px; color: var(--text-muted, inherit); }
+  .variante-row-ch.lvl2 td:first-child { padding-left: 52px; }
+  .variante-row-ch.lvl3 td:first-child { padding-left: 66px; }
+  .variante-cell-off { opacity: .45; }
+  .variante-manual { font-size: 10px; color: #b45309; display: block; }
+  .variante-inline-check { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; }
+  .variante-checks { display: inline-flex; gap: 10px; flex-wrap: wrap; }
+  .variante-bulk { margin-top: 8px; border: 1px dashed var(--border); border-radius: 10px; padding: 6px 10px; }
+  .variante-bulk > summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+  .variante-preview { margin-top: 10px; padding: 10px 14px; }
+  .variante-toc { margin: 6px 0 0; padding-left: 4px; list-style: none; font-size: 13px; }
+  .variante-toc li { margin: 2px 0; }
+  .variante-toc .lvl2 { padding-left: 18px; } .variante-toc .lvl3 { padding-left: 36px; }
+  .variante-toc .off { color: var(--text-faint); text-decoration: line-through; }
+  .variante-toc .ref { color: var(--text-faint); font-style: italic; text-decoration: none; display: inline-block; margin-left: 6px; }
   .notes-ov-overdue > td { background: color-mix(in srgb, #f59e0b 9%, transparent); }
   .notes-ov-overdue > td:first-child { box-shadow: inset 3px 0 0 #f59e0b; }
   .final-note-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
@@ -793,6 +824,7 @@
       <li><button class="nav-item" data-view="edito" type="button">Editor</button></li>
       <li><button class="nav-item" data-view="unterkapitel" type="button">Unterkapitel</button></li>
       <li><button class="nav-item" data-view="final" type="button">FINAL</button></li>
+      <li><button class="nav-item" data-view="variante" type="button">VARIANTE</button></li>
       <li><button class="nav-item" data-view="mitteilungen" type="button">Mitteilungen<span class="count-badge" id="nav-badge-notes" hidden title="fällige interne Mitteilungen">0</span></button></li>
       <li><button class="nav-item" data-view="bilder" type="button">Bilder</button></li>
       <li><button class="nav-item" data-view="tabellen" type="button">Tabelle</button></li>
@@ -3347,6 +3379,77 @@
 
         <div class="gallery" id="gallery"></div>
         <div class="empty-hint" id="gallery-empty">Noch keine Bilder vorhanden &ndash; ein Bild hochladen oder unter "Prozessbild" ein Diagramm generieren.</div>
+      </section>
+
+      <!-- ================= VARIANTE ================= -->
+      <section class="view-panel" data-view-panel="variante" hidden>
+        <div class="view-head"><h2>VARIANTE</h2><p class="desc">Aus <b>einem</b> Dokument (FINAL-Stand) mehrere Varianten je <b>Rolle</b> und <b>Sprache</b> erzeugen. Kapitel werden über die Matrix Domäne · Rolle · Kapitel je Rolle ein- oder ausgeblendet; jede Variante bekommt ein neu nummeriertes Inhaltsverzeichnis und – wo ein Thema in dieser Rolle fehlt – einen Verweis auf das Handbuch der Rolle(n), die es enthalten. Fremdsprachige Varianten übersetzt die KI kapitelweise (Bild-Platzhalter und Jira-Nummern bleiben erhalten). Jede erzeugte Variante wird als eigener Stand in FINAL angelegt (Design, Review, Mitteilungen, Team) und lässt sich direkt als Word laden.</p></div>
+
+        <section class="panel variante-step">
+          <p class="section-label">1. Basisdokument</p>
+          <div class="controls" style="flex-wrap:wrap; align-items:flex-end;">
+            <div><label for="variante-base-select">FINAL-Stand</label><select id="variante-base-select" aria-label="Basisdokument"></select></div>
+            <div><label for="variante-base-lang-select">Sprache des Basisdokuments</label><select id="variante-base-lang-select" aria-label="Sprache des Basisdokuments"></select></div>
+          </div>
+          <p class="step-note" id="variante-base-info"></p>
+        </section>
+
+        <section class="panel variante-step">
+          <p class="section-label">2. Domänen &amp; Unterdomänen, Kapitel zuordnen</p>
+          <div class="controls" style="flex-wrap:wrap;">
+            <button class="btn ghost btn-tiny" id="variante-domains-import-btn" type="button" title="Domänen aus der Gliederung (Kapitel-Domänen) und den Tickets übernehmen">Domänen aus Gliederung &amp; Tickets übernehmen</button>
+            <input class="text-input" id="variante-domain-new-input" type="text" placeholder="Neue Domäne" aria-label="Neue Domäne" style="max-width:220px;">
+            <button class="btn ghost btn-tiny" id="variante-domain-add-btn" type="button">Domäne hinzufügen</button>
+          </div>
+          <div id="variante-domains-list" class="variante-domains"></div>
+          <div class="controls" style="margin-top:10px;">
+            <button class="btn ghost btn-tiny" id="variante-automap-btn" type="button" title="Kapitel ohne Zuordnung über Gliederung bzw. Domänen-Namen im Titel zuordnen">Kapitel automatisch zuordnen</button>
+            <span class="step-note" id="variante-automap-note" style="margin:0;"></span>
+          </div>
+          <div class="table-wrap" style="margin-top:8px;"><table class="simple-table"><thead><tr><th>Kapitel (Basisdokument)</th><th>Domäne / Unterdomäne</th></tr></thead><tbody id="variante-chapters-tbody"></tbody></table></div>
+        </section>
+
+        <section class="panel variante-step">
+          <p class="section-label">3. Matrix Domäne · Rolle · Kapitel</p>
+          <p class="step-note" style="margin-top:0;">Häkchen = in dieser Rolle aktiv. Eine deaktivierte Domäne blendet alle Unterdomänen und Kapitel darunter aus; einzelne Kapitel lassen sich abweichend schalten („manuell“, ↺ setzt auf die Domäne zurück). Unterkapitel ohne eigene Zuordnung folgen ihrem Kapitel; Kapitel ohne Domäne („Allgemein“) sind in allen Rollen aktiv.</p>
+          <div class="controls" style="flex-wrap:wrap;">
+            <label class="variante-inline-check"><input type="checkbox" id="variante-matrix-show-chapters" checked> Kapitel anzeigen</label>
+            <input class="text-input" id="variante-role-new-input" type="text" placeholder="Weitere Rolle" aria-label="Weitere Rolle" style="max-width:180px;">
+            <button class="btn ghost btn-tiny" id="variante-role-add-btn" type="button">Rolle hinzufügen</button>
+          </div>
+          <div class="table-wrap variante-matrix-wrap"><table class="simple-table variante-matrix" id="variante-matrix"><thead id="variante-matrix-thead"></thead><tbody id="variante-matrix-tbody"></tbody><tfoot id="variante-matrix-tfoot"></tfoot></table></div>
+        </section>
+
+        <section class="panel variante-step">
+          <p class="section-label">4. Varianten je Rolle &amp; Sprache</p>
+          <div class="controls" style="flex-wrap:wrap; align-items:flex-end;">
+            <div><label for="variante-new-role">Rolle</label><select id="variante-new-role" aria-label="Rolle der Variante"></select></div>
+            <div><label for="variante-new-lang">Sprache</label><select id="variante-new-lang" aria-label="Sprache der Variante"></select></div>
+            <div style="flex:1; min-width:200px;"><label for="variante-new-name">Name (optional)</label><input class="text-input" id="variante-new-name" type="text" placeholder="automatisch: Basis – Rolle – Sprache" style="width:100%;"></div>
+            <button class="btn ghost" id="variante-add-btn" type="button">Variante hinzufügen</button>
+          </div>
+          <details class="variante-bulk"><summary>Mehrere Varianten auf einmal (Rollen × Sprachen)</summary>
+            <div class="controls" style="flex-wrap:wrap;"><span class="step-note" style="margin:0;">Rollen:</span><span id="variante-bulk-roles" class="variante-checks"></span></div>
+            <div class="controls" style="flex-wrap:wrap;"><span class="step-note" style="margin:0;">Sprachen:</span><span id="variante-bulk-langs" class="variante-checks"></span></div>
+            <button class="btn ghost btn-tiny" id="variante-bulk-add-btn" type="button">Kombinationen anlegen</button>
+          </details>
+          <div class="controls" style="flex-wrap:wrap; margin-top:8px;">
+            <label class="variante-inline-check"><input type="checkbox" id="variante-opt-renumber" checked> Inhaltsverzeichnis neu nummerieren</label>
+            <label class="variante-inline-check"><input type="checkbox" id="variante-opt-ref-inline" checked> Hinweis an der Stelle ausgelassener Themen</label>
+            <label class="variante-inline-check"><input type="checkbox" id="variante-opt-ref-chapter" checked> Verweis-Kapitel „Themen in anderen Rollen“ am Ende</label>
+          </div>
+          <div class="table-wrap" id="variante-table-wrap" style="margin-top:8px;"><table class="simple-table"><thead><tr><th>Variante</th><th>Rolle</th><th>Sprache</th><th>Kapitel</th><th>Verweise</th><th>Stand in FINAL</th><th>Aktion</th></tr></thead><tbody id="variante-tbody"></tbody></table></div>
+          <div class="empty-hint" id="variante-empty">Noch keine Varianten &ndash; Rolle und Sprache wählen und „Variante hinzufügen“.</div>
+          <div class="controls" style="margin-top:8px;">
+            <button class="btn primary" id="variante-generate-all-btn" type="button" disabled><span class="btn-spinner" id="variante-spinner" hidden></span>Alle Varianten erzeugen</button>
+            <button class="btn ghost" id="variante-stop-btn" type="button" hidden>Stopp</button>
+          </div>
+          <p class="step-note" id="variante-status"></p>
+          <div class="panel variante-preview" id="variante-preview" hidden>
+            <div class="controls" style="justify-content:space-between;"><p class="section-label" id="variante-preview-title" style="margin:0;"></p><button class="btn ghost btn-tiny" id="variante-preview-close-btn" type="button">Schließen</button></div>
+            <ol class="variante-toc" id="variante-preview-toc"></ol>
+          </div>
+        </section>
       </section>
 
       <!-- ================= Mitteilungen ================= -->
@@ -6026,7 +6129,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.124.0";
+  var APP_VERSION = "2.125.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7630,7 +7733,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -7768,6 +7871,7 @@
     editoBaseDocId: null,
     // Interne Mitteilungen der Register (nie in deren Ausgaben).
     docNotes: { releaseletter: [], benutzerhandbuch: [], prozessbild: [], clickanweisung: [] },
+    variante: null,
     tickets: [],
     view: { bucket: "all", domain: "", label: "", query: "", issueType: "", excludeTypes: {}, sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
@@ -8306,6 +8410,7 @@
     app.editoFinalDocId = null;
     app.editoBaseDocId = null;
     app.docNotes = docNotesNormalize(null);
+    app.variante = varianteNormalize(null);
     editoFinalWork = null;
     els.finalAssignImagesStatusNote.textContent = "";
     renderFinal();
@@ -8417,6 +8522,7 @@
     app.editoFinalDocId = null;
     app.editoBaseDocId = null;
     app.docNotes = docNotesNormalize(null);
+    app.variante = varianteNormalize(null);
     editoFinalWork = null;
     els.finalAssignImagesStatusNote.textContent = "";
     renderFinal();
@@ -8501,6 +8607,7 @@
       editoFinalDocId: app.editoFinalDocId,
       editoBaseDocId: app.editoBaseDocId,
       docNotes: app.docNotes,
+      variante: app.variante,
       selectedKeys: app.selectedKeys,
       savedLists: app.savedLists,
       nextSavedListId: app.nextSavedListId,
@@ -8608,6 +8715,7 @@
     app.editoFinalDocId = typeof data.editoFinalDocId === "number" ? data.editoFinalDocId : null;
     app.editoBaseDocId = typeof data.editoBaseDocId === "number" ? data.editoBaseDocId : null;
     app.docNotes = docNotesNormalize(data.docNotes);
+    app.variante = varianteNormalize(data.variante);
     app.selectedKeys = data.selectedKeys || {};
     app.savedLists = data.savedLists || [];
     app.nextSavedListId = data.nextSavedListId || 1;
@@ -8713,6 +8821,7 @@
     renderRovoSummary();
     renderFinal();
     renderAllDocNotes();
+    renderVariante();
     renderMassFiles();
     renderMassTicketSourceWrap();
     els.massMergeOutput.value = app.massMergedDoc;
@@ -19860,6 +19969,7 @@
     finalAgentReview: "Du prüfst ein internes Dokument (Benutzerhandbuch der Anwendung oneSCM) vor der Veröffentlichung. Bewerte je Kapitel kurz Inhalt (Vollständigkeit, Widersprüche, fehlende Schritte), Sprache (Verständlichkeit, Einheitlichkeit) und - falls angegeben - ob die Verbesserungen aus ROVO bereits umgesetzt sind. Gliedere den Bericht mit einer Zeile je Kapitel (Kapiteltitel), darunter Stichpunkte mit konkreten Fundstellen und Empfehlungen, und schließe mit einer Gesamtempfehlung (Entwurf / Geprüft / Veröffentlichungsreif). Erfinde keine Inhalte.",
     finalReviewStyle: "Du bist Lektor für das Benutzerhandbuch der Anwendung oneSCM. Prüfe das unten stehende Gesamtdokument sprachlich, OHNE es umzuschreiben. Gib AUSSCHLIESSLICH die folgenden Abschnitte aus:\n\n### Rechtschreibung & Grammatik\n- (je Fundstelle: Kapitel, fehlerhafte Stelle wörtlich, Korrektur)\n\n### Verständlichkeit & Stil\n- (je Fundstelle: Kapitel, Problem – z. B. Schachtelsatz, Passiv, Füllwörter – und konkreter Verbesserungsvorschlag)\n\n### Einheitliche Begriffe\n- (Begriffe, die für dasselbe uneinheitlich verwendet werden, mit Empfehlung)\n\nIst ein Abschnitt leer, schreibe darunter \"Keine gefunden.\" Zeilen mit nur [Bild] sind Platzhalter für Screens und kein Fehler. Erfinde keine Probleme:",
     finalReviewCompleteness: "Du bist Qualitätsprüfer für das Benutzerhandbuch der Anwendung oneSCM. Unten stehen alle Kapitel des Gesamtdokuments, je Kapitel mit den Verbesserungen aus ROVO (mit Umsetzungsstatus), den zugeordneten Jira-Tickets (falls vorhanden), der Zahl der zugeordneten Screens und dem Kapiteltext. Gib AUSSCHLIESSLICH die folgenden Abschnitte aus:\n\n### Nicht umgesetzte Verbesserungen\n- (je Kapitel: Verbesserung aus ROVO, die im Kapiteltext nicht erkennbar umgesetzt ist)\n\n### Nicht abgedeckte Tickets\n- (je Kapitel: Ticket, dessen Inhalt im Kapiteltext nicht erkennbar aufgegriffen wird)\n\n### Lücken im Ablauf\n- (je Kapitel: fehlende Schritte, fehlende Voraussetzungen oder Beschreibungen ohne passenden Screen)\n\nIst ein Abschnitt leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme:",
+    variantTranslate: "Du bist Fachübersetzer für das Benutzerhandbuch der Anwendung oneSCM. Übersetze das folgende Kapitel vollständig und sinngemäß in die angegebene Zielsprache, in klarer Anwender-Sprache. Regeln: Zeilen, die nur [Bild] enthalten, unverändert und in gleicher Anzahl und Reihenfolge übernehmen; Jira-Nummern (z. B. ONESCM-123), Menü-/Feldnamen in Anführungszeichen der Oberfläche und Produktnamen unverändert lassen; Absätze und Aufzählungen beibehalten; nichts hinzufügen oder weglassen. Antworte ausschließlich in diesem Format: erste Zeile \"TITEL: <übersetzter Kapiteltitel>\", danach eine Leerzeile, danach der übersetzte Kapiteltext.",
     finalCompareVersions: "Du vergleichst zwei Fassungen (Stand A und Stand B) eines Benutzerhandbuchs der Anwendung oneSCM. Die Fassungen können in unterschiedlichen Sprachen oder für unterschiedliche Rollen/Märkte geschrieben sein - vergleiche den INHALT, nicht den Wortlaut. Gehe Kapitel für Kapitel vor (Kapitel über Titel bzw. Reihenfolge zuordnen) und nenne je Kapitel: Inhalte, die nur in A stehen; Inhalte, die nur in B stehen; inhaltliche Abweichungen oder Widersprüche. Kapitel ohne inhaltlichen Unterschied mit einer Zeile \"keine inhaltlichen Unterschiede\" erwähnen. Schließe mit einer kurzen Gesamteinschätzung. Erfinde nichts."
   };
   var RAG_PROMPT_LABELS = {
@@ -19899,6 +20009,7 @@
     finalAgentReview: "Editor (interne Dokumente): Prüfbericht über ein Dokument",
     finalReviewStyle: "FINAL Review: Sprache & Stil des Gesamtdokuments prüfen (Bericht)",
     finalReviewCompleteness: "FINAL Review: Vollständigkeit (ROVO-Verbesserungen, Tickets, Ablauf) prüfen",
+    variantTranslate: "VARIANTE: Kapitel in die Sprache der Variante übersetzen",
     finalCompareVersions: "FINAL: Zwei Stände inhaltlich vergleichen"
   };
   function ragPromptFor(promptKey) {
@@ -27454,6 +27565,7 @@
   // ---- Staende (Schritt 6) ----
   function finalVersionConfigLabel(cfg) {
     cfg = cfg || {};
+    if (cfg.variant) return "Variante " + cfg.variant.role + " · " + cfg.variant.lang + " aus „" + (cfg.variant.baseName || "Basis") + "“";
     var m = cfg.manualId ? finalManualById(cfg.manualId) : null;
     var imp = cfg.improvementFileId ? finalImprovementFileById(cfg.improvementFileId) : null;
     var sf = cfg.screensFileId ? finalScreensFileById(cfg.screensFileId) : null;
@@ -29799,6 +29911,504 @@
     showView("edito");
   });
 
+  // ===================== v2.125: Register VARIANTE – Varianten je Rolle & Sprache =====================
+  // app.variante = { baseVersionId, baseLang, domains: [{ name, subs: [name] }], chapterMap: { title: { dom, sub } | { all: true } },
+  //   roles: [..], domOff: { dom: { role: true } }, subOff: { "dom\u0001sub": { role: true } }, chOverride: { title: { role: bool } },
+  //   variants: [{ id, name, role, lang, standId, generatedAt, stats }], opts: { renumber, refInline, refChapter } }
+  // Gespeichert werden nur Deaktivierungen/Abweichungen – Standard ist "aktiv".
+  var VARIANT_LANGS = [["DE", "Deutsch"], ["EN", "Englisch"], ["FR", "Französisch"], ["IT", "Italienisch"], ["ES", "Spanisch"], ["NL", "Niederländisch"], ["PL", "Polnisch"], ["CS", "Tschechisch"]];
+  var VARIANT_L10N = {
+    DE: { refTitle: "Themen in anderen Rollen-Handbüchern", refIntro: "Die folgenden Themen sind nicht Teil dieses Handbuchs. Sie sind im Benutzerhandbuch der genannten Rolle(n) beschrieben:", hint: function (t, r) { return "Hinweis: Das Thema „" + t + "“ ist im Benutzerhandbuch für die Rolle(n) " + r + " beschrieben."; }, role: "Rolle(n)", manual: "Benutzerhandbuch" },
+    EN: { refTitle: "Topics in other role manuals", refIntro: "The following topics are not part of this manual. They are described in the user manual for the role(s) listed:", hint: function (t, r) { return "Note: The topic “" + t + "” is described in the user manual for the role(s) " + r + "."; }, role: "Role(s)", manual: "User Manual" },
+    FR: { refTitle: "Thèmes dans les manuels d’autres rôles", refIntro: "Les thèmes suivants ne font pas partie de ce manuel. Ils sont décrits dans le manuel utilisateur du ou des rôles indiqués :", hint: function (t, r) { return "Remarque : le thème « " + t + " » est décrit dans le manuel utilisateur du ou des rôles " + r + "."; }, role: "Rôle(s)", manual: "Manuel utilisateur" },
+    IT: { refTitle: "Argomenti nei manuali di altri ruoli", refIntro: "I seguenti argomenti non fanno parte di questo manuale. Sono descritti nel manuale utente del/dei ruolo/i indicato/i:", hint: function (t, r) { return "Nota: l’argomento “" + t + "” è descritto nel manuale utente per il/i ruolo/i " + r + "."; }, role: "Ruolo/i", manual: "Manuale utente" },
+    ES: { refTitle: "Temas en los manuales de otros roles", refIntro: "Los siguientes temas no forman parte de este manual. Se describen en el manual de usuario del rol o roles indicados:", hint: function (t, r) { return "Nota: el tema «" + t + "» se describe en el manual de usuario del rol o roles " + r + "."; }, role: "Rol(es)", manual: "Manual de usuario" },
+    NL: { refTitle: "Onderwerpen in handleidingen van andere rollen", refIntro: "De volgende onderwerpen maken geen deel uit van deze handleiding. Ze worden beschreven in de gebruikershandleiding van de genoemde rol(len):", hint: function (t, r) { return "Opmerking: het onderwerp „" + t + "” wordt beschreven in de gebruikershandleiding voor de rol(len) " + r + "."; }, role: "Rol(len)", manual: "Gebruikershandleiding" }
+  };
+  function variantL(lang) { return VARIANT_L10N[lang] || VARIANT_L10N.EN; }
+  function variantLangName(code) { var x = VARIANT_LANGS.filter(function (l) { return l[0] === code; })[0]; return x ? x[1] : code; }
+  function varianteNormalize(d) {
+    d = d && typeof d === "object" ? d : {};
+    var obj = function (v) { return v && typeof v === "object" && !Array.isArray(v) ? v : {}; };
+    var o = obj(d.opts);
+    return {
+      baseVersionId: typeof d.baseVersionId === "number" ? d.baseVersionId : null,
+      baseLang: typeof d.baseLang === "string" && d.baseLang ? d.baseLang : "DE",
+      domains: Array.isArray(d.domains) ? d.domains.filter(function (x) { return x && x.name; }).map(function (x) { return { name: String(x.name), subs: Array.isArray(x.subs) ? x.subs.map(String) : [] }; }) : [],
+      chapterMap: obj(d.chapterMap),
+      roles: Array.isArray(d.roles) && d.roles.length ? d.roles.map(String) : FINAL_ROLE_OPTIONS.slice(),
+      domOff: obj(d.domOff), subOff: obj(d.subOff), chOverride: obj(d.chOverride),
+      variants: Array.isArray(d.variants) ? d.variants : [],
+      opts: { renumber: o.renumber !== false, refInline: o.refInline !== false, refChapter: o.refChapter !== false }
+    };
+  }
+  function VS() { if (!app.variante) app.variante = varianteNormalize(null); return app.variante; }
+  var VR_SEP = "\u0001";
+  var varianteAbort = null, varianteBusy = false, variantePreviewId = null;
+  function varianteBase() { var st = VS(); return st.baseVersionId ? finalVersionById(st.baseVersionId) : null; }
+  function varianteChapters() { var b = varianteBase(); return b ? b.chapters : []; }
+  function vrLevel(c) { return Math.max(1, Math.min(3, c.level || 1)); }
+  function vrParentIndex(chs, i) { for (var j = i - 1; j >= 0; j--) if (vrLevel(chs[j]) < vrLevel(chs[i])) return j; return -1; }
+  function vrOwnMap(title) { var m = VS().chapterMap[title]; return m && (m.all || m.dom) ? m : null; }
+  // Wirksame Zuordnung: eigene, sonst (Unterkapitel) die des uebergeordneten Kapitels, sonst "Allgemein" (null).
+  function vrMapping(chs, i) {
+    var own = vrOwnMap(chs[i].title);
+    if (own) return own.all ? null : own;
+    var p = vrParentIndex(chs, i);
+    return p >= 0 ? vrMapping(chs, p) : null;
+  }
+  function vrDomActive(dom, role) { return !(VS().domOff[dom] && VS().domOff[dom][role]); }
+  function vrSubActive(dom, sub, role) { var k = dom + VR_SEP + sub; return !(VS().subOff[k] && VS().subOff[k][role]); }
+  function vrMapActive(m, role) { return !m || (vrDomActive(m.dom, role) && (!m.sub || vrSubActive(m.dom, m.sub, role))); }
+  function vrOverride(title, role) { var o = VS().chOverride[title]; return o && typeof o[role] === "boolean" ? o[role] : undefined; }
+  function vrActive(chs, i, role) {
+    var ov = vrOverride(chs[i].title, role);
+    if (ov !== undefined) return ov;
+    if (!vrOwnMap(chs[i].title)) { var p = vrParentIndex(chs, i); if (p >= 0) return vrActive(chs, p, role); }
+    return vrMapActive(vrMapping(chs, i), role);
+  }
+  function vrCleanTitle(t) { return String(t || "").replace(/^\s*(kapitel|chapter)\s*[\d.]+\s*[:.\-–]?\s*/i, "").replace(/^\s*\d+(\.\d+)*\.?\s+/, "").trim() || String(t || ""); }
+  // Plan einer Variante: neues Inhaltsverzeichnis, ausgelassene Themen mit Verweis-Rollen (ohne KI).
+  function variantPlan(variant) {
+    var st = VS(), chs = varianteChapters(), counters = [0, 0, 0], lastLevel = 0, items = [];
+    chs.forEach(function (c, i) {
+      var inc = vrActive(chs, i, variant.role);
+      var refRoles = inc ? [] : st.roles.filter(function (r) { return r !== variant.role && vrActive(chs, i, r); });
+      if (!inc) { items.push({ index: i, chapter: c, include: false, refRoles: refRoles, clean: vrCleanTitle(c.title) }); return; }
+      var lvl = Math.min(vrLevel(c), lastLevel + 1);
+      counters[lvl - 1]++;
+      for (var k = lvl; k < 3; k++) counters[k] = 0;
+      lastLevel = lvl;
+      var num = counters.slice(0, lvl).join(".");
+      items.push({ index: i, chapter: c, include: true, level: lvl, num: num, clean: vrCleanTitle(c.title), title: st.opts.renumber ? num + " " + vrCleanTitle(c.title) : c.title });
+    });
+    var inc = items.filter(function (x) { return x.include; });
+    var refs = items.filter(function (x) { return !x.include && x.refRoles.length; });
+    var refNum = st.opts.renumber ? String(counters[0] + 1) : "";
+    return { items: items, included: inc.length, excluded: items.length - inc.length, refs: refs, refChapterTitle: refs.length && st.opts.refChapter ? (refNum ? refNum + " " : "") + variantL(variant.lang).refTitle : "" };
+  }
+  // Kapitel der Variante (vor Uebersetzung): Hinweise an der Stelle ausgelassener Themen, Verweis-Kapitel am Ende.
+  function variantBuildChapters(variant, plan) {
+    var st = VS(), L = variantL(variant.lang), out = [], pendingStart = [];
+    plan.items.forEach(function (x) {
+      if (x.include) {
+        var text = x.chapter.text || "";
+        if (pendingStart.length) { text = pendingStart.join("\n\n") + "\n\n" + text; pendingStart = []; }
+        out.push({ title: x.title, clean: x.clean, num: st.opts.renumber ? x.num : "", level: x.level, text: text, screenIds: (x.chapter.screenIds || []).slice(), sourceTitle: x.chapter.title });
+        return;
+      }
+      if (!st.opts.refInline || !x.refRoles.length) return;
+      var hint = L.hint(x.clean, x.refRoles.join(", "));
+      if (out.length) out[out.length - 1].text += "\n\n" + hint; else pendingStart.push(hint);
+    });
+    if (plan.refChapterTitle) {
+      out.push({ title: plan.refChapterTitle, clean: L.refTitle, num: "", level: 1, isRef: true, screenIds: [],
+        text: L.refIntro + "\n\n" + plan.refs.map(function (x) { return "- " + x.clean + " → " + L.role + ": " + x.refRoles.join(", "); }).join("\n") });
+    }
+    return out;
+  }
+  function variantDefaultName(role, lang) { var b = varianteBase(); return (b ? b.name : "Handbuch") + " – " + role + " – " + lang; }
+  function variantNextId() { return VS().variants.reduce(function (m, v) { return Math.max(m, v.id || 0); }, 0) + 1; }
+  function variantAdd(role, lang, name) {
+    var st = VS();
+    if (st.variants.some(function (v) { return v.role === role && v.lang === lang && v.baseVersionId === st.baseVersionId; }) && !name) return null;
+    var v = { id: variantNextId(), name: name || variantDefaultName(role, lang), role: role, lang: lang, baseVersionId: st.baseVersionId, standId: null, generatedAt: "", stats: null };
+    st.variants.push(v);
+    return v;
+  }
+
+  // ----- Render -----
+  function vrOptions(list, sel) { return list.map(function (o) { var val = Array.isArray(o) ? o[0] : o, lab = Array.isArray(o) ? o[0] + " – " + o[1] : o; return '<option value="' + escapeHtml(val) + '"' + (val === sel ? " selected" : "") + ">" + escapeHtml(lab) + "</option>"; }).join(""); }
+  function renderVariante() {
+    if (!els.varianteBaseSelect) return;
+    var st = VS(), versions = app.final.versions;
+    if (st.baseVersionId && !finalVersionById(st.baseVersionId)) st.baseVersionId = null;
+    if (!st.baseVersionId) { var cand = versions.filter(function (v) { return v.origin !== "Variante"; }); if (cand.length) st.baseVersionId = cand[cand.length - 1].id; }
+    els.varianteBaseSelect.innerHTML = versions.length ? versions.map(function (v) { return '<option value="' + v.id + '"' + (v.id === st.baseVersionId ? " selected" : "") + ">" + escapeHtml(finalVersionOptionLabel(v)) + "</option>"; }).join("") : '<option value="">– zuerst in FINAL einen Stand erzeugen –</option>';
+    els.varianteBaseLangSelect.innerHTML = vrOptions(VARIANT_LANGS, st.baseLang);
+    var base = varianteBase(), chs = varianteChapters();
+    els.varianteBaseInfo.textContent = base ? chs.length + " Kapitel/Unterkapitel · " + chs.reduce(function (n, c) { return n + (c.screenIds || []).length; }, 0) + " Screens · Status " + base.status : "Kein Basisdokument – in FINAL einen Stand zusammenführen.";
+    renderVarianteDomains();
+    renderVarianteChapterMap();
+    renderVarianteMatrix();
+    renderVarianteVariants();
+  }
+  function renderVarianteDomains() {
+    var st = VS();
+    els.varianteDomainsList.innerHTML = st.domains.length ? st.domains.map(function (d, i) {
+      return '<div class="variante-domain" data-vr-dom="' + i + '"><b>' + escapeHtml(d.name) + "</b>" +
+        d.subs.map(function (sname, j) { return '<span class="variante-chip">' + escapeHtml(sname) + '<button type="button" data-vr-sub-del="' + j + '" title="Unterdomäne entfernen" aria-label="Unterdomäne ' + escapeHtml(sname) + ' entfernen">×</button></span>'; }).join("") +
+        '<input class="text-input" type="text" data-vr-sub-new placeholder="+ Unterdomäne" aria-label="Neue Unterdomäne für ' + escapeHtml(d.name) + '">' +
+        '<button class="btn ghost btn-tiny" type="button" data-vr-sub-add>Hinzufügen</button>' +
+        '<button class="variante-x" type="button" data-vr-dom-del title="Domäne entfernen" aria-label="Domäne ' + escapeHtml(d.name) + ' entfernen">×</button></div>';
+    }).join("") : '<p class="step-note">Noch keine Domänen – aus Gliederung &amp; Tickets übernehmen oder selbst anlegen.</p>';
+  }
+  function vrMapValue(m) { return !m ? "" : m.all ? "__all__" : m.dom + (m.sub ? VR_SEP + m.sub : ""); }
+  function renderVarianteChapterMap() {
+    var st = VS(), chs = varianteChapters();
+    var opts = [];
+    st.domains.forEach(function (d) { opts.push([d.name, d.name]); d.subs.forEach(function (sname) { opts.push([d.name + VR_SEP + sname, d.name + " › " + sname]); }); });
+    els.varianteChaptersTbody.innerHTML = chs.length ? chs.map(function (c, i) {
+      var val = vrMapValue(vrOwnMap(c.title)), lvl = vrLevel(c), eff = vrMapping(chs, i);
+      var inherit = lvl > 1 && vrParentIndex(chs, i) >= 0;
+      return '<tr><td style="padding-left:' + (8 + (lvl - 1) * 16) + 'px;">' + escapeHtml(c.title) + "</td><td>" +
+        '<select data-vr-map="' + i + '" aria-label="Domäne für ' + escapeHtml(c.title) + '">' +
+        '<option value="">' + (inherit ? "– wie übergeordnetes Kapitel" + (eff ? " (" + escapeHtml(eff.dom + (eff.sub ? " › " + eff.sub : "")) + ")" : " (Allgemein)") + " –" : "– Allgemein (alle Rollen) –") + "</option>" +
+        (inherit ? '<option value="__all__"' + (val === "__all__" ? " selected" : "") + ">– Allgemein (alle Rollen) –</option>" : "") +
+        opts.map(function (o) { return '<option value="' + escapeHtml(o[0]) + '"' + (o[0] === val ? " selected" : "") + ">" + escapeHtml(o[1]) + "</option>"; }).join("") + "</select></td></tr>";
+    }).join("") : '<tr><td colspan="2" class="step-note">Kein Basisdokument gewählt.</td></tr>';
+  }
+  function vrCb(kind, key, role, checked, extraCls, title) {
+    return '<td class="' + (checked ? "" : "variante-cell-off ") + (extraCls || "") + '"><input type="checkbox" data-vm-kind="' + kind + '" data-vm-key="' + escapeHtml(key) + '" data-vm-role="' + escapeHtml(role) + '"' + (checked ? " checked" : "") + ' aria-label="' + escapeHtml(title + " – " + role) + '">';
+  }
+  function renderVarianteMatrix() {
+    var st = VS(), chs = varianteChapters(), roles = st.roles, showCh = els.varianteMatrixShowChapters.checked;
+    els.varianteMatrixThead.innerHTML = "<tr><th>Domäne / Unterdomäne / Kapitel</th>" + roles.map(function (r) {
+      return "<th>" + escapeHtml(r) + (FINAL_ROLE_OPTIONS.indexOf(r) === -1 ? ' <button class="variante-x" type="button" data-vr-role-del="' + escapeHtml(r) + '" title="Rolle entfernen" aria-label="Rolle ' + escapeHtml(r) + ' entfernen">×</button>' : "") + "</th>";
+    }).join("") + "</tr>";
+    // Kapitel nach wirksamer Zuordnung gruppieren
+    var groups = {};
+    chs.forEach(function (c, i) {
+      var m = vrMapping(chs, i), key = m ? m.dom + (m.sub ? VR_SEP + m.sub : "") : "";
+      (groups[key] = groups[key] || []).push(i);
+    });
+    var rows = [];
+    function chRows(key) {
+      if (!showCh) return;
+      (groups[key] || []).forEach(function (i) {
+        var c = chs[i], o = VS().chOverride[c.title] || {};
+        rows.push('<tr class="variante-row-ch lvl' + vrLevel(c) + '"><td>' + escapeHtml(c.title) + "</td>" + roles.map(function (r) {
+          var manual = typeof o[r] === "boolean";
+          return vrCb("ch", String(i), r, vrActive(chs, i, r), "", c.title) + (manual ? '<span class="variante-manual">manuell <button class="variante-x" type="button" data-vr-reset="' + i + '" data-vr-reset-role="' + escapeHtml(r) + '" title="Auf Domänen-Einstellung zurücksetzen" aria-label="Zurücksetzen">↺</button></span>' : "") + "</td>";
+        }).join("") + "</tr>");
+      });
+    }
+    st.domains.forEach(function (d) {
+      rows.push('<tr class="variante-row-dom"><td>' + escapeHtml(d.name) + "</td>" + roles.map(function (r) { return vrCb("dom", d.name, r, vrDomActive(d.name, r), "", d.name) + "</td>"; }).join("") + "</tr>");
+      chRows(d.name);
+      d.subs.forEach(function (sname) {
+        rows.push('<tr class="variante-row-sub"><td>› ' + escapeHtml(sname) + "</td>" + roles.map(function (r) {
+          return vrCb("sub", d.name + VR_SEP + sname, r, vrSubActive(d.name, sname, r), vrDomActive(d.name, r) ? "" : "variante-cell-off", d.name + " › " + sname) + "</td>";
+        }).join("") + "</tr>");
+        chRows(d.name + VR_SEP + sname);
+      });
+    });
+    if (groups[""] && groups[""].length) {
+      rows.push('<tr class="variante-row-dom"><td>Allgemein (ohne Domäne)</td>' + roles.map(function () { return '<td class="step-note">immer</td>'; }).join("") + "</tr>");
+      chRows("");
+    }
+    els.varianteMatrixTbody.innerHTML = rows.join("") || '<tr><td class="step-note">Noch keine Domänen und kein Basisdokument.</td></tr>';
+    els.varianteMatrixTfoot.innerHTML = chs.length ? "<tr><th>Aktive Kapitel</th>" + roles.map(function (r) {
+      return "<th data-vr-count=\"" + escapeHtml(r) + "\">" + chs.filter(function (_, i) { return vrActive(chs, i, r); }).length + " / " + chs.length + "</th>";
+    }).join("") + "</tr>" : "";
+  }
+  function renderVarianteVariants() {
+    var st = VS();
+    els.varianteNewRole.innerHTML = vrOptions(st.roles, els.varianteNewRole.value || st.roles[0]);
+    els.varianteNewLang.innerHTML = vrOptions(VARIANT_LANGS, els.varianteNewLang.value || st.baseLang);
+    var prevR = {}, prevL = {};
+    Array.prototype.forEach.call(els.varianteBulkRoles.querySelectorAll("input"), function (cb) { prevR[cb.value] = cb.checked; });
+    Array.prototype.forEach.call(els.varianteBulkLangs.querySelectorAll("input"), function (cb) { prevL[cb.value] = cb.checked; });
+    els.varianteBulkRoles.innerHTML = st.roles.map(function (r) { return '<label class="variante-inline-check"><input type="checkbox" value="' + escapeHtml(r) + '"' + (prevR[r] ? " checked" : "") + "> " + escapeHtml(r) + "</label>"; }).join("");
+    els.varianteBulkLangs.innerHTML = VARIANT_LANGS.map(function (l) { return '<label class="variante-inline-check"><input type="checkbox" value="' + l[0] + '"' + (prevL[l[0]] || (prevL[l[0]] === undefined && l[0] === st.baseLang) ? " checked" : "") + "> " + l[0] + "</label>"; }).join("");
+    els.varianteOptRenumber.checked = st.opts.renumber; els.varianteOptRefInline.checked = st.opts.refInline; els.varianteOptRefChapter.checked = st.opts.refChapter;
+    var list = st.variants;
+    els.varianteEmpty.hidden = list.length > 0;
+    els.varianteTableWrap.hidden = !list.length;
+    var hasBase = !!varianteBase();
+    els.varianteTbody.innerHTML = list.map(function (v) {
+      var plan = hasBase && v.baseVersionId === st.baseVersionId ? variantPlan(v) : null;
+      var stand = v.standId ? finalVersionById(v.standId) : null;
+      var otherBase = v.baseVersionId !== st.baseVersionId;
+      return '<tr data-vr-variant="' + v.id + '"><td><b>' + escapeHtml(v.name) + "</b>" + (otherBase ? '<div class="step-note">anderes Basisdokument</div>' : "") + "</td><td>" + escapeHtml(v.role) + "</td><td>" + escapeHtml(v.lang) + "</td>" +
+        "<td>" + (plan ? plan.included + " aktiv · " + plan.excluded + " ausgelassen" : "–") + "</td><td>" + (plan ? plan.refs.length : "–") + "</td>" +
+        "<td>" + (stand ? escapeHtml(stand.name) + '<div class="step-note">' + escapeHtml(v.generatedAt) + (v.stats ? " · " + escapeHtml(v.stats.note) : "") + "</div>" : '<span class="step-note">noch nicht erzeugt</span>') + "</td>" +
+        '<td><div class="final-row-actions variante-actions">' +
+        '<button class="btn ghost btn-tiny" type="button" data-vr-preview="' + v.id + '"' + (plan ? "" : " disabled") + ">Inhaltsverzeichnis</button>" +
+        '<button class="btn primary btn-tiny" type="button" data-vr-generate="' + v.id + '"' + (plan && !varianteBusy ? "" : " disabled") + ">" + (stand ? "Neu erzeugen" : "Erzeugen") + "</button>" +
+        (stand ? '<button class="btn ghost btn-tiny" type="button" data-vr-open="' + v.id + '">In FINAL öffnen</button><button class="btn ghost btn-tiny" type="button" data-vr-docx="' + v.id + '">Word</button>' : "") +
+        '<button class="btn ghost btn-tiny final-btn-danger" type="button" data-vr-delete="' + v.id + '"' + (varianteBusy ? " disabled" : "") + ">Entfernen</button></div></td></tr>";
+    }).join("");
+    els.varianteGenerateAllBtn.disabled = varianteBusy || !hasBase || !list.some(function (v) { return v.baseVersionId === st.baseVersionId; });
+    els.varianteSpinner.hidden = !varianteBusy;
+    els.varianteStopBtn.hidden = !varianteBusy;
+    renderVariantePreview();
+  }
+  function renderVariantePreview() {
+    var v = VS().variants.filter(function (x) { return x.id === variantePreviewId; })[0];
+    if (!v || !varianteBase() || v.baseVersionId !== VS().baseVersionId) { els.variantePreview.hidden = true; return; }
+    var plan = variantPlan(v);
+    els.variantePreview.hidden = false;
+    els.variantePreviewTitle.textContent = "Inhaltsverzeichnis – " + v.name + " (" + plan.included + " Kapitel, " + plan.excluded + " ausgelassen)";
+    els.variantePreviewToc.innerHTML = plan.items.map(function (x) {
+      if (x.include) return '<li class="lvl' + x.level + '">' + escapeHtml(x.title) + "</li>";
+      return '<li class="lvl' + vrLevel(x.chapter) + '"><span class="off">' + escapeHtml(x.clean) + '</span><span class="ref">' + (x.refRoles.length ? "→ Verweis: " + escapeHtml(x.refRoles.join(", ")) : "in keiner anderen Rolle aktiv") + "</span></li>";
+    }).join("") + (plan.refChapterTitle ? '<li class="lvl1"><b>' + escapeHtml(plan.refChapterTitle) + "</b> <span class=\"ref\">(" + plan.refs.length + " Verweise)</span></li>" : "");
+  }
+
+  // ----- Ereignisse: Basis, Domaenen, Zuordnung -----
+  els.varianteBaseSelect.addEventListener("change", function () { VS().baseVersionId = finalSelId(els.varianteBaseSelect); variantePreviewId = null; renderVariante(); });
+  els.varianteBaseLangSelect.addEventListener("change", function () { VS().baseLang = els.varianteBaseLangSelect.value; renderVarianteVariants(); });
+  function vrAddDomain(name) {
+    name = String(name || "").trim();
+    if (!name || VS().domains.some(function (d) { return d.name.toLowerCase() === name.toLowerCase(); })) return false;
+    VS().domains.push({ name: name, subs: [] });
+    return true;
+  }
+  els.varianteDomainAddBtn.addEventListener("click", function () {
+    if (!vrAddDomain(els.varianteDomainNewInput.value)) { showToast("Nicht hinzugefügt", "Name fehlt oder Domäne existiert bereits.", true); return; }
+    els.varianteDomainNewInput.value = "";
+    renderVariante();
+  });
+  els.varianteDomainsImportBtn.addEventListener("click", function () {
+    var names = [];
+    (app.outline || []).forEach(function (c) { (c.domains || []).forEach(function (d) { if (d && names.indexOf(d) === -1) names.push(d); }); });
+    (app.tickets || []).forEach(function (t) { if (t.domain && names.indexOf(t.domain) === -1) names.push(t.domain); });
+    var added = names.filter(vrAddDomain).length;
+    els.varianteAutomapNote.textContent = added ? added + " Domäne(n) übernommen." : "Keine neuen Domänen in Gliederung/Tickets gefunden.";
+    renderVariante();
+  });
+  els.varianteDomainsList.addEventListener("click", async function (e) {
+    var row = e.target.closest("[data-vr-dom]");
+    if (!row) return;
+    var st = VS(), d = st.domains[parseInt(row.getAttribute("data-vr-dom"), 10)];
+    if (!d) return;
+    if (e.target.closest("[data-vr-sub-add]")) {
+      var inp = row.querySelector("[data-vr-sub-new]"), name = inp.value.trim();
+      if (!name || d.subs.indexOf(name) !== -1) return;
+      d.subs.push(name);
+    } else if (e.target.closest("[data-vr-sub-del]")) {
+      var sname = d.subs[parseInt(e.target.closest("[data-vr-sub-del]").getAttribute("data-vr-sub-del"), 10)];
+      d.subs = d.subs.filter(function (x) { return x !== sname; });
+      delete st.subOff[d.name + VR_SEP + sname];
+      Object.keys(st.chapterMap).forEach(function (t) { var m = st.chapterMap[t]; if (m && m.dom === d.name && m.sub === sname) st.chapterMap[t] = { dom: d.name }; });
+    } else if (e.target.closest("[data-vr-dom-del]")) {
+      if (!(await confirmDialog("Domäne „" + d.name + "“ mit Unterdomänen entfernen? Zugeordnete Kapitel werden „Allgemein“.", "Entfernen"))) return;
+      st.domains = st.domains.filter(function (x) { return x !== d; });
+      delete st.domOff[d.name];
+      Object.keys(st.subOff).forEach(function (k) { if (k.indexOf(d.name + VR_SEP) === 0) delete st.subOff[k]; });
+      Object.keys(st.chapterMap).forEach(function (t) { var m = st.chapterMap[t]; if (m && m.dom === d.name) delete st.chapterMap[t]; });
+    } else return;
+    renderVariante();
+  });
+  els.varianteDomainsList.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target.matches("[data-vr-sub-new]")) { e.preventDefault(); var b = e.target.parentNode.querySelector("[data-vr-sub-add]"); if (b) b.click(); }
+  });
+  els.varianteChaptersTbody.addEventListener("change", function (e) {
+    var sel = e.target.closest("[data-vr-map]");
+    if (!sel) return;
+    var c = varianteChapters()[parseInt(sel.getAttribute("data-vr-map"), 10)];
+    if (!c) return;
+    var val = sel.value, map = VS().chapterMap;
+    if (!val) delete map[c.title];
+    else if (val === "__all__") map[c.title] = { all: true };
+    else { var parts = val.split(VR_SEP); map[c.title] = parts[1] ? { dom: parts[0], sub: parts[1] } : { dom: parts[0] }; }
+    renderVariante();
+  });
+  els.varianteAutomapBtn.addEventListener("click", function () {
+    var st = VS(), chs = varianteChapters(), n = 0;
+    var norm = function (t) { return vrCleanTitle(t).toLowerCase().replace(/\s+/g, " ").trim(); };
+    chs.forEach(function (c) {
+      if (vrOwnMap(c.title)) return;
+      var hit = null, oc = (app.outline || []).filter(function (o) { return norm(o.title) === norm(c.title); })[0];
+      if (oc && (oc.domains || []).length) hit = st.domains.filter(function (d) { return d.name === oc.domains[0]; })[0];
+      var hay = (c.title + " " + String(c.text || "").slice(0, 400)).toLowerCase();
+      if (!hit) hit = st.domains.filter(function (d) { return hay.indexOf(d.name.toLowerCase()) !== -1; }).sort(function (a, b) { return b.name.length - a.name.length; })[0];
+      if (!hit) return;
+      var sub = hit.subs.filter(function (sname) { return hay.indexOf(sname.toLowerCase()) !== -1; })[0];
+      st.chapterMap[c.title] = sub ? { dom: hit.name, sub: sub } : { dom: hit.name };
+      n++;
+    });
+    els.varianteAutomapNote.textContent = n + " Kapitel automatisch zugeordnet (über Gliederung bzw. Domänen-Namen in Titel/Text) – bitte prüfen.";
+    renderVariante();
+  });
+
+  // ----- Matrix -----
+  els.varianteMatrixShowChapters.addEventListener("change", renderVarianteMatrix);
+  els.varianteMatrixTbody.addEventListener("change", function (e) {
+    var cb = e.target.closest("[data-vm-kind]");
+    if (!cb) return;
+    var st = VS(), kind = cb.getAttribute("data-vm-kind"), key = cb.getAttribute("data-vm-key"), role = cb.getAttribute("data-vm-role");
+    function setOff(store, k) { store[k] = store[k] || {}; if (cb.checked) delete store[k][role]; else store[k][role] = true; if (!Object.keys(store[k]).length) delete store[k]; }
+    if (kind === "dom") setOff(st.domOff, key);
+    else if (kind === "sub") setOff(st.subOff, key);
+    else {
+      var chs = varianteChapters(), i = parseInt(key, 10), c = chs[i];
+      if (!c) return;
+      var o = st.chOverride[c.title] = st.chOverride[c.title] || {};
+      delete o[role];
+      if (vrActive(chs, i, role) !== cb.checked) o[role] = cb.checked;
+      if (!Object.keys(o).length) delete st.chOverride[c.title];
+    }
+    renderVarianteMatrix();
+    renderVarianteVariants();
+  });
+  els.varianteMatrixTbody.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-vr-reset]");
+    if (!b) return;
+    var c = varianteChapters()[parseInt(b.getAttribute("data-vr-reset"), 10)], st = VS();
+    if (!c || !st.chOverride[c.title]) return;
+    delete st.chOverride[c.title][b.getAttribute("data-vr-reset-role")];
+    if (!Object.keys(st.chOverride[c.title]).length) delete st.chOverride[c.title];
+    renderVarianteMatrix();
+    renderVarianteVariants();
+  });
+  els.varianteRoleAddBtn.addEventListener("click", function () {
+    var r = els.varianteRoleNewInput.value.trim(), st = VS();
+    if (!r || st.roles.indexOf(r) !== -1) return;
+    st.roles.push(r);
+    els.varianteRoleNewInput.value = "";
+    renderVariante();
+  });
+  els.varianteMatrixThead.addEventListener("click", async function (e) {
+    var b = e.target.closest("[data-vr-role-del]");
+    if (!b) return;
+    var r = b.getAttribute("data-vr-role-del"), st = VS();
+    if (!(await confirmDialog("Rolle „" + r + "“ aus der Matrix entfernen?", "Entfernen"))) return;
+    st.roles = st.roles.filter(function (x) { return x !== r; });
+    [st.domOff, st.subOff, st.chOverride].forEach(function (store) { Object.keys(store).forEach(function (k) { delete store[k][r]; if (!Object.keys(store[k]).length) delete store[k]; }); });
+    renderVariante();
+  });
+
+  // ----- Varianten -----
+  [["varianteOptRenumber", "renumber"], ["varianteOptRefInline", "refInline"], ["varianteOptRefChapter", "refChapter"]].forEach(function (p) {
+    els[p[0]].addEventListener("change", function () { VS().opts[p[1]] = els[p[0]].checked; renderVarianteVariants(); });
+  });
+  els.varianteAddBtn.addEventListener("click", function () {
+    if (!varianteBase()) { showToast("Kein Basisdokument", "Bitte zuerst in Schritt 1 einen FINAL-Stand wählen.", true); return; }
+    var v = variantAdd(els.varianteNewRole.value, els.varianteNewLang.value, els.varianteNewName.value.trim());
+    if (!v) { showToast("Schon vorhanden", "Diese Rolle/Sprache-Kombination gibt es für dieses Basisdokument bereits.", true); return; }
+    els.varianteNewName.value = "";
+    addLog("VARIANTE: Variante „" + v.name + "“ angelegt.");
+    renderVarianteVariants();
+  });
+  els.varianteBulkAddBtn.addEventListener("click", function () {
+    if (!varianteBase()) { showToast("Kein Basisdokument", "Bitte zuerst in Schritt 1 einen FINAL-Stand wählen.", true); return; }
+    var roles = Array.prototype.filter.call(els.varianteBulkRoles.querySelectorAll("input"), function (cb) { return cb.checked; }).map(function (cb) { return cb.value; });
+    var langs = Array.prototype.filter.call(els.varianteBulkLangs.querySelectorAll("input"), function (cb) { return cb.checked; }).map(function (cb) { return cb.value; });
+    var n = 0;
+    roles.forEach(function (r) { langs.forEach(function (l) { if (variantAdd(r, l)) n++; }); });
+    els.varianteStatus.textContent = n + " Variante(n) angelegt (" + roles.length + " Rolle(n) × " + langs.length + " Sprache(n); vorhandene Kombinationen übersprungen).";
+    if (n) addLog("VARIANTE: " + n + " Variante(n) angelegt.");
+    renderVarianteVariants();
+  });
+  function variantById(id) { return VS().variants.filter(function (v) { return v.id === id; })[0] || null; }
+  function variantParseTranslation(raw) {
+    var t = String(raw || "").replace(/^\s+/, ""), m = t.match(/^TITEL:\s*(.*)\r?\n/i);
+    if (!m) return null;
+    return { title: m[1].trim(), text: t.slice(m[0].length).replace(/^\s*\n/, "").replace(/\s+$/, "") };
+  }
+  async function variantGenerate(v, signal) {
+    var st = VS(), base = varianteBase();
+    if (!base || v.baseVersionId !== st.baseVersionId) return { ok: false, note: "Basisdokument fehlt" };
+    var plan = variantPlan(v), chs = variantBuildChapters(v, plan);
+    var translate = v.lang !== st.baseLang, translated = 0, kept = 0, aiMissing = translate && !sampleApi;
+    if (translate && sampleApi) {
+      for (var i = 0; i < chs.length; i++) {
+        if (signal && signal.aborted) return { ok: false, stopped: true };
+        var c = chs[i];
+        if (c.isRef) continue;
+        els.varianteStatus.textContent = "„" + v.name + "“: Kapitel " + (i + 1) + " von " + chs.length + " wird übersetzt (" + variantLangName(v.lang) + ") …";
+        try {
+          var res = await sampleApi(ragPromptFor("variantTranslate") + "\n\nZIELSPRACHE: " + variantLangName(v.lang) + " (" + v.lang + ")\n\nTITEL: " + c.clean + "\n\nTEXT:\n" + truncate(c.text, 20000),
+            { modelTier: "default", cache: false, signal: signal });
+          var tr = variantParseTranslation(res && res.text);
+          if (tr && tr.text && !editoFinalRejectReason(c.text, tr.text)) {
+            c.text = tr.text; c.clean = tr.title || c.clean; c.title = c.num ? c.num + " " + c.clean : c.clean; translated++;
+          } else kept++;
+        } catch (err) {
+          if (signal && (signal.aborted || (err && err.code === "cancelled"))) return { ok: false, stopped: true };
+          kept++;
+        }
+      }
+    }
+    // Verbesserungen (ROVO) der uebernommenen Kapitel mitnehmen
+    var improvements = {}, improvementStatus = {};
+    chs.forEach(function (c) {
+      if (!c.sourceTitle || !(base.improvements || {})[c.sourceTitle]) return;
+      improvements[c.title] = base.improvements[c.sourceTitle].slice();
+      improvementStatus[c.title] = base.improvements[c.sourceTitle].map(function (_, k) { return finalImpStatus(base, c.sourceTitle, k); });
+    });
+    var chapters = chs.map(function (c) { return { title: c.title, level: c.level, text: c.text, screenIds: c.screenIds }; });
+    var activeBefore = app.final.activeVersionId;
+    var old = v.standId ? finalVersionById(v.standId) : null;
+    var note = plan.included + " Kapitel, " + plan.refs.length + " Verweis(e)" + (translate ? (aiMissing ? ", nicht übersetzt (KI nicht verfügbar)" : ", " + translated + " übersetzt" + (kept ? ", " + kept + " unverändert (Übersetzung verworfen)" : "")) : "");
+    if (old && old.status !== "Veröffentlicht") {
+      old.chapters = chapters; old.improvements = improvements; old.improvementStatus = improvementStatus;
+      old.createdAt = nowLabel(); old.lastReview = null;
+      if (app.final.activeVersionId === old.id) finalSetActiveVersion(old.id);
+    } else {
+      var created = finalCreateVersion(chapters, { name: v.name, origin: "Variante", basedOnId: base.id, improvements: improvements, improvementStatus: improvementStatus,
+        config: { variant: { role: v.role, lang: v.lang, baseId: base.id, baseName: base.name } } });
+      v.standId = created.id;
+      finalSetActiveVersion(activeBefore);
+    }
+    v.generatedAt = nowLabel();
+    v.stats = { included: plan.included, excluded: plan.excluded, refs: plan.refs.length, translated: translated, kept: kept, note: note };
+    return { ok: true, note: note };
+  }
+  async function varianteRun(list) {
+    if (varianteBusy || !list.length) return;
+    varianteBusy = true;
+    varianteAbort = new AbortController();
+    renderVarianteVariants();
+    var done = 0, stopped = false;
+    for (var i = 0; i < list.length; i++) {
+      els.varianteStatus.textContent = "Variante " + (i + 1) + " von " + list.length + ": „" + list[i].name + "“ …";
+      var r = await variantGenerate(list[i], varianteAbort.signal);
+      if (r.stopped) { stopped = true; break; }
+      if (r.ok) { done++; addLog("VARIANTE: „" + list[i].name + "“ erzeugt (" + r.note + ")."); }
+    }
+    varianteBusy = false;
+    varianteAbort = null;
+    els.varianteStatus.textContent = (stopped ? "Gestoppt – " : "") + done + " von " + list.length + " Variante(n) erzeugt und als Stand in FINAL angelegt (" + nowLabel() + ").";
+    renderFinal();
+    renderVarianteVariants();
+  }
+  els.varianteGenerateAllBtn.addEventListener("click", function () {
+    var st = VS();
+    varianteRun(st.variants.filter(function (v) { return v.baseVersionId === st.baseVersionId; }));
+  });
+  els.varianteStopBtn.addEventListener("click", function () { if (varianteAbort) varianteAbort.abort(); });
+  els.variantePreviewCloseBtn.addEventListener("click", function () { variantePreviewId = null; renderVariantePreview(); });
+  els.varianteTbody.addEventListener("click", async function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    var id = parseInt(b.getAttribute("data-vr-preview") || b.getAttribute("data-vr-generate") || b.getAttribute("data-vr-open") || b.getAttribute("data-vr-docx") || b.getAttribute("data-vr-delete"), 10);
+    var v = variantById(id);
+    if (!v) return;
+    if (b.hasAttribute("data-vr-preview")) { variantePreviewId = variantePreviewId === v.id ? null : v.id; renderVariantePreview(); return; }
+    if (b.hasAttribute("data-vr-generate")) {
+      var stand = v.standId ? finalVersionById(v.standId) : null;
+      if (stand && stand.status === "Veröffentlicht" && !(await confirmDialog("Der Stand „" + stand.name + "“ ist veröffentlicht. Statt ihn zu überschreiben wird ein neuer Stand angelegt.", "Neuen Stand anlegen"))) return;
+      await varianteRun([v]);
+      return;
+    }
+    if (b.hasAttribute("data-vr-open")) { finalSetActiveVersion(v.standId); showView("final"); renderFinal(); return; }
+    if (b.hasAttribute("data-vr-docx")) {
+      var sv = finalVersionById(v.standId);
+      if (!sv) return;
+      try {
+        var chs = sv.chapters.map(function (c) {
+          var screens = (c.screenIds || []).map(function (sid) { return app.uploadedImages.filter(function (img) { return img.id === sid; })[0]; })
+            .filter(Boolean).map(function (img) { return Object.assign({}, img, { description: finalScreenCaption(img) }); });
+          return { title: c.title, level: c.level || 1, text: c.text, screens: screens };
+        });
+        var blob = await buildFinalMasterDocxBlob(chs, { coverTitle: variantL(v.lang).manual, coverSubtitle: v.role + " · " + variantLangName(v.lang), footerTitle: variantL(v.lang).manual + " – " + v.role });
+        blob = await finalApplyWordDesign(blob, finalResolveWordDesign());
+        var fn = "Variante_" + editoFinalSafeName(v.name) + "_" + dateStampForFilename() + ".docx";
+        if (await saveOrWarn(fn, blob)) addLog("VARIANTE: „" + fn + "“ heruntergeladen.");
+      } catch (err) { showToast("Word-Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+      return;
+    }
+    if (b.hasAttribute("data-vr-delete")) {
+      if (!(await confirmDialog("Variante „" + v.name + "“ entfernen? Ein bereits erzeugter Stand in FINAL bleibt erhalten.", "Entfernen"))) return;
+      VS().variants = VS().variants.filter(function (x) { return x !== v; });
+      if (variantePreviewId === v.id) variantePreviewId = null;
+      renderVarianteVariants();
+    }
+  });
+
   /* ============ Teil 10: Navigation ============ */
 
   var viewPanels = document.querySelectorAll("[data-view-panel]");
@@ -29818,6 +30428,7 @@
     if (name === "rovosummary") renderRovoSummary();
     if (name === "final") renderFinal();
     if (name === "mitteilungen") renderNotesOverview();
+    if (name === "variante") renderVariante();
     if (name === "tabellen") renderRovoTables();
     if (window.innerWidth <= 900) setSidebar(false);
   }

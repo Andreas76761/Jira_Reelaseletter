@@ -42,7 +42,7 @@ function note(id, category, title, text, intervalDays, daysAgo) {
   const setSel = (id, v) => { const el = doc.getElementById(id); el.value = v; fire(el, "change"); };
 
   const navItems = Array.from(doc.querySelectorAll(".nav-item")).map((b) => b.getAttribute("data-view"));
-  check("Nav: 'Mitteilungen' direkt nach FINAL", navItems.indexOf("mitteilungen") === navItems.indexOf("final") + 1);
+  check("Nav: FINAL → VARIANTE → Mitteilungen", navItems.indexOf("variante") === navItems.indexOf("final") + 1 && navItems.indexOf("mitteilungen") === navItems.indexOf("variante") + 1);
   nav("mitteilungen");
   check("Leere Übersicht: Hinweis sichtbar, Exporte deaktiviert", !doc.getElementById("notes-ov-empty").hidden && doc.getElementById("notes-ov-xlsx-btn").disabled && doc.getElementById("notes-ov-summary").textContent.startsWith("0 interne"));
 

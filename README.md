@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.124.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.125.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,6 +2031,27 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **Register VARIANTE – Varianten je Rolle & Sprache aus einem Dokument (v2.125.0)**: Neues Register
+  nach FINAL. (1) **Basisdokument**: ein FINAL-Stand und seine Sprache. (2) **Domänen &
+  Unterdomänen** anlegen bzw. aus Gliederung (Kapitel-Domänen) und Tickets übernehmen; jedes Kapitel
+  (auch Unterkapitel) einer Domäne/Unterdomäne zuordnen – automatisch über Gliederung bzw.
+  Domänen-Namen in Titel/Text oder per Auswahl; Unterkapitel ohne eigene Zuordnung folgen ihrem
+  Kapitel, Kapitel ohne Domäne gelten als „Allgemein“ (alle Rollen). (3) **Matrix Domäne · Rolle ·
+  Kapitel**: Spalten = Rollen (Markt, MO, Retail, IT, HQ, eigene Rollen ergänzbar), Zeilen = Domäne ›
+  Unterdomäne › Kapitel; Domänen und Unterdomänen je Rolle aktivieren/deaktivieren, einzelne Kapitel
+  abweichend schalten („manuell“, ↺ zurücksetzen); Fußzeile zählt die aktiven Kapitel je Rolle.
+  (4) **Varianten** je Rolle und Sprache (einzeln oder als Kombinationen Rollen × Sprachen), mit
+  Vorschau des **geänderten Inhaltsverzeichnisses** (neu nummeriert 1, 1.1 …; ausgelassene Themen
+  durchgestrichen mit Verweis-Rollen). Beim Erzeugen entsteht je Variante ein eigener FINAL-Stand
+  (Herkunft „Variante“, Konfiguration „Variante Rolle · Sprache aus …“) mit Screens und
+  ROVO-Verbesserungen der übernommenen Kapitel; **Verweise auf andere Rollen** als Hinweis an der
+  Stelle des ausgelassenen Themas und als Verweis-Kapitel „Themen in anderen Rollen-Handbüchern“
+  am Ende (Texte in DE/EN/FR/IT/ES/NL). Fremdsprachige Varianten übersetzt die KI kapitelweise
+  (neuer RAG-Prompt); Übersetzungen, die Bild-Platzhalter oder Jira-Nummern verändern, werden
+  verworfen (Kapitel bleibt unverändert, Bilanz in der Tabelle). Erneutes Erzeugen aktualisiert den
+  Stand (veröffentlichte Stände bleiben unangetastet, dann neuer Stand); „In FINAL öffnen“ und
+  „Word“ (Deckblatt in Zielsprache, Word-Design aus FINAL) je Variante. Alles wird in der Sitzung
+  gespeichert. Test: `webapp/tests/variante_test.js`.
 - **FINAL Schritt 9 – Review-Befunde übernehmen, Ergebnisse je Stand (v2.124.0)**: Unter den
   Agenten-Berichten listet „Befunde übernehmen (n)“ alle Stichpunkte der KI-Berichte (ohne
   „Keine gefunden.“ und ohne die deterministische Struktur-Prüfung) mit Agent und automatisch
