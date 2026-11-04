@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.129.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.130.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,6 +2031,16 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **FINAL Schritt 7 – Rollen-Markierungen sichtbar, „Ansicht als Rolle“ (v2.130.0)**: Enthält die neue
+  Zusammenführung Rollen-Markierungen, zeigt Schritt 7 sie als farbige Badges („Nur: Retail, MO“,
+  „Nicht: IT“, „Ende Rollen-Block“) statt als Rohtext. Darunter erscheint „Ansicht als Rolle“: mit
+  gewählter Rolle werden Absätze, die diese Rolle nicht sieht, durchgestrichen und abgeschwächt
+  dargestellt – oder mit „ausgeblendete Absätze weglassen“ ganz entfernt, sodass der Text wie in der
+  späteren Variante aussieht; ein Hinweis zählt die betroffenen Absätze. Screens bleiben dabei
+  korrekt zugeordnet (auch wenn ein [Bild] im ausgeblendeten Block liegt). Gilt auch für „Gesamtes
+  Dokument“ und die Vollbild-Ansicht; Kapitel ohne Markierungen und die Quellversion bleiben
+  unverändert, bei Dokumenten ohne Markierungen ist die Steuerung ausgeblendet. Rollenliste aus
+  VARIANTE (inkl. eigener Rollen). Test: `webapp/tests/final_role_view_test.js`.
 - **VARIANTE – Übersetzungsspeicher (v2.129.0)**: Jede KI-Übersetzung eines Kapitels wird je
   Sprache unter einem Fingerabdruck der Quelle gespeichert (Titel, Text nach Rollen-Bedingungen und
   Verweis-Hinweisen, verwendete Glossar-Begriffe). Beim Neu-Erzeugen werden unveränderte Kapitel ohne

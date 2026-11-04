@@ -513,6 +513,11 @@
   .variante-fulltext-bild { display: inline-block; font-size: 11px; color: var(--text-faint); border: 1px dashed var(--border); border-radius: 6px; padding: 1px 6px; }
   .variante-gloss { margin-top: 3px; font-size: 12px; }
   .variante-gloss > summary { cursor: pointer; color: #b45309; font-weight: 600; }
+  .final-role-badge { display: inline-block; font-size: 11px; font-weight: 700; line-height: 1.5; border-radius: 6px; padding: 0 6px; margin-right: 4px; background: color-mix(in srgb, #7c3aed 14%, transparent); color: #6d28d9; white-space: nowrap; }
+  .final-role-badge.final-role-not { background: color-mix(in srgb, #dc2626 12%, transparent); color: #b91c1c; }
+  .final-role-badge.final-role-end { background: var(--surface-2); color: var(--text-faint); }
+  .final-role-hidden { opacity: .42; text-decoration: line-through; }
+  .final-role-view { margin-top: 6px; flex-wrap: wrap; }
   .variante-actions { flex-wrap: wrap; min-width: 220px; max-width: 300px; }
   #variante-table-wrap td, #variante-table-wrap th { white-space: normal; }
   #variante-table-wrap td:first-child { min-width: 180px; }
@@ -3234,6 +3239,11 @@
             <select id="final-result-chapter-select" aria-label="Kapitel für Ergebnis-Vergleich"></select>
             <button class="btn ghost btn-tiny" id="final-result-fullscreen-both-btn" type="button" title="Beide Fenster nebeneinander im Vollbild öffnen"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path d="M12 7v10"/></svg>Beide im Vollbild</button>
           </div>
+          <div class="controls final-role-view" id="final-result-role-wrap" hidden>
+            <label for="final-result-role-select">Ansicht als Rolle</label>
+            <select id="final-result-role-select" aria-label="Neue Zusammenführung als Rolle ansehen"></select>
+            <label class="variante-inline-check"><input type="checkbox" id="final-result-role-hide"> ausgeblendete Absätze weglassen</label>
+            <span class="step-note" id="final-result-role-note" style="margin:0;"></span></div>
           <div class="rovo-detail-cols" style="margin-top:10px;">
             <div class="rovo-detail-col">
               <div class="final-result-col-head"><h3>Quellversion</h3><button class="btn ghost btn-tiny" type="button" data-final-result-fullscreen="source" title="Quellversion im Vollbild öffnen (Zoom, Blättern)"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Vollbild</button></div>
@@ -6162,7 +6172,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.129.0";
+  var APP_VERSION = "2.130.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7766,7 +7776,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -27059,10 +27069,40 @@
   }
   // Master-Text eines Kapitels; "[Bild]"-Zeilen werden zu lesbaren Hinweisen
   // bzw. (withImages) zum eingebetteten Screen mit Bildunterschrift.
+  // v2.130: Rollen-Markierungen als Badges, optional "Ansicht als Rolle" (ausgeblendete Absaetze abgeschwaecht/weggelassen).
+  var finalResultRoleState = { role: "", hide: false, hidden: 0 };
+  function finalHasRoleMarkers(text) { return String(text || "").split("\n").some(function (l) { return VR_COND_RE.test(l) || VR_COND_END_RE.test(l); }); }
+  function finalRoleBadge(cond) { return '<span class="final-role-badge' + (cond.not ? " final-role-not" : "") + '">' + (cond.not ? "Nicht: " : "Nur: ") + escapeHtml(cond.roles.join(", ")) + "</span>"; }
+  function finalResultMasterRoleHtml(text, screenObjs, withImages) {
+    var role = finalResultRoleState.role, hide = finalResultRoleState.hide, block = null, bildCount = 0, out = [];
+    String(text || "").split("\n").forEach(function (raw) {
+      if (VR_COND_END_RE.test(raw)) { block = null; if (!(role && hide)) out.push('<span class="final-role-badge final-role-end">Ende Rollen-Block</span>'); return; }
+      var m = raw.match(VR_COND_RE), cond = null, line = raw;
+      if (m) {
+        var c = vrParseCond(m);
+        if (!m[3].trim()) { block = c; if (!(role && hide)) out.push(finalRoleBadge(c)); return; }
+        cond = c; line = m[3];
+      }
+      var visible = !role || ((!cond || vrCondMatches(cond, role)) && (!block || vrCondMatches(block, role)));
+      var html;
+      if (line.trim() === "[Bild]") {
+        var screen = screenObjs[bildCount];
+        bildCount++;
+        var caption = screen ? finalScreenCaption(screen) : "?";
+        html = withImages && screen ? '<figure class="final-viewer-figure"><img src="' + screen.dataUrl + '" alt="' + escapeHtml(caption) + '"><figcaption>' + escapeHtml(caption) + "</figcaption></figure>" : escapeHtml("[Bild: " + caption + "]");
+      } else html = finalMarkedTextToHtml(line);
+      if (cond) html = finalRoleBadge(cond) + html;
+      if (!visible) { finalResultRoleState.hidden++; if (hide) return; html = '<span class="final-role-hidden">' + html + "</span>"; }
+      out.push(html);
+    });
+    return out.join("\n");
+  }
   function finalResultMasterHtml(title, withImages) {
     var masterChapter = app.final.master.chapters.filter(function (c) { return c.title === title; })[0];
     if (!masterChapter) return "";
     var screenObjs = (masterChapter.screenIds || []).map(function (id) { return app.uploadedImages.filter(function (i) { return i.id === id; })[0]; });
+    var srcText = typeof masterChapter.markedText === "string" ? masterChapter.markedText : masterChapter.text;
+    if (finalHasRoleMarkers(srcText)) return finalResultMasterRoleHtml(srcText, screenObjs, withImages);
     var bildCount = 0, parts = [], buf = [];
     (typeof masterChapter.markedText === "string" ? masterChapter.markedText : masterChapter.text).split("\n").forEach(function (line) {
       if (line.trim() !== "[Bild]") { buf.push(line); return; }
@@ -27089,12 +27129,27 @@
       return '<h2 class="final-doc-chapter" data-final-chapter-anchor="' + i + '">' + escapeHtml(t) + "</h2>" + one(t);
     }).join("");
   }
+  function renderFinalResultRoleControls() {
+    var any = app.final.master.chapters.some(function (c) { return finalHasRoleMarkers(typeof c.markedText === "string" ? c.markedText : c.text); });
+    els.finalResultRoleWrap.hidden = !any;
+    if (!any) { finalResultRoleState.role = ""; return; }
+    var roles = (app.variante && app.variante.roles && app.variante.roles.length ? app.variante.roles : FINAL_ROLE_OPTIONS).slice();
+    if (finalResultRoleState.role && roles.indexOf(finalResultRoleState.role) === -1) finalResultRoleState.role = "";
+    els.finalResultRoleSelect.innerHTML = '<option value="">alle Rollen (Markierungen zeigen)</option>' + roles.map(function (r) { return '<option value="' + escapeHtml(r) + '"' + (r === finalResultRoleState.role ? " selected" : "") + ">" + escapeHtml(r) + "</option>"; }).join("");
+    els.finalResultRoleHide.checked = finalResultRoleState.hide;
+    els.finalResultRoleHide.disabled = !finalResultRoleState.role;
+  }
   function updateFinalResult() {
+    renderFinalResultRoleControls();
+    finalResultRoleState.hidden = 0;
     var value = els.finalResultChapterSelect.value;
     if (!value) { els.finalResultSourceOutput.textContent = ""; els.finalResultMasterOutput.textContent = ""; return; }
     els.finalResultSourceOutput.innerHTML = finalResultHtml("source", value, false);
     els.finalResultMasterOutput.innerHTML = finalResultHtml("master", value, false);
+    els.finalResultRoleNote.textContent = finalResultRoleState.role ? finalResultRoleState.hidden + " Absatz/Absätze für „" + finalResultRoleState.role + "“ " + (finalResultRoleState.hide ? "weggelassen" : "ausgeblendet (durchgestrichen)") + "." : "";
   }
+  els.finalResultRoleSelect.addEventListener("change", function () { finalResultRoleState.role = els.finalResultRoleSelect.value; updateFinalResult(); });
+  els.finalResultRoleHide.addEventListener("change", function () { finalResultRoleState.hide = els.finalResultRoleHide.checked; updateFinalResult(); });
 
   // Vollbild-Ansicht fuer Schritt 7: ein oder zwei Fenster (Quellversion /
   // neue Zusammenfuehrung), jedes mit eigener Kapitelauswahl, Blaettern
