@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.123.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.124.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,6 +2031,18 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **FINAL Schritt 9 – Review-Befunde übernehmen, Ergebnisse je Stand (v2.124.0)**: Unter den
+  Agenten-Berichten listet „Befunde übernehmen (n)“ alle Stichpunkte der KI-Berichte (ohne
+  „Keine gefunden.“ und ohne die deterministische Struktur-Prüfung) mit Agent und automatisch
+  erkanntem Kapitel – aus dem Stichpunkt selbst (voller Titel oder Kurzname ohne „Kapitel n:“)
+  oder aus der vorangehenden Kapitel-Zeile/Überschrift; das Kapitel ist je Befund änderbar.
+  Markierte Befunde lassen sich **als Verbesserungen** übernehmen (beim Kapitel mit Herkunft
+  „[Review – Agent]“ und Status „offen“, sichtbar in Schritt 7 und in der Struktur-Prüfung, und
+  direkt vom Editor-Agenten „Verbesserungen einarbeiten“ umgesetzt) oder **als interne Mitteilung
+  „Offene Punkte“** (wöchentliches Intervall) am Stand festhalten. Bereits übernommene Befunde sind
+  gesperrt; bei veröffentlichten Ständen ist die Übernahme als Verbesserung gesperrt. Die
+  Review-Ergebnisse werden je Stand gespeichert (auch in der Sitzung) und beim Wechsel zurück
+  wiederhergestellt. Test: `webapp/tests/final_review_findings_test.js`.
 - **FINAL Schritt 9 – Gesamtdokument & Review mit Agenten (v2.123.0)**: Die Stufe „6. Gesamtdokument“
   aus dem Register Editor steht jetzt auch am Ende von FINAL. Für den gewählten Stand (Auswahlfeld
   synchron zu Schritt 7/8) wird ein Gesamtdokument als Word (im gewählten Word-Design) **und** PDF

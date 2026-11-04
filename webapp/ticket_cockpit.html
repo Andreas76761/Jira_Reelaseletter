@@ -3279,6 +3279,16 @@
           </div>
           <p class="step-note" id="final-review-status"></p>
           <div id="final-review-results"></div>
+          <div id="final-review-findings" hidden style="margin-top:12px;">
+            <p class="section-label final-sub-label">Befunde übernehmen (<span id="final-review-findings-count">0</span>)</p>
+            <p class="step-note" style="margin-top:0;">Stichpunkte aus den KI-Berichten, dem erkannten Kapitel zugeordnet (änderbar). Als <b>Verbesserungen</b> übernommen erscheinen sie beim Kapitel mit Status „offen“ (Schritt 7) und lassen sich im Editor mit dem Agenten „Verbesserungen einarbeiten“ umsetzen; ohne Kapitel lassen sie sich als interne Mitteilung „Offene Punkte“ am Stand festhalten.</p>
+            <div class="table-wrap"><table class="simple-table"><thead><tr><th><input type="checkbox" id="final-review-findings-all" aria-label="Alle Befunde markieren"></th><th>Agent</th><th>Kapitel</th><th>Befund</th></tr></thead><tbody id="final-review-findings-tbody"></tbody></table></div>
+            <div class="controls" style="margin-top:8px; flex-wrap:wrap;">
+              <button class="btn primary btn-tiny" id="final-review-adopt-imp-btn" type="button" disabled>Markierte als Verbesserungen übernehmen</button>
+              <button class="btn ghost btn-tiny" id="final-review-adopt-note-btn" type="button" disabled>Markierte als interne Mitteilung „Offene Punkte“</button>
+            </div>
+            <p class="step-note" id="final-review-findings-note"></p>
+          </div>
           <div class="controls" id="final-review-report-actions" hidden style="margin-top:8px; flex-wrap:wrap;">
             <button class="btn primary btn-tiny" id="final-review-attach-btn" type="button">Gesamtbericht an Stand anhängen</button>
             <button class="btn ghost btn-tiny" id="final-review-report-docx-btn" type="button">Gesamtbericht als Word</button>
@@ -6016,7 +6026,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.123.0";
+  var APP_VERSION = "2.124.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7617,7 +7627,7 @@
     "final-preview-manual-select", "final-preview-improvements-select", "final-preview-improvements", "final-screens-file-filter-select",
     "final-build-manual-select", "final-build-improvements-select", "final-build-screens-select", "final-build-name-input",
     "final-versions-block", "final-versions-tbody", "final-result-version-select", "final-result-version-status",
-    "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
+    "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
     "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
@@ -29457,7 +29467,12 @@
   var finalReviewAbort = null, finalReviewBusy = false;
   function finalReviewEnsure() {
     var v = finalVersionById(app.final.activeVersionId), id = v ? v.id : null;
-    if (finalReviewState.versionId !== id) finalReviewState = { versionId: id, results: {}, merged: null };
+    if (finalReviewState.versionId !== id) {
+      // v2.124: letzte Review-Ergebnisse je Stand (v.lastReview) wiederherstellen
+      var saved = v && v.lastReview && v.lastReview.results ? JSON.parse(JSON.stringify(v.lastReview.results)) : {};
+      finalReviewState = { versionId: id, results: saved, merged: null, findSel: {} };
+      if (els.finalReviewStatus) els.finalReviewStatus.textContent = Object.keys(saved).length ? "Gespeicherte Review-Ergebnisse vom " + v.lastReview.at + " (" + Object.keys(saved).length + " Agent(en))." : "";
+    }
     return v;
   }
   function finalReviewAgentDef(key) { return FINAL_REVIEW_AGENTS.filter(function (a) { return a.key === key; })[0]; }
@@ -29496,6 +29511,7 @@
         (r.status && r.status !== "ok" ? " · " + escapeHtml(r.status) : "") + '</span></summary><div class="final-review-result-body">' + escapeHtml(r.text) + "</div></details>";
     }).join("");
     els.finalReviewReportActions.hidden = !Object.keys(res).length;
+    renderFinalReviewFindings(v);
   }
   els.finalReviewAgents.addEventListener("change", function (e) {
     var cb = e.target.closest("[data-final-review-agent]");
@@ -29621,12 +29637,140 @@
     }
     finalReviewAbort = null;
     finalReviewBusy = false;
+    if (done) v.lastReview = { at: nowLabel(), results: JSON.parse(JSON.stringify(finalReviewState.results)) };
     var summary = (stopped ? "Gestoppt – " : "") + done + " von " + keys.length + " Agent(en) ausgeführt" + (failed ? ", " + failed + " fehlgeschlagen" : "") + " (" + nowLabel() + ").";
     els.finalReviewStatus.textContent = summary;
     addLog("FINAL: Review für Stand „" + v.name + "“ – " + summary);
     renderFinalReview();
   });
   els.finalReviewStopBtn.addEventListener("click", function () { if (finalReviewAbort) finalReviewAbort.abort(); });
+
+  // ===================== v2.124: Review-Befunde uebernehmen (Verbesserungen je Kapitel / interne Mitteilung) =====================
+  function finalReviewMatchChapter(line, titles) {
+    var l = String(line || "").toLowerCase(), best = "";
+    titles.forEach(function (t) {
+      var tl = t.toLowerCase(), short = tl.replace(/^(kapitel|chapter)\s*[\d.]+\s*[:.\-–]?\s*/, "").trim();
+      if ((l.indexOf(tl) !== -1 || (short.length >= 4 && l.indexOf(short) !== -1)) && t.length > best.length) best = t;
+    });
+    return best;
+  }
+  function finalReviewStripChapter(text, title) {
+    if (!title) return text;
+    var t = text, cands = [title, title.replace(/^(Kapitel|Chapter)\s*[\d.]+\s*[:.\-–]?\s*/i, "")];
+    cands.forEach(function (c) {
+      if (c && t.toLowerCase().indexOf(c.toLowerCase()) === 0) t = t.slice(c.length).replace(/^[\s:–\-—)\]]+/, "");
+    });
+    return t || text;
+  }
+  // Stichpunkte der KI-Berichte (ohne Struktur-Pruefung) mit erkanntem Kapitel.
+  function finalReviewFindings(v) {
+    var titles = v.chapters.map(function (c) { return c.title; }), out = [];
+    FINAL_REVIEW_AGENTS.forEach(function (a) {
+      var r = finalReviewState.results[a.key];
+      if (!a.prompt || !r || r.status !== "ok") return;
+      var current = "", n = 0;
+      String(r.text || "").split(/\r?\n/).forEach(function (raw) {
+        var line = raw.trim();
+        if (!line) return;
+        if (/^#+\s*/.test(line)) { current = finalReviewMatchChapter(line.replace(/^#+\s*/, ""), titles); return; }
+        var bm = line.match(/^(?:[-*•]|\d+[.)])\s+(.*)$/);
+        if (!bm) {
+          var m = finalReviewMatchChapter(line, titles);
+          if (m && line.replace(/[*_:]/g, "").length <= m.length + 40) current = m;
+          return;
+        }
+        var text = bm[1].replace(/\*\*/g, "").trim();
+        if (text.length < 6 || /^keine (gefunden|befunde)/i.test(text) || /^\(.*\)$/.test(text)) return;
+        var ch = finalReviewMatchChapter(text, titles) || current;
+        out.push({ id: a.key + ":" + (n++), agent: a.key, agentLabel: a.label, chapter: ch, text: finalReviewStripChapter(text, ch) });
+      });
+    });
+    return out;
+  }
+  function finalReviewImpText(f) { return "[Review – " + f.agentLabel + "] " + f.text; }
+  function finalReviewFindingSel(f) {
+    var sel = finalReviewState.findSel = finalReviewState.findSel || {};
+    return (sel[f.id] = sel[f.id] || { on: false, chapter: f.chapter });
+  }
+  function finalReviewIsAdopted(v, f, chapter) { return !!chapter && ((v.improvements || {})[chapter] || []).indexOf(finalReviewImpText(f)) !== -1; }
+  function renderFinalReviewFindings(v) {
+    var list = v ? finalReviewFindings(v) : [];
+    els.finalReviewFindingsTbody._findings = list;
+    els.finalReviewFindings.hidden = !list.length;
+    els.finalReviewFindingsCount.textContent = list.length;
+    if (!list.length) return;
+    var titles = v.chapters.map(function (c) { return c.title; });
+    var marked = 0, selectable = 0;
+    els.finalReviewFindingsTbody.innerHTML = list.map(function (f, i) {
+      var sel = finalReviewFindingSel(f), adopted = finalReviewIsAdopted(v, f, sel.chapter);
+      if (!adopted) { selectable++; if (sel.on) marked++; }
+      return '<tr data-final-finding="' + i + '"><td><input type="checkbox" data-final-finding-cb="' + i + '"' + (sel.on && !adopted ? " checked" : "") + (adopted ? " disabled" : "") + ' aria-label="Befund markieren"></td>' +
+        "<td>" + escapeHtml(f.agentLabel) + "</td>" +
+        '<td><select data-final-finding-chapter="' + i + '" aria-label="Kapitel des Befunds"><option value="">– ohne Kapitel –</option>' +
+        titles.map(function (t) { return '<option value="' + escapeHtml(t) + '"' + (t === sel.chapter ? " selected" : "") + ">" + escapeHtml(t) + "</option>"; }).join("") + "</select></td>" +
+        "<td>" + escapeHtml(f.text) + (adopted ? ' <span class="step-note">· als Verbesserung übernommen</span>' : "") + "</td></tr>";
+    }).join("");
+    els.finalReviewFindingsAll.checked = selectable > 0 && marked === selectable;
+    els.finalReviewFindingsAll.indeterminate = marked > 0 && marked < selectable;
+    els.finalReviewAdoptImpBtn.disabled = !marked;
+    els.finalReviewAdoptNoteBtn.disabled = !marked;
+  }
+  function finalReviewMarked(v) {
+    return (els.finalReviewFindingsTbody._findings || []).filter(function (f) { var sel = finalReviewFindingSel(f); return sel.on && !finalReviewIsAdopted(v, f, sel.chapter); });
+  }
+  els.finalReviewFindingsTbody.addEventListener("change", function (e) {
+    var list = els.finalReviewFindingsTbody._findings || [];
+    var cb = e.target.closest("[data-final-finding-cb]"), chs = e.target.closest("[data-final-finding-chapter]");
+    if (cb) { var f = list[parseInt(cb.getAttribute("data-final-finding-cb"), 10)]; if (f) finalReviewFindingSel(f).on = cb.checked; }
+    if (chs) { var g = list[parseInt(chs.getAttribute("data-final-finding-chapter"), 10)]; if (g) finalReviewFindingSel(g).chapter = chs.value; }
+    renderFinalReviewFindings(finalReviewEnsure());
+  });
+  els.finalReviewFindingsAll.addEventListener("change", function () {
+    var v = finalReviewEnsure();
+    (els.finalReviewFindingsTbody._findings || []).forEach(function (f) { var sel = finalReviewFindingSel(f); if (!finalReviewIsAdopted(v, f, sel.chapter)) sel.on = els.finalReviewFindingsAll.checked; });
+    renderFinalReviewFindings(v);
+  });
+  els.finalReviewAdoptImpBtn.addEventListener("click", function () {
+    var v = finalReviewEnsure();
+    if (!v) return;
+    if (v.status === "Veröffentlicht") { showToast("Gesperrt", "Stand „" + v.name + "“ ist veröffentlicht – zuerst den Status zurücksetzen.", true); return; }
+    var marked = finalReviewMarked(v), added = 0, noChapter = 0;
+    v.improvements = v.improvements || {};
+    v.improvementStatus = v.improvementStatus || {};
+    marked.forEach(function (f) {
+      var sel = finalReviewFindingSel(f), ch = sel.chapter;
+      if (!ch) { noChapter++; return; }
+      var imps = v.improvements[ch] = v.improvements[ch] || [];
+      var statuses = imps.map(function (_, i) { return finalImpStatus(v, ch, i); });
+      imps.push(finalReviewImpText(f));
+      statuses.push("offen");
+      v.improvementStatus[ch] = statuses;
+      sel.on = false;
+      added++;
+    });
+    els.finalReviewFindingsNote.textContent = added + " Befund(e) als Verbesserung übernommen (Status „offen“)" + (noChapter ? ", " + noChapter + " ohne Kapitel übersprungen – Kapitel wählen oder als interne Mitteilung festhalten" : "") + ".";
+    if (added) {
+      addLog("FINAL: " + added + " Review-Befund(e) als Verbesserungen in Stand „" + v.name + "“ übernommen.");
+      showToast("Übernommen", added + " Verbesserung(en) – im Editor mit „Verbesserungen einarbeiten“ umsetzen.");
+      renderFinal();
+    } else renderFinalReviewFindings(v);
+  });
+  els.finalReviewAdoptNoteBtn.addEventListener("click", function () {
+    var v = finalReviewEnsure();
+    if (!v) return;
+    var marked = finalReviewMarked(v);
+    if (!marked.length) return;
+    var text = marked.map(function (f) { var ch = finalReviewFindingSel(f).chapter; return "- " + (ch ? ch + ": " : "") + f.text + " (" + f.agentLabel + ")"; }).join("\n");
+    v.notes = v.notes || [];
+    v.notes.push(noteCreate("Offene Punkte", "Review-Befunde vom " + new Date().toLocaleDateString("de-DE"), text, 7));
+    marked.forEach(function (f) { finalReviewFindingSel(f).on = false; });
+    els.finalReviewFindingsNote.textContent = marked.length + " Befund(e) als interne Mitteilung „Offene Punkte“ am Stand gespeichert (wöchentlich zu prüfen).";
+    addLog("FINAL: " + marked.length + " Review-Befund(e) als interne Mitteilung an Stand „" + v.name + "“ gespeichert.");
+    showToast("Gespeichert", "Interne Mitteilung „Offene Punkte“ am Stand „" + v.name + "“.");
+    renderFinalVersions();
+    renderFinalNotes();
+    renderFinalReviewFindings(v);
+  });
   function finalReviewReport() {
     var v = finalReviewEnsure(), text = finalReviewCombined();
     return v && text ? { v: v, report: { text: text, at: nowLabel(), by: finalReviewerName() } } : null;
