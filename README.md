@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.140.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.141.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,26 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Register AGENT: 8 Agenten mit Orchestrator (v2.141.0)**: neues Register „AGENT“ (nach CROSS_X). Tabelle der Agenten
+  mit Eingabe, Ausgabe, Status und Ergebnis; Auswahl per Häkchen, „Ausführen“ je Agent oder „Orchestrator starten“.
+  Der **Orchestrator** führt die gewählten Agenten in fester Reihenfolge aus, ergänzt fehlende oder veraltete
+  Vorgänger automatisch (z. B. Knowledge → Extraction + Quality), überspringt abhängige Agenten nach einem Fehler,
+  protokolliert jeden Schritt mit Dauer und lässt sich stoppen. **Extraction** (Dateien .docx/.md/.txt, FINAL-Stände,
+  Review-Dokumente, Rovo Knowledge → strukturierte Blöcke: Überschrift, Absatz, Liste, Tabelle, Bild, Hinweis; interne
+  Vermerke gekennzeichnet). **Classification** (Domäne/Unterdomäne aus VARIANTE, Rolle aus [Rolle: …]-Markierung,
+  Quelle oder Schlüsselwörtern, Markt aus einstellbarer Marktliste, Sprache per Texterkennung). **Quality**
+  (Gültigkeitsregeln an-/abwählbar, eigene verbotene Begriffe; Lücken, Konflikte – auch zwischen Quellen –, Dubletten
+  über Textähnlichkeit, Regelverstöße). **Media** (Bildvorschläge aus dem Bildarchiv je Platzhalter anhand des
+  Textumfelds, Untertitelvorschläge aus Bildtext/OCR; ins Bildarchiv übernehmbar). **Knowledge** (Wissensobjekte je
+  Kapitel aus geprüften Blöcken – Funktion, Anleitung, Begriff – mit Domäne/Rolle/Markt/Sprache; nach Rovo Knowledge
+  übernehmbar, Label „AGENT“). **Translation** (nur freigegebene Revisionen; Glossar, Übersetzungsspeicher, KI;
+  Vorschlag als Review-Dokument übernehmbar). **Impact** (alte vs. neue Revision: geänderte/neue/entfernte Kapitel,
+  Schlüsselbegriffe; betroffene Handbücher – FINAL-Stände, Varianten, Review-Dokumente – mit Einstufung hoch/mittel).
+  **Publishing** (Vorprüfung: Freigabe, leere Kapitel, Lücken, Statusangaben, Jira, interne Vermerke, Bilder, Review-
+  Stufen, Quality-Befunde → bereit / mit Hinweisen / blockiert; Renderingauftrag als JSON; „Rendering ausführen“ erzeugt
+  Word/PDF). Mit „mit KI verfeinern“ verbessert Claude Klassifikation, Qualitätsprüfung, Untertitel und Wissensobjekte
+  (4 neue, bearbeitbare Prompts; nur erlaubte Werte werden übernommen). Laufbericht (Markdown) und Ergebnisse als Excel.
 
 - **Dokument-Review: Dateien je Version, PDF, Übergabe an FINAL und Release-Paket (v2.140.0)**: **Ablage bewahrt
   Dateien auf** – jedes erzeugte Word (Verteilung/intern), PDF und jeder Reviewbericht wird mit Zeitpunkt, Version und

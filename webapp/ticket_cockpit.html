@@ -543,6 +543,15 @@
   .vrev-row-active td { background: color-mix(in srgb, var(--accent) 7%, transparent); }
   .vrev-diff summary { cursor: pointer; margin: 4px 0; }
   .vrev-textbox { margin-top: 10px; }
+  .agent-inputs { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .agent-input { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+  .agent-input select { max-width: 100%; }
+  .agent-log { margin: 6px 0 0 18px; padding: 0; font-size: 13px; }
+  .agent-log li { margin: 2px 0; }
+  .agent-table td, .agent-out td { white-space: normal; vertical-align: top; }
+  .agent-intern td { background: #fff4d6; }
+  .agent-f-konflikt td:first-child { color: #b91c1c; } .agent-f-luecke td:first-child { color: #b45309; } .agent-f-dublette td:first-child { color: #6d28d9; }
+  .agent-json { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 12px; overflow: auto; max-height: 320px; white-space: pre-wrap; overflow-wrap: anywhere; }
   #vrev-docs-tbody .final-row-actions { display: flex; flex-wrap: wrap; gap: 4px; max-width: 260px; }
   #vrev-docs-tbody td { vertical-align: top; }
   .variante-stale { display: inline-block; margin-top: 3px; font-size: 11px; font-weight: 700; color: #b45309; background: color-mix(in srgb, #f59e0b 14%, transparent); border-radius: 6px; padding: 1px 6px; }
@@ -907,6 +916,7 @@
       <li><button class="nav-item" data-view="variante" type="button">VARIANTE</button></li>
       <li><button class="nav-item" data-view="mitteilungen" type="button">Mitteilungen<span class="count-badge" id="nav-badge-notes" hidden title="fällige interne Mitteilungen">0</span></button></li>
       <li><button class="nav-item" data-view="crossx" type="button">CROSS_X</button></li>
+      <li><button class="nav-item" data-view="agent" type="button">AGENT</button></li>
       <li><button class="nav-item" data-view="bilder" type="button">Bilder</button></li>
       <li><button class="nav-item" data-view="tabellen" type="button">Tabelle</button></li>
       <li class="nav-sep">Output</li>
@@ -3691,6 +3701,50 @@
       </section>
 
       <!-- ================= CROSS_X ================= -->
+      <section class="view-panel" data-view-panel="agent" id="agent-panel" hidden>
+        <div class="view-head"><h2>AGENT</h2><p class="desc">Acht spezialisierte Agenten mit einem <b>Orchestrator</b>: Extraction → Classification → Quality → Media → Knowledge → Translation → Impact → Publishing. Jeder Agent arbeitet regelbasiert; mit „mit KI verfeinern“ verbessert Claude Klassifikation, Qualitätsprüfung, Untertitel und Wissensobjekte (die Übersetzung nutzt immer die KI, sofern verfügbar). Der Orchestrator führt die gewählten Agenten in dieser Reihenfolge aus und ergänzt benötigte Vorgänger automatisch.</p></div>
+        <section class="panel variante-step">
+          <p class="section-label">Orchestrator</p>
+          <div class="table-wrap"><table class="simple-table agent-table"><thead><tr><th></th><th>Agent</th><th>Eingabe</th><th>Ausgabe</th><th>Status</th><th>Ergebnis</th><th>Aktion</th></tr></thead><tbody id="agent-tbody"></tbody></table></div>
+          <div class="controls" style="flex-wrap:wrap;">
+            <label class="variante-inline-check"><input type="checkbox" id="agent-use-ai"> mit KI verfeinern</label>
+            <button class="btn primary" id="agent-run-btn" type="button"><span class="btn-spinner" id="agent-spinner" hidden></span>Orchestrator starten (gewählte Agenten)</button>
+            <button class="btn ghost" id="agent-stop-btn" type="button" hidden>Stopp</button>
+            <button class="btn ghost" id="agent-report-md-btn" type="button" disabled>Laufbericht (Markdown)</button>
+            <button class="btn ghost" id="agent-xlsx-btn" type="button" disabled>Ergebnisse als Excel</button>
+          </div>
+          <p class="step-note" id="agent-status"></p>
+          <ol class="agent-log" id="agent-log"></ol>
+        </section>
+        <section class="panel variante-step">
+          <p class="section-label">Eingaben</p>
+          <div class="agent-inputs">
+            <div class="agent-input"><b>Quellen</b> <span class="step-note">(Extraction)</span>
+              <div class="controls" style="margin:4px 0;"><button class="btn ghost btn-tiny" id="agent-upload-btn" type="button">Dateien hochladen (.docx, .md, .txt)</button><input type="file" id="agent-file-input" accept=".docx,.md,.txt" multiple hidden></div>
+              <div id="agent-sources"></div></div>
+            <div class="agent-input"><b>Gültigkeitsregeln</b> <span class="step-note">(Quality)</span><div id="agent-rules"></div>
+              <div class="controls" style="margin:4px 0;"><input class="text-input" id="agent-rule-term" type="text" placeholder="Verbotener Begriff, z. B. Testsystem" aria-label="Verbotener Begriff"><button class="btn ghost btn-tiny" id="agent-rule-add-btn" type="button">Regel hinzufügen</button></div></div>
+            <div class="agent-input"><b>Märkte</b> <span class="step-note">(Classification, kommagetrennt)</span><textarea class="text-input" id="agent-markets" rows="2" style="width:100%; font-family:inherit;" aria-label="Märkte"></textarea>
+              <p class="step-note">Domänen und Rollen kommen aus VARIANTE (Schritt 2 und Matrix); Sprache wird am Text erkannt.</p></div>
+            <div class="agent-input"><b>Translation</b>
+              <div><label for="agent-tr-source">Freigegebene Ausgangsrevision</label><select id="agent-tr-source"></select></div>
+              <div><label for="agent-tr-lang">Zielsprache</label><select id="agent-tr-lang"></select></div></div>
+            <div class="agent-input"><b>Impact</b>
+              <div><label for="agent-imp-a">Revision alt</label><select id="agent-imp-a"></select></div>
+              <div><label for="agent-imp-b">Revision neu</label><select id="agent-imp-b"></select></div></div>
+            <div class="agent-input"><b>Publishing</b>
+              <div><label for="agent-pub-source">Publikationsentwurf</label><select id="agent-pub-source"></select></div>
+              <label class="variante-inline-check"><input type="checkbox" id="agent-pub-word" checked> Word</label> <label class="variante-inline-check"><input type="checkbox" id="agent-pub-pdf"> PDF</label>
+              <label class="variante-inline-check"><input type="checkbox" id="agent-pub-intern"> interne Fassung (mit Vermerken)</label></div>
+          </div>
+        </section>
+        <section class="panel variante-step">
+          <p class="section-label">Ergebnisse</p>
+          <div class="vrev-stepper" id="agent-tabs"></div>
+          <div id="agent-output"></div>
+        </section>
+      </section>
+
       <section class="view-panel" data-view-panel="crossx" hidden>
         <div class="view-head"><h2>CROSS_X</h2><p class="desc">Wissensagent für <b>Cross-Reference-Prüfungen über Kapitel und Rollen hinweg</b>. Grundlage ist eine Wissensbasis aus den Dokumenten (FINAL-Stände, Matrix, Varianten) <b>und internen Informationen</b> (interne Mitteilungen, ROVO-Verbesserungen, Prüfberichte, Jira-Tickets). Interne Inhalte sind als INTERN gekennzeichnet; Ergebnisse dieses Registers sind interne Arbeitsstände und erscheinen in keinem Dokument, Releaseletter oder Release-Paket.</p></div>
 
@@ -6419,7 +6473,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.140.0";
+  var APP_VERSION = "2.141.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8023,7 +8077,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -8163,6 +8217,7 @@
     docNotes: { releaseletter: [], benutzerhandbuch: [], prozessbild: [], clickanweisung: [] },
     variante: null,
     vrev: null,
+    agent: null,
     rlRoleOverrides: {},
     crossx: null,
     screenPh: null,
@@ -8706,6 +8761,7 @@
     app.docNotes = docNotesNormalize(null);
     app.variante = varianteNormalize(null);
     app.vrev = vrevNormalize(null);
+    app.agent = agentNormalize(null);
     app.rlRoleOverrides = {};
     app.crossx = crossxNormalize(null);
     app.screenPh = screenPhNormalize(null);
@@ -8822,6 +8878,7 @@
     app.docNotes = docNotesNormalize(null);
     app.variante = varianteNormalize(null);
     app.vrev = vrevNormalize(null);
+    app.agent = agentNormalize(null);
     app.rlRoleOverrides = {};
     app.crossx = crossxNormalize(null);
     app.screenPh = screenPhNormalize(null);
@@ -8911,6 +8968,7 @@
       docNotes: app.docNotes,
       variante: app.variante,
       vrev: app.vrev,
+      agent: app.agent,
       rlRoleOverrides: app.rlRoleOverrides,
       crossx: app.crossx,
       screenPh: app.screenPh,
@@ -9023,6 +9081,7 @@
     app.docNotes = docNotesNormalize(data.docNotes);
     app.variante = varianteNormalize(data.variante);
     app.vrev = vrevNormalize(data.vrev);
+    app.agent = agentNormalize(data.agent);
     app.rlRoleOverrides = rlNormalizeOverrides(data.rlRoleOverrides);
     app.crossx = crossxNormalize(data.crossx);
     app.screenPh = screenPhNormalize(data.screenPh);
@@ -9133,6 +9192,7 @@
     renderAllDocNotes();
     renderVariante();
     renderVrev();
+    renderAgent();
     renderCrossx();
     renderScreenPh();
     renderMassFiles();
@@ -20371,6 +20431,10 @@
     crossxAgent: "Du bist der interne Wissensagent für das Benutzerhandbuch und die Releaseletter der Anwendung oneSCM. Du beantwortest Fragen AUSSCHLIESSLICH auf Basis der unten stehenden Wissensbasis. Jeder Eintrag beginnt mit [#Nummer], Quelle und ggf. INTERN. Arbeite kapitel- und rollenübergreifend: Vergleiche Aussagen zwischen Kapiteln, Rollen-Varianten, internen Mitteilungen, ROVO-Verbesserungen, Prüfberichten und Jira-Tickets. Belege jede Aussage mit den Eintragsnummern in eckigen Klammern, z. B. [#12]. Kennzeichne Aussagen, die nur auf INTERNEN Einträgen beruhen, mit (intern). Wenn die Wissensbasis die Frage nicht beantwortet, sag das deutlich. Erfinde nichts. Antworte auf Deutsch, knapp und strukturiert.",
     crossxCheck: "Du bist Prüfer für Querverweise (Cross-Reference-Check) in einem rollenbasierten Benutzerhandbuch der Anwendung oneSCM. Prüfe anhand der Wissensbasis (Kapitel, Matrix: welche Kapitel in welcher Rolle aktiv sind, Varianten, interne Mitteilungen, ROVO-Verbesserungen, Prüfberichte, Jira-Tickets) und der bereits automatisch gefundenen Regel-Befunde, und gib AUSSCHLIESSLICH diese Abschnitte aus:\n\n### Widersprüche zwischen Kapiteln oder Rollen\n### Fehlende oder falsche Querverweise\n### Inhalte, die in einer Rolle fehlen, obwohl sie dort gebraucht werden\n### Interne Hinweise mit Auswirkung auf Kapitel oder Rollen\n\nJe Befund ein Stichpunkt mit Kapitel, Rolle(n) und Belegen [#n]; Befunde, die nur auf internen Einträgen beruhen, mit (intern) kennzeichnen. Ist ein Abschnitt leer, schreibe \"Keine gefunden.\" Wiederhole die Regel-Befunde nicht einzeln, sondern ergänze sie. Erfinde nichts.",
     screenPhMatch: "Du ordnest Bildschirm-Screenshots (Screens) der Anwendung oneSCM Platzhaltern in einem Benutzerhandbuch zu. Zu jedem Platzhalter (Nr., Kapitel, Beschreibung des gewünschten Screenshots) bekommst du Kandidaten-Screens mit ID und ihrem bekannten Text (Bildtext/Überschrift, OCR-Text, Kapitel). Wähle je Platzhalter höchstens MAX Screens, die den beschriebenen Bildschirm wirklich zeigen – im Zweifel weniger oder keinen. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt der Form {\"Nr\": [ID, ...], ...} für alle genannten Platzhalter-Nummern (leere Liste, wenn keiner passt). Erfinde keine IDs.",
+    agentClassify: "Du bist der Classification Agent für Inhalte des Benutzerhandbuchs der Anwendung oneSCM. Ordne jedem Block (Kennung #Nummer, in eckigen Klammern das Kapitel) Domäne, Rolle, Markt und Sprache zu – nur Werte aus der Liste ERLAUBT, sonst leerer Text. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt der Form {\"Nummer\": {\"domain\": \"\", \"role\": \"\", \"market\": \"\", \"lang\": \"\"}, ...}.",
+    agentQuality: "Du bist der Quality Agent für das Benutzerhandbuch der Anwendung oneSCM. Prüfe die Inhalte (Abschnitte „## Quelle › Kapitel“) auf inhaltliche Lücken (fehlende Schritte, unklare Voraussetzungen), Konflikte (widersprüchliche Aussagen zwischen Kapiteln oder Quellen) und Dubletten (gleiche Aussage mehrfach). Antworte AUSSCHLIESSLICH mit einem JSON-Array [{\"type\": \"Lücke\"|\"Konflikt\"|\"Dublette\", \"chapter\": \"Quelle › Kapitel\", \"text\": \"kurze Beschreibung\"}], höchstens 30 Einträge, leeres Array wenn nichts auffällt.",
+    agentMedia: "Du bist der Media Agent für das Benutzerhandbuch der Anwendung oneSCM. Formuliere für jedes Bild (ID, Kapitel, Platzhalter, Textumfeld, OCR-Text, bisheriger Bildtext) einen kurzen, sachlichen Untertitel (höchstens 12 Wörter, ohne „Abbildung“/„Screenshot“ am Anfang), der beschreibt, was der Screen zeigt. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt {\"ID\": \"Untertitel\", ...}.",
+    agentKnowledge: "Du bist der Knowledge Agent für die Wissensbasis der Anwendung oneSCM. Verbessere jeden Wissensobjekt-Vorschlag (#Nummer, Titel, Text): prägnanter Titel, Zusammenfassung in 1–3 Sätzen für Anwender, Typ aus Funktion, Anleitung, Begriff, FAQ, Regel. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt {\"Nummer\": {\"title\": \"\", \"summary\": \"\", \"type\": \"\"}, ...}.",
     vrevQuality: "Du bist Lektor für das Benutzerhandbuch der Anwendung oneSCM. Prüfe den folgenden Kapiteltext auf Grammatik, Rechtschreibung, Zeichensetzung, Stil, inhaltliche Fehler/Widersprüche und Lücken (fehlende Schritte, unklare Stellen). Antworte AUSSCHLIESSLICH mit einem JSON-Array von Objekten der Form {\"typ\": \"Grammatik\"|\"Rechtschreibung\"|\"Stil\"|\"Fehler\"|\"Lücke\", \"original\": \"exakter, wörtlich kopierter Textausschnitt aus dem Kapitel (bei Lücken leer)\", \"vorschlag\": \"korrigierter Ausschnitt bzw. was ergänzt werden sollte\", \"hinweis\": \"kurze Begründung\"}. Höchstens 15 Einträge, keine erfundenen Zitate, Fachbegriffe und Produktnamen nicht ändern; leeres Array [], wenn nichts zu beanstanden ist.",
     finalCompareVersions: "Du vergleichst zwei Fassungen (Stand A und Stand B) eines Benutzerhandbuchs der Anwendung oneSCM. Die Fassungen können in unterschiedlichen Sprachen oder für unterschiedliche Rollen/Märkte geschrieben sein - vergleiche den INHALT, nicht den Wortlaut. Gehe Kapitel für Kapitel vor (Kapitel über Titel bzw. Reihenfolge zuordnen) und nenne je Kapitel: Inhalte, die nur in A stehen; Inhalte, die nur in B stehen; inhaltliche Abweichungen oder Widersprüche. Kapitel ohne inhaltlichen Unterschied mit einer Zeile \"keine inhaltlichen Unterschiede\" erwähnen. Schließe mit einer kurzen Gesamteinschätzung. Erfinde nichts."
   };
@@ -20417,6 +20481,10 @@
     crossxCheck: "CROSS_X: KI-Cross-Check über Kapitel und Rollen",
     screenPhMatch: "Screens-Import: Screens zu Platzhaltern zuordnen (KI-Verfeinerung)",
     vrevQuality: "VARIANTE Review Stufe 4: Grammatik, Fehler und Lücken je Kapitel (KI)",
+    agentClassify: "AGENT: Classification Agent (Domäne, Rolle, Markt, Sprache)",
+    agentQuality: "AGENT: Quality Agent (Lücken, Konflikte, Dubletten)",
+    agentMedia: "AGENT: Media Agent (Untertitelvorschläge)",
+    agentKnowledge: "AGENT: Knowledge Agent (Wissensobjekte)",
     finalCompareVersions: "FINAL: Zwei Stände inhaltlich vergleichen"
   };
   function ragPromptFor(promptKey) {
@@ -33531,6 +33599,807 @@
     if (act === "translate") { var sel = els.vrevStage.querySelector("[data-vrev-tr-lang]"); if (sel && sel.value) vrevTranslate(doc, sel.value); return; }
   });
 
+  /* ============ v2.141: Register AGENT – 8 Agenten mit Orchestrator ============
+     Extraction → Classification → Quality → Media → Knowledge → Translation → Impact → Publishing.
+     Jeder Agent arbeitet ohne KI (Regeln/Heuristiken); mit "mit KI verfeinern" werden Klassifikation,
+     Qualitaet, Untertitel und Wissensobjekte zusaetzlich von Claude verfeinert. Der Orchestrator fuehrt die
+     gewaehlten Agenten in fester Reihenfolge aus und ergaenzt benoetigte Vorgaenger automatisch. */
+  var AGENT_DEFS = [
+    { key: "extraction", label: "Extraction Agent", input: "Dateien, Quellen", output: "Strukturierte Blöcke", needs: [] },
+    { key: "classification", label: "Classification Agent", input: "Extrahierte Inhalte", output: "Domäne, Rolle, Markt, Sprache", needs: ["extraction"] },
+    { key: "quality", label: "Quality Agent", input: "Inhalte und Gültigkeitsregeln", output: "Lücken, Konflikte, Dubletten", needs: ["extraction"] },
+    { key: "media", label: "Media Agent", input: "Bilder, OCR, Textumfeld", output: "Bildzuordnung, Untertitelvorschläge", needs: ["extraction"] },
+    { key: "knowledge", label: "Knowledge Agent", input: "Geprüfte Inhalte", output: "Wissensobjektvorschläge", needs: ["quality"] },
+    { key: "translation", label: "Translation Agent", input: "Freigegebene Ausgangsrevision", output: "Übersetzungsvorschlag", needs: [] },
+    { key: "impact", label: "Impact Agent", input: "Geänderte Revisionen", output: "Betroffene Handbücher", needs: [] },
+    { key: "publishing", label: "Publishing Agent", input: "Publikationsentwurf", output: "Vorprüfung und Renderingauftrag", needs: [] }
+  ];
+  var AGENT_RULES_DEFAULT = [
+    { id: "jira", label: "Keine Jira-Nummern im Kundentext", kind: "jira", on: true },
+    { id: "gap", label: "Keine Lücken-Markierungen (TBD, XXX, …)", kind: "gap", on: true },
+    { id: "status", label: "Geplantes/in Entwicklung nicht als verfügbar beschreiben", kind: "status", on: true },
+    { id: "intern", label: "Interne Vermerke kennzeichnen (nicht im Kundentext)", kind: "intern", on: true },
+    { id: "empty", label: "Kein Kapitel ohne Inhalt", kind: "empty", on: true },
+    { id: "image", label: "Bild-Platzhalter mit Bild belegt", kind: "image", on: true },
+    { id: "dup", label: "Keine doppelten Absätze (Dubletten)", kind: "dup", on: true }
+  ];
+  var AGENT_MARKETS_DEFAULT = "Deutschland, Österreich, Schweiz, Frankreich, Italien, Spanien, Niederlande, Belgien, Polen, Tschechien, Großbritannien";
+  var AGENT_ROLE_WORDS = { Retail: ["retail", "händler", "autohaus", "dealer", "verkäufer"], MO: ["market organisation", "marktorganisation", "mo-check", "mo-checks"], HQ: ["headquarter", "zentrale", "hq"], IT: ["administrator", "schnittstelle", "it-support", "systemadministration"], Markt: ["marktgesellschaft", "landesgesellschaft"] };
+  var AGENT_LANG_WORDS = {
+    DE: ["der", "die", "das", "und", "ist", "nicht", "mit", "für", "sie", "werden", "auf", "ein", "eine", "den", "wird", "im"],
+    EN: ["the", "and", "is", "not", "with", "for", "you", "are", "to", "of", "this", "be", "can", "in", "on"],
+    FR: ["le", "la", "les", "et", "est", "pour", "vous", "des", "une", "dans", "pas", "du"],
+    IT: ["il", "che", "per", "non", "una", "sono", "del", "della", "con", "gli"],
+    ES: ["el", "los", "que", "para", "con", "por", "las", "es", "una", "del"],
+    NL: ["het", "een", "niet", "voor", "met", "van", "zijn", "wordt", "deze"]
+  };
+  var agentBusy = false, agentAbort = null, agentTab = "extraction";
+  function agentNormalize(d) {
+    d = d && typeof d === "object" ? d : {};
+    var rules = Array.isArray(d.rules) && d.rules.length ? d.rules.filter(function (r) { return r && r.id && r.label; }) : AGENT_RULES_DEFAULT.map(function (r) { return Object.assign({}, r); });
+    return {
+      uploads: Array.isArray(d.uploads) ? d.uploads.filter(function (u) { return u && typeof u.id === "number" && Array.isArray(u.chapters); }) : [],
+      include: d.include && typeof d.include === "object" ? d.include : {},
+      rules: rules, markets: typeof d.markets === "string" ? d.markets : AGENT_MARKETS_DEFAULT,
+      sel: d.sel && typeof d.sel === "object" ? d.sel : { extraction: true, classification: true, quality: true, media: true, knowledge: true },
+      useAi: !!d.useAi, status: d.status && typeof d.status === "object" ? d.status : {}, log: Array.isArray(d.log) ? d.log : [],
+      blocks: Array.isArray(d.blocks) ? d.blocks : [], quality: d.quality || null, media: d.media || null, knowledge: d.knowledge || null,
+      translation: d.translation || null, impact: d.impact || null, publishing: d.publishing || null,
+      trSource: d.trSource || "", trLang: d.trLang || "EN", impA: d.impA || "", impB: d.impB || "", pubSource: d.pubSource || "", pubWord: d.pubWord !== false, pubPdf: !!d.pubPdf, pubIntern: !!d.pubIntern
+    };
+  }
+  function AG() { if (!app.agent) app.agent = agentNormalize(null); return app.agent; }
+  function agentDef(key) { return AGENT_DEFS.filter(function (a) { return a.key === key; })[0]; }
+
+  // ---------- Revisionen (FINAL-Staende + Review-Dokumente) als gemeinsame Quelle ----------
+  function agentFinalDoc(v) {
+    var chapters = v.chapters.map(function (c) { return { title: c.title, level: c.level || 1, text: c.markedText || c.text || "" }; }), ph = {};
+    v.chapters.forEach(function (c, ci) {
+      var ids = (c.screenIds || []).slice(), k = 0;
+      vrevPlaceholders(chapters[ci].text).forEach(function (p) { if (p.kind !== "bild") return; if (ids[k] != null) ph[ci + ":" + p.idx] = [ids[k]]; k++; });
+    });
+    var cfg = v.config || {}, varnt = cfg.variant || null;
+    return { key: "F:" + v.id, kind: "FINAL", label: "FINAL „" + v.name + "“ (" + v.status + ")", name: v.name, status: v.status, released: v.status !== "Entwurf",
+      chapters: chapters, ph: ph, lang: varnt ? varnt.lang : "DE", role: varnt ? varnt.role : "", ref: v };
+  }
+  function agentReviewDoc(d) {
+    return { key: "R:" + d.id, kind: "Review", label: "Review „" + d.name + "“ v" + d.version + " (" + d.status + ")", name: d.name + " v" + d.version, status: d.status,
+      released: d.status === "Freigegeben" || d.status === "Verteilt", chapters: d.chapters, ph: d.ph || {}, lang: d.lang || "DE", role: "", ref: d };
+  }
+  function agentRevisions() {
+    return app.final.versions.map(agentFinalDoc).concat(typeof VR === "function" ? VR().docs.map(agentReviewDoc) : []);
+  }
+  function agentRevision(key) { return agentRevisions().filter(function (r) { return r.key === key; })[0] || null; }
+  function agentSources() {
+    var a = AG(), out = a.uploads.map(function (u) { return { key: "U:" + u.id, kind: "Datei", label: "Datei „" + u.name + "“", name: u.name, chapters: u.chapters, ph: u.ph || {}, lang: "", role: "", ref: u }; });
+    out = out.concat(agentRevisions());
+    if (app.rovoEntries.length) out.push({ key: "rovo", kind: "Rovo", label: "Rovo Knowledge (" + app.rovoEntries.length + " Einträge)", name: "Rovo Knowledge", ph: {}, lang: "", role: "",
+      chapters: app.rovoEntries.map(function (e) { return { title: e.chapter || ("Rovo-Eintrag " + e.id), level: 1, text: [e.chatText ? "Frage: " + e.chatText : "", e.answerText].filter(Boolean).join("\n") }; }) });
+    return out;
+  }
+  function agentIncluded(src) { var inc = AG().include[src.key]; return inc === undefined ? src.kind === "Datei" : !!inc; }
+
+  // ---------- 1 Extraction ----------
+  function agentBlocksOf(src, startId) {
+    var out = [], id = startId;
+    function push(b) { b.id = ++id; b.src = src.key; b.srcName = src.name; out.push(b); return b; }
+    src.chapters.forEach(function (c, ci) {
+      push({ kind: "heading", chapter: c.title, level: c.level || 1, text: String(c.title || "").replace(/\*\*|__/g, ""), intern: false });
+      var phIdx = 0, tIdx = 0, list = null;
+      String(c.text || "").split("\n").forEach(function (line) {
+        var plain = vrevPlain(line).trim();
+        if (!plain) { list = null; return; }
+        var intern = line.indexOf("\u0001") !== -1 || VREV_RE.internalLine.test(plain), pub = vrevPublic(line).trim();
+        if (VREV_RE.placeholder.test(line)) {
+          var m = VREV_RE.placeholder.exec(line), key = ci + ":" + phIdx++;
+          list = null;
+          push({ kind: "image", chapter: c.title, text: plain, phKey: key, imgIds: ((src.ph || {})[key] || []).slice(), desc: ((m && (m[2] || m[4])) || "").trim(), intern: intern });
+          return;
+        }
+        if (plain === "[Tabelle]") {
+          var tb = (c.tables || [])[tIdx++];
+          list = null;
+          push({ kind: "table", chapter: c.title, text: tb ? tb.rows.map(function (r) { return r.join(" | "); }).join("\n") : "", intern: intern });
+          return;
+        }
+        if (RICH_LIST_RE.test(plain)) {
+          if (list && !intern) { list.text += "\n" + plain; return; }
+          list = push({ kind: "list", chapter: c.title, text: plain, intern: intern });
+          return;
+        }
+        list = null;
+        var tag = MANUAL_CALLOUT_TAGS.filter(function (t) { return plain.indexOf(t) === 0; })[0];
+        // intern = ganze Zeile intern (Kommentarbereich ueber die ganze Zeile oder Vermerk-Zeile wie "TODO:"); teilweise interne Zeilen behalten ihren oeffentlichen Teil in pub
+        var whole = !pub || VREV_RE.internalLine.test(plain);
+        push({ kind: tag ? "callout" : "paragraph", chapter: c.title, text: plain, pub: !whole && pub !== plain ? pub : undefined, intern: intern && whole });
+      });
+    });
+    return out;
+  }
+  async function agentRunExtraction() {
+    var srcs = agentSources().filter(agentIncluded);
+    if (!srcs.length) throw new Error("Keine Quellen ausgewählt – unter „Eingaben“ Dateien hochladen oder Quellen ankreuzen.");
+    var blocks = [];
+    srcs.forEach(function (s) { blocks = blocks.concat(agentBlocksOf(s, blocks.length)); });
+    var a = AG();
+    a.blocks = blocks;
+    a.quality = null; a.media = null; a.knowledge = null;
+    ["classification", "quality", "media", "knowledge"].forEach(function (k) { if (a.status[k]) a.status[k].stale = true; });
+    var kinds = {};
+    blocks.forEach(function (b) { kinds[b.kind] = (kinds[b.kind] || 0) + 1; });
+    var labels = { heading: "Überschriften", paragraph: "Absätze", list: "Listen", table: "Tabellen", image: "Bilder", callout: "Hinweise" };
+    return { s: "ok", summary: blocks.length + " Blöcke aus " + srcs.length + " Quelle(n): " + Object.keys(kinds).map(function (k) { return kinds[k] + " " + (labels[k] || k); }).join(", ") };
+  }
+
+  // ---------- 2 Classification ----------
+  function agentLang(text) {
+    var words = String(text || "").toLowerCase().match(/[a-zäöüßéèàùç]+/g) || [], best = "", bestN = 0, second = 0;
+    Object.keys(AGENT_LANG_WORDS).forEach(function (l) {
+      var set = AGENT_LANG_WORDS[l], n = words.filter(function (w) { return set.indexOf(w) !== -1; }).length;
+      if (n > bestN) { second = bestN; bestN = n; best = l; } else if (n > second) second = n;
+    });
+    return bestN >= 2 && bestN > second ? best : "";
+  }
+  function agentMarkets() { return AG().markets.split(/[,;\n]/).map(function (m) { return m.trim(); }).filter(Boolean); }
+  function agentClassifyBlock(b, src) {
+    var hay = (b.chapter + "\n" + b.text).toLowerCase(), res = { domain: "", sub: "", role: "", market: "", lang: "", via: "Regel" };
+    // Domaene: Zuordnung aus VARIANTE (Kapitel) oder Domaenen-/Unterdomaenen-Namen im Text
+    var own = typeof vrOwnMap === "function" ? vrOwnMap(b.chapter) : null;
+    if (own && own.dom) { res.domain = own.dom; res.sub = own.sub || ""; }
+    else {
+      var best = null;
+      VS().domains.forEach(function (d) {
+        var n = (hay.split(d.name.toLowerCase()).length - 1) * 2, sub = "";
+        d.subs.forEach(function (sname) { var k = hay.split(sname.toLowerCase()).length - 1; if (k) { n += k; sub = sub || sname; } });
+        if (n && (!best || n > best.n)) best = { n: n, dom: d.name, sub: sub };
+      });
+      if (best) { res.domain = best.dom; res.sub = best.sub; }
+    }
+    // Rolle: explizite Markierung [Rolle: …], sonst Metadaten der Quelle, sonst Schluesselwoerter
+    var cond = VR_COND_RE.exec(b.text);
+    if (cond && !cond[1]) res.role = cond[2].split(/[,;/]/)[0].trim();
+    else if (src && src.role) res.role = src.role;
+    else {
+      Object.keys(AGENT_ROLE_WORDS).some(function (r) { if (AGENT_ROLE_WORDS[r].some(function (w) { return hay.indexOf(w) !== -1; })) { res.role = r; return true; } return false; });
+    }
+    agentMarkets().some(function (m) { if (hay.indexOf(m.toLowerCase()) !== -1) { res.market = m; return true; } return false; });
+    res.lang = agentLang(b.text) || (src && src.lang) || "";
+    return res;
+  }
+  async function agentRunClassification(signal) {
+    var a = AG(), srcs = {}, n = 0;
+    agentSources().forEach(function (s) { srcs[s.key] = s; });
+    // Sprache je Kapitel aus dem ganzen Kapiteltext (kurze Bloecke allein sind unsicher)
+    var chapLang = {};
+    a.blocks.forEach(function (b) { var k = b.src + "|" + b.chapter; chapLang[k] = (chapLang[k] || "") + " " + b.text; });
+    Object.keys(chapLang).forEach(function (k) { chapLang[k] = agentLang(chapLang[k]); });
+    a.blocks.forEach(function (b) {
+      var c = agentClassifyBlock(b, srcs[b.src]);
+      if (!agentLang(b.text)) c.lang = chapLang[b.src + "|" + b.chapter] || c.lang;
+      b.cls = c; n++;
+    });
+    var aiN = 0;
+    if (a.useAi && sampleApi) {
+      var cand = a.blocks.filter(function (b) { return b.kind !== "heading" && b.kind !== "image"; }).slice(0, 60);
+      if (cand.length) {
+        var doms = VS().domains.map(function (d) { return d.name; }), roles = FINAL_ROLE_OPTIONS, mk = agentMarkets(), langs = VARIANT_LANGS.map(function (l) { return l[0]; });
+        var res = await sampleApi(ragPromptFor("agentClassify") + "\n\nERLAUBT: Domänen: " + (doms.join(", ") || "(keine)") + " | Rollen: " + roles.join(", ") + " | Märkte: " + mk.join(", ") + " | Sprachen: " + langs.join(", ") +
+          "\n\nBLÖCKE:\n" + cand.map(function (b) { return "#" + b.id + " [" + b.chapter + "] " + truncate(b.text.replace(/\s+/g, " "), 300); }).join("\n"), { modelTier: "default", cache: false, signal: signal });
+        var obj = rlParseJsonObject(res && res.text) || {};
+        cand.forEach(function (b) {
+          var x = obj[String(b.id)] || obj["#" + b.id];
+          if (!x || typeof x !== "object") return;
+          var changed = false;
+          if (x.domain && doms.indexOf(x.domain) !== -1) { b.cls.domain = x.domain; changed = true; }
+          if (x.role && roles.indexOf(x.role) !== -1) { b.cls.role = x.role; changed = true; }
+          if (x.market && mk.indexOf(x.market) !== -1) { b.cls.market = x.market; changed = true; }
+          if (x.lang && langs.indexOf(x.lang) !== -1) { b.cls.lang = x.lang; changed = true; }
+          if (changed) { b.cls.via = "KI"; aiN++; }
+        });
+      }
+    }
+    var cnt = function (f) { return a.blocks.filter(function (b) { return b.cls && b.cls[f]; }).length; };
+    return { s: "ok", summary: n + " Blöcke klassifiziert – Domäne: " + cnt("domain") + ", Rolle: " + cnt("role") + ", Markt: " + cnt("market") + ", Sprache: " + cnt("lang") + (aiN ? " · " + aiN + " per KI verfeinert" : "") };
+  }
+
+  // ---------- 3 Quality ----------
+  function agentShingles(text) {
+    var w = String(text || "").toLowerCase().replace(/[^a-zäöüß0-9 ]+/g, " ").split(/\s+/).filter(Boolean), set = {};
+    for (var i = 0; i + 2 < w.length; i++) set[w[i] + " " + w[i + 1] + " " + w[i + 2]] = true;
+    return set;
+  }
+  function agentJaccard(a, b) {
+    var ka = Object.keys(a), kb = Object.keys(b), inter = 0;
+    if (!ka.length || !kb.length) return 0;
+    ka.forEach(function (k) { if (b[k]) inter++; });
+    return inter / (ka.length + kb.length - inter);
+  }
+  function agentNormTitle(t) { return String(t || "").replace(/^\s*\d+(\.\d+)*\.?\s*/, "").replace(/\*\*|__/g, "").trim().toLowerCase(); }
+  async function agentRunQuality(signal) {
+    var a = AG(), rules = {}, f = [];
+    a.rules.forEach(function (r) { if (r.on) rules[r.kind === "term" ? r.id : r.kind] = r; });
+    function add(type, rule, blocks, text) { f.push({ type: type, rule: rule, blockIds: blocks.map(function (b) { return b.id; }), chapter: blocks[0] ? blocks[0].chapter : "", src: blocks[0] ? blocks[0].srcName : "", text: text, via: "Regel" }); }
+    var body = a.blocks.filter(function (b) { return b.kind !== "heading"; });
+    body.forEach(function (b) {
+      var pub = b.pub != null ? b.pub : (b.intern ? "" : b.text);
+      if (rules.jira && (pub.match(ROVO_JIRA_KEY_RE) || []).length) add("Regel", rules.jira.label, [b], "Jira-Nummer im Kundentext: " + (pub.match(ROVO_JIRA_KEY_RE) || []).join(", "));
+      if (rules.gap && /\b(XXX|TBD)\b|\[\s*(\.\.\.|…)\s*\]|^\s*(\.\.\.|…)\s*$/.test(pub)) add("Lücke", rules.gap.label, [b], "Lücken-Markierung: „" + truncate(pub, 80) + "“");
+      if (rules.status && VREV_RE.planned.test(pub) && VREV_RE.avail.test(pub)) add("Konflikt", rules.status.label, [b], "Geplantes/in Entwicklung als verfügbar beschrieben: „" + truncate(pub, 100) + "“");
+      if (rules.intern && b.intern) add("Regel", rules.intern.label, [b], "Interner Vermerk: „" + truncate(b.text, 80) + "“ – nicht für Kunden");
+      if (rules.image && b.kind === "image" && !(b.imgIds || []).length) add("Lücke", rules.image.label, [b], "Bild-Platzhalter ohne Bild: " + b.text);
+      a.rules.filter(function (r) { return r.on && r.kind === "term" && r.term; }).forEach(function (r) {
+        if (pub.toLowerCase().indexOf(r.term.toLowerCase()) !== -1) add("Regel", r.label, [b], "Verbotener Begriff „" + r.term + "“: „" + truncate(pub, 80) + "“");
+      });
+    });
+    if (rules.empty) {
+      a.blocks.forEach(function (b, i) {
+        if (b.kind !== "heading") return;
+        var next = a.blocks[i + 1];
+        if (!next || next.kind === "heading" && next.src === b.src && (next.level || 1) <= (b.level || 1) || next.src !== b.src) add("Lücke", rules.empty.label, [b], "Kapitel „" + b.text + "“ ohne Inhalt");
+      });
+    }
+    if (rules.dup) {
+      var paras = body.filter(function (b) { return (b.kind === "paragraph" || b.kind === "list") && b.text.split(/\s+/).length >= 8; }), sh = paras.map(function (b) { return agentShingles(b.text); }), seen = {};
+      for (var i = 0; i < paras.length; i++) for (var j = i + 1; j < paras.length; j++) {
+        if (seen[j]) continue;
+        var sim = agentJaccard(sh[i], sh[j]);
+        if (sim >= 0.8) { seen[j] = true; add("Dublette", rules.dup.label, [paras[i], paras[j]], Math.round(sim * 100) + " % gleich: „" + truncate(paras[i].text, 70) + "“ (" + paras[i].srcName + " › " + paras[i].chapter + " / " + paras[j].srcName + " › " + paras[j].chapter + ")"); }
+      }
+    }
+    // Konflikt ueber Quellen: gleiches Kapitel, unterschiedliche Statusangaben
+    var byTitle = {};
+    a.blocks.forEach(function (b) {
+      if (b.kind === "heading") return;
+      var t = agentNormTitle(b.chapter), pub = b.pub != null ? b.pub : (b.intern ? "" : b.text);
+      VREV_STATUS_DEFS.forEach(function (sd) { if (sd.re.test(pub)) { var e = byTitle[t] = byTitle[t] || {}; (e[sd.key] = e[sd.key] || []).push(b); } });
+    });
+    Object.keys(byTitle).forEach(function (t) {
+      var e = byTitle[t], keys = Object.keys(e);
+      if (e["verfügbar"] && (e["geplant"] || e["in Entwicklung"])) {
+        var bs = e["verfügbar"].concat(e["geplant"] || [], e["in Entwicklung"] || []), srcN = {};
+        bs.forEach(function (b) { srcN[b.src] = true; });
+        if (Object.keys(srcN).length > 1) add("Konflikt", "Statusangaben über Quellen einheitlich", bs, "Kapitel „" + bs[0].chapter + "“: " + keys.join(" vs. ") + " in verschiedenen Quellen");
+      }
+    });
+    var aiN = 0;
+    if (a.useAi && sampleApi) {
+      var chs = {}, order = [];
+      body.forEach(function (b) { var k = b.srcName + " › " + b.chapter; if (!chs[k]) { chs[k] = []; order.push(k); } if (!b.intern) chs[k].push(b.pub != null ? b.pub : b.text); });
+      var text = order.slice(0, 40).map(function (k) { return "## " + k + "\n" + truncate(chs[k].join("\n"), 1500); }).join("\n\n");
+      var res = await sampleApi(ragPromptFor("agentQuality") + "\n\nINHALTE:\n" + truncate(text, 30000), { modelTier: "default", cache: false, signal: signal });
+      var t = String((res && res.text) || ""), x = t.indexOf("["), y = t.lastIndexOf("]"), arr = null;
+      try { arr = x >= 0 && y > x ? JSON.parse(t.slice(x, y + 1)) : null; } catch (e) { arr = null; }
+      (Array.isArray(arr) ? arr : []).slice(0, 30).forEach(function (it) {
+        if (!it || typeof it !== "object" || !it.text) return;
+        var type = ["Lücke", "Konflikt", "Dublette"].indexOf(it.type) !== -1 ? it.type : "Lücke";
+        f.push({ type: type, rule: "KI-Prüfung", blockIds: [], chapter: String(it.chapter || ""), src: "", text: String(it.text), via: "KI" });
+        aiN++;
+      });
+    }
+    a.quality = { at: nowLabel(), findings: f };
+    var c = function (t) { return f.filter(function (x) { return x.type === t; }).length; };
+    return { s: f.length ? "warn" : "ok", summary: c("Lücke") + " Lücke(n), " + c("Konflikt") + " Konflikt(e), " + c("Dublette") + " Dublette(n), " + c("Regel") + " Regelverstoß/-verstöße" + (aiN ? " · " + aiN + " per KI" : "") };
+  }
+
+  // ---------- 4 Media ----------
+  function agentCaptionFor(img, ctx) {
+    var ocr = String(img.ocrText || "").split("\n").map(function (l) { return l.trim(); }).filter(function (l) { return l.length >= 6; })[0] || "";
+    var base = (img.description || "").trim() || ocr || ctx || "";
+    return base ? truncate(base.replace(/\s+/g, " "), 90) : "";
+  }
+  async function agentRunMedia(signal) {
+    var a = AG(), pool = app.uploadedImages.filter(function (i) { return i.dataUrl; }), items = [], ix = pool.length ? screenPhIndex(pool) : null;
+    a.blocks.forEach(function (b, i) {
+      if (b.kind !== "image") return;
+      var prev = null;
+      for (var k = i - 1; k >= 0 && a.blocks[k].src === b.src; k--) if (a.blocks[k].kind === "paragraph" || a.blocks[k].kind === "list") { prev = a.blocks[k]; break; }
+      var ctx = prev ? prev.text : "", have = (b.imgIds || []).slice(), sugg = [];
+      if (!have.length && ix) sugg = vrevRank({ chapter: b.chapter, desc: b.desc || ctx }, pool, ix).filter(function (x) { return x.pct >= 25; }).slice(0, 3).map(function (x) { return { id: x.img.id, pct: x.pct }; });
+      var ids = have.length ? have : sugg.map(function (s) { return s.id; });
+      items.push({ blockId: b.id, chapter: b.chapter, src: b.srcName, placeholder: b.text, context: truncate(ctx, 160), assigned: have, suggestions: sugg,
+        captions: ids.map(function (id) { var img = screenPhImgById(id); return { id: id, caption: img ? agentCaptionFor(img, b.desc || b.chapter) : "", via: "Regel" }; }) });
+    });
+    var aiN = 0;
+    if (a.useAi && sampleApi) {
+      var caps = [];
+      items.forEach(function (it) { it.captions.forEach(function (c) { var img = screenPhImgById(c.id); if (img) caps.push({ it: it, c: c, img: img }); }); });
+      caps = caps.slice(0, 30);
+      if (caps.length) {
+        var res = await sampleApi(ragPromptFor("agentMedia") + "\n\nBILDER:\n" + caps.map(function (x) {
+          return "ID " + x.img.id + " | Kapitel: " + x.it.chapter + " | Platzhalter: " + x.it.placeholder + " | Textumfeld: " + truncate(x.it.context, 200) + " | OCR: " + truncate(String(x.img.ocrText || "").replace(/\s+/g, " "), 200) + " | bisher: " + (x.img.description || "–");
+        }).join("\n"), { modelTier: "default", cache: false, signal: signal });
+        var obj = rlParseJsonObject(res && res.text) || {};
+        caps.forEach(function (x) { var v = obj[String(x.img.id)]; if (typeof v === "string" && v.trim()) { x.c.caption = truncate(v.trim(), 120); x.c.via = "KI"; aiN++; } });
+      }
+    }
+    a.media = { at: nowLabel(), items: items, pool: pool.length };
+    var open = items.filter(function (it) { return !it.assigned.length && !it.suggestions.length; }).length;
+    return { s: open ? "warn" : "ok", summary: items.length + " Bild-Platzhalter: " + items.filter(function (it) { return it.assigned.length; }).length + " belegt, " + items.filter(function (it) { return !it.assigned.length && it.suggestions.length; }).length + " mit Vorschlag, " + open + " ohne passendes Bild · " + items.reduce(function (n, it) { return n + it.captions.length; }, 0) + " Untertitelvorschläge" + (aiN ? " (" + aiN + " per KI)" : "") + " · Bildarchiv: " + pool.length };
+  }
+
+  // ---------- 5 Knowledge ----------
+  async function agentRunKnowledge(signal) {
+    var a = AG(), bad = {}, groups = {}, order = [];
+    ((a.quality && a.quality.findings) || []).forEach(function (f) { if (f.type !== "Dublette") f.blockIds.forEach(function (id) { bad[id] = true; }); });
+    a.blocks.forEach(function (b) {
+      if (b.kind === "heading" || b.kind === "image" || b.intern || bad[b.id]) return;
+      var k = b.src + "|" + b.chapter;
+      if (!groups[k]) { groups[k] = []; order.push(k); }
+      groups[k].push(b);
+    });
+    var items = [], seenTitle = {};
+    order.forEach(function (k) {
+      var bs = groups[k], text = bs.map(function (b) { return b.pub != null ? b.pub : b.text; }).join("\n").replace(/\*\*|__/g, "");
+      if (text.split(/\s+/).length < 8) return;
+      var title = String(bs[0].chapter).replace(/^\s*\d+(\.\d+)*\.?\s*/, "").replace(/\*\*|__/g, ""), norm = title.toLowerCase();
+      var type = bs.some(function (b) { return b.kind === "list" && /^\d+\./.test(b.text); }) ? "Anleitung" : /\b(bedeutet|bezeichnet|versteht man|ist ein[e]?)\b/i.test(text) ? "Begriff" : "Funktion";
+      var maj = function (f) { var c = {}; bs.forEach(function (b) { var v = b.cls && b.cls[f]; if (v) c[v] = (c[v] || 0) + 1; }); return Object.keys(c).sort(function (x, y) { return c[y] - c[x]; })[0] || ""; };
+      var summary = (text.replace(/\n+/g, " ").match(/[^.!?]+[.!?]/g) || [text]).slice(0, 2).join(" ").trim();
+      items.push({ id: items.length + 1, title: title, type: type, summary: truncate(summary, 320), domain: maj("domain"), role: maj("role"), market: maj("market"), lang: maj("lang"),
+        sources: [bs[0].srcName + " › " + bs[0].chapter], blockIds: bs.map(function (b) { return b.id; }), duplicateOf: seenTitle[norm] || null, via: "Regel", adopted: "" });
+      if (!seenTitle[norm]) seenTitle[norm] = items.length;
+      // Begriffe aus Fettungen
+      (text.match(/\*\*([^*]{3,40})\*\*/g) || []).forEach(function () { /* Fettungen sind oben bereits entfernt */ });
+    });
+    // gleiche Titel aus mehreren Quellen zusammenfuehren
+    items.forEach(function (it) { if (it.duplicateOf) { var main = items[it.duplicateOf - 1]; main.sources = main.sources.concat(it.sources); main.blockIds = main.blockIds.concat(it.blockIds); } });
+    items = items.filter(function (it) { return !it.duplicateOf; });
+    items.forEach(function (it, i) { it.id = i + 1; });
+    var aiN = 0;
+    if (a.useAi && sampleApi && items.length) {
+      var res = await sampleApi(ragPromptFor("agentKnowledge") + "\n\nOBJEKTE:\n" + items.slice(0, 30).map(function (it) {
+        var txt = it.blockIds.map(function (id) { var b = a.blocks.filter(function (x) { return x.id === id; })[0]; return b ? (b.pub != null ? b.pub : b.text) : ""; }).join(" ");
+        return "#" + it.id + " " + it.title + ": " + truncate(txt.replace(/\s+/g, " "), 700);
+      }).join("\n"), { modelTier: "default", cache: false, signal: signal });
+      var obj = rlParseJsonObject(res && res.text) || {};
+      items.forEach(function (it) {
+        var x = obj[String(it.id)] || obj["#" + it.id];
+        if (!x || typeof x !== "object") return;
+        if (x.summary) it.summary = truncate(String(x.summary), 400);
+        if (x.title) it.title = truncate(String(x.title), 100);
+        if (["Funktion", "Anleitung", "Begriff", "FAQ", "Regel"].indexOf(x.type) !== -1) it.type = x.type;
+        it.via = "KI"; aiN++;
+      });
+    }
+    a.knowledge = { at: nowLabel(), items: items, excluded: Object.keys(bad).length };
+    return { s: "ok", summary: items.length + " Wissensobjekt(e) vorgeschlagen (" + ["Funktion", "Anleitung", "Begriff"].map(function (t) { return items.filter(function (i) { return i.type === t; }).length + " " + t; }).join(", ") + ")" + (Object.keys(bad).length ? " · " + Object.keys(bad).length + " Block/Blöcke mit Qualitätsbefund ausgelassen" : "") + (aiN ? " · " + aiN + " per KI verfeinert" : "") };
+  }
+
+  // ---------- 6 Translation ----------
+  async function agentRunTranslation(signal) {
+    var a = AG(), rev = agentRevision(a.trSource), lang = a.trLang;
+    if (!rev) throw new Error("Keine Ausgangsrevision gewählt (Eingaben › Translation).");
+    if (!rev.released) throw new Error("„" + rev.label + "“ ist nicht freigegeben – nur geprüfte/veröffentlichte Stände bzw. freigegebene Review-Dokumente werden übersetzt.");
+    if (rev.lang === lang) throw new Error("Ausgangs- und Zielsprache sind gleich (" + lang + ").");
+    var out = [], tr = 0, tm = 0, kept = 0;
+    for (var i = 0; i < rev.chapters.length; i++) {
+      if (signal && signal.aborted) throw Object.assign(new Error("gestoppt"), { code: "cancelled" });
+      var c = rev.chapters[i], text = c.text;
+      if (!vrevWords(text)) { out.push({ title: c.title, level: c.level, text: text, tables: c.tables, via: "–" }); continue; }
+      var gl = variantGlossaryFor(lang, c.title + "\n" + text), key = variantTmKey(lang, c.title, text, gl), hit = variantTmGet(lang, key);
+      if (hit) { out.push({ title: hit.title || c.title, level: c.level, text: hit.text, tables: c.tables, via: "Speicher" }); tm++; continue; }
+      if (!sampleApi) { out.push({ title: c.title, level: c.level, text: text, tables: c.tables, via: "unverändert (keine KI)" }); kept++; continue; }
+      els.agentStatus.textContent = "Translation Agent: Kapitel " + (i + 1) + " von " + rev.chapters.length + " …";
+      var res = await sampleApi(ragPromptFor("variantTranslate") + "\n\nZIELSPRACHE: " + variantLangName(lang) + " (" + lang + ")" +
+        (gl.length ? "\n\nGLOSSAR (verbindlich – diese Übersetzungen verwenden):\n" + gl.map(function (g) { return "- " + g.src + " → " + g.target; }).join("\n") : "") +
+        "\n\nTITEL: " + c.title + "\n\nTEXT:\n" + truncate(text.replace(/\u0001/g, "[[INTERN]]").replace(/\u0002/g, "[[/INTERN]]"), 20000), { modelTier: "default", cache: false, signal: signal });
+      var t = variantParseTranslation(res && res.text);
+      if (t && t.text) {
+        var back = t.text.replace(/\[\[INTERN\]\]/g, "\u0001").replace(/\[\[\/INTERN\]\]/g, "\u0002");
+        variantTmPut(lang, key, { title: t.title || c.title, text: back, at: nowLabel(), source: "KI" });
+        out.push({ title: t.title || c.title, level: c.level, text: back, tables: c.tables, via: "KI" }); tr++;
+      } else { out.push({ title: c.title, level: c.level, text: text, tables: c.tables, via: "unverändert" }); kept++; }
+    }
+    a.translation = { at: nowLabel(), sourceKey: rev.key, sourceLabel: rev.label, sourceName: rev.name, lang: lang, chapters: out, ph: JSON.parse(JSON.stringify(rev.ph || {})), adopted: "" };
+    return { s: kept ? "warn" : "ok", summary: "Übersetzungsvorschlag " + variantLangName(lang) + " für „" + rev.name + "“: " + tr + " Kapitel per KI, " + tm + " aus dem Übersetzungsspeicher" + (kept ? ", " + kept + " unverändert" + (!sampleApi ? " (KI in dieser Ansicht nicht verfügbar)" : "") : "") };
+  }
+
+  // ---------- 7 Impact ----------
+  function agentTerms(lines) {
+    var cnt = {};
+    lines.forEach(function (l) { (vrevPlain(l).toLowerCase().match(/[a-zäöüß][a-zäöüß-]{5,}/g) || []).forEach(function (w) { if (SCREENPH_STOP.indexOf(w) === -1) cnt[w] = (cnt[w] || 0) + 1; }); });
+    return Object.keys(cnt).sort(function (x, y) { return cnt[y] - cnt[x]; }).slice(0, 10);
+  }
+  async function agentRunImpact() {
+    var a = AG(), A = agentRevision(a.impA), B = agentRevision(a.impB);
+    if (!A || !B) throw new Error("Zwei Revisionen wählen (Eingaben › Impact: alt und neu).");
+    if (A.key === B.key) throw new Error("Alte und neue Revision sind identisch.");
+    var mapA = {}, changed = [], changedLines = [];
+    A.chapters.forEach(function (c) { mapA[agentNormTitle(c.title)] = c; });
+    var seenB = {};
+    B.chapters.forEach(function (c) {
+      var k = agentNormTitle(c.title), o = mapA[k];
+      seenB[k] = true;
+      if (!o) { changed.push({ title: c.title, kind: "neu", add: vrevPlain(c.text).split("\n").filter(Boolean).length, rem: 0 }); changedLines = changedLines.concat(vrevPlain(c.text).split("\n")); return; }
+      var d = diffLines(vrevPlain(o.text), vrevPlain(c.text)), ad = d.filter(function (x) { return x.type === "added"; }), rm = d.filter(function (x) { return x.type === "removed"; });
+      if (ad.length || rm.length) { changed.push({ title: c.title, kind: "geändert", add: ad.length, rem: rm.length }); changedLines = changedLines.concat(ad.concat(rm).map(function (x) { return x.text; })); }
+    });
+    A.chapters.forEach(function (c) { if (!seenB[agentNormTitle(c.title)]) { changed.push({ title: c.title, kind: "entfernt", add: 0, rem: vrevPlain(c.text).split("\n").filter(Boolean).length }); changedLines = changedLines.concat(vrevPlain(c.text).split("\n")); } });
+    var terms = agentTerms(changedLines), titles = changed.map(function (c) { return agentNormTitle(c.title); }), affected = [];
+    agentRevisions().forEach(function (r) {
+      if (r.key === A.key || r.key === B.key) return;
+      var hitCh = [], hitTerms = {};
+      r.chapters.forEach(function (c) {
+        var low = (c.title + "\n" + vrevPlain(c.text)).toLowerCase(), tHits = terms.filter(function (t) { return low.indexOf(t) !== -1; });
+        if (titles.indexOf(agentNormTitle(c.title)) !== -1 || tHits.length >= 2) { hitCh.push(c.title); tHits.forEach(function (t) { hitTerms[t] = true; }); }
+      });
+      if (!hitCh.length) return;
+      var v = r.kind === "FINAL" ? r.ref : null, variant = v && v.config && v.config.variant ? "Variante " + v.config.variant.role + " · " + v.config.variant.lang : "";
+      var sameTitle = hitCh.filter(function (t) { return titles.indexOf(agentNormTitle(t)) !== -1; }).length;
+      affected.push({ key: r.key, label: r.label, kind: r.kind + (variant ? " (" + variant + ")" : ""), chapters: hitCh, terms: Object.keys(hitTerms), level: sameTitle ? "hoch" : "mittel",
+        reason: (sameTitle ? sameTitle + " gleichnamige(s) Kapitel" : "") + (sameTitle && Object.keys(hitTerms).length ? " · " : "") + (Object.keys(hitTerms).length ? "Begriffe: " + Object.keys(hitTerms).slice(0, 5).join(", ") : "") });
+    });
+    affected.sort(function (x, y) { return (x.level === "hoch" ? 0 : 1) - (y.level === "hoch" ? 0 : 1) || y.chapters.length - x.chapters.length; });
+    a.impact = { at: nowLabel(), a: A.label, b: B.label, changed: changed, terms: terms, affected: affected };
+    return { s: affected.length ? "warn" : "ok", summary: changed.length + " geänderte(s) Kapitel zwischen „" + A.name + "“ und „" + B.name + "“ → " + affected.length + " betroffene(s) Handbuch/Handbücher" + (affected.filter(function (x) { return x.level === "hoch"; }).length ? " (" + affected.filter(function (x) { return x.level === "hoch"; }).length + " hoch)" : "") };
+  }
+
+  // ---------- 8 Publishing ----------
+  function agentPubDoc(rev) {
+    if (rev.kind === "Review") return rev.ref;
+    return { name: rev.name, version: "Stand", status: rev.status, chapters: rev.chapters, ph: rev.ph, legend: false, designKey: "", wordDesign: null, lang: rev.lang };
+  }
+  async function agentRunPublishing() {
+    var a = AG(), rev = agentRevision(a.pubSource);
+    if (!rev) throw new Error("Keinen Publikationsentwurf gewählt (Eingaben › Publishing).");
+    if (!a.pubWord && !a.pubPdf) throw new Error("Mindestens ein Format wählen (Word oder PDF).");
+    var checks = [], jira = 0, intern = 0, gaps = [], empty = [], noImg = 0, conflicts = 0;
+    rev.chapters.forEach(function (c, ci) {
+      var words = vrevWords(String(c.text || "").split("\n").filter(function (l) { return !VREV_RE.placeholder.test(l); }).join("\n"));
+      if (!words && !(c.tables || []).length) empty.push(c.title);
+      String(c.text || "").split("\n").forEach(function (line) {
+        var pub = vrevPublic(line);
+        jira += (vrevPlain(line).match(ROVO_JIRA_KEY_RE) || []).length;
+        if (line.indexOf("\u0001") !== -1 || VREV_RE.internalLine.test(vrevPlain(line))) intern++;
+        if (/\b(XXX|TBD)\b|\[\s*(\.\.\.|…)\s*\]/.test(pub)) gaps.push(c.title);
+        if (VREV_RE.planned.test(pub) && VREV_RE.avail.test(pub)) conflicts++;
+      });
+      vrevPlaceholders(c.text).forEach(function (p) { if (!((rev.ph || {})[ci + ":" + p.idx] || []).length) noImg++; });
+    });
+    var put = function (label, s, d) { checks.push({ label: label, s: s, d: d }); };
+    put("Freigabestatus", rev.released ? "ok" : "warn", rev.released ? "Status „" + rev.status + "“" : "Status „" + rev.status + "“ – noch nicht freigegeben");
+    put("Leere Kapitel", empty.length ? "fail" : "ok", empty.length ? empty.length + ": " + empty.slice(0, 3).join(", ") : "keine");
+    put("Lücken-Markierungen", gaps.length ? "fail" : "ok", gaps.length ? gaps.length + " (TBD/XXX/…) in " + gaps.slice(0, 3).join(", ") : "keine");
+    put("Statusangaben", conflicts ? "fail" : "ok", conflicts ? conflicts + " Stelle(n): Geplantes als verfügbar beschrieben" : "widerspruchsfrei");
+    put("Jira-Nummern", jira ? "warn" : "ok", jira ? jira + " – werden in der Verteilfassung entfernt" : "keine");
+    put("Interne Vermerke", intern ? "warn" : "ok", intern ? intern + " – " + (a.pubIntern ? "in der internen Fassung enthalten" : "werden in der Verteilfassung entfernt") : "keine");
+    put("Bilder", noImg ? "warn" : "ok", noImg ? noImg + " Platzhalter ohne Bild (werden ausgelassen)" : "alle Platzhalter belegt");
+    if (rev.kind === "Review") {
+      var d = rev.ref, steps = vrevStepsDone(d);
+      put("Review", steps === 7 && (d.score == null || d.score >= 70) ? "ok" : "warn", steps + "/7 Stufen abgeschlossen" + (d.score != null ? ", Qualität " + d.score : ""));
+    }
+    var qf = ((a.quality && a.quality.findings) || []).filter(function (f) { return a.blocks.some(function (b) { return b.src === rev.key && f.blockIds.indexOf(b.id) !== -1; }); });
+    if (a.quality) put("Quality Agent", qf.some(function (f) { return f.type === "Konflikt"; }) ? "fail" : qf.length ? "warn" : "ok", qf.length ? qf.length + " Befund(e) zu dieser Quelle" : "keine Befunde zu dieser Quelle");
+    var verdict = checks.some(function (c) { return c.s === "fail"; }) ? "blockiert" : checks.some(function (c) { return c.s === "warn"; }) ? "bereit mit Hinweisen" : "bereit";
+    var doc = agentPubDoc(rev), formats = (a.pubWord ? ["Word"] : []).concat(a.pubPdf ? ["PDF"] : []);
+    var order = {
+      auftrag: "R-" + dateStampForFilename().replace(/-/g, "") + "-" + (AG().log.length + 1), erstellt: nowLabel(), dokument: rev.name, quelle: rev.label, revision: rev.key,
+      fassung: a.pubIntern ? "intern (mit Vermerken)" : "Verteilung (ohne interne Vermerke, ohne Jira-Nummern)", formate: formats,
+      design: rev.kind === "Review" ? vrevDesignLabel(rev.ref) : "Design aus FINAL", sprache: rev.lang || "DE", kapitel: rev.chapters.length,
+      bilder: Object.keys(rev.ph || {}).reduce(function (n, k) { return n + rev.ph[k].length; }, 0),
+      dateien: formats.map(function (f) { return vrevFileBase(doc) + (a.pubIntern && f === "Word" ? "_INTERN" : "") + (f === "Word" ? ".docx" : ".pdf"); }),
+      vorpruefung: verdict
+    };
+    a.publishing = { at: nowLabel(), sourceKey: rev.key, label: rev.label, checks: checks, verdict: verdict, order: order, rendered: "" };
+    return { s: verdict === "blockiert" ? "error" : verdict === "bereit" ? "ok" : "warn", summary: "Vorprüfung „" + rev.name + "“: " + verdict + " · Renderingauftrag " + order.auftrag + " (" + formats.join(" + ") + ")" };
+  }
+  async function agentRender() {
+    var a = AG(), p = a.publishing, rev = p && agentRevision(p.sourceKey);
+    if (!rev) return;
+    if (p.verdict === "blockiert" && !(await confirmDialog("Die Vorprüfung meldet „blockiert“. Trotzdem rendern?", "Rendern"))) return;
+    var doc = agentPubDoc(rev), n = 0;
+    try {
+      for (var i = 0; i < p.order.formate.length; i++) {
+        var f = p.order.formate[i], fn = p.order.dateien[i];
+        var blob = f === "Word" ? await vrevBuildWord(doc, a.pubIntern, false) : await vrevBuildPdf(doc);
+        if (await saveOrWarn(fn, blob)) n++;
+      }
+      p.rendered = nowLabel() + " (" + n + " Datei(en))";
+      addLog("AGENT: Renderingauftrag " + p.order.auftrag + " ausgeführt – " + n + " Datei(en).");
+      renderAgent();
+    } catch (err) { showToast("Rendering fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  }
+
+  // ---------- Orchestrator ----------
+  var AGENT_RUNNERS = { extraction: agentRunExtraction, classification: agentRunClassification, quality: agentRunQuality, media: agentRunMedia, knowledge: agentRunKnowledge, translation: agentRunTranslation, impact: agentRunImpact, publishing: agentRunPublishing };
+  function agentPlan(selected) {
+    var want = {}, auto = [];
+    function need(k, by) {
+      if (want[k]) return;
+      want[k] = true;
+      if (by) auto.push({ key: k, by: by });
+      agentDef(k).needs.forEach(function (n) { if (!want[n] && (!AG().status[n] || AG().status[n].s === "error" || AG().status[n].stale || n === "extraction" && !AG().blocks.length)) need(n, k); });
+    }
+    selected.forEach(function (k) { need(k, null); });
+    return { order: AGENT_DEFS.map(function (d) { return d.key; }).filter(function (k) { return want[k]; }), auto: auto };
+  }
+  async function agentOrchestrate(keys) {
+    if (agentBusy) return;
+    var a = AG(), plan = agentPlan(keys);
+    if (!plan.order.length) { els.agentStatus.textContent = "Keinen Agenten ausgewählt."; return; }
+    agentBusy = true; agentAbort = new AbortController();
+    var run = { at: nowLabel(), steps: [] }, failed = {};
+    a.log = [run];
+    plan.auto.forEach(function (x) { run.steps.push({ key: x.key, s: "info", summary: "automatisch ergänzt – benötigt von " + agentDef(x.by).label, ms: 0 }); });
+    renderAgent();
+    try {
+      for (var i = 0; i < plan.order.length; i++) {
+        var k = plan.order[i], def = agentDef(k);
+        if (agentAbort.signal.aborted) { run.steps.push({ key: k, s: "skipped", summary: "gestoppt", ms: 0 }); continue; }
+        var blockedBy = def.needs.filter(function (n) { return failed[n]; });
+        if (blockedBy.length) { failed[k] = true; a.status[k] = { s: "skipped", at: nowLabel(), summary: "übersprungen – " + agentDef(blockedBy[0]).label + " fehlgeschlagen" }; run.steps.push({ key: k, s: "skipped", summary: a.status[k].summary, ms: 0 }); continue; }
+        a.status[k] = { s: "running", at: nowLabel(), summary: "läuft …" };
+        els.agentStatus.textContent = "Orchestrator: " + def.label + " (" + (i + 1) + " von " + plan.order.length + ") …";
+        renderAgent();
+        var t0 = Date.now(), res;
+        try { res = await AGENT_RUNNERS[k](agentAbort.signal); }
+        catch (err) {
+          var stopped = agentAbort.signal.aborted || (err && err.code === "cancelled");
+          res = { s: stopped ? "skipped" : "error", summary: stopped ? "gestoppt" : (err && err.message) || "Unbekannter Fehler." };
+          failed[k] = true;
+        }
+        var ms = Date.now() - t0;
+        a.status[k] = { s: res.s, at: nowLabel(), summary: res.summary, ms: ms };
+        run.steps.push({ key: k, s: res.s, summary: res.summary, ms: ms });
+        agentTab = k;
+        renderAgent();
+      }
+      var errs = run.steps.filter(function (s) { return s.s === "error"; }).length;
+      els.agentStatus.textContent = "Orchestrator fertig: " + plan.order.length + " Agent(en) – " + run.steps.filter(function (s) { return s.s === "ok"; }).length + " OK, " + run.steps.filter(function (s) { return s.s === "warn"; }).length + " mit Hinweisen" + (errs ? ", " + errs + " Fehler" : "") + (agentAbort.signal.aborted ? " (gestoppt)" : "") + ".";
+      addLog("AGENT: Orchestrator-Lauf mit " + plan.order.map(function (k) { return agentDef(k).label; }).join(" → ") + ".");
+    } finally { agentBusy = false; agentAbort = null; renderAgent(); }
+  }
+
+  // ---------- Bericht / Excel ----------
+  function agentReportMd() {
+    var a = AG(), md = ["# AGENT – Laufbericht", "", "Erstellt: " + nowLabel(), ""];
+    md.push("## Orchestrator", "");
+    (a.log[0] ? a.log[0].steps : []).forEach(function (s) { md.push("- " + agentDef(s.key).label + " · " + s.s + " · " + s.summary + (s.ms ? " (" + s.ms + " ms)" : "")); });
+    md.push("");
+    AGENT_DEFS.forEach(function (d) { var st = a.status[d.key]; md.push("## " + d.label, "", "Eingabe: " + d.input + " · Ausgabe: " + d.output, "", st ? "Status: " + st.s + " (" + st.at + ") – " + st.summary : "Nicht ausgeführt.", ""); });
+    if (a.quality && a.quality.findings.length) { md.push("## Befunde (Quality Agent)", ""); a.quality.findings.forEach(function (f) { md.push("- " + f.type + " · " + (f.src ? f.src + " › " : "") + f.chapter + ": " + f.text + " [" + f.rule + "]"); }); md.push(""); }
+    if (a.knowledge && a.knowledge.items.length) { md.push("## Wissensobjekte", ""); a.knowledge.items.forEach(function (k) { md.push("- " + k.type + " · " + k.title + ": " + k.summary); }); md.push(""); }
+    if (a.impact) { md.push("## Betroffene Handbücher", ""); a.impact.affected.forEach(function (x) { md.push("- " + x.level + " · " + x.label + ": " + x.chapters.slice(0, 5).join(", ") + " (" + x.reason + ")"); }); md.push(""); }
+    if (a.publishing) { md.push("## Renderingauftrag", "", "```json", JSON.stringify(a.publishing.order, null, 2), "```", ""); }
+    return md.join("\n");
+  }
+  function agentXlsxSections() {
+    var a = AG(), s = [];
+    s.push({ title: "Blöcke", headers: ["ID", "Quelle", "Kapitel", "Art", "Text", "Intern", "Domäne", "Unterdomäne", "Rolle", "Markt", "Sprache", "Klassifiziert per"],
+      rows: a.blocks.map(function (b) { var c = b.cls || {}; return [b.id, b.srcName, b.chapter, b.kind, truncate(b.text, 500), b.intern ? "ja" : "", c.domain || "", c.sub || "", c.role || "", c.market || "", c.lang || "", c.via || ""]; }) });
+    s.push({ title: "Qualität", headers: ["Art", "Quelle", "Kapitel", "Befund", "Regel", "Blöcke", "per"], rows: ((a.quality && a.quality.findings) || []).map(function (f) { return [f.type, f.src, f.chapter, f.text, f.rule, f.blockIds.join(", "), f.via]; }) });
+    s.push({ title: "Medien", headers: ["Quelle", "Kapitel", "Platzhalter", "Zugeordnet", "Vorschläge", "Untertitel"], rows: ((a.media && a.media.items) || []).map(function (it) {
+      return [it.src, it.chapter, it.placeholder, it.assigned.join(", "), it.suggestions.map(function (x) { return x.id + " (" + x.pct + " %)"; }).join(", "), it.captions.map(function (c) { return c.id + ": " + c.caption; }).join(" | ")]; }) });
+    s.push({ title: "Wissen", headers: ["Nr.", "Typ", "Titel", "Zusammenfassung", "Domäne", "Rolle", "Markt", "Sprache", "Quellen", "übernommen"], rows: ((a.knowledge && a.knowledge.items) || []).map(function (k) { return [k.id, k.type, k.title, k.summary, k.domain, k.role, k.market, k.lang, k.sources.join("; "), k.adopted]; }) });
+    s.push({ title: "Impact", headers: ["Einstufung", "Handbuch", "Art", "Kapitel", "Grund"], rows: ((a.impact && a.impact.affected) || []).map(function (x) { return [x.level, x.label, x.kind, x.chapters.join("; "), x.reason]; }) });
+    s.push({ title: "Publishing", headers: ["Prüfung", "Ergebnis", "Befund"], rows: ((a.publishing && a.publishing.checks) || []).map(function (c) { return [c.label, c.s, c.d]; }) });
+    return s;
+  }
+
+  // ---------- Rendern ----------
+  var AGENT_STATUS_LBL = { ok: "OK", warn: "Hinweise", error: "Fehler", skipped: "übersprungen", running: "läuft …", info: "ergänzt" };
+  function agentPill(s) { var m = { ok: "ok", warn: "warn", error: "fail", skipped: "open", running: "open", info: "open" }; return '<span class="vrev-pill vrev-' + (m[s] || "open") + '">' + (AGENT_STATUS_LBL[s] || "bereit") + "</span>"; }
+  function agentRevOptions(sel, filter, emptyLabel) {
+    var revs = agentRevisions().filter(filter || function () { return true; });
+    return (emptyLabel ? '<option value="">' + emptyLabel + "</option>" : "") + revs.map(function (r) { return '<option value="' + r.key + '"' + (r.key === sel ? " selected" : "") + ">" + escapeHtml(r.label) + "</option>"; }).join("");
+  }
+  function renderAgent() {
+    if (!els.agentTbody) return;
+    var a = AG();
+    els.agentTbody.innerHTML = AGENT_DEFS.map(function (d, i) {
+      var st = a.status[d.key];
+      return '<tr data-agent-row="' + d.key + '"><td><input type="checkbox" data-agent-sel="' + d.key + '"' + (a.sel[d.key] ? " checked" : "") + ' aria-label="' + escapeHtml(d.label) + ' auswählen"></td><td><b>' + (i + 1) + ". " + escapeHtml(d.label) + "</b>" +
+        (d.needs.length ? '<div class="step-note">nach ' + d.needs.map(function (n) { return agentDef(n).label.replace(" Agent", ""); }).join(", ") + "</div>" : "") + "</td><td>" + escapeHtml(d.input) + "</td><td>" + escapeHtml(d.output) + "</td>" +
+        "<td>" + (st ? agentPill(st.s) + (st.stale ? '<div class="step-note">veraltet</div>' : "") : '<span class="vrev-pill vrev-open">bereit</span>') + "</td><td>" + (st ? escapeHtml(st.summary) + '<div class="step-note">' + escapeHtml(st.at || "") + (st.ms ? " · " + st.ms + " ms" : "") + "</div>" : "–") + "</td>" +
+        '<td><div class="final-row-actions"><button class="btn ghost btn-tiny" type="button" data-agent-run="' + d.key + '"' + (agentBusy ? " disabled" : "") + '>Ausführen</button><button class="btn ghost btn-tiny" type="button" data-agent-tab="' + d.key + '">Ergebnis</button></div></td></tr>';
+    }).join("");
+    els.agentUseAi.checked = a.useAi;
+    els.agentRunBtn.disabled = agentBusy;
+    els.agentSpinner.hidden = !agentBusy;
+    els.agentStopBtn.hidden = !agentBusy;
+    var any = Object.keys(a.status).length > 0;
+    els.agentReportMdBtn.disabled = els.agentXlsxBtn.disabled = !any;
+    els.agentLog.innerHTML = (a.log[0] ? a.log[0].steps : []).map(function (s) { return "<li>" + agentPill(s.s) + " <b>" + escapeHtml(agentDef(s.key).label) + "</b> – " + escapeHtml(s.summary) + (s.ms ? ' <span class="step-note">(' + s.ms + " ms)</span>" : "") + "</li>"; }).join("");
+    // Eingaben
+    var srcs = agentSources();
+    els.agentSources.innerHTML = srcs.length ? srcs.map(function (s) {
+      return '<label class="variante-inline-check" style="display:flex;"><input type="checkbox" data-agent-src="' + escapeHtml(s.key) + '"' + (agentIncluded(s) ? " checked" : "") + "> " + escapeHtml(s.label) + ' <span class="step-note" style="margin:0;">· ' + s.chapters.length + " Kapitel</span>" +
+        (s.kind === "Datei" ? ' <button class="variante-x" type="button" data-agent-upload-del="' + s.ref.id + '" title="Datei entfernen" aria-label="Datei entfernen">×</button>' : "") + "</label>";
+    }).join("") : '<p class="step-note">Noch keine Quellen – Dateien hochladen oder in FINAL/Review Dokumente anlegen.</p>';
+    els.agentRules.innerHTML = a.rules.map(function (r) {
+      return '<label class="variante-inline-check" style="display:flex;"><input type="checkbox" data-agent-rule="' + escapeHtml(r.id) + '"' + (r.on ? " checked" : "") + "> " + escapeHtml(r.label) +
+        (r.kind === "term" ? ' <button class="variante-x" type="button" data-agent-rule-del="' + escapeHtml(r.id) + '" aria-label="Regel entfernen">×</button>' : "") + "</label>";
+    }).join("");
+    if (document.activeElement !== els.agentMarkets) els.agentMarkets.value = a.markets;
+    els.agentTrSource.innerHTML = agentRevOptions(a.trSource, function (r) { return r.released; }, "– freigegebene Revision wählen –");
+    els.agentTrLang.innerHTML = VARIANT_LANGS.map(function (l) { return '<option value="' + l[0] + '"' + (l[0] === a.trLang ? " selected" : "") + ">" + l[1] + "</option>"; }).join("");
+    els.agentImpA.innerHTML = agentRevOptions(a.impA, null, "– alt –");
+    els.agentImpB.innerHTML = agentRevOptions(a.impB, null, "– neu –");
+    els.agentPubSource.innerHTML = agentRevOptions(a.pubSource, null, "– Entwurf wählen –");
+    els.agentPubWord.checked = a.pubWord; els.agentPubPdf.checked = a.pubPdf; els.agentPubIntern.checked = a.pubIntern;
+    // Ergebnisse
+    els.agentTabs.innerHTML = AGENT_DEFS.map(function (d, i) {
+      var st = a.status[d.key];
+      return '<button type="button" class="vrev-stage-btn' + (d.key === agentTab ? " active" : "") + '" data-agent-tab="' + d.key + '"><span class="vrev-stage-n">' + (i + 1) + "</span>" + escapeHtml(d.label.replace(" Agent", "")) +
+        (st ? ' <i class="vrev-dot vrev-' + ({ ok: "ok", warn: "warn", error: "fail" }[st.s] || "open") + '"></i>' : "") + "</button>";
+    }).join("");
+    els.agentOutput.innerHTML = agentOutputHtml(agentTab);
+  }
+  function agentTable(headers, rows) {
+    return '<div class="table-wrap"><table class="simple-table agent-out"><thead><tr>' + headers.map(function (h) { return "<th>" + escapeHtml(h) + "</th>"; }).join("") + "</tr></thead><tbody>" + rows.join("") + "</tbody></table></div>";
+  }
+  function agentOutputHtml(k) {
+    var a = AG(), d = agentDef(k), st = a.status[k], h = '<p class="step-note" style="margin-top:0;"><b>' + escapeHtml(d.label) + "</b> · Eingabe: " + escapeHtml(d.input) + " · Ausgabe: " + escapeHtml(d.output) + (st ? " · " + escapeHtml(st.summary) : " · noch nicht ausgeführt") + "</p>";
+    if (k === "extraction" || k === "classification") {
+      if (!a.blocks.length) return h;
+      var show = a.blocks.slice(0, 300);
+      return h + agentTable(["ID", "Quelle", "Kapitel", "Art", "Text"].concat(k === "classification" ? ["Domäne", "Rolle", "Markt", "Sprache", "per"] : []), show.map(function (b) {
+        var c = b.cls || {};
+        return '<tr data-agent-block="' + b.id + '"' + (b.intern ? ' class="agent-intern"' : "") + '><td class="mono">' + b.id + "</td><td>" + escapeHtml(b.srcName) + "</td><td>" + escapeHtml(truncate(b.chapter, 50)) + "</td><td>" + escapeHtml(b.kind) + (b.intern ? '<div class="step-note">intern</div>' : "") + "</td><td>" + escapeHtml(truncate(b.text, 200)) + "</td>" +
+          (k === "classification" ? "<td>" + escapeHtml((c.domain || "–") + (c.sub ? " › " + c.sub : "")) + "</td><td>" + escapeHtml(c.role || "–") + "</td><td>" + escapeHtml(c.market || "–") + "</td><td>" + escapeHtml(c.lang || "–") + "</td><td>" + escapeHtml(c.via || "") + "</td>" : "") + "</tr>";
+      })) + (a.blocks.length > 300 ? '<p class="step-note">… ' + (a.blocks.length - 300) + " weitere Blöcke im Excel-Export.</p>" : "");
+    }
+    if (k === "quality") {
+      if (!a.quality) return h;
+      return h + agentTable(["Art", "Quelle › Kapitel", "Befund", "Regel", "per"], a.quality.findings.map(function (f) {
+        return '<tr class="agent-f-' + f.type.toLowerCase().replace("ü", "ue") + '"><td><b>' + escapeHtml(f.type) + "</b></td><td>" + escapeHtml((f.src ? f.src + " › " : "") + f.chapter) + "</td><td>" + escapeHtml(f.text) + "</td><td>" + escapeHtml(f.rule) + "</td><td>" + escapeHtml(f.via) + "</td></tr>";
+      }));
+    }
+    if (k === "media") {
+      if (!a.media) return h;
+      return h + agentTable(["Quelle › Kapitel", "Platzhalter / Textumfeld", "Bilder", "Untertitelvorschlag", "Aktion"], a.media.items.map(function (it, i) {
+        var ids = it.assigned.length ? it.assigned : it.suggestions.map(function (s) { return s.id; });
+        var thumbs = ids.map(function (id) { var img = screenPhImgById(id); if (!img) return ""; var sg = it.suggestions.filter(function (s) { return s.id === id; })[0];
+          return '<div class="screenph-thumb" title="' + escapeHtml(img.description || img.filename || "") + '"><img src="' + screenPreviewUrl(img) + '" loading="lazy" decoding="async" alt="Bild"><span class="screenph-score">' + (sg ? sg.pct + " % · Vorschlag" : "zugeordnet") + "</span></div>"; }).join("");
+        return "<tr><td>" + escapeHtml(it.src + " › " + it.chapter) + "</td><td>" + escapeHtml(it.placeholder) + (it.context ? '<div class="step-note">' + escapeHtml(it.context) + "</div>" : "") + '</td><td><div class="screenph-thumbs">' + (thumbs || "–") + "</div></td>" +
+          "<td>" + it.captions.map(function (c) { return "<div>" + escapeHtml(c.caption || "–") + ' <span class="step-note">(' + escapeHtml(c.via) + ")</span></div>"; }).join("") + "</td>" +
+          '<td>' + (it.captions.length ? '<button class="btn ghost btn-tiny" type="button" data-agent-caption="' + i + '">Untertitel übernehmen</button>' : "") + "</td></tr>";
+      }));
+    }
+    if (k === "knowledge") {
+      if (!a.knowledge) return h;
+      return h + '<div class="controls"><button class="btn ghost btn-tiny" type="button" data-agent-kn-all' + (a.knowledge.items.some(function (x) { return !x.adopted; }) ? "" : " disabled") + ">Alle nach Rovo Knowledge übernehmen</button></div>" +
+        agentTable(["Nr.", "Typ", "Titel", "Zusammenfassung", "Domäne · Rolle · Markt · Sprache", "Quellen", "Aktion"], a.knowledge.items.map(function (it) {
+          return '<tr data-agent-kn="' + it.id + '"><td class="mono">' + it.id + "</td><td>" + escapeHtml(it.type) + "</td><td><b>" + escapeHtml(it.title) + "</b></td><td>" + escapeHtml(it.summary) + "</td><td>" + escapeHtml([it.domain || "–", it.role || "–", it.market || "–", it.lang || "–"].join(" · ")) + "</td><td>" + escapeHtml(it.sources.join("; ")) + "</td>" +
+            "<td>" + (it.adopted ? '<span class="step-note">' + escapeHtml(it.adopted) + "</span>" : '<button class="btn ghost btn-tiny" type="button" data-agent-kn-adopt="' + it.id + '">Übernehmen</button>') + "</td></tr>";
+        }));
+    }
+    if (k === "translation") {
+      var t = a.translation;
+      if (!t) return h;
+      return h + '<div class="controls"><button class="btn ghost btn-tiny" type="button" data-agent-tr-adopt' + (t.adopted ? " disabled" : "") + ">" + (t.adopted ? escapeHtml(t.adopted) : "Als Review-Dokument übernehmen") + "</button></div>" +
+        agentTable(["Kapitel", "Übersetzung (Auszug)", "per"], t.chapters.map(function (c) { return "<tr><td>" + escapeHtml(c.title) + "</td><td>" + escapeHtml(truncate(vrevPlain(c.text), 260)) + "</td><td>" + escapeHtml(c.via) + "</td></tr>"; }));
+    }
+    if (k === "impact") {
+      var im = a.impact;
+      if (!im) return h;
+      return h + '<p class="step-note">„' + escapeHtml(im.a) + "“ → „" + escapeHtml(im.b) + "“ · Schlüsselbegriffe der Änderungen: " + escapeHtml(im.terms.join(", ") || "–") + "</p>" +
+        agentTable(["Kapitel", "Änderung", "+ / −"], im.changed.map(function (c) { return "<tr><td>" + escapeHtml(c.title) + "</td><td>" + escapeHtml(c.kind) + "</td><td>+" + c.add + " / −" + c.rem + "</td></tr>"; })) +
+        '<p class="section-label">Betroffene Handbücher</p>' + (im.affected.length ? agentTable(["Einstufung", "Handbuch", "Art", "Betroffene Kapitel", "Grund"], im.affected.map(function (x) {
+          return '<tr data-agent-imp="' + escapeHtml(x.key) + '"><td>' + vrevPill(x.level === "hoch" ? "fail" : "warn").replace(/>[^<]+</, ">" + x.level + "<") + "</td><td>" + escapeHtml(x.label) + "</td><td>" + escapeHtml(x.kind) + "</td><td>" + escapeHtml(x.chapters.slice(0, 6).join("; ")) + "</td><td>" + escapeHtml(x.reason) + "</td></tr>";
+        })) : '<p class="step-note">Keine weiteren Handbücher betroffen.</p>');
+    }
+    if (k === "publishing") {
+      var p = a.publishing;
+      if (!p) return h;
+      return h + '<p><b>Vorprüfung: ' + escapeHtml(p.verdict) + "</b>" + (p.rendered ? ' <span class="step-note">· gerendert ' + escapeHtml(p.rendered) + "</span>" : "") + "</p>" +
+        agentTable(["Prüfung", "Ergebnis", "Befund"], p.checks.map(function (c) { return "<tr><td>" + escapeHtml(c.label) + "</td><td>" + vrevPill(c.s) + "</td><td>" + escapeHtml(c.d) + "</td></tr>"; })) +
+        '<p class="section-label">Renderingauftrag</p><pre class="agent-json" id="agent-order-json">' + escapeHtml(JSON.stringify(p.order, null, 2)) + "</pre>" +
+        '<div class="controls"><button class="btn primary" type="button" data-agent-render>Rendering ausführen</button><button class="btn ghost" type="button" data-agent-order-dl>Renderingauftrag (JSON)</button></div>';
+    }
+    return h;
+  }
+
+  // ---------- Ereignisse ----------
+  async function agentReadUpload(file) {
+    var name = file.name, chapters, ph = {};
+    if (/\.docx$/i.test(name)) {
+      var zip = await JSZip.loadAsync(await file.arrayBuffer());
+      if (!zip.file("word/document.xml")) throw new Error("kein Word-Dokumentinhalt gefunden");
+      var w = await vrevDocxWithImages(zip, name), r = vrevResolveImageMarkers(w.chapters, w.images, w.caps || [], w.tables || []);
+      w.images.slice().reverse().forEach(function (img) { app.uploadedImages.unshift(img); });
+      chapters = r.chapters; ph = r.ph;
+    } else {
+      var text = await file.text(), cur = { title: name, level: 1, lines: [] };
+      chapters = [cur];
+      text.split(/\r?\n/).forEach(function (line) {
+        var m = /^(#{1,3})\s+(.*)$/.exec(line);
+        if (m) { cur = { title: m[2].trim(), level: m[1].length, lines: [] }; chapters.push(cur); } else cur.lines.push(line);
+      });
+      chapters = chapters.filter(function (c, i) { return i > 0 || c.lines.join("").trim(); }).map(function (c) { return { title: c.title, level: c.level, text: c.lines.join("\n").trim() }; });
+    }
+    var a = AG(), id = a.uploads.reduce(function (m, u) { return Math.max(m, u.id); }, 0) + 1;
+    a.uploads.push({ id: id, name: name, at: nowLabel(), chapters: chapters, ph: ph });
+    return chapters.length;
+  }
+  els.agentUploadBtn.addEventListener("click", function () { els.agentFileInput.click(); });
+  els.agentFileInput.addEventListener("change", async function () {
+    var files = Array.prototype.slice.call(els.agentFileInput.files || []), ok = 0, errs = [];
+    els.agentFileInput.value = "";
+    for (var i = 0; i < files.length; i++) {
+      try { await agentReadUpload(files[i]); ok++; } catch (err) { errs.push(files[i].name + ": " + ((err && err.message) || "Fehler")); }
+    }
+    els.agentStatus.textContent = ok + " Datei(en) als Quelle übernommen." + (errs.length ? " Fehler: " + errs.join(" · ") : "");
+    renderAgent();
+  });
+  els.agentRunBtn.addEventListener("click", function () { var a = AG(); agentOrchestrate(AGENT_DEFS.map(function (d) { return d.key; }).filter(function (k) { return a.sel[k]; })); });
+  els.agentStopBtn.addEventListener("click", function () { if (agentAbort) agentAbort.abort(); });
+  els.agentUseAi.addEventListener("change", function () { AG().useAi = els.agentUseAi.checked; });
+  els.agentMarkets.addEventListener("change", function () { AG().markets = els.agentMarkets.value; });
+  els.agentRuleAddBtn.addEventListener("click", function () {
+    var t = els.agentRuleTerm.value.trim();
+    if (!t) return;
+    var a = AG();
+    a.rules.push({ id: "term" + Date.now() + a.rules.length, label: "Verbotener Begriff „" + t + "“", kind: "term", term: t, on: true });
+    els.agentRuleTerm.value = "";
+    renderAgent();
+  });
+  els.agentReportMdBtn.addEventListener("click", async function () {
+    var fn = "AGENT_Laufbericht_" + dateStampForFilename() + ".md";
+    if (await saveOrWarn(fn, new Blob([agentReportMd()], { type: "text/markdown" }))) els.agentStatus.textContent = "„" + fn + "“ heruntergeladen.";
+  });
+  els.agentXlsxBtn.addEventListener("click", async function () {
+    try {
+      var fn = "AGENT_Ergebnisse_" + dateStampForFilename() + ".xlsx";
+      if (await saveOrWarn(fn, await buildXlsxBlob(agentXlsxSections()))) els.agentStatus.textContent = "„" + fn + "“ heruntergeladen.";
+    } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
+  els.agentPanel.addEventListener("change", function (e) {
+    var t = e.target, a = AG();
+    if (t.matches("[data-agent-sel]")) { a.sel[t.getAttribute("data-agent-sel")] = t.checked; return; }
+    if (t.matches("[data-agent-src]")) { a.include[t.getAttribute("data-agent-src")] = t.checked; if (a.status.extraction) a.status.extraction.stale = true; renderAgent(); return; }
+    if (t.matches("[data-agent-rule]")) { var r = a.rules.filter(function (x) { return x.id === t.getAttribute("data-agent-rule"); })[0]; if (r) r.on = t.checked; return; }
+    if (t === els.agentTrSource) a.trSource = t.value;
+    else if (t === els.agentTrLang) a.trLang = t.value;
+    else if (t === els.agentImpA) a.impA = t.value;
+    else if (t === els.agentImpB) a.impB = t.value;
+    else if (t === els.agentPubSource) a.pubSource = t.value;
+    else if (t === els.agentPubWord) a.pubWord = t.checked;
+    else if (t === els.agentPubPdf) a.pubPdf = t.checked;
+    else if (t === els.agentPubIntern) a.pubIntern = t.checked;
+  });
+  els.agentPanel.addEventListener("click", async function (e) {
+    var a = AG(), b;
+    if ((b = e.target.closest("[data-agent-run]"))) { agentOrchestrate([b.getAttribute("data-agent-run")]); return; }
+    if ((b = e.target.closest("[data-agent-tab]"))) { agentTab = b.getAttribute("data-agent-tab"); renderAgent(); return; }
+    if ((b = e.target.closest("[data-agent-upload-del]"))) { var uid = parseInt(b.getAttribute("data-agent-upload-del"), 10); a.uploads = a.uploads.filter(function (u) { return u.id !== uid; }); delete a.include["U:" + uid]; renderAgent(); return; }
+    if ((b = e.target.closest("[data-agent-rule-del]"))) { var rid = b.getAttribute("data-agent-rule-del"); a.rules = a.rules.filter(function (r) { return r.id !== rid; }); renderAgent(); return; }
+    if ((b = e.target.closest("[data-agent-caption]"))) {
+      var it = a.media && a.media.items[parseInt(b.getAttribute("data-agent-caption"), 10)], n = 0;
+      (it ? it.captions : []).forEach(function (c) { var img = screenPhImgById(c.id); if (img && c.caption && img.description !== c.caption) { img.description = c.caption; n++; } });
+      els.agentStatus.textContent = n + " Untertitel ins Bildarchiv übernommen.";
+      renderWhenVisible("bilder", "gallery", renderGallery);
+      renderAgent(); return;
+    }
+    if ((b = e.target.closest("[data-agent-kn-adopt]")) || (b = e.target.closest("[data-agent-kn-all]"))) {
+      var all = b.hasAttribute("data-agent-kn-all"), id = parseInt(b.getAttribute("data-agent-kn-adopt"), 10), cnt = 0;
+      (a.knowledge ? a.knowledge.items : []).forEach(function (it) {
+        if (it.adopted || (!all && it.id !== id)) return;
+        var e2 = rovoAddEntry(it.title, it.summary + "\n\nTyp: " + it.type + (it.domain ? " · Domäne: " + it.domain : "") + (it.role ? " · Rolle: " + it.role : "") + (it.market ? " · Markt: " + it.market : "") + (it.lang ? " · Sprache: " + it.lang : "") + "\nQuellen: " + it.sources.join("; "));
+        if (e2) { e2.labels.push("AGENT"); it.adopted = "in Rovo Knowledge (#" + e2.id + ")"; cnt++; }
+      });
+      if (typeof renderRovoEntries === "function") renderRovoEntries();
+      els.agentStatus.textContent = cnt + " Wissensobjekt(e) nach Rovo Knowledge übernommen.";
+      renderAgent(); return;
+    }
+    if ((b = e.target.closest("[data-agent-tr-adopt]"))) {
+      var t = a.translation; if (!t || t.adopted) return;
+      var nd = vrevAddDoc({ name: t.sourceName + " (" + t.lang + ")", source: "Übersetzung", lang: t.lang, chapters: t.chapters.map(function (c) { var o = { title: c.title, level: c.level, text: c.text }; if (c.tables) o.tables = c.tables; return o; }), ph: t.ph });
+      vrevRunChecks(nd);
+      var base = t.sourceKey.indexOf("R:") === 0 ? vrevDoc(parseInt(t.sourceKey.slice(2), 10)) : null;
+      if (base) { nd.baseDocId = base.id; base.translations.push(nd.id); vrevRunChecks(base); }
+      t.adopted = "als Review-Dokument „" + nd.name + "“ angelegt";
+      if (typeof renderVrev === "function") renderVrev();
+      renderAgent(); return;
+    }
+    if (e.target.closest("[data-agent-render]")) { agentRender(); return; }
+    if (e.target.closest("[data-agent-order-dl]")) {
+      var p = a.publishing; if (!p) return;
+      var fn = "Renderingauftrag_" + p.order.auftrag + ".json";
+      if (await saveOrWarn(fn, new Blob([JSON.stringify(p.order, null, 2)], { type: "application/json" }))) els.agentStatus.textContent = "„" + fn + "“ heruntergeladen.";
+    }
+  });
+
   /* ============ Teil 10: Navigation ============ */
 
   var viewPanels = document.querySelectorAll("[data-view-panel]");
@@ -33552,6 +34421,7 @@
     if (name === "mitteilungen") renderNotesOverview();
     if (name === "variante") { renderVariante(); renderVrev(); }
     if (name === "crossx") renderCrossx();
+    if (name === "agent") renderAgent();
     if (name === "tabellen") renderRovoTables();
     if (window.innerWidth <= 900) setSidebar(false);
   }
