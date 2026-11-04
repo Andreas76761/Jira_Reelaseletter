@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.138.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.139.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,18 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Dokument-Review: Formatierung erhalten, Inhalt bereinigen, Design korrigieren (v2.139.0)**: **Formatierung** – beim
+  Einlesen eines Entwurfs bleiben Fett (`**…**`), Kursiv (`__…__`), Aufzählungen (• / ◦ / ▪ je Ebene, nummerierte
+  Listen als „1.“, „2.“ – aus der Word-Nummerierung) und Tabellen (Platzhalter `[Tabelle]` mit gesicherten Zellen)
+  erhalten; die Word-Ausgabe setzt sie wieder als echte Fett-/Kursiv-Läufe, eingerückte Aufzählungen und Word-Tabellen
+  um. Jira-Nummern in Tabellen werden mitgezählt, mit „Jira-Nummern löschen“ entfernt und in der Verteilfassung
+  ausgelassen. **Inhalt (Stufe 2)** – neue Knöpfe „Planungen als intern markieren“, „Test-Hinweise als intern markieren“
+  (die Zeilen fehlen in der Verteilfassung und erscheinen intern als „[Intern: …]“) und „Interne Vermerke löschen“ (nach
+  Bestätigung). **Design (Stufe 1)** – Ziel-Design für die Ausgabe wählbar (Entwurf, FINAL-Originaldesigns, eigene
+  Vorlage, App-Designs); „Ausgabe prüfen“ bewertet D1–D4 an der tatsächlichen Word-Ausgabe. „Tipps/Hinweise markieren“
+  setzt `[Tipp]`, `[Hinweis]` bzw. `[Warnung]` vor Zeilen wie „Tipp:“, „Info:“, „Achtung:“ (im Word farbig hervorgehoben);
+  D5 prüft das jetzt am aktuellen Text und meldet mehr als 5 verschiedene Icons als uneinheitlich.
 
 - **Dokument-Review: Bilder aus Entwürfen, Status-Legende, Ablage als Excel (v2.138.0)**: **Eingebettete Bilder** eines
   hochgeladenen Entwurfs (.docx) kommen ins Bildarchiv (Screens-Import/Bilder, Quelldatei = Entwurf); an ihrer Stelle

@@ -3683,7 +3683,7 @@
               </div>
               <div class="vrev-text-view" id="vrev-text-view"></div>
               <textarea class="text-input" id="vrev-text-edit" rows="8" style="width:100%; font-family:inherit; margin-top:8px;" aria-label="Kapiteltext bearbeiten"></textarea>
-              <div class="controls"><button class="btn ghost btn-tiny" id="vrev-text-save-btn" type="button">Änderung speichern</button><span class="step-note" style="margin:0;">Interne Vermerke stehen zwischen [[INTERN]] und [[/INTERN]].</span></div>
+              <div class="controls"><button class="btn ghost btn-tiny" id="vrev-text-save-btn" type="button">Änderung speichern</button><span class="step-note" style="margin:0;">Interne Vermerke stehen zwischen [[INTERN]] und [[/INTERN]]; **fett**, __kursiv__, Aufzählung mit „• “ oder „1. “, „[Tabelle]“ = Tabelle aus dem Entwurf.</span></div>
             </details>
           </div>
         </section>
@@ -6418,7 +6418,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.138.0";
+  var APP_VERSION = "2.139.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -23752,7 +23752,27 @@
       '<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:i/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">' +
       xmlEsc("Tabelle " + table.tableNumber + ": " + table.sourceFile) + "</w:t></w:r></w:p>";
   }
-  function manualChapterBodyXml(title, text, media, tables) {
+  // v2.139: einfache Auszeichnung fuer den Dokument-Review: **fett**, __kursiv__, Aufzaehlungen (• ◦ ▪ / 1.).
+  function richInlineRunsXml(line) {
+    var parts = String(line).split(/(\*\*|__)/), b = false, i = false, out = "";
+    parts.forEach(function (t) {
+      if (t === "**") { b = !b; return; }
+      if (t === "__") { i = !i; return; }
+      if (!t) return;
+      out += "<w:r>" + (b || i ? "<w:rPr>" + (b ? "<w:b/>" : "") + (i ? "<w:i/>" : "") + "</w:rPr>" : "") + '<w:t xml:space="preserve">' + xmlEsc(t) + "</w:t></w:r>";
+    });
+    return out || '<w:r><w:t xml:space="preserve"></w:t></w:r>';
+  }
+  var RICH_LIST_RE = /^(•|◦|▪|\d+\.)\s+/;
+  function richParagraphXml(line, pPrExtra) {
+    var m = RICH_LIST_RE.exec(line);
+    if (m) {
+      var lvl = m[1] === "◦" ? 1 : m[1] === "▪" ? 2 : 0;
+      return '<w:p><w:pPr><w:ind w:left="' + (360 * (lvl + 1) + 360) + '" w:hanging="360"/>' + (pPrExtra || "") + "</w:pPr>" + richInlineRunsXml(m[1] + "\t" + line.slice(m[0].length)).replace("\t", "</w:t></w:r><w:r><w:tab/><w:t xml:space=\"preserve\">") + "</w:p>";
+    }
+    return "<w:p>" + (pPrExtra ? "<w:pPr>" + pPrExtra + "</w:pPr>" : "") + richInlineRunsXml(line) + "</w:p>";
+  }
+  function manualChapterBodyXml(title, text, media, tables, rich) {
     var body = '<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>' + xmlEsc(title) + "</w:t></w:r></w:p>";
     var roleShd = null;
     var mediaIdx = 0;
@@ -23768,7 +23788,7 @@
       if (manualIsTablePlaceholder(line)) {
         var tb = (tables || [])[tableIdx];
         tableIdx++;
-        body += tb ? manualTableDrawingXml(tb) :
+        body += tb ? (tb.noCaption ? printableDocxTableXml(tb.rows, rovoTableColumnWidthsTwips(tb.rows, MANUAL_CHAPTER_TABLE_USABLE_TWIPS)) + "<w:p/>" : manualTableDrawingXml(tb)) :
           '<w:p><w:r><w:rPr><w:i/></w:rPr><w:t xml:space="preserve">[Tabelle: keine Tabelle zugeordnet]</w:t></w:r></w:p>';
         return;
       }
@@ -23783,6 +23803,7 @@
         body += '<w:p><w:pPr><w:shd w:val="clear" w:fill="' + MANUAL_TAG_SHD_HEX[tag] + '"/></w:pPr><w:r><w:rPr><w:b/><w:color w:val="C0392B"/></w:rPr><w:t xml:space="preserve">' + xmlEsc(line) + "</w:t></w:r></w:p>";
         return;
       }
+      if (rich) { body += richParagraphXml(line, roleShd ? '<w:shd w:val="clear" w:fill="' + roleShd + '"/>' : ""); return; }
       var rolePPr = roleShd ? '<w:pPr><w:shd w:val="clear" w:fill="' + roleShd + '"/></w:pPr>' : "";
       body += '<w:p>' + rolePPr + '<w:r><w:t xml:space="preserve">' + xmlEsc(line) + "</w:t></w:r></w:p>";
     });
@@ -29275,7 +29296,7 @@
       });
       nextMediaNum += renumbered.length;
       allMedia = allMedia.concat(renumbered);
-      bodyParts.push(manualChapterBodyXml(c.title, c.text, renumbered, []).replace('<w:pStyle w:val="Title"/>', '<w:pStyle w:val="Heading' + Math.min(Math.max(c.level || 1, 1), 3) + '"/>'));
+      bodyParts.push(manualChapterBodyXml(c.title, c.text, renumbered, opts.rich ? (c.tables || []) : [], !!opts.rich).replace('<w:pStyle w:val="Title"/>', '<w:pStyle w:val="Heading' + Math.min(Math.max(c.level || 1, 1), 3) + '"/>'));
       if (i < chapters.length - 1) bodyParts.push(manualPageBreakParagraphXml());
     }
     if (opts.footer === false) return buildDocxBlobFromBodyAndMedia(bodyParts.join(""), allMedia);
@@ -32306,7 +32327,7 @@
     d = d && typeof d === "object" ? d : {};
     var docs = Array.isArray(d.docs) ? d.docs.filter(function (x) { return x && typeof x.id === "number" && Array.isArray(x.chapters); }).map(function (x) {
       return Object.assign({ name: "Dokument", filename: "", source: "Upload", sourceRef: null, version: "1.0", status: "Entwurf", createdAt: "", updatedAt: "", original: [], ph: {}, design: null, wordDesign: null,
-        checks: {}, steps: {}, stage: 1, changes: [], history: [], ai: null, translationNotNeeded: false, legend: false, lang: "DE", translations: [], baseDocId: null, scoreInitial: null, score: null, checkedAt: "" }, x);
+        checks: {}, steps: {}, stage: 1, changes: [], history: [], ai: null, translationNotNeeded: false, legend: false, designKey: "", designOut: null, designOutLabel: "", lang: "DE", translations: [], baseDocId: null, scoreInitial: null, score: null, checkedAt: "" }, x);
     }) : [];
     return { docs: docs, activeId: typeof d.activeId === "number" ? d.activeId : null };
   }
@@ -32461,8 +32482,10 @@
   function vrevLines(doc, fn) {
     doc.chapters.forEach(function (c, ci) {
       String(c.text || "").split("\n").forEach(function (line, li) { fn(line, c, ci, li); });
+      (c.tables || []).forEach(function (t) { t.rows.forEach(function (row) { fn(row.join(" | "), c, ci, -1); }); });
     });
   }
+  function vrevPublic(line) { return vrevPlain(String(line || "").replace(VREV_RE.internalSeg, "")); }
   function vrevWords(text) { return (vrevPlain(text).match(/[A-Za-zÄÖÜäöüß0-9][\wÄÖÜäöüß-]*/g) || []).length; }
   function vrevQ1Findings(doc) {
     var out = [];
@@ -32485,10 +32508,43 @@
       return line.replace(/\b([A-Za-zÄÖÜäöüß]{2,})\s+\1\b/gi, "$1").replace(/(\S) {2,}(?=\S)/g, "$1 ").replace(/ ([,.;:!?])(?=\s|$)/g, "$1").replace(/([,;])(?=[A-Za-zÄÖÜäöü])/g, "$1 ");
     }).join("\n");
   }
+  function vrevTipLines(doc) {
+    var unmarked = [], marked = 0;
+    vrevLines(doc, function (line, c, ci, li) {
+      if (li < 0) return;
+      var t = vrevPublic(line).trim();
+      if (MANUAL_CALLOUT_TAGS.some(function (tag) { return t.indexOf(tag) === 0; })) marked++;
+      else if (VREV_RE.tipStart.test(t)) unmarked.push(t);
+    });
+    return { unmarked: unmarked, marked: marked };
+  }
+  function vrevIconSet(doc) {
+    var set = {};
+    vrevLines(doc, function (line) { (vrevPlain(line).match(VREV_RE.icon) || []).forEach(function (ch) { set[ch] = true; }); });
+    return Object.keys(set);
+  }
+  var VREV_TIP_TAG = { tipp: "[Tipp]", hinweis: "[Hinweis]", info: "[Hinweis]", achtung: "[Warnung]", wichtig: "[Warnung]", warnung: "[Warnung]" };
+  function vrevMarkTipsText(text) {
+    return String(text || "").split("\n").map(function (line) {
+      var m = /^(\s*)(Tipp|Hinweis|Achtung|Wichtig|Warnung|Info)\s*[:!]\s*/i.exec(line);
+      if (!m || line.indexOf("\u0001") !== -1 && line.indexOf("\u0001") < m[0].length) return line;
+      return m[1] + VREV_TIP_TAG[m[2].toLowerCase()] + " " + line.slice(m[0].length);
+    }).join("\n");
+  }
+  function vrevMarkInternalText(text, re) {
+    return String(text || "").split("\n").map(function (line) {
+      var pub = vrevPublic(line);
+      if (!pub.trim() || VREV_RE.placeholder.test(pub) || !re.test(pub)) return line;
+      return "\u0001" + line.replace(FINAL_MARK_RE, "") + "\u0002";
+    }).join("\n");
+  }
+  function vrevDeleteInternalText(text) {
+    return String(text || "").replace(VREV_RE.internalSeg, "").split("\n").filter(function (line) { return !VREV_RE.internalLine.test(vrevPlain(line)); }).join("\n").replace(/\n{3,}/g, "\n\n");
+  }
   function vrevStatusHits(doc) {
     var out = [];
     vrevLines(doc, function (line, c, ci) {
-      var t = vrevPlain(line);
+      var t = vrevPublic(line);
       VREV_STATUS_DEFS.forEach(function (s) {
         if (s.re.test(t)) out.push({ chapter: c.title, ci: ci, status: s.key, cls: s.cls, text: t.trim(), conflict: (s.key === "geplant" || s.key === "in Entwicklung") && VREV_RE.avail.test(t) });
       });
@@ -32514,29 +32570,34 @@
     return vals.length ? Math.round(vals.reduce(function (n, c) { return n + w[c.s]; }, 0) / vals.length) : null;
   }
   function vrevRunChecks(doc) {
-    var ch = {}, d = doc.design, put = function (id, s, detail, n) { ch[id] = { s: s, d: detail, n: n == null ? null : n }; };
+    var ch = {}, d = doc.designOut || doc.design, outPfx = doc.designOut ? "Ausgabe (" + (doc.designOutLabel || "gewähltes Design") + "): " : "", put = function (id, s, detail, n) { ch[id] = { s: s, d: detail, n: n == null ? null : n }; };
     // Stufe 1 – Design
     if (!d) ["D1", "D2", "D3", "D4", "D5"].forEach(function (id) { put(id, "open", "Keine Design-Daten (Dokument konnte nicht als Word analysiert werden)."); });
     else {
       var fonts = vrevShares(d.fonts, 2), sizes = vrevShares(d.sizes, 2), lines = vrevShares(d.lines, 0), colors = vrevShares(d.colors, 1).filter(function (x) { return x.key !== "Automatisch/Schwarz"; });
-      put("D1", vrevGrade(fonts.length, 2, 3), fonts.length + " Schriftart(en): " + fonts.map(function (x) { return x.key + " " + x.pct + " %"; }).join(", "), fonts.length);
+      put("D1", vrevGrade(fonts.length, 2, 3), outPfx + fonts.length + " Schriftart(en): " + fonts.map(function (x) { return x.key + " " + x.pct + " %"; }).join(", "), fonts.length);
       var main = sizes[0] ? parseFloat(sizes[0].key) : null, sizeS = vrevGrade(sizes.length, 2, 3);
       if (main && (main < 9 || main > 12) && sizeS === "ok") sizeS = "warn";
-      put("D2", sizeS, sizes.length + " Schriftgröße(n) im Fließtext: " + sizes.map(function (x) { return String(x.key).replace(".", ",") + " pt " + x.pct + " %"; }).join(", ") + (main && (main < 9 || main > 12) ? " – Fließtext außerhalb von 9–12 pt" : ""), sizes.length);
+      put("D2", sizeS, outPfx + sizes.length + " Schriftgröße(n) im Fließtext: " + sizes.map(function (x) { return String(x.key).replace(".", ",") + " pt " + x.pct + " %"; }).join(", ") + (main && (main < 9 || main > 12) ? " – Fließtext außerhalb von 9–12 pt" : ""), sizes.length);
       var dom = lines[0];
-      put("D3", !dom ? "ok" : dom.pct >= 90 ? "ok" : dom.pct >= 75 ? "warn" : "fail", lines.length ? "Zeilenabstand: " + lines.map(function (x) { return x.key + " " + x.pct + " %"; }).join(", ") : "Kein Fließtext.", lines.length);
-      put("D4", vrevGrade(colors.length, 4, 6), colors.length ? colors.length + " Textfarbe(n) neben Schwarz: " + colors.map(function (x) { return "#" + x.key; }).join(", ") : "Nur Schwarz/Automatisch.", colors.length);
-      put("D5", vrevGrade(d.tipsUnmarked.length, 0, 3), "Icons/Symbole: " + d.icons + " · markierte Tipps/Hinweise: " + d.tipsMarked + " · unmarkierte Tipps/Hinweise: " + d.tipsUnmarked.length +
-        (d.tipsUnmarked.length ? " (" + d.tipsUnmarked.slice(0, 3).join(" | ") + ")" : "") + " · interne Bemerkungen: " + d.comments + " Kommentar(e), " + d.highlights + " farblich markierte Stelle(n)", d.tipsUnmarked.length);
+      put("D3", !dom ? "ok" : dom.pct >= 90 ? "ok" : dom.pct >= 75 ? "warn" : "fail", lines.length ? outPfx + "Zeilenabstand: " + lines.map(function (x) { return x.key + " " + x.pct + " %"; }).join(", ") : "Kein Fließtext.", lines.length);
+      put("D4", vrevGrade(colors.length, 4, 6), colors.length ? outPfx + colors.length + " Textfarbe(n) neben Schwarz: " + colors.map(function (x) { return "#" + x.key; }).join(", ") : "Nur Schwarz/Automatisch.", colors.length);
+      var tips = vrevTipLines(doc), icons = vrevIconSet(doc), src = doc.design || d;
+      var d5 = vrevGrade(tips.unmarked.length, 0, 3);
+      if (d5 === "ok" && icons.length > 5) d5 = "warn";
+      put("D5", d5, "Icons/Symbole: " + icons.length + " verschiedene" + (icons.length ? " (" + icons.slice(0, 8).join(" ") + ")" : "") + (icons.length > 5 ? " – uneinheitlich, höchstens 5 verwenden" : "") +
+        " · markierte Tipps/Hinweise: " + tips.marked + " · unmarkierte Tipps/Hinweise: " + tips.unmarked.length + (tips.unmarked.length ? " (" + tips.unmarked.slice(0, 3).map(function (x) { return truncate(x, 60); }).join(" | ") + ")" : "") +
+        " · interne Bemerkungen: " + src.comments + " Kommentar(e), " + src.highlights + " farblich markierte Stelle(n)", tips.unmarked.length);
     }
     // Stufe 2 – Inhalt
     var jira = 0, plan = [], intern = 0, internLines = [], test = [];
     vrevLines(doc, function (line, c) {
       var t = vrevPlain(line);
       jira += (t.match(ROVO_JIRA_KEY_RE) || []).length;
-      if (VREV_RE.planning.test(t)) plan.push(c.title + ": " + truncate(t.trim(), 70));
+      var pub = vrevPublic(line);
+      if (VREV_RE.planning.test(pub)) plan.push(c.title + ": " + truncate(pub.trim(), 70));
       if (VREV_RE.internalLine.test(t)) internLines.push(c.title + ": " + truncate(t.trim(), 70));
-      if (VREV_RE.test.test(t)) test.push(c.title + ": " + truncate(t.trim(), 70));
+      if (VREV_RE.test.test(pub)) test.push(c.title + ": " + truncate(pub.trim(), 70));
     });
     doc.chapters.forEach(function (c) { intern += (String(c.text || "").match(VREV_RE.internalSeg) || []).length; });
     put("C1", jira ? "fail" : "ok", jira ? jira + " Jira-Nummer(n) im Text – für Kunden entfernen („Jira-Nummern löschen“)." : "Keine Jira-Nummern im Text.", jira);
@@ -32640,15 +32701,33 @@
       vrevPlaceholders(c.text).forEach(function (p) {
         (doc.ph[ci + ":" + p.idx] || []).forEach(function (id) { var img = screenPhImgById(id); if (img) screens.push(Object.assign({}, img, { description: finalScreenCaption(img) })); });
       });
-      return { title: c.title, level: Math.max(1, c.level || 1), text: vrevExportText(doc, c, ci, withInternal), screens: screens };
+      var tables = (c.tables || []).map(function (t) { return { noCaption: true, rows: withInternal ? t.rows : t.rows.map(function (row) { return row.map(function (cell) { return finalStripJiraKeys(cell); }); }) }; });
+      return { title: c.title, level: Math.max(1, c.level || 1), text: vrevExportText(doc, c, ci, withInternal), screens: screens, tables: tables };
     });
   }
   async function vrevBuildWord(doc, withInternal, plain) {
     var blob = await buildFinalMasterDocxBlob(vrevExportChapters(doc, withInternal), {
       coverTitle: doc.name, coverSubtitle: "Version " + doc.version + " · " + doc.status + (withInternal ? " · INTERN – mit internen Vermerken" : ""),
-      footerTitle: doc.name + " v" + doc.version + (withInternal ? " – INTERN" : "")
+      footerTitle: doc.name + " v" + doc.version + (withInternal ? " – INTERN" : ""), rich: true
     });
-    return plain ? blob : finalApplyWordDesign(blob, doc.wordDesign || finalResolveWordDesign());
+    return plain ? blob : finalApplyWordDesign(blob, vrevResolveDesign(doc));
+  }
+  function vrevDesignOptions(doc) {
+    var opts = [{ key: "", label: doc.wordDesign ? "Design des Entwurfs (" + (doc.filename || doc.name) + ")" : "Design aus FINAL (Schritt Design)" }];
+    finalWordDesignOptions().forEach(function (o) { opts.push({ key: o.key, label: o.label, design: o.design }); });
+    return opts;
+  }
+  function vrevResolveDesign(doc) {
+    if (doc.designKey) {
+      var o = vrevDesignOptions(doc).filter(function (x) { return x.key === doc.designKey; })[0];
+      if (o) return o.design || finalAppWordDesign("app:standard");
+    }
+    return doc.wordDesign || finalResolveWordDesign();
+  }
+  function vrevDesignLabel(doc) { var o = vrevDesignOptions(doc).filter(function (x) { return x.key === (doc.designKey || ""); })[0]; return o ? o.label : "Standard"; }
+  async function vrevAnalyzeOutput(doc) {
+    try { doc.designOut = await vrevAnalyzeDocxZip(await JSZip.loadAsync(await (await vrevBuildWord(doc, false, false)).arrayBuffer())); doc.designOutLabel = vrevDesignLabel(doc); }
+    catch (e) { doc.designOut = null; }
   }
   function vrevFileBase(doc) { return editoFinalSafeName(doc.name) + "_v" + String(doc.version).replace(/[^\w.]/g, ""); }
 
@@ -32776,7 +32855,14 @@
   function vrevStageBody(doc, n) {
     var h = "";
     if (n === 1) {
-      var d = doc.design;
+      var tipsN = vrevTipLines(doc).unmarked.length;
+      h += '<div class="controls" style="flex-wrap:wrap; align-items:flex-end;"><div><label for="vrev-design-select">Design für die Ausgabe</label><select id="vrev-design-select" data-vrev-design>' +
+        vrevDesignOptions(doc).map(function (o) { return '<option value="' + escapeHtml(o.key) + '"' + (o.key === (doc.designKey || "") ? " selected" : "") + ">" + escapeHtml(o.label) + "</option>"; }).join("") + "</select></div>" +
+        '<button class="btn ghost" type="button" data-vrev-act="design-out"' + (vrevBusy ? " disabled" : "") + ">Ausgabe prüfen</button>" +
+        '<button class="btn ghost" type="button" data-vrev-act="mark-tips"' + (tipsN ? "" : " disabled") + ">Tipps/Hinweise markieren (" + tipsN + ")</button></div>" +
+        '<p class="step-note">' + (doc.designOut ? "D1–D4 bewerten die Word-Ausgabe im Design „" + escapeHtml(doc.designOutLabel || "") + "“ (direkte Formatierung des Entwurfs entfällt, Fett/Kursiv/Aufzählungen/Tabellen bleiben). Werte unten: Ausgabe." :
+          "D1–D4 bewerten den Entwurf. „Ausgabe prüfen“ bewertet die Word-Ausgabe im gewählten Design.") + "</p>";
+      var d = doc.designOut || doc.design;
       if (d) {
         var list = function (title, arr, fmt) { return "<div><b>" + title + "</b><ul>" + arr.slice(0, 6).map(function (x) { return "<li>" + fmt(x) + "</li>"; }).join("") + "</ul></div>"; };
         h += '<div class="vrev-design">' +
@@ -32784,11 +32870,16 @@
           list("Schriftgrößen (Fließtext)", vrevShares(d.sizes, 1), function (x) { return escapeHtml(String(x.key).replace(".", ",")) + " pt – " + x.pct + " %"; }) +
           list("Zeilenabstand", vrevShares(d.lines, 0), function (x) { return escapeHtml(x.key) + " – " + x.pct + " %"; }) +
           list("Farbpalette", vrevShares(d.colors, 1), function (x) { return (x.key.length === 6 ? '<span class="vrev-swatch" style="background:#' + escapeHtml(x.key) + '"></span>#' : "") + escapeHtml(x.key) + " – " + x.pct + " %"; }) +
-          "<div><b>Icons & Markierungen</b><ul><li>Icons/Symbole: " + d.icons + "</li><li>Markierte Tipps/Hinweise: " + d.tipsMarked + "</li><li>Unmarkierte Tipps/Hinweise: " + d.tipsUnmarked.length + "</li><li>Interne Bemerkungen: " + d.comments + " Kommentar(e), " + d.highlights + " Hervorhebung(en)</li><li>Bilder im Dokument: " + d.images + "</li></ul></div></div>" +
-          (d.tipsUnmarked.length ? '<p class="step-note">Unmarkierte Tipps/Hinweise (als [Tipp]/[Hinweis] kennzeichnen): ' + d.tipsUnmarked.slice(0, 5).map(escapeHtml).join(" · ") + "</p>" : "");
+          "<div><b>Icons & Markierungen</b><ul><li>Icons/Symbole: " + vrevIconSet(doc).join(" ") + " (" + vrevIconSet(doc).length + " verschiedene)</li><li>Markierte Tipps/Hinweise: " + vrevTipLines(doc).marked + "</li><li>Unmarkierte Tipps/Hinweise: " + vrevTipLines(doc).unmarked.length + "</li><li>Interne Bemerkungen: " + d.comments + " Kommentar(e), " + d.highlights + " Hervorhebung(en)</li><li>Bilder im Dokument: " + d.images + "</li></ul></div></div>" +
+          "";
       }
     } else if (n === 2) {
-      h += '<div class="controls" style="flex-wrap:wrap;"><button class="btn ghost" type="button" data-vrev-act="strip-jira"' + (doc.checks.C1 && doc.checks.C1.n ? "" : " disabled") + ">Jira-Nummern löschen (" + ((doc.checks.C1 && doc.checks.C1.n) || 0) + ")</button></div>";
+      var nPlan = (doc.checks.C2 && doc.checks.C2.n) || 0, nTest = (doc.checks.C4 && doc.checks.C4.n) || 0, nInt = (doc.checks.C3 && doc.checks.C3.n) || 0;
+      h += '<div class="controls" style="flex-wrap:wrap;"><button class="btn ghost" type="button" data-vrev-act="strip-jira"' + (doc.checks.C1 && doc.checks.C1.n ? "" : " disabled") + ">Jira-Nummern löschen (" + ((doc.checks.C1 && doc.checks.C1.n) || 0) + ")</button>" +
+        '<button class="btn ghost" type="button" data-vrev-act="mark-plan"' + (nPlan ? "" : " disabled") + ">Planungen als intern markieren (" + nPlan + ")</button>" +
+        '<button class="btn ghost" type="button" data-vrev-act="mark-test"' + (nTest ? "" : " disabled") + ">Test-Hinweise als intern markieren (" + nTest + ")</button>" +
+        '<button class="btn ghost final-btn-danger" type="button" data-vrev-act="del-intern"' + (nInt ? "" : " disabled") + ">Interne Vermerke löschen (" + nInt + ")</button></div>" +
+        '<p class="step-note">Als intern markierte Stellen fehlen in der Verteilfassung und erscheinen in der internen Fassung als „[Intern: …]“.</p>';
       h += '<div class="vrev-legend">' + VREV_STATUS_DEFS.map(function (s) { return '<div><span class="vrev-st vrev-st-' + s.cls + '">' + escapeHtml(s.key) + "</span> " + escapeHtml(s.def) + "</div>"; }).join("") + "</div>";
       var sh = vrevStatusHits(doc);
       h += sh.length ? '<table class="simple-table vrev-status-table"><thead><tr><th>Kapitel</th><th>Status</th><th>Textstelle</th></tr></thead><tbody>' + sh.slice(0, 60).map(function (x) {
@@ -32893,7 +32984,20 @@
     var relsMap = await loadZipRelationships(zip, "word/_rels/document.xml.rels");
     var dom = new DOMParser().parseFromString(xml, "application/xml"), body = dom.getElementsByTagName("w:body")[0];
     if (dom.querySelector("parsererror") || !body) return { chapters: docxXmlToFinalChapters(xml), images: [] };
-    var W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main", pend = [], lastHeading = "";
+    var W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main", pend = [], lastHeading = "", tables = [];
+    var numFmt = await vrevNumberingFormats(zip);
+    // Tabellen (oberste Ebene) als "[Tabelle]"-Platzhalter mit Zellinhalt sichern
+    Array.prototype.filter.call(body.childNodes, function (n) { return n.nodeType === 1 && n.tagName === "w:tbl"; }).forEach(function (tbl) {
+      var rows = Array.prototype.filter.call(tbl.getElementsByTagName("w:tr"), function (tr) { return tr.parentNode === tbl; })
+        .map(function (tr) { return Array.prototype.filter.call(tr.childNodes, function (n) { return n.nodeType === 1 && n.tagName === "w:tc"; }).map(docxCellText); })
+        .filter(function (r) { return r.some(function (c) { return c; }); });
+      var p = dom.createElementNS(W, "w:p"), r = dom.createElementNS(W, "w:r"), t = dom.createElementNS(W, "w:t");
+      t.textContent = "[Tabelle: #vrevtbl" + tables.length + "#]";
+      r.appendChild(t); p.appendChild(r);
+      tables.push(rows);
+      body.replaceChild(p, tbl);
+    });
+    vrevMarkRichRuns(dom, body, numFmt, W);
     var nodes = Array.prototype.filter.call(body.childNodes, function (n) { return n.nodeType === 1 && n.tagName === "w:p"; });
     nodes.forEach(function (node, ni) {
       var text = docxParagraphText(node), level = docxHeadingLevel(docxParagraphStyleId(node));
@@ -32923,13 +33027,64 @@
       if (im.blob) setScreenPreviewBlob(img, im.blob);
       return img;
     });
-    return { chapters: chapters, images: images, caps: pend.map(function (x) { return x.cap; }) };
+    return { chapters: chapters, images: images, caps: pend.map(function (x) { return x.cap; }), tables: tables };
   }
-  function vrevResolveImageMarkers(chapters, images, caps) {
+  async function vrevNumberingFormats(zip) {
+    var f = zip.file("word/numbering.xml"), out = {};
+    if (!f) return out;
+    try {
+      var d = new DOMParser().parseFromString(await f.async("string"), "application/xml"), abs = {};
+      Array.prototype.forEach.call(d.getElementsByTagName("w:abstractNum"), function (a) {
+        var lv = {};
+        Array.prototype.forEach.call(a.getElementsByTagName("w:lvl"), function (l) { var nf = vrevChild(l, "w:numFmt"); lv[l.getAttribute("w:ilvl")] = nf ? nf.getAttribute("w:val") : "bullet"; });
+        abs[a.getAttribute("w:abstractNumId")] = lv;
+      });
+      Array.prototype.forEach.call(d.getElementsByTagName("w:num"), function (n) { var a = vrevChild(n, "w:abstractNumId"); if (a) out[n.getAttribute("w:numId")] = abs[a.getAttribute("w:val")] || {}; });
+    } catch (e) { /* ohne Nummerierung weiter */ }
+    return out;
+  }
+  function vrevOn(el) { if (!el) return false; var v = el.getAttribute("w:val"); return v == null || !/^(0|false|off|none)$/i.test(v); }
+  // Fett/Kursiv als **…**/__…__ und Aufzaehlungen als "• "/"1. " in den Text schreiben (vor dem Kapitel-Parsing).
+  function vrevMarkRichRuns(dom, body, numFmt, W) {
+    var counters = {};
+    Array.prototype.filter.call(body.childNodes, function (n) { return n.nodeType === 1 && n.tagName === "w:p"; }).forEach(function (p) {
+      if (docxHeadingLevel(docxParagraphStyleId(p)) > 0) return;
+      Array.prototype.forEach.call(p.getElementsByTagName("w:r"), function (r) {
+        var rPr = vrevChild(r, "w:rPr"), b = rPr && vrevOn(vrevChild(rPr, "w:b")), it = rPr && vrevOn(vrevChild(rPr, "w:i"));
+        if (!b && !it) return;
+        var ts = r.getElementsByTagName("w:t");
+        if (!ts.length || !Array.prototype.some.call(ts, function (t) { return t.textContent.trim(); })) return;
+        var open = (b ? "**" : "") + (it ? "__" : ""), close = (it ? "__" : "") + (b ? "**" : "");
+        var first = ts[0], last = ts[ts.length - 1], lead = /^\s*/.exec(first.textContent)[0], trail = /\s*$/.exec(last.textContent)[0];
+        first.textContent = lead + open + first.textContent.slice(lead.length);
+        last.textContent = last.textContent.slice(0, last.textContent.length - trail.length) + close + trail;
+      });
+      var pPr = vrevChild(p, "w:pPr"), numPr = vrevChild(pPr, "w:numPr");
+      if (!numPr) { counters = {}; return; }
+      var idEl = vrevChild(numPr, "w:numId"), lvEl = vrevChild(numPr, "w:ilvl"), numId = idEl ? idEl.getAttribute("w:val") : "", lvl = lvEl ? parseInt(lvEl.getAttribute("w:val"), 10) || 0 : 0;
+      if (!numId || numId === "0") return;
+      var fmt = (numFmt[numId] || {})[String(lvl)] || "bullet", prefix;
+      if (fmt === "bullet" || fmt === "none") prefix = lvl === 0 ? "• " : lvl === 1 ? "◦ " : "▪ ";
+      else {
+        var key = numId + ":" + lvl;
+        Object.keys(counters).forEach(function (k) { var parts = k.split(":"); if (parts[0] === numId && parseInt(parts[1], 10) > lvl) delete counters[k]; });
+        counters[key] = (counters[key] || 0) + 1;
+        prefix = counters[key] + ". ";
+      }
+      var firstT = p.getElementsByTagName("w:t")[0];
+      if (firstT) firstT.textContent = prefix + firstT.textContent;
+    });
+  }
+  function vrevCleanRich(text) {
+    return String(text || "").replace(/(\*\*|__)(\s*)\1/g, "$2").replace(/\*\*\*\*|____/g, "");
+  }
+  function vrevResolveImageMarkers(chapters, images, caps, tables) {
     var ph = {};
     var out = chapters.map(function (c, ci) {
-      var marks = {};
-      var text = String(c.markedText || c.fullText || "").split("\n").map(function (line, li) {
+      var marks = {}, ctables = [];
+      var text = vrevCleanRich(String(c.markedText || c.fullText || "")).split("\n").map(function (line, li) {
+        var tm = /^\s*\[Tabelle: #vrevtbl(\d+)#\]\s*$/.exec(line.replace(FINAL_MARK_RE, ""));
+        if (tm) { ctables.push({ rows: (tables || [])[parseInt(tm[1], 10)] || [] }); return "[Tabelle]"; }
         var m = /^\s*\[Bild: #vrevimg(\d+)#\]\s*$/.exec(line.replace(FINAL_MARK_RE, ""));
         if (!m) return line;
         var k = parseInt(m[1], 10);
@@ -32937,7 +33092,9 @@
         return caps[k] ? "[Bild: " + caps[k] + "]" : "[Bild]";
       }).join("\n");
       vrevPlaceholders(text).forEach(function (p) { if (marks[p.line] != null && images[marks[p.line]]) ph[ci + ":" + p.idx] = [images[marks[p.line]].id]; });
-      return { title: c.title, level: c.level, text: text };
+      var ch = { title: String(c.title || "").replace(/\*\*|__/g, ""), level: c.level, text: text };
+      if (ctables.length) ch.tables = ctables;
+      return ch;
     });
     return { chapters: out, ph: ph };
   }
@@ -32952,7 +33109,7 @@
         var zip = await JSZip.loadAsync(buf), entry = zip.file("word/document.xml");
         if (!entry) throw new Error("kein Word-Dokumentinhalt gefunden");
         var withImgs = await vrevDocxWithImages(zip, f.name);
-        var resolved = vrevResolveImageMarkers(withImgs.chapters, withImgs.images, withImgs.caps || []);
+        var resolved = vrevResolveImageMarkers(withImgs.chapters, withImgs.images, withImgs.caps || [], withImgs.tables || []);
         withImgs.images.slice().reverse().forEach(function (img) { app.uploadedImages.unshift(img); });
         var design = null, wordDesign = null;
         try { design = await vrevAnalyzeDocxZip(zip); } catch (e) { design = null; }
@@ -33163,6 +33320,14 @@
       return;
     }
     if (!doc) return;
+    if (t.matches("[data-vrev-design]")) {
+      doc.designKey = t.value; doc.designOut = null;
+      vrevHistory(doc, "Ausgabe-Design: " + vrevDesignLabel(doc));
+      vrevBusy = true; renderVrev();
+      try { await vrevAnalyzeOutput(doc); vrevRunChecks(doc); els.vrevStatus.textContent = "Design „" + vrevDesignLabel(doc) + "“ gewählt und Ausgabe geprüft."; }
+      finally { vrevBusy = false; renderVrev(); }
+      return;
+    }
     if (t.matches("[data-vrev-ph-add]") && t.value) {
       var key = t.getAttribute("data-vrev-ph-add"), id = parseInt(t.value, 10), ids = doc.ph[key] = doc.ph[key] || [];
       if (ids.length < 3 && ids.indexOf(id) === -1) { ids.push(id); vrevLog(doc, 3, "Bild zugeordnet", 1); vrevRunChecks(doc); }
@@ -33205,8 +33370,33 @@
     if (act === "reopen-stage") { delete doc.steps[doc.stage || 1]; vrevRunChecks(doc); renderVrev(); return; }
     if (act === "strip-jira") {
       var before = (doc.checks.C1 && doc.checks.C1.n) || 0, nch = vrevChangedChapters(doc, finalStripJiraKeys);
+      doc.chapters.forEach(function (c) { (c.tables || []).forEach(function (tb) { tb.rows = tb.rows.map(function (row) { return row.map(function (cell) { var x = finalStripJiraKeys(cell); if (x !== cell) nch++; return x; }); }); }); });
       if (nch) { vrevLog(doc, 2, "Jira-Nummern gelöscht", before); vrevRunChecks(doc); els.vrevStatus.textContent = before + " Jira-Nummer(n) in " + nch + " Kapitel(n) gelöscht."; }
       renderVrev(); return;
+    }
+    if (act === "mark-plan" || act === "mark-test") {
+      var reMark = act === "mark-plan" ? VREV_RE.planning : VREV_RE.test, nBefore = (doc.checks[act === "mark-plan" ? "C2" : "C4"] || {}).n || 0;
+      var nm = vrevChangedChapters(doc, function (t) { return vrevMarkInternalText(t, reMark); });
+      if (nm) { vrevLog(doc, 2, (act === "mark-plan" ? "Planungen" : "Test-Hinweise") + " als intern markiert", nBefore); vrevRunChecks(doc); els.vrevStatus.textContent = nBefore + " Stelle(n) als intern markiert – in der Verteilfassung nicht enthalten."; }
+      renderVrev(); return;
+    }
+    if (act === "del-intern") {
+      var nInt2 = (doc.checks.C3 && doc.checks.C3.n) || 0;
+      if (!(await confirmDialog(nInt2 + " interne(n) Vermerk(e) endgültig aus dem Text löschen? (Auch die interne Fassung enthält sie danach nicht mehr.)", "Löschen"))) return;
+      var nd2 = vrevChangedChapters(doc, vrevDeleteInternalText);
+      if (nd2) { vrevLog(doc, 2, "Interne Vermerke gelöscht", nInt2); vrevRunChecks(doc); els.vrevStatus.textContent = nInt2 + " interne(r) Vermerk(e) gelöscht."; }
+      renderVrev(); return;
+    }
+    if (act === "mark-tips") {
+      var nTips = vrevTipLines(doc).unmarked.length, nt = vrevChangedChapters(doc, vrevMarkTipsText);
+      if (nt) { vrevLog(doc, 1, "Tipps/Hinweise markiert", nTips); vrevRunChecks(doc); els.vrevStatus.textContent = nTips + " Tipp(s)/Hinweis(e) als [Tipp]/[Hinweis]/[Warnung] markiert – im Word farbig hervorgehoben."; }
+      renderVrev(); return;
+    }
+    if (act === "design-out") {
+      vrevBusy = true; renderVrev();
+      try { await vrevAnalyzeOutput(doc); vrevRunChecks(doc); els.vrevStatus.textContent = "Word-Ausgabe im Design „" + vrevDesignLabel(doc) + "“ geprüft."; }
+      finally { vrevBusy = false; renderVrev(); }
+      return;
     }
     if (act === "ph-remove") {
       var k = b.getAttribute("data-key"), rid = parseInt(b.getAttribute("data-img"), 10);
