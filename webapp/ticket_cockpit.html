@@ -2245,6 +2245,30 @@
             <div class="callout" id="rlrefcompare-analysis-output"></div>
           </div>
         </section>
+
+        <section class="panel rl-roles" id="rl-roles-section" style="padding:12px 14px; margin-top:14px;">
+          <p class="section-label">Releaseletter je Rolle</p>
+          <p class="desc" style="margin-top:0;">Aus derselben Ticket-Auswahl wie oben (Name, gefilterte Tickets bzw. Ticket-Liste) je Rolle und Sprache einen eigenen Releaseletter erzeugen. Ein Ticket gehört zu einer Rolle über sein Rollen-Label (Jira-Label oder automatisches Label: Retail, Markt, MO, HQ, IT); Tickets ohne Rollen-Label gelten wahlweise für alle Rollen. Jeder Releaseletter enthält den passenden Rollenhinweis und optional einen Abschnitt mit den Änderungen, die nur andere Rollen betreffen.</p>
+          <div class="controls" style="flex-wrap:wrap;"><span class="step-note" style="margin:0;">Rollen:</span><span id="rl-roles-roles" class="variante-checks"></span></div>
+          <div class="controls" style="flex-wrap:wrap;"><span class="step-note" style="margin:0;">Sprachen:</span><span class="variante-checks">
+            <label class="variante-inline-check"><input type="checkbox" id="rl-roles-lang-de" checked> Deutsch</label>
+            <label class="variante-inline-check"><input type="checkbox" id="rl-roles-lang-en"> Englisch</label></span></div>
+          <div class="controls" style="flex-wrap:wrap;">
+            <label class="variante-inline-check"><input type="checkbox" id="rl-roles-untagged" checked> Tickets ohne Rollen-Label in alle Releaseletter aufnehmen</label>
+            <label class="variante-inline-check"><input type="checkbox" id="rl-roles-others" checked> Abschnitt „Änderungen für andere Rollen“</label>
+          </div>
+          <div class="controls" style="flex-wrap:wrap;">
+            <button class="btn primary" id="rl-roles-generate-btn" type="button">Releaseletter je Rolle erzeugen</button>
+            <button class="btn ghost" id="rl-roles-zip-btn" type="button" disabled>Alle als ZIP (Word + Markdown)</button>
+            <button class="btn ghost" id="rl-roles-xlsx-btn" type="button" disabled>Übersicht Ticket × Rolle (Excel)</button>
+          </div>
+          <p class="step-note" id="rl-roles-status"></p>
+          <div class="table-wrap" id="rl-roles-table-wrap" hidden><table class="simple-table"><thead><tr><th>Rolle</th><th>Sprache</th><th>Tickets</th><th>Nur andere Rollen</th><th>Aktion</th></tr></thead><tbody id="rl-roles-tbody"></tbody></table></div>
+          <div class="panel" id="rl-roles-preview-wrap" hidden style="margin-top:10px; padding:10px 14px;">
+            <div class="controls" style="justify-content:space-between;"><p class="section-label" id="rl-roles-preview-title" style="margin:0;"></p><button class="btn ghost btn-tiny" id="rl-roles-preview-close-btn" type="button">Schließen</button></div>
+            <div class="gen-preview" id="rl-roles-preview" style="white-space:pre-wrap; max-height:480px; overflow:auto;"></div>
+          </div>
+        </section>
       </section>
 
       <!-- ================= Benutzerhandbuch ================= -->
@@ -6172,7 +6196,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.130.0";
+  var APP_VERSION = "2.131.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7776,7 +7800,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -30883,6 +30907,100 @@
       renderVarianteVariants();
     }
   });
+
+  // ===================== v2.131: Releaseletter je Rolle (und Sprache) =====================
+  // Rollen-Zugehoerigkeit eines Tickets ueber ticketRoleTags (Jira-Label oder automatisches Label).
+  var RL_ROLES = [{ tag: "Retail", key: "dealer" }, { tag: "Markt", key: "markt" }, { tag: "MO", key: "mo" }, { tag: "HQ", key: "hq" }, { tag: "IT", key: "alle" }];
+  var RL_OTHER_I18N = {
+    de: { title: "Änderungen für andere Rollen", intro: function (r) { return "Die folgenden Änderungen betreffen nicht die Rolle " + r + ", sondern andere Rollen:"; }, roles: "Rollen" },
+    en: { title: "Changes for other roles", intro: function (r) { return "The following changes do not affect the " + r + " role but other roles:"; }, roles: "Roles" }
+  };
+  var rlRoleResults = [], rlRolePreviewIdx = -1, rlRoleTitle = "Release", rlRoleTickets = [], rlRoleSel = { Retail: true, Markt: true, MO: true, HQ: true, IT: false };
+  function rlWrapperMap() { var m = {}; app.tickets.forEach(function (w) { m[w.key] = w; }); return m; }
+  function rlTicketRoles(raw, map) { var w = map[raw.key]; return w ? ticketRoleTags(w) : []; }
+  function renderRlRoles() {
+    els.rlRolesRoles.innerHTML = RL_ROLES.map(function (r) { return '<label class="variante-inline-check"><input type="checkbox" data-rl-role="' + r.tag + '"' + (rlRoleSel[r.tag] ? " checked" : "") + "> " + r.tag + "</label>"; }).join("");
+  }
+  function renderRlRoleResults() {
+    els.rlRolesTableWrap.hidden = !rlRoleResults.length;
+    els.rlRolesZipBtn.disabled = els.rlRolesXlsxBtn.disabled = !rlRoleResults.length;
+    els.rlRolesTbody.innerHTML = rlRoleResults.map(function (r, i) {
+      return '<tr data-rl-result="' + i + '"><td><b>' + escapeHtml(r.role) + "</b></td><td>" + (r.lang === "de" ? "Deutsch" : "Englisch") + "</td><td>" + r.own.length + "</td><td>" + r.others.length + "</td>" +
+        '<td><div class="final-row-actions variante-actions"><button class="btn ghost btn-tiny" type="button" data-rl-preview="' + i + '">Vorschau</button><button class="btn ghost btn-tiny" type="button" data-rl-md="' + i + '">Markdown</button><button class="btn ghost btn-tiny" type="button" data-rl-docx="' + i + '">Word</button></div></td></tr>';
+    }).join("");
+    var r = rlRoleResults[rlRolePreviewIdx];
+    els.rlRolesPreviewWrap.hidden = !r;
+    if (r) { els.rlRolesPreviewTitle.textContent = "Vorschau – " + r.role + " (" + (r.lang === "de" ? "Deutsch" : "Englisch") + ")"; els.rlRolesPreview.innerHTML = highlightNegativeWordsHtml(r.content); }
+  }
+  function rlRoleFileBase(r) { return safeFilename(rlRoleTitle) + "_releaseletter_" + safeFilename(r.role) + "_" + r.lang; }
+  els.rlRolesRoles.addEventListener("change", function (e) { var cb = e.target.closest("[data-rl-role]"); if (cb) rlRoleSel[cb.getAttribute("data-rl-role")] = cb.checked; });
+  els.rlRolesGenerateBtn.addEventListener("click", function () {
+    var tickets = resolveGeneratorTickets("releaseletter");
+    if (!tickets.length) { showToast("Keine Tickets", "Keine passenden Tickets gefunden.", true); return; }
+    var roles = RL_ROLES.filter(function (r) { return rlRoleSel[r.tag]; });
+    var langs = [els.rlRolesLangDe.checked ? "de" : null, els.rlRolesLangEn.checked ? "en" : null].filter(Boolean);
+    if (!roles.length || !langs.length) { showToast("Auswahl fehlt", "Bitte mindestens eine Rolle und eine Sprache wählen.", true); return; }
+    var map = rlWrapperMap(), untagged = els.rlRolesUntagged.checked, withOthers = els.rlRolesOthers.checked;
+    rlRoleTitle = (document.getElementById("releaseletter-name").value || "").trim() || "Release";
+    rlRoleTickets = tickets.map(function (t) { return { t: t, roles: rlTicketRoles(t, map) }; });
+    rlRoleResults = [];
+    roles.forEach(function (role) {
+      var own = rlRoleTickets.filter(function (x) { return x.roles.indexOf(role.tag) !== -1 || (untagged && !x.roles.length); });
+      var others = rlRoleTickets.filter(function (x) { return own.indexOf(x) === -1 && x.roles.length; });
+      langs.forEach(function (lang) {
+        var content = renderReleaseLetter(rlRoleTitle + " – " + role.tag, own.map(function (x) { return x.t; }), lang, role.key);
+        if (withOthers && others.length) {
+          var L = RL_OTHER_I18N[lang];
+          content += "\n\n## " + L.title + "\n\n" + L.intro(role.tag) + "\n\n" + others.map(function (x) { return "- **" + x.t.key + "** – " + (x.t.summary || "") + " (" + L.roles + ": " + x.roles.join(", ") + ")"; }).join("\n");
+        }
+        rlRoleResults.push({ role: role.tag, lang: lang, own: own, others: others, content: content });
+      });
+    });
+    rlRolePreviewIdx = -1;
+    var noTag = rlRoleTickets.filter(function (x) { return !x.roles.length; }).length;
+    els.rlRolesStatus.textContent = rlRoleResults.length + " Releaseletter erzeugt (" + roles.length + " Rolle(n) × " + langs.length + " Sprache(n)) aus " + tickets.length + " Ticket(s)" +
+      (noTag ? "; " + noTag + " ohne Rollen-Label " + (untagged ? "(in allen enthalten)" : "(nicht enthalten)") : "") + ".";
+    addLog("Releaseletter: " + rlRoleResults.length + " Releaseletter je Rolle erzeugt.");
+    renderRlRoleResults();
+  });
+  els.rlRolesTbody.addEventListener("click", async function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    var i = parseInt(b.getAttribute("data-rl-preview") || b.getAttribute("data-rl-md") || b.getAttribute("data-rl-docx"), 10), r = rlRoleResults[i];
+    if (!r) return;
+    if (b.hasAttribute("data-rl-preview")) { rlRolePreviewIdx = rlRolePreviewIdx === i ? -1 : i; renderRlRoleResults(); return; }
+    try {
+      if (b.hasAttribute("data-rl-md")) { if (await saveOrWarn(rlRoleFileBase(r) + ".md", r.content)) showToast("Gespeichert", "Markdown heruntergeladen."); }
+      else if (await saveOrWarn(rlRoleFileBase(r) + ".docx", await buildMarkdownDocxBlob(rlRoleTitle + " – " + r.role, r.content))) showToast("Gespeichert", "DOCX heruntergeladen.");
+    } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
+  els.rlRolesPreviewCloseBtn.addEventListener("click", function () { rlRolePreviewIdx = -1; renderRlRoleResults(); });
+  els.rlRolesZipBtn.addEventListener("click", async function () {
+    if (!rlRoleResults.length || typeof JSZip === "undefined") return;
+    try {
+      var zip = new JSZip();
+      for (var i = 0; i < rlRoleResults.length; i++) {
+        var r = rlRoleResults[i];
+        zip.file(rlRoleFileBase(r) + ".md", r.content);
+        zip.file(rlRoleFileBase(r) + ".docx", await buildMarkdownDocxBlob(rlRoleTitle + " – " + r.role, r.content));
+      }
+      var fn = safeFilename(rlRoleTitle) + "_Releaseletter_je_Rolle_" + dateStampForFilename() + ".zip";
+      if (await saveOrWarn(fn, await zip.generateAsync({ type: "blob" }))) { els.rlRolesStatus.textContent = rlRoleResults.length + " Releaseletter als „" + fn + "“ heruntergeladen (je Word + Markdown)."; addLog("Releaseletter: ZIP „" + fn + "“ heruntergeladen."); }
+    } catch (err) { showToast("ZIP fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
+  els.rlRolesXlsxBtn.addEventListener("click", async function () {
+    var roles = []; rlRoleResults.forEach(function (r) { if (roles.indexOf(r.role) === -1) roles.push(r.role); });
+    var inRole = {};
+    rlRoleResults.forEach(function (r) { r.own.forEach(function (x) { inRole[x.t.key + "|" + r.role] = true; }); });
+    try {
+      var blob = await buildXlsxBlob([{ title: "Ticket je Rolle", headers: ["Ticket", "Zusammenfassung", "Rollen-Label"].concat(roles), rows: rlRoleTickets.map(function (x) {
+        return [x.t.key, x.t.summary || "", x.roles.join(", ") || "(ohne – gilt für alle)"].concat(roles.map(function (r) { return inRole[x.t.key + "|" + r] ? "x" : ""; }));
+      }) }]);
+      var fn = safeFilename(rlRoleTitle) + "_Tickets_je_Rolle_" + dateStampForFilename() + ".xlsx";
+      if (await saveOrWarn(fn, blob)) els.rlRolesStatus.textContent = "Übersicht „" + fn + "“ heruntergeladen (" + rlRoleTickets.length + " Tickets × " + roles.length + " Rollen).";
+    } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
+  renderRlRoles();
 
   /* ============ Teil 10: Navigation ============ */
 

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.130.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.131.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,6 +2031,16 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **Releaseletter je Rolle und Sprache (v2.131.0)**: Im Register Releaseletter erzeugt der neue
+  Bereich „Releaseletter je Rolle“ aus derselben Ticket-Auswahl wie der Haupt-Entwurf (Name,
+  gefilterte Tickets bzw. Ticket-Liste) je gewählter Rolle (Retail, Markt, MO, HQ, IT) und Sprache
+  (Deutsch/Englisch) einen eigenen Releaseletter. Ein Ticket gehört zu einer Rolle über sein
+  Rollen-Label (Jira-Label oder automatisches Label); Tickets ohne Rollen-Label werden wahlweise in
+  alle Releaseletter aufgenommen. Jeder Brief enthält den passenden Rollenhinweis (oneSCM-Navigation)
+  und optional den Abschnitt „Änderungen für andere Rollen“ (Ticket, Zusammenfassung, betroffene
+  Rollen). Tabelle mit Ticketzahlen je Brief, Vorschau, Download je Brief als Markdown oder Word,
+  „Alle als ZIP (Word + Markdown)“ und „Übersicht Ticket × Rolle (Excel)“.
+  Test: `webapp/tests/releaseletter_roles_test.js`.
 - **FINAL Schritt 7 – Rollen-Markierungen sichtbar, „Ansicht als Rolle“ (v2.130.0)**: Enthält die neue
   Zusammenführung Rollen-Markierungen, zeigt Schritt 7 sie als farbige Badges („Nur: Retail, MO“,
   „Nicht: IT“, „Ende Rollen-Block“) statt als Rohtext. Darunter erscheint „Ansicht als Rolle“: mit
