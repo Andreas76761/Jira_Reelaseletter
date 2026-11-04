@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.128.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.129.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,6 +2031,17 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **VARIANTE – Übersetzungsspeicher (v2.129.0)**: Jede KI-Übersetzung eines Kapitels wird je
+  Sprache unter einem Fingerabdruck der Quelle gespeichert (Titel, Text nach Rollen-Bedingungen und
+  Verweis-Hinweisen, verwendete Glossar-Begriffe). Beim Neu-Erzeugen werden unveränderte Kapitel ohne
+  KI-Aufruf aus dem Speicher übernommen – nur geänderte Kapitel (oder solche mit geändertem
+  Glossar-Begriff) werden neu übersetzt; die Bilanz zeigt „n übersetzt, m aus Übersetzungsspeicher“.
+  **„Korrekturen merken“** (bei übersetzten Varianten) übernimmt im Stand korrigierte Titel/Texte –
+  z. B. nach Überarbeitung im Editor – in den Speicher, sodass Neu-Erzeugen die korrigierte Fassung
+  behält (abgelehnt, wenn die Kapitelstruktur des Stands verändert wurde). Anzeige „Übersetzungs-
+  speicher: n Kapitel (EN …, FR …)“ und „Übersetzungsspeicher leeren“ (mit Rückfrage); gespeichert in
+  der Sitzung (Herkunft „KI“ bzw. „Korrektur“). Ohne KI werden vorhandene Speichertreffer trotzdem
+  übernommen. Test: `webapp/tests/variante_tm_test.js`.
 - **VARIANTE – Glossar für Übersetzungen, Volltext-Vorschau (v2.128.0)**: Neuer Bereich „Glossar
   für Übersetzungen (n)“ mit verbindlichen Fachbegriffen je Zielsprache (Begriff → Übersetzung),
   manuell pflegbar (gleicher Begriff/Sprache wird aktualisiert statt doppelt angelegt), als Excel

@@ -3458,6 +3458,7 @@
               <input type="file" id="variante-gloss-import-input" accept=".xlsx" hidden>
             </div>
             <p class="step-note" id="variante-gloss-note"></p>
+            <div class="controls" style="flex-wrap:wrap;"><span class="step-note" id="variante-tm-info" style="margin:0;"></span><button class="btn ghost btn-tiny" id="variante-tm-clear-btn" type="button" title="Gespeicherte Übersetzungen verwerfen – beim nächsten Erzeugen wird neu übersetzt">Übersetzungsspeicher leeren</button></div>
             <div class="table-wrap"><table class="simple-table"><thead><tr><th>Begriff</th><th>Sprache</th><th>Übersetzung</th><th></th></tr></thead><tbody id="variante-glossary-tbody"></tbody></table></div>
           </details>
           <div class="controls" style="flex-wrap:wrap; margin-top:8px;">
@@ -6161,7 +6162,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.128.0";
+  var APP_VERSION = "2.129.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7765,7 +7766,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-preview-fulltext-btn", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -29973,6 +29974,7 @@
       domOff: obj(d.domOff), subOff: obj(d.subOff), chOverride: obj(d.chOverride),
       variants: Array.isArray(d.variants) ? d.variants : [],
       opts: { renumber: o.renumber !== false, refInline: o.refInline !== false, refChapter: o.refChapter !== false },
+      tm: (function () { var out = {}, t = obj(d.tm); Object.keys(t).forEach(function (l) { var m = obj(t[l]), e = {}; Object.keys(m).forEach(function (k) { if (m[k] && typeof m[k].text === "string") e[k] = m[k]; }); out[l] = e; }); return out; })(),
       glossary: Array.isArray(d.glossary) ? d.glossary.filter(function (g) { return g && g.src && g.lang && g.target; }).map(function (g) { return { src: String(g.src), lang: String(g.lang), target: String(g.target) }; }) : []
     };
   }
@@ -30209,6 +30211,7 @@
         '<button class="btn ghost btn-tiny" type="button" data-vr-preview="' + v.id + '"' + (plan ? "" : " disabled") + ">Inhaltsverzeichnis</button>" +
         '<button class="btn primary btn-tiny" type="button" data-vr-generate="' + v.id + '"' + (plan && !varianteBusy ? "" : " disabled") + ">" + (stand ? "Neu erzeugen" : "Erzeugen") + "</button>" +
         (stand ? '<button class="btn ghost btn-tiny" type="button" data-vr-open="' + v.id + '">In FINAL öffnen</button><button class="btn ghost btn-tiny" type="button" data-vr-docx="' + v.id + '">Word</button>' : "") +
+        (stand && v.chapterSources ? '<button class="btn ghost btn-tiny" type="button" data-vr-tm-learn="' + v.id + '" title="Im Stand (z. B. im Editor) korrigierte Übersetzungen merken – Neu-Erzeugen behält sie">Korrekturen merken</button>' : "") +
         '<button class="btn ghost btn-tiny final-btn-danger" type="button" data-vr-delete="' + v.id + '"' + (varianteBusy ? " disabled" : "") + ">Entfernen</button></div></td></tr>";
     }).join("");
     els.varianteGenerateAllBtn.disabled = varianteBusy || !hasBase || !list.some(function (v) { return v.baseVersionId === st.baseVersionId; });
@@ -30226,12 +30229,53 @@
     els.varianteStopBtn.hidden = !varianteBusy;
     renderVariantePreview();
   }
+  // ----- v2.129: Uebersetzungsspeicher (je Sprache: Quell-Fingerabdruck -> Uebersetzung) -----
+  var VARIANT_TM_MAX = 3000;
+  function variantTmKey(lang, title, text, gl) {
+    var src = lang + "\u0002" + title + "\u0002" + text + "\u0002" + JSON.stringify((gl || []).map(function (g) { return [g.src, g.target]; }));
+    return src.length + ":" + hashString(src);
+  }
+  function variantTmGet(lang, key) { var t = VS().tm[lang]; return t && t[key] ? t[key] : null; }
+  function variantTmPut(lang, key, entry) {
+    var tm = VS().tm, t = tm[lang] = tm[lang] || {};
+    t[key] = entry;
+    var keys = Object.keys(t);
+    if (keys.length > VARIANT_TM_MAX) keys.slice(0, keys.length - VARIANT_TM_MAX).forEach(function (k) { delete t[k]; });
+  }
+  function variantGlossCheck(gl, title, text, c, misses) {
+    var outLow = ((title || "") + "\n" + (text || "")).toLowerCase();
+    gl.forEach(function (g) { if (outLow.indexOf(g.target.toLowerCase()) === -1) misses.push({ chapter: c.num ? c.num + " " + (title || c.clean) : (title || c.clean), src: g.src, target: g.target }); });
+  }
+  function variantTmStatsText() {
+    var tm = VS().tm, langs = Object.keys(tm).filter(function (l) { return Object.keys(tm[l] || {}).length; });
+    var total = langs.reduce(function (n, l) { return n + Object.keys(tm[l]).length; }, 0);
+    return total ? "Übersetzungsspeicher: " + total + " Kapitel (" + langs.map(function (l) { return l + " " + Object.keys(tm[l]).length; }).join(", ") + ")" : "Übersetzungsspeicher: leer";
+  }
+  // Manuelle Korrekturen eines uebersetzten Varianten-Stands in den Speicher uebernehmen.
+  function variantTmLearn(v) {
+    var stand = v.standId ? finalVersionById(v.standId) : null, src = v.chapterSources;
+    if (!stand || !src) return { ok: false, reason: "keine übersetzte Variante" };
+    if (stand.chapters.length !== src.length) return { ok: false, reason: "Kapitelstruktur des Stands wurde verändert" };
+    var n = 0;
+    stand.chapters.forEach(function (c, i) {
+      var s = src[i];
+      if (!s) return;
+      var cur = variantTmGet(v.lang, s.key) || {};
+      var title = s.num && c.title.indexOf(s.num + " ") === 0 ? c.title.slice(s.num.length + 1) : c.title;
+      if (cur.text === c.text && cur.title === title) return;
+      variantTmPut(v.lang, s.key, { title: title, text: c.text, at: nowLabel(), source: "Korrektur" });
+      n++;
+    });
+    return { ok: true, n: n };
+  }
   function variantGlossaryFor(lang, text) {
     var low = String(text || "").toLowerCase();
     return VS().glossary.filter(function (g) { return g.lang === lang && low.indexOf(g.src.toLowerCase()) !== -1; });
   }
   function renderVarianteGlossary() {
     var st = VS();
+    els.varianteTmInfo.textContent = variantTmStatsText();
+    els.varianteTmClearBtn.disabled = !Object.keys(st.tm).some(function (l) { return Object.keys(st.tm[l] || {}).length; });
     els.varianteGlossaryCount.textContent = st.glossary.length;
     if (!els.varianteGlossLang.options.length) els.varianteGlossLang.innerHTML = vrOptions(VARIANT_LANGS, "EN");
     els.varianteGlossaryTbody.innerHTML = st.glossary.length ? st.glossary.map(function (g, i) {
@@ -30435,23 +30479,33 @@
     var st = VS(), base = varianteBase();
     if (!base || v.baseVersionId !== st.baseVersionId) return { ok: false, note: "Basisdokument fehlt" };
     var plan = variantPlan(v), chs = variantBuildChapters(v, plan);
-    var translate = v.lang !== st.baseLang, translated = 0, kept = 0, aiMissing = translate && !sampleApi, glossMisses = [];
-    if (translate && sampleApi) {
+    var translate = v.lang !== st.baseLang, translated = 0, kept = 0, fromTm = 0, noAi = 0, glossMisses = [];
+    // Uebersetzungsspeicher: ohne KI trotzdem nutzbar (nur Treffer werden uebernommen)
+    var aiMissing = translate && !sampleApi && !chs.some(function (c) { return !c.isRef && variantTmGet(v.lang, variantTmKey(v.lang, c.clean, c.text, variantGlossaryFor(v.lang, c.clean + "\n" + c.text))); });
+    if (translate && (sampleApi || !aiMissing)) {
       for (var i = 0; i < chs.length; i++) {
         if (signal && signal.aborted) return { ok: false, stopped: true };
         var c = chs[i];
         if (c.isRef) continue;
+        var gl = variantGlossaryFor(v.lang, c.clean + "\n" + c.text);
+        var tmKey = variantTmKey(v.lang, c.clean, c.text, gl), hit = variantTmGet(v.lang, tmKey);
+        c.tmKey = tmKey;
+        if (hit) {
+          variantGlossCheck(gl, hit.title, hit.text, c, glossMisses);
+          c.text = hit.text; c.clean = hit.title || c.clean; c.title = c.num ? c.num + " " + c.clean : c.clean; fromTm++;
+          continue;
+        }
         els.varianteStatus.textContent = "„" + v.name + "“: Kapitel " + (i + 1) + " von " + chs.length + " wird übersetzt (" + variantLangName(v.lang) + ") …";
+        if (!sampleApi) { noAi++; continue; }
         try {
-          var gl = variantGlossaryFor(v.lang, c.clean + "\n" + c.text);
           var res = await sampleApi(ragPromptFor("variantTranslate") + "\n\nZIELSPRACHE: " + variantLangName(v.lang) + " (" + v.lang + ")" +
             (gl.length ? "\n\nGLOSSAR (verbindlich – diese Übersetzungen verwenden):\n" + gl.map(function (g) { return "- " + g.src + " → " + g.target; }).join("\n") : "") +
             "\n\nTITEL: " + c.clean + "\n\nTEXT:\n" + truncate(c.text, 20000),
             { modelTier: "default", cache: false, signal: signal });
           var tr = variantParseTranslation(res && res.text);
           if (tr && tr.text && !editoFinalRejectReason(c.text, tr.text)) {
-            var outLow = (tr.title + "\n" + tr.text).toLowerCase();
-            gl.forEach(function (g) { if (outLow.indexOf(g.target.toLowerCase()) === -1) glossMisses.push({ chapter: c.num ? c.num + " " + (tr.title || c.clean) : (tr.title || c.clean), src: g.src, target: g.target }); });
+            variantGlossCheck(gl, tr.title, tr.text, c, glossMisses);
+            variantTmPut(v.lang, tmKey, { title: tr.title || c.clean, text: tr.text, at: nowLabel(), source: "KI" });
             c.text = tr.text; c.clean = tr.title || c.clean; c.title = c.num ? c.num + " " + c.clean : c.clean; translated++;
           } else kept++;
         } catch (err) {
@@ -30470,7 +30524,7 @@
     var chapters = chs.map(function (c) { return { title: c.title, level: c.level, text: c.text, screenIds: c.screenIds }; });
     var activeBefore = app.final.activeVersionId;
     var old = v.standId ? finalVersionById(v.standId) : null;
-    var note = plan.included + " Kapitel, " + plan.refs.length + " Verweis(e)" + (translate ? (aiMissing ? ", nicht übersetzt (KI nicht verfügbar)" : ", " + translated + " übersetzt" + (kept ? ", " + kept + " unverändert (Übersetzung verworfen)" : "") + (glossMisses.length ? ", " + glossMisses.length + " Glossar-Abweichung(en)" : "")) : "");
+    var note = plan.included + " Kapitel, " + plan.refs.length + " Verweis(e)" + (translate ? (aiMissing ? ", nicht übersetzt (KI nicht verfügbar)" : ", " + translated + " übersetzt" + (fromTm ? ", " + fromTm + " aus Übersetzungsspeicher" : "") + (kept ? ", " + kept + " unverändert (Übersetzung verworfen)" : "") + (noAi ? ", " + noAi + " nicht übersetzt (KI nicht verfügbar)" : "") + (glossMisses.length ? ", " + glossMisses.length + " Glossar-Abweichung(en)" : "")) : "");
     if (old && old.status !== "Veröffentlicht") {
       old.chapters = chapters; old.improvements = improvements; old.improvementStatus = improvementStatus;
       old.createdAt = nowLabel(); old.lastReview = null; old.basedOnId = base.id;
@@ -30484,7 +30538,8 @@
     }
     v.generatedAt = nowLabel();
     v.fp = { base: variantBaseFp(base), plan: variantPlanFp(v) };
-    v.stats = { included: plan.included, excluded: plan.excluded, refs: plan.refs.length, translated: translated, kept: kept, note: note, glossaryMisses: glossMisses };
+    v.stats = { included: plan.included, excluded: plan.excluded, refs: plan.refs.length, translated: translated, kept: kept, fromTm: fromTm, note: note, glossaryMisses: glossMisses };
+    v.chapterSources = translate ? chs.map(function (c) { return c.isRef || !c.tmKey ? null : { key: c.tmKey, num: c.num || "" }; }) : null;
     return { ok: true, note: note };
   }
   async function varianteRun(list) {
@@ -30668,6 +30723,12 @@
     return res;
   }
   els.variantePreviewCloseBtn.addEventListener("click", function () { variantePreviewId = null; renderVariantePreview(); });
+  els.varianteTmClearBtn.addEventListener("click", async function () {
+    if (!(await confirmDialog("Übersetzungsspeicher leeren? Auch übernommene Korrekturen gehen verloren; beim nächsten Erzeugen wird neu übersetzt.", "Leeren"))) return;
+    VS().tm = {};
+    addLog("VARIANTE: Übersetzungsspeicher geleert.");
+    renderVarianteGlossary();
+  });
   els.variantePreviewFulltextBtn.addEventListener("click", function () { variantePreviewFull = !variantePreviewFull; renderVariantePreview(); });
   // ----- v2.128: Glossar -----
   function variantGlossaryAdd(src, lang, target) {
@@ -30732,9 +30793,16 @@
   els.varianteTbody.addEventListener("click", async function (e) {
     var b = e.target.closest("button");
     if (!b) return;
-    var id = parseInt(b.getAttribute("data-vr-preview") || b.getAttribute("data-vr-generate") || b.getAttribute("data-vr-open") || b.getAttribute("data-vr-docx") || b.getAttribute("data-vr-delete"), 10);
+    var id = parseInt(b.getAttribute("data-vr-preview") || b.getAttribute("data-vr-generate") || b.getAttribute("data-vr-open") || b.getAttribute("data-vr-docx") || b.getAttribute("data-vr-delete") || b.getAttribute("data-vr-tm-learn"), 10);
     var v = variantById(id);
     if (!v) return;
+    if (b.hasAttribute("data-vr-tm-learn")) {
+      var lr = variantTmLearn(v);
+      els.varianteStatus.textContent = lr.ok ? (lr.n ? lr.n + " korrigierte(s) Kapitel von „" + v.name + "“ in den Übersetzungsspeicher übernommen – Neu-Erzeugen behält diese Fassung." : "Keine Korrekturen in „" + v.name + "“ gefunden.") : "Korrekturen nicht übernommen: " + lr.reason + ".";
+      if (lr.ok && lr.n) addLog("VARIANTE: " + lr.n + " Korrektur(en) aus „" + v.name + "“ in den Übersetzungsspeicher übernommen.");
+      renderVarianteGlossary();
+      return;
+    }
     if (b.hasAttribute("data-vr-preview")) { variantePreviewId = variantePreviewId === v.id ? null : v.id; renderVariantePreview(); return; }
     if (b.hasAttribute("data-vr-generate")) {
       var stand = v.standId ? finalVersionById(v.standId) : null;
