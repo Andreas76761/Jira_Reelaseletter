@@ -3664,6 +3664,7 @@
           </div>
           <p class="step-note" id="vrev-import-note"></p>
           <p class="section-label" style="margin-top:10px;">Ablage</p>
+          <div class="controls" style="margin-top:0;"><button class="btn ghost btn-tiny" id="vrev-xlsx-btn" type="button" disabled>Ablage als Excel (alle Prüfergebnisse)</button></div>
           <div class="table-wrap" id="vrev-docs-wrap" hidden><table class="simple-table"><thead><tr><th>Dokument</th><th>Version</th><th>Status</th><th>Quelle</th><th>Qualität</th><th>Stufen</th><th>Änderungen</th><th>Geprüft</th><th>Aktion</th></tr></thead><tbody id="vrev-docs-tbody"></tbody></table></div>
           <div class="empty-hint" id="vrev-docs-empty">Noch keine Dokumente im Review.</div>
           <div id="vrev-work" hidden>
@@ -6417,7 +6418,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.137.0";
+  var APP_VERSION = "2.138.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8021,7 +8022,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -32305,7 +32306,7 @@
     d = d && typeof d === "object" ? d : {};
     var docs = Array.isArray(d.docs) ? d.docs.filter(function (x) { return x && typeof x.id === "number" && Array.isArray(x.chapters); }).map(function (x) {
       return Object.assign({ name: "Dokument", filename: "", source: "Upload", sourceRef: null, version: "1.0", status: "Entwurf", createdAt: "", updatedAt: "", original: [], ph: {}, design: null, wordDesign: null,
-        checks: {}, steps: {}, stage: 1, changes: [], history: [], ai: null, translationNotNeeded: false, lang: "DE", translations: [], baseDocId: null, scoreInitial: null, score: null, checkedAt: "" }, x);
+        checks: {}, steps: {}, stage: 1, changes: [], history: [], ai: null, translationNotNeeded: false, legend: false, lang: "DE", translations: [], baseDocId: null, scoreInitial: null, score: null, checkedAt: "" }, x);
     }) : [];
     return { docs: docs, activeId: typeof d.activeId === "number" ? d.activeId : null };
   }
@@ -32624,7 +32625,16 @@
     else t = finalStripJiraKeys(t.replace(VREV_RE.internalSeg, "").replace(FINAL_MARK_RE, ""));
     return variantStripRoleMarkers(t);
   }
+  function vrevLegendChapter(doc) {
+    var used = VREV_STATUS_DEFS.filter(function (sd) { return doc.chapters.some(function (c) { return sd.re.test(vrevPlain(c.text)); }); });
+    var list = used.length ? used : VREV_STATUS_DEFS;
+    return { title: "Statusangaben", level: 1, screens: [], text: "Die Kennzeichnungen im Text bedeuten:\n\n" + list.map(function (sd) { return sd.key + ": " + sd.def; }).join("\n") };
+  }
   function vrevExportChapters(doc, withInternal) {
+    var out = vrevExportChaptersRaw(doc, withInternal);
+    return doc.legend ? [vrevLegendChapter(doc)].concat(out) : out;
+  }
+  function vrevExportChaptersRaw(doc, withInternal) {
     return doc.chapters.map(function (c, ci) {
       var screens = [];
       vrevPlaceholders(c.text).forEach(function (p) {
@@ -32710,6 +32720,7 @@
     els.vrevExistingBtn.disabled = !app.final.versions.length || vrevBusy;
     els.vrevUploadBtn.disabled = vrevBusy;
     els.vrevDocsWrap.hidden = !st.docs.length;
+    els.vrevXlsxBtn.disabled = !st.docs.length;
     els.vrevDocsEmpty.hidden = st.docs.length > 0;
     els.vrevDocsTbody.innerHTML = st.docs.map(function (x) {
       var c = vrevCounts(x), active = doc && x.id === doc.id;
@@ -32844,6 +32855,7 @@
       h += '<div class="controls" style="flex-wrap:wrap;"><button class="btn primary" type="button" data-vrev-act="word-dist">Word für die Verteilung (ohne interne Vermerke)</button>' +
         '<button class="btn ghost" type="button" data-vrev-act="word-intern">Word intern (mit internen Vermerken)</button>' +
         '<button class="btn ghost" type="button" data-vrev-act="report-docx">Reviewbericht (Word)</button></div>' +
+        '<label class="variante-inline-check"><input type="checkbox" data-vrev-act="legend"' + (doc.legend ? " checked" : "") + "> Kapitel „Statusangaben“ mit Erklärung (verfügbar, in Abnahme, in Entwicklung, geplant) am Anfang einfügen</label>" +
         '<p class="step-note">Verteilfassung: ohne Kommentarbereiche, ohne Zeilen „Intern:“/„TODO“/„[Intern]“, ohne Jira-Nummern, Bilder an den Platzhaltern, Design ' + (doc.wordDesign ? "aus dem hochgeladenen Entwurf" : "aus FINAL") + ". Die interne Fassung zeigt Vermerke als „[Intern: …]“.</p>";
     }
     return h;
@@ -32874,8 +32886,63 @@
     try { doc.design = await vrevAnalyzeDocxZip(await JSZip.loadAsync(await (await vrevBuildWord(doc, false, false)).arrayBuffer())); }
     catch (e) { doc.design = null; }
   }
+  // v2.138: eingebettete Bilder eines Entwurfs ins Bildarchiv uebernehmen und an ihrer Stelle einen belegten
+  // Platzhalter "[Bild: Bildunterschrift]" einfuegen - sonst fehlen sie in der Word-Ausgabe.
+  async function vrevDocxWithImages(zip, filename) {
+    var xml = await zip.file("word/document.xml").async("string");
+    var relsMap = await loadZipRelationships(zip, "word/_rels/document.xml.rels");
+    var dom = new DOMParser().parseFromString(xml, "application/xml"), body = dom.getElementsByTagName("w:body")[0];
+    if (dom.querySelector("parsererror") || !body) return { chapters: docxXmlToFinalChapters(xml), images: [] };
+    var W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main", pend = [], lastHeading = "";
+    var nodes = Array.prototype.filter.call(body.childNodes, function (n) { return n.nodeType === 1 && n.tagName === "w:p"; });
+    nodes.forEach(function (node, ni) {
+      var text = docxParagraphText(node), level = docxHeadingLevel(docxParagraphStyleId(node));
+      var ps = blipImagePromises(node, relsMap, "word/document.xml", zip);
+      if (ps.length) {
+        var next = nodes[ni + 1] ? docxParagraphText(nodes[ni + 1]) : "";
+        var cap = (text || (/^(Abbildung|Abb\.|Bild|Screenshot)\b/i.test(next) ? next : "") || lastHeading).replace(/[\[\]]/g, "").trim();
+        var after = node.nextSibling;
+        ps.forEach(function (pr) {
+          var k = pend.length;
+          pend.push({ pr: pr, cap: cap });
+          var p = dom.createElementNS(W, "w:p"), r = dom.createElementNS(W, "w:r"), t = dom.createElementNS(W, "w:t");
+          t.textContent = "[Bild: #vrevimg" + k + "#]";
+          r.appendChild(t); p.appendChild(r);
+          body.insertBefore(p, after);
+        });
+      }
+      if (level > 0 && text) lastHeading = text;
+    });
+    var chapters = docxXmlToFinalChapters(new XMLSerializer().serializeToString(dom));
+    var imgs = await Promise.all(pend.map(function (x) { return x.pr; }));
+    var images = pend.map(function (x, k) {
+      var im = imgs[k], img = { id: nextImageId++, filename: filename + " - Bild " + (k + 1), dataUrl: im.dataUrl, mimeType: (/^data:([^;]+);/.exec(im.dataUrl) || [])[1] || "unbekannt",
+        sizeBytes: Math.round((im.dataUrl.length - im.dataUrl.indexOf(",") - 1) * 0.75), when: nowLabel(), domain: "", processStep: "", chapter: "", subchapter: "", description: x.cap,
+        width: null, height: null, avgColor: null, brightnessPct: null, metadataComputed: false, metadataError: null, ocrText: null, ocrError: null, ocrRanAt: null,
+        imageNumber: k + 1, sourceFile: filename, editorFileId: null, rolle: "", sprache: "", reviewImport: true };
+      if (im.blob) setScreenPreviewBlob(img, im.blob);
+      return img;
+    });
+    return { chapters: chapters, images: images, caps: pend.map(function (x) { return x.cap; }) };
+  }
+  function vrevResolveImageMarkers(chapters, images, caps) {
+    var ph = {};
+    var out = chapters.map(function (c, ci) {
+      var marks = {};
+      var text = String(c.markedText || c.fullText || "").split("\n").map(function (line, li) {
+        var m = /^\s*\[Bild: #vrevimg(\d+)#\]\s*$/.exec(line.replace(FINAL_MARK_RE, ""));
+        if (!m) return line;
+        var k = parseInt(m[1], 10);
+        marks[li] = k;
+        return caps[k] ? "[Bild: " + caps[k] + "]" : "[Bild]";
+      }).join("\n");
+      vrevPlaceholders(text).forEach(function (p) { if (marks[p.line] != null && images[marks[p.line]]) ph[ci + ":" + p.idx] = [images[marks[p.line]].id]; });
+      return { title: c.title, level: c.level, text: text };
+    });
+    return { chapters: out, ph: ph };
+  }
   async function vrevImportFiles(files) {
-    var ok = 0, errs = [];
+    var ok = 0, errs = [], imgTotal = 0;
     for (var i = 0; i < files.length; i++) {
       var f = files[i];
       els.vrevImportNote.textContent = "„" + f.name + "“ wird eingelesen …";
@@ -32884,17 +32951,22 @@
         if (classifyWordBuffer(buf) !== "zip") throw new Error("keine .docx-Datei (bitte in Word als .docx speichern)");
         var zip = await JSZip.loadAsync(buf), entry = zip.file("word/document.xml");
         if (!entry) throw new Error("kein Word-Dokumentinhalt gefunden");
-        var chs = docxXmlToFinalChapters(await entry.async("string"));
+        var withImgs = await vrevDocxWithImages(zip, f.name);
+        var resolved = vrevResolveImageMarkers(withImgs.chapters, withImgs.images, withImgs.caps || []);
+        withImgs.images.slice().reverse().forEach(function (img) { app.uploadedImages.unshift(img); });
         var design = null, wordDesign = null;
         try { design = await vrevAnalyzeDocxZip(zip); } catch (e) { design = null; }
         try { wordDesign = await finalExtractWordDesign(zip); } catch (e) { wordDesign = null; }
         var doc = vrevAddDoc({ name: f.name.replace(/\.docx$/i, ""), filename: f.name, source: "Upload", design: design, wordDesign: wordDesign,
-          chapters: chs.map(function (c) { return { title: c.title, level: c.level, text: c.markedText || c.fullText || "" }; }) });
+          chapters: resolved.chapters, ph: resolved.ph });
+        if (withImgs.images.length) vrevHistory(doc, withImgs.images.length + " eingebettete(s) Bild(er) ins Bildarchiv übernommen");
+        imgTotal += withImgs.images.length;
         vrevRunChecks(doc);
         ok++;
       } catch (err) { errs.push(f.name + ": " + ((err && err.message) || "unbekannter Fehler")); }
     }
-    els.vrevImportNote.textContent = ok + " Entwurf/Entwürfe übernommen und geprüft." + (errs.length ? " Fehler: " + errs.join(" · ") : "");
+    els.vrevImportNote.textContent = ok + " Entwurf/Entwürfe übernommen und geprüft." + (imgTotal ? " " + imgTotal + " eingebettete(s) Bild(er) ins Bildarchiv übernommen und an ihrer Stelle als Platzhalter belegt." : "") + (errs.length ? " Fehler: " + errs.join(" · ") : "");
+    if (imgTotal) { renderWhenVisible("bilder", "gallery", renderGallery); if (typeof renderEditorScreens === "function") renderEditorScreens(); }
     if (ok) addLog("VARIANTE Review: " + ok + " Entwurf/Entwürfe (.docx) übernommen.");
     renderVrev();
   }
@@ -33026,6 +33098,30 @@
       if (await saveOrWarn(fn, data)) { els.vrevStatus.textContent = "„" + fn + "“ heruntergeladen."; addLog("VARIANTE Review: Reviewbericht " + fn + "."); }
     } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
   }
+  els.vrevXlsxBtn.addEventListener("click", async function () {
+    var docs = VR().docs, lbl = { ok: "OK", warn: "Hinweis", fail: "Fehler", open: "offen" };
+    if (!docs.length) return;
+    try {
+      var overview = docs.map(function (d) {
+        var c = vrevCounts(d);
+        return [d.name, d.version, d.status, d.source, d.lang, d.score == null ? "" : d.score, d.scoreInitial == null ? "" : d.scoreInitial, vrevStepsDone(d) + "/7", vrevChangeCount(d), c.ok, c.warn, c.fail, c.open, d.checkedAt || ""]
+          .concat(VREV_CHECKS.map(function (k) { return d.checks[k.id] ? lbl[d.checks[k.id].s] : "offen"; }));
+      });
+      var findings = [], history = [];
+      docs.forEach(function (d) {
+        VREV_CHECKS.forEach(function (k) { var x = d.checks[k.id]; findings.push([d.name, d.version, "Stufe " + k.stage + " – " + VREV_STAGES[k.stage - 1].label, k.id + " " + k.label, x ? lbl[x.s] : "offen", x ? x.d : ""]); });
+        d.history.forEach(function (h) { history.push([d.name, h.at, "v" + h.version, h.status, h.what]); });
+        d.changes.forEach(function (x) { history.push([d.name, x.at, "v" + d.version, "Änderung Stufe " + x.stage, x.what + (x.n > 1 ? " (" + x.n + ")" : "")]); });
+      });
+      var blob = await buildXlsxBlob([
+        { title: "Ablage", headers: ["Dokument", "Version", "Status", "Quelle", "Sprache", "Qualität", "Qualität Start", "Stufen", "Änderungen", "OK", "Hinweise", "Fehler", "offen", "Geprüft"].concat(VREV_CHECKS.map(function (k) { return k.id + " " + k.label; })), rows: overview },
+        { title: "Befunde", headers: ["Dokument", "Version", "Stufe", "Prüfung", "Ergebnis", "Befund"], rows: findings },
+        { title: "Verlauf", headers: ["Dokument", "Zeitpunkt", "Version", "Status/Art", "Eintrag"], rows: history }
+      ]);
+      var fn = "Review_Ablage_" + dateStampForFilename() + ".xlsx";
+      if (await saveOrWarn(fn, blob)) { els.vrevImportNote.textContent = "„" + fn + "“ heruntergeladen (" + docs.length + " Dokument(e))."; addLog("VARIANTE Review: Ablage als Excel exportiert."); }
+    } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
   els.vrevUploadBtn.addEventListener("click", function () { els.vrevFileInput.click(); });
   els.vrevFileInput.addEventListener("change", function () {
     var files = Array.prototype.slice.call(els.vrevFileInput.files || []);
@@ -33071,6 +33167,8 @@
       var key = t.getAttribute("data-vrev-ph-add"), id = parseInt(t.value, 10), ids = doc.ph[key] = doc.ph[key] || [];
       if (ids.length < 3 && ids.indexOf(id) === -1) { ids.push(id); vrevLog(doc, 3, "Bild zugeordnet", 1); vrevRunChecks(doc); }
       renderVrev();
+    } else if (t.matches('[data-vrev-act="legend"]')) {
+      doc.legend = t.checked; vrevHistory(doc, "Status-Legende " + (t.checked ? "eingefügt" : "entfernt")); renderVrev();
     } else if (t.matches('[data-vrev-act="tr-not-needed"]')) {
       doc.translationNotNeeded = t.checked; vrevRunChecks(doc); renderVrev();
     }

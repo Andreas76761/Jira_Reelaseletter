@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.137.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.138.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,16 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Dokument-Review: Bilder aus Entwürfen, Status-Legende, Ablage als Excel (v2.138.0)**: **Eingebettete Bilder** eines
+  hochgeladenen Entwurfs (.docx) kommen ins Bildarchiv (Screens-Import/Bilder, Quelldatei = Entwurf); an ihrer Stelle
+  steht ein Platzhalter „[Bild: Bildunterschrift]“, der gleich mit dem Bild belegt ist – die Bilder bleiben so in der
+  Word-Ausgabe erhalten und lassen sich in Stufe 3 tauschen oder ergänzen. Bildunterschrift: Text im Bild-Absatz, sonst
+  die folgende Zeile „Abbildung …“/„Bild …“, sonst die Kapitelüberschrift. **Status-Legende**: in Stufe 7 optional ein
+  Kapitel „Statusangaben“ am Anfang des Word-Dokuments mit der Erklärung der im Text vorkommenden Status (verfügbar,
+  in Abnahme, in Entwicklung, geplant). **Ablage als Excel**: Blatt „Ablage“ (je Dokument Version, Status, Quelle,
+  Sprache, Qualität jetzt/Start, Stufen, Änderungen, Zählung und alle 20 Prüfergebnisse), „Befunde“ (20 je Dokument mit
+  Stufe und Befundtext) und „Verlauf“ (Status-/Versionsverlauf und Änderungen).
 
 - **VARIANTE: Dokument-Review – 20 Prüfungen in 7 Stufen (v2.137.0)**: neuer Abschnitt „6. Dokument-Review“
   im Register VARIANTE. **Eingang**: Entwürfe als Word (.docx, mehrere auf einmal) hochladen oder einen bestehenden
