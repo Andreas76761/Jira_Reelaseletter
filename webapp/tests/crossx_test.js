@@ -86,7 +86,7 @@ async function waitUntil(fn, t) { const s = Date.now(); while (Date.now() - s < 
   const cnt = (k) => doc.querySelector('[data-cx-src-count="' + k + '"]').textContent;
   check("Wissensbasis: Quellen mit Anzahl (Kapitel 5, Matrix 5, Variante 1, Mitteilung 1, ROVO 1, Prüfbericht 1, Jira 1)",
     cnt("stands") === "5" && cnt("matrix") === "5" && cnt("variants") === "1" && cnt("notes") === "1" && cnt("improvements") === "1" && cnt("reviews") === "1" && cnt("tickets") === "1" && Number(cnt("rolenav")) > 0 && cnt("glossary") === "0");
-  check("Zusammenfassung mit internen Einträgen und Basis", /^Wissensbasis: \d+ Einträge \(4 intern\), ca\. \d+ Tsd\. Zeichen · Basis „Basis“$/.test($("crossx-kb-summary").textContent));
+  check("Zusammenfassung mit internen Einträgen und Basis (v2.145: + Protokoll, intern)", /^Wissensbasis: \d+ Einträge \(5 intern\), ca\. \d+ Tsd\. Zeichen · Basis „Basis“$/.test($("crossx-kb-summary").textContent));
   fire($("crossx-kb-btn"), "click");
   const kbTxt = $("crossx-kb-list").textContent;
   check("Wissensbasis-Liste: interner Vermerk sichtbar, Matrix mit Rollen, Variante mit Inhaltsverzeichnis", kbTxt.includes("⟦INTERN: Interner Vermerk: Freigabe-Prozess wird umgebaut⟧") && kbTxt.includes("Aktiv in Rollen: MO, Retail") && kbTxt.includes("(ausgelassen: Finanzen → Verweis auf Markt, MO, IT, HQ)") && kbTxt.includes("INTERN"));
@@ -115,14 +115,14 @@ async function waitUntil(fn, t) { const s = Date.now(); while (Date.now() - s < 
   fire($("crossx-ask-btn"), "click");
   await waitUntil(() => $("crossx-agent-status").textContent.startsWith("Fertig"), 5000);
   const p0 = prompts[0];
-  check("Agent-Prompt: Rolle, Wissensbasis mit [#n]/INTERN, Frage", p0.includes("interne Wissensagent") && p0.includes("WISSENSBASIS (") && /\[#\d+\] \(Mitteilung, INTERN\) Mitteilung › Stand „Basis“ › Ideenspeicher: Neue Finanzmaske/.test(p0) && p0.endsWith("FRAGE: Welche internen Pläne gibt es zur Finanzmaske?"));
+  check("Chat-Prompt (v2.145): nur Wissensbasis, Belegpflicht, Wissensbasis mit [#n]/INTERN, Frage", p0.includes("Chat-Assistent") && p0.includes("AUSSCHLIESSLICH Informationen aus der WISSENSBASIS") && p0.includes("WISSENSBASIS (") && /\[#\d+\] \(Mitteilung, INTERN\) Mitteilung › Stand „Basis“ › Ideenspeicher: Neue Finanzmaske/.test(p0) && p0.endsWith("FRAGE: Welche internen Pläne gibt es zur Finanzmaske?"));
   const ans = doc.querySelector("[data-cx-answer]");
   check("Antwort mit zitierten Quellen (ungültige ignoriert), interne Quelle markiert", ans.querySelector(".crossx-answer-q").textContent === "Welche internen Pläne gibt es zur Finanzmaske?" && ans.querySelectorAll(".crossx-sources details").length === 2 &&
     ans.querySelector(".crossx-sources").textContent.includes("INTERN") && $("crossx-agent-status").textContent.endsWith("2 Quelle(n) zitiert.") && $("crossx-question").value === "");
   fire($("crossx-ai-check-btn"), "click");
   await waitUntil(() => prompts.length === 2 && $("crossx-agent-status").textContent.startsWith("Fertig"), 5000);
   check("KI-Cross-Check: Regel-Befunde und Wissensbasis im Prompt", prompts[1].includes("Cross-Reference-Check") && prompts[1].includes("REGEL-BEFUNDE (automatisch, 13)") && prompts[1].includes("[Fehler] Kapitelverweis ins Leere") && prompts[1].includes("Matrix ›"));
-  check("Verlauf: neueste zuerst (KI-Cross-Check oben)", doc.querySelectorAll("[data-cx-answer]").length === 2 && doc.querySelector("[data-cx-answer] .crossx-answer-q").textContent === "KI-Cross-Check über Kapitel & Rollen");
+  check("Chat-Verlauf: älteste zuerst (KI-Cross-Check unten)", doc.querySelectorAll("[data-cx-answer]").length === 2 && doc.querySelectorAll("[data-cx-answer] .crossx-answer-q")[1].textContent === "KI-Cross-Check über Kapitel & Rollen");
 
   // ===================== Ohne interne Informationen =====================
   $("crossx-include-intern").checked = false; fire($("crossx-include-intern"), "change");

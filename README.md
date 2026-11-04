@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.144.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.145.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,22 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **CROSS_X als Chat mit Zugriff auf alle Register (v2.145.0)**: CROSS_X › „3. Chat mit allen Registern (KI)“
+  beantwortet Fragen über **alle Register**: zusätzlich zu Ständen, Matrix, Varianten, Notizen, Verbesserungen, Reviews,
+  Tickets, Rollen-Navigation und Glossar jetzt auch **Dokument-Review** (Status/Prüfungen je Dokument, Kapiteltexte,
+  KI-Befunde und Verlauf als intern), **AGENT** (Wissensobjekte, Quality-, Impact-, Publishing-Ergebnisse), **Rovo
+  Knowledge** (Einträge intern, Zusammenfassungen), **Texte** (Releaseletter, Benutzerhandbuch, Clickanweisung,
+  Prozessbild, Rollen-Texte, Handbuch-Kapitel, EDITO, Unterkapitel), **RAG-Bibliothek**, **Bilder** (Beschreibung,
+  OCR-Text, Kapitel), **Tabellen**, **Begriffe**, **Gliederung** (inkl. Screen-Platzhalter) und **Protokoll** (intern) –
+  jede Quelle einzeln abwählbar mit Anzahl. **Nichts hinzudichten**: der Chat-Prompt erlaubt ausschließlich Inhalte aus
+  der Wissensbasis, jede Aussage braucht einen Beleg [#n]; fehlt die Information, lautet die Antwort „Dazu finde ich in
+  den Registern keine Information.“ Die App prüft jede Antwort: **ungültige Belegnummern** werden entfernt („[#?]“) und
+  gemeldet, **Aussagen ohne Beleg** werden markiert und gezählt, eine Antwort ganz ohne Beleg erhält die Warnung
+  „Antwort ohne Quellenbeleg – nicht verwenden.“ **Quellen nach jeder Antwort** („Quellen (n):“) aufklappbar mit dem
+  belegten Text und Knopf **„→ Register“**, der das Ursprungsregister öffnet; interne Quellen sind als INTERN markiert
+  und mit „Interne Quellen einbeziehen“ abschaltbar (dann auch interne Vermerke im Review-Text entfernt). **Chat-Verlauf**:
+  älteste Frage oben, **Folgefragen** berücksichtigen die letzten drei Fragen/Antworten, **Enter sendet**.
 
 - **Dokument-Review: Bilder in Tabellen, Grenzwerte, KI-Konsistenz, vollständigere Übersetzung (v2.144.0)**:
   **Bilder in Tabellen** eines Entwurfs kommen ins Bildarchiv und als belegte Platzhalter direkt hinter die Tabelle
