@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.131.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.132.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,6 +2031,17 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **Releaseletter je Rolle – Rollen-Zuordnung prüfen, manuell setzen, per KI vorschlagen (v2.132.0)**:
+  Der aufklappbare Bereich „Rollen-Zuordnung prüfen (n manuell)“ zeigt die Tickets der aktuellen
+  Auswahl (wahlweise nur die ohne Rolle) mit den Rollen aus Jira-/automatischen Labels und je Rolle
+  einem Häkchen. Geänderte Häkchen setzen eine manuelle Zuordnung, die Vorrang vor den Labels hat
+  (↺ zurück zu den Labels). „Rollen per KI vorschlagen“ fragt für die angezeigten Tickets (max. 60)
+  anhand von Zusammenfassung und Beschreibung Rollen ab (neuer, unter RAG editierbarer Prompt;
+  Antwort als JSON, nur gültige Rollen werden übernommen); Vorschläge werden erst nach „Übernehmen“
+  bzw. „Alle Vorschläge übernehmen“ wirksam, ungültige Antworten werden verständlich gemeldet. Die
+  Releaseletter je Rolle und die Excel-Übersicht (neue Spalte „Quelle“: Label/manuell) nutzen die
+  manuelle Zuordnung; sie wird in der Sitzung gespeichert.
+  Test: `webapp/tests/releaseletter_role_assign_test.js`.
 - **Releaseletter je Rolle und Sprache (v2.131.0)**: Im Register Releaseletter erzeugt der neue
   Bereich „Releaseletter je Rolle“ aus derselben Ticket-Auswahl wie der Haupt-Entwurf (Name,
   gefilterte Tickets bzw. Ticket-Liste) je gewählter Rolle (Retail, Markt, MO, HQ, IT) und Sprache

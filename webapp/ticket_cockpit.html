@@ -2262,6 +2262,17 @@
             <button class="btn ghost" id="rl-roles-zip-btn" type="button" disabled>Alle als ZIP (Word + Markdown)</button>
             <button class="btn ghost" id="rl-roles-xlsx-btn" type="button" disabled>Übersicht Ticket × Rolle (Excel)</button>
           </div>
+          <details class="variante-bulk" id="rl-assign-wrap"><summary>Rollen-Zuordnung prüfen (<span id="rl-assign-count">0</span> manuell)</summary>
+            <p class="step-note" style="margin-top:4px;">Zeigt die Tickets der aktuellen Auswahl mit ihren Rollen aus Jira-/automatischen Labels. Häkchen setzen eine <b>manuelle</b> Zuordnung, die Vorrang vor den Labels hat (↺ zurück zu den Labels). „Rollen per KI vorschlagen“ schlägt für die angezeigten Tickets Rollen anhand von Zusammenfassung und Beschreibung vor – übernommen wird erst nach Bestätigung.</p>
+            <div class="controls" style="flex-wrap:wrap;">
+              <button class="btn ghost btn-tiny" id="rl-assign-load-btn" type="button">Tickets der Auswahl anzeigen</button>
+              <label class="variante-inline-check"><input type="checkbox" id="rl-assign-only-untagged" checked> nur Tickets ohne Rolle</label>
+              <button class="btn ghost btn-tiny" id="rl-assign-ai-btn" type="button" disabled><span class="btn-spinner" id="rl-assign-ai-spinner" hidden></span>Rollen per KI vorschlagen</button>
+              <button class="btn ghost btn-tiny" id="rl-assign-accept-all-btn" type="button" hidden>Alle Vorschläge übernehmen</button>
+            </div>
+            <p class="step-note" id="rl-assign-note"></p>
+            <div class="table-wrap" id="rl-assign-table-wrap" hidden><table class="simple-table"><thead id="rl-assign-thead"></thead><tbody id="rl-assign-tbody"></tbody></table></div>
+          </details>
           <p class="step-note" id="rl-roles-status"></p>
           <div class="table-wrap" id="rl-roles-table-wrap" hidden><table class="simple-table"><thead><tr><th>Rolle</th><th>Sprache</th><th>Tickets</th><th>Nur andere Rollen</th><th>Aktion</th></tr></thead><tbody id="rl-roles-tbody"></tbody></table></div>
           <div class="panel" id="rl-roles-preview-wrap" hidden style="margin-top:10px; padding:10px 14px;">
@@ -6196,7 +6207,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.131.0";
+  var APP_VERSION = "2.132.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7800,7 +7811,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -7939,6 +7950,7 @@
     // Interne Mitteilungen der Register (nie in deren Ausgaben).
     docNotes: { releaseletter: [], benutzerhandbuch: [], prozessbild: [], clickanweisung: [] },
     variante: null,
+    rlRoleOverrides: {},
     tickets: [],
     view: { bucket: "all", domain: "", label: "", query: "", issueType: "", excludeTypes: {}, sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
@@ -8478,6 +8490,7 @@
     app.editoBaseDocId = null;
     app.docNotes = docNotesNormalize(null);
     app.variante = varianteNormalize(null);
+    app.rlRoleOverrides = {};
     editoFinalWork = null;
     els.finalAssignImagesStatusNote.textContent = "";
     renderFinal();
@@ -8590,6 +8603,7 @@
     app.editoBaseDocId = null;
     app.docNotes = docNotesNormalize(null);
     app.variante = varianteNormalize(null);
+    app.rlRoleOverrides = {};
     editoFinalWork = null;
     els.finalAssignImagesStatusNote.textContent = "";
     renderFinal();
@@ -8675,6 +8689,7 @@
       editoBaseDocId: app.editoBaseDocId,
       docNotes: app.docNotes,
       variante: app.variante,
+      rlRoleOverrides: app.rlRoleOverrides,
       selectedKeys: app.selectedKeys,
       savedLists: app.savedLists,
       nextSavedListId: app.nextSavedListId,
@@ -8783,6 +8798,7 @@
     app.editoBaseDocId = typeof data.editoBaseDocId === "number" ? data.editoBaseDocId : null;
     app.docNotes = docNotesNormalize(data.docNotes);
     app.variante = varianteNormalize(data.variante);
+    app.rlRoleOverrides = rlNormalizeOverrides(data.rlRoleOverrides);
     app.selectedKeys = data.selectedKeys || {};
     app.savedLists = data.savedLists || [];
     app.nextSavedListId = data.nextSavedListId || 1;
@@ -20037,6 +20053,7 @@
     finalReviewStyle: "Du bist Lektor für das Benutzerhandbuch der Anwendung oneSCM. Prüfe das unten stehende Gesamtdokument sprachlich, OHNE es umzuschreiben. Gib AUSSCHLIESSLICH die folgenden Abschnitte aus:\n\n### Rechtschreibung & Grammatik\n- (je Fundstelle: Kapitel, fehlerhafte Stelle wörtlich, Korrektur)\n\n### Verständlichkeit & Stil\n- (je Fundstelle: Kapitel, Problem – z. B. Schachtelsatz, Passiv, Füllwörter – und konkreter Verbesserungsvorschlag)\n\n### Einheitliche Begriffe\n- (Begriffe, die für dasselbe uneinheitlich verwendet werden, mit Empfehlung)\n\nIst ein Abschnitt leer, schreibe darunter \"Keine gefunden.\" Zeilen mit nur [Bild] sind Platzhalter für Screens und kein Fehler. Erfinde keine Probleme:",
     finalReviewCompleteness: "Du bist Qualitätsprüfer für das Benutzerhandbuch der Anwendung oneSCM. Unten stehen alle Kapitel des Gesamtdokuments, je Kapitel mit den Verbesserungen aus ROVO (mit Umsetzungsstatus), den zugeordneten Jira-Tickets (falls vorhanden), der Zahl der zugeordneten Screens und dem Kapiteltext. Gib AUSSCHLIESSLICH die folgenden Abschnitte aus:\n\n### Nicht umgesetzte Verbesserungen\n- (je Kapitel: Verbesserung aus ROVO, die im Kapiteltext nicht erkennbar umgesetzt ist)\n\n### Nicht abgedeckte Tickets\n- (je Kapitel: Ticket, dessen Inhalt im Kapiteltext nicht erkennbar aufgegriffen wird)\n\n### Lücken im Ablauf\n- (je Kapitel: fehlende Schritte, fehlende Voraussetzungen oder Beschreibungen ohne passenden Screen)\n\nIst ein Abschnitt leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme:",
     variantTranslate: "Du bist Fachübersetzer für das Benutzerhandbuch der Anwendung oneSCM. Übersetze das folgende Kapitel vollständig und sinngemäß in die angegebene Zielsprache, in klarer Anwender-Sprache. Regeln: Zeilen, die nur [Bild] enthalten, unverändert und in gleicher Anzahl und Reihenfolge übernehmen; Jira-Nummern (z. B. ONESCM-123), Menü-/Feldnamen in Anführungszeichen der Oberfläche und Produktnamen unverändert lassen; Absätze und Aufzählungen beibehalten; nichts hinzufügen oder weglassen. Antworte ausschließlich in diesem Format: erste Zeile \"TITEL: <übersetzter Kapiteltitel>\", danach eine Leerzeile, danach der übersetzte Kapiteltext.",
+    rlRoleSuggest: "Du ordnest Jira-Tickets der Anwendung oneSCM (Fuhrpark-/Servicevertrags-Management) den Anwender-Rollen zu, für die die Änderung relevant ist. Rollen: Retail (Händler/Dealer: Verträge anlegen und verwalten, Kunden), Markt (Markt-/Ländergesellschaft: Produkte, Markteinstellungen, Vorlagen), MO (Market Operation: Prüfungen/MO-Checks, Freigaben, Finanzen), HQ (Headquarters: zentrale Steuerung, Auswertungen, Administration), IT (technische Änderungen ohne fachliche Oberfläche: Schnittstellen, Batch, Performance). Ein Ticket kann mehrere Rollen haben. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt der Form {\"TICKET-KEY\": [\"Rolle\", ...], ...} mit genau den unten genannten Ticket-Keys und nur den Rollennamen Retail, Markt, MO, HQ, IT. Ist keine Rolle erkennbar, gib eine leere Liste zurück. Erfinde nichts.",
     finalCompareVersions: "Du vergleichst zwei Fassungen (Stand A und Stand B) eines Benutzerhandbuchs der Anwendung oneSCM. Die Fassungen können in unterschiedlichen Sprachen oder für unterschiedliche Rollen/Märkte geschrieben sein - vergleiche den INHALT, nicht den Wortlaut. Gehe Kapitel für Kapitel vor (Kapitel über Titel bzw. Reihenfolge zuordnen) und nenne je Kapitel: Inhalte, die nur in A stehen; Inhalte, die nur in B stehen; inhaltliche Abweichungen oder Widersprüche. Kapitel ohne inhaltlichen Unterschied mit einer Zeile \"keine inhaltlichen Unterschiede\" erwähnen. Schließe mit einer kurzen Gesamteinschätzung. Erfinde nichts."
   };
   var RAG_PROMPT_LABELS = {
@@ -20077,6 +20094,7 @@
     finalReviewStyle: "FINAL Review: Sprache & Stil des Gesamtdokuments prüfen (Bericht)",
     finalReviewCompleteness: "FINAL Review: Vollständigkeit (ROVO-Verbesserungen, Tickets, Ablauf) prüfen",
     variantTranslate: "VARIANTE: Kapitel in die Sprache der Variante übersetzen",
+    rlRoleSuggest: "Releaseletter je Rolle: Rollen für Tickets vorschlagen",
     finalCompareVersions: "FINAL: Zwei Stände inhaltlich vergleichen"
   };
   function ragPromptFor(promptKey) {
@@ -30917,7 +30935,13 @@
   };
   var rlRoleResults = [], rlRolePreviewIdx = -1, rlRoleTitle = "Release", rlRoleTickets = [], rlRoleSel = { Retail: true, Markt: true, MO: true, HQ: true, IT: false };
   function rlWrapperMap() { var m = {}; app.tickets.forEach(function (w) { m[w.key] = w; }); return m; }
-  function rlTicketRoles(raw, map) { var w = map[raw.key]; return w ? ticketRoleTags(w) : []; }
+  function rlLabelRoles(raw, map) { var w = map[raw.key]; return w ? ticketRoleTags(w) : []; }
+  function rlTicketRoles(raw, map) { var o = (app.rlRoleOverrides || {})[raw.key]; return Array.isArray(o) ? o.slice() : rlLabelRoles(raw, map); }
+  function rlNormalizeOverrides(d) {
+    var out = {}, tags = RL_ROLES.map(function (r) { return r.tag; });
+    if (d && typeof d === "object") Object.keys(d).forEach(function (k) { if (Array.isArray(d[k])) out[k] = d[k].filter(function (r) { return tags.indexOf(r) !== -1; }); });
+    return out;
+  }
   function renderRlRoles() {
     els.rlRolesRoles.innerHTML = RL_ROLES.map(function (r) { return '<label class="variante-inline-check"><input type="checkbox" data-rl-role="' + r.tag + '"' + (rlRoleSel[r.tag] ? " checked" : "") + "> " + r.tag + "</label>"; }).join("");
   }
@@ -30993,14 +31017,101 @@
     var inRole = {};
     rlRoleResults.forEach(function (r) { r.own.forEach(function (x) { inRole[x.t.key + "|" + r.role] = true; }); });
     try {
-      var blob = await buildXlsxBlob([{ title: "Ticket je Rolle", headers: ["Ticket", "Zusammenfassung", "Rollen-Label"].concat(roles), rows: rlRoleTickets.map(function (x) {
-        return [x.t.key, x.t.summary || "", x.roles.join(", ") || "(ohne – gilt für alle)"].concat(roles.map(function (r) { return inRole[x.t.key + "|" + r] ? "x" : ""; }));
+      var blob = await buildXlsxBlob([{ title: "Ticket je Rolle", headers: ["Ticket", "Zusammenfassung", "Rollen-Label", "Quelle"].concat(roles), rows: rlRoleTickets.map(function (x) {
+        return [x.t.key, x.t.summary || "", x.roles.join(", ") || "(ohne – gilt für alle)", Array.isArray((app.rlRoleOverrides || {})[x.t.key]) ? "manuell" : "Label"].concat(roles.map(function (r) { return inRole[x.t.key + "|" + r] ? "x" : ""; }));
       }) }]);
       var fn = safeFilename(rlRoleTitle) + "_Tickets_je_Rolle_" + dateStampForFilename() + ".xlsx";
       if (await saveOrWarn(fn, blob)) els.rlRolesStatus.textContent = "Übersicht „" + fn + "“ heruntergeladen (" + rlRoleTickets.length + " Tickets × " + roles.length + " Rollen).";
     } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
   });
   renderRlRoles();
+  // ----- v2.132: Rollen-Zuordnung pruefen, manuell setzen, per KI vorschlagen -----
+  var rlAssignTickets = [], rlAssignSuggest = {};
+  function rlAssignVisible() {
+    var map = rlWrapperMap(), only = els.rlAssignOnlyUntagged.checked;
+    return rlAssignTickets.filter(function (t) { return !only || !rlTicketRoles(t, map).length || Array.isArray(app.rlRoleOverrides[t.key]) || rlAssignSuggest[t.key]; });
+  }
+  function renderRlAssign() {
+    app.rlRoleOverrides = app.rlRoleOverrides || {};
+    els.rlAssignCount.textContent = Object.keys(app.rlRoleOverrides).length;
+    var map = rlWrapperMap(), list = rlAssignVisible(), tags = RL_ROLES.map(function (r) { return r.tag; });
+    els.rlAssignTableWrap.hidden = !list.length;
+    els.rlAssignAiBtn.disabled = !list.length;
+    var withSug = list.filter(function (t) { return rlAssignSuggest[t.key]; });
+    els.rlAssignAcceptAllBtn.hidden = !withSug.length;
+    els.rlAssignThead.innerHTML = "<tr><th>Ticket</th><th>Rollen aus Labels</th>" + tags.map(function (t) { return "<th>" + t + "</th>"; }).join("") + "<th>KI-Vorschlag</th></tr>";
+    els.rlAssignTbody.innerHTML = list.map(function (t) {
+      var own = rlTicketRoles(t, map), manual = Array.isArray(app.rlRoleOverrides[t.key]), sug = rlAssignSuggest[t.key];
+      return '<tr data-rl-assign="' + escapeHtml(t.key) + '"><td><b>' + escapeHtml(t.key) + '</b><div class="step-note">' + escapeHtml(truncate(t.summary || "", 90)) + "</div></td>" +
+        "<td>" + (rlLabelRoles(t, map).join(", ") || '<span class="step-note">–</span>') + "</td>" +
+        tags.map(function (tag) { return '<td><input type="checkbox" data-rl-assign-role="' + tag + '"' + (own.indexOf(tag) !== -1 ? " checked" : "") + ' aria-label="' + escapeHtml(t.key) + " – " + tag + '"></td>'; }).join("") +
+        "<td>" + (sug ? escapeHtml(sug.length ? sug.join(", ") : "keine Rolle erkannt") + (sug.length ? ' <button class="btn ghost btn-tiny" type="button" data-rl-assign-accept>Übernehmen</button>' : "") : "") +
+        (manual ? ' <span class="variante-manual">manuell <button class="variante-x" type="button" data-rl-assign-reset title="Zurück zu den Labels" aria-label="Zurück zu den Labels">↺</button></span>' : "") + "</td></tr>";
+    }).join("");
+    if (!list.length && rlAssignTickets.length) els.rlAssignNote.textContent = "Alle " + rlAssignTickets.length + " Ticket(s) der Auswahl haben eine Rolle.";
+  }
+  els.rlAssignLoadBtn.addEventListener("click", function () {
+    rlAssignTickets = resolveGeneratorTickets("releaseletter");
+    rlAssignSuggest = {};
+    var map = rlWrapperMap(), untagged = rlAssignTickets.filter(function (t) { return !rlTicketRoles(t, map).length; }).length;
+    els.rlAssignNote.textContent = rlAssignTickets.length ? rlAssignTickets.length + " Ticket(s) in der Auswahl, davon " + untagged + " ohne Rolle." : "Keine Tickets in der Auswahl.";
+    renderRlAssign();
+  });
+  els.rlAssignOnlyUntagged.addEventListener("change", renderRlAssign);
+  els.rlAssignTbody.addEventListener("change", function (e) {
+    var cb = e.target.closest("[data-rl-assign-role]"), row = e.target.closest("[data-rl-assign]");
+    if (!cb || !row) return;
+    var key = row.getAttribute("data-rl-assign"), roles = [];
+    row.querySelectorAll("[data-rl-assign-role]").forEach(function (c) { if (c.checked) roles.push(c.getAttribute("data-rl-assign-role")); });
+    app.rlRoleOverrides[key] = roles;
+    renderRlAssign();
+  });
+  els.rlAssignTbody.addEventListener("click", function (e) {
+    var row = e.target.closest("[data-rl-assign]");
+    if (!row) return;
+    var key = row.getAttribute("data-rl-assign");
+    if (e.target.closest("[data-rl-assign-accept]")) { app.rlRoleOverrides[key] = (rlAssignSuggest[key] || []).slice(); delete rlAssignSuggest[key]; addLog("Releaseletter: KI-Rollenvorschlag für " + key + " übernommen."); }
+    else if (e.target.closest("[data-rl-assign-reset]")) delete app.rlRoleOverrides[key];
+    else return;
+    renderRlAssign();
+  });
+  els.rlAssignAcceptAllBtn.addEventListener("click", function () {
+    var n = 0;
+    rlAssignVisible().forEach(function (t) { var sug = rlAssignSuggest[t.key]; if (sug && sug.length) { app.rlRoleOverrides[t.key] = sug.slice(); delete rlAssignSuggest[t.key]; n++; } });
+    els.rlAssignNote.textContent = n + " KI-Vorschlag/Vorschläge übernommen.";
+    if (n) addLog("Releaseletter: " + n + " KI-Rollenvorschläge übernommen.");
+    renderRlAssign();
+  });
+  function rlParseJsonObject(text) {
+    var t = String(text || ""), a = t.indexOf("{"), b = t.lastIndexOf("}");
+    if (a < 0 || b <= a) return null;
+    try { var o = JSON.parse(t.slice(a, b + 1)); return o && typeof o === "object" && !Array.isArray(o) ? o : null; } catch (e) { return null; }
+  }
+  els.rlAssignAiBtn.addEventListener("click", async function () {
+    var list = rlAssignVisible().slice(0, 60);
+    if (!list.length) return;
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
+    els.rlAssignAiBtn.disabled = true; els.rlAssignAiSpinner.hidden = false;
+    try {
+      var res = await sampleApi(ragPromptFor("rlRoleSuggest") + "\n\nTICKETS:\n" + list.map(function (t) { return "- " + t.key + ": " + (t.summary || "") + (t.description ? " – " + truncate(String(t.description).replace(/\s+/g, " "), 300) : ""); }).join("\n"),
+        { modelTier: "default", cache: false });
+      var obj = rlParseJsonObject(res && res.text), tags = RL_ROLES.map(function (r) { return r.tag; }), n = 0;
+      if (!obj) throw new Error("Antwort der KI war kein gültiges JSON.");
+      list.forEach(function (t) {
+        if (!Array.isArray(obj[t.key])) return;
+        rlAssignSuggest[t.key] = obj[t.key].map(String).filter(function (r) { return tags.indexOf(r) !== -1; });
+        n++;
+      });
+      els.rlAssignNote.textContent = "KI-Vorschläge für " + n + " von " + list.length + " Ticket(s) – bitte prüfen und übernehmen.";
+      addLog("Releaseletter: KI-Rollenvorschläge für " + n + " Ticket(s) erzeugt.");
+    } catch (err) {
+      els.rlAssignNote.textContent = "KI-Vorschlag fehlgeschlagen: " + ((err && err.message) || "Unbekannter Fehler.");
+    } finally {
+      els.rlAssignAiSpinner.hidden = true;
+      renderRlAssign();
+    }
+  });
+  renderRlAssign();
 
   /* ============ Teil 10: Navigation ============ */
 
