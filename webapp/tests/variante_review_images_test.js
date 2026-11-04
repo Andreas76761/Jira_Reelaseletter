@@ -98,8 +98,9 @@ async function sheetRows(zip, n) {
   $("vrev-stage").querySelector('[data-vrev-act="word-dist"]').click();
   await waitUntil(() => savedFiles.length === 1, 8000);
   w = await docText(savedFiles[0].data);
-  check("Mit Legende: Kapitel „Statusangaben“ mit den im Text vorkommenden Status", w.text.includes("Statusangaben") && w.text.includes("verfügbar: Die Funktion ist bereits im Einsatz.") &&
-    w.text.includes("geplant: Die Funktion ist vorgesehen, aber noch nicht umgesetzt.") && !w.text.includes("in Abnahme:"));
+  const flat = w.text.replace(/\n/g, ""); // v2.142: Statusbegriffe stehen farbig in eigenen Textläufen
+  check("Mit Legende: Kapitel „Statusangaben“ mit den im Text vorkommenden Status", w.text.includes("Statusangaben") && flat.includes("verfügbar: Die Funktion ist bereits im Einsatz.") &&
+    flat.includes("geplant: Die Funktion ist vorgesehen, aber noch nicht umgesetzt.") && !flat.includes("in Abnahme:"));
   check("Legende im Inhaltsverzeichnis vor Kapitel 1", w.text.indexOf("Statusangaben") < w.text.indexOf("1 Vertragsübersicht"));
 
   // Ablage als Excel

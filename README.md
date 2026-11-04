@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.141.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.142.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,18 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **End-to-End-Test: Korrekturen und Optimierungen (v2.142.0)**: Ergebnis eines Durchlaufs im echten Browser mit großen
+  Dokumenten (Handbuch mit 120 Kapiteln/Unterkapiteln, 30 Bildern, Tabellen, Listen, Kommentaren; 80 Screens).
+  **PDF-Export**: Bilder werden jetzt komprimiert und je Bild nur einmal eingebettet – das PDF des großen Handbuchs
+  schrumpft von 90 MB auf 0,7 MB (betrifft alle PDF-Exporte der App). **Dokument-Review**: KI-Prüfung (Stufe 4) und
+  Übersetzung (Stufe 5) bearbeiten 3 Kapitel gleichzeitig statt nacheinander (mit echter KI bei 100+ Kapiteln deutlich
+  schneller); die übersetzte Kopie behält jetzt die Tabellen des Entwurfs (fehlten vorher); Statusangaben (verfügbar,
+  in Abnahme, in Entwicklung, geplant) erscheinen im Word farbig hinterlegt (Stufe 7, abschaltbar); „Bildvorschläge
+  übernehmen“ meldet, wenn bereits alle Platzhalter belegt sind. **AGENT**: Dubletten werden als Gruppen gemeldet
+  (Textbausteine ergaben vorher hunderte Einzelpaare, jetzt z. B. 14 Gruppen) und über einen Index der 3-Wort-Folgen
+  gesucht statt „jeder mit jedem“; der Classification Agent weist darauf hin, wenn in VARIANTE keine Domänen angelegt
+  sind.
 
 - **Register AGENT: 8 Agenten mit Orchestrator (v2.141.0)**: neues Register „AGENT“ (nach CROSS_X). Tabelle der Agenten
   mit Eingabe, Ausgabe, Status und Ergebnis; Auswahl per Häkchen, „Ausführen“ je Agent oder „Orchestrator starten“.

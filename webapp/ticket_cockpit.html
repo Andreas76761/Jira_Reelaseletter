@@ -6473,7 +6473,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.141.0";
+  var APP_VERSION = "2.142.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -23822,13 +23822,22 @@
       xmlEsc("Tabelle " + table.tableNumber + ": " + table.sourceFile) + "</w:t></w:r></w:p>";
   }
   // v2.139: einfache Auszeichnung fuer den Dokument-Review: **fett**, __kursiv__, Aufzaehlungen (• ◦ ▪ / 1.).
+  // v2.142: Statusangaben (verfuegbar, in Abnahme, in Entwicklung, geplant) im Word farbig hinterlegt (abschaltbar)
+  var RICH_STATUS_STYLE = { "verfügbar": ["E7F6EC", "15803D"], "in abnahme": ["E0EEFB", "1D4ED8"], "in entwicklung": ["FDF3E2", "B45309"], "geplant": ["EFE7FB", "6D28D9"] };
+  var RICH_STATUS_RE = /(\bverfügbar\b|\bin Abnahme\b|\bin Entwicklung\b|\bgeplant\b)/i;
+  var richStatusColors = false;
   function richInlineRunsXml(line) {
     var parts = String(line).split(/(\*\*|__)/), b = false, i = false, out = "";
     parts.forEach(function (t) {
       if (t === "**") { b = !b; return; }
       if (t === "__") { i = !i; return; }
       if (!t) return;
-      out += "<w:r>" + (b || i ? "<w:rPr>" + (b ? "<w:b/>" : "") + (i ? "<w:i/>" : "") + "</w:rPr>" : "") + '<w:t xml:space="preserve">' + xmlEsc(t) + "</w:t></w:r>";
+      (richStatusColors ? t.split(new RegExp(RICH_STATUS_RE.source, "gi")) : [t]).forEach(function (seg) {
+        if (!seg) return;
+        var st = richStatusColors && RICH_STATUS_STYLE[seg.toLowerCase()];
+        var rpr = (b || st ? "<w:b/>" : "") + (i ? "<w:i/>" : "") + (st ? '<w:color w:val="' + st[1] + '"/><w:shd w:val="clear" w:color="auto" w:fill="' + st[0] + '"/>' : "");
+        out += "<w:r>" + (rpr ? "<w:rPr>" + rpr + "</w:rPr>" : "") + '<w:t xml:space="preserve">' + xmlEsc(seg) + "</w:t></w:r>";
+      });
     });
     return out || '<w:r><w:t xml:space="preserve"></w:t></w:r>';
   }
@@ -24078,7 +24087,8 @@
         var widthMm = m.widthEmu / 36000, heightMm = m.heightEmu / 36000;
         if (y + heightMm > pageHLimit) { doc.addPage(); y = margin; }
         var format = MANUAL_IMAGE_EXT_TO_JSPDF_FORMAT[m.ext] || "PNG";
-        try { doc.addImage(m.screen.dataUrl, format, margin, y, widthMm, heightMm); } catch (e) { /* defektes/nicht unterstuetztes Bildformat - Platzhalter einfach auslassen */ }
+        // v2.142: komprimiert ("FAST") und je Bild nur einmal eingebettet (Alias) – vorher ~3 MB je Screenshot
+        try { doc.addImage(m.screen.dataUrl, format, margin, y, widthMm, heightMm, m.screen.id != null ? "bild-" + m.screen.id : undefined, "FAST"); } catch (e) { /* defektes/nicht unterstuetztes Bildformat - Platzhalter einfach auslassen */ }
         y += heightMm + 4;
         doc.setFont("helvetica", "italic"); doc.setFontSize(9); doc.setTextColor(0, 0, 0);
         var captionLines = doc.splitTextToSize("Abbildung " + m.num + ": " + (m.screen.description || m.screen.sourceFile || ""), widthMm);
@@ -32399,7 +32409,7 @@
     icon: /[←-⇿☀-➿⬀-⯿ℹ]|[\uD83C-\uD83E][\uDC00-\uDFFF]/g,
     placeholder: /^\s*(\[Bild(?::\s*([^\]]*))?\]|(Screenshot|Abbildung)\s*:\s*(.+))\s*$/i
   };
-  var vrevBusy = false, vrevAbort = null, vrevTextChapter = 0, vrevFilesOpen = {};
+  var vrevBusy = false, vrevAbort = null, vrevTextChapter = 0, vrevFilesOpen = {}, VREV_AI_PARALLEL = 3;
 
   function vrevNormalize(d) {
     d = d && typeof d === "object" ? d : {};
@@ -32784,10 +32794,12 @@
     });
   }
   async function vrevBuildWord(doc, withInternal, plain, coverDate) {
-    var blob = await buildFinalMasterDocxBlob(vrevExportChapters(doc, withInternal), { coverDate: coverDate || undefined,
+    richStatusColors = doc.statusColors !== false;
+    var blob;
+    try { blob = await buildFinalMasterDocxBlob(vrevExportChapters(doc, withInternal), { coverDate: coverDate || undefined,
       coverTitle: doc.name, coverSubtitle: "Version " + doc.version + " · " + doc.status + (withInternal ? " · INTERN – mit internen Vermerken" : ""),
       footerTitle: doc.name + " v" + doc.version + (withInternal ? " – INTERN" : ""), rich: true
-    });
+    }); } finally { richStatusColors = false; }
     return plain ? blob : finalApplyWordDesign(blob, vrevResolveDesign(doc));
   }
   function vrevDesignOptions(doc) {
@@ -32809,7 +32821,7 @@
   }
   var VREV_MAX_FILES = 25;
   function vrevSnapshot(doc) {
-    return JSON.parse(JSON.stringify({ name: doc.name, version: doc.version, status: doc.status, chapters: doc.chapters, ph: doc.ph, legend: doc.legend, designKey: doc.designKey, lang: doc.lang }));
+    return JSON.parse(JSON.stringify({ name: doc.name, version: doc.version, status: doc.status, chapters: doc.chapters, ph: doc.ph, legend: doc.legend, designKey: doc.designKey, lang: doc.lang, statusColors: doc.statusColors }));
   }
   function vrevKeepFile(doc, kind, filename, snap, at) {
     doc.files = doc.files || [];
@@ -33060,6 +33072,7 @@
         '<button class="btn ghost" type="button" data-vrev-act="pdf-dist">PDF für die Verteilung</button>' +
         '<button class="btn ghost" type="button" data-vrev-act="to-final">' + (doc.finalVersionId && finalVersionById(doc.finalVersionId) ? "Erneut als Stand nach FINAL" : "Als Stand nach FINAL übernehmen") + "</button>" +
         '<button class="btn ghost" type="button" data-vrev-act="report-docx">Reviewbericht (Word)</button></div>' +
+        '<label class="variante-inline-check"><input type="checkbox" data-vrev-act="status-colors"' + (doc.statusColors !== false ? " checked" : "") + "> Statusangaben im Word farbig hervorheben</label> " +
         '<label class="variante-inline-check"><input type="checkbox" data-vrev-act="legend"' + (doc.legend ? " checked" : "") + "> Kapitel „Statusangaben“ mit Erklärung (verfügbar, in Abnahme, in Entwicklung, geplant) am Anfang einfügen</label>" +
         (doc.finalVersionId && finalVersionById(doc.finalVersionId) ? '<p class="step-note">In FINAL als Stand „' + escapeHtml(finalVersionById(doc.finalVersionId).name) + "“ (" + escapeHtml(finalVersionById(doc.finalVersionId).status) + ") – auch für Varianten und CROSS_X nutzbar.</p>" : "") +
         '<p class="step-note">Freigegebene und verteilte Dokumente können im Release-Paket (Schritt 5) mitgeliefert werden. Verteilfassung: ohne Kommentarbereiche, ohne Zeilen „Intern:“/„TODO“/„[Intern]“, ohne Jira-Nummern, Bilder an den Platzhaltern, Design ' + (doc.wordDesign ? "aus dem hochgeladenen Entwurf" : "aus FINAL") + ". Die interne Fassung zeigt Vermerke als „[Intern: …]“.</p>";
@@ -33276,27 +33289,28 @@
   async function vrevAiQuality(doc) {
     if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
     vrevBusy = true; vrevAbort = new AbortController(); renderVrev();
-    var findings = [], failed = 0, chs = doc.chapters.filter(function (c) { return vrevWords(c.text) > 0; });
+    var failed = 0, done = 0, chs = doc.chapters.filter(function (c) { return vrevWords(c.text) > 0; });
     try {
-      for (var i = 0; i < chs.length; i++) {
-        if (vrevAbort.signal.aborted) break;
-        els.vrevStatus.textContent = "KI-Prüfung: Kapitel " + (i + 1) + " von " + chs.length + " …";
+      // v2.142: 3 Kapitel gleichzeitig (vorher strikt nacheinander – bei 100+ Kapiteln sehr lange Laufzeit)
+      var per = await mapWithConcurrency(chs, VREV_AI_PARALLEL, async function (ch) {
+        if (vrevAbort.signal.aborted) return [];
         try {
-          var res = await sampleApi(ragPromptFor("vrevQuality") + "\n\nKAPITEL: " + chs[i].title + "\n\nTEXT:\n" + truncate(vrevPlain(chs[i].text), 15000), { modelTier: "default", cache: false, signal: vrevAbort.signal });
-          var t = String((res && res.text) || ""), a = t.indexOf("["), b = t.lastIndexOf("]"), arr = a >= 0 && b > a ? JSON.parse(t.slice(a, b + 1)) : null;
-          if (!Array.isArray(arr)) { failed++; continue; }
-          arr.slice(0, 15).forEach(function (f) {
-            if (!f || typeof f !== "object") return;
+          var res = await sampleApi(ragPromptFor("vrevQuality") + "\n\nKAPITEL: " + ch.title + "\n\nTEXT:\n" + truncate(vrevPlain(ch.text), 15000), { modelTier: "default", cache: false, signal: vrevAbort.signal });
+          var t = String((res && res.text) || ""), a = t.indexOf("["), b = t.lastIndexOf("]"), arr = null;
+          try { arr = a >= 0 && b > a ? JSON.parse(t.slice(a, b + 1)) : null; } catch (e) { arr = null; }
+          if (!Array.isArray(arr)) { failed++; return []; }
+          return arr.slice(0, 15).filter(function (f) { return f && typeof f === "object"; }).map(function (f) {
             var typ = ["Grammatik", "Rechtschreibung", "Stil", "Fehler", "Lücke"].indexOf(f.typ) !== -1 ? f.typ : "Fehler";
             var orig = String(f.original || "").trim();
-            if (orig && vrevPlain(chs[i].text).indexOf(orig) === -1) orig = "";
-            findings.push({ chapter: chs[i].title, typ: typ, original: orig, vorschlag: String(f.vorschlag || "").trim(), hinweis: String(f.hinweis || "").trim(), done: "" });
+            if (orig && vrevPlain(ch.text).indexOf(orig) === -1) orig = "";
+            return { chapter: ch.title, typ: typ, original: orig, vorschlag: String(f.vorschlag || "").trim(), hinweis: String(f.hinweis || "").trim(), done: "" };
           });
         } catch (err) {
-          if (vrevAbort.signal.aborted || (err && err.code === "cancelled")) break;
-          failed++;
-        }
-      }
+          if (!(vrevAbort.signal.aborted || (err && err.code === "cancelled"))) failed++;
+          return [];
+        } finally { done++; els.vrevStatus.textContent = "KI-Prüfung: " + done + " von " + chs.length + " Kapitel(n) geprüft …"; }
+      });
+      var findings = [].concat.apply([], per);
       doc.ai = { at: nowLabel(), findings: findings };
       vrevRunChecks(doc);
       els.vrevStatus.textContent = "KI-Prüfung: " + findings.length + " Befund(e) in " + chs.length + " Kapitel(n)" + (failed ? ", " + failed + " Kapitel ohne auswertbare Antwort" : "") + (vrevAbort.signal.aborted ? " (gestoppt)" : "") + ".";
@@ -33314,15 +33328,15 @@
   async function vrevTranslate(doc, lang) {
     if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
     vrevBusy = true; vrevAbort = new AbortController(); renderVrev();
-    var out = [], tr = 0, kept = 0, fromTm = 0;
+    var tr = 0, kept = 0, fromTm = 0, done = 0;
+    function withTables(o, c) { if (c.tables) o.tables = JSON.parse(JSON.stringify(c.tables)); return o; }
     try {
-      for (var i = 0; i < doc.chapters.length; i++) {
-        var c = doc.chapters[i], text = c.text;
-        if (vrevAbort.signal.aborted) break;
-        if (!vrevWords(text)) { out.push({ title: c.title, level: c.level, text: text }); continue; }
+      // v2.142: 3 Kapitel gleichzeitig; Tabellen bleiben erhalten (fehlten vorher in der Kopie)
+      var out = await mapWithConcurrency(doc.chapters, VREV_AI_PARALLEL, async function (c) {
+        var text = c.text;
+        if (vrevAbort.signal.aborted || !vrevWords(text)) return withTables({ title: c.title, level: c.level, text: text }, c);
         var gl = variantGlossaryFor(lang, c.title + "\n" + text), key = variantTmKey(lang, c.title, text, gl), hit = variantTmGet(lang, key);
-        if (hit) { out.push({ title: hit.title || c.title, level: c.level, text: hit.text }); fromTm++; continue; }
-        els.vrevStatus.textContent = "Übersetzung (" + variantLangName(lang) + "): Kapitel " + (i + 1) + " von " + doc.chapters.length + " …";
+        if (hit) { fromTm++; return withTables({ title: hit.title || c.title, level: c.level, text: hit.text }, c); }
         try {
           var res = await sampleApi(ragPromptFor("variantTranslate") + "\n\nZIELSPRACHE: " + variantLangName(lang) + " (" + lang + ")" +
             (gl.length ? "\n\nGLOSSAR (verbindlich – diese Übersetzungen verwenden):\n" + gl.map(function (g) { return "- " + g.src + " → " + g.target; }).join("\n") : "") +
@@ -33331,13 +33345,16 @@
           if (t && t.text) {
             var back = t.text.replace(/\[\[INTERN\]\]/g, "\u0001").replace(/\[\[\/INTERN\]\]/g, "\u0002");
             variantTmPut(lang, key, { title: t.title || c.title, text: back, at: nowLabel(), source: "KI" });
-            out.push({ title: t.title || c.title, level: c.level, text: back }); tr++;
-          } else { out.push({ title: c.title, level: c.level, text: text }); kept++; }
+            tr++;
+            return withTables({ title: t.title || c.title, level: c.level, text: back }, c);
+          }
+          kept++;
+          return withTables({ title: c.title, level: c.level, text: text }, c);
         } catch (err) {
-          if (vrevAbort.signal.aborted || (err && err.code === "cancelled")) break;
-          out.push({ title: c.title, level: c.level, text: text }); kept++;
-        }
-      }
+          if (!(vrevAbort.signal.aborted || (err && err.code === "cancelled"))) kept++;
+          return withTables({ title: c.title, level: c.level, text: text }, c);
+        } finally { done++; els.vrevStatus.textContent = "Übersetzung (" + variantLangName(lang) + "): " + done + " von " + doc.chapters.length + " Kapitel(n) …"; }
+      });
       if (vrevAbort.signal.aborted) { els.vrevStatus.textContent = "Übersetzung gestoppt – keine Kopie erzeugt."; return; }
       var nd = vrevAddDoc({ name: doc.name + " (" + lang + ")", source: "Übersetzung", sourceRef: doc.id, baseDocId: doc.id, lang: lang, version: doc.version, chapters: out,
         ph: JSON.parse(JSON.stringify(doc.ph)), design: doc.design, wordDesign: doc.wordDesign });
@@ -33488,6 +33505,8 @@
       var key = t.getAttribute("data-vrev-ph-add"), id = parseInt(t.value, 10), ids = doc.ph[key] = doc.ph[key] || [];
       if (ids.length < 3 && ids.indexOf(id) === -1) { ids.push(id); vrevLog(doc, 3, "Bild zugeordnet", 1); vrevRunChecks(doc); }
       renderVrev();
+    } else if (t.matches('[data-vrev-act="status-colors"]')) {
+      doc.statusColors = t.checked; renderVrev();
     } else if (t.matches('[data-vrev-act="legend"]')) {
       doc.legend = t.checked; vrevHistory(doc, "Status-Legende " + (t.checked ? "eingefügt" : "entfernt")); renderVrev();
     } else if (t.matches('[data-vrev-act="tr-not-needed"]')) {
@@ -33574,7 +33593,9 @@
       });
       if (added) vrevLog(doc, 3, "Bildvorschläge übernommen", added);
       vrevRunChecks(doc);
-      els.vrevStatus.textContent = filledN + " Platzhalter mit " + added + " vorgeschlagenen Bild(ern) belegt – bitte prüfen.";
+      var emptyN = vrevAllPlaceholders(doc).filter(function (p) { return !(doc.ph[p.key] || []).length; }).length;
+      els.vrevStatus.textContent = filledN ? filledN + " Platzhalter mit " + added + " vorgeschlagenen Bild(ern) belegt – bitte prüfen." + (emptyN ? " " + emptyN + " ohne passendes Bild." : "") :
+        emptyN ? "Kein passendes Bild im Bildarchiv für die " + emptyN + " leeren Platzhalter." : "Alle Platzhalter sind bereits belegt.";
       renderVrev(); return;
     }
     if (act === "autofix") {
@@ -33799,7 +33820,7 @@
       }
     }
     var cnt = function (f) { return a.blocks.filter(function (b) { return b.cls && b.cls[f]; }).length; };
-    return { s: "ok", summary: n + " Blöcke klassifiziert – Domäne: " + cnt("domain") + ", Rolle: " + cnt("role") + ", Markt: " + cnt("market") + ", Sprache: " + cnt("lang") + (aiN ? " · " + aiN + " per KI verfeinert" : "") };
+    return { s: "ok", summary: n + " Blöcke klassifiziert – Domäne: " + cnt("domain") + (VS().domains.length ? "" : " (keine Domänen in VARIANTE angelegt)") + ", Rolle: " + cnt("role") + ", Markt: " + cnt("market") + ", Sprache: " + cnt("lang") + (aiN ? " · " + aiN + " per KI verfeinert" : "") };
   }
 
   // ---------- 3 Quality ----------
@@ -33839,12 +33860,30 @@
       });
     }
     if (rules.dup) {
-      var paras = body.filter(function (b) { return (b.kind === "paragraph" || b.kind === "list") && b.text.split(/\s+/).length >= 8; }), sh = paras.map(function (b) { return agentShingles(b.text); }), seen = {};
-      for (var i = 0; i < paras.length; i++) for (var j = i + 1; j < paras.length; j++) {
-        if (seen[j]) continue;
-        var sim = agentJaccard(sh[i], sh[j]);
-        if (sim >= 0.8) { seen[j] = true; add("Dublette", rules.dup.label, [paras[i], paras[j]], Math.round(sim * 100) + " % gleich: „" + truncate(paras[i].text, 70) + "“ (" + paras[i].srcName + " › " + paras[i].chapter + " / " + paras[j].srcName + " › " + paras[j].chapter + ")"); }
-      }
+      // v2.142: aehnliche Absaetze zu Gruppen zusammenfassen (vorher ein Befund je Paar – bei Textbausteinen hunderte);
+      // Kandidaten nur ueber gemeinsame 3-Wort-Folgen (Index) statt jeder mit jedem.
+      var paras = body.filter(function (b) { return (b.kind === "paragraph" || b.kind === "list") && b.text.split(/\s+/).length >= 8; }), sh = paras.map(function (b) { return agentShingles(b.text); });
+      var idx = {}, parent = paras.map(function (_, i) { return i; }), simOf = {};
+      function root(i) { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; }
+      sh.forEach(function (set, i) { Object.keys(set).forEach(function (k) { (idx[k] = idx[k] || []).push(i); }); });
+      sh.forEach(function (set, i) {
+        var cand = {};
+        Object.keys(set).forEach(function (k) { if (idx[k].length <= 200) idx[k].forEach(function (j) { if (j > i) cand[j] = (cand[j] || 0) + 1; }); });
+        Object.keys(cand).forEach(function (j) {
+          j = +j;
+          if (cand[j] < 0.5 * Math.min(Object.keys(set).length, Object.keys(sh[j]).length)) return;
+          var sim = agentJaccard(set, sh[j]);
+          if (sim >= 0.8) { var ri = root(i), rj = root(j); if (ri !== rj) parent[rj] = ri; simOf[i] = Math.min(simOf[i] || 1, sim); }
+        });
+      });
+      var groups = {};
+      paras.forEach(function (b, i) { var r = root(i); (groups[r] = groups[r] || []).push(b); });
+      Object.keys(groups).forEach(function (r) {
+        var g = groups[r];
+        if (g.length < 2) return;
+        var where = g.slice(0, 4).map(function (b) { return b.srcName + " › " + b.chapter; }).join(" / ") + (g.length > 4 ? " / …" : "");
+        add("Dublette", rules.dup.label, g, g.length + " gleiche/sehr ähnliche Absätze (≥ " + Math.round((simOf[r] || 0.8) * 100) + " %): „" + truncate(g[0].text, 70) + "“ – " + where);
+      });
     }
     // Konflikt ueber Quellen: gleiches Kapitel, unterschiedliche Statusangaben
     var byTitle = {};

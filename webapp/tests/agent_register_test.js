@@ -155,7 +155,7 @@ const manualBody = H("1 Verträge anlegen") + P("Neue Verträge werden online an
   out = await tab("quality");
   const q = out.textContent;
   check("Quality: Jira-Regel, Lücke TBD, Konflikt Status, leeres Kapitel, Dublette, eigener Begriff", q.includes("Jira-Nummer im Kundentext: ONESCM-12") && q.includes("Lücken-Markierung") && q.includes("Geplantes/in Entwicklung als verfügbar beschrieben") &&
-    q.includes("Kapitel „3 Leeres Kapitel“ ohne Inhalt") && q.includes("Interner Vermerk: „TODO: Abstimmung mit dem Fachbereich“") && /100 % gleich: „Der Vertrag wird nach/.test(q) && q.includes("Verbotener Begriff „Testsystem“"));
+    q.includes("Kapitel „3 Leeres Kapitel“ ohne Inhalt") && q.includes("Interner Vermerk: „TODO: Abstimmung mit dem Fachbereich“") && q.includes("2 gleiche/sehr ähnliche Absätze (≥ 100 %): „Der Vertrag wird nach") && q.includes("Verbotener Begriff „Testsystem“"));
 
   out = await tab("media");
   const mRows = Array.from(out.querySelectorAll("tbody tr"));
