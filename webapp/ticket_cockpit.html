@@ -3450,6 +3450,8 @@
             <button class="btn primary" id="variante-generate-all-btn" type="button" disabled><span class="btn-spinner" id="variante-spinner" hidden></span>Alle Varianten erzeugen</button>
             <button class="btn ghost" id="variante-update-stale-btn" type="button" hidden>Veraltete Varianten aktualisieren</button>
             <button class="btn ghost" id="variante-rebase-btn" type="button" hidden>Varianten auf dieses Basisdokument übertragen</button>
+            <button class="btn ghost" id="variante-zip-btn" type="button" disabled title="Je erzeugter Variante ein Word-Dokument (Word-Design aus FINAL)">Alle Varianten als ZIP (Word)</button>
+            <button class="btn ghost" id="variante-overview-xlsx-btn" type="button" disabled title="Welche Kapitel stehen in welcher Variante (neue Nummer bzw. Verweis)">Varianten-Übersicht als Excel</button>
             <button class="btn ghost" id="variante-stop-btn" type="button" hidden>Stopp</button>
           </div>
           <p class="step-note" id="variante-status"></p>
@@ -6137,7 +6139,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.126.0";
+  var APP_VERSION = "2.127.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7741,7 +7743,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -29152,7 +29154,8 @@
     return app.final.master.chapters.map(function (c) {
       var screens = (c.screenIds || []).map(function (id) { return app.uploadedImages.filter(function (i) { return i.id === id; })[0]; })
         .filter(Boolean).map(function (img) { return Object.assign({}, img, { description: finalScreenCaption(img) }); });
-      return { title: c.title, level: c.level || 1, text: c.text, screens: screens };
+      // v2.127: Rollen-Markierungen ([Rolle: …], [/Rolle]) erscheinen in keiner Ausgabe – Inhalt bleibt vollstaendig.
+      return { title: c.title, level: c.level || 1, text: variantStripRoleMarkers(c.text), screens: screens };
     });
   }
   async function finalDownloadWord() {
@@ -30024,6 +30027,17 @@
     return cond.not ? !hit : hit;
   }
   function vrParseCond(m) { return { not: !!m[1], roles: m[2].split(/[,;\/]/).map(function (x) { return x.trim(); }).filter(Boolean) }; }
+  function variantStripRoleMarkers(text) {
+    if (String(text || "").indexOf("olle") === -1) return text || "";
+    var out = [];
+    String(text).split("\n").forEach(function (line) {
+      if (VR_COND_END_RE.test(line)) return;
+      var m = line.match(VR_COND_RE);
+      if (m) { if (m[3].trim()) out.push(m[3]); return; }
+      out.push(line);
+    });
+    return out.join("\n");
+  }
   function variantCondCount(text) {
     return String(text || "").split("\n").filter(function (l) { return VR_COND_RE.test(l); }).length;
   }
@@ -30172,6 +30186,8 @@
         '<button class="btn ghost btn-tiny final-btn-danger" type="button" data-vr-delete="' + v.id + '"' + (varianteBusy ? " disabled" : "") + ">Entfernen</button></div></td></tr>";
     }).join("");
     els.varianteGenerateAllBtn.disabled = varianteBusy || !hasBase || !list.some(function (v) { return v.baseVersionId === st.baseVersionId; });
+    els.varianteZipBtn.disabled = varianteBusy || !list.some(function (v) { return v.standId && finalVersionById(v.standId); });
+    els.varianteOverviewXlsxBtn.disabled = !hasBase || !list.some(function (v) { return v.baseVersionId === st.baseVersionId; });
     var stale = list.filter(function (v) { return variantStaleReasons(v).length; });
     els.varianteUpdateStaleBtn.hidden = !stale.length;
     els.varianteUpdateStaleBtn.disabled = varianteBusy;
@@ -30439,6 +30455,65 @@
     varianteRun(st.variants.filter(function (v) { return v.baseVersionId === st.baseVersionId; }));
   });
   els.varianteStopBtn.addEventListener("click", function () { if (varianteAbort) varianteAbort.abort(); });
+  async function variantDocxBlob(v, sv) {
+    var chs = sv.chapters.map(function (c) {
+      var screens = (c.screenIds || []).map(function (sid) { return app.uploadedImages.filter(function (img) { return img.id === sid; })[0]; })
+        .filter(Boolean).map(function (img) { return Object.assign({}, img, { description: finalScreenCaption(img) }); });
+      return { title: c.title, level: c.level || 1, text: variantStripRoleMarkers(c.text), screens: screens };
+    });
+    var blob = await buildFinalMasterDocxBlob(chs, { coverTitle: variantL(v.lang).manual, coverSubtitle: v.role + " · " + variantLangName(v.lang), footerTitle: variantL(v.lang).manual + " – " + v.role });
+    return finalApplyWordDesign(blob, finalResolveWordDesign());
+  }
+  function variantDocxName(v) { return "Variante_" + editoFinalSafeName(v.name) + "_" + dateStampForFilename() + ".docx"; }
+  els.varianteZipBtn.addEventListener("click", async function () {
+    var list = VS().variants.filter(function (v) { return v.standId && finalVersionById(v.standId); });
+    if (!list.length || typeof JSZip === "undefined") return;
+    els.varianteZipBtn.disabled = true;
+    try {
+      var zip = new JSZip(), stale = 0, names = {};
+      for (var i = 0; i < list.length; i++) {
+        els.varianteStatus.textContent = "ZIP: Word " + (i + 1) + " von " + list.length + " – „" + list[i].name + "“ …";
+        var fn = variantDocxName(list[i]);
+        if (names[fn]) fn = fn.replace(/\.docx$/, "_" + list[i].id + ".docx");
+        names[fn] = true;
+        zip.file(fn, await variantDocxBlob(list[i], finalVersionById(list[i].standId)));
+        if (variantStaleReasons(list[i]).length) stale++;
+      }
+      var base = varianteBase();
+      var zipName = "Varianten_" + editoFinalSafeName(base ? base.name : "Handbuch") + "_" + dateStampForFilename() + ".zip";
+      var blob = await zip.generateAsync({ type: "blob" });
+      if (await saveOrWarn(zipName, blob)) {
+        els.varianteStatus.textContent = list.length + " Variante(n) als „" + zipName + "“ heruntergeladen" + (stale ? " – Achtung: " + stale + " davon veraltet" : "") + ".";
+        addLog("VARIANTE: " + list.length + " Variante(n) als ZIP „" + zipName + "“ heruntergeladen.");
+      } else els.varianteStatus.textContent = "";
+    } catch (err) { showToast("ZIP fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+    renderVarianteVariants();
+  });
+  els.varianteOverviewXlsxBtn.addEventListener("click", async function () {
+    var st = VS(), chs = varianteChapters(), base = varianteBase();
+    var list = st.variants.filter(function (v) { return v.baseVersionId === st.baseVersionId; });
+    if (!base || !list.length) return;
+    var plans = list.map(function (v) { return variantPlan(v); });
+    var rows = chs.map(function (c, i) {
+      var m = vrMapping(chs, i);
+      return [c.title, m ? m.dom + (m.sub ? " › " + m.sub : "") : "Allgemein"].concat(plans.map(function (p) {
+        var x = p.items[i];
+        return x.include ? (st.opts.renumber ? x.num : "enthalten") : (x.refRoles.length ? "→ " + x.refRoles.join(", ") : "–");
+      }));
+    });
+    var meta = list.map(function (v, k) {
+      var stand = v.standId ? finalVersionById(v.standId) : null, reasons = variantStaleReasons(v);
+      return [v.name, v.role, v.lang, plans[k].included, plans[k].excluded, plans[k].refs.length, stand ? stand.name : "", v.generatedAt || "",
+        !stand ? "nicht erzeugt" : reasons.length ? "veraltet: " + reasons.join(", ") : "aktuell"];
+    });
+    try {
+      var blob = await buildXlsxBlob([
+        { title: "Kapitel je Variante", headers: ["Kapitel (Basis „" + base.name + "“)", "Domäne"].concat(list.map(function (v) { return v.name; })), rows: rows },
+        { title: "Varianten", headers: ["Variante", "Rolle", "Sprache", "Kapitel aktiv", "ausgelassen", "Verweise", "Stand in FINAL", "Erzeugt", "Status"], rows: meta }]);
+      var fn = "Varianten_Uebersicht_" + editoFinalSafeName(base.name) + "_" + dateStampForFilename() + ".xlsx";
+      if (await saveOrWarn(fn, blob)) { els.varianteStatus.textContent = "Varianten-Übersicht „" + fn + "“ heruntergeladen (" + list.length + " Variante(n), " + chs.length + " Kapitel)."; addLog("VARIANTE: Übersicht „" + fn + "“ exportiert."); }
+    } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
   els.varianteUpdateStaleBtn.addEventListener("click", function () {
     varianteRun(VS().variants.filter(function (v) { return variantStaleReasons(v).length; }));
   });
@@ -30556,14 +30631,8 @@
       var sv = finalVersionById(v.standId);
       if (!sv) return;
       try {
-        var chs = sv.chapters.map(function (c) {
-          var screens = (c.screenIds || []).map(function (sid) { return app.uploadedImages.filter(function (img) { return img.id === sid; })[0]; })
-            .filter(Boolean).map(function (img) { return Object.assign({}, img, { description: finalScreenCaption(img) }); });
-          return { title: c.title, level: c.level || 1, text: c.text, screens: screens };
-        });
-        var blob = await buildFinalMasterDocxBlob(chs, { coverTitle: variantL(v.lang).manual, coverSubtitle: v.role + " · " + variantLangName(v.lang), footerTitle: variantL(v.lang).manual + " – " + v.role });
-        blob = await finalApplyWordDesign(blob, finalResolveWordDesign());
-        var fn = "Variante_" + editoFinalSafeName(v.name) + "_" + dateStampForFilename() + ".docx";
+        var blob = await variantDocxBlob(v, sv);
+        var fn = variantDocxName(v);
         if (await saveOrWarn(fn, blob)) addLog("VARIANTE: „" + fn + "“ heruntergeladen.");
       } catch (err) { showToast("Word-Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
       return;

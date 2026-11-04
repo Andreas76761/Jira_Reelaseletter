@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.126.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.127.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,6 +2031,16 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **VARIANTE – saubere Ausgaben, alle Varianten als ZIP, Varianten-Übersicht (v2.127.0)**:
+  Rollen-Markierungen (`[Rolle: …]`, `[Nicht Rolle: …]`, `[/Rolle]`) erscheinen in keiner Ausgabe
+  des Basisdokuments mehr – FINAL Word und PowerPoint, Schritt 9 (Gesamtdokument-Vorschau, Word,
+  PDF, Agenten-Prompts) –, der Inhalt aller Absätze bleibt dabei vollständig; im Stand selbst bleiben
+  sie zum Bearbeiten erhalten. Neu in VARIANTE: **„Alle Varianten als ZIP (Word)“** (je erzeugter
+  Variante ein Word im Word-Design aus FINAL; Hinweis, wenn darunter veraltete sind) und
+  **„Varianten-Übersicht als Excel“** mit Blatt „Kapitel je Variante“ (Basis-Kapitel × Varianten:
+  neue Nummer bzw. „→ Rollen“ als Verweis oder „–“) und Blatt „Varianten“ (Rolle, Sprache, Kapitel
+  aktiv/ausgelassen, Verweise, Stand, Status aktuell / veraltet / nicht erzeugt).
+  Test: `webapp/tests/variante_exports_test.js`.
 - **VARIANTE – Rollen-Bedingungen im Text, veraltete Varianten, Matrix als Excel (v2.126.0)**:
   (1) **Rollen-Bedingungen auf Absatz-Ebene** im Basisdokument: `[Rolle: Retail, MO] Text` bzw.
   `[Nicht Rolle: IT] Text` gilt für diesen Absatz; steht die Markierung allein in einer Zeile, gilt
