@@ -2720,12 +2720,16 @@
             <div><label for="screenph-rolle">Nur Screens der Rolle</label><select id="screenph-rolle" aria-label="Rollen-Filter für Screens"></select></div>
             <div><label for="screenph-sprache">Nur Screens der Sprache</label><select id="screenph-sprache" aria-label="Sprachen-Filter für Screens"></select></div>
             <div><label for="screenph-max">Screens je Platzhalter</label><select id="screenph-max" aria-label="Maximale Screens je Platzhalter"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option></select></div>
+            <label class="variante-inline-check"><input type="checkbox" id="screenph-ocr-first"> Vorher Bildtext per OCR erkennen (nur Screens ohne OCR-Text)</label>
           </div>
           <div class="controls" style="flex-wrap:wrap;">
             <button class="btn primary" id="screenph-match-btn" type="button" disabled>Screens zuordnen</button>
             <button class="btn ghost" id="screenph-ai-btn" type="button" disabled><span class="btn-spinner" id="screenph-ai-spinner" hidden></span>Mit KI verfeinern</button>
             <button class="btn ghost" id="screenph-docx-btn" type="button" disabled>Datei mit Screens herunterladen (Word)</button>
+            <button class="btn ghost" id="screenph-xlsx-btn" type="button" disabled>Liste als Excel (inkl. fehlende Screens)</button>
+            <button class="btn ghost" id="screenph-missing-md-btn" type="button" disabled>Fehlende Screens als Aufnahme-Liste (Markdown)</button>
           </div>
+          <p class="step-note" id="screenph-missing-note" hidden></p>
           <p class="step-note" id="screenph-status"></p>
           <div class="panel table-wrap" id="screenph-table-wrap" hidden><table class="simple-table"><thead><tr><th>Nr.</th><th>Kapitel</th><th>Beschreibung</th><th>Screens</th><th>Status</th></tr></thead><tbody id="screenph-tbody"></tbody></table></div>
         </section>
@@ -6339,7 +6343,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.135.0";
+  var APP_VERSION = "2.136.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7943,7 +7947,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -31862,6 +31866,11 @@
     els.screenphMatchBtn.disabled = !has;
     els.screenphAiBtn.disabled = !has;
     els.screenphDocxBtn.disabled = !has;
+    els.screenphXlsxBtn.disabled = !has;
+    var missing = screenPhMissingRows();
+    els.screenphMissingMdBtn.disabled = !has || !missing.length;
+    els.screenphMissingNote.hidden = !has || !missing.length;
+    els.screenphMissingNote.textContent = missing.length ? "Fehlende Screens: " + missing.length + " Platzhalter ohne passenden Screen – " + missing.slice(0, 6).map(function (r) { return r.chapter || r.nr; }).join(", ") + (missing.length > 6 ? " …" : "") + " (als Aufnahme-Liste exportierbar)." : "";
     els.screenphFileNote.textContent = has ? (st.filename || "eingefügte Zeilen") + " · " + st.rows.length + " Platzhalter" + (st.at ? " · eingelesen " + st.at : "") : "";
     els.screenphTableWrap.hidden = !has;
     if (!has) return;
@@ -31953,11 +31962,42 @@
     if (screenPhSetRows(text.split(/\r?\n/).map(screenPhSplitLine), "eingefügte Zeilen")) els.screenphPaste.value = "";
   });
   [els.screenphRolle, els.screenphSprache].forEach(function (el) { el.addEventListener("change", renderScreenPh); });
-  els.screenphMatchBtn.addEventListener("click", function () {
+  // v2.136: Screens ohne erkannten Bildtext vor dem Zuordnen per OCR lesen (nur Text, keine Kapitel-KI) - verbessert die Trefferquote bei Screens ohne Ueberschrift.
+  async function screenPhOcrMissing() {
+    var targets = screenPhPool().filter(function (img) { return !img.ocrText && !img.ocrRanAt; }); // bereits gelesene (auch ohne Text) nicht erneut
+    if (!targets.length) return { done: 0, failed: 0, skipped: false };
+    if (typeof Tesseract === "undefined") {
+      showToast("OCR nicht verfügbar", "OCR-Bibliothek (Tesseract.js) konnte nicht geladen werden - Zuordnung läuft ohne OCR.", true);
+      return { done: 0, failed: 0, skipped: true };
+    }
+    var pool;
+    try { pool = await getOcrWorkerPool(); }
+    catch (err) { showToast("OCR nicht verfügbar", "OCR-Bibliothek konnte nicht initialisiert werden - Zuordnung läuft ohne OCR.", true); return { done: 0, failed: 0, skipped: true }; }
+    var done = 0, failed = 0;
+    els.screenphStatus.textContent = "OCR: 0 von " + targets.length + " Screens …";
+    await mapWithWorkerPool(targets, pool, async function (img, worker) {
+      try {
+        var result = await worker.recognize(await downscaleDataUrlForOcr(img.dataUrl));
+        img.ocrText = ((result && result.data && result.data.text) || "").trim();
+        img.ocrError = null;
+        img.ocrRanAt = nowLabel();
+      } catch (err) { img.ocrError = (err && err.message) || "Unbekannter Fehler bei der Texterkennung."; failed++; }
+      done++;
+      els.screenphStatus.textContent = "OCR: " + done + " von " + targets.length + " Screens …";
+    });
+    addLog("Screens-Import: OCR vor Platzhalter-Zuordnung für " + targets.length + " Screen(s)" + (failed ? ", " + failed + " Fehler" : "") + ".");
+    return { done: done - failed, failed: failed, skipped: false };
+  }
+  els.screenphMatchBtn.addEventListener("click", async function () {
+    var ocr = null;
+    if (els.screenphOcrFirst.checked) {
+      els.screenphMatchBtn.disabled = true;
+      try { ocr = await screenPhOcrMissing(); } finally { els.screenphMatchBtn.disabled = false; }
+    }
     var res = screenPhMatchAll(true), st = SP();
     if (!res.pool) { els.screenphStatus.textContent = "Keine Screens vorhanden (bzw. keine zur gewählten Rolle/Sprache) – zuerst oben Dateien mit Screens einlesen."; renderScreenPh(); return; }
     var manual = st.rows.filter(function (r) { return r.manual; }).length;
-    els.screenphStatus.textContent = res.matched + " von " + st.rows.length + " Platzhalter(n) mit Screens belegt (aus " + res.pool + " Screens)" + (manual ? ", " + manual + " manuell bearbeitete unverändert" : "") + ". Bitte prüfen – Screens lassen sich entfernen (×) oder ergänzen.";
+    els.screenphStatus.textContent = res.matched + " von " + st.rows.length + " Platzhalter(n) mit Screens belegt (aus " + res.pool + " Screens)" + (manual ? ", " + manual + " manuell bearbeitete unverändert" : "") + (ocr && ocr.done ? ", vorher " + ocr.done + " Screen(s) per OCR gelesen" : "") + (ocr && ocr.failed ? " (" + ocr.failed + " OCR-Fehler)" : "") + ". Bitte prüfen – Screens lassen sich entfernen (×) oder ergänzen.";
     addLog("Screens-Import: " + res.matched + " von " + st.rows.length + " Platzhaltern mit Screens belegt.");
     renderScreenPh();
   });
@@ -32013,6 +32053,71 @@
     } finally {
       els.screenphAiSpinner.hidden = true;
       renderScreenPh();
+    }
+  });
+  function screenPhMissingRows() { return SP().rows.filter(function (r) { return !r.screenIds.length; }); }
+  function screenPhFilterLabel() {
+    return { rolle: els.screenphRolle.value || "alle", sprache: els.screenphSprache.value || "alle" };
+  }
+  function screenPhBestCandidate(r, pool, ix) {
+    var c = ix ? screenPhRank(r, pool, ix.idf, ix.raw, ix.stems, ix.unseen)[0] : null;
+    return c ? c.pct + " % – " + truncate((c.img.description || c.img.filename || "").replace(/\s+/g, " "), 60) + (c.img.sourceFile ? " (" + c.img.sourceFile + ")" : "") : "";
+  }
+  els.screenphXlsxBtn.addEventListener("click", async function () {
+    var st = SP();
+    if (!st.rows.length) return;
+    try {
+      var f = screenPhFilterLabel(), pool = screenPhPool(), ix = pool.length ? screenPhIndex(pool) : null;
+      var viaOf = function (r) { return r.manual ? "manuell" : (r.via || ""); };
+      var screenLabel = function (img) { return (img.sourceFile || img.filename || "") + " #" + (img.imageNumber || img.id); };
+      var main = st.rows.map(function (r) {
+        var imgs = r.screenIds.map(screenPhImgById).filter(Boolean);
+        return [r.nr, r.chapter, r.desc, r.status || "offen", imgs.length ? "zugeordnet (" + imgs.length + ")" : "offen",
+          imgs.map(screenLabel).join("; "), imgs.map(function (img) { return r.scores[img.id] != null ? r.scores[img.id] + " %" : "–"; }).join("; "), viaOf(r)];
+      });
+      var assign = [];
+      st.rows.forEach(function (r) {
+        r.screenIds.map(screenPhImgById).filter(Boolean).forEach(function (img, k) {
+          assign.push([r.nr, r.chapter, k + 1, img.sourceFile || img.filename || "", img.imageNumber != null ? img.imageNumber : "", img.description || "", r.scores[img.id] != null ? r.scores[img.id] : "", viaOf(r), img.rolle || "", img.sprache || "", img.chapter || ""]);
+        });
+      });
+      var missing = screenPhMissingRows().map(function (r) { return [r.nr, r.chapter, r.desc, f.rolle, f.sprache, screenPhBestCandidate(r, pool, ix) || "kein Kandidat", ""]; });
+      var blob = await buildXlsxBlob([
+        { title: "Platzhalter", headers: ["Nr.", "Kapitel", "Beschreibung", "Status (Quelle)", "Status (neu)", "Screens (Quelldatei #Nr.)", "Trefferquote", "Zuordnung"], rows: main },
+        { title: "Zuordnung", headers: ["Nr.", "Kapitel", "Pos.", "Quelldatei", "Screen-Nr.", "Bildtext", "Trefferquote %", "Zuordnung", "Rolle", "Sprache", "Kapitel (Screen)"], rows: assign },
+        { title: "Fehlende Screens", headers: ["Nr.", "Kapitel", "Beschreibung", "Rolle", "Sprache", "Bester Kandidat (zu schwach)", "Aufgenommen am"], rows: missing }
+      ]);
+      var fn = safeFilename((st.filename || "Platzhalter").replace(/\.[a-z0-9]+$/i, "")) + "_Zuordnung_" + dateStampForFilename() + ".xlsx";
+      if (await saveOrWarn(fn, blob)) {
+        els.screenphStatus.textContent = "„" + fn + "“ heruntergeladen – " + assign.length + " Zuordnung(en), " + missing.length + " fehlende Screen(s).";
+        addLog("Screens-Import: Platzhalter-Liste „" + fn + "“ exportiert (" + missing.length + " fehlende Screens).");
+      }
+    } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
+  els.screenphMissingMdBtn.addEventListener("click", async function () {
+    var st = SP(), missing = screenPhMissingRows();
+    if (!missing.length) return;
+    var f = screenPhFilterLabel(), pool = screenPhPool(), ix = pool.length ? screenPhIndex(pool) : null;
+    var lines = ["# Fehlende Screens – Aufnahme-Liste", "", "Quelle: " + (st.filename || "Platzhalter") + " · Stand " + nowLabel() + " · Rolle: " + f.rolle + " · Sprache: " + f.sprache, "",
+      missing.length + " von " + st.rows.length + " Platzhalter(n) ohne passenden Screen.", ""];
+    var byChapter = {}, order = [];
+    missing.forEach(function (r) {
+      var top = (screenPhChapterNum(r.chapter) || "").split(".")[0] || "–";
+      if (!byChapter[top]) { byChapter[top] = []; order.push(top); }
+      byChapter[top].push(r);
+    });
+    order.forEach(function (top) {
+      lines.push("## Kapitel " + top, "");
+      byChapter[top].forEach(function (r) {
+        var best = screenPhBestCandidate(r, pool, ix);
+        lines.push("- [ ] **" + (r.nr ? r.nr + " · " : "") + r.chapter + "** – " + r.desc + (best ? "  \n  _Bester vorhandener Kandidat (zu schwach): " + best + "_" : ""));
+      });
+      lines.push("");
+    });
+    var fn = safeFilename((st.filename || "Platzhalter").replace(/\.[a-z0-9]+$/i, "")) + "_fehlende_Screens_" + dateStampForFilename() + ".md";
+    if (await saveOrWarn(fn, new Blob([lines.join("\n")], { type: "text/markdown" }))) {
+      els.screenphStatus.textContent = "„" + fn + "“ heruntergeladen – " + missing.length + " fehlende Screen(s).";
+      addLog("Screens-Import: Aufnahme-Liste fehlender Screens „" + fn + "“ exportiert.");
     }
   });
   function screenPhCellXml(paras, widthTw, shade) {

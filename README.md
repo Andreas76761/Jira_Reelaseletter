@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.135.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.136.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,19 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Screens zu Platzhaltern: OCR vorab, Excel-Liste, fehlende Screens (v2.136.0)**:
+  **OCR vor dem Zuordnen** – Option „Vorher Bildtext per OCR erkennen“: Screens ohne erkannten
+  Bildtext (z. B. nur „Abbildung 3“ als Überschrift) werden vor dem Zuordnen per OCR gelesen
+  (derselbe Tesseract-Worker-Pool wie im Register „Bilder“, nur Text, keine Kapitel-KI); bereits
+  gelesene Screens werden nicht erneut verarbeitet. Ohne OCR-Bibliothek gibt es einen Hinweis und
+  die Zuordnung läuft trotzdem. **Liste als Excel** mit drei Blättern: „Platzhalter“ (Nr., Kapitel,
+  Beschreibung, Status aus der Quelle und neuer Status, Screens als „Quelldatei #Screen-Nr.“,
+  Trefferquote, Zuordnung Text/KI/manuell), „Zuordnung“ (je zugeordnetem Screen eine Zeile mit
+  Quelldatei, Screen-Nr., Bildtext, Trefferquote, Rolle, Sprache) und „Fehlende Screens“ (offene
+  Platzhalter mit Rollen-/Sprachfilter, bester zu schwacher Kandidat, leere Spalte „Aufgenommen am“).
+  **Fehlende Screens** werden unter der Tabelle genannt und lassen sich als Aufnahme-Liste
+  (Markdown, Checkboxen je Platzhalter, nach Hauptkapitel gruppiert) herunterladen.
 
 - **Screens-Import: schneller, Rolle/Sprache je Datei, Screens zu Platzhaltern (v2.135.0)**:
   **Performance** – gemessen mit 4 Word-Dateien / 240 Screens (44 MB) im Browser: Import von
