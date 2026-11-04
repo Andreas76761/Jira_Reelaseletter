@@ -543,6 +543,10 @@
   .vrev-row-active td { background: color-mix(in srgb, var(--accent) 7%, transparent); }
   .vrev-diff summary { cursor: pointer; margin: 4px 0; }
   .vrev-textbox { margin-top: 10px; }
+  .vrev-limits { margin-top: 10px; }
+  .vrev-limits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px 12px; margin: 8px 0; font-size: 13px; }
+  .vrev-limits-grid label { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .vrev-limits-grid input { width: 64px; }
   .agent-inputs { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
   .agent-input { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; min-width: 0; }
   .agent-input select { max-width: 100%; }
@@ -3678,6 +3682,10 @@
           <div class="controls" style="margin-top:0;"><button class="btn ghost btn-tiny" id="vrev-xlsx-btn" type="button" disabled>Ablage als Excel (alle Prüfergebnisse)</button></div>
           <div class="table-wrap" id="vrev-docs-wrap" hidden><table class="simple-table"><thead><tr><th>Dokument</th><th>Version</th><th>Status</th><th>Quelle</th><th>Qualität</th><th>Stufen</th><th>Änderungen</th><th>Dateien</th><th>Geprüft</th><th>Aktion</th></tr></thead><tbody id="vrev-docs-tbody"></tbody></table></div>
           <div class="empty-hint" id="vrev-docs-empty">Noch keine Dokumente im Review.</div>
+          <details class="vrev-limits"><summary>Prüf-Grenzwerte einstellen</summary>
+            <div class="vrev-limits-grid" id="vrev-limits"></div>
+            <div class="controls"><button class="btn ghost btn-tiny" id="vrev-limits-reset-btn" type="button">Standard wiederherstellen</button><span class="step-note" style="margin:0;">Gelten für alle Dokumente der Ablage; Änderungen bewerten das geöffnete Dokument sofort neu.</span></div>
+          </details>
           <div id="vrev-team" hidden>
             <p class="section-label" style="margin-top:12px;">Team-Ablage</p>
             <p class="step-note" style="margin-top:0;">Geteilte Review-Dokumente für alle mit Zugriff auf diese App – Text, Prüfergebnisse, Stufen, Verlauf und Status (ohne Bilddaten; Bilder werden beim Übernehmen über Bild-ID und Bildtext dem eigenen Bildarchiv zugeordnet). Der Status gilt für alle.</p>
@@ -6479,7 +6487,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.143.0";
+  var APP_VERSION = "2.144.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8083,7 +8091,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -20441,6 +20449,8 @@
     agentQuality: "Du bist der Quality Agent für das Benutzerhandbuch der Anwendung oneSCM. Prüfe die Inhalte (Abschnitte „## Quelle › Kapitel“) auf inhaltliche Lücken (fehlende Schritte, unklare Voraussetzungen), Konflikte (widersprüchliche Aussagen zwischen Kapiteln oder Quellen) und Dubletten (gleiche Aussage mehrfach). Antworte AUSSCHLIESSLICH mit einem JSON-Array [{\"type\": \"Lücke\"|\"Konflikt\"|\"Dublette\", \"chapter\": \"Quelle › Kapitel\", \"text\": \"kurze Beschreibung\"}], höchstens 30 Einträge, leeres Array wenn nichts auffällt.",
     agentMedia: "Du bist der Media Agent für das Benutzerhandbuch der Anwendung oneSCM. Formuliere für jedes Bild (ID, Kapitel, Platzhalter, Textumfeld, OCR-Text, bisheriger Bildtext) einen kurzen, sachlichen Untertitel (höchstens 12 Wörter, ohne „Abbildung“/„Screenshot“ am Anfang), der beschreibt, was der Screen zeigt. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt {\"ID\": \"Untertitel\", ...}.",
     agentKnowledge: "Du bist der Knowledge Agent für die Wissensbasis der Anwendung oneSCM. Verbessere jeden Wissensobjekt-Vorschlag (#Nummer, Titel, Text): prägnanter Titel, Zusammenfassung in 1–3 Sätzen für Anwender, Typ aus Funktion, Anleitung, Begriff, FAQ, Regel. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt {\"Nummer\": {\"title\": \"\", \"summary\": \"\", \"type\": \"\"}, ...}.",
+    vrevConsistency: "Du bist Lektor für das Benutzerhandbuch der Anwendung oneSCM. Unten stehen alle Kapitel eines Dokuments (je Kapitel mit „## “). Vergleiche die Kapitel UNTEREINANDER und finde Widersprüche (unterschiedliche Aussagen zum selben Sachverhalt, abweichende Bezeichnungen für dieselbe Funktion, widersprüchliche Statusangaben oder Abläufe). Antworte AUSSCHLIESSLICH mit einem JSON-Array [{\"kapitel\": \"Kapitel A / Kapitel B\", \"widerspruch\": \"kurze Beschreibung\", \"vorschlag\": \"wie vereinheitlichen\"}], höchstens 20 Einträge, leeres Array [], wenn die Kapitel widerspruchsfrei sind.",
+    vrevTranslateItems: "Du bist Fachübersetzer für das Benutzerhandbuch der Anwendung oneSCM. Übersetze die WERTE des folgenden JSON-Objekts (Bildtexte, Bildunterschriften, Tabellenzellen) sinngemäß und kurz in die Zielsprache. Schlüssel unverändert lassen; Jira-Nummern, Zahlen, Produkt-, Menü- und Feldnamen der Oberfläche unverändert; leere Werte leer lassen. Antworte AUSSCHLIESSLICH mit dem JSON-Objekt in gleicher Struktur.",
     vrevQuality: "Du bist Lektor für das Benutzerhandbuch der Anwendung oneSCM. Prüfe den folgenden Kapiteltext auf Grammatik, Rechtschreibung, Zeichensetzung, Stil, inhaltliche Fehler/Widersprüche und Lücken (fehlende Schritte, unklare Stellen). Antworte AUSSCHLIESSLICH mit einem JSON-Array von Objekten der Form {\"typ\": \"Grammatik\"|\"Rechtschreibung\"|\"Stil\"|\"Fehler\"|\"Lücke\", \"original\": \"exakter, wörtlich kopierter Textausschnitt aus dem Kapitel (bei Lücken leer)\", \"vorschlag\": \"korrigierter Ausschnitt bzw. was ergänzt werden sollte\", \"hinweis\": \"kurze Begründung\"}. Höchstens 15 Einträge, keine erfundenen Zitate, Fachbegriffe und Produktnamen nicht ändern; leeres Array [], wenn nichts zu beanstanden ist.",
     finalCompareVersions: "Du vergleichst zwei Fassungen (Stand A und Stand B) eines Benutzerhandbuchs der Anwendung oneSCM. Die Fassungen können in unterschiedlichen Sprachen oder für unterschiedliche Rollen/Märkte geschrieben sein - vergleiche den INHALT, nicht den Wortlaut. Gehe Kapitel für Kapitel vor (Kapitel über Titel bzw. Reihenfolge zuordnen) und nenne je Kapitel: Inhalte, die nur in A stehen; Inhalte, die nur in B stehen; inhaltliche Abweichungen oder Widersprüche. Kapitel ohne inhaltlichen Unterschied mit einer Zeile \"keine inhaltlichen Unterschiede\" erwähnen. Schließe mit einer kurzen Gesamteinschätzung. Erfinde nichts."
   };
@@ -20487,6 +20497,8 @@
     crossxCheck: "CROSS_X: KI-Cross-Check über Kapitel und Rollen",
     screenPhMatch: "Screens-Import: Screens zu Platzhaltern zuordnen (KI-Verfeinerung)",
     vrevQuality: "VARIANTE Review Stufe 4: Grammatik, Fehler und Lücken je Kapitel (KI)",
+    vrevConsistency: "VARIANTE Review Stufe 6: Widersprüche zwischen Kapiteln (KI)",
+    vrevTranslateItems: "VARIANTE Review Stufe 5: Bildtexte und Tabellenzellen übersetzen (KI)",
     agentClassify: "AGENT: Classification Agent (Domäne, Rolle, Markt, Sprache)",
     agentQuality: "AGENT: Quality Agent (Lücken, Konflikte, Dubletten)",
     agentMedia: "AGENT: Media Agent (Untertitelvorschläge)",
@@ -32417,14 +32429,34 @@
     placeholder: /^\s*(\[Bild(?::\s*([^\]]*))?\]|(Screenshot|Abbildung)\s*:\s*(.+))\s*$/i
   };
   var vrevBusy = false, vrevAbort = null, vrevTextChapter = 0, vrevFilesOpen = {}, VREV_AI_PARALLEL = 3;
+  // v2.144: einstellbare Grenzwerte der Pruefungen (OK bis …, Hinweis bis …, darueber Fehler)
+  var VREV_LIMITS = [
+    { key: "fontsOk", label: "D1 Schriftarten: OK bis", def: 2 }, { key: "fontsWarn", label: "D1 Schriftarten: Hinweis bis", def: 3 },
+    { key: "sizesOk", label: "D2 Schriftgrößen: OK bis", def: 2 }, { key: "sizesWarn", label: "D2 Schriftgrößen: Hinweis bis", def: 3 },
+    { key: "sizeMin", label: "D2 Fließtext mindestens (pt)", def: 9 }, { key: "sizeMax", label: "D2 Fließtext höchstens (pt)", def: 12 },
+    { key: "lineOk", label: "D3 Einheitlicher Zeilenabstand OK ab (%)", def: 90 }, { key: "lineWarn", label: "D3 … Hinweis ab (%)", def: 75 },
+    { key: "colorsOk", label: "D4 Textfarben: OK bis", def: 4 }, { key: "colorsWarn", label: "D4 Textfarben: Hinweis bis", def: 6 },
+    { key: "iconsMax", label: "D5 Verschiedene Icons höchstens", def: 5 }, { key: "tipsWarn", label: "D5 Unmarkierte Tipps: Hinweis bis", def: 3 },
+    { key: "q1Warn", label: "Q1 Formfehler: Hinweis bis", def: 3 }, { key: "q2Warn", label: "Q2 KI-Befunde: Hinweis bis", def: 5 },
+    { key: "shortWords", label: "Q3 Kurzes Kapitel unter (Wörter)", def: 25 }, { key: "sentWords", label: "Q4 Langer Satz ab (Wörter)", def: 30 },
+    { key: "sentWarnPct", label: "Q4 Lange Sätze: Hinweis ab (%)", def: 10 }, { key: "sentFailPct", label: "Q4 Lange Sätze: Fehler ab (%)", def: 25 },
+    { key: "consFail", label: "A1 Uneinheitliche Schreibweisen: Fehler ab", def: 4 }, { key: "aiConsWarn", label: "A1 KI-Widersprüche: Hinweis bis", def: 2 },
+    { key: "scoreOk", label: "A2 Qualität OK ab", def: 85 }, { key: "scoreWarn", label: "A2 Qualität Hinweis ab", def: 70 }
+  ];
+  function vrevLimit(key) {
+    var l = (VR().limits || {})[key], def = VREV_LIMITS.filter(function (x) { return x.key === key; })[0];
+    return typeof l === "number" && isFinite(l) ? l : def ? def.def : 0;
+  }
 
   function vrevNormalize(d) {
     d = d && typeof d === "object" ? d : {};
     var docs = Array.isArray(d.docs) ? d.docs.filter(function (x) { return x && typeof x.id === "number" && Array.isArray(x.chapters); }).map(function (x) {
       return Object.assign({ name: "Dokument", filename: "", source: "Upload", sourceRef: null, version: "1.0", status: "Entwurf", createdAt: "", updatedAt: "", original: [], ph: {}, design: null, wordDesign: null,
-        checks: {}, steps: {}, stage: 1, changes: [], history: [], ai: null, translationNotNeeded: false, legend: false, designKey: "", designOut: null, designOutLabel: "", files: [], snaps: {}, finalVersionId: null, teamDocId: null, lang: "DE", translations: [], baseDocId: null, scoreInitial: null, score: null, checkedAt: "" }, x);
+        checks: {}, steps: {}, stage: 1, changes: [], history: [], ai: null, translationNotNeeded: false, legend: false, designKey: "", designOut: null, designOutLabel: "", files: [], snaps: {}, finalVersionId: null, teamDocId: null, captions: {}, aiConsistency: null, lang: "DE", translations: [], baseDocId: null, scoreInitial: null, score: null, checkedAt: "" }, x);
     }) : [];
-    return { docs: docs, activeId: typeof d.activeId === "number" ? d.activeId : null };
+    var limits = {};
+    if (d.limits && typeof d.limits === "object") Object.keys(d.limits).forEach(function (k) { var v = Number(d.limits[k]); if (isFinite(v)) limits[k] = v; });
+    return { docs: docs, activeId: typeof d.activeId === "number" ? d.activeId : null, limits: limits };
   }
   function VR() { if (!app.vrev) app.vrev = vrevNormalize(null); return app.vrev; }
   function vrevDoc(id) { return VR().docs.filter(function (x) { return x.id === id; })[0] || null; }
@@ -32670,17 +32702,18 @@
     if (!d) ["D1", "D2", "D3", "D4", "D5"].forEach(function (id) { put(id, "open", "Keine Design-Daten (Dokument konnte nicht als Word analysiert werden)."); });
     else {
       var fonts = vrevShares(d.fonts, 2), sizes = vrevShares(d.sizes, 2), lines = vrevShares(d.lines, 0), colors = vrevShares(d.colors, 1).filter(function (x) { return x.key !== "Automatisch/Schwarz"; });
-      put("D1", vrevGrade(fonts.length, 2, 3), outPfx + fonts.length + " Schriftart(en): " + fonts.map(function (x) { return x.key + " " + x.pct + " %"; }).join(", "), fonts.length);
-      var main = sizes[0] ? parseFloat(sizes[0].key) : null, sizeS = vrevGrade(sizes.length, 2, 3);
-      if (main && (main < 9 || main > 12) && sizeS === "ok") sizeS = "warn";
-      put("D2", sizeS, outPfx + sizes.length + " Schriftgröße(n) im Fließtext: " + sizes.map(function (x) { return String(x.key).replace(".", ",") + " pt " + x.pct + " %"; }).join(", ") + (main && (main < 9 || main > 12) ? " – Fließtext außerhalb von 9–12 pt" : ""), sizes.length);
+      put("D1", vrevGrade(fonts.length, vrevLimit("fontsOk"), vrevLimit("fontsWarn")), outPfx + fonts.length + " Schriftart(en): " + fonts.map(function (x) { return x.key + " " + x.pct + " %"; }).join(", "), fonts.length);
+      var main = sizes[0] ? parseFloat(sizes[0].key) : null, sizeS = vrevGrade(sizes.length, vrevLimit("sizesOk"), vrevLimit("sizesWarn")), sMin = vrevLimit("sizeMin"), sMax = vrevLimit("sizeMax");
+      var outOfRange = main && (main < sMin || main > sMax);
+      if (outOfRange && sizeS === "ok") sizeS = "warn";
+      put("D2", sizeS, outPfx + sizes.length + " Schriftgröße(n) im Fließtext: " + sizes.map(function (x) { return String(x.key).replace(".", ",") + " pt " + x.pct + " %"; }).join(", ") + (outOfRange ? " – Fließtext außerhalb von " + sMin + "–" + sMax + " pt" : ""), sizes.length);
       var dom = lines[0];
-      put("D3", !dom ? "ok" : dom.pct >= 90 ? "ok" : dom.pct >= 75 ? "warn" : "fail", lines.length ? outPfx + "Zeilenabstand: " + lines.map(function (x) { return x.key + " " + x.pct + " %"; }).join(", ") : "Kein Fließtext.", lines.length);
-      put("D4", vrevGrade(colors.length, 4, 6), colors.length ? outPfx + colors.length + " Textfarbe(n) neben Schwarz: " + colors.map(function (x) { return "#" + x.key; }).join(", ") : "Nur Schwarz/Automatisch.", colors.length);
+      put("D3", !dom ? "ok" : dom.pct >= vrevLimit("lineOk") ? "ok" : dom.pct >= vrevLimit("lineWarn") ? "warn" : "fail", lines.length ? outPfx + "Zeilenabstand: " + lines.map(function (x) { return x.key + " " + x.pct + " %"; }).join(", ") : "Kein Fließtext.", lines.length);
+      put("D4", vrevGrade(colors.length, vrevLimit("colorsOk"), vrevLimit("colorsWarn")), colors.length ? outPfx + colors.length + " Textfarbe(n) neben Schwarz: " + colors.map(function (x) { return "#" + x.key; }).join(", ") : "Nur Schwarz/Automatisch.", colors.length);
       var tips = vrevTipLines(doc), icons = vrevIconSet(doc), src = doc.design || d;
-      var d5 = vrevGrade(tips.unmarked.length, 0, 3);
-      if (d5 === "ok" && icons.length > 5) d5 = "warn";
-      put("D5", d5, "Icons/Symbole: " + icons.length + " verschiedene" + (icons.length ? " (" + icons.slice(0, 8).join(" ") + ")" : "") + (icons.length > 5 ? " – uneinheitlich, höchstens 5 verwenden" : "") +
+      var d5 = vrevGrade(tips.unmarked.length, 0, vrevLimit("tipsWarn")), iconsMax = vrevLimit("iconsMax");
+      if (d5 === "ok" && icons.length > iconsMax) d5 = "warn";
+      put("D5", d5, "Icons/Symbole: " + icons.length + " verschiedene" + (icons.length ? " (" + icons.slice(0, 8).join(" ") + ")" : "") + (icons.length > iconsMax ? " – uneinheitlich, höchstens " + iconsMax + " verwenden" : "") +
         " · markierte Tipps/Hinweise: " + tips.marked + " · unmarkierte Tipps/Hinweise: " + tips.unmarked.length + (tips.unmarked.length ? " (" + tips.unmarked.slice(0, 3).map(function (x) { return truncate(x, 60); }).join(" | ") + ")" : "") +
         " · interne Bemerkungen: " + src.comments + " Kommentar(e), " + src.highlights + " farblich markierte Stelle(n)", tips.unmarked.length);
     }
@@ -32712,18 +32745,18 @@
     // Stufe 4 – Qualitaet
     var q1 = vrevQ1Findings(doc), aiOpen = function (typs) { return doc.ai ? doc.ai.findings.filter(function (f) { return !f.done && typs.indexOf(f.typ) !== -1; }) : []; };
     var aiErr = aiOpen(["Fehler"]), aiGram = aiOpen(["Grammatik", "Rechtschreibung", "Stil"]), aiGap = aiOpen(["Lücke"]);
-    put("Q1", vrevGrade(q1.length + aiErr.length, 0, 3), (q1.length ? q1.length + " Formfehler (" + q1.slice(0, 3).map(function (f) { return f.typ + ": „" + f.text + "“"; }).join("; ") + ")" : "Keine Formfehler") + (doc.ai ? " · KI: " + aiErr.length + " offene(r) Fehler" : "") + ".", q1.length + aiErr.length);
-    put("Q2", !doc.ai ? "open" : vrevGrade(aiGram.length, 0, 5), !doc.ai ? "Noch nicht geprüft – „KI-Prüfung“ in Stufe 4 starten." : aiGram.length + " offene KI-Befund(e) zu Grammatik/Rechtschreibung/Stil (Prüfung vom " + doc.ai.at + ").", aiGram.length);
+    put("Q1", vrevGrade(q1.length + aiErr.length, 0, vrevLimit("q1Warn")), (q1.length ? q1.length + " Formfehler (" + q1.slice(0, 3).map(function (f) { return f.typ + ": „" + f.text + "“"; }).join("; ") + ")" : "Keine Formfehler") + (doc.ai ? " · KI: " + aiErr.length + " offene(r) Fehler" : "") + ".", q1.length + aiErr.length);
+    put("Q2", !doc.ai ? "open" : vrevGrade(aiGram.length, 0, vrevLimit("q2Warn")), !doc.ai ? "Noch nicht geprüft – „KI-Prüfung“ in Stufe 4 starten." : aiGram.length + " offene KI-Befund(e) zu Grammatik/Rechtschreibung/Stil (Prüfung vom " + doc.ai.at + ").", aiGram.length);
     var empty = doc.chapters.filter(function (c) { return vrevWords(c.text.split("\n").filter(function (l) { return !VREV_RE.placeholder.test(l); }).join("\n")) === 0; });
-    var short = doc.chapters.filter(function (c) { var w = vrevWords(c.text); return w > 0 && w < 25; });
+    var short = doc.chapters.filter(function (c) { var w = vrevWords(c.text); return w > 0 && w < vrevLimit("shortWords"); });
     var marks = []; vrevLines(doc, function (line, c) { if (/\b(XXX|TBD)\b|\[\s*(\.\.\.|…)\s*\]|^\s*(\.\.\.|…)\s*$/.test(vrevPlain(line))) marks.push(c.title); });
     put("Q3", empty.length || marks.length ? "fail" : short.length || aiGap.length ? "warn" : "ok",
       (empty.length ? empty.length + " leere(s) Kapitel (" + empty.slice(0, 3).map(function (c) { return c.title; }).join(", ") + ")" : "Keine leeren Kapitel") +
-      (short.length ? " · " + short.length + " sehr kurze(s) Kapitel (< 25 Wörter)" : "") + (marks.length ? " · " + marks.length + " Lücken-Markierung(en) (XXX/TBD/…)" : "") + (doc.ai ? " · KI: " + aiGap.length + " offene Lücke(n)" : "") + ".", empty.length + short.length + marks.length + aiGap.length);
+      (short.length ? " · " + short.length + " sehr kurze(s) Kapitel (< " + vrevLimit("shortWords") + " Wörter)" : "") + (marks.length ? " · " + marks.length + " Lücken-Markierung(en) (XXX/TBD/…)" : "") + (doc.ai ? " · KI: " + aiGap.length + " offene Lücke(n)" : "") + ".", empty.length + short.length + marks.length + aiGap.length);
     var sentences = [], longS = 0;
-    doc.chapters.forEach(function (c) { vrevPlain(c.text).split(/[.!?]+(?:\s+|$)/).forEach(function (s) { var n = (s.match(/\S+/g) || []).length; if (n >= 3) { sentences.push(n); if (n > 30) longS++; } }); });
+    doc.chapters.forEach(function (c) { vrevPlain(c.text).split(/[.!?]+(?:\s+|$)/).forEach(function (s) { var n = (s.match(/\S+/g) || []).length; if (n >= 3) { sentences.push(n); if (n > vrevLimit("sentWords")) longS++; } }); });
     var share = sentences.length ? Math.round(100 * longS / sentences.length) : 0, avg = sentences.length ? Math.round(sentences.reduce(function (a, b) { return a + b; }, 0) / sentences.length) : 0;
-    put("Q4", share > 25 ? "fail" : share > 10 ? "warn" : "ok", sentences.length ? "Ø " + avg + " Wörter je Satz, " + longS + " Satz/Sätze mit mehr als 30 Wörtern (" + share + " %)." : "Kein Fließtext.", longS);
+    put("Q4", share >= vrevLimit("sentFailPct") ? "fail" : share >= vrevLimit("sentWarnPct") ? "warn" : "ok", sentences.length ? "Ø " + avg + " Wörter je Satz, " + longS + " Satz/Sätze mit mehr als " + vrevLimit("sentWords") + " Wörtern (" + share + " %)." : "Kein Fließtext.", longS);
     // Stufe 5 – Uebersetzung
     var base = doc.baseDocId ? vrevDoc(doc.baseDocId) : null;
     var trs = (doc.translations || []).map(vrevDoc).filter(Boolean);
@@ -32736,10 +32769,13 @@
     // Stufe 6 – Abschluss
     var variants = vrevSpellingVariants(doc), numbered = doc.chapters.filter(function (c) { return /^\s*\d+(\.\d+)*\.?\s/.test(c.title); }).length;
     var mixed = numbered > 0 && numbered < doc.chapters.filter(function (c) { return c.level > 0 && !/^Vorspann/.test(c.title); }).length;
-    put("A1", variants.length > 3 ? "fail" : variants.length || mixed ? "warn" : "ok", (variants.length ? variants.length + " uneinheitliche Schreibweise(n): " + variants.slice(0, 4).map(function (v) { return v.join(" / "); }).join("; ") : "Begriffe einheitlich geschrieben") + (mixed ? " · Kapitelnummerierung uneinheitlich (" + numbered + " nummeriert)" : "") + ".", variants.length + (mixed ? 1 : 0));
+    var aiCons = doc.aiConsistency ? doc.aiConsistency.findings.filter(function (f) { return !f.done; }) : [];
+    var a1 = variants.length >= vrevLimit("consFail") || aiCons.length > vrevLimit("aiConsWarn") ? "fail" : variants.length || mixed || aiCons.length ? "warn" : "ok";
+    put("A1", a1, (variants.length ? variants.length + " uneinheitliche Schreibweise(n): " + variants.slice(0, 4).map(function (v) { return v.join(" / "); }).join("; ") : "Begriffe einheitlich geschrieben") + (mixed ? " · Kapitelnummerierung uneinheitlich (" + numbered + " nummeriert)" : "") +
+      (doc.aiConsistency ? " · KI-Konsistenz: " + aiCons.length + " offene(r) Widerspruch/Widersprüche zwischen Kapiteln" : "") + ".", variants.length + (mixed ? 1 : 0) + aiCons.length);
     var scoreIds = VREV_CHECKS.map(function (c) { return c.id; }).filter(function (id) { return id !== "A2" && id !== "F1"; });
     var score = vrevScore(ch, scoreIds);
-    put("A2", score == null ? "open" : score >= 85 ? "ok" : score >= 70 ? "warn" : "fail", "Qualität " + (score == null ? "–" : score + " von 100") + (doc.scoreInitial != null ? " (beim ersten Prüflauf " + doc.scoreInitial + ")" : "") + ".", score);
+    put("A2", score == null ? "open" : score >= vrevLimit("scoreOk") ? "ok" : score >= vrevLimit("scoreWarn") ? "warn" : "fail", "Qualität " + (score == null ? "–" : score + " von 100") + (doc.scoreInitial != null ? " (beim ersten Prüflauf " + doc.scoreInitial + ")" : "") + ".", score);
     // Stufe 7 – Finalisierung
     var blockers = scoreIds.concat(["A2"]).filter(function (id) { return ch[id] && ch[id].s === "fail"; });
     var openStages = [1, 2, 3, 4, 5, 6].filter(function (n) { return !doc.steps[n]; });
@@ -32794,7 +32830,7 @@
     return doc.chapters.map(function (c, ci) {
       var screens = [];
       vrevPlaceholders(c.text).forEach(function (p) {
-        (doc.ph[ci + ":" + p.idx] || []).forEach(function (id) { var img = screenPhImgById(id); if (img) screens.push(Object.assign({}, img, { description: finalScreenCaption(img) })); });
+        (doc.ph[ci + ":" + p.idx] || []).forEach(function (id) { var img = screenPhImgById(id); if (img) screens.push(Object.assign({}, img, { description: (doc.captions && doc.captions[id]) || finalScreenCaption(img) })); });
       });
       var tables = (c.tables || []).map(function (t) { return { noCaption: true, rows: withInternal ? t.rows : t.rows.map(function (row) { return row.map(function (cell) { return finalStripJiraKeys(cell); }); }) }; });
       return { title: c.title, level: Math.max(1, c.level || 1), text: vrevExportText(doc, c, ci, withInternal), screens: screens, tables: tables };
@@ -32940,7 +32976,7 @@
         "<td>" + vrevStatusPill(x.status) + '<div><select data-vrev-status="' + x.id + '" aria-label="Status von ' + escapeHtml(x.name) + '">' +
         VREV_STATUSES.map(function (s) { return '<option value="' + s + '"' + (s === x.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select></div></td>" +
         "<td>" + escapeHtml(x.source) + (x.source === "Übersetzung" || x.lang !== "DE" ? " · " + escapeHtml(x.lang) : "") + "</td>" +
-        "<td>" + (x.score == null ? "–" : '<b class="vrev-score-' + (x.score >= 85 ? "ok" : x.score >= 70 ? "warn" : "fail") + '">' + x.score + "</b>") + '<div class="step-note">' + c.ok + "✓ " + c.warn + "! " + c.fail + "✕</div></td>" +
+        "<td>" + (x.score == null ? "–" : '<b class="vrev-score-' + (x.score >= vrevLimit("scoreOk") ? "ok" : x.score >= vrevLimit("scoreWarn") ? "warn" : "fail") + '">' + x.score + "</b>") + '<div class="step-note">' + c.ok + "✓ " + c.warn + "! " + c.fail + "✕</div></td>" +
         "<td>" + vrevStepsDone(x) + "/7</td><td>" + vrevChangeCount(x) + "</td>" +
         '<td><button class="btn ghost btn-tiny" type="button" data-vrev-act="files" data-id="' + x.id + '"' + ((x.files || []).length ? "" : " disabled") + ">" + (x.files || []).length + (vrevFilesOpen[x.id] ? " ▴" : " ▾") + "</button></td>" +
         "<td>" + escapeHtml(x.checkedAt || "–") + "</td>" +
@@ -32958,6 +32994,10 @@
     }).join("");
     if (typeof renderPaket === "function") renderPaket();
     renderVrevTeam();
+    if (els.vrevLimits && !els.vrevLimits.contains(document.activeElement)) els.vrevLimits.innerHTML = VREV_LIMITS.map(function (l) {
+      var v = vrevLimit(l.key);
+      return "<label>" + escapeHtml(l.label) + ' <input type="number" class="text-input" data-vrev-limit="' + l.key + '" value="' + v + '"' + (v !== l.def ? ' style="font-weight:600"' : "") + "></label>";
+    }).join("");
     els.vrevWork.hidden = !doc;
     if (!doc) return;
     els.vrevDocTitle.textContent = doc.name + " · v" + doc.version + " · " + doc.status;
@@ -33081,6 +33121,13 @@
         '<div class="vrev-tile"><span class="vrev-tile-label">Vorher → nachher</span><b class="vrev-tile-value">+' + addN + " / −" + remN + '</b><span class="vrev-tile-sub">Zeilen · Wörter ' + wb + " → " + wa + "</span></div>" +
         '<div class="vrev-tile"><span class="vrev-tile-label">Qualität</span><b class="vrev-tile-value">' + (doc.scoreInitial == null ? "–" : doc.scoreInitial) + " → " + (doc.score == null ? "–" : doc.score) + '</b><span class="vrev-tile-sub">erster Prüflauf → jetzt</span></div>' +
         '<div class="vrev-tile"><span class="vrev-tile-label">Konsistenz</span><b class="vrev-tile-value">' + (doc.checks.A1 ? vrevPill(doc.checks.A1.s) : "–") + '</b><span class="vrev-tile-sub">' + escapeHtml(doc.checks.A1 ? truncate(doc.checks.A1.d, 90) : "") + "</span></div></div>";
+      var cons = doc.aiConsistency;
+      h += '<div class="controls" style="flex-wrap:wrap;"><button class="btn ghost" type="button" data-vrev-act="ai-consistency"' + (vrevBusy ? " disabled" : "") + ">KI-Konsistenzprüfung: Widersprüche zwischen Kapiteln</button>" +
+        (cons ? '<span class="step-note" style="margin:0;">' + cons.findings.length + " Befund(e), " + cons.findings.filter(function (f) { return !f.done; }).length + " offen (" + escapeHtml(cons.at) + ")</span>" : "") + "</div>";
+      if (cons && cons.findings.length) h += '<table class="simple-table vrev-ai-table"><thead><tr><th>Kapitel</th><th>Widerspruch</th><th>Vorschlag</th><th>Aktion</th></tr></thead><tbody>' + cons.findings.map(function (f, i) {
+        return '<tr data-vrev-cons="' + i + '"' + (f.done ? ' class="vrev-done"' : "") + "><td>" + escapeHtml(f.kapitel) + "</td><td>" + escapeHtml(f.widerspruch) + "</td><td>" + escapeHtml(f.vorschlag || "") + "</td><td>" +
+          (f.done ? "erledigt" : '<button class="btn ghost btn-tiny" type="button" data-vrev-act="cons-done" data-i="' + i + '">Erledigt</button>') + "</td></tr>";
+      }).join("") + "</tbody></table>";
       var changed = diffs.filter(function (x) { return x.a || x.r; });
       h += changed.length ? changed.map(function (x) { return "<details class=\"vrev-diff\"><summary>" + escapeHtml(x.title) + " (+" + x.a + " / −" + x.r + ")</summary>" + diffLinesHtml(vrevPlain(x.o), vrevPlain(x.n)) + "</details>"; }).join("") : '<p class="step-note">Noch keine Textänderungen gegenüber dem Original.</p>';
     } else if (n === 7) {
@@ -33132,15 +33179,29 @@
     var W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main", pend = [], lastHeading = "", tables = [];
     var numFmt = await vrevNumberingFormats(zip);
     // Tabellen (oberste Ebene) als "[Tabelle]"-Platzhalter mit Zellinhalt sichern
+    function markerP(text) { var p = dom.createElementNS(W, "w:p"), r = dom.createElementNS(W, "w:r"), t = dom.createElementNS(W, "w:t"); t.textContent = text; r.appendChild(t); p.appendChild(r); return p; }
     Array.prototype.filter.call(body.childNodes, function (n) { return n.nodeType === 1 && n.tagName === "w:tbl"; }).forEach(function (tbl) {
       var rows = Array.prototype.filter.call(tbl.getElementsByTagName("w:tr"), function (tr) { return tr.parentNode === tbl; })
         .map(function (tr) { return Array.prototype.filter.call(tr.childNodes, function (n) { return n.nodeType === 1 && n.tagName === "w:tc"; }).map(docxCellText); })
         .filter(function (r) { return r.some(function (c) { return c; }); });
-      var p = dom.createElementNS(W, "w:p"), r = dom.createElementNS(W, "w:r"), t = dom.createElementNS(W, "w:t");
-      t.textContent = "[Tabelle: #vrevtbl" + tables.length + "#]";
-      r.appendChild(t); p.appendChild(r);
+      // v2.144: Bilder in Tabellenzellen hinter der Tabelle als belegte Platzhalter (Bildtext = Text der Zelle bzw. Zeile)
+      var imgPs = [];
+      Array.prototype.forEach.call(tbl.getElementsByTagName("a:blip"), function (blip) {
+        var rId = blip.getAttribute("r:embed") || blip.getAttribute("r:link"), target = rId && relsMap[rId], mediaPath = target && resolveZipRelPath("word/document.xml", target);
+        var mime = mediaPath && zip.file(mediaPath) ? imageMimeFromPath(mediaPath) : null;
+        if (!mime) return;
+        var tc = blip, tr = null;
+        while (tc && tc.tagName !== "w:tc") tc = tc.parentNode;
+        tr = tc ? tc.parentNode : null;
+        var cap = ((tc ? docxCellText(tc) : "") || (tr ? Array.prototype.filter.call(tr.childNodes, function (n) { return n.nodeType === 1 && n.tagName === "w:tc"; }).map(docxCellText).filter(Boolean).join(" – ") : "")).replace(/[\[\]]/g, "").trim();
+        imgPs.push(markerP("[Bild: #vrevimg" + pend.length + "#]"));
+        pend.push({ pr: zipMediaImage(zip, mediaPath, mime), cap: cap || "Bild aus Tabelle" });
+      });
+      var p = markerP("[Tabelle: #vrevtbl" + tables.length + "#]");
       tables.push(rows);
       body.replaceChild(p, tbl);
+      var after = p.nextSibling;
+      imgPs.forEach(function (ip) { body.insertBefore(ip, after); });
     });
     vrevMarkRichRuns(dom, body, numFmt, W);
     var nodes = Array.prototype.filter.call(body.childNodes, function (n) { return n.nodeType === 1 && n.tagName === "w:p"; });
@@ -33163,6 +33224,20 @@
       if (level > 0 && text) lastHeading = text;
     });
     var chapters = docxXmlToFinalChapters(new XMLSerializer().serializeToString(dom));
+    // Kopf-/Fusszeilen: Bilder (meist Logos) nur ins Bildarchiv, nicht in den Text
+    var hfPaths = Object.keys(zip.files).filter(function (f) { return /^word\/(header|footer)\d*\.xml$/.test(f); }).sort(), hfSeen = {}, hf = [];
+    for (var hi = 0; hi < hfPaths.length; hi++) {
+      var hp = hfPaths[hi], hdom = new DOMParser().parseFromString(await zip.file(hp).async("string"), "application/xml");
+      if (hdom.querySelector("parsererror")) continue;
+      var hrels = await loadZipRelationships(zip, "word/_rels/" + hp.split("/").pop() + ".rels");
+      Array.prototype.forEach.call(hdom.getElementsByTagName("a:blip"), function (blip) {
+        var rId = blip.getAttribute("r:embed"), target = rId && hrels[rId], mp = target && resolveZipRelPath(hp, target), mime = mp && zip.file(mp) ? imageMimeFromPath(mp) : null;
+        if (!mime || hfSeen[mp]) return;
+        hfSeen[mp] = true;
+        hf.push({ pr: zipMediaImage(zip, mp, mime), cap: (/header/.test(hp) ? "Kopfzeile" : "Fußzeile") + " (" + filename + ")" });
+      });
+    }
+    pend = pend.concat(hf.map(function (x) { x.headerFooter = true; return x; }));
     var imgs = await Promise.all(pend.map(function (x) { return x.pr; }));
     var images = pend.map(function (x, k) {
       var im = imgs[k], img = { id: nextImageId++, filename: filename + " - Bild " + (k + 1), dataUrl: im.dataUrl, mimeType: (/^data:([^;]+);/.exec(im.dataUrl) || [])[1] || "unbekannt",
@@ -33172,7 +33247,7 @@
       if (im.blob) setScreenPreviewBlob(img, im.blob);
       return img;
     });
-    return { chapters: chapters, images: images, caps: pend.map(function (x) { return x.cap; }), tables: tables };
+    return { chapters: chapters, images: images, caps: pend.map(function (x) { return x.cap; }), tables: tables, headerFooter: pend.filter(function (x) { return x.headerFooter; }).length };
   }
   async function vrevNumberingFormats(zip) {
     var f = zip.file("word/numbering.xml"), out = {};
@@ -33244,7 +33319,7 @@
     return { chapters: out, ph: ph };
   }
   async function vrevImportFiles(files) {
-    var ok = 0, errs = [], imgTotal = 0;
+    var ok = 0, errs = [], imgTotal = 0, hfTotal = 0;
     for (var i = 0; i < files.length; i++) {
       var f = files[i];
       els.vrevImportNote.textContent = "„" + f.name + "“ wird eingelesen …";
@@ -33261,13 +33336,13 @@
         try { wordDesign = await finalExtractWordDesign(zip); } catch (e) { wordDesign = null; }
         var doc = vrevAddDoc({ name: f.name.replace(/\.docx$/i, ""), filename: f.name, source: "Upload", design: design, wordDesign: wordDesign,
           chapters: resolved.chapters, ph: resolved.ph });
-        if (withImgs.images.length) vrevHistory(doc, withImgs.images.length + " eingebettete(s) Bild(er) ins Bildarchiv übernommen");
-        imgTotal += withImgs.images.length;
+        if (withImgs.images.length) vrevHistory(doc, withImgs.images.length + " eingebettete(s) Bild(er) ins Bildarchiv übernommen" + (withImgs.headerFooter ? ", davon " + withImgs.headerFooter + " aus Kopf-/Fußzeile" : ""));
+        imgTotal += withImgs.images.length; hfTotal += withImgs.headerFooter || 0;
         vrevRunChecks(doc);
         ok++;
       } catch (err) { errs.push(f.name + ": " + ((err && err.message) || "unbekannter Fehler")); }
     }
-    els.vrevImportNote.textContent = ok + " Entwurf/Entwürfe übernommen und geprüft." + (imgTotal ? " " + imgTotal + " eingebettete(s) Bild(er) ins Bildarchiv übernommen und an ihrer Stelle als Platzhalter belegt." : "") + (errs.length ? " Fehler: " + errs.join(" · ") : "");
+    els.vrevImportNote.textContent = ok + " Entwurf/Entwürfe übernommen und geprüft." + (imgTotal ? " " + imgTotal + " eingebettete(s) Bild(er) ins Bildarchiv übernommen" + (imgTotal - hfTotal ? " und " + (imgTotal - hfTotal) + " an ihrer Stelle als Platzhalter belegt" : "") + (hfTotal ? "; " + hfTotal + " aus Kopf-/Fußzeile nur im Bildarchiv (nicht im Text)" : "") + "." : "") + (errs.length ? " Fehler: " + errs.join(" · ") : "");
     if (imgTotal) { renderWhenVisible("bilder", "gallery", renderGallery); if (typeof renderEditorScreens === "function") renderEditorScreens(); }
     if (ok) addLog("VARIANTE Review: " + ok + " Entwurf/Entwürfe (.docx) übernommen.");
     renderVrev();
@@ -33334,6 +33409,24 @@
       addLog("VARIANTE Review: KI-Qualitätsprüfung „" + doc.name + "“ – " + findings.length + " Befund(e).");
     } finally { vrevBusy = false; vrevAbort = null; renderVrev(); }
   }
+  async function vrevAiConsistency(doc) {
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
+    vrevBusy = true; vrevAbort = new AbortController(); renderVrev();
+    els.vrevStatus.textContent = "KI-Konsistenzprüfung läuft …";
+    try {
+      var all = doc.chapters.filter(function (c) { return vrevWords(c.text); }).map(function (c) { return "## " + c.title + "\n" + vrevPublic(c.text); }).join("\n\n");
+      var res = await sampleApi(ragPromptFor("vrevConsistency") + "\n\nDOKUMENT:\n" + truncate(all, 60000), { modelTier: "default", cache: false, signal: vrevAbort.signal });
+      var t = String((res && res.text) || ""), a = t.indexOf("["), z = t.lastIndexOf("]"), arr = null;
+      try { arr = a >= 0 && z > a ? JSON.parse(t.slice(a, z + 1)) : null; } catch (e) { arr = null; }
+      if (!Array.isArray(arr)) { els.vrevStatus.textContent = "KI-Konsistenzprüfung: keine auswertbare Antwort."; return; }
+      doc.aiConsistency = { at: nowLabel(), findings: arr.slice(0, 20).filter(function (f) { return f && f.widerspruch; }).map(function (f) { return { kapitel: String(f.kapitel || ""), widerspruch: String(f.widerspruch), vorschlag: String(f.vorschlag || ""), done: false }; }) };
+      vrevRunChecks(doc);
+      els.vrevStatus.textContent = "KI-Konsistenzprüfung: " + doc.aiConsistency.findings.length + " Widerspruch/Widersprüche zwischen Kapiteln.";
+      addLog("VARIANTE Review: KI-Konsistenzprüfung „" + doc.name + "“ – " + doc.aiConsistency.findings.length + " Befund(e).");
+    } catch (err) {
+      els.vrevStatus.textContent = vrevAbort.signal.aborted ? "KI-Konsistenzprüfung gestoppt." : "KI-Konsistenzprüfung fehlgeschlagen: " + ((err && err.message) || "Unbekannter Fehler.");
+    } finally { vrevBusy = false; vrevAbort = null; renderVrev(); }
+  }
   function vrevAdoptFinding(doc, f) {
     if (f.done || !f.original || !f.vorschlag) return false;
     var c = doc.chapters.filter(function (x) { return x.title === f.chapter; })[0];
@@ -33342,16 +33435,51 @@
     f.done = "übernommen";
     return true;
   }
+  // v2.144: Platzhalter vor der KI schuetzen (nur "[Bild]"-Zeilen, die der Prompt unveraendert laesst) und danach mit
+  // uebersetztem Bildtext wiederherstellen; Bildtexte, Bildunterschriften und Tabellenzellen in einem JSON-Aufruf uebersetzen.
+  function vrevProtectPlaceholders(text) {
+    var phs = [];
+    var out = String(text || "").split("\n").map(function (line) {
+      if (line.trim() === "[Tabelle]") { phs.push({ table: true }); return "[Bild]"; } // auch Tabellen-Platzhalter schuetzen (KI koennte "[Table]" schreiben)
+      var m = VREV_RE.placeholder.exec(line);
+      if (!m) return line;
+      var bild = /^\s*\[Bild/i.test(m[1]);
+      phs.push({ bild: bild, prefix: bild ? "" : (m[3] || "Screenshot"), desc: ((bild ? m[2] : m[4]) || "").trim() });
+      return "[Bild]";
+    }).join("\n");
+    return { text: out, phs: phs };
+  }
+  function vrevRestorePlaceholders(text, phs, tr) {
+    var k = 0;
+    function line(p) { if (p.table) return "[Tabelle]"; var d = p.desc ? (tr[p.desc] || p.desc) : ""; return p.bild ? (d ? "[Bild: " + d + "]" : "[Bild]") : p.prefix + ": " + d; }
+    var out = String(text || "").split("\n").map(function (l) { return l.trim() === "[Bild]" && k < phs.length ? line(phs[k++]) : l; });
+    while (k < phs.length) out.push(line(phs[k++])); // von der KI ausgelassene Platzhalter am Kapitelende ergaenzen
+    return out.join("\n");
+  }
+  async function vrevTranslateItems(items, lang, signal) {
+    var keys = Object.keys(items), out = {};
+    if (!keys.length || !sampleApi) return out;
+    for (var i = 0; i < keys.length; i += 120) {
+      var part = {};
+      keys.slice(i, i + 120).forEach(function (k) { part[k] = items[k]; });
+      try {
+        var res = await sampleApi(ragPromptFor("vrevTranslateItems") + "\n\nZIELSPRACHE: " + variantLangName(lang) + " (" + lang + ")\n\nJSON:\n" + JSON.stringify(part), { modelTier: "default", cache: false, signal: signal });
+        var obj = rlParseJsonObject(res && res.text) || {};
+        Object.keys(part).forEach(function (k) { if (typeof obj[k] === "string" && obj[k].trim()) out[k] = obj[k].trim(); });
+      } catch (err) { if (signal && signal.aborted) throw err; }
+    }
+    return out;
+  }
   async function vrevTranslate(doc, lang) {
     if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
     vrevBusy = true; vrevAbort = new AbortController(); renderVrev();
-    var tr = 0, kept = 0, fromTm = 0, done = 0;
+    var tr = 0, kept = 0, fromTm = 0, done = 0, prot = doc.chapters.map(function (c) { return vrevProtectPlaceholders(c.text); });
     function withTables(o, c) { if (c.tables) o.tables = JSON.parse(JSON.stringify(c.tables)); return o; }
     try {
       // v2.142: 3 Kapitel gleichzeitig; Tabellen bleiben erhalten (fehlten vorher in der Kopie)
-      var out = await mapWithConcurrency(doc.chapters, VREV_AI_PARALLEL, async function (c) {
-        var text = c.text;
-        if (vrevAbort.signal.aborted || !vrevWords(text)) return withTables({ title: c.title, level: c.level, text: text }, c);
+      var out = await mapWithConcurrency(doc.chapters, VREV_AI_PARALLEL, async function (c, ci) {
+        var text = prot[ci].text;
+        if (vrevAbort.signal.aborted || !vrevWords(text)) return withTables({ title: c.title, level: c.level, text: c.text, keep: true }, c);
         var gl = variantGlossaryFor(lang, c.title + "\n" + text), key = variantTmKey(lang, c.title, text, gl), hit = variantTmGet(lang, key);
         if (hit) { fromTm++; return withTables({ title: hit.title || c.title, level: c.level, text: hit.text }, c); }
         try {
@@ -33366,21 +33494,34 @@
             return withTables({ title: t.title || c.title, level: c.level, text: back }, c);
           }
           kept++;
-          return withTables({ title: c.title, level: c.level, text: text }, c);
+          return withTables({ title: c.title, level: c.level, text: c.text, keep: true }, c);
         } catch (err) {
           if (!(vrevAbort.signal.aborted || (err && err.code === "cancelled"))) kept++;
-          return withTables({ title: c.title, level: c.level, text: text }, c);
+          return withTables({ title: c.title, level: c.level, text: c.text, keep: true }, c);
         } finally { done++; els.vrevStatus.textContent = "Übersetzung (" + variantLangName(lang) + "): " + done + " von " + doc.chapters.length + " Kapitel(n) …"; }
       });
+      // Bildtexte der Platzhalter, Bildunterschriften (Word) und Tabellenzellen uebersetzen
+      var items = {}, capIds = {};
+      prot.forEach(function (p) { p.phs.forEach(function (x) { if (x.desc) items["p:" + x.desc] = x.desc; }); });
+      Object.keys(doc.ph || {}).forEach(function (k) { (doc.ph[k] || []).forEach(function (id) { var img = screenPhImgById(id); if (img) { capIds[id] = true; items["c:" + id] = finalScreenCaption(img); } }); });
+      out.forEach(function (c, ci) { (c.tables || []).forEach(function (tb, ti) { tb.rows.forEach(function (row, ri) { row.forEach(function (cell, xi) { if (cell && /[A-Za-zÄÖÜäöü]{2,}/.test(cell)) items["t:" + ci + ":" + ti + ":" + ri + ":" + xi] = cell; }); }); }); });
+      if (!vrevAbort.signal.aborted && Object.keys(items).length) els.vrevStatus.textContent = "Übersetzung: Bildtexte und Tabellen …";
+      var trItems = vrevAbort.signal.aborted ? {} : await vrevTranslateItems(items, lang, vrevAbort.signal), descMap = {}, captions = {}, cells = 0;
+      Object.keys(trItems).forEach(function (k) {
+        if (k.indexOf("p:") === 0) descMap[k.slice(2)] = trItems[k];
+        else if (k.indexOf("c:") === 0) captions[k.slice(2)] = trItems[k];
+        else { var q = k.split(":"), tb = out[+q[1]].tables[+q[2]]; tb.rows[+q[3]][+q[4]] = trItems[k]; cells++; }
+      });
+      out.forEach(function (c, ci) { if (!c.keep) c.text = vrevRestorePlaceholders(c.text, prot[ci].phs, descMap); delete c.keep; });
       if (vrevAbort.signal.aborted) { els.vrevStatus.textContent = "Übersetzung gestoppt – keine Kopie erzeugt."; return; }
       var nd = vrevAddDoc({ name: doc.name + " (" + lang + ")", source: "Übersetzung", sourceRef: doc.id, baseDocId: doc.id, lang: lang, version: doc.version, chapters: out,
-        ph: JSON.parse(JSON.stringify(doc.ph)), design: doc.design, wordDesign: doc.wordDesign });
+        ph: JSON.parse(JSON.stringify(doc.ph)), design: doc.design, wordDesign: doc.wordDesign, captions: captions });
       doc.translations.push(nd.id);
       vrevHistory(doc, "Übersetzung " + lang + " als Kopie erzeugt");
       vrevRunChecks(nd);
       VR().activeId = doc.id;
       vrevRunChecks(doc);
-      els.vrevStatus.textContent = "Kopie „" + nd.name + "“ erzeugt: " + tr + " Kapitel übersetzt" + (fromTm ? ", " + fromTm + " aus dem Übersetzungsspeicher" : "") + (kept ? ", " + kept + " unverändert" : "") + ".";
+      els.vrevStatus.textContent = "Kopie „" + nd.name + "“ erzeugt: " + tr + " Kapitel übersetzt" + (Object.keys(descMap).length + Object.keys(captions).length + cells ? ", " + (Object.keys(descMap).length + Object.keys(captions).length) + " Bildtext(e) und " + cells + " Tabellenzelle(n)" : "") + (fromTm ? ", " + fromTm + " aus dem Übersetzungsspeicher" : "") + (kept ? ", " + kept + " unverändert" : "") + ".";
       addLog("VARIANTE Review: Übersetzung „" + nd.name + "“ erzeugt.");
     } finally { vrevBusy = false; vrevAbort = null; renderVrev(); }
   }
@@ -33573,6 +33714,23 @@
     }).join("");
     teamResolvePeople(els.vrevTeamTbody);
   }
+  els.vrevLimits.addEventListener("change", function (e) {
+    var t = e.target.closest("[data-vrev-limit]");
+    if (!t) return;
+    var v = Number(t.value), st = VR();
+    st.limits = st.limits || {};
+    var def = VREV_LIMITS.filter(function (x) { return x.key === t.getAttribute("data-vrev-limit"); })[0];
+    if (!isFinite(v) || t.value === "" || (def && v === def.def)) delete st.limits[t.getAttribute("data-vrev-limit")]; else st.limits[t.getAttribute("data-vrev-limit")] = v;
+    st.docs.forEach(function (d) { if (d.checkedAt) vrevRunChecks(d); });
+    els.vrevStatus.textContent = "Grenzwert geändert – Prüfungen neu bewertet.";
+    t.blur(); renderVrev();
+  });
+  els.vrevLimitsResetBtn.addEventListener("click", function () {
+    VR().limits = {};
+    VR().docs.forEach(function (d) { if (d.checkedAt) vrevRunChecks(d); });
+    els.vrevStatus.textContent = "Standard-Grenzwerte wiederhergestellt.";
+    renderVrev();
+  });
   els.vrevUploadBtn.addEventListener("click", function () { els.vrevFileInput.click(); });
   els.vrevFileInput.addEventListener("change", function () {
     var files = Array.prototype.slice.call(els.vrevFileInput.files || []);
@@ -33737,6 +33895,8 @@
       renderVrev(); return;
     }
     if (act === "ai-quality") { vrevAiQuality(doc); return; }
+    if (act === "ai-consistency") { vrevAiConsistency(doc); return; }
+    if (act === "cons-done") { var cf = doc.aiConsistency && doc.aiConsistency.findings[parseInt(b.getAttribute("data-i"), 10)]; if (cf) { cf.done = true; vrevLog(doc, 6, "KI-Widerspruch erledigt", 1); vrevRunChecks(doc); renderVrev(); } return; }
     if (act === "ai-adopt" || act === "ai-dismiss") {
       var f = doc.ai && doc.ai.findings[parseInt(b.getAttribute("data-i"), 10)];
       if (!f) return;
@@ -34157,11 +34317,11 @@
     var out = [], tr = 0, tm = 0, kept = 0;
     for (var i = 0; i < rev.chapters.length; i++) {
       if (signal && signal.aborted) throw Object.assign(new Error("gestoppt"), { code: "cancelled" });
-      var c = rev.chapters[i], text = c.text;
-      if (!vrevWords(text)) { out.push({ title: c.title, level: c.level, text: text, tables: c.tables, via: "–" }); continue; }
+      var c = rev.chapters[i], pr = vrevProtectPlaceholders(c.text), text = pr.text; // v2.144: Platzhalter schuetzen
+      if (!vrevWords(text)) { out.push({ title: c.title, level: c.level, text: c.text, tables: c.tables, via: "–" }); continue; }
       var gl = variantGlossaryFor(lang, c.title + "\n" + text), key = variantTmKey(lang, c.title, text, gl), hit = variantTmGet(lang, key);
-      if (hit) { out.push({ title: hit.title || c.title, level: c.level, text: hit.text, tables: c.tables, via: "Speicher" }); tm++; continue; }
-      if (!sampleApi) { out.push({ title: c.title, level: c.level, text: text, tables: c.tables, via: "unverändert (keine KI)" }); kept++; continue; }
+      if (hit) { out.push({ title: hit.title || c.title, level: c.level, text: vrevRestorePlaceholders(hit.text, pr.phs, {}), tables: c.tables, via: "Speicher" }); tm++; continue; }
+      if (!sampleApi) { out.push({ title: c.title, level: c.level, text: c.text, tables: c.tables, via: "unverändert (keine KI)" }); kept++; continue; }
       els.agentStatus.textContent = "Translation Agent: Kapitel " + (i + 1) + " von " + rev.chapters.length + " …";
       var res = await sampleApi(ragPromptFor("variantTranslate") + "\n\nZIELSPRACHE: " + variantLangName(lang) + " (" + lang + ")" +
         (gl.length ? "\n\nGLOSSAR (verbindlich – diese Übersetzungen verwenden):\n" + gl.map(function (g) { return "- " + g.src + " → " + g.target; }).join("\n") : "") +
@@ -34170,8 +34330,8 @@
       if (t && t.text) {
         var back = t.text.replace(/\[\[INTERN\]\]/g, "\u0001").replace(/\[\[\/INTERN\]\]/g, "\u0002");
         variantTmPut(lang, key, { title: t.title || c.title, text: back, at: nowLabel(), source: "KI" });
-        out.push({ title: t.title || c.title, level: c.level, text: back, tables: c.tables, via: "KI" }); tr++;
-      } else { out.push({ title: c.title, level: c.level, text: text, tables: c.tables, via: "unverändert" }); kept++; }
+        out.push({ title: t.title || c.title, level: c.level, text: vrevRestorePlaceholders(back, pr.phs, {}), tables: c.tables, via: "KI" }); tr++;
+      } else { out.push({ title: c.title, level: c.level, text: c.text, tables: c.tables, via: "unverändert" }); kept++; }
     }
     a.translation = { at: nowLabel(), sourceKey: rev.key, sourceLabel: rev.label, sourceName: rev.name, lang: lang, chapters: out, ph: JSON.parse(JSON.stringify(rev.ph || {})), adopted: "" };
     return { s: kept ? "warn" : "ok", summary: "Übersetzungsvorschlag " + variantLangName(lang) + " für „" + rev.name + "“: " + tr + " Kapitel per KI, " + tm + " aus dem Übersetzungsspeicher" + (kept ? ", " + kept + " unverändert" + (!sampleApi ? " (KI in dieser Ansicht nicht verfügbar)" : "") : "") };

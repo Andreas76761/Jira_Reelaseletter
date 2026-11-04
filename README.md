@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.143.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.144.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,19 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Dokument-Review: Bilder in Tabellen, Grenzwerte, KI-Konsistenz, vollständigere Übersetzung (v2.144.0)**:
+  **Bilder in Tabellen** eines Entwurfs kommen ins Bildarchiv und als belegte Platzhalter direkt hinter die Tabelle
+  (Bildtext = Text der Zelle bzw. Zeile); Bilder aus **Kopf-/Fußzeilen** (meist Logos) kommen nur ins Bildarchiv.
+  **Prüf-Grenzwerte einstellbar** (aufklappbar unter der Ablage, 22 Werte: Schriftarten, Schriftgrößen inkl.
+  Fließtext-Bereich, Zeilenabstand, Farben, Icons, unmarkierte Tipps, Formfehler, KI-Befunde, kurze Kapitel, Satzlänge,
+  Schreibweisen, KI-Widersprüche, Qualität OK/Hinweis) – gelten für alle Dokumente der Ablage, bewerten sofort neu,
+  „Standard wiederherstellen“. **KI-Konsistenzprüfung** in Stufe 6: Widersprüche zwischen Kapiteln als Tabelle mit
+  Vorschlag, einzeln als erledigt markierbar; offene Widersprüche fließen in A1 ein (neuer Prompt). **Übersetzung**:
+  Bild- und Tabellen-Platzhalter werden vor der KI geschützt (vorher konnte „[Bild: …]“/„[Tabelle]“ mitübersetzt und
+  damit Bilder bzw. Tabellen verloren gehen) und danach wiederhergestellt – auch wenn die KI eine Platzhalterzeile
+  weglässt; Bildtexte der Platzhalter, Bildunterschriften im Word und Tabellenzellen werden in einem eigenen
+  KI-Aufruf übersetzt (neuer Prompt). Der Translation Agent (AGENT) schützt die Platzhalter ebenfalls.
 
 - **Dokument-Review im Team, kleinere Sitzungsdatei (v2.143.0)**: **Team-Ablage** (VARIANTE › Dokument-Review, sichtbar
   mit geteilter Datenhaltung): je Dokument „Im Team teilen“ bzw. „Team aktualisieren“ – geteilt werden Text (inkl.
