@@ -505,6 +505,7 @@
   .final-review-result > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
   .final-review-result-body { padding: 0 12px 12px; white-space: pre-wrap; font-size: 13px; max-height: 420px; overflow: auto; }
   .variante-step { padding: 12px 14px; margin-bottom: 14px; }
+  .variante-stale { display: inline-block; margin-top: 3px; font-size: 11px; font-weight: 700; color: #b45309; background: color-mix(in srgb, #f59e0b 14%, transparent); border-radius: 6px; padding: 1px 6px; }
   .variante-actions { flex-wrap: wrap; min-width: 220px; max-width: 300px; }
   #variante-table-wrap td, #variante-table-wrap th { white-space: normal; }
   #variante-table-wrap td:first-child { min-width: 180px; }
@@ -3406,7 +3407,8 @@
             <button class="btn ghost btn-tiny" id="variante-automap-btn" type="button" title="Kapitel ohne Zuordnung über Gliederung bzw. Domänen-Namen im Titel zuordnen">Kapitel automatisch zuordnen</button>
             <span class="step-note" id="variante-automap-note" style="margin:0;"></span>
           </div>
-          <div class="table-wrap" style="margin-top:8px;"><table class="simple-table"><thead><tr><th>Kapitel (Basisdokument)</th><th>Domäne / Unterdomäne</th></tr></thead><tbody id="variante-chapters-tbody"></tbody></table></div>
+          <p class="step-note">Feiner als Kapitel: Absätze im Text mit <code class="mono">[Rolle: Retail, MO]</code> bzw. <code class="mono">[Nicht Rolle: IT]</code> beginnen lassen – dann erscheinen sie nur in (bzw. nicht in) diesen Rollen-Varianten. Steht die Markierung allein in einer Zeile, gilt sie für alle folgenden Absätze bis <code class="mono">[/Rolle]</code>. Screens ([Bild]) in ausgeblendeten Absätzen entfallen mit; die Markierungen selbst erscheinen in keiner Variante.</p>
+          <div class="table-wrap" style="margin-top:8px;"><table class="simple-table"><thead><tr><th>Kapitel (Basisdokument)</th><th>Domäne / Unterdomäne</th><th>Rollen-Bedingungen</th></tr></thead><tbody id="variante-chapters-tbody"></tbody></table></div>
         </section>
 
         <section class="panel variante-step">
@@ -3416,7 +3418,11 @@
             <label class="variante-inline-check"><input type="checkbox" id="variante-matrix-show-chapters" checked> Kapitel anzeigen</label>
             <input class="text-input" id="variante-role-new-input" type="text" placeholder="Weitere Rolle" aria-label="Weitere Rolle" style="max-width:180px;">
             <button class="btn ghost btn-tiny" id="variante-role-add-btn" type="button">Rolle hinzufügen</button>
+            <button class="btn ghost btn-tiny" id="variante-matrix-xlsx-btn" type="button" title="Domänen, Unterdomänen und Kapitel mit x je aktiver Rolle">Matrix als Excel</button>
+            <button class="btn ghost btn-tiny" id="variante-matrix-import-btn" type="button" title="Bearbeitete Matrix-Excel wieder einlesen">Matrix aus Excel laden</button>
+            <input type="file" id="variante-matrix-import-input" accept=".xlsx" hidden>
           </div>
+          <p class="step-note" id="variante-matrix-note"></p>
           <div class="table-wrap variante-matrix-wrap"><table class="simple-table variante-matrix" id="variante-matrix"><thead id="variante-matrix-thead"></thead><tbody id="variante-matrix-tbody"></tbody><tfoot id="variante-matrix-tfoot"></tfoot></table></div>
         </section>
 
@@ -3440,8 +3446,10 @@
           </div>
           <div class="table-wrap" id="variante-table-wrap" style="margin-top:8px;"><table class="simple-table"><thead><tr><th>Variante</th><th>Rolle</th><th>Sprache</th><th>Kapitel</th><th>Verweise</th><th>Stand in FINAL</th><th>Aktion</th></tr></thead><tbody id="variante-tbody"></tbody></table></div>
           <div class="empty-hint" id="variante-empty">Noch keine Varianten &ndash; Rolle und Sprache wählen und „Variante hinzufügen“.</div>
-          <div class="controls" style="margin-top:8px;">
+          <div class="controls" style="margin-top:8px; flex-wrap:wrap;">
             <button class="btn primary" id="variante-generate-all-btn" type="button" disabled><span class="btn-spinner" id="variante-spinner" hidden></span>Alle Varianten erzeugen</button>
+            <button class="btn ghost" id="variante-update-stale-btn" type="button" hidden>Veraltete Varianten aktualisieren</button>
+            <button class="btn ghost" id="variante-rebase-btn" type="button" hidden>Varianten auf dieses Basisdokument übertragen</button>
             <button class="btn ghost" id="variante-stop-btn" type="button" hidden>Stopp</button>
           </div>
           <p class="step-note" id="variante-status"></p>
@@ -6129,7 +6137,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.125.0";
+  var APP_VERSION = "2.126.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7733,7 +7741,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -29992,9 +30000,10 @@
     var st = VS(), L = variantL(variant.lang), out = [], pendingStart = [];
     plan.items.forEach(function (x) {
       if (x.include) {
-        var text = x.chapter.text || "";
+        var filtered = variantFilterRoleText(x.chapter.text || "", x.chapter.screenIds, variant.role);
+        var text = filtered.text;
         if (pendingStart.length) { text = pendingStart.join("\n\n") + "\n\n" + text; pendingStart = []; }
-        out.push({ title: x.title, clean: x.clean, num: st.opts.renumber ? x.num : "", level: x.level, text: text, screenIds: (x.chapter.screenIds || []).slice(), sourceTitle: x.chapter.title });
+        out.push({ title: x.title, clean: x.clean, num: st.opts.renumber ? x.num : "", level: x.level, text: text, screenIds: filtered.screenIds, removed: filtered.removed, sourceTitle: x.chapter.title });
         return;
       }
       if (!st.opts.refInline || !x.refRoles.length) return;
@@ -30006,6 +30015,37 @@
         text: L.refIntro + "\n\n" + plan.refs.map(function (x) { return "- " + x.clean + " → " + L.role + ": " + x.refRoles.join(", "); }).join("\n") });
     }
     return out;
+  }
+  // v2.126: Rollen-Bedingungen auf Absatz-Ebene. "[Rolle: A, B] Text" / "[Nicht Rolle: A] Text" gilt fuer die Zeile,
+  // allein in einer Zeile fuer alle folgenden Zeilen bis "[/Rolle]". Screens zu entfernten [Bild]-Zeilen entfallen.
+  var VR_COND_RE = /^\s*\[(nicht\s+)?rolle:\s*([^\]]*)\]\s*(.*)$/i, VR_COND_END_RE = /^\s*\[\/rolle\]\s*$/i;
+  function vrCondMatches(cond, role) {
+    var hit = cond.roles.some(function (r) { return r.toLowerCase() === String(role).toLowerCase(); });
+    return cond.not ? !hit : hit;
+  }
+  function vrParseCond(m) { return { not: !!m[1], roles: m[2].split(/[,;\/]/).map(function (x) { return x.trim(); }).filter(Boolean) }; }
+  function variantCondCount(text) {
+    return String(text || "").split("\n").filter(function (l) { return VR_COND_RE.test(l); }).length;
+  }
+  function variantFilterRoleText(text, screenIds, role) {
+    var lines = String(text || "").split("\n"), out = [], block = null, bild = 0, dropScreens = {}, removed = 0;
+    lines.forEach(function (line) {
+      if (VR_COND_END_RE.test(line)) { block = null; return; }
+      var m = line.match(VR_COND_RE);
+      if (m) {
+        var cond = vrParseCond(m);
+        if (!m[3].trim()) { block = cond; return; }
+        line = m[3];
+        if (!vrCondMatches(cond, role) || (block && !vrCondMatches(block, role))) { if (manualIsImagePlaceholder(line)) dropScreens[bild] = true; if (manualIsImagePlaceholder(line)) bild++; removed++; return; }
+      } else if (block && !vrCondMatches(block, role)) {
+        if (manualIsImagePlaceholder(line)) { dropScreens[bild] = true; bild++; }
+        if (line.trim()) removed++;
+        return;
+      }
+      if (manualIsImagePlaceholder(line)) bild++;
+      out.push(line);
+    });
+    return { text: out.join("\n").replace(/\n{3,}/g, "\n\n").replace(/^\n+|\n+$/g, ""), screenIds: (screenIds || []).filter(function (_, i) { return !dropScreens[i]; }), removed: removed };
   }
   function variantDefaultName(role, lang) { var b = varianteBase(); return (b ? b.name : "Handbuch") + " – " + role + " – " + lang; }
   function variantNextId() { return VS().variants.reduce(function (m, v) { return Math.max(m, v.id || 0); }, 0) + 1; }
@@ -30055,8 +30095,9 @@
         '<select data-vr-map="' + i + '" aria-label="Domäne für ' + escapeHtml(c.title) + '">' +
         '<option value="">' + (inherit ? "– wie übergeordnetes Kapitel" + (eff ? " (" + escapeHtml(eff.dom + (eff.sub ? " › " + eff.sub : "")) + ")" : " (Allgemein)") + " –" : "– Allgemein (alle Rollen) –") + "</option>" +
         (inherit ? '<option value="__all__"' + (val === "__all__" ? " selected" : "") + ">– Allgemein (alle Rollen) –</option>" : "") +
-        opts.map(function (o) { return '<option value="' + escapeHtml(o[0]) + '"' + (o[0] === val ? " selected" : "") + ">" + escapeHtml(o[1]) + "</option>"; }).join("") + "</select></td></tr>";
-    }).join("") : '<tr><td colspan="2" class="step-note">Kein Basisdokument gewählt.</td></tr>';
+        opts.map(function (o) { return '<option value="' + escapeHtml(o[0]) + '"' + (o[0] === val ? " selected" : "") + ">" + escapeHtml(o[1]) + "</option>"; }).join("") + "</select></td>" +
+        '<td data-vr-cond-count="' + i + '">' + (variantCondCount(c.text) ? variantCondCount(c.text) + " Absatz/Block" : '<span class="step-note">–</span>') + "</td></tr>";
+    }).join("") : '<tr><td colspan="3" class="step-note">Kein Basisdokument gewählt.</td></tr>';
   }
   function vrCb(kind, key, role, checked, extraCls, title) {
     return '<td class="' + (checked ? "" : "variante-cell-off ") + (extraCls || "") + '"><input type="checkbox" data-vm-kind="' + kind + '" data-vm-key="' + escapeHtml(key) + '" data-vm-role="' + escapeHtml(role) + '"' + (checked ? " checked" : "") + ' aria-label="' + escapeHtml(title + " – " + role) + '">';
@@ -30122,7 +30163,8 @@
       var otherBase = v.baseVersionId !== st.baseVersionId;
       return '<tr data-vr-variant="' + v.id + '"><td><b>' + escapeHtml(v.name) + "</b>" + (otherBase ? '<div class="step-note">anderes Basisdokument</div>' : "") + "</td><td>" + escapeHtml(v.role) + "</td><td>" + escapeHtml(v.lang) + "</td>" +
         "<td>" + (plan ? plan.included + " aktiv · " + plan.excluded + " ausgelassen" : "–") + "</td><td>" + (plan ? plan.refs.length : "–") + "</td>" +
-        "<td>" + (stand ? escapeHtml(stand.name) + '<div class="step-note">' + escapeHtml(v.generatedAt) + (v.stats ? " · " + escapeHtml(v.stats.note) : "") + "</div>" : '<span class="step-note">noch nicht erzeugt</span>') + "</td>" +
+        "<td>" + (stand ? escapeHtml(stand.name) + '<div class="step-note">' + escapeHtml(v.generatedAt) + (v.stats ? " · " + escapeHtml(v.stats.note) : "") + "</div>" +
+          (variantStaleReasons(v).length ? '<span class="variante-stale" data-vr-stale="' + v.id + '">veraltet: ' + escapeHtml(variantStaleReasons(v).join(", ")) + "</span>" : "") : '<span class="step-note">noch nicht erzeugt</span>') + "</td>" +
         '<td><div class="final-row-actions variante-actions">' +
         '<button class="btn ghost btn-tiny" type="button" data-vr-preview="' + v.id + '"' + (plan ? "" : " disabled") + ">Inhaltsverzeichnis</button>" +
         '<button class="btn primary btn-tiny" type="button" data-vr-generate="' + v.id + '"' + (plan && !varianteBusy ? "" : " disabled") + ">" + (stand ? "Neu erzeugen" : "Erzeugen") + "</button>" +
@@ -30130,6 +30172,14 @@
         '<button class="btn ghost btn-tiny final-btn-danger" type="button" data-vr-delete="' + v.id + '"' + (varianteBusy ? " disabled" : "") + ">Entfernen</button></div></td></tr>";
     }).join("");
     els.varianteGenerateAllBtn.disabled = varianteBusy || !hasBase || !list.some(function (v) { return v.baseVersionId === st.baseVersionId; });
+    var stale = list.filter(function (v) { return variantStaleReasons(v).length; });
+    els.varianteUpdateStaleBtn.hidden = !stale.length;
+    els.varianteUpdateStaleBtn.disabled = varianteBusy;
+    els.varianteUpdateStaleBtn.textContent = "Veraltete Varianten aktualisieren (" + stale.length + ")";
+    var other = hasBase ? list.filter(function (v) { return v.baseVersionId !== st.baseVersionId; }) : [];
+    els.varianteRebaseBtn.hidden = !other.length;
+    els.varianteRebaseBtn.disabled = varianteBusy;
+    els.varianteRebaseBtn.textContent = "Varianten auf dieses Basisdokument übertragen (" + other.length + ")";
     els.varianteSpinner.hidden = !varianteBusy;
     els.varianteStopBtn.hidden = !varianteBusy;
     renderVariantePreview();
@@ -30298,6 +30348,23 @@
     if (!m) return null;
     return { title: m[1].trim(), text: t.slice(m[0].length).replace(/^\s*\n/, "").replace(/\s+$/, "") };
   }
+  function variantBaseFp(base) {
+    var s = JSON.stringify(base.chapters.map(function (c) { return [c.title, c.level || 1, c.text, c.screenIds || []]; }));
+    return s.length + ":" + hashString(s);
+  }
+  function variantPlanFp(v) {
+    var st = VS(), plan = variantPlan(v);
+    return String(hashString(JSON.stringify({ i: plan.items.map(function (x) { return [x.include ? 1 : 0, x.refRoles || []]; }), o: st.opts, b: st.baseLang, l: v.lang, r: v.role })));
+  }
+  // Gruende, warum eine erzeugte Variante nicht mehr zum aktuellen Stand passt (leer = aktuell).
+  function variantStaleReasons(v) {
+    var stand = v.standId ? finalVersionById(v.standId) : null, base = varianteBase();
+    if (!stand || !v.fp || !base || v.baseVersionId !== VS().baseVersionId) return [];
+    var r = [];
+    if (v.fp.base !== variantBaseFp(base)) r.push("Basisdokument geändert");
+    if (v.fp.plan !== variantPlanFp(v)) r.push("Matrix/Optionen geändert");
+    return r;
+  }
   async function variantGenerate(v, signal) {
     var st = VS(), base = varianteBase();
     if (!base || v.baseVersionId !== st.baseVersionId) return { ok: false, note: "Basisdokument fehlt" };
@@ -30335,7 +30402,8 @@
     var note = plan.included + " Kapitel, " + plan.refs.length + " Verweis(e)" + (translate ? (aiMissing ? ", nicht übersetzt (KI nicht verfügbar)" : ", " + translated + " übersetzt" + (kept ? ", " + kept + " unverändert (Übersetzung verworfen)" : "")) : "");
     if (old && old.status !== "Veröffentlicht") {
       old.chapters = chapters; old.improvements = improvements; old.improvementStatus = improvementStatus;
-      old.createdAt = nowLabel(); old.lastReview = null;
+      old.createdAt = nowLabel(); old.lastReview = null; old.basedOnId = base.id;
+      old.config = { variant: { role: v.role, lang: v.lang, baseId: base.id, baseName: base.name } };
       if (app.final.activeVersionId === old.id) finalSetActiveVersion(old.id);
     } else {
       var created = finalCreateVersion(chapters, { name: v.name, origin: "Variante", basedOnId: base.id, improvements: improvements, improvementStatus: improvementStatus,
@@ -30344,6 +30412,7 @@
       finalSetActiveVersion(activeBefore);
     }
     v.generatedAt = nowLabel();
+    v.fp = { base: variantBaseFp(base), plan: variantPlanFp(v) };
     v.stats = { included: plan.included, excluded: plan.excluded, refs: plan.refs.length, translated: translated, kept: kept, note: note };
     return { ok: true, note: note };
   }
@@ -30370,6 +30439,104 @@
     varianteRun(st.variants.filter(function (v) { return v.baseVersionId === st.baseVersionId; }));
   });
   els.varianteStopBtn.addEventListener("click", function () { if (varianteAbort) varianteAbort.abort(); });
+  els.varianteUpdateStaleBtn.addEventListener("click", function () {
+    varianteRun(VS().variants.filter(function (v) { return variantStaleReasons(v).length; }));
+  });
+  els.varianteRebaseBtn.addEventListener("click", async function () {
+    var st = VS(), base = varianteBase();
+    if (!base) return;
+    var other = st.variants.filter(function (v) { return v.baseVersionId !== st.baseVersionId; });
+    if (!other.length || !(await confirmDialog(other.length + " Variante(n) auf das Basisdokument „" + base.name + "“ übertragen? Beim nächsten Erzeugen werden ihre Stände aus diesem Dokument neu aufgebaut.", "Übertragen"))) return;
+    var moved = 0, skipped = 0;
+    other.forEach(function (v) {
+      if (st.variants.some(function (x) { return x !== v && x.baseVersionId === st.baseVersionId && x.role === v.role && x.lang === v.lang; })) { skipped++; return; }
+      v.baseVersionId = st.baseVersionId; v.fp = v.fp ? { base: "", plan: v.fp.plan } : null; moved++;
+    });
+    els.varianteStatus.textContent = moved + " Variante(n) übertragen" + (skipped ? ", " + skipped + " übersprungen (Rolle/Sprache für dieses Basisdokument schon vorhanden)" : "") + " – jetzt neu erzeugen.";
+    addLog("VARIANTE: " + moved + " Variante(n) auf Basisdokument „" + base.name + "“ übertragen.");
+    renderVarianteVariants();
+  });
+
+  // ----- v2.126: Matrix als Excel exportieren / importieren -----
+  function vrTruthy(v) { return /^(x|✓|✔|ja|yes|1|true|aktiv)$/i.test(String(v == null ? "" : v).trim()); }
+  els.varianteMatrixXlsxBtn.addEventListener("click", async function () {
+    var st = VS(), chs = varianteChapters(), roles = st.roles, rows = [];
+    var cells = function (fn) { return roles.map(function (r) { return fn(r) ? "x" : ""; }); };
+    st.domains.forEach(function (d) {
+      rows.push(["Domäne", d.name, "", ""].concat(cells(function (r) { return vrDomActive(d.name, r); }), [""]));
+      d.subs.forEach(function (sname) { rows.push(["Unterdomäne", d.name, sname, ""].concat(cells(function (r) { return vrSubActive(d.name, sname, r); }), [""])); });
+    });
+    chs.forEach(function (c, i) {
+      var m = vrMapping(chs, i), o = st.chOverride[c.title] || {};
+      var man = Object.keys(o).filter(function (r) { return roles.indexOf(r) !== -1; });
+      rows.push(["Kapitel", m ? m.dom : "", m && m.sub ? m.sub : "", c.title].concat(cells(function (r) { return vrActive(chs, i, r); }), [man.length ? "manuell: " + man.join(", ") : ""]));
+    });
+    try {
+      var blob = await buildXlsxBlob([{ title: "Matrix", headers: ["Typ", "Domäne", "Unterdomäne", "Kapitel"].concat(roles, ["Hinweis"]), rows: rows }]);
+      var base = varianteBase();
+      var fn = "Variante_Matrix_" + editoFinalSafeName(base ? base.name : "ohne_Basis") + "_" + dateStampForFilename() + ".xlsx";
+      if (await saveOrWarn(fn, blob)) { els.varianteMatrixNote.textContent = "Matrix als „" + fn + "“ exportiert (x = aktiv). Bearbeiten und über „Matrix aus Excel laden“ wieder einlesen."; addLog("VARIANTE: Matrix „" + fn + "“ exportiert."); }
+    } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
+  els.varianteMatrixImportBtn.addEventListener("click", function () { els.varianteMatrixImportInput.click(); });
+  els.varianteMatrixImportInput.addEventListener("change", async function () {
+    var file = els.varianteMatrixImportInput.files && els.varianteMatrixImportInput.files[0];
+    els.varianteMatrixImportInput.value = "";
+    if (!file) return;
+    try {
+      var rows = await finalReadXlsxRows(await file.arrayBuffer());
+      var res = variantImportMatrix(rows);
+      els.varianteMatrixNote.textContent = "Matrix aus „" + file.name + "“ geladen: " + res.doms + " Domäne(n), " + res.subs + " Unterdomäne(n), " + res.chs + " Kapitel" +
+        (res.overrides ? " (" + res.overrides + " abweichend geschaltet)" : "") + (res.newRoles.length ? ", neue Rolle(n): " + res.newRoles.join(", ") : "") + (res.unknown ? ", " + res.unknown + " unbekannte(s) Kapitel übersprungen" : "") + ".";
+      addLog("VARIANTE: Matrix aus „" + file.name + "“ geladen.");
+      renderVariante();
+    } catch (err) { showToast("Import fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
+  function variantImportMatrix(rows) {
+    var st = VS(), chs = varianteChapters();
+    var hi = rows.findIndex(function (r) { return (r || []).some(function (v) { return String(v).trim().toLowerCase() === "typ"; }); });
+    if (hi < 0) throw new Error("Spalte „Typ“ nicht gefunden – bitte eine über „Matrix als Excel“ erzeugte Datei verwenden.");
+    var head = rows[hi].map(function (v) { return String(v == null ? "" : v).trim(); }), col = function (n) { return head.findIndex(function (h) { return h.toLowerCase() === n.toLowerCase(); }); };
+    var cT = col("Typ"), cD = col("Domäne"), cS = col("Unterdomäne"), cK = col("Kapitel"), cH = col("Hinweis");
+    var roleCols = [], newRoles = [];
+    head.forEach(function (h, i) { if (h && i > Math.max(cT, cD, cS, cK) && i !== cH) roleCols.push({ role: h, i: i }); });
+    roleCols.forEach(function (rc) { if (st.roles.indexOf(rc.role) === -1) { st.roles.push(rc.role); newRoles.push(rc.role); } });
+    var data = rows.slice(hi + 1).filter(function (r) { return r && String(r[cT] || "").trim(); });
+    var cell = function (r, i) { return String(r[i] == null ? "" : r[i]).trim(); };
+    var res = { doms: 0, subs: 0, chs: 0, overrides: 0, unknown: 0, newRoles: newRoles };
+    function setOff(store, key, r) {
+      roleCols.forEach(function (rc) { store[key] = store[key] || {}; if (vrTruthy(r[rc.i])) delete store[key][rc.role]; else store[key][rc.role] = true; });
+      if (store[key] && !Object.keys(store[key]).length) delete store[key];
+    }
+    data.forEach(function (r) {
+      var typ = cell(r, cT).toLowerCase(), dom = cell(r, cD), sub = cell(r, cS);
+      if (typ === "domäne" && dom) { vrAddDomain(dom); var d = st.domains.filter(function (x) { return x.name.toLowerCase() === dom.toLowerCase(); })[0]; setOff(st.domOff, d.name, r); res.doms++; }
+      else if (typ === "unterdomäne" && dom && sub) {
+        vrAddDomain(dom);
+        var d2 = st.domains.filter(function (x) { return x.name.toLowerCase() === dom.toLowerCase(); })[0];
+        if (d2.subs.indexOf(sub) === -1) d2.subs.push(sub);
+        setOff(st.subOff, d2.name + VR_SEP + sub, r); res.subs++;
+      }
+    });
+    data.forEach(function (r) {
+      if (cell(r, cT).toLowerCase() !== "kapitel") return;
+      var title = cell(r, cK), i = chs.findIndex(function (c) { return c.title === title; });
+      if (i < 0) { res.unknown++; return; }
+      var dom = cell(r, cD), sub = cell(r, cS), eff = vrMapping(chs, i);
+      var want = dom ? { dom: dom, sub: sub || undefined } : null;
+      var same = (!want && !eff) || (want && eff && want.dom === eff.dom && (want.sub || "") === (eff.sub || ""));
+      if (!same) {
+        if (want) { vrAddDomain(dom); var d3 = st.domains.filter(function (x) { return x.name.toLowerCase() === dom.toLowerCase(); })[0]; if (sub && d3.subs.indexOf(sub) === -1) d3.subs.push(sub); st.chapterMap[title] = sub ? { dom: d3.name, sub: sub } : { dom: d3.name }; }
+        else st.chapterMap[title] = { all: true };
+      }
+      var o = st.chOverride[title] = st.chOverride[title] || {};
+      roleCols.forEach(function (rc) { delete o[rc.role]; });
+      roleCols.forEach(function (rc) { var want2 = vrTruthy(r[rc.i]); if (vrActive(chs, i, rc.role) !== want2) { o[rc.role] = want2; res.overrides++; } });
+      if (!Object.keys(o).length) delete st.chOverride[title];
+      res.chs++;
+    });
+    return res;
+  }
   els.variantePreviewCloseBtn.addEventListener("click", function () { variantePreviewId = null; renderVariantePreview(); });
   els.varianteTbody.addEventListener("click", async function (e) {
     var b = e.target.closest("button");

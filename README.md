@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.125.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.126.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,6 +2031,22 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **VARIANTE – Rollen-Bedingungen im Text, veraltete Varianten, Matrix als Excel (v2.126.0)**:
+  (1) **Rollen-Bedingungen auf Absatz-Ebene** im Basisdokument: `[Rolle: Retail, MO] Text` bzw.
+  `[Nicht Rolle: IT] Text` gilt für diesen Absatz; steht die Markierung allein in einer Zeile, gilt
+  sie für alle folgenden Absätze bis `[/Rolle]`. Screens ([Bild]) in ausgeblendeten Absätzen
+  entfallen mit; die Markierungen erscheinen in keiner Variante; Schritt 2 zählt die Bedingungen je
+  Kapitel. (2) **Veraltete Varianten**: Jede erzeugte Variante merkt sich einen Fingerabdruck von
+  Basisdokument und Plan (Matrix, Optionen, Sprache); weicht er ab, zeigt die Tabelle „veraltet:
+  Basisdokument geändert / Matrix/Optionen geändert“, und „Veraltete Varianten aktualisieren (n)“
+  erzeugt genau diese neu. Ist ein anderes Basisdokument gewählt, überträgt „Varianten auf dieses
+  Basisdokument übertragen (n)“ die Varianten (bestehende Rolle/Sprache-Kombinationen werden
+  übersprungen); beim Neu-Erzeugen wird derselbe FINAL-Stand mit neuer Basis aktualisiert.
+  (3) **Matrix als Excel** (Typ, Domäne, Unterdomäne, Kapitel, je Rolle „x“ = aktiv, Hinweis auf
+  manuelle Abweichungen) exportieren und bearbeitet wieder einlesen: fehlende Domänen/Unterdomänen
+  und neue Rollen werden angelegt, Kapitel-Zuordnungen übernommen, abweichende Kapitel als „manuell“
+  geschaltet, unbekannte Kapitel übersprungen (mit Bilanz).
+  Test: `webapp/tests/variante_conditions_test.js`.
 - **Register VARIANTE – Varianten je Rolle & Sprache aus einem Dokument (v2.125.0)**: Neues Register
   nach FINAL. (1) **Basisdokument**: ein FINAL-Stand und seine Sprache. (2) **Domänen &
   Unterdomänen** anlegen bzw. aus Gliederung (Kapitel-Domänen) und Tickets übernehmen; jedes Kapitel
