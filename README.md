@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.127.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.128.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,6 +2031,18 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **VARIANTE – Glossar für Übersetzungen, Volltext-Vorschau (v2.128.0)**: Neuer Bereich „Glossar
+  für Übersetzungen (n)“ mit verbindlichen Fachbegriffen je Zielsprache (Begriff → Übersetzung),
+  manuell pflegbar (gleicher Begriff/Sprache wird aktualisiert statt doppelt angelegt), als Excel
+  exportierbar und aus Excel ladbar – breit (Spalte „Begriff“ und je Sprache eine Spalte EN, FR, …)
+  oder lang („Begriff“, „Sprache“, „Übersetzung“). Beim Übersetzen bekommt die KI je Kapitel nur die
+  Glossar-Begriffe der Zielsprache, die im Kapitel vorkommen; anschließend wird geprüft, ob die
+  vorgegebene Übersetzung verwendet wurde – Abweichungen erscheinen je Variante aufklappbar
+  („„Vertrag“ → „contract“ nicht verwendet“). Glossar-Änderungen machen nur Varianten der
+  betroffenen Sprache „veraltet“. In der Inhaltsverzeichnis-Vorschau zeigt **„Volltext anzeigen“**
+  den Text der Variante, wie ihn die Rolle sieht (Rollen-Bedingungen angewendet, Verweis-Hinweise,
+  Screens als Platzhalter; bei Fremdsprachen vor der Übersetzung).
+  Test: `webapp/tests/variante_glossary_test.js`.
 - **VARIANTE – saubere Ausgaben, alle Varianten als ZIP, Varianten-Übersicht (v2.127.0)**:
   Rollen-Markierungen (`[Rolle: …]`, `[Nicht Rolle: …]`, `[/Rolle]`) erscheinen in keiner Ausgabe
   des Basisdokuments mehr – FINAL Word und PowerPoint, Schritt 9 (Gesamtdokument-Vorschau, Word,
