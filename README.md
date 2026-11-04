@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.136.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.137.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,29 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **VARIANTE: Dokument-Review – 20 Prüfungen in 7 Stufen (v2.137.0)**: neuer Abschnitt „6. Dokument-Review“
+  im Register VARIANTE. **Eingang**: Entwürfe als Word (.docx, mehrere auf einmal) hochladen oder einen bestehenden
+  Stand aus FINAL/VARIANTE übernehmen. **Ablage**: alle Dokumente mit Version (1.0, „Neue Version“ → 1.1), Status
+  (Entwurf, In Review, Geprüft, Freigegeben, Verteilt – automatisch fortgeschrieben und manuell änderbar), Quelle,
+  Qualitätswert, abgeschlossenen Stufen, Anzahl Änderungen und Verlauf; je Dokument Reviewbericht, Word, neue Version,
+  Löschen. **Dashboard**: Kacheln (Qualität 0–100 mit Startwert, Prüfungen OK/Hinweis/Fehler/offen, Stufen, Änderungen,
+  Jira-Nummern, interne Vermerke, belegte Bild-Platzhalter) und 20 farbige Prüf-Chips. **Die 7 Stufen** (einzeln
+  abschließbar, „weiter“ zur nächsten): 1 *Design* – Schriftarten, Schriftgrößen, Zeilenabstand und Farbpalette aus
+  Formatvorlagen, Theme und direkter Formatierung der .docx, Icons/Symbole, markierte und unmarkierte Tipps/Hinweise,
+  interne Bemerkungen (Kommentare, Hervorhebungen); bestehende Stände werden über ihre Word-Ausgabe analysiert.
+  2 *Inhalt* – Jira-Nummern (Anzeige mit/ohne, „Jira-Nummern löschen“), Planungen/Termine, interne Vermerke, Test-
+  Hinweise und Statusangaben (verfügbar, in Abnahme, in Entwicklung, geplant) mit Legende und Tabelle; „geplant“/„in
+  Entwicklung“ zusammen mit „steht ab sofort zur Verfügung“ wird als Widerspruch markiert. 3 *Bilder* – Platzhalter
+  („[Bild]“, „[Bild: …]“, „Screenshot: …“) mit Bildvorschlag aus dem Bildarchiv, je Platzhalter bis zu 3 Bilder.
+  4 *Qualität* – Form-/Tippfehler (mit automatischer Korrektur), KI-Prüfung Grammatik/Fehler/Lücken je Kapitel mit
+  übernehmbaren Vorschlägen (neuer bearbeitbarer Prompt), leere/kurze Kapitel, Satzlänge. 5 *Übersetzung* – Kopie
+  der Version in einer Zielsprache als eigenes Dokument (Glossar und Übersetzungsspeicher, interne Vermerke
+  geschützt). 6 *Abschluss* – Änderungen je Stufe, Vergleich vorher/nachher je Kapitel, Qualität vorher → jetzt,
+  Konsistenz (Schreibweisen wie E-Mail/Email, Nummerierung). 7 *Finalisierung* – Word für die Verteilung (ohne
+  Kommentarbereiche, Intern/TODO-Zeilen und Jira-Nummern, Bilder an den Platzhaltern, Design des Entwurfs bzw. aus
+  FINAL) oder intern mit Vermerken als „[Intern: …]“. **Reviewbericht** als Word oder Markdown. Text je Kapitel mit
+  Markierungen ansehen und direkt bearbeiten. Alles wird in der Sitzung gespeichert.
 
 - **Screens zu Platzhaltern: OCR vorab, Excel-Liste, fehlende Screens (v2.136.0)**:
   **OCR vor dem Zuordnen** – Option „Vorher Bildtext per OCR erkennen“: Screens ohne erkannten

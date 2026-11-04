@@ -505,6 +505,46 @@
   .final-review-result > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
   .final-review-result-body { padding: 0 12px 12px; white-space: pre-wrap; font-size: 13px; max-height: 420px; overflow: auto; }
   .variante-step { padding: 12px 14px; margin-bottom: 14px; }
+  .vrev-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 10px 0; }
+  .vrev-tile { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--surface); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .vrev-tile-label { font-size: 12px; color: var(--text-faint); }
+  .vrev-tile-value { font-size: 22px; line-height: 1.2; }
+  .vrev-tile-sub { font-size: 11.5px; color: var(--text-faint); overflow-wrap: anywhere; }
+  .vrev-tile-ok { border-left: 4px solid #15803d; } .vrev-tile-warn { border-left: 4px solid #b45309; } .vrev-tile-fail { border-left: 4px solid #b91c1c; }
+  .vrev-checkgrid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .vrev-chip { border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; font-size: 12px; background: var(--surface); color: inherit; cursor: pointer; }
+  .vrev-chip-ok { background: #e7f6ec; border-color: #9fd8b1; } .vrev-chip-warn { background: #fdf3e2; border-color: #f0c98a; } .vrev-chip-fail { background: #fbe6e4; border-color: #eba59d; }
+  .vrev-stepper { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .vrev-stage-btn { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; background: var(--surface); color: inherit; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; font-size: 13px; }
+  .vrev-stage-btn.active { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent); font-weight: 600; }
+  .vrev-stage-btn.done .vrev-stage-n { background: #15803d; color: #fff; }
+  .vrev-stage-n { display: inline-flex; width: 20px; height: 20px; border-radius: 50%; align-items: center; justify-content: center; background: var(--border); font-size: 11px; }
+  .vrev-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+  .vrev-dot.vrev-ok { background: #15803d; } .vrev-dot.vrev-warn { background: #d97706; } .vrev-dot.vrev-fail { background: #b91c1c; } .vrev-dot.vrev-open { background: #9ca3af; }
+  .vrev-stage { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .vrev-pill { display: inline-block; border-radius: 4px; padding: 1px 7px; font-size: 12px; font-weight: 600; }
+  .vrev-pill.vrev-ok { background: #e7f6ec; color: #15803d; } .vrev-pill.vrev-warn { background: #fdf3e2; color: #b45309; } .vrev-pill.vrev-fail { background: #fbe6e4; color: #b91c1c; } .vrev-pill.vrev-open { background: #eef0f3; color: #6b7280; }
+  .vrev-checks td, .vrev-ph-table td, .vrev-ai-table td, .vrev-status-table td { white-space: normal; vertical-align: top; }
+  .vrev-design { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin-top: 8px; font-size: 13px; }
+  .vrev-design ul { margin: 4px 0 0 16px; padding: 0; }
+  .vrev-swatch { display: inline-block; width: 11px; height: 11px; border: 1px solid var(--border); border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+  .vrev-legend { display: grid; gap: 4px; margin: 8px 0; font-size: 13px; }
+  .vrev-st { display: inline-block; border-radius: 4px; padding: 0 5px; font-weight: 600; }
+  .vrev-st-ok { background: #e7f6ec; color: #15803d; } .vrev-st-abn { background: #e0eefb; color: #1d4ed8; } .vrev-st-dev { background: #fdf3e2; color: #b45309; } .vrev-st-plan { background: #efe7fb; color: #6d28d9; }
+  .vrev-conflict td { background: #fbe6e4; }
+  .vrev-done td { opacity: .6; }
+  .vrev-text-view { border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; max-height: 360px; overflow: auto; font-size: 13px; margin-top: 6px; }
+  .vrev-line { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .vrev-l-ph { color: var(--accent); font-style: italic; } .vrev-l-intern { background: #fff4d6; } .vrev-l-plan { background: #efe7fb; } .vrev-l-test { background: #e0eefb; }
+  .vrev-m-jira { background: #fbe6e4; color: #b91c1c; } .vrev-m-intern { background: #fff1b8; }
+  .vrev-docstatus { display: inline-block; border-radius: 4px; padding: 1px 7px; font-size: 12px; font-weight: 600; background: #eef0f3; }
+  .vrev-ds-1 { background: #e0eefb; color: #1d4ed8; } .vrev-ds-2 { background: #e7f6ec; color: #15803d; } .vrev-ds-3 { background: #dcfce7; color: #166534; } .vrev-ds-4 { background: #efe7fb; color: #6d28d9; }
+  .vrev-score-ok { color: #15803d; } .vrev-score-warn { color: #b45309; } .vrev-score-fail { color: #b91c1c; }
+  .vrev-row-active td { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+  .vrev-diff summary { cursor: pointer; margin: 4px 0; }
+  .vrev-textbox { margin-top: 10px; }
+  #vrev-docs-tbody .final-row-actions { display: flex; flex-wrap: wrap; gap: 4px; max-width: 260px; }
+  #vrev-docs-tbody td { vertical-align: top; }
   .variante-stale { display: inline-block; margin-top: 3px; font-size: 11px; font-weight: 700; color: #b45309; background: color-mix(in srgb, #f59e0b 14%, transparent); border-radius: 6px; padding: 1px 6px; }
   .variante-fulltext { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; max-height: 520px; overflow: auto; }
   .variante-fulltext h4 { margin: 12px 0 4px; font-size: 14px; }
@@ -3612,6 +3652,40 @@
           <p class="step-note" id="paket-status"></p>
           <div class="table-wrap" id="paket-list-wrap" hidden><table class="simple-table"><thead><tr><th>Datei im Paket</th><th>Art</th><th>Rolle</th><th>Sprache</th><th>Hinweis</th></tr></thead><tbody id="paket-list-tbody"></tbody></table></div>
         </section>
+
+        <section class="panel variante-step" id="vrev-step">
+          <p class="section-label">6. Dokument-Review – 20 Prüfungen in 7 Stufen</p>
+          <p class="desc" style="margin-top:0;">Entwürfe als Word (.docx) hochladen oder bestehende Stände (FINAL/Varianten) übernehmen. Jedes Dokument wird nach 20 Prüfungen bewertet (Dashboard und Reviewbericht) und Schritt für Schritt geprüft: 1 Design · 2 Inhalt · 3 Bilder · 4 Qualität · 5 Übersetzung · 6 Abschluss · 7 Finalisierung. Alle Dokumente liegen mit Version, Status und Reviewbericht in der Ablage.</p>
+          <div class="controls" style="flex-wrap:wrap; align-items:flex-end;">
+            <button class="btn primary" id="vrev-upload-btn" type="button">Entwurf hochladen (.docx)</button>
+            <input type="file" id="vrev-file-input" accept=".docx" multiple hidden>
+            <div><label for="vrev-existing-select">oder bestehendes Dokument</label><select id="vrev-existing-select" aria-label="Bestehendes Dokument"></select></div>
+            <button class="btn ghost" id="vrev-existing-btn" type="button">Übernehmen</button>
+          </div>
+          <p class="step-note" id="vrev-import-note"></p>
+          <p class="section-label" style="margin-top:10px;">Ablage</p>
+          <div class="table-wrap" id="vrev-docs-wrap" hidden><table class="simple-table"><thead><tr><th>Dokument</th><th>Version</th><th>Status</th><th>Quelle</th><th>Qualität</th><th>Stufen</th><th>Änderungen</th><th>Geprüft</th><th>Aktion</th></tr></thead><tbody id="vrev-docs-tbody"></tbody></table></div>
+          <div class="empty-hint" id="vrev-docs-empty">Noch keine Dokumente im Review.</div>
+          <div id="vrev-work" hidden>
+            <div class="controls" style="justify-content:space-between; flex-wrap:wrap; margin-top:12px;">
+              <p class="section-label" id="vrev-doc-title" style="margin:0;"></p>
+              <span class="controls" style="margin:0; flex-wrap:wrap;"><button class="btn primary" id="vrev-run-btn" type="button">Alle 20 Prüfungen ausführen</button><button class="btn ghost" id="vrev-report-docx-btn" type="button">Reviewbericht (Word)</button><button class="btn ghost" id="vrev-report-md-btn" type="button">Reviewbericht (Markdown)</button></span>
+            </div>
+            <div id="vrev-dash"></div>
+            <div class="vrev-stepper" id="vrev-stepper"></div>
+            <div class="vrev-stage" id="vrev-stage"></div>
+            <p class="step-note" id="vrev-status"></p>
+            <details class="vrev-textbox"><summary>Text ansehen und bearbeiten (Jira, Statusangaben, interne Vermerke, Planungen, Test-Hinweise markiert)</summary>
+              <div class="controls" style="flex-wrap:wrap; align-items:flex-end;">
+                <div><label for="vrev-text-chapter">Kapitel</label><select id="vrev-text-chapter" aria-label="Kapitel"></select></div>
+                <label class="variante-inline-check"><input type="checkbox" id="vrev-hide-jira"> ohne Jira-Nummern anzeigen</label>
+              </div>
+              <div class="vrev-text-view" id="vrev-text-view"></div>
+              <textarea class="text-input" id="vrev-text-edit" rows="8" style="width:100%; font-family:inherit; margin-top:8px;" aria-label="Kapiteltext bearbeiten"></textarea>
+              <div class="controls"><button class="btn ghost btn-tiny" id="vrev-text-save-btn" type="button">Änderung speichern</button><span class="step-note" style="margin:0;">Interne Vermerke stehen zwischen [[INTERN]] und [[/INTERN]].</span></div>
+            </details>
+          </div>
+        </section>
       </section>
 
       <!-- ================= CROSS_X ================= -->
@@ -6343,7 +6417,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.136.0";
+  var APP_VERSION = "2.137.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7947,7 +8021,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -8086,6 +8160,7 @@
     // Interne Mitteilungen der Register (nie in deren Ausgaben).
     docNotes: { releaseletter: [], benutzerhandbuch: [], prozessbild: [], clickanweisung: [] },
     variante: null,
+    vrev: null,
     rlRoleOverrides: {},
     crossx: null,
     screenPh: null,
@@ -8628,6 +8703,7 @@
     app.editoBaseDocId = null;
     app.docNotes = docNotesNormalize(null);
     app.variante = varianteNormalize(null);
+    app.vrev = vrevNormalize(null);
     app.rlRoleOverrides = {};
     app.crossx = crossxNormalize(null);
     app.screenPh = screenPhNormalize(null);
@@ -8743,6 +8819,7 @@
     app.editoBaseDocId = null;
     app.docNotes = docNotesNormalize(null);
     app.variante = varianteNormalize(null);
+    app.vrev = vrevNormalize(null);
     app.rlRoleOverrides = {};
     app.crossx = crossxNormalize(null);
     app.screenPh = screenPhNormalize(null);
@@ -8831,6 +8908,7 @@
       editoBaseDocId: app.editoBaseDocId,
       docNotes: app.docNotes,
       variante: app.variante,
+      vrev: app.vrev,
       rlRoleOverrides: app.rlRoleOverrides,
       crossx: app.crossx,
       screenPh: app.screenPh,
@@ -8942,6 +9020,7 @@
     app.editoBaseDocId = typeof data.editoBaseDocId === "number" ? data.editoBaseDocId : null;
     app.docNotes = docNotesNormalize(data.docNotes);
     app.variante = varianteNormalize(data.variante);
+    app.vrev = vrevNormalize(data.vrev);
     app.rlRoleOverrides = rlNormalizeOverrides(data.rlRoleOverrides);
     app.crossx = crossxNormalize(data.crossx);
     app.screenPh = screenPhNormalize(data.screenPh);
@@ -9051,6 +9130,7 @@
     renderFinal();
     renderAllDocNotes();
     renderVariante();
+    renderVrev();
     renderCrossx();
     renderScreenPh();
     renderMassFiles();
@@ -20289,6 +20369,7 @@
     crossxAgent: "Du bist der interne Wissensagent für das Benutzerhandbuch und die Releaseletter der Anwendung oneSCM. Du beantwortest Fragen AUSSCHLIESSLICH auf Basis der unten stehenden Wissensbasis. Jeder Eintrag beginnt mit [#Nummer], Quelle und ggf. INTERN. Arbeite kapitel- und rollenübergreifend: Vergleiche Aussagen zwischen Kapiteln, Rollen-Varianten, internen Mitteilungen, ROVO-Verbesserungen, Prüfberichten und Jira-Tickets. Belege jede Aussage mit den Eintragsnummern in eckigen Klammern, z. B. [#12]. Kennzeichne Aussagen, die nur auf INTERNEN Einträgen beruhen, mit (intern). Wenn die Wissensbasis die Frage nicht beantwortet, sag das deutlich. Erfinde nichts. Antworte auf Deutsch, knapp und strukturiert.",
     crossxCheck: "Du bist Prüfer für Querverweise (Cross-Reference-Check) in einem rollenbasierten Benutzerhandbuch der Anwendung oneSCM. Prüfe anhand der Wissensbasis (Kapitel, Matrix: welche Kapitel in welcher Rolle aktiv sind, Varianten, interne Mitteilungen, ROVO-Verbesserungen, Prüfberichte, Jira-Tickets) und der bereits automatisch gefundenen Regel-Befunde, und gib AUSSCHLIESSLICH diese Abschnitte aus:\n\n### Widersprüche zwischen Kapiteln oder Rollen\n### Fehlende oder falsche Querverweise\n### Inhalte, die in einer Rolle fehlen, obwohl sie dort gebraucht werden\n### Interne Hinweise mit Auswirkung auf Kapitel oder Rollen\n\nJe Befund ein Stichpunkt mit Kapitel, Rolle(n) und Belegen [#n]; Befunde, die nur auf internen Einträgen beruhen, mit (intern) kennzeichnen. Ist ein Abschnitt leer, schreibe \"Keine gefunden.\" Wiederhole die Regel-Befunde nicht einzeln, sondern ergänze sie. Erfinde nichts.",
     screenPhMatch: "Du ordnest Bildschirm-Screenshots (Screens) der Anwendung oneSCM Platzhaltern in einem Benutzerhandbuch zu. Zu jedem Platzhalter (Nr., Kapitel, Beschreibung des gewünschten Screenshots) bekommst du Kandidaten-Screens mit ID und ihrem bekannten Text (Bildtext/Überschrift, OCR-Text, Kapitel). Wähle je Platzhalter höchstens MAX Screens, die den beschriebenen Bildschirm wirklich zeigen – im Zweifel weniger oder keinen. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt der Form {\"Nr\": [ID, ...], ...} für alle genannten Platzhalter-Nummern (leere Liste, wenn keiner passt). Erfinde keine IDs.",
+    vrevQuality: "Du bist Lektor für das Benutzerhandbuch der Anwendung oneSCM. Prüfe den folgenden Kapiteltext auf Grammatik, Rechtschreibung, Zeichensetzung, Stil, inhaltliche Fehler/Widersprüche und Lücken (fehlende Schritte, unklare Stellen). Antworte AUSSCHLIESSLICH mit einem JSON-Array von Objekten der Form {\"typ\": \"Grammatik\"|\"Rechtschreibung\"|\"Stil\"|\"Fehler\"|\"Lücke\", \"original\": \"exakter, wörtlich kopierter Textausschnitt aus dem Kapitel (bei Lücken leer)\", \"vorschlag\": \"korrigierter Ausschnitt bzw. was ergänzt werden sollte\", \"hinweis\": \"kurze Begründung\"}. Höchstens 15 Einträge, keine erfundenen Zitate, Fachbegriffe und Produktnamen nicht ändern; leeres Array [], wenn nichts zu beanstanden ist.",
     finalCompareVersions: "Du vergleichst zwei Fassungen (Stand A und Stand B) eines Benutzerhandbuchs der Anwendung oneSCM. Die Fassungen können in unterschiedlichen Sprachen oder für unterschiedliche Rollen/Märkte geschrieben sein - vergleiche den INHALT, nicht den Wortlaut. Gehe Kapitel für Kapitel vor (Kapitel über Titel bzw. Reihenfolge zuordnen) und nenne je Kapitel: Inhalte, die nur in A stehen; Inhalte, die nur in B stehen; inhaltliche Abweichungen oder Widersprüche. Kapitel ohne inhaltlichen Unterschied mit einer Zeile \"keine inhaltlichen Unterschiede\" erwähnen. Schließe mit einer kurzen Gesamteinschätzung. Erfinde nichts."
   };
   var RAG_PROMPT_LABELS = {
@@ -20333,6 +20414,7 @@
     crossxAgent: "CROSS_X: Wissensagent (Fragen über Kapitel und Rollen, inkl. interner Informationen)",
     crossxCheck: "CROSS_X: KI-Cross-Check über Kapitel und Rollen",
     screenPhMatch: "Screens-Import: Screens zu Platzhaltern zuordnen (KI-Verfeinerung)",
+    vrevQuality: "VARIANTE Review Stufe 4: Grammatik, Fehler und Lücken je Kapitel (KI)",
     finalCompareVersions: "FINAL: Zwei Stände inhaltlich vergleichen"
   };
   function ragPromptFor(promptKey) {
@@ -32161,6 +32243,914 @@
     } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
   });
 
+  /* ============ VARIANTE 6: Dokument-Review (v2.137) ============
+     Entwuerfe (.docx) oder bestehende Staende (FINAL/Varianten) in eine
+     Review-Ablage uebernehmen, 20 Pruefungen in 7 Stufen (Design, Inhalt,
+     Bilder, Qualitaet, Uebersetzung, Abschluss, Finalisierung), Dashboard,
+     Reviewbericht (Word/Markdown), Versionen und Status je Dokument.
+     Text der Kapitel enthaelt interne Kommentarbereiche wie in FINAL als
+     \u0001…\u0002 (FINAL_MARK_START/END). */
+  var VREV_STATUSES = ["Entwurf", "In Review", "Geprüft", "Freigegeben", "Verteilt"];
+  var VREV_STAGES = [
+    { n: 1, label: "Design", hint: "Schriftart, Schriftgröße, Zeilenabstand, Farbpalette, Icons und Markierungen für Tipps und interne Bemerkungen." },
+    { n: 2, label: "Inhalt", hint: "Mit/ohne Jira-Tickets, Planungen, interne Vermerke, Test-Hinweise und Statusangaben im Text." },
+    { n: 3, label: "Bilder", hint: "Platzhalter mit Bildvorschlag – je Platzhalter bis zu 3 Bilder aus dem Bildarchiv." },
+    { n: 4, label: "Qualität", hint: "Grammatik, Fehler, Lücken und Lesbarkeit." },
+    { n: 5, label: "Übersetzung", hint: "Kopie dieser Version mit Übersetzung als eigenes Dokument in der Ablage." },
+    { n: 6, label: "Abschluss", hint: "Anzahl der Änderungen, Vergleich vorher/nachher, Messung von Qualität und Konsistenz." },
+    { n: 7, label: "Finalisierung", hint: "Word-Dokument für die Verteilung – ohne oder mit internen Vermerken." }
+  ];
+  var VREV_CHECKS = [
+    { id: "D1", stage: 1, label: "Schriftarten einheitlich" },
+    { id: "D2", stage: 1, label: "Schriftgrößen" },
+    { id: "D3", stage: 1, label: "Zeilenabstand" },
+    { id: "D4", stage: 1, label: "Farbpalette" },
+    { id: "D5", stage: 1, label: "Icons & Markierungen (Tipps, interne Bemerkungen)" },
+    { id: "C1", stage: 2, label: "Jira-Nummern" },
+    { id: "C2", stage: 2, label: "Planungen & Termine" },
+    { id: "C3", stage: 2, label: "Interne Vermerke" },
+    { id: "C4", stage: 2, label: "Test-Hinweise" },
+    { id: "C5", stage: 2, label: "Statusangaben" },
+    { id: "B1", stage: 3, label: "Bild-Platzhalter belegt" },
+    { id: "B2", stage: 3, label: "Bilder je Platzhalter & Untertitel" },
+    { id: "Q1", stage: 4, label: "Form- und Tippfehler" },
+    { id: "Q2", stage: 4, label: "Grammatik & Stil (KI)" },
+    { id: "Q3", stage: 4, label: "Lücken & leere Kapitel" },
+    { id: "Q4", stage: 4, label: "Lesbarkeit (Satzlänge)" },
+    { id: "T1", stage: 5, label: "Übersetzung" },
+    { id: "A1", stage: 6, label: "Konsistenz (Begriffe, Nummerierung)" },
+    { id: "A2", stage: 6, label: "Qualitätsmessung" },
+    { id: "F1", stage: 7, label: "Bereit für die Verteilung" }
+  ];
+  var VREV_STATUS_DEFS = [
+    { key: "verfügbar", re: /\bverfügbar\b/i, cls: "ok", def: "Die Funktion ist bereits im Einsatz." },
+    { key: "in Abnahme", re: /\bin Abnahme\b/i, cls: "abn", def: "Die Funktion ist entwickelt und wird derzeit abschließend getestet und freigegeben." },
+    { key: "in Entwicklung", re: /\bin Entwicklung\b/i, cls: "dev", def: "Die Funktion wird gerade umgesetzt." },
+    { key: "geplant", re: /\bgeplant\b/i, cls: "plan", def: "Die Funktion ist vorgesehen, aber noch nicht umgesetzt. Beschreiben Sie sie gegenüber Kunden bitte nicht als verfügbar." }
+  ];
+  var VREV_RE = {
+    internalSeg: /\u0001[\s\S]*?\u0002/g,
+    internalLine: /^\s*(\[Intern[^\]]*\]|\[Interner Vermerk\]|Interne?r? (Vermerk|Bemerkung|Hinweis)\s*:|Intern\s*:|TODO\b|FIXME\b|TBD\b)/i,
+    planning: /\b(Q[1-4]\s*\/?\s*20\d\d|Sprint\s*\d+|geplant (für|ab|im|bis)|Roadmap|Release\s+20\d\d(\.\d+)?|KW\s*\d{1,2}|Liefertermin|Go-?Live|Rollout (im|ab))\b/i,
+    test: /\b(Testsystem|Testumgebung|Testdaten|Testfall|Testfälle|Testkunde|UAT|QA-System|Staging|Dummy|Testlauf)\b/i,
+    avail: /(steht\s+(Ihnen\s+)?(ab sofort\s+|bereits\s+|jetzt\s+)?zur Verfügung|ist\s+(ab sofort\s+|bereits\s+|jetzt\s+)?verfügbar|(ab sofort|bereits) (nutzbar|verfügbar|möglich))/i,
+    planned: /\b(geplant|in Entwicklung)\b/i,
+    tipStart: /^\s*(Tipp|Hinweis|Achtung|Wichtig|Warnung|Info)\s*[:!]/i,
+    icon: /[←-⇿☀-➿⬀-⯿ℹ]|[\uD83C-\uD83E][\uDC00-\uDFFF]/g,
+    placeholder: /^\s*(\[Bild(?::\s*([^\]]*))?\]|(Screenshot|Abbildung)\s*:\s*(.+))\s*$/i
+  };
+  var vrevBusy = false, vrevAbort = null, vrevTextChapter = 0;
+
+  function vrevNormalize(d) {
+    d = d && typeof d === "object" ? d : {};
+    var docs = Array.isArray(d.docs) ? d.docs.filter(function (x) { return x && typeof x.id === "number" && Array.isArray(x.chapters); }).map(function (x) {
+      return Object.assign({ name: "Dokument", filename: "", source: "Upload", sourceRef: null, version: "1.0", status: "Entwurf", createdAt: "", updatedAt: "", original: [], ph: {}, design: null, wordDesign: null,
+        checks: {}, steps: {}, stage: 1, changes: [], history: [], ai: null, translationNotNeeded: false, lang: "DE", translations: [], baseDocId: null, scoreInitial: null, score: null, checkedAt: "" }, x);
+    }) : [];
+    return { docs: docs, activeId: typeof d.activeId === "number" ? d.activeId : null };
+  }
+  function VR() { if (!app.vrev) app.vrev = vrevNormalize(null); return app.vrev; }
+  function vrevDoc(id) { return VR().docs.filter(function (x) { return x.id === id; })[0] || null; }
+  function vrevActive() { return vrevDoc(VR().activeId); }
+  function vrevAddDoc(o) {
+    var st = VR(), id = st.docs.reduce(function (m, x) { return Math.max(m, x.id); }, 0) + 1;
+    var doc = vrevNormalize({ docs: [Object.assign({ id: id, createdAt: nowLabel(), updatedAt: nowLabel() }, o)] }).docs[0];
+    doc.original = doc.chapters.map(function (c) { return { title: c.title, text: c.text }; });
+    doc.history = [{ at: nowLabel(), version: doc.version, status: doc.status, what: "Angelegt (" + doc.source + (doc.filename ? ": " + doc.filename : "") + ")" }];
+    st.docs.push(doc);
+    st.activeId = doc.id;
+    return doc;
+  }
+  function vrevLog(doc, stage, what, n) {
+    doc.changes.push({ at: nowLabel(), stage: stage, what: what, n: n || 1 });
+    doc.updatedAt = nowLabel();
+  }
+  function vrevHistory(doc, what) { doc.history.push({ at: nowLabel(), version: doc.version, status: doc.status, what: what }); doc.updatedAt = nowLabel(); }
+
+  // ---------- Design-Analyse einer .docx (Formatvorlagen + direkte Formatierung) ----------
+  function vrevChild(el, tag) {
+    if (!el) return null;
+    for (var i = 0; i < el.childNodes.length; i++) { var c = el.childNodes[i]; if (c.nodeType === 1 && c.tagName === tag) return c; }
+    return null;
+  }
+  async function vrevAnalyzeDocxZip(zip) {
+    async function read(p) { var f = zip.file(p); return f ? await f.async("string") : ""; }
+    function parse(x) { if (!x) return null; var d = new DOMParser().parseFromString(x, "application/xml"); return d.querySelector("parsererror") ? null : d; }
+    var themePath = Object.keys(zip.files).filter(function (p) { return /^word\/theme\/theme\d*\.xml$/.test(p); }).sort()[0];
+    var theme = themePath ? parse(await read(themePath)) : null, themeFonts = { major: "", minor: "" };
+    if (theme) ["major", "minor"].forEach(function (k) { var el = theme.getElementsByTagName("a:" + k + "Font")[0], lat = el && el.getElementsByTagName("a:latin")[0]; if (lat) themeFonts[k] = lat.getAttribute("typeface") || ""; });
+    function fontOf(rf) {
+      if (!rf) return null;
+      var a = rf.getAttribute("w:ascii") || rf.getAttribute("w:hAnsi");
+      if (a) return a;
+      var t = rf.getAttribute("w:asciiTheme") || rf.getAttribute("w:hAnsiTheme");
+      return t ? (themeFonts[t.indexOf("major") === 0 ? "major" : "minor"] || null) : null;
+    }
+    function rProps(rPr) {
+      var o = {};
+      if (!rPr) return o;
+      var f = fontOf(vrevChild(rPr, "w:rFonts")); if (f) o.font = f;
+      var sz = vrevChild(rPr, "w:sz"); if (sz && sz.getAttribute("w:val")) o.size = parseInt(sz.getAttribute("w:val"), 10) / 2;
+      var c = vrevChild(rPr, "w:color"); if (c && c.getAttribute("w:val")) o.color = String(c.getAttribute("w:val")).toUpperCase();
+      return o;
+    }
+    function spacing(pPr) {
+      var sp = vrevChild(pPr, "w:spacing");
+      if (!sp || !sp.getAttribute("w:line")) return null;
+      var line = parseInt(sp.getAttribute("w:line"), 10), rule = sp.getAttribute("w:lineRule") || "auto";
+      return rule === "auto" ? String(Math.round(line / 240 * 100) / 100).replace(".", ",") + "-fach" : (line / 20) + " pt " + (rule === "exact" ? "genau" : "mindestens");
+    }
+    var styles = parse(await read("word/styles.xml")), defs = { font: themeFonts.minor || "Calibri", size: 10, color: "AUTO", line: "1-fach" }, st = {}, defaultId = null;
+    if (styles) {
+      var dd = styles.getElementsByTagName("w:docDefaults")[0];
+      if (dd) {
+        var rd = dd.getElementsByTagName("w:rPr")[0]; Object.assign(defs, rProps(rd));
+        var pd = dd.getElementsByTagName("w:pPr")[0], l0 = pd ? spacing(pd) : null; if (l0) defs.line = l0;
+      }
+      Array.prototype.forEach.call(styles.getElementsByTagName("w:style"), function (s) {
+        var id = s.getAttribute("w:styleId"), b = vrevChild(s, "w:basedOn"), nm = vrevChild(s, "w:name");
+        var o = rProps(vrevChild(s, "w:rPr")), l = spacing(vrevChild(s, "w:pPr"));
+        if (l) o.line = l;
+        o.basedOn = b ? b.getAttribute("w:val") : null;
+        o.name = nm ? String(nm.getAttribute("w:val") || "").toLowerCase() : "";
+        if (s.getAttribute("w:type") === "paragraph" && s.getAttribute("w:default") === "1") defaultId = id;
+        st[id] = o;
+      });
+    }
+    function styleProps(id, depth) {
+      var s = st[id]; depth = depth || 0;
+      if (!s || depth > 8) return {};
+      var o = Object.assign({}, s.basedOn ? styleProps(s.basedOn, depth + 1) : {});
+      ["font", "size", "color", "line"].forEach(function (k) { if (s[k] != null) o[k] = s[k]; });
+      return o;
+    }
+    var doc = parse(await read("word/document.xml"));
+    if (!doc) throw new Error("word/document.xml nicht lesbar");
+    var res = { fonts: {}, sizes: {}, lines: {}, colors: {}, icons: 0, tipsMarked: 0, tipsUnmarked: [], comments: doc.getElementsByTagName("w:commentRangeStart").length, highlights: 0, images: doc.getElementsByTagName("w:drawing").length, paragraphs: 0 };
+    Array.prototype.forEach.call(doc.getElementsByTagName("w:p"), function (p) {
+      var pPr = vrevChild(p, "w:pPr"), ps = vrevChild(pPr, "w:pStyle"), sid = ps ? ps.getAttribute("w:val") : defaultId;
+      var sp = Object.assign({}, defs, styleProps(sid));
+      var sname = (st[sid] && st[sid].name) || "";
+      var isHeading = /^(heading|title|überschrift|titel)/.test(sname) || /^(Heading|berschrift|Title|Titel)/i.test(sid || "");
+      var line = spacing(pPr) || sp.line, text = "";
+      Array.prototype.forEach.call(p.getElementsByTagName("w:r"), function (r) {
+        var ts = r.getElementsByTagName("w:t"), t = "";
+        for (var i = 0; i < ts.length; i++) t += ts[i].textContent;
+        res.icons += r.getElementsByTagName("w:sym").length;
+        if (!t) return;
+        var rPr = vrevChild(r, "w:rPr"), rp = Object.assign({}, sp, rProps(rPr)), len = t.length;
+        res.fonts[rp.font || "?"] = (res.fonts[rp.font || "?"] || 0) + len;
+        if (!isHeading && rp.size) res.sizes[rp.size] = (res.sizes[rp.size] || 0) + len;
+        var col = !rp.color || rp.color === "AUTO" || rp.color === "000000" ? "Automatisch/Schwarz" : rp.color;
+        res.colors[col] = (res.colors[col] || 0) + len;
+        if (rPr && vrevChild(rPr, "w:highlight")) res.highlights++;
+        res.icons += (t.match(VREV_RE.icon) || []).length;
+        text += t;
+      });
+      if (!text.trim()) return;
+      res.paragraphs++;
+      if (!isHeading) res.lines[line] = (res.lines[line] || 0) + 1;
+      var shd = vrevChild(pPr, "w:shd"), fill = shd ? String(shd.getAttribute("w:fill") || "").toUpperCase() : "";
+      var marked = (fill && fill !== "AUTO" && fill !== "FFFFFF") || MANUAL_CALLOUT_TAGS.some(function (tag) { return text.trim().indexOf(tag) === 0; }) || /tip|hinweis|note|warn/.test(sname);
+      if (marked && (VREV_RE.tipStart.test(text) || MANUAL_CALLOUT_TAGS.some(function (tag) { return text.trim().indexOf(tag) === 0; }))) res.tipsMarked++;
+      else if (!marked && VREV_RE.tipStart.test(text)) res.tipsUnmarked.push(truncate(text.trim(), 80));
+    });
+    return res;
+  }
+  function vrevShares(map, minPct) {
+    var total = Object.keys(map).reduce(function (n, k) { return n + map[k]; }, 0) || 1;
+    return Object.keys(map).map(function (k) { return { key: k, pct: Math.round(100 * map[k] / total) }; })
+      .filter(function (x) { return x.pct >= (minPct || 0); }).sort(function (a, b) { return b.pct - a.pct; });
+  }
+
+  // ---------- Platzhalter ----------
+  function vrevPlaceholders(text) {
+    var out = [], lines = String(text || "").split("\n"), idx = 0, prev = "";
+    lines.forEach(function (line, li) {
+      var m = VREV_RE.placeholder.exec(line);
+      if (m) {
+        var bild = !!m[1] && /^\s*\[Bild/i.test(m[1]);
+        out.push({ idx: idx++, line: li, kind: bild ? "bild" : "screenshot", desc: (bild ? (m[2] || "") : (m[4] || "")).trim(), context: prev });
+      } else if (line.trim()) prev = line.replace(FINAL_MARK_RE, "").trim();
+    });
+    return out;
+  }
+  function vrevAllPlaceholders(doc) {
+    var all = [];
+    doc.chapters.forEach(function (c, ci) { vrevPlaceholders(c.text).forEach(function (p) { all.push(Object.assign({ ci: ci, key: ci + ":" + p.idx, chapter: c.title }, p)); }); });
+    return all;
+  }
+  // Rangfolge wie "Screens zu Platzhaltern", plus Bonus fuer ganze Woerter der Beschreibung im Bildtext
+  // (Stammbildung kuerzt auf 7 Zeichen: "Vertragsuebersicht" und "Vertragsliste" waeren sonst gleich).
+  function vrevRank(p, pool, ix) {
+    var q = { chapter: p.chapter, desc: p.desc || p.context || "" }, pos = new Map();
+    pool.forEach(function (img, i) { pos.set(img, i); });
+    var words = vrevPlain(q.desc).toLowerCase().match(/[a-zäöüß0-9]{5,}/g) || [];
+    return screenPhRank(q, pool, ix.idf, ix.raw, ix.stems, ix.unseen).map(function (x) {
+      var raw = ix.raw[pos.get(x.img)] || "", bonus = words.length ? words.filter(function (w) { return raw.indexOf(w) !== -1; }).length / words.length : 0;
+      return { img: x.img, pct: Math.max(x.pct, Math.round(100 * bonus)), score: x.score * (1 + bonus) };
+    }).sort(function (a, b) { return b.score - a.score; });
+  }
+  function vrevImagePool(doc) {
+    return app.uploadedImages.filter(function (img) { return img.dataUrl && (!img.sprache || !doc.lang || img.sprache === doc.lang); });
+  }
+
+  // ---------- Text-Helfer ----------
+  function vrevPlain(text) { return String(text || "").replace(FINAL_MARK_RE, ""); }
+  function vrevLines(doc, fn) {
+    doc.chapters.forEach(function (c, ci) {
+      String(c.text || "").split("\n").forEach(function (line, li) { fn(line, c, ci, li); });
+    });
+  }
+  function vrevWords(text) { return (vrevPlain(text).match(/[A-Za-zÄÖÜäöüß0-9][\wÄÖÜäöüß-]*/g) || []).length; }
+  function vrevQ1Findings(doc) {
+    var out = [];
+    vrevLines(doc, function (line, c) {
+      var t = vrevPlain(line);
+      if (VREV_RE.placeholder.test(t)) return;
+      var m, re = /\b([A-Za-zÄÖÜäöüß]{2,})\s+\1\b/gi;
+      while ((m = re.exec(t))) out.push({ chapter: c.title, typ: "doppeltes Wort", text: m[0] });
+      if (/\S {2,}\S/.test(t)) out.push({ chapter: c.title, typ: "doppelte Leerzeichen", text: truncate(t.trim(), 60) });
+      re = / [,.;:!?](?=\s|$)/g;
+      while ((m = re.exec(t))) out.push({ chapter: c.title, typ: "Leerzeichen vor Satzzeichen", text: truncate(t.slice(Math.max(0, m.index - 20), m.index + 3), 40) });
+      re = /[,;](?=[A-Za-zÄÖÜäöü])/g;
+      while ((m = re.exec(t))) out.push({ chapter: c.title, typ: "fehlendes Leerzeichen nach Satzzeichen", text: truncate(t.slice(Math.max(0, m.index - 15), m.index + 15), 40) });
+    });
+    return out;
+  }
+  function vrevAutofixText(text) {
+    return String(text || "").split("\n").map(function (line) {
+      if (VREV_RE.placeholder.test(line)) return line;
+      return line.replace(/\b([A-Za-zÄÖÜäöüß]{2,})\s+\1\b/gi, "$1").replace(/(\S) {2,}(?=\S)/g, "$1 ").replace(/ ([,.;:!?])(?=\s|$)/g, "$1").replace(/([,;])(?=[A-Za-zÄÖÜäöü])/g, "$1 ");
+    }).join("\n");
+  }
+  function vrevStatusHits(doc) {
+    var out = [];
+    vrevLines(doc, function (line, c, ci) {
+      var t = vrevPlain(line);
+      VREV_STATUS_DEFS.forEach(function (s) {
+        if (s.re.test(t)) out.push({ chapter: c.title, ci: ci, status: s.key, cls: s.cls, text: t.trim(), conflict: (s.key === "geplant" || s.key === "in Entwicklung") && VREV_RE.avail.test(t) });
+      });
+    });
+    return out;
+  }
+  function vrevSpellingVariants(doc) {
+    var groups = {};
+    doc.chapters.forEach(function (c) {
+      (vrevPlain(c.title + "\n" + c.text).match(/[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß-]{2,}/g) || []).forEach(function (w) {
+        var low = w.toLowerCase().replace(/-+$/, ""), key = low.replace(/-/g, "");
+        if (key.length < 4) return;
+        (groups[key] = groups[key] || {})[low] = true;
+      });
+    });
+    return Object.keys(groups).map(function (k) { return Object.keys(groups[k]); }).filter(function (v) { return v.length > 1 && v.some(function (x) { return x.indexOf("-") !== -1; }); });
+  }
+
+  // ---------- Die 20 Pruefungen ----------
+  function vrevGrade(n, okMax, warnMax) { return n <= okMax ? "ok" : n <= warnMax ? "warn" : "fail"; }
+  function vrevScore(checks, ids) {
+    var w = { ok: 100, warn: 60, fail: 0 }, vals = ids.map(function (id) { return checks[id]; }).filter(function (c) { return c && w[c.s] != null; });
+    return vals.length ? Math.round(vals.reduce(function (n, c) { return n + w[c.s]; }, 0) / vals.length) : null;
+  }
+  function vrevRunChecks(doc) {
+    var ch = {}, d = doc.design, put = function (id, s, detail, n) { ch[id] = { s: s, d: detail, n: n == null ? null : n }; };
+    // Stufe 1 – Design
+    if (!d) ["D1", "D2", "D3", "D4", "D5"].forEach(function (id) { put(id, "open", "Keine Design-Daten (Dokument konnte nicht als Word analysiert werden)."); });
+    else {
+      var fonts = vrevShares(d.fonts, 2), sizes = vrevShares(d.sizes, 2), lines = vrevShares(d.lines, 0), colors = vrevShares(d.colors, 1).filter(function (x) { return x.key !== "Automatisch/Schwarz"; });
+      put("D1", vrevGrade(fonts.length, 2, 3), fonts.length + " Schriftart(en): " + fonts.map(function (x) { return x.key + " " + x.pct + " %"; }).join(", "), fonts.length);
+      var main = sizes[0] ? parseFloat(sizes[0].key) : null, sizeS = vrevGrade(sizes.length, 2, 3);
+      if (main && (main < 9 || main > 12) && sizeS === "ok") sizeS = "warn";
+      put("D2", sizeS, sizes.length + " Schriftgröße(n) im Fließtext: " + sizes.map(function (x) { return String(x.key).replace(".", ",") + " pt " + x.pct + " %"; }).join(", ") + (main && (main < 9 || main > 12) ? " – Fließtext außerhalb von 9–12 pt" : ""), sizes.length);
+      var dom = lines[0];
+      put("D3", !dom ? "ok" : dom.pct >= 90 ? "ok" : dom.pct >= 75 ? "warn" : "fail", lines.length ? "Zeilenabstand: " + lines.map(function (x) { return x.key + " " + x.pct + " %"; }).join(", ") : "Kein Fließtext.", lines.length);
+      put("D4", vrevGrade(colors.length, 4, 6), colors.length ? colors.length + " Textfarbe(n) neben Schwarz: " + colors.map(function (x) { return "#" + x.key; }).join(", ") : "Nur Schwarz/Automatisch.", colors.length);
+      put("D5", vrevGrade(d.tipsUnmarked.length, 0, 3), "Icons/Symbole: " + d.icons + " · markierte Tipps/Hinweise: " + d.tipsMarked + " · unmarkierte Tipps/Hinweise: " + d.tipsUnmarked.length +
+        (d.tipsUnmarked.length ? " (" + d.tipsUnmarked.slice(0, 3).join(" | ") + ")" : "") + " · interne Bemerkungen: " + d.comments + " Kommentar(e), " + d.highlights + " farblich markierte Stelle(n)", d.tipsUnmarked.length);
+    }
+    // Stufe 2 – Inhalt
+    var jira = 0, plan = [], intern = 0, internLines = [], test = [];
+    vrevLines(doc, function (line, c) {
+      var t = vrevPlain(line);
+      jira += (t.match(ROVO_JIRA_KEY_RE) || []).length;
+      if (VREV_RE.planning.test(t)) plan.push(c.title + ": " + truncate(t.trim(), 70));
+      if (VREV_RE.internalLine.test(t)) internLines.push(c.title + ": " + truncate(t.trim(), 70));
+      if (VREV_RE.test.test(t)) test.push(c.title + ": " + truncate(t.trim(), 70));
+    });
+    doc.chapters.forEach(function (c) { intern += (String(c.text || "").match(VREV_RE.internalSeg) || []).length; });
+    put("C1", jira ? "fail" : "ok", jira ? jira + " Jira-Nummer(n) im Text – für Kunden entfernen („Jira-Nummern löschen“)." : "Keine Jira-Nummern im Text.", jira);
+    put("C2", plan.length ? "warn" : "ok", plan.length ? plan.length + " Stelle(n) mit Planung/Termin: " + plan.slice(0, 3).join(" | ") : "Keine Planungsangaben.", plan.length);
+    put("C3", intern + internLines.length ? "warn" : "ok", intern + internLines.length ? (intern + internLines.length) + " interne(r) Vermerk(e) (Kommentarbereiche: " + intern + ", Zeilen: " + internLines.length + ") – werden in der Verteilfassung entfernt." : "Keine internen Vermerke.", intern + internLines.length);
+    put("C4", test.length ? "warn" : "ok", test.length ? test.length + " Test-Hinweis(e): " + test.slice(0, 3).join(" | ") : "Keine Test-Hinweise.", test.length);
+    var sh = vrevStatusHits(doc), conflicts = sh.filter(function (h) { return h.conflict; }), planned = sh.filter(function (h) { return h.status === "geplant" || h.status === "in Entwicklung"; });
+    var counts = VREV_STATUS_DEFS.map(function (s) { return s.key + ": " + sh.filter(function (h) { return h.status === s.key; }).length; }).join(" · ");
+    put("C5", conflicts.length ? "fail" : planned.length ? "warn" : "ok", (sh.length ? counts : "Keine Statusangaben im Text.") +
+      (conflicts.length ? " – " + conflicts.length + " Stelle(n) beschreiben Geplantes/in Entwicklung Befindliches als verfügbar." : planned.length ? " – geplante Funktionen gegenüber Kunden nicht als verfügbar beschreiben." : ""), sh.length);
+    // Stufe 3 – Bilder
+    var phs = vrevAllPlaceholders(doc), filled = phs.filter(function (p) { return (doc.ph[p.key] || []).length; });
+    put("B1", !phs.length ? "ok" : filled.length === phs.length ? "ok" : filled.length ? "warn" : "fail", phs.length ? filled.length + " von " + phs.length + " Platzhalter(n) mit Bildern belegt." : "Keine Bild-Platzhalter im Text.", phs.length - filled.length);
+    var over = phs.filter(function (p) { return (doc.ph[p.key] || []).length > 3; }).length, noCap = 0, imgs = 0;
+    phs.forEach(function (p) { (doc.ph[p.key] || []).forEach(function (id) { var img = screenPhImgById(id); imgs++; if (!img || !(img.description || img.caption)) noCap++; }); });
+    put("B2", over ? "fail" : noCap ? "warn" : "ok", imgs + " Bild(er) zugeordnet" + (over ? ", " + over + " Platzhalter mit mehr als 3 Bildern" : "") + (noCap ? ", " + noCap + " ohne Bildtext/Untertitel" : ", alle mit Bildtext") + ".", over + noCap);
+    // Stufe 4 – Qualitaet
+    var q1 = vrevQ1Findings(doc), aiOpen = function (typs) { return doc.ai ? doc.ai.findings.filter(function (f) { return !f.done && typs.indexOf(f.typ) !== -1; }) : []; };
+    var aiErr = aiOpen(["Fehler"]), aiGram = aiOpen(["Grammatik", "Rechtschreibung", "Stil"]), aiGap = aiOpen(["Lücke"]);
+    put("Q1", vrevGrade(q1.length + aiErr.length, 0, 3), (q1.length ? q1.length + " Formfehler (" + q1.slice(0, 3).map(function (f) { return f.typ + ": „" + f.text + "“"; }).join("; ") + ")" : "Keine Formfehler") + (doc.ai ? " · KI: " + aiErr.length + " offene(r) Fehler" : "") + ".", q1.length + aiErr.length);
+    put("Q2", !doc.ai ? "open" : vrevGrade(aiGram.length, 0, 5), !doc.ai ? "Noch nicht geprüft – „KI-Prüfung“ in Stufe 4 starten." : aiGram.length + " offene KI-Befund(e) zu Grammatik/Rechtschreibung/Stil (Prüfung vom " + doc.ai.at + ").", aiGram.length);
+    var empty = doc.chapters.filter(function (c) { return vrevWords(c.text.split("\n").filter(function (l) { return !VREV_RE.placeholder.test(l); }).join("\n")) === 0; });
+    var short = doc.chapters.filter(function (c) { var w = vrevWords(c.text); return w > 0 && w < 25; });
+    var marks = []; vrevLines(doc, function (line, c) { if (/\b(XXX|TBD)\b|\[\s*(\.\.\.|…)\s*\]|^\s*(\.\.\.|…)\s*$/.test(vrevPlain(line))) marks.push(c.title); });
+    put("Q3", empty.length || marks.length ? "fail" : short.length || aiGap.length ? "warn" : "ok",
+      (empty.length ? empty.length + " leere(s) Kapitel (" + empty.slice(0, 3).map(function (c) { return c.title; }).join(", ") + ")" : "Keine leeren Kapitel") +
+      (short.length ? " · " + short.length + " sehr kurze(s) Kapitel (< 25 Wörter)" : "") + (marks.length ? " · " + marks.length + " Lücken-Markierung(en) (XXX/TBD/…)" : "") + (doc.ai ? " · KI: " + aiGap.length + " offene Lücke(n)" : "") + ".", empty.length + short.length + marks.length + aiGap.length);
+    var sentences = [], longS = 0;
+    doc.chapters.forEach(function (c) { vrevPlain(c.text).split(/[.!?]+(?:\s+|$)/).forEach(function (s) { var n = (s.match(/\S+/g) || []).length; if (n >= 3) { sentences.push(n); if (n > 30) longS++; } }); });
+    var share = sentences.length ? Math.round(100 * longS / sentences.length) : 0, avg = sentences.length ? Math.round(sentences.reduce(function (a, b) { return a + b; }, 0) / sentences.length) : 0;
+    put("Q4", share > 25 ? "fail" : share > 10 ? "warn" : "ok", sentences.length ? "Ø " + avg + " Wörter je Satz, " + longS + " Satz/Sätze mit mehr als 30 Wörtern (" + share + " %)." : "Kein Fließtext.", longS);
+    // Stufe 5 – Uebersetzung
+    var base = doc.baseDocId ? vrevDoc(doc.baseDocId) : null;
+    var trs = (doc.translations || []).map(vrevDoc).filter(Boolean);
+    var bildCount = function (x) { return vrevAllPlaceholders(x).length; };
+    var complete = trs.filter(function (t) { return t.chapters.length === doc.chapters.length && bildCount(t) === bildCount(doc); });
+    if (doc.source === "Übersetzung") put("T1", "ok", "Übersetzung (" + variantLangName(doc.lang) + ")" + (base ? " von „" + base.name + "“ v" + base.version : "") + ".");
+    else if (trs.length) put("T1", complete.length === trs.length ? "ok" : "warn", trs.map(function (t) { return variantLangName(t.lang) + " (v" + t.version + ")"; }).join(", ") + (complete.length === trs.length ? " – vollständig (Kapitel und Platzhalter)." : " – unvollständig: Kapitel- oder Platzhalteranzahl weicht ab."), trs.length);
+    else if (doc.translationNotNeeded) put("T1", "ok", "Keine Übersetzung erforderlich.");
+    else put("T1", "open", "Noch keine Übersetzung – in Stufe 5 erzeugen oder als „nicht erforderlich“ markieren.");
+    // Stufe 6 – Abschluss
+    var variants = vrevSpellingVariants(doc), numbered = doc.chapters.filter(function (c) { return /^\s*\d+(\.\d+)*\.?\s/.test(c.title); }).length;
+    var mixed = numbered > 0 && numbered < doc.chapters.filter(function (c) { return c.level > 0 && !/^Vorspann/.test(c.title); }).length;
+    put("A1", variants.length > 3 ? "fail" : variants.length || mixed ? "warn" : "ok", (variants.length ? variants.length + " uneinheitliche Schreibweise(n): " + variants.slice(0, 4).map(function (v) { return v.join(" / "); }).join("; ") : "Begriffe einheitlich geschrieben") + (mixed ? " · Kapitelnummerierung uneinheitlich (" + numbered + " nummeriert)" : "") + ".", variants.length + (mixed ? 1 : 0));
+    var scoreIds = VREV_CHECKS.map(function (c) { return c.id; }).filter(function (id) { return id !== "A2" && id !== "F1"; });
+    var score = vrevScore(ch, scoreIds);
+    put("A2", score == null ? "open" : score >= 85 ? "ok" : score >= 70 ? "warn" : "fail", "Qualität " + (score == null ? "–" : score + " von 100") + (doc.scoreInitial != null ? " (beim ersten Prüflauf " + doc.scoreInitial + ")" : "") + ".", score);
+    // Stufe 7 – Finalisierung
+    var blockers = scoreIds.concat(["A2"]).filter(function (id) { return ch[id] && ch[id].s === "fail"; });
+    var openStages = [1, 2, 3, 4, 5, 6].filter(function (n) { return !doc.steps[n]; });
+    put("F1", !blockers.length && !openStages.length ? "ok" : "warn", (blockers.length ? "Offene Fehler: " + blockers.join(", ") + ". " : "") + (openStages.length ? "Nicht abgeschlossene Stufen: " + openStages.join(", ") + ". " : "") +
+      (!blockers.length && !openStages.length ? "Alle Stufen abgeschlossen, keine Fehler – die Verteilfassung enthält keine internen Vermerke und keine Jira-Nummern." : "Die Verteilfassung entfernt interne Vermerke und Jira-Nummern trotzdem automatisch."), blockers.length + openStages.length);
+    doc.checks = ch;
+    doc.score = score;
+    if (doc.scoreInitial == null && score != null) doc.scoreInitial = score;
+    doc.checkedAt = nowLabel();
+    if (doc.status === "Entwurf") { doc.status = "In Review"; vrevHistory(doc, "Review gestartet"); }
+    return ch;
+  }
+  function vrevCounts(doc) {
+    var c = { ok: 0, warn: 0, fail: 0, open: 0 };
+    VREV_CHECKS.forEach(function (k) { var x = doc.checks[k.id]; c[x ? x.s : "open"]++; });
+    return c;
+  }
+  function vrevStepsDone(doc) { return VREV_STAGES.filter(function (s) { return doc.steps[s.n]; }).length; }
+  function vrevChangeCount(doc) { return doc.changes.reduce(function (n, x) { return n + (x.n || 1); }, 0); }
+
+  // ---------- Ausgabe (Word) ----------
+  function vrevExportText(doc, c, ci, withInternal) {
+    var out = [], phs = vrevPlaceholders(c.text), byLine = {};
+    phs.forEach(function (p) { byLine[p.line] = p; });
+    String(c.text || "").split("\n").forEach(function (line, li) {
+      var p = byLine[li];
+      if (p) {
+        var ids = (doc.ph[ci + ":" + p.idx] || []).filter(function (id) { return screenPhImgById(id); });
+        if (ids.length) { ids.forEach(function () { out.push("[Bild]"); }); return; }
+        // Leerer Platzhalter: kein "[Bild]" ausgeben (wuerde sonst das Bild des naechsten Platzhalters belegen).
+        if (withInternal) out.push("[Intern: Bild fehlt" + (p.desc ? " – " + p.desc : "") + "]");
+        return;
+      }
+      if (!withInternal && VREV_RE.internalLine.test(vrevPlain(line))) return;
+      out.push(line);
+    });
+    var t = out.join("\n");
+    if (withInternal) t = t.replace(/\u0001/g, "[Intern: ").replace(/\u0002/g, "]");
+    else t = finalStripJiraKeys(t.replace(VREV_RE.internalSeg, "").replace(FINAL_MARK_RE, ""));
+    return variantStripRoleMarkers(t);
+  }
+  function vrevExportChapters(doc, withInternal) {
+    return doc.chapters.map(function (c, ci) {
+      var screens = [];
+      vrevPlaceholders(c.text).forEach(function (p) {
+        (doc.ph[ci + ":" + p.idx] || []).forEach(function (id) { var img = screenPhImgById(id); if (img) screens.push(Object.assign({}, img, { description: finalScreenCaption(img) })); });
+      });
+      return { title: c.title, level: Math.max(1, c.level || 1), text: vrevExportText(doc, c, ci, withInternal), screens: screens };
+    });
+  }
+  async function vrevBuildWord(doc, withInternal, plain) {
+    var blob = await buildFinalMasterDocxBlob(vrevExportChapters(doc, withInternal), {
+      coverTitle: doc.name, coverSubtitle: "Version " + doc.version + " · " + doc.status + (withInternal ? " · INTERN – mit internen Vermerken" : ""),
+      footerTitle: doc.name + " v" + doc.version + (withInternal ? " – INTERN" : "")
+    });
+    return plain ? blob : finalApplyWordDesign(blob, doc.wordDesign || finalResolveWordDesign());
+  }
+  function vrevFileBase(doc) { return editoFinalSafeName(doc.name) + "_v" + String(doc.version).replace(/[^\w.]/g, ""); }
+
+  // ---------- Reviewbericht ----------
+  function vrevReportMd(doc) {
+    var c = vrevCounts(doc), sym = { ok: "OK", warn: "Hinweis", fail: "Fehler", open: "offen" };
+    var md = ["# Reviewbericht – " + doc.name, "",
+      "Version " + doc.version + " · Status: " + doc.status + " · Quelle: " + doc.source + (doc.filename ? " (" + doc.filename + ")" : "") + " · Sprache: " + variantLangName(doc.lang) + " · geprüft: " + (doc.checkedAt || "–"), "",
+      "## Dashboard", "",
+      "- Qualität: " + (doc.score == null ? "–" : doc.score + " von 100") + (doc.scoreInitial != null ? " (Start: " + doc.scoreInitial + ")" : ""),
+      "- Prüfungen: " + c.ok + " OK · " + c.warn + " Hinweise · " + c.fail + " Fehler · " + c.open + " offen (von 20)",
+      "- Stufen abgeschlossen: " + vrevStepsDone(doc) + " von 7",
+      "- Änderungen: " + vrevChangeCount(doc), ""];
+    VREV_STAGES.forEach(function (s) {
+      md.push("## Stufe " + s.n + " – " + s.label + (doc.steps[s.n] ? " (abgeschlossen " + doc.steps[s.n] + ")" : " (offen)"), "");
+      VREV_CHECKS.filter(function (k) { return k.stage === s.n; }).forEach(function (k) {
+        var x = doc.checks[k.id];
+        md.push("- [" + sym[x ? x.s : "open"] + "] " + k.id + " " + k.label + ": " + (x ? x.d : "nicht geprüft"));
+      });
+      md.push("");
+    });
+    var sh = vrevStatusHits(doc);
+    if (sh.length) {
+      md.push("## Statusangaben im Text", "");
+      sh.slice(0, 40).forEach(function (h) { md.push("- " + h.status + (h.conflict ? " (WIDERSPRUCH: als verfügbar beschrieben)" : "") + " – " + h.chapter + ": " + truncate(h.text, 120)); });
+      md.push("");
+    }
+    if (doc.ai && doc.ai.findings.length) {
+      md.push("## KI-Befunde (Stufe 4)", "");
+      doc.ai.findings.forEach(function (f) { md.push("- " + (f.done ? "erledigt" : "offen") + " · " + f.typ + " · " + f.chapter + ": " + (f.original ? "„" + truncate(f.original, 80) + "“ → " : "") + truncate(f.vorschlag || "", 120) + (f.hinweis ? " (" + truncate(f.hinweis, 80) + ")" : "")); });
+      md.push("");
+    }
+    var miss = vrevAllPlaceholders(doc).filter(function (p) { return !(doc.ph[p.key] || []).length; });
+    if (miss.length) { md.push("## Fehlende Bilder", ""); miss.forEach(function (p) { md.push("- " + p.chapter + ": " + (p.desc || p.context || "[Bild]")); }); md.push(""); }
+    md.push("## Änderungen", "");
+    if (!doc.changes.length) md.push("- keine");
+    doc.changes.forEach(function (x) { md.push("- " + x.at + " · Stufe " + x.stage + " · " + x.what + (x.n > 1 ? " (" + x.n + ")" : "")); });
+    md.push("", "## Verlauf (Version und Status)", "");
+    doc.history.forEach(function (h) { md.push("- " + h.at + " · v" + h.version + " · " + h.status + " · " + h.what); });
+    return md.join("\n");
+  }
+
+  // ---------- Rendern ----------
+  function vrevPill(s) {
+    var lbl = { ok: "OK", warn: "Hinweis", fail: "Fehler", open: "offen" }[s] || s;
+    return '<span class="vrev-pill vrev-' + s + '">' + lbl + "</span>";
+  }
+  function vrevStatusPill(st) { return '<span class="vrev-docstatus vrev-ds-' + VREV_STATUSES.indexOf(st) + '">' + escapeHtml(st) + "</span>"; }
+  function vrevMarkHtml(text, hideJira) {
+    var t = String(text || "");
+    if (hideJira) t = finalStripJiraKeys(t);
+    var h = escapeHtml(t).replace(/\u0001/g, '<mark class="vrev-m-intern" title="interner Vermerk">').replace(/\u0002/g, "</mark>");
+    if (!hideJira) h = h.replace(ROVO_JIRA_KEY_RE, function (k) { return '<mark class="vrev-m-jira">' + k + "</mark>"; });
+    VREV_STATUS_DEFS.forEach(function (s) {
+      h = h.replace(new RegExp("\\b(" + s.key.replace(/ /g, "\\s") + ")\\b", "gi"), '<span class="vrev-st vrev-st-' + s.cls + '" title="' + escapeHtml(s.def) + '">$1</span>');
+    });
+    return h.split("\n").map(function (line) {
+      var raw = line.replace(/<[^>]+>/g, "");
+      var cls = VREV_RE.placeholder.test(raw) ? "vrev-l-ph" : VREV_RE.internalLine.test(raw) ? "vrev-l-intern" : VREV_RE.planning.test(raw) ? "vrev-l-plan" : VREV_RE.test.test(raw) ? "vrev-l-test" : "";
+      return '<div class="vrev-line ' + cls + '">' + (line || "&nbsp;") + "</div>";
+    }).join("");
+  }
+  function renderVrev() {
+    if (!els.vrevStep) return;
+    var st = VR(), doc = vrevActive();
+    els.vrevExistingSelect.innerHTML = app.final.versions.length ? app.final.versions.map(function (v) {
+      return '<option value="' + v.id + '">' + escapeHtml(v.name + " – " + v.status + (v.origin === "Variante" ? " (Variante)" : "")) + "</option>";
+    }).join("") : '<option value="">– noch keine Stände in FINAL –</option>';
+    els.vrevExistingBtn.disabled = !app.final.versions.length || vrevBusy;
+    els.vrevUploadBtn.disabled = vrevBusy;
+    els.vrevDocsWrap.hidden = !st.docs.length;
+    els.vrevDocsEmpty.hidden = st.docs.length > 0;
+    els.vrevDocsTbody.innerHTML = st.docs.map(function (x) {
+      var c = vrevCounts(x), active = doc && x.id === doc.id;
+      return '<tr data-vrev-row="' + x.id + '"' + (active ? ' class="vrev-row-active"' : "") + "><td><b>" + escapeHtml(x.name) + "</b>" + (active ? ' <span class="step-note">(geöffnet)</span>' : "") +
+        (x.filename ? '<div class="step-note">' + escapeHtml(x.filename) + "</div>" : "") + "</td>" +
+        '<td class="mono">' + escapeHtml(x.version) + "</td>" +
+        "<td>" + vrevStatusPill(x.status) + '<div><select data-vrev-status="' + x.id + '" aria-label="Status von ' + escapeHtml(x.name) + '">' +
+        VREV_STATUSES.map(function (s) { return '<option value="' + s + '"' + (s === x.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select></div></td>" +
+        "<td>" + escapeHtml(x.source) + (x.source === "Übersetzung" || x.lang !== "DE" ? " · " + escapeHtml(x.lang) : "") + "</td>" +
+        "<td>" + (x.score == null ? "–" : '<b class="vrev-score-' + (x.score >= 85 ? "ok" : x.score >= 70 ? "warn" : "fail") + '">' + x.score + "</b>") + '<div class="step-note">' + c.ok + "✓ " + c.warn + "! " + c.fail + "✕</div></td>" +
+        "<td>" + vrevStepsDone(x) + "/7</td><td>" + vrevChangeCount(x) + "</td><td>" + escapeHtml(x.checkedAt || "–") + "</td>" +
+        '<td><div class="final-row-actions">' + (active ? "" : '<button class="btn ghost btn-tiny" type="button" data-vrev-act="open" data-id="' + x.id + '">Öffnen</button>') +
+        '<button class="btn ghost btn-tiny" type="button" data-vrev-act="report-docx" data-id="' + x.id + '"' + (x.checkedAt ? "" : " disabled") + ">Reviewbericht</button>" +
+        '<button class="btn ghost btn-tiny" type="button" data-vrev-act="word-dist" data-id="' + x.id + '">Word</button>' +
+        '<button class="btn ghost btn-tiny" type="button" data-vrev-act="new-version" data-id="' + x.id + '">Neue Version</button>' +
+        '<button class="btn ghost btn-tiny final-btn-danger" type="button" data-vrev-act="delete" data-id="' + x.id + '">Löschen</button></div></td></tr>';
+    }).join("");
+    els.vrevWork.hidden = !doc;
+    if (!doc) return;
+    els.vrevDocTitle.textContent = doc.name + " · v" + doc.version + " · " + doc.status;
+    els.vrevRunBtn.disabled = vrevBusy;
+    els.vrevReportDocxBtn.disabled = els.vrevReportMdBtn.disabled = !doc.checkedAt;
+    renderVrevDash(doc);
+    renderVrevStage(doc);
+    renderVrevText(doc);
+  }
+  function renderVrevDash(doc) {
+    if (!doc.checkedAt) { els.vrevDash.innerHTML = '<p class="step-note">Noch nicht geprüft – „Alle 20 Prüfungen ausführen“.</p>'; return; }
+    var c = vrevCounts(doc), phs = vrevAllPlaceholders(doc), filled = phs.filter(function (p) { return (doc.ph[p.key] || []).length; }).length;
+    var tile = function (label, value, sub, cls) { return '<div class="vrev-tile' + (cls ? " vrev-tile-" + cls : "") + '"><span class="vrev-tile-label">' + label + '</span><b class="vrev-tile-value">' + value + "</b>" + (sub ? '<span class="vrev-tile-sub">' + sub + "</span>" : "") + "</div>"; };
+    var sc = doc.score;
+    els.vrevDash.innerHTML = '<div class="vrev-tiles">' +
+      tile("Qualität", sc == null ? "–" : sc, (doc.scoreInitial != null && doc.scoreInitial !== sc ? "vorher " + doc.scoreInitial + " · " : "") + "von 100", sc == null ? "" : sc >= 85 ? "ok" : sc >= 70 ? "warn" : "fail") +
+      tile("Prüfungen", c.ok + " / 20", c.warn + " Hinweise · " + c.fail + " Fehler · " + c.open + " offen", c.fail ? "fail" : c.warn ? "warn" : "ok") +
+      tile("Stufen", vrevStepsDone(doc) + " / 7", "abgeschlossen") +
+      tile("Änderungen", vrevChangeCount(doc), doc.changes.length + " Bearbeitungsschritt(e)") +
+      tile("Jira-Nummern", (doc.checks.C1 && doc.checks.C1.n) || 0, "im Text", doc.checks.C1 && doc.checks.C1.n ? "fail" : "ok") +
+      tile("Interne Vermerke", (doc.checks.C3 && doc.checks.C3.n) || 0, "werden bei Verteilung entfernt") +
+      tile("Bild-Platzhalter", filled + " / " + phs.length, "belegt", phs.length && filled < phs.length ? "warn" : "ok") +
+      "</div>" +
+      '<div class="vrev-checkgrid">' + VREV_CHECKS.map(function (k) {
+        var x = doc.checks[k.id] || { s: "open", d: "nicht geprüft" };
+        return '<button type="button" class="vrev-chip vrev-chip-' + x.s + '" data-vrev-act="goto-stage" data-stage="' + k.stage + '" title="' + escapeHtml(k.label + ": " + x.d) + '"><b>' + k.id + "</b> " + escapeHtml(k.label) + "</button>";
+      }).join("") + "</div>";
+  }
+  function vrevChecksHtml(doc, stage) {
+    return '<table class="simple-table vrev-checks"><thead><tr><th>Prüfung</th><th>Ergebnis</th><th>Befund</th></tr></thead><tbody>' +
+      VREV_CHECKS.filter(function (k) { return k.stage === stage; }).map(function (k) {
+        var x = doc.checks[k.id];
+        return '<tr data-vrev-check="' + k.id + '"><td><b>' + k.id + "</b> " + escapeHtml(k.label) + "</td><td>" + vrevPill(x ? x.s : "open") + "</td><td>" + escapeHtml(x ? x.d : "nicht geprüft") + "</td></tr>";
+      }).join("") + "</tbody></table>";
+  }
+  function vrevStageBody(doc, n) {
+    var h = "";
+    if (n === 1) {
+      var d = doc.design;
+      if (d) {
+        var list = function (title, arr, fmt) { return "<div><b>" + title + "</b><ul>" + arr.slice(0, 6).map(function (x) { return "<li>" + fmt(x) + "</li>"; }).join("") + "</ul></div>"; };
+        h += '<div class="vrev-design">' +
+          list("Schriftarten", vrevShares(d.fonts, 1), function (x) { return escapeHtml(x.key) + " – " + x.pct + " %"; }) +
+          list("Schriftgrößen (Fließtext)", vrevShares(d.sizes, 1), function (x) { return escapeHtml(String(x.key).replace(".", ",")) + " pt – " + x.pct + " %"; }) +
+          list("Zeilenabstand", vrevShares(d.lines, 0), function (x) { return escapeHtml(x.key) + " – " + x.pct + " %"; }) +
+          list("Farbpalette", vrevShares(d.colors, 1), function (x) { return (x.key.length === 6 ? '<span class="vrev-swatch" style="background:#' + escapeHtml(x.key) + '"></span>#' : "") + escapeHtml(x.key) + " – " + x.pct + " %"; }) +
+          "<div><b>Icons & Markierungen</b><ul><li>Icons/Symbole: " + d.icons + "</li><li>Markierte Tipps/Hinweise: " + d.tipsMarked + "</li><li>Unmarkierte Tipps/Hinweise: " + d.tipsUnmarked.length + "</li><li>Interne Bemerkungen: " + d.comments + " Kommentar(e), " + d.highlights + " Hervorhebung(en)</li><li>Bilder im Dokument: " + d.images + "</li></ul></div></div>" +
+          (d.tipsUnmarked.length ? '<p class="step-note">Unmarkierte Tipps/Hinweise (als [Tipp]/[Hinweis] kennzeichnen): ' + d.tipsUnmarked.slice(0, 5).map(escapeHtml).join(" · ") + "</p>" : "");
+      }
+    } else if (n === 2) {
+      h += '<div class="controls" style="flex-wrap:wrap;"><button class="btn ghost" type="button" data-vrev-act="strip-jira"' + (doc.checks.C1 && doc.checks.C1.n ? "" : " disabled") + ">Jira-Nummern löschen (" + ((doc.checks.C1 && doc.checks.C1.n) || 0) + ")</button></div>";
+      h += '<div class="vrev-legend">' + VREV_STATUS_DEFS.map(function (s) { return '<div><span class="vrev-st vrev-st-' + s.cls + '">' + escapeHtml(s.key) + "</span> " + escapeHtml(s.def) + "</div>"; }).join("") + "</div>";
+      var sh = vrevStatusHits(doc);
+      h += sh.length ? '<table class="simple-table vrev-status-table"><thead><tr><th>Kapitel</th><th>Status</th><th>Textstelle</th></tr></thead><tbody>' + sh.slice(0, 60).map(function (x) {
+        return "<tr" + (x.conflict ? ' class="vrev-conflict"' : "") + "><td>" + escapeHtml(x.chapter) + '</td><td><span class="vrev-st vrev-st-' + x.cls + '">' + escapeHtml(x.status) + "</span>" + (x.conflict ? '<div class="step-note">als verfügbar beschrieben!</div>' : "") + "</td><td>" + vrevMarkHtml(truncate(x.text, 220), false) + "</td></tr>";
+      }).join("") + "</tbody></table>" : '<p class="step-note">Keine Statusangaben (verfügbar, in Abnahme, in Entwicklung, geplant) im Text.</p>';
+    } else if (n === 3) {
+      var phs = vrevAllPlaceholders(doc), pool = vrevImagePool(doc), ix = pool.length ? screenPhIndex(pool) : null;
+      h += '<div class="controls" style="flex-wrap:wrap;"><button class="btn ghost" type="button" data-vrev-act="ph-suggest"' + (phs.length && pool.length ? "" : " disabled") + ">Bildvorschläge für leere Platzhalter übernehmen</button>" +
+        '<span class="step-note" style="margin:0;">Bildarchiv: ' + pool.length + " Bild(er) (Register Screens-Import/Bilder)" + "</span></div>";
+      h += phs.length ? '<table class="simple-table vrev-ph-table"><thead><tr><th>Kapitel</th><th>Platzhalter</th><th>Bilder (max. 3)</th><th>Vorschlag</th></tr></thead><tbody>' + phs.map(function (p) {
+        var ids = doc.ph[p.key] || [];
+        var thumbs = ids.map(function (id) {
+          var img = screenPhImgById(id); if (!img) return "";
+          return '<div class="screenph-thumb" title="' + escapeHtml(img.description || img.filename || "") + '"><img src="' + screenPreviewUrl(img) + '" loading="lazy" decoding="async" alt="Bild"><span class="screenph-score">' + escapeHtml(truncate(img.description || img.filename || "", 28)) +
+            '</span><button class="variante-x" type="button" data-vrev-act="ph-remove" data-key="' + p.key + '" data-img="' + id + '" title="Bild entfernen" aria-label="Bild entfernen">×</button></div>';
+        }).join("");
+        var cands = ix ? vrevRank(p, pool, ix).filter(function (x) { return ids.indexOf(x.img.id) === -1; }).slice(0, 10) : [];
+        var sel = ids.length < 3 && cands.length ? '<select data-vrev-ph-add="' + p.key + '" aria-label="Bild hinzufügen"><option value="">+ Bild …</option>' + cands.map(function (x) { return '<option value="' + x.img.id + '">' + x.pct + " % – " + escapeHtml(truncate(x.img.description || x.img.filename || "", 45)) + "</option>"; }).join("") + "</select>" : "";
+        return '<tr data-vrev-ph="' + p.key + '"><td>' + escapeHtml(p.chapter) + "</td><td>" + escapeHtml(p.kind === "bild" ? "[Bild" + (p.desc ? ": " + p.desc : "") + "]" : "Screenshot: " + p.desc) + (p.context && !p.desc ? '<div class="step-note">nach: ' + escapeHtml(truncate(p.context, 80)) + "</div>" : "") + "</td>" +
+          '<td><div class="screenph-thumbs">' + thumbs + "</div>" + sel + "</td><td>" + (cands[0] && !ids.length ? escapeHtml(cands[0].pct + " % – " + truncate(cands[0].img.description || cands[0].img.filename || "", 40)) : "–") + "</td></tr>";
+      }).join("") + "</tbody></table>" : '<p class="step-note">Keine Platzhalter im Text. Platzhalter sind eigene Zeilen „[Bild]“, „[Bild: Beschreibung]“ oder „Screenshot: Beschreibung“.</p>';
+    } else if (n === 4) {
+      var q1 = vrevQ1Findings(doc);
+      h += '<div class="controls" style="flex-wrap:wrap;"><button class="btn ghost" type="button" data-vrev-act="autofix"' + (q1.length ? "" : " disabled") + ">Formfehler automatisch korrigieren (" + q1.length + ")</button>" +
+        '<button class="btn primary" type="button" data-vrev-act="ai-quality"' + (vrevBusy ? " disabled" : "") + ">KI-Prüfung: Grammatik, Fehler, Lücken</button>" +
+        (vrevBusy ? '<button class="btn ghost" type="button" data-vrev-act="stop">Stopp</button>' : "") + "</div>";
+      if (doc.ai && doc.ai.findings.length) {
+        var open = doc.ai.findings.filter(function (f) { return !f.done; }).length;
+        h += '<div class="controls"><span class="step-note" style="margin:0;">' + doc.ai.findings.length + " KI-Befund(e), " + open + " offen (Prüfung vom " + escapeHtml(doc.ai.at) + ")</span>" +
+          (open ? '<button class="btn ghost btn-tiny" type="button" data-vrev-act="ai-adopt-all">Alle Vorschläge übernehmen</button>' : "") + "</div>" +
+          '<table class="simple-table vrev-ai-table"><thead><tr><th>Kapitel</th><th>Art</th><th>Original</th><th>Vorschlag</th><th>Aktion</th></tr></thead><tbody>' + doc.ai.findings.map(function (f, i) {
+            return '<tr data-vrev-ai="' + i + '"' + (f.done ? ' class="vrev-done"' : "") + "><td>" + escapeHtml(f.chapter) + "</td><td>" + escapeHtml(f.typ) + "</td><td>" + escapeHtml(f.original || "–") + "</td><td>" + escapeHtml(f.vorschlag || "") + (f.hinweis ? '<div class="step-note">' + escapeHtml(f.hinweis) + "</div>" : "") + "</td><td>" +
+              (f.done ? escapeHtml(f.done) : (f.original && f.vorschlag ? '<button class="btn ghost btn-tiny" type="button" data-vrev-act="ai-adopt" data-i="' + i + '">Übernehmen</button>' : "") + '<button class="btn ghost btn-tiny" type="button" data-vrev-act="ai-dismiss" data-i="' + i + '">Erledigt</button>') + "</td></tr>";
+          }).join("") + "</tbody></table>";
+      } else if (doc.ai) h += '<p class="step-note">KI-Prüfung vom ' + escapeHtml(doc.ai.at) + ": keine Befunde.</p>";
+      if (q1.length) h += '<p class="step-note">Formfehler: ' + q1.slice(0, 8).map(function (f) { return escapeHtml(f.chapter + " – " + f.typ + ": „" + f.text + "“"); }).join(" · ") + "</p>";
+    } else if (n === 5) {
+      var trs = (doc.translations || []).map(vrevDoc).filter(Boolean);
+      h += doc.source === "Übersetzung" ? '<p class="step-note">Dieses Dokument ist eine Übersetzung (' + escapeHtml(variantLangName(doc.lang)) + ").</p>" :
+        '<div class="controls" style="flex-wrap:wrap; align-items:flex-end;"><div><label for="vrev-tr-lang">Zielsprache</label><select id="vrev-tr-lang" data-vrev-tr-lang>' +
+        VARIANT_LANGS.filter(function (l) { return l[0] !== doc.lang; }).map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select></div>" +
+        '<button class="btn primary" type="button" data-vrev-act="translate"' + (vrevBusy ? " disabled" : "") + ">Kopie mit Übersetzung erzeugen</button>" +
+        (vrevBusy ? '<button class="btn ghost" type="button" data-vrev-act="stop">Stopp</button>' : "") +
+        '<label class="variante-inline-check"><input type="checkbox" data-vrev-act="tr-not-needed"' + (doc.translationNotNeeded ? " checked" : "") + "> Übersetzung nicht erforderlich</label></div>" +
+        '<p class="step-note">Glossar und Übersetzungsspeicher aus Schritt 4 werden genutzt. Die Kopie erscheint als eigenes Dokument in der Ablage und lässt sich dort separat prüfen.</p>' +
+        (trs.length ? "<ul>" + trs.map(function (t) { return "<li>" + escapeHtml(t.name) + " (v" + escapeHtml(t.version) + ", " + escapeHtml(t.status) + ') <button class="btn ghost btn-tiny" type="button" data-vrev-act="open" data-id="' + t.id + '">Öffnen</button></li>'; }).join("") + "</ul>" : "");
+    } else if (n === 6) {
+      var addN = 0, remN = 0, wb = 0, wa = 0;
+      var diffs = doc.chapters.map(function (c, ci) {
+        var o = doc.original[ci] || { title: c.title, text: "" }, dd = diffLines(vrevPlain(o.text), vrevPlain(c.text));
+        var a = dd.filter(function (x) { return x.type === "added"; }).length, r = dd.filter(function (x) { return x.type === "removed"; }).length;
+        addN += a; remN += r; wb += vrevWords(o.text); wa += vrevWords(c.text);
+        return { title: c.title, a: a, r: r, o: o.text, n: c.text };
+      });
+      var byStage = VREV_STAGES.map(function (s) { var n2 = doc.changes.filter(function (x) { return x.stage === s.n; }).reduce(function (k, x) { return k + (x.n || 1); }, 0); return n2 ? s.label + ": " + n2 : ""; }).filter(Boolean);
+      h += '<div class="vrev-tiles">' +
+        '<div class="vrev-tile"><span class="vrev-tile-label">Änderungen</span><b class="vrev-tile-value">' + vrevChangeCount(doc) + '</b><span class="vrev-tile-sub">' + escapeHtml(byStage.join(" · ") || "keine") + "</span></div>" +
+        '<div class="vrev-tile"><span class="vrev-tile-label">Vorher → nachher</span><b class="vrev-tile-value">+' + addN + " / −" + remN + '</b><span class="vrev-tile-sub">Zeilen · Wörter ' + wb + " → " + wa + "</span></div>" +
+        '<div class="vrev-tile"><span class="vrev-tile-label">Qualität</span><b class="vrev-tile-value">' + (doc.scoreInitial == null ? "–" : doc.scoreInitial) + " → " + (doc.score == null ? "–" : doc.score) + '</b><span class="vrev-tile-sub">erster Prüflauf → jetzt</span></div>' +
+        '<div class="vrev-tile"><span class="vrev-tile-label">Konsistenz</span><b class="vrev-tile-value">' + (doc.checks.A1 ? vrevPill(doc.checks.A1.s) : "–") + '</b><span class="vrev-tile-sub">' + escapeHtml(doc.checks.A1 ? truncate(doc.checks.A1.d, 90) : "") + "</span></div></div>";
+      var changed = diffs.filter(function (x) { return x.a || x.r; });
+      h += changed.length ? changed.map(function (x) { return "<details class=\"vrev-diff\"><summary>" + escapeHtml(x.title) + " (+" + x.a + " / −" + x.r + ")</summary>" + diffLinesHtml(vrevPlain(x.o), vrevPlain(x.n)) + "</details>"; }).join("") : '<p class="step-note">Noch keine Textänderungen gegenüber dem Original.</p>';
+    } else if (n === 7) {
+      h += '<div class="controls" style="flex-wrap:wrap;"><button class="btn primary" type="button" data-vrev-act="word-dist">Word für die Verteilung (ohne interne Vermerke)</button>' +
+        '<button class="btn ghost" type="button" data-vrev-act="word-intern">Word intern (mit internen Vermerken)</button>' +
+        '<button class="btn ghost" type="button" data-vrev-act="report-docx">Reviewbericht (Word)</button></div>' +
+        '<p class="step-note">Verteilfassung: ohne Kommentarbereiche, ohne Zeilen „Intern:“/„TODO“/„[Intern]“, ohne Jira-Nummern, Bilder an den Platzhaltern, Design ' + (doc.wordDesign ? "aus dem hochgeladenen Entwurf" : "aus FINAL") + ". Die interne Fassung zeigt Vermerke als „[Intern: …]“.</p>";
+    }
+    return h;
+  }
+  function renderVrevStage(doc) {
+    var cur = doc.stage || 1, s = VREV_STAGES[cur - 1];
+    els.vrevStepper.innerHTML = VREV_STAGES.map(function (x) {
+      var checks = VREV_CHECKS.filter(function (k) { return k.stage === x.n; }).map(function (k) { return doc.checks[k.id] ? doc.checks[k.id].s : "open"; });
+      var worst = checks.indexOf("fail") !== -1 ? "fail" : checks.indexOf("warn") !== -1 ? "warn" : checks.indexOf("open") !== -1 ? "open" : "ok";
+      return '<button type="button" class="vrev-stage-btn' + (x.n === cur ? " active" : "") + (doc.steps[x.n] ? " done" : "") + '" data-vrev-act="goto-stage" data-stage="' + x.n + '"><span class="vrev-stage-n">' + (doc.steps[x.n] ? "✓" : x.n) + "</span>" + escapeHtml(x.label) +
+        (doc.checkedAt ? ' <i class="vrev-dot vrev-' + worst + '"></i>' : "") + "</button>";
+    }).join("");
+    els.vrevStage.innerHTML = '<p class="section-label" style="margin-top:0;">Stufe ' + s.n + " – Review " + escapeHtml(s.label) + '</p><p class="desc" style="margin-top:0;">' + escapeHtml(s.hint) + "</p>" +
+      vrevChecksHtml(doc, s.n) + vrevStageBody(doc, s.n) +
+      '<div class="controls" style="justify-content:flex-end; margin-top:10px;">' + (doc.steps[s.n] ? '<span class="step-note" style="margin:0;">abgeschlossen ' + escapeHtml(doc.steps[s.n]) + "</span>" +
+        '<button class="btn ghost btn-tiny" type="button" data-vrev-act="reopen-stage">Wieder öffnen</button>' : '<button class="btn primary" type="button" data-vrev-act="complete-stage"' + (doc.checkedAt ? "" : " disabled") + ">Stufe " + s.n + " abschließen" + (s.n < 7 ? " → weiter" : "") + "</button>") + "</div>";
+  }
+  function renderVrevText(doc) {
+    if (vrevTextChapter >= doc.chapters.length) vrevTextChapter = 0;
+    els.vrevTextChapter.innerHTML = doc.chapters.map(function (c, i) { return '<option value="' + i + '"' + (i === vrevTextChapter ? " selected" : "") + ">" + escapeHtml(truncate(c.title, 80)) + "</option>"; }).join("");
+    var c = doc.chapters[vrevTextChapter];
+    els.vrevTextView.innerHTML = c ? vrevMarkHtml(c.text, els.vrevHideJira.checked) : "";
+    if (document.activeElement !== els.vrevTextEdit) els.vrevTextEdit.value = c ? c.text.replace(/\u0001/g, "[[INTERN]]").replace(/\u0002/g, "[[/INTERN]]") : "";
+  }
+
+  // ---------- Aktionen ----------
+  async function vrevAnalyzeGenerated(doc) {
+    try { doc.design = await vrevAnalyzeDocxZip(await JSZip.loadAsync(await (await vrevBuildWord(doc, false, false)).arrayBuffer())); }
+    catch (e) { doc.design = null; }
+  }
+  async function vrevImportFiles(files) {
+    var ok = 0, errs = [];
+    for (var i = 0; i < files.length; i++) {
+      var f = files[i];
+      els.vrevImportNote.textContent = "„" + f.name + "“ wird eingelesen …";
+      try {
+        var buf = await f.arrayBuffer();
+        if (classifyWordBuffer(buf) !== "zip") throw new Error("keine .docx-Datei (bitte in Word als .docx speichern)");
+        var zip = await JSZip.loadAsync(buf), entry = zip.file("word/document.xml");
+        if (!entry) throw new Error("kein Word-Dokumentinhalt gefunden");
+        var chs = docxXmlToFinalChapters(await entry.async("string"));
+        var design = null, wordDesign = null;
+        try { design = await vrevAnalyzeDocxZip(zip); } catch (e) { design = null; }
+        try { wordDesign = await finalExtractWordDesign(zip); } catch (e) { wordDesign = null; }
+        var doc = vrevAddDoc({ name: f.name.replace(/\.docx$/i, ""), filename: f.name, source: "Upload", design: design, wordDesign: wordDesign,
+          chapters: chs.map(function (c) { return { title: c.title, level: c.level, text: c.markedText || c.fullText || "" }; }) });
+        vrevRunChecks(doc);
+        ok++;
+      } catch (err) { errs.push(f.name + ": " + ((err && err.message) || "unbekannter Fehler")); }
+    }
+    els.vrevImportNote.textContent = ok + " Entwurf/Entwürfe übernommen und geprüft." + (errs.length ? " Fehler: " + errs.join(" · ") : "");
+    if (ok) addLog("VARIANTE Review: " + ok + " Entwurf/Entwürfe (.docx) übernommen.");
+    renderVrev();
+  }
+  async function vrevImportExisting(v) {
+    var chapters = v.chapters.map(function (c) { return { title: c.title, level: c.level || 1, text: c.markedText || c.text || "" }; }), ph = {};
+    v.chapters.forEach(function (c, ci) {
+      var ids = (c.screenIds || []).slice(), k = 0;
+      vrevPlaceholders(chapters[ci].text).forEach(function (p) { if (p.kind !== "bild") return; if (ids[k] != null) ph[ci + ":" + p.idx] = [ids[k]]; k++; });
+    });
+    var lang = v.config && v.config.variant && v.config.variant.lang ? v.config.variant.lang : "DE";
+    var doc = vrevAddDoc({ name: v.name, source: v.origin === "Variante" ? "Variante" : "FINAL", sourceRef: v.id, chapters: chapters, ph: ph, lang: lang });
+    await vrevAnalyzeGenerated(doc);
+    vrevRunChecks(doc);
+    els.vrevImportNote.textContent = "„" + v.name + "“ übernommen und geprüft.";
+    addLog("VARIANTE Review: Stand „" + v.name + "“ übernommen.");
+    renderVrev();
+  }
+  function vrevBumpVersion(ver) {
+    var m = /^(\d+)\.(\d+)$/.exec(String(ver || ""));
+    return m ? m[1] + "." + (parseInt(m[2], 10) + 1) : String(ver || "1") + ".1";
+  }
+  function vrevNewVersion(doc) {
+    var copy = JSON.parse(JSON.stringify(doc));
+    delete copy.id;
+    var nd = vrevAddDoc(Object.assign(copy, { version: vrevBumpVersion(doc.version), status: "Entwurf", createdAt: nowLabel(), updatedAt: nowLabel(), steps: {}, stage: 1, changes: [], ai: null, translations: [], scoreInitial: null, score: null, checks: {}, checkedAt: "", baseDocId: doc.id, history: [] }));
+    nd.history = [{ at: nowLabel(), version: nd.version, status: nd.status, what: "Neue Version aus v" + doc.version }];
+    vrevRunChecks(nd);
+    return nd;
+  }
+  function vrevChangedChapters(doc, fn) {
+    var n = 0;
+    doc.chapters.forEach(function (c) { var t = fn(c.text); if (t !== c.text) { c.text = t; n++; } });
+    return n;
+  }
+  async function vrevAiQuality(doc) {
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
+    vrevBusy = true; vrevAbort = new AbortController(); renderVrev();
+    var findings = [], failed = 0, chs = doc.chapters.filter(function (c) { return vrevWords(c.text) > 0; });
+    try {
+      for (var i = 0; i < chs.length; i++) {
+        if (vrevAbort.signal.aborted) break;
+        els.vrevStatus.textContent = "KI-Prüfung: Kapitel " + (i + 1) + " von " + chs.length + " …";
+        try {
+          var res = await sampleApi(ragPromptFor("vrevQuality") + "\n\nKAPITEL: " + chs[i].title + "\n\nTEXT:\n" + truncate(vrevPlain(chs[i].text), 15000), { modelTier: "default", cache: false, signal: vrevAbort.signal });
+          var t = String((res && res.text) || ""), a = t.indexOf("["), b = t.lastIndexOf("]"), arr = a >= 0 && b > a ? JSON.parse(t.slice(a, b + 1)) : null;
+          if (!Array.isArray(arr)) { failed++; continue; }
+          arr.slice(0, 15).forEach(function (f) {
+            if (!f || typeof f !== "object") return;
+            var typ = ["Grammatik", "Rechtschreibung", "Stil", "Fehler", "Lücke"].indexOf(f.typ) !== -1 ? f.typ : "Fehler";
+            var orig = String(f.original || "").trim();
+            if (orig && vrevPlain(chs[i].text).indexOf(orig) === -1) orig = "";
+            findings.push({ chapter: chs[i].title, typ: typ, original: orig, vorschlag: String(f.vorschlag || "").trim(), hinweis: String(f.hinweis || "").trim(), done: "" });
+          });
+        } catch (err) {
+          if (vrevAbort.signal.aborted || (err && err.code === "cancelled")) break;
+          failed++;
+        }
+      }
+      doc.ai = { at: nowLabel(), findings: findings };
+      vrevRunChecks(doc);
+      els.vrevStatus.textContent = "KI-Prüfung: " + findings.length + " Befund(e) in " + chs.length + " Kapitel(n)" + (failed ? ", " + failed + " Kapitel ohne auswertbare Antwort" : "") + (vrevAbort.signal.aborted ? " (gestoppt)" : "") + ".";
+      addLog("VARIANTE Review: KI-Qualitätsprüfung „" + doc.name + "“ – " + findings.length + " Befund(e).");
+    } finally { vrevBusy = false; vrevAbort = null; renderVrev(); }
+  }
+  function vrevAdoptFinding(doc, f) {
+    if (f.done || !f.original || !f.vorschlag) return false;
+    var c = doc.chapters.filter(function (x) { return x.title === f.chapter; })[0];
+    if (!c || c.text.indexOf(f.original) === -1) return false;
+    c.text = c.text.replace(f.original, f.vorschlag);
+    f.done = "übernommen";
+    return true;
+  }
+  async function vrevTranslate(doc, lang) {
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
+    vrevBusy = true; vrevAbort = new AbortController(); renderVrev();
+    var out = [], tr = 0, kept = 0, fromTm = 0;
+    try {
+      for (var i = 0; i < doc.chapters.length; i++) {
+        var c = doc.chapters[i], text = c.text;
+        if (vrevAbort.signal.aborted) break;
+        if (!vrevWords(text)) { out.push({ title: c.title, level: c.level, text: text }); continue; }
+        var gl = variantGlossaryFor(lang, c.title + "\n" + text), key = variantTmKey(lang, c.title, text, gl), hit = variantTmGet(lang, key);
+        if (hit) { out.push({ title: hit.title || c.title, level: c.level, text: hit.text }); fromTm++; continue; }
+        els.vrevStatus.textContent = "Übersetzung (" + variantLangName(lang) + "): Kapitel " + (i + 1) + " von " + doc.chapters.length + " …";
+        try {
+          var res = await sampleApi(ragPromptFor("variantTranslate") + "\n\nZIELSPRACHE: " + variantLangName(lang) + " (" + lang + ")" +
+            (gl.length ? "\n\nGLOSSAR (verbindlich – diese Übersetzungen verwenden):\n" + gl.map(function (g) { return "- " + g.src + " → " + g.target; }).join("\n") : "") +
+            "\n\nTITEL: " + c.title + "\n\nTEXT:\n" + truncate(text.replace(/\u0001/g, "[[INTERN]]").replace(/\u0002/g, "[[/INTERN]]"), 20000), { modelTier: "default", cache: false, signal: vrevAbort.signal });
+          var t = variantParseTranslation(res && res.text);
+          if (t && t.text) {
+            var back = t.text.replace(/\[\[INTERN\]\]/g, "\u0001").replace(/\[\[\/INTERN\]\]/g, "\u0002");
+            variantTmPut(lang, key, { title: t.title || c.title, text: back, at: nowLabel(), source: "KI" });
+            out.push({ title: t.title || c.title, level: c.level, text: back }); tr++;
+          } else { out.push({ title: c.title, level: c.level, text: text }); kept++; }
+        } catch (err) {
+          if (vrevAbort.signal.aborted || (err && err.code === "cancelled")) break;
+          out.push({ title: c.title, level: c.level, text: text }); kept++;
+        }
+      }
+      if (vrevAbort.signal.aborted) { els.vrevStatus.textContent = "Übersetzung gestoppt – keine Kopie erzeugt."; return; }
+      var nd = vrevAddDoc({ name: doc.name + " (" + lang + ")", source: "Übersetzung", sourceRef: doc.id, baseDocId: doc.id, lang: lang, version: doc.version, chapters: out,
+        ph: JSON.parse(JSON.stringify(doc.ph)), design: doc.design, wordDesign: doc.wordDesign });
+      doc.translations.push(nd.id);
+      vrevHistory(doc, "Übersetzung " + lang + " als Kopie erzeugt");
+      vrevRunChecks(nd);
+      VR().activeId = doc.id;
+      vrevRunChecks(doc);
+      els.vrevStatus.textContent = "Kopie „" + nd.name + "“ erzeugt: " + tr + " Kapitel übersetzt" + (fromTm ? ", " + fromTm + " aus dem Übersetzungsspeicher" : "") + (kept ? ", " + kept + " unverändert" : "") + ".";
+      addLog("VARIANTE Review: Übersetzung „" + nd.name + "“ erzeugt.");
+    } finally { vrevBusy = false; vrevAbort = null; renderVrev(); }
+  }
+  async function vrevSaveWord(doc, withInternal) {
+    try {
+      var blob = await vrevBuildWord(doc, withInternal, false), fn = vrevFileBase(doc) + (withInternal ? "_INTERN" : "") + "_" + dateStampForFilename() + ".docx";
+      if (await saveOrWarn(fn, blob)) {
+        vrevHistory(doc, (withInternal ? "Word intern" : "Word für die Verteilung") + " erzeugt: " + fn);
+        if (!withInternal && doc.status === "Freigegeben") { doc.status = "Verteilt"; vrevHistory(doc, "Verteilt"); }
+        els.vrevStatus.textContent = "„" + fn + "“ heruntergeladen.";
+        addLog("VARIANTE Review: " + fn + " heruntergeladen.");
+        renderVrev();
+      }
+    } catch (err) { showToast("Word-Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  }
+  async function vrevSaveReport(doc, asWord) {
+    if (!doc.checkedAt) vrevRunChecks(doc);
+    var md = vrevReportMd(doc), fn = "Reviewbericht_" + vrevFileBase(doc) + "_" + dateStampForFilename() + (asWord ? ".docx" : ".md");
+    try {
+      var data = asWord ? await buildMarkdownDocxBlob("Reviewbericht – " + doc.name, md) : new Blob([md], { type: "text/markdown" });
+      if (await saveOrWarn(fn, data)) { els.vrevStatus.textContent = "„" + fn + "“ heruntergeladen."; addLog("VARIANTE Review: Reviewbericht " + fn + "."); }
+    } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  }
+  els.vrevUploadBtn.addEventListener("click", function () { els.vrevFileInput.click(); });
+  els.vrevFileInput.addEventListener("change", function () {
+    var files = Array.prototype.slice.call(els.vrevFileInput.files || []);
+    els.vrevFileInput.value = "";
+    if (files.length) vrevImportFiles(files);
+  });
+  els.vrevExistingBtn.addEventListener("click", function () {
+    var v = finalVersionById(parseInt(els.vrevExistingSelect.value, 10));
+    if (v) vrevImportExisting(v);
+  });
+  els.vrevRunBtn.addEventListener("click", function () {
+    var doc = vrevActive(); if (!doc) return;
+    vrevRunChecks(doc);
+    var c = vrevCounts(doc);
+    els.vrevStatus.textContent = "20 Prüfungen ausgeführt: " + c.ok + " OK, " + c.warn + " Hinweise, " + c.fail + " Fehler, " + c.open + " offen – Qualität " + (doc.score == null ? "–" : doc.score) + ".";
+    addLog("VARIANTE Review: „" + doc.name + "“ geprüft – Qualität " + doc.score + ".");
+    renderVrev();
+  });
+  els.vrevReportDocxBtn.addEventListener("click", function () { var d = vrevActive(); if (d) vrevSaveReport(d, true); });
+  els.vrevReportMdBtn.addEventListener("click", function () { var d = vrevActive(); if (d) vrevSaveReport(d, false); });
+  els.vrevTextChapter.addEventListener("change", function () { vrevTextChapter = parseInt(els.vrevTextChapter.value, 10) || 0; var d = vrevActive(); if (d) renderVrevText(d); });
+  els.vrevHideJira.addEventListener("change", function () { var d = vrevActive(); if (d) renderVrevText(d); });
+  els.vrevTextSaveBtn.addEventListener("click", function () {
+    var d = vrevActive(), c = d && d.chapters[vrevTextChapter];
+    if (!c) return;
+    var t = els.vrevTextEdit.value.replace(/\[\[INTERN\]\]/g, "\u0001").replace(/\[\[\/INTERN\]\]/g, "\u0002");
+    if (t === c.text) return;
+    c.text = t;
+    vrevLog(d, d.stage || 1, "Text bearbeitet: " + c.title, 1);
+    vrevRunChecks(d);
+    els.vrevStatus.textContent = "Änderung an „" + c.title + "“ gespeichert.";
+    renderVrev();
+  });
+  els.vrevStep.addEventListener("change", async function (e) {
+    var t = e.target, doc = vrevActive();
+    if (t.matches("[data-vrev-status]")) {
+      var d2 = vrevDoc(parseInt(t.getAttribute("data-vrev-status"), 10));
+      if (d2 && d2.status !== t.value) { d2.status = t.value; vrevHistory(d2, "Status geändert"); renderVrev(); }
+      return;
+    }
+    if (!doc) return;
+    if (t.matches("[data-vrev-ph-add]") && t.value) {
+      var key = t.getAttribute("data-vrev-ph-add"), id = parseInt(t.value, 10), ids = doc.ph[key] = doc.ph[key] || [];
+      if (ids.length < 3 && ids.indexOf(id) === -1) { ids.push(id); vrevLog(doc, 3, "Bild zugeordnet", 1); vrevRunChecks(doc); }
+      renderVrev();
+    } else if (t.matches('[data-vrev-act="tr-not-needed"]')) {
+      doc.translationNotNeeded = t.checked; vrevRunChecks(doc); renderVrev();
+    }
+  });
+  els.vrevStep.addEventListener("click", async function (e) {
+    var b = e.target.closest("[data-vrev-act]");
+    if (!b || b.tagName === "INPUT") return;
+    var act = b.getAttribute("data-vrev-act"), id = parseInt(b.getAttribute("data-id"), 10), doc = id ? vrevDoc(id) : vrevActive();
+    if (!doc) return;
+    if (act === "open") { VR().activeId = doc.id; vrevTextChapter = 0; els.vrevStatus.textContent = ""; renderVrev(); return; }
+    if (act === "delete") {
+      if (!(await confirmDialog("Dokument „" + doc.name + "“ (v" + doc.version + ") samt Reviewbericht aus der Ablage löschen?", "Löschen"))) return;
+      var st = VR();
+      st.docs = st.docs.filter(function (x) { return x.id !== doc.id; });
+      st.docs.forEach(function (x) { x.translations = (x.translations || []).filter(function (t) { return t !== doc.id; }); });
+      if (st.activeId === doc.id) st.activeId = st.docs.length ? st.docs[st.docs.length - 1].id : null;
+      renderVrev(); return;
+    }
+    if (act === "new-version") { var nd = vrevNewVersion(doc); els.vrevStatus.textContent = "Neue Version v" + nd.version + " von „" + nd.name + "“ angelegt."; renderVrev(); return; }
+    if (act === "report-docx") { vrevSaveReport(doc, true); return; }
+    if (act === "word-dist") { vrevSaveWord(doc, false); return; }
+    if (act === "word-intern") { vrevSaveWord(doc, true); return; }
+    if (act === "stop") { if (vrevAbort) vrevAbort.abort(); return; }
+    if (act === "goto-stage") { doc.stage = parseInt(b.getAttribute("data-stage"), 10) || 1; renderVrev(); return; }
+    if (act === "complete-stage") {
+      var n = doc.stage || 1;
+      doc.steps[n] = nowLabel();
+      vrevHistory(doc, "Stufe " + n + " (" + VREV_STAGES[n - 1].label + ") abgeschlossen");
+      if (n === 6 && VREV_STATUSES.indexOf(doc.status) < 2) doc.status = "Geprüft";
+      if (n === 7 && VREV_STATUSES.indexOf(doc.status) < 3) { doc.status = "Freigegeben"; vrevHistory(doc, "Freigegeben"); }
+      if (n < 7) doc.stage = n + 1;
+      vrevRunChecks(doc); renderVrev(); return;
+    }
+    if (act === "reopen-stage") { delete doc.steps[doc.stage || 1]; vrevRunChecks(doc); renderVrev(); return; }
+    if (act === "strip-jira") {
+      var before = (doc.checks.C1 && doc.checks.C1.n) || 0, nch = vrevChangedChapters(doc, finalStripJiraKeys);
+      if (nch) { vrevLog(doc, 2, "Jira-Nummern gelöscht", before); vrevRunChecks(doc); els.vrevStatus.textContent = before + " Jira-Nummer(n) in " + nch + " Kapitel(n) gelöscht."; }
+      renderVrev(); return;
+    }
+    if (act === "ph-remove") {
+      var k = b.getAttribute("data-key"), rid = parseInt(b.getAttribute("data-img"), 10);
+      doc.ph[k] = (doc.ph[k] || []).filter(function (x) { return x !== rid; });
+      vrevLog(doc, 3, "Bild entfernt", 1); vrevRunChecks(doc); renderVrev(); return;
+    }
+    if (act === "ph-suggest") {
+      var pool = vrevImagePool(doc), ix = pool.length ? screenPhIndex(pool) : null, added = 0, filledN = 0;
+      if (!ix) return;
+      vrevAllPlaceholders(doc).forEach(function (p) {
+        if ((doc.ph[p.key] || []).length) return;
+        var ranked = vrevRank(p, pool, ix), top = ranked.length ? ranked[0].score : 0;
+        var pick = ranked.filter(function (x) { return x.pct >= 25 && x.score >= 0.45 * top; }).slice(0, 3);
+        if (pick.length) { doc.ph[p.key] = pick.map(function (x) { return x.img.id; }); added += pick.length; filledN++; }
+      });
+      if (added) vrevLog(doc, 3, "Bildvorschläge übernommen", added);
+      vrevRunChecks(doc);
+      els.vrevStatus.textContent = filledN + " Platzhalter mit " + added + " vorgeschlagenen Bild(ern) belegt – bitte prüfen.";
+      renderVrev(); return;
+    }
+    if (act === "autofix") {
+      var nq = vrevQ1Findings(doc).length, nfix = vrevChangedChapters(doc, vrevAutofixText);
+      if (nfix) { vrevLog(doc, 4, "Formfehler automatisch korrigiert", nq); vrevRunChecks(doc); els.vrevStatus.textContent = nq + " Formfehler in " + nfix + " Kapitel(n) korrigiert."; }
+      renderVrev(); return;
+    }
+    if (act === "ai-quality") { vrevAiQuality(doc); return; }
+    if (act === "ai-adopt" || act === "ai-dismiss") {
+      var f = doc.ai && doc.ai.findings[parseInt(b.getAttribute("data-i"), 10)];
+      if (!f) return;
+      if (act === "ai-adopt") { if (vrevAdoptFinding(doc, f)) vrevLog(doc, 4, "KI-Vorschlag übernommen (" + f.typ + ")", 1); else showToast("Nicht übernommen", "Die Textstelle wurde im Kapitel nicht (mehr) gefunden.", true); }
+      else f.done = "erledigt";
+      vrevRunChecks(doc); renderVrev(); return;
+    }
+    if (act === "ai-adopt-all") {
+      var na = 0;
+      (doc.ai ? doc.ai.findings : []).forEach(function (x) { if (vrevAdoptFinding(doc, x)) na++; });
+      if (na) vrevLog(doc, 4, "KI-Vorschläge übernommen", na);
+      vrevRunChecks(doc); els.vrevStatus.textContent = na + " KI-Vorschlag/Vorschläge übernommen."; renderVrev(); return;
+    }
+    if (act === "translate") { var sel = els.vrevStage.querySelector("[data-vrev-tr-lang]"); if (sel && sel.value) vrevTranslate(doc, sel.value); return; }
+  });
+
   /* ============ Teil 10: Navigation ============ */
 
   var viewPanels = document.querySelectorAll("[data-view-panel]");
@@ -32180,7 +33170,7 @@
     if (name === "rovosummary") renderRovoSummary();
     if (name === "final") renderFinal();
     if (name === "mitteilungen") renderNotesOverview();
-    if (name === "variante") renderVariante();
+    if (name === "variante") { renderVariante(); renderVrev(); }
     if (name === "crossx") renderCrossx();
     if (name === "tabellen") renderRovoTables();
     if (window.innerWidth <= 900) setSidebar(false);
