@@ -3678,6 +3678,12 @@
           <div class="controls" style="margin-top:0;"><button class="btn ghost btn-tiny" id="vrev-xlsx-btn" type="button" disabled>Ablage als Excel (alle Prüfergebnisse)</button></div>
           <div class="table-wrap" id="vrev-docs-wrap" hidden><table class="simple-table"><thead><tr><th>Dokument</th><th>Version</th><th>Status</th><th>Quelle</th><th>Qualität</th><th>Stufen</th><th>Änderungen</th><th>Dateien</th><th>Geprüft</th><th>Aktion</th></tr></thead><tbody id="vrev-docs-tbody"></tbody></table></div>
           <div class="empty-hint" id="vrev-docs-empty">Noch keine Dokumente im Review.</div>
+          <div id="vrev-team" hidden>
+            <p class="section-label" style="margin-top:12px;">Team-Ablage</p>
+            <p class="step-note" style="margin-top:0;">Geteilte Review-Dokumente für alle mit Zugriff auf diese App – Text, Prüfergebnisse, Stufen, Verlauf und Status (ohne Bilddaten; Bilder werden beim Übernehmen über Bild-ID und Bildtext dem eigenen Bildarchiv zugeordnet). Der Status gilt für alle.</p>
+            <div class="table-wrap" id="vrev-team-wrap" hidden><table class="simple-table"><thead><tr><th>Dokument</th><th>Version</th><th>Status</th><th>Qualität</th><th>Stufen</th><th>Geteilt</th><th>Aktualisiert</th><th>Aktion</th></tr></thead><tbody id="vrev-team-tbody"></tbody></table></div>
+            <div class="empty-hint" id="vrev-team-empty">Noch keine Review-Dokumente im Team geteilt.</div>
+          </div>
           <div id="vrev-work" hidden>
             <div class="controls" style="justify-content:space-between; flex-wrap:wrap; margin-top:12px;">
               <p class="section-label" id="vrev-doc-title" style="margin:0;"></p>
@@ -6473,7 +6479,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.142.0";
+  var APP_VERSION = "2.143.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8077,7 +8083,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -8968,7 +8974,7 @@
       docNotes: app.docNotes,
       variante: app.variante,
       vrev: app.vrev,
-      agent: app.agent,
+      agent: agentForSession(),
       rlRoleOverrides: app.rlRoleOverrides,
       crossx: app.crossx,
       screenPh: app.screenPh,
@@ -28658,6 +28664,7 @@
       teamDb = db;
       teamSubscribe();
       renderFinalTeam();
+      if (typeof vrevTeamSubscribe === "function") vrevTeamSubscribe();
     }).catch(function () { /* ohne geteilte Datenhaltung: Team-Bereich bleibt deaktiviert */ });
   }
   function teamSubscribe() {
@@ -32415,7 +32422,7 @@
     d = d && typeof d === "object" ? d : {};
     var docs = Array.isArray(d.docs) ? d.docs.filter(function (x) { return x && typeof x.id === "number" && Array.isArray(x.chapters); }).map(function (x) {
       return Object.assign({ name: "Dokument", filename: "", source: "Upload", sourceRef: null, version: "1.0", status: "Entwurf", createdAt: "", updatedAt: "", original: [], ph: {}, design: null, wordDesign: null,
-        checks: {}, steps: {}, stage: 1, changes: [], history: [], ai: null, translationNotNeeded: false, legend: false, designKey: "", designOut: null, designOutLabel: "", files: [], finalVersionId: null, lang: "DE", translations: [], baseDocId: null, scoreInitial: null, score: null, checkedAt: "" }, x);
+        checks: {}, steps: {}, stage: 1, changes: [], history: [], ai: null, translationNotNeeded: false, legend: false, designKey: "", designOut: null, designOutLabel: "", files: [], snaps: {}, finalVersionId: null, teamDocId: null, lang: "DE", translations: [], baseDocId: null, scoreInitial: null, score: null, checkedAt: "" }, x);
     }) : [];
     return { docs: docs, activeId: typeof d.activeId === "number" ? d.activeId : null };
   }
@@ -32823,12 +32830,20 @@
   function vrevSnapshot(doc) {
     return JSON.parse(JSON.stringify({ name: doc.name, version: doc.version, status: doc.status, chapters: doc.chapters, ph: doc.ph, legend: doc.legend, designKey: doc.designKey, lang: doc.lang, statusColors: doc.statusColors }));
   }
+  function vrevHash(str) { var h = 5381; for (var i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + "-" + str.length.toString(36); }
+  // v2.143: gleiche Staende (Word/PDF/intern aus demselben Text) nur einmal in doc.snaps speichern – kleinere Sitzungsdatei.
   function vrevKeepFile(doc, kind, filename, snap, at) {
     doc.files = doc.files || [];
-    var id = doc.files.reduce(function (m, f) { return Math.max(m, f.id || 0); }, 0) + 1;
-    doc.files.push({ id: id, at: at || nowLabel(), version: doc.version, status: doc.status, kind: kind, filename: filename, snap: snap });
+    doc.snaps = doc.snaps || {};
+    var id = doc.files.reduce(function (m, f) { return Math.max(m, f.id || 0); }, 0) + 1, entry = { id: id, at: at || nowLabel(), version: doc.version, status: doc.status, kind: kind, filename: filename };
+    if (snap && snap.chapters) { var key = vrevHash(JSON.stringify(snap)); doc.snaps[key] = snap; entry.snapKey = key; } else entry.snap = snap;
+    doc.files.push(entry);
     if (doc.files.length > VREV_MAX_FILES) doc.files.splice(0, doc.files.length - VREV_MAX_FILES);
+    var used = {};
+    doc.files.forEach(function (f) { if (f.snapKey) used[f.snapKey] = true; });
+    Object.keys(doc.snaps).forEach(function (k) { if (!used[k]) delete doc.snaps[k]; });
   }
+  function vrevFileSnap(doc, f) { return f.snap || (doc.snaps || {})[f.snapKey] || null; }
   // Verteil-/Druckfassung ohne Auszeichnung: Tabellen als Textzeilen, **/__ entfernt (PDF, Stand in FINAL).
   function vrevPlainExportChapters(doc, withInternal) {
     return vrevExportChapters(doc, withInternal).map(function (c) {
@@ -32920,7 +32935,7 @@
     els.vrevDocsTbody.innerHTML = st.docs.map(function (x) {
       var c = vrevCounts(x), active = doc && x.id === doc.id;
       return '<tr data-vrev-row="' + x.id + '"' + (active ? ' class="vrev-row-active"' : "") + "><td><b>" + escapeHtml(x.name) + "</b>" + (active ? ' <span class="step-note">(geöffnet)</span>' : "") +
-        (x.filename ? '<div class="step-note">' + escapeHtml(x.filename) + "</div>" : "") + "</td>" +
+        (x.filename ? '<div class="step-note">' + escapeHtml(x.filename) + "</div>" : "") + (x.teamDocId && vrevTeamDocById(x.teamDocId) ? '<div class="step-note">im Team geteilt</div>' : "") + "</td>" +
         '<td class="mono">' + escapeHtml(x.version) + "</td>" +
         "<td>" + vrevStatusPill(x.status) + '<div><select data-vrev-status="' + x.id + '" aria-label="Status von ' + escapeHtml(x.name) + '">' +
         VREV_STATUSES.map(function (s) { return '<option value="' + s + '"' + (s === x.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select></div></td>" +
@@ -32933,6 +32948,7 @@
         '<button class="btn ghost btn-tiny" type="button" data-vrev-act="report-docx" data-id="' + x.id + '"' + (x.checkedAt ? "" : " disabled") + ">Reviewbericht</button>" +
         '<button class="btn ghost btn-tiny" type="button" data-vrev-act="word-dist" data-id="' + x.id + '">Word</button>' +
         '<button class="btn ghost btn-tiny" type="button" data-vrev-act="new-version" data-id="' + x.id + '">Neue Version</button>' +
+        (teamDb ? '<button class="btn ghost btn-tiny" type="button" data-vrev-act="team-share" data-id="' + x.id + '">' + (x.teamDocId && vrevTeamDocById(x.teamDocId) ? "Team aktualisieren" : "Im Team teilen") + "</button>" : "") +
         '<button class="btn ghost btn-tiny final-btn-danger" type="button" data-vrev-act="delete" data-id="' + x.id + '">Löschen</button></div></td></tr>' +
         (vrevFilesOpen[x.id] && (x.files || []).length ? '<tr class="vrev-files-row" data-vrev-files="' + x.id + '"><td colspan="10"><table class="simple-table"><thead><tr><th>Abgelegt</th><th>Art</th><th>Datei</th><th>Version · Status</th><th></th></tr></thead><tbody>' +
           x.files.slice().reverse().map(function (f) {
@@ -32941,6 +32957,7 @@
           }).join("") + '</tbody></table><p class="step-note">Abgelegte Dateien werden aus dem damaligen Stand neu erzeugt (Text, Bilder, Design-Wahl) – spätere Änderungen fließen nicht ein.</p></td></tr>' : "");
     }).join("");
     if (typeof renderPaket === "function") renderPaket();
+    renderVrevTeam();
     els.vrevWork.hidden = !doc;
     if (!doc) return;
     els.vrevDocTitle.textContent = doc.name + " · v" + doc.version + " · " + doc.status;
@@ -33276,7 +33293,7 @@
   function vrevNewVersion(doc) {
     var copy = JSON.parse(JSON.stringify(doc));
     delete copy.id;
-    var nd = vrevAddDoc(Object.assign(copy, { version: vrevBumpVersion(doc.version), status: "Entwurf", createdAt: nowLabel(), updatedAt: nowLabel(), files: [], finalVersionId: null, steps: {}, stage: 1, changes: [], ai: null, translations: [], scoreInitial: null, score: null, checks: {}, checkedAt: "", baseDocId: doc.id, history: [] }));
+    var nd = vrevAddDoc(Object.assign(copy, { version: vrevBumpVersion(doc.version), status: "Entwurf", createdAt: nowLabel(), updatedAt: nowLabel(), files: [], snaps: {}, finalVersionId: null, teamDocId: null, steps: {}, stage: 1, changes: [], ai: null, translations: [], scoreInitial: null, score: null, checks: {}, checkedAt: "", baseDocId: doc.id, history: [] }));
     nd.history = [{ at: nowLabel(), version: nd.version, status: nd.status, what: "Neue Version aus v" + doc.version }];
     vrevRunChecks(nd);
     return nd;
@@ -33433,9 +33450,11 @@
   async function vrevRedownload(doc, f) {
     try {
       var data;
-      if (f.kind === "Reviewbericht") data = /\.docx$/i.test(f.filename) ? await buildMarkdownDocxBlob("Reviewbericht – " + f.snap.name, f.snap.md) : new Blob([f.snap.md], { type: "text/markdown" });
+      var snap = vrevFileSnap(doc, f);
+      if (!snap) throw new Error("Der abgelegte Stand ist nicht mehr vorhanden.");
+      if (f.kind === "Reviewbericht") data = /\.docx$/i.test(f.filename) ? await buildMarkdownDocxBlob("Reviewbericht – " + snap.name, snap.md) : new Blob([snap.md], { type: "text/markdown" });
       else {
-        var tmp = Object.assign({}, doc, JSON.parse(JSON.stringify(f.snap)));
+        var tmp = Object.assign({}, doc, JSON.parse(JSON.stringify(snap)));
         data = f.kind === "PDF Verteilung" ? await vrevBuildPdf(tmp, f.at) : await vrevBuildWord(tmp, f.kind === "Word intern", false, f.at);
       }
       if (await saveOrWarn(f.filename, data)) els.vrevImportNote.textContent = "„" + f.filename + "“ (abgelegt " + f.at + ", v" + f.version + ") erneut heruntergeladen.";
@@ -33451,6 +33470,108 @@
     vrevHistory(doc, "Als Stand „" + v.name + "“ nach FINAL übernommen");
     if (typeof renderFinal === "function") renderFinal();
     return v;
+  }
+  // ---------- v2.143: Team-Ablage (Sammlung "teamreviews", ohne Bilddaten) ----------
+  var vrevTeamDocs = [], vrevTeamUnsub = null;
+  function vrevTeamDocById(id) { return vrevTeamDocs.filter(function (d) { return d._id === id; })[0] || null; }
+  function vrevImgCaption(img) { return (img && (img.description || img.filename)) || ""; }
+  function vrevTeamSubscribe() {
+    if (vrevTeamUnsub || !teamDb) return;
+    vrevTeamUnsub = teamDb.collection("teamreviews").orderBy("sharedAt", "desc").limit(200).onSnapshot(function (snap) {
+      vrevTeamDocs = snap.docs.map(function (d) { return Object.assign({ _id: d.id }, d.data()); });
+      VR().docs.forEach(function (x) {
+        var td = x.teamDocId ? vrevTeamDocById(x.teamDocId) : null;
+        if (td && td.status && td.status !== x.status) { x.status = td.status; x.history = (td.history || x.history).slice(); }
+      });
+      renderVrev();
+    }, function () { vrevTeamUnsub = null; });
+  }
+  function vrevTeamBody(doc) {
+    var images = {};
+    Object.keys(doc.ph || {}).forEach(function (k) { images[k] = (doc.ph[k] || []).map(function (id) { return { id: id, caption: vrevImgCaption(screenPhImgById(id)) }; }); });
+    return { name: doc.name, version: doc.version, status: doc.status, source: doc.source, lang: doc.lang, filename: doc.filename || "",
+      legend: !!doc.legend, designKey: doc.designKey || "", statusColors: doc.statusColors !== false, translationNotNeeded: !!doc.translationNotNeeded,
+      chapters: doc.chapters.map(function (c) { var o = { title: c.title, level: c.level || 1, text: c.text }; if (c.tables) o.tables = c.tables; return o; }),
+      images: images, checks: doc.checks, steps: doc.steps, score: doc.score, scoreInitial: doc.scoreInitial, checkedAt: doc.checkedAt,
+      changes: (doc.changes || []).slice(-60), history: (doc.history || []).slice(-60), ai: doc.ai ? { at: doc.ai.at, findings: doc.ai.findings.slice(0, 80) } : null,
+      updatedAt: teamNowIso(), updatedById: teamMyId() };
+  }
+  async function vrevTeamShare(doc) {
+    if (!teamDb) return;
+    if (!doc.checkedAt) vrevRunChecks(doc);
+    var body = vrevTeamBody(doc), existing = doc.teamDocId ? vrevTeamDocById(doc.teamDocId) : null;
+    if (teamTooBig(body)) { showToast("Zu groß zum Teilen", "„" + doc.name + "“ überschreitet die Größe eines Team-Dokuments (ca. 240 KB Text).", true); return; }
+    try {
+      if (existing) {
+        var ref = teamDb.doc("teamreviews/" + existing._id), res = await ref.acquire({ holder: teamHolder(), ttlMs: 5000 });
+        if (!res.acquired) { showToast("Gerade in Bearbeitung", "Bitte nach " + teamFmt(res.expiresAt) + " erneut versuchen.", true); return; }
+        delete body.status; delete body.history; // gemeinsamer Status bleibt massgeblich
+        await ref.update(body);
+        vrevHistory(doc, "Team-Dokument aktualisiert");
+        showToast("Aktualisiert", "Team-Dokument „" + doc.name + "“ aktualisiert.");
+      } else {
+        var nref = teamDb.collection("teamreviews").doc();
+        await nref.set(Object.assign(body, { sharedById: teamMyId(), sharedAt: teamNowIso() }));
+        doc.teamDocId = nref.id;
+        vrevHistory(doc, "Im Team geteilt");
+        showToast("Geteilt", "„" + doc.name + "“ v" + doc.version + " ist jetzt für das Team sichtbar.");
+      }
+      addLog("VARIANTE Review: „" + doc.name + "“ v" + doc.version + " im Team " + (existing ? "aktualisiert" : "geteilt") + ".");
+    } catch (err) {
+      showToast("Teilen fehlgeschlagen", err && err.code === "invalid_argument" ? "Keine Schreibberechtigung für Team-Daten (Freigabe mindestens „Contributor“ nötig)." : ((err && err.message) || "Unbekannter Fehler."), true);
+    }
+    renderVrev();
+  }
+  function vrevTeamImport(td) {
+    var ph = {}, missing = 0;
+    Object.keys(td.images || {}).forEach(function (k) {
+      var ids = [];
+      (td.images[k] || []).forEach(function (ref) {
+        var img = app.uploadedImages.filter(function (i) { return i.id === ref.id && vrevImgCaption(i) === ref.caption; })[0] ||
+          (ref.caption ? app.uploadedImages.filter(function (i) { return vrevImgCaption(i) === ref.caption; })[0] : null);
+        if (img) ids.push(img.id); else missing++;
+      });
+      if (ids.length) ph[k] = ids;
+    });
+    var fields = { name: td.name, version: td.version || "1.0", status: td.status || "Entwurf", source: td.source || "Team", lang: td.lang || "DE", filename: td.filename || "",
+      legend: !!td.legend, designKey: td.designKey || "", statusColors: td.statusColors !== false, translationNotNeeded: !!td.translationNotNeeded,
+      chapters: JSON.parse(JSON.stringify(td.chapters || [])), ph: ph, checks: td.checks || {}, steps: td.steps || {}, score: td.score != null ? td.score : null,
+      scoreInitial: td.scoreInitial != null ? td.scoreInitial : null, checkedAt: td.checkedAt || "", changes: (td.changes || []).slice(), history: (td.history || []).slice(),
+      ai: td.ai ? JSON.parse(JSON.stringify(td.ai)) : null, teamDocId: td._id };
+    var local = VR().docs.filter(function (x) { return x.teamDocId === td._id; })[0], doc;
+    if (local) { Object.assign(local, fields); local.updatedAt = nowLabel(); doc = local; VR().activeId = local.id; vrevHistory(local, "Aus dem Team aktualisiert"); }
+    else { doc = vrevAddDoc(fields); doc.history = (td.history || []).concat([{ at: nowLabel(), version: doc.version, status: doc.status, what: "Aus dem Team übernommen" }]); }
+    vrevRunChecks(doc);
+    if (td.status) doc.status = td.status;
+    els.vrevImportNote.textContent = "„" + td.name + "“ v" + doc.version + (local ? " aus dem Team aktualisiert." : " aus dem Team übernommen.") + (missing ? " " + missing + " Bild(er) nicht im eigenen Bildarchiv – Platzhalter bleiben leer." : "");
+    return doc;
+  }
+  async function vrevTeamSetStatus(td, status) {
+    var ref = teamDb.doc("teamreviews/" + td._id);
+    // Statuswechsel ohne Sperre (Sperren laufen nur von selbst ab und wuerden andere Sekunden lang blockieren) – der letzte Wechsel gilt.
+    try {
+      var history = (td.history || []).concat([{ at: nowLabel(), version: td.version, status: status, what: "Status im Team geändert", byId: teamMyId() }]).slice(-60);
+      await ref.update({ status: status, history: history, statusChangedAt: teamNowIso(), statusById: teamMyId() });
+      VR().docs.forEach(function (x) { if (x.teamDocId === td._id) { x.status = status; x.history = history.slice(); } });
+      addLog("VARIANTE Review: Team-Dokument „" + td.name + "“ auf „" + status + "“ gesetzt.");
+    } catch (err) { showToast("Status nicht gespeichert", (err && err.message) || "Unbekannter Fehler.", true); }
+    renderVrev();
+  }
+  function renderVrevTeam() {
+    if (!els.vrevTeam) return;
+    els.vrevTeam.hidden = !teamDb;
+    if (!teamDb) return;
+    els.vrevTeamWrap.hidden = !vrevTeamDocs.length;
+    els.vrevTeamEmpty.hidden = vrevTeamDocs.length > 0;
+    els.vrevTeamTbody.innerHTML = vrevTeamDocs.map(function (td) {
+      var local = VR().docs.filter(function (x) { return x.teamDocId === td._id; })[0];
+      return '<tr data-vrev-team-row="' + escapeHtml(td._id) + '"><td><b>' + escapeHtml(td.name) + "</b>" + (local ? ' <span class="step-note">(lokal vorhanden)</span>' : "") + '</td><td class="mono">' + escapeHtml(td.version || "") + "</td>" +
+        "<td>" + vrevStatusPill(td.status || "Entwurf") + '<div><select data-vrev-team-status="' + escapeHtml(td._id) + '" aria-label="Team-Status">' + VREV_STATUSES.map(function (st) { return '<option value="' + st + '"' + (st === td.status ? " selected" : "") + ">" + st + "</option>"; }).join("") + "</select></div></td>" +
+        "<td>" + (td.score == null ? "–" : td.score) + "</td><td>" + Object.keys(td.steps || {}).length + "/7</td>" +
+        "<td>" + teamPersonHtml(td.sharedById, "Teammitglied") + '<div class="step-note">' + escapeHtml(teamFmt(td.sharedAt)) + "</div></td><td>" + teamPersonHtml(td.updatedById, "Teammitglied") + '<div class="step-note">' + escapeHtml(teamFmt(td.updatedAt)) + "</div></td>" +
+        '<td><button class="btn ghost btn-tiny" type="button" data-vrev-team-import="' + escapeHtml(td._id) + '">' + (local ? "Lokal aktualisieren" : "Übernehmen") + "</button></td></tr>";
+    }).join("");
+    teamResolvePeople(els.vrevTeamTbody);
   }
   els.vrevUploadBtn.addEventListener("click", function () { els.vrevFileInput.click(); });
   els.vrevFileInput.addEventListener("change", function () {
@@ -33485,11 +33606,22 @@
     els.vrevStatus.textContent = "Änderung an „" + c.title + "“ gespeichert.";
     renderVrev();
   });
+  els.vrevStep.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-vrev-team-import]");
+    if (!b) return;
+    var td = vrevTeamDocById(b.getAttribute("data-vrev-team-import"));
+    if (td) { vrevTeamImport(td); renderVrev(); }
+  });
   els.vrevStep.addEventListener("change", async function (e) {
     var t = e.target, doc = vrevActive();
+    if (t.matches("[data-vrev-team-status]")) { var td0 = vrevTeamDocById(t.getAttribute("data-vrev-team-status")); if (td0 && td0.status !== t.value) vrevTeamSetStatus(td0, t.value); return; }
     if (t.matches("[data-vrev-status]")) {
       var d2 = vrevDoc(parseInt(t.getAttribute("data-vrev-status"), 10));
-      if (d2 && d2.status !== t.value) { d2.status = t.value; vrevHistory(d2, "Status geändert"); renderVrev(); }
+      if (d2 && d2.status !== t.value) {
+        d2.status = t.value; vrevHistory(d2, "Status geändert");
+        var tdl = d2.teamDocId ? vrevTeamDocById(d2.teamDocId) : null;
+        if (tdl && teamDb) vrevTeamSetStatus(tdl, t.value); else renderVrev();
+      }
       return;
     }
     if (!doc) return;
@@ -33532,6 +33664,7 @@
     if (act === "word-dist") { vrevSaveWord(doc, false); return; }
     if (act === "word-intern") { vrevSaveWord(doc, true); return; }
     if (act === "pdf-dist") { vrevSavePdf(doc); return; }
+    if (act === "team-share") { vrevTeamShare(doc); return; }
     if (act === "to-final") { var fv = vrevToFinal(doc); els.vrevStatus.textContent = "Stand „" + fv.name + "“ in FINAL angelegt (Status Entwurf)."; addLog("VARIANTE Review: „" + doc.name + "“ als FINAL-Stand übernommen."); renderVrev(); return; }
     if (act === "files") { vrevFilesOpen[doc.id] = !vrevFilesOpen[doc.id]; renderVrev(); return; }
     if (act === "file-dl") { var ff = (doc.files || []).filter(function (x) { return x.id === parseInt(b.getAttribute("data-file"), 10); })[0]; if (ff) vrevRedownload(doc, ff); return; }
@@ -33664,12 +33797,23 @@
       rules: rules, markets: typeof d.markets === "string" ? d.markets : AGENT_MARKETS_DEFAULT,
       sel: d.sel && typeof d.sel === "object" ? d.sel : { extraction: true, classification: true, quality: true, media: true, knowledge: true },
       useAi: !!d.useAi, status: d.status && typeof d.status === "object" ? d.status : {}, log: Array.isArray(d.log) ? d.log : [],
-      blocks: Array.isArray(d.blocks) ? d.blocks : [], quality: d.quality || null, media: d.media || null, knowledge: d.knowledge || null,
+      blocks: Array.isArray(d.blocks) ? d.blocks : [], blocksDropped: (!Array.isArray(d.blocks) || !d.blocks.length) && d.blocksDropped ? d.blocksDropped : 0, quality: d.quality || null, media: d.media || null, knowledge: d.knowledge || null,
       translation: d.translation || null, impact: d.impact || null, publishing: d.publishing || null,
       trSource: d.trSource || "", trLang: d.trLang || "EN", impA: d.impA || "", impB: d.impB || "", pubSource: d.pubSource || "", pubWord: d.pubWord !== false, pubPdf: !!d.pubPdf, pubIntern: !!d.pubIntern
     };
   }
-  function AG() { if (!app.agent) app.agent = agentNormalize(null); return app.agent; }
+  function AG() {
+    if (!app.agent) app.agent = agentNormalize(null);
+    var a = app.agent;
+    if (a.blocksDropped && !a.blocks.length && a.status.extraction && !a.status.extraction.stale) { a.status.extraction.stale = true; if (a.status.classification) a.status.classification.stale = true; }
+    return a;
+  }
+  // v2.143: Bloecke werden nicht in der Sitzung gespeichert (bis zu MB Text, jederzeit neu erzeugbar) –
+  // nach dem Laden ist die Extraction "veraltet" und laeuft beim naechsten Orchestrator-Lauf automatisch neu.
+  function agentForSession() {
+    var a = AG();
+    return Object.assign({}, a, { blocks: [], blocksDropped: a.blocks.length || a.blocksDropped || 0 });
+  }
   function agentDef(key) { return AGENT_DEFS.filter(function (a) { return a.key === key; })[0]; }
 
   // ---------- Revisionen (FINAL-Staende + Review-Dokumente) als gemeinsame Quelle ----------
@@ -33743,7 +33887,7 @@
     var blocks = [];
     srcs.forEach(function (s) { blocks = blocks.concat(agentBlocksOf(s, blocks.length)); });
     var a = AG();
-    a.blocks = blocks;
+    a.blocks = blocks; a.blocksDropped = 0;
     a.quality = null; a.media = null; a.knowledge = null;
     ["classification", "quality", "media", "knowledge"].forEach(function (k) { if (a.status[k]) a.status[k].stale = true; });
     var kinds = {};
@@ -34270,7 +34414,7 @@
   function agentOutputHtml(k) {
     var a = AG(), d = agentDef(k), st = a.status[k], h = '<p class="step-note" style="margin-top:0;"><b>' + escapeHtml(d.label) + "</b> · Eingabe: " + escapeHtml(d.input) + " · Ausgabe: " + escapeHtml(d.output) + (st ? " · " + escapeHtml(st.summary) : " · noch nicht ausgeführt") + "</p>";
     if (k === "extraction" || k === "classification") {
-      if (!a.blocks.length) return h;
+      if (!a.blocks.length) return h + (a.blocksDropped ? '<p class="step-note">' + a.blocksDropped + " Blöcke aus dem letzten Lauf werden nicht in der Sitzung gespeichert – „Ausführen“ erzeugt sie in wenigen Millisekunden neu (Klassifikation per KI ggf. erneut).</p>" : "");
       var show = a.blocks.slice(0, 300);
       return h + agentTable(["ID", "Quelle", "Kapitel", "Art", "Text"].concat(k === "classification" ? ["Domäne", "Rolle", "Markt", "Sprache", "per"] : []), show.map(function (b) {
         var c = b.cls || {};

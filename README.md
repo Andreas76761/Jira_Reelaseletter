@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.142.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.143.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,19 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Dokument-Review im Team, kleinere Sitzungsdatei (v2.143.0)**: **Team-Ablage** (VARIANTE › Dokument-Review, sichtbar
+  mit geteilter Datenhaltung): je Dokument „Im Team teilen“ bzw. „Team aktualisieren“ – geteilt werden Text (inkl.
+  Tabellen), Prüfergebnisse, Stufen, Qualität, KI-Befunde, Änderungen, Verlauf und Ausgabe-Optionen, ohne Bilddaten
+  (Bilder als Referenz mit Bildtext). Die Liste „Team-Ablage“ zeigt live alle geteilten Dokumente mit Version, Status,
+  Qualität, Stufen, wer geteilt/aktualisiert hat und wann; „Übernehmen“ legt ein lokales Dokument an, „Lokal
+  aktualisieren“ holt den neuesten Team-Stand – Bilder werden über Bild-ID und Bildtext dem eigenen Bildarchiv
+  zugeordnet (fehlende werden gemeldet). Der Status ist gemeinsam: Änderungen in der Team-Liste oder in der eigenen
+  Ablage gelten für alle und erscheinen live bei den anderen; „Team aktualisieren“ überschreibt den gemeinsamen Status
+  nicht und nutzt eine kurze Sperre gegen gleichzeitiges Überschreiben. **Kleinere Sitzungsdatei**: abgelegte Dateien
+  aus demselben Stand (z. B. Word + PDF + intern) speichern den Text nur einmal; die Blöcke des Registers AGENT werden
+  nicht gespeichert (nach dem Laden ist die Extraction „veraltet“ und läuft beim nächsten Orchestrator-Lauf automatisch
+  in Millisekunden neu). Im End-to-End-Beispiel sinkt die Sitzung von 5,2 MB auf 4,8 MB (Rest überwiegend Bilder).
 
 - **End-to-End-Test: Korrekturen und Optimierungen (v2.142.0)**: Ergebnis eines Durchlaufs im echten Browser mit großen
   Dokumenten (Handbuch mit 120 Kapiteln/Unterkapiteln, 30 Bildern, Tabellen, Listen, Kommentaren; 80 Screens).

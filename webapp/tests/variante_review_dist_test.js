@@ -115,7 +115,7 @@ async function wordText(data) {
   const fv = sess.final.versions.find((v) => v.name === "Handbuch v1.0 (Review)");
   check("FINAL-Stand: Verteilfassung (App-Text, Tabelle als Zeile, ohne Jira/Kommentar/**)", fv && fv.origin === "Review" && fv.chapters[0].text.includes("über die App") && fv.chapters[0].text.includes("Feld | Wert") &&
     !fv.chapters[0].text.includes("ONESCM-7") && !fv.chapters[0].text.includes(SECRET) && fv.chapters[1].text.includes("jederzeit") && !fv.chapters[1].text.includes("**"));
-  check("Sitzung: Dateien je Dokument gespeichert", sess.vrev.docs[0].files.length === 3 && sess.vrev.docs[0].files[0].kind === "Word Verteilung" && sess.vrev.docs[0].files[0].snap.chapters[0].text.includes("über das Portal"));
+  check("Sitzung: Dateien je Dokument gespeichert", sess.vrev.docs[0].files.length === 3 && sess.vrev.docs[0].files[0].kind === "Word Verteilung" && sess.vrev.docs[0].snaps[sess.vrev.docs[0].files[0].snapKey].chapters[0].text.includes("über das Portal") && Object.keys(sess.vrev.docs[0].snaps).length === 1);
   nav("variante"); await wait(30);
 
   // Release-Paket

@@ -223,7 +223,7 @@ const manualBody = H("1 Verträge anlegen") + P("Neue Verträge werden online an
   fire($("session-export-btn"), "click");
   await waitUntil(() => savedFiles.length > 0, 5000);
   const sess = JSON.parse(savedFiles[0].data);
-  check("Sitzung: Quellen, Blöcke, Ergebnisse und Status gespeichert", sess.agent.uploads.length === 1 && sess.agent.blocks.length > 10 && sess.agent.knowledge.items.length > 0 && sess.agent.status.publishing.s === "warn" && sess.agent.useAi === true);
+  check("Sitzung: Quellen, Ergebnisse und Status gespeichert, Blöcke nicht (neu erzeugbar)", sess.agent.uploads.length === 1 && sess.agent.blocks.length === 0 && sess.agent.blocksDropped > 10 && sess.agent.knowledge.items.length > 0 && sess.agent.status.publishing.s === "warn" && sess.agent.useAi === true);
   check("Rovo Knowledge enthält übernommene Objekte mit Label AGENT", sess.rovoEntries.some((e) => e.labels.includes("AGENT")));
 
   check("Keine Skriptfehler", errors.length === 0);
