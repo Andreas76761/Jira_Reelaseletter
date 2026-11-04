@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.134.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.135.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,6 +2031,25 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **Screens-Import: schneller, Rolle/Sprache je Datei, Screens zu Platzhaltern (v2.135.0)**:
+  **Performance** – gemessen mit 4 Word-Dateien / 240 Screens (44 MB) im Browser: Import von
+  ~10,6 s auf ~1,9–2,8 s, längste Blockade der Oberfläche von ~3,4 s auf ~0,3–0,7 s. Ursachen laut
+  CPU-Profil: Tabelle und Galerie im Register „Bilder“ wurden nach jeder Datei komplett neu gezeichnet
+  (auch unsichtbar), die Screens-Tabelle schrieb alle Bilder als Base64 ins HTML, Bilddaten wurden in
+  JavaScript Base64-kodiert. Jetzt: Galerie wird nur vorgemerkt und beim Öffnen gezeichnet, die
+  Screens-Tabelle einmal je Upload-Stapel mit schlanken Blob-Vorschauen (lazy), Bilddaten nativ und
+  parallel umgewandelt; Dateien erscheinen sofort mit Status „Wartet …“/„Wird verarbeitet …“.
+  **Metadaten** – Rolle und Sprache für neu hochgeladene Dateien wählbar; die Dateiübersicht zeigt je
+  Datei Rolle, Sprache (änderbar, wirkt auf deren Screens) und Einlesedatum; die Screens-Tabelle zeigt
+  „Rolle · Sprache“. **Screens zu Platzhaltern** – neuer Bereich am Ende: Platzhalter-Datei einlesen
+  (Excel, Word-Tabelle, Text/CSV/TSV oder Zeilen einfügen; je Zeile Nr., Kapitel, Beschreibung
+  „Screenshot: …“, Status), je Platzhalter bis zu 1–3 passende Screens zuordnen (idf-gewichtete
+  Begriffe aus Bildtext, OCR-Text, Kapitel/Unterkapitel; Teilwort-Treffer, Kapitel-Bonus; Filter nach
+  Rolle/Sprache; ohne ausreichenden Treffer bleibt der Platzhalter „offen“), Screens entfernen (×) oder
+  ergänzen, optional „Mit KI verfeinern“ (neuer RAG-Prompt, JSON, nur vorgeschlagene Kandidaten), und
+  „Datei mit Screens herunterladen (Word)“: Tabelle Nr. | Kapitel | Beschreibung | Screens (Bilder mit
+  Bildunterschrift) | Status. Gespeichert in der Sitzung.
+  Test: `webapp/tests/screens_placeholder_test.js`.
 - **Register CROSS_X – Wissensagent für Cross-Reference-Prüfungen über Kapitel und Rollen (v2.134.0)**:
   Neues Register nach „Mitteilungen“. (1) **Wissensbasis** aus wählbaren Quellen: Kapiteltexte der
   gewählten FINAL-Stände (Basis + Varianten, inkl. interner Vermerke als ⟦INTERN: …⟧ und

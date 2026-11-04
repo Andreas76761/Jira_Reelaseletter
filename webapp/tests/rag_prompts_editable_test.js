@@ -74,7 +74,7 @@ function setValue(el, v) { el.value = v; fire(el, "input"); }
   // (Prompt direkt am Ort der Nutzung editierbar), eine dokumentweite
   // Zaehlung waere daher falsch.
   const textareas = Array.from(doc.querySelectorAll("#ragprompts-list .ragprompt-textarea"));
-  check("Genau 41 editierbare RAG-Prompts vorhanden (inkl. Benutzerhandbuch-Kapitel + Zusammenführung + Handbuch-Vergleich + Qualitätsprüfung + Dateiansicht-FastTrack + 3 Verbesserungs-Varianten + 5 EDITO-Prompts + RAG-Analyse + 2 RAG-Anreicherungs-Prompts + Unterkapitel-Werkstatt-Prompt + 2 Unterkapitel-Agenten-Prompts + 2 Rovo-Summary-Prompts + FINAL-Bildzuordnung + 3 Editor-Agenten für interne Dokumente + Stände-Vergleich + 2 FINAL-Review-Agenten + VARIANTE-Übersetzung + Rollen-Vorschlag + 2 CROSS_X-Prompts)", textareas.length === 41);
+  check("Genau 42 editierbare RAG-Prompts vorhanden (inkl. Benutzerhandbuch-Kapitel + Zusammenführung + Handbuch-Vergleich + Qualitätsprüfung + Dateiansicht-FastTrack + 3 Verbesserungs-Varianten + 5 EDITO-Prompts + RAG-Analyse + 2 RAG-Anreicherungs-Prompts + Unterkapitel-Werkstatt-Prompt + 2 Unterkapitel-Agenten-Prompts + 2 Rovo-Summary-Prompts + FINAL-Bildzuordnung + 3 Editor-Agenten für interne Dokumente + Stände-Vergleich + 2 FINAL-Review-Agenten + VARIANTE-Übersetzung + Rollen-Vorschlag + 2 CROSS_X-Prompts + Screens-Platzhalter)", textareas.length === 42);
   const summaryTa = doc.querySelector('.ragprompt-textarea[data-ragprompt-key="summary"]');
   check("Zusammenfassungs-Prompt initial mit Standardtext befüllt", summaryTa.value.includes("prägnanten, endnutzergerechten Zusammenfassung"));
   const summaryBlock = summaryTa.closest(".ragprompt-block");

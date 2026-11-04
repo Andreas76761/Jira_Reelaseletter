@@ -234,7 +234,11 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   await wait(50);
   check("Nach Löschen der DOCX-Datei: nur noch 1 Datei in der Übersicht", doc.getElementById("editor-files-count").textContent === "1");
   check("Nach Löschen der DOCX-Datei: nur noch 2 Screens (die der PPTX bleiben erhalten)", doc.getElementById("editor-screens-count").textContent === "2");
+  doc.querySelector('.nav-item[data-view="bilder"]').click();
+  await wait(30);
   check("Gelöschte Screens verschwinden auch aus „Bilder“", !doc.getElementById("gallery").innerHTML.includes("screens_vertrag"));
+  doc.querySelector('.nav-item[data-view="editor"]').click();
+  await wait(30);
 
   // ===================== Fehlerbehandlung bei kaputter Datei =====================
   const editorInput3 = doc.getElementById("editor-file-input");

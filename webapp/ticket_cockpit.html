@@ -535,6 +535,16 @@
   .crossx-answer-meta { font-size: 12px; color: var(--text-faint); }
   .crossx-sources { margin-top: 6px; font-size: 12px; }
   .crossx-sources details { margin: 2px 0; }
+  .screenph-thumbs { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
+  .screenph-thumb { position: relative; border: 1px solid var(--border); border-radius: 6px; padding: 2px; background: var(--surface); width: 110px; font-size: 11px; }
+  .screenph-thumb img { width: 104px; height: 64px; object-fit: contain; display: block; }
+  .screenph-thumb .variante-x { position: absolute; top: 0; right: 0; background: var(--surface); border-radius: 0 6px 0 6px; }
+  .screenph-score { color: var(--text-faint); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #screenph-tbody select { max-width: 112px; font-size: 12px; margin-top: 4px; }
+  #screenph-tbody td { white-space: normal; vertical-align: top; }
+  #screenph-tbody td:nth-child(3) { min-width: 180px; max-width: 280px; }
+  #screenph-tbody td:nth-child(4) { min-width: 120px; max-width: 360px; }
+  .screenph-status-ok { color: #15803d; font-weight: 600; } .screenph-status-open { color: #b45309; font-weight: 600; }
   .variante-actions { flex-wrap: wrap; min-width: 220px; max-width: 300px; }
   #variante-table-wrap td, #variante-table-wrap th { white-space: normal; }
   #variante-table-wrap td:first-child { min-width: 180px; }
@@ -2643,6 +2653,11 @@
           <p class="section-label">Datei hochladen (.docx / .pptx)</p>
           <label for="editor-domain-select">Domäne für neu hochgeladene Dateien</label>
           <select id="editor-domain-select" style="margin-bottom:10px; max-width:320px;"></select>
+          <div class="controls" style="flex-wrap:wrap; margin-bottom:10px;">
+            <div><label for="editor-meta-rolle">Rolle (Metadaten)</label><select id="editor-meta-rolle" aria-label="Rolle für neu hochgeladene Dateien"></select></div>
+            <div><label for="editor-meta-sprache">Sprache (Metadaten)</label><select id="editor-meta-sprache" aria-label="Sprache für neu hochgeladene Dateien"></select></div>
+            <span class="step-note" style="margin:0; align-self:flex-end;">Gilt für die nächsten hochgeladenen Dateien; je Datei in der Übersicht änderbar.</span>
+          </div>
           <div class="dropzone" id="editor-dropzone" tabindex="0" role="button" aria-label="Word-/PowerPoint-Datei(en) auswählen">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
             <span class="txt">
@@ -2657,7 +2672,7 @@
           <p class="section-label">Hochgeladene Dateien (<span id="editor-files-count">0</span>)</p>
           <div class="panel table-wrap" style="max-height:260px; overflow:auto;">
             <table class="simple-table" id="editor-files-table">
-              <thead><tr><th>Dateiname</th><th>Typ</th><th>Domäne</th><th>Status</th><th>Screens</th><th>Aktion</th></tr></thead>
+              <thead><tr><th>Dateiname</th><th>Typ</th><th>Domäne</th><th>Status</th><th>Screens</th><th>Rolle</th><th>Sprache</th><th>Eingelesen</th><th>Aktion</th></tr></thead>
               <tbody id="editor-files-tbody"></tbody>
             </table>
             <div class="empty-hint" id="editor-files-empty">Noch keine Dateien hochgeladen.</div>
@@ -2682,11 +2697,37 @@
           </div>
           <div class="panel table-wrap" style="max-height:440px; overflow:auto;">
             <table class="simple-table" id="editor-screens-table">
-              <thead><tr><th>Vorschau</th><th>Nr.</th><th>Bildtext</th><th>Quelldatei</th><th>Domäne</th><th>Kapitel</th><th>Unterkapitel</th></tr></thead>
+              <thead><tr><th>Vorschau</th><th>Nr.</th><th>Bildtext</th><th>Quelldatei</th><th>Domäne</th><th>Kapitel</th><th>Unterkapitel</th><th>Rolle · Sprache</th></tr></thead>
               <tbody id="editor-screens-tbody"></tbody>
             </table>
             <div class="empty-hint" id="editor-screens-empty">Noch keine Screens extrahiert &ndash; zuerst eine Datei hochladen.</div>
           </div>
+        </section>
+
+        <section id="screenph-section">
+          <p class="section-label">Screens zu Platzhaltern zuordnen</p>
+          <p class="desc">Eine Datei mit Platzhaltern einlesen – je Zeile Nr., Kapitel (z. B. „5.1 Produkt konfigurieren“), Beschreibung („Screenshot: …“) und Status. Unterstützt werden Excel (.xlsx), Word-Tabellen (.docx) und Text (.txt/.csv/.tsv, Tabulator/Semikolon getrennt); Zeilen lassen sich auch direkt einfügen. Zu jedem Platzhalter werden bis zu 3 passende Screens aus den oben eingelesenen Screens gesucht (Bildtext, OCR-Text, Kapitel/Unterkapitel), optional mit KI verfeinert und von Hand korrigiert. Ergebnis: eine neue Word-Datei mit den Screens je Platzhalter.</p>
+          <div class="controls" style="flex-wrap:wrap;">
+            <button class="btn primary" id="screenph-upload-btn" type="button">Platzhalter-Datei wählen</button>
+            <input type="file" id="screenph-file-input" accept=".xlsx,.docx,.txt,.csv,.tsv" hidden>
+            <span class="step-note" id="screenph-file-note" style="margin:0;"></span>
+          </div>
+          <details class="variante-bulk"><summary>Zeilen einfügen (z. B. aus Excel/Confluence kopiert)</summary>
+            <textarea class="text-input" id="screenph-paste" rows="5" style="width:100%; font-family:inherit; margin-top:6px;" placeholder="7&#9;5.1 Produkt konfigurieren&#9;Screenshot: Produktkonfiguration mit Laufzeit, Laufleistung und Zahlungsintervall&#9;offen"></textarea>
+            <button class="btn ghost btn-tiny" id="screenph-paste-btn" type="button">Zeilen übernehmen</button>
+          </details>
+          <div class="controls" style="flex-wrap:wrap; margin-top:8px; align-items:flex-end;">
+            <div><label for="screenph-rolle">Nur Screens der Rolle</label><select id="screenph-rolle" aria-label="Rollen-Filter für Screens"></select></div>
+            <div><label for="screenph-sprache">Nur Screens der Sprache</label><select id="screenph-sprache" aria-label="Sprachen-Filter für Screens"></select></div>
+            <div><label for="screenph-max">Screens je Platzhalter</label><select id="screenph-max" aria-label="Maximale Screens je Platzhalter"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option></select></div>
+          </div>
+          <div class="controls" style="flex-wrap:wrap;">
+            <button class="btn primary" id="screenph-match-btn" type="button" disabled>Screens zuordnen</button>
+            <button class="btn ghost" id="screenph-ai-btn" type="button" disabled><span class="btn-spinner" id="screenph-ai-spinner" hidden></span>Mit KI verfeinern</button>
+            <button class="btn ghost" id="screenph-docx-btn" type="button" disabled>Datei mit Screens herunterladen (Word)</button>
+          </div>
+          <p class="step-note" id="screenph-status"></p>
+          <div class="panel table-wrap" id="screenph-table-wrap" hidden><table class="simple-table"><thead><tr><th>Nr.</th><th>Kapitel</th><th>Beschreibung</th><th>Screens</th><th>Status</th></tr></thead><tbody id="screenph-tbody"></tbody></table></div>
         </section>
       </section>
 
@@ -6298,7 +6339,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.134.0";
+  var APP_VERSION = "2.135.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7902,7 +7943,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "crossx-srcs", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -8043,6 +8084,7 @@
     variante: null,
     rlRoleOverrides: {},
     crossx: null,
+    screenPh: null,
     tickets: [],
     view: { bucket: "all", domain: "", label: "", query: "", issueType: "", excludeTypes: {}, sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
@@ -8584,6 +8626,7 @@
     app.variante = varianteNormalize(null);
     app.rlRoleOverrides = {};
     app.crossx = crossxNormalize(null);
+    app.screenPh = screenPhNormalize(null);
     editoFinalWork = null;
     els.finalAssignImagesStatusNote.textContent = "";
     renderFinal();
@@ -8698,6 +8741,7 @@
     app.variante = varianteNormalize(null);
     app.rlRoleOverrides = {};
     app.crossx = crossxNormalize(null);
+    app.screenPh = screenPhNormalize(null);
     editoFinalWork = null;
     els.finalAssignImagesStatusNote.textContent = "";
     renderFinal();
@@ -8785,6 +8829,7 @@
       variante: app.variante,
       rlRoleOverrides: app.rlRoleOverrides,
       crossx: app.crossx,
+      screenPh: app.screenPh,
       selectedKeys: app.selectedKeys,
       savedLists: app.savedLists,
       nextSavedListId: app.nextSavedListId,
@@ -8895,6 +8940,7 @@
     app.variante = varianteNormalize(data.variante);
     app.rlRoleOverrides = rlNormalizeOverrides(data.rlRoleOverrides);
     app.crossx = crossxNormalize(data.crossx);
+    app.screenPh = screenPhNormalize(data.screenPh);
     app.selectedKeys = data.selectedKeys || {};
     app.savedLists = data.savedLists || [];
     app.nextSavedListId = data.nextSavedListId || 1;
@@ -9002,6 +9048,7 @@
     renderAllDocNotes();
     renderVariante();
     renderCrossx();
+    renderScreenPh();
     renderMassFiles();
     renderMassTicketSourceWrap();
     els.massMergeOutput.value = app.massMergedDoc;
@@ -12552,24 +12599,46 @@
     });
     return map;
   }
-  async function blipsInNode(node, relsMap, ownerPartPath, zip) {
+  // v2.135: Bilddaten nativ (Blob + FileReader) statt JS-Base64 umwandeln, je Medium nur einmal
+  // (Cache am ZIP) und parallel; liefert zusaetzlich den Blob fuer schlanke Vorschau-URLs.
+  function blobToDataUrl(blob) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onerror = function () { reject(r.error || new Error("Bild konnte nicht gelesen werden.")); };
+      r.onload = function () { resolve(String(r.result)); };
+      r.readAsDataURL(blob);
+    });
+  }
+  function zipMediaImage(zip, mediaPath, mime) {
+    var cache = zip.__mediaCache || (zip.__mediaCache = {});
+    if (!cache[mediaPath]) {
+      var entry = zip.file(mediaPath);
+      cache[mediaPath] = entry.async("uint8array").then(function (bytes) {
+        var blob = new Blob([bytes], { type: mime });
+        return blobToDataUrl(blob).then(function (url) { return { dataUrl: url, blob: blob }; });
+      }).catch(function () {
+        return entry.async("base64").then(function (b64) { return { dataUrl: "data:" + mime + ";base64," + b64, blob: null }; });
+      });
+    }
+    return cache[mediaPath];
+  }
+  // Startet die Umwandlung aller Bilder eines Knotens sofort (ohne zu warten) - Promises.
+  function blipImagePromises(node, relsMap, ownerPartPath, zip) {
     var out = [];
     var blips = node.getElementsByTagName("a:blip");
     for (var i = 0; i < blips.length; i++) {
       var rId = blips[i].getAttribute("r:embed") || blips[i].getAttribute("r:link");
-      if (!rId) continue;
-      var target = relsMap[rId];
-      if (!target) continue;
-      var mediaPath = resolveZipRelPath(ownerPartPath, target);
-      if (!mediaPath) continue;
-      var mediaEntry = zip.file(mediaPath);
-      if (!mediaEntry) continue;
+      var target = rId && relsMap[rId];
+      var mediaPath = target && resolveZipRelPath(ownerPartPath, target);
+      if (!mediaPath || !zip.file(mediaPath)) continue;
       var mime = imageMimeFromPath(mediaPath);
-      if (!mime) continue; // Vektor-/Metadatei (z. B. .emf/.wmf) - keine im Browser darstellbare Vorschau
-      var base64 = await mediaEntry.async("base64");
-      out.push({ dataUrl: "data:" + mime + ";base64," + base64 });
+      if (!mime) continue;
+      out.push(zipMediaImage(zip, mediaPath, mime));
     }
     return out;
+  }
+  async function blipsInNode(node, relsMap, ownerPartPath, zip) {
+    return Promise.all(blipImagePromises(node, relsMap, ownerPartPath, zip));
   }
   // Bildtext/Caption-Heuristik: die Dateien folgen laut Nutzerangabe dem
   // Muster "Überschrift" gefolgt vom zugehörigen "Screen" - daher wird
@@ -12592,11 +12661,12 @@
       if (node.nodeType !== 1 || node.tagName !== "w:p") continue;
       var level = docxHeadingLevel(docxParagraphStyleId(node));
       var text = docxParagraphText(node);
-      var blips = await blipsInNode(node, relsMap, "word/document.xml", zip);
-      for (var j = 0; j < blips.length; j++) screens.push({ dataUrl: blips[j].dataUrl, caption: text || lastHeadingText || "" });
+      var pending = blipImagePromises(node, relsMap, "word/document.xml", zip);
+      for (var j = 0; j < pending.length; j++) screens.push({ pending: pending[j], caption: text || lastHeadingText || "" });
       if (level > 0 && text) lastHeadingText = text;
     }
-    return screens;
+    var imgs = await Promise.all(screens.map(function (sc) { return sc.pending; }));
+    return screens.map(function (sc, k) { return { dataUrl: imgs[k].dataUrl, blob: imgs[k].blob, caption: sc.caption }; });
   }
   function pptxSlideNumber(path) {
     var m = /slide(\d+)\.xml$/i.exec(path || "");
@@ -12633,10 +12703,11 @@
       var relsPath = "ppt/slides/_rels/" + slidePath.split("/").pop() + ".rels";
       var relsMap = await loadZipRelationships(zip, relsPath);
       var caption = pptxSlideTitleText(slideDoc);
-      var blips = await blipsInNode(slideDoc, relsMap, slidePath, zip);
-      for (var j = 0; j < blips.length; j++) screens.push({ dataUrl: blips[j].dataUrl, caption: caption || "", page: pptxSlideNumber(slidePath) });
+      var pending = blipImagePromises(slideDoc, relsMap, slidePath, zip);
+      for (var j = 0; j < pending.length; j++) screens.push({ pending: pending[j], caption: caption || "", page: pptxSlideNumber(slidePath) });
     }
-    return screens;
+    var imgs = await Promise.all(screens.map(function (sc) { return sc.pending; }));
+    return screens.map(function (sc, k) { return { dataUrl: imgs[k].dataUrl, blob: imgs[k].blob, caption: sc.caption, page: sc.page }; });
   }
   // Reine Fliesstext-Extraktion aus einer .pptx (fuer Rovo-Knowledge-Import,
   // s. u.) - anders als pptxZipToScreens() (nur Bilder + Folientitel als
@@ -18101,7 +18172,7 @@
     card.innerHTML =
       "<h3>" + escapeHtml(img.filename) + "</h3>" +
       '<div class="meta">' + escapeHtml(img.when) + "</div>" +
-      '<img class="uploaded-thumb" src="' + img.dataUrl + '" alt="' + escapeHtml(img.filename) + '" data-img-view="' + img.id + '" style="cursor:zoom-in;" title="Zum Vergrößern/Verwischen anklicken">' +
+      '<img class="uploaded-thumb" src="' + screenPreviewUrl(img) + '" loading="lazy" decoding="async" alt="' + escapeHtml(img.filename) + '" data-img-view="' + img.id + '" style="cursor:zoom-in;" title="Zum Vergrößern/Verwischen anklicken">' +
       '<div class="image-tag-row">' +
       '<label>Domäne<input type="text" class="text-input image-tag-input" data-id="' + img.id + '" data-field="domain" value="' + escapeHtml(img.domain) + '" placeholder="z. B. Contract Management"></label>' +
       '<label>Schritt (für Clickanweisung)<input type="text" class="text-input image-tag-input" data-id="' + img.id + '" data-field="processStep" value="' + escapeHtml(img.processStep) + '" placeholder="z. B. Schritt 3: Freigabe"></label>' +
@@ -18129,7 +18200,7 @@
     // bedeutungstragender Inhalt sind, keine Dekoration.
     if (kind === "uploaded") {
       var altUploaded = data.description || data.filename || "Hochgeladenes Bild";
-      return '<img class="uploaded-thumb table-thumb" src="' + data.dataUrl + '" alt="' + escapeHtml(altUploaded) + '" data-img-view="' + data.id + '" style="cursor:zoom-in;" title="Zum Vergrößern/Verwischen anklicken">';
+      return '<img class="uploaded-thumb table-thumb" src="' + screenPreviewUrl(data) + '" loading="lazy" decoding="async" alt="' + escapeHtml(altUploaded) + '" data-img-view="' + data.id + '" style="cursor:zoom-in;" title="Zum Vergrößern/Verwischen anklicken">';
     }
     var altGenerated = data.description || data.title || "Generiertes Prozessbild";
     if (data.kind === "svg") return '<img class="uploaded-thumb table-thumb" src="data:image/svg+xml;utf8,' + encodeURIComponent(data.svg) + '" alt="' + escapeHtml(altGenerated) + '">';
@@ -18793,7 +18864,16 @@
      app.uploadedImages ab (dieselbe Datenstruktur wie "Bilder" - Screens
      erscheinen dadurch dort automatisch mit, ohne doppelte Datenhaltung),
      ergänzt um imageNumber (Reihenfolge im Quelldokument) und sourceFile. */
+  function editorMetaOptions(kind, sel, emptyLabel) {
+    var list = kind === "rolle" ? FINAL_ROLE_OPTIONS : VARIANT_LANGS.map(function (l) { return l[0]; });
+    if (sel && list.indexOf(sel) === -1) list = list.concat([sel]);
+    return '<option value="">' + emptyLabel + "</option>" + list.map(function (v) { return '<option value="' + escapeHtml(v) + '"' + (v === sel ? " selected" : "") + ">" + escapeHtml(v) + "</option>"; }).join("");
+  }
   function renderEditorDomainSelect() {
+    if (els.editorMetaRolle) {
+      els.editorMetaRolle.innerHTML = editorMetaOptions("rolle", els.editorMetaRolle.value, "– keine –");
+      els.editorMetaSprache.innerHTML = editorMetaOptions("sprache", els.editorMetaSprache.value, "– keine –");
+    }
     var domains = massDomainOptionsList();
     var current = els.editorDomainSelect.value;
     els.editorDomainSelect.innerHTML = '<option value="">Ohne Domäne</option>' +
@@ -18815,6 +18895,9 @@
         "<td>" + escapeHtml(f.domain || "–") + "</td>" +
         "<td>" + escapeHtml(f.status) + "</td>" +
         "<td class=\"mono\">" + f.screenCount + "</td>" +
+        '<td><select data-editor-file-meta="rolle" data-id="' + f.id + '" aria-label="Rolle der Datei">' + editorMetaOptions("rolle", f.rolle || "", "–") + "</select></td>" +
+        '<td><select data-editor-file-meta="sprache" data-id="' + f.id + '" aria-label="Sprache der Datei">' + editorMetaOptions("sprache", f.sprache || "", "–") + "</select></td>" +
+        '<td class="mono" style="white-space:nowrap;">' + escapeHtml(f.when || "–") + "</td>" +
         '<td><button type="button" class="btn ghost btn-tiny" data-editor-file-delete="' + f.id + '">Löschen</button></td>' +
         "</tr>";
     }).join("");
@@ -18830,26 +18913,57 @@
     els.editorScreensEmpty.hidden = screens.length > 0;
     els.editorScreensTbody.innerHTML = screens.map(function (s) {
       return "<tr>" +
-        '<td><img src="' + s.dataUrl + '" alt="Screen" style="max-width:90px; max-height:60px; object-fit:contain; border:1px solid var(--border); border-radius:4px;"></td>' +
+        '<td><img src="' + screenPreviewUrl(s) + '" alt="Screen" loading="lazy" decoding="async" style="max-width:90px; max-height:60px; object-fit:contain; border:1px solid var(--border); border-radius:4px;"></td>' +
         '<td class="mono">' + s.imageNumber + "</td>" +
         "<td>" + escapeHtml(s.description || "–") + "</td>" +
         "<td>" + escapeHtml(s.sourceFile) + "</td>" +
         "<td>" + escapeHtml(s.domain || "–") + "</td>" +
         '<td><select class="editor-screen-chapter-select" data-id="' + s.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapters, s.chapter, "Ohne Kapitel") + "</select></td>" +
         '<td><select class="editor-screen-subchapter-select" data-id="' + s.id + '" aria-label="Unterkapitel"' + (s.chapter ? "" : " disabled") + ">" + ragLibraryOptionsHtml(subchapterOptionsForChapter(s.chapter), s.subchapter, "Ohne Unterkapitel") + "</select></td>" +
+        '<td class="step-note" style="white-space:nowrap;">' + escapeHtml((s.rolle || "–") + " · " + (s.sprache || "–")) + "</td>" +
         "</tr>";
     }).join("");
   }
+  // v2.135: schlanke Vorschau-URLs (Blob statt Base64 im HTML), je Bild einmal erzeugt.
+  var screenPreviewUrls = {};
+  function screenPreviewUrl(img) {
+    var c = screenPreviewUrls[img.id];
+    if (c && c.len === (img.dataUrl || "").length) return c.url;
+    if (typeof URL === "undefined" || typeof URL.createObjectURL !== "function" || !img.dataUrl || img.dataUrl.indexOf("data:") !== 0) return img.dataUrl;
+    try {
+      var comma = img.dataUrl.indexOf(","), meta = img.dataUrl.slice(5, comma), bin = atob(img.dataUrl.slice(comma + 1));
+      var bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return setScreenPreviewBlob(img, new Blob([bytes], { type: meta.split(";")[0] }));
+    } catch (e) { return img.dataUrl; }
+  }
+  function setScreenPreviewBlob(img, blob) {
+    if (!blob || typeof URL === "undefined" || typeof URL.createObjectURL !== "function") return img.dataUrl;
+    var old = screenPreviewUrls[img.id];
+    if (old) { try { URL.revokeObjectURL(old.url); } catch (e) { /* egal */ } }
+    var url = URL.createObjectURL(blob);
+    screenPreviewUrls[img.id] = { url: url, len: (img.dataUrl || "").length };
+    return url;
+  }
+  function editorYield() { return new Promise(function (r) { setTimeout(r, 0); }); }
   var nextEditorFileId = 1;
   async function handleEditorFiles(fileList) {
     var files = Array.prototype.filter.call(fileList || [], function (f) { return /\.(docx|pptx)$/i.test(f.name || ""); });
     if (!files.length) { showToast("Keine passende Datei", "Bitte eine .docx- oder .pptx-Datei auswählen.", true); return; }
-    var domain = els.editorDomainSelect.value;
+    var domain = els.editorDomainSelect.value, rolle = els.editorMetaRolle ? els.editorMetaRolle.value : "", sprache = els.editorMetaSprache ? els.editorMetaSprache.value : "";
+    // Alle Dateien sofort mit Status "Wartet" listen; Darstellung der Screens/Bilder erst am Ende (Performance).
+    var entries = files.map(function (file) {
+      var e = { id: nextEditorFileId++, filename: file.name, format: "", domain: domain, rolle: rolle, sprache: sprache, status: "Wartet …", screenCount: 0, when: nowLabel() };
+      app.editorFiles.unshift(e);
+      return e;
+    });
+    renderEditorFiles();
+    var t0 = Date.now(), total = 0;
     for (var i = 0; i < files.length; i++) {
-      var file = files[i];
-      var entry = { id: nextEditorFileId++, filename: file.name, format: "", domain: domain, status: "Wird verarbeitet …", screenCount: 0, when: nowLabel() };
-      app.editorFiles.unshift(entry);
+      var file = files[i], entry = entries[i];
+      entry.status = "Wird verarbeitet …";
       renderEditorFiles();
+      await editorYield();
       try {
         var buf = await readFileAsArrayBuffer(file);
         var result = await extractScreensFromOfficeFile(buf);
@@ -18862,22 +18976,39 @@
               id: nextImageId++, filename: file.name + " - Screen " + (idx + 1), dataUrl: screen.dataUrl, mimeType: (/^data:([^;]+);/.exec(screen.dataUrl) || [])[1] || "unbekannt",
               sizeBytes: Math.round((screen.dataUrl.length - screen.dataUrl.indexOf(",") - 1) * 0.75), when: nowLabel(), domain: domain, processStep: "", chapter: "", subchapter: "", description: screen.caption || "",
               width: null, height: null, avgColor: null, brightnessPct: null, metadataComputed: false, metadataError: null,
-              ocrText: null, ocrError: null, ocrRanAt: null, imageNumber: idx + 1, sourceFile: file.name, editorFileId: entry.id
+              ocrText: null, ocrError: null, ocrRanAt: null, imageNumber: idx + 1, sourceFile: file.name, editorFileId: entry.id, rolle: rolle, sprache: sprache
             });
+            if (screen.blob) setScreenPreviewBlob(app.uploadedImages[0], screen.blob);
           });
           entry.status = "Verarbeitet";
         }
         entry.screenCount = result.screens.length;
+        entry.when = nowLabel();
+        total += result.screens.length;
         addLog("Editor: „" + file.name + "“ (" + editorFileTypeLabel(result.format) + ") hochgeladen, " + result.screens.length + " Screen(s) extrahiert.");
       } catch (err) {
         entry.status = "Fehler: " + ((err && err.message) || "Unbekannter Fehler.");
         showToast("Fehler beim Verarbeiten", entry.filename + ": " + entry.status.replace(/^Fehler: /, ""), true);
       }
       renderEditorFiles();
-      renderGallery();
-      renderEditorScreens();
     }
+    renderEditorScreens();
+    renderWhenVisible("bilder", "gallery", renderGallery);
+    if (typeof renderScreenPh === "function") renderScreenPh();
+    addLog("Editor: " + files.length + " Datei(en), " + total + " Screen(s) in " + ((Date.now() - t0) / 1000).toFixed(1) + " s eingelesen.");
   }
+  els.editorFilesTbody.addEventListener("change", function (e) {
+    var sel = e.target.closest("[data-editor-file-meta]");
+    if (!sel) return;
+    var id = parseInt(sel.getAttribute("data-id"), 10), field = sel.getAttribute("data-editor-file-meta");
+    var f = app.editorFiles.filter(function (x) { return x.id === id; })[0];
+    if (!f) return;
+    f[field] = sel.value;
+    var n = 0;
+    app.uploadedImages.forEach(function (img) { if (img.editorFileId === id) { img[field] = sel.value; n++; } });
+    addLog("Editor: " + (field === "rolle" ? "Rolle" : "Sprache") + " von „" + f.filename + "“ auf „" + (sel.value || "–") + "“ gesetzt (" + n + " Screen(s)).");
+    renderEditorScreens();
+  });
   els.editorDropzone.addEventListener("click", function () { els.editorFileInput.click(); });
   els.editorDropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.editorFileInput.click(); } });
   els.editorFileInput.addEventListener("change", function () { handleEditorFiles(els.editorFileInput.files); els.editorFileInput.value = ""; });
@@ -18910,7 +19041,7 @@
     app.uploadedImages = app.uploadedImages.filter(function (i) { return !belongsToFile(i); });
     renderEditorFiles();
     renderEditorScreens();
-    renderGallery();
+    renderWhenVisible("bilder", "gallery", renderGallery);
     renderWhenVisible("bildband", "bildband", renderBildband);
     renderWhenVisible("final", "final", renderFinal);
     addLog("Editor: Datei „" + file.filename + "“ und " + removedCount + " zugehörige(r) Screen(s) gelöscht.");
@@ -20153,6 +20284,7 @@
     rlRoleSuggest: "Du ordnest Jira-Tickets der Anwendung oneSCM (Fuhrpark-/Servicevertrags-Management) den Anwender-Rollen zu, für die die Änderung relevant ist. Rollen: Retail (Händler/Dealer: Verträge anlegen und verwalten, Kunden), Markt (Markt-/Ländergesellschaft: Produkte, Markteinstellungen, Vorlagen), MO (Market Operation: Prüfungen/MO-Checks, Freigaben, Finanzen), HQ (Headquarters: zentrale Steuerung, Auswertungen, Administration), IT (technische Änderungen ohne fachliche Oberfläche: Schnittstellen, Batch, Performance). Ein Ticket kann mehrere Rollen haben. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt der Form {\"TICKET-KEY\": [\"Rolle\", ...], ...} mit genau den unten genannten Ticket-Keys und nur den Rollennamen Retail, Markt, MO, HQ, IT. Ist keine Rolle erkennbar, gib eine leere Liste zurück. Erfinde nichts.",
     crossxAgent: "Du bist der interne Wissensagent für das Benutzerhandbuch und die Releaseletter der Anwendung oneSCM. Du beantwortest Fragen AUSSCHLIESSLICH auf Basis der unten stehenden Wissensbasis. Jeder Eintrag beginnt mit [#Nummer], Quelle und ggf. INTERN. Arbeite kapitel- und rollenübergreifend: Vergleiche Aussagen zwischen Kapiteln, Rollen-Varianten, internen Mitteilungen, ROVO-Verbesserungen, Prüfberichten und Jira-Tickets. Belege jede Aussage mit den Eintragsnummern in eckigen Klammern, z. B. [#12]. Kennzeichne Aussagen, die nur auf INTERNEN Einträgen beruhen, mit (intern). Wenn die Wissensbasis die Frage nicht beantwortet, sag das deutlich. Erfinde nichts. Antworte auf Deutsch, knapp und strukturiert.",
     crossxCheck: "Du bist Prüfer für Querverweise (Cross-Reference-Check) in einem rollenbasierten Benutzerhandbuch der Anwendung oneSCM. Prüfe anhand der Wissensbasis (Kapitel, Matrix: welche Kapitel in welcher Rolle aktiv sind, Varianten, interne Mitteilungen, ROVO-Verbesserungen, Prüfberichte, Jira-Tickets) und der bereits automatisch gefundenen Regel-Befunde, und gib AUSSCHLIESSLICH diese Abschnitte aus:\n\n### Widersprüche zwischen Kapiteln oder Rollen\n### Fehlende oder falsche Querverweise\n### Inhalte, die in einer Rolle fehlen, obwohl sie dort gebraucht werden\n### Interne Hinweise mit Auswirkung auf Kapitel oder Rollen\n\nJe Befund ein Stichpunkt mit Kapitel, Rolle(n) und Belegen [#n]; Befunde, die nur auf internen Einträgen beruhen, mit (intern) kennzeichnen. Ist ein Abschnitt leer, schreibe \"Keine gefunden.\" Wiederhole die Regel-Befunde nicht einzeln, sondern ergänze sie. Erfinde nichts.",
+    screenPhMatch: "Du ordnest Bildschirm-Screenshots (Screens) der Anwendung oneSCM Platzhaltern in einem Benutzerhandbuch zu. Zu jedem Platzhalter (Nr., Kapitel, Beschreibung des gewünschten Screenshots) bekommst du Kandidaten-Screens mit ID und ihrem bekannten Text (Bildtext/Überschrift, OCR-Text, Kapitel). Wähle je Platzhalter höchstens MAX Screens, die den beschriebenen Bildschirm wirklich zeigen – im Zweifel weniger oder keinen. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt der Form {\"Nr\": [ID, ...], ...} für alle genannten Platzhalter-Nummern (leere Liste, wenn keiner passt). Erfinde keine IDs.",
     finalCompareVersions: "Du vergleichst zwei Fassungen (Stand A und Stand B) eines Benutzerhandbuchs der Anwendung oneSCM. Die Fassungen können in unterschiedlichen Sprachen oder für unterschiedliche Rollen/Märkte geschrieben sein - vergleiche den INHALT, nicht den Wortlaut. Gehe Kapitel für Kapitel vor (Kapitel über Titel bzw. Reihenfolge zuordnen) und nenne je Kapitel: Inhalte, die nur in A stehen; Inhalte, die nur in B stehen; inhaltliche Abweichungen oder Widersprüche. Kapitel ohne inhaltlichen Unterschied mit einer Zeile \"keine inhaltlichen Unterschiede\" erwähnen. Schließe mit einer kurzen Gesamteinschätzung. Erfinde nichts."
   };
   var RAG_PROMPT_LABELS = {
@@ -20196,6 +20328,7 @@
     rlRoleSuggest: "Releaseletter je Rolle: Rollen für Tickets vorschlagen",
     crossxAgent: "CROSS_X: Wissensagent (Fragen über Kapitel und Rollen, inkl. interner Informationen)",
     crossxCheck: "CROSS_X: KI-Cross-Check über Kapitel und Rollen",
+    screenPhMatch: "Screens-Import: Screens zu Platzhaltern zuordnen (KI-Verfeinerung)",
     finalCompareVersions: "FINAL: Zwei Stände inhaltlich vergleichen"
   };
   function ragPromptFor(promptKey) {
@@ -31642,6 +31775,287 @@
     } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
   });
 
+  // ===================== v2.135: Screens zu Platzhaltern zuordnen (Screens-Import) =====================
+  // app.screenPh = { filename, at, rows: [{ nr, chapter, desc, status, screenIds: [], scores: { id: pct }, manual, via }] }
+  function screenPhNormalize(d) {
+    d = d && typeof d === "object" ? d : {};
+    return { filename: typeof d.filename === "string" ? d.filename : "", at: typeof d.at === "string" ? d.at : "",
+      rows: Array.isArray(d.rows) ? d.rows.filter(function (r) { return r && (r.chapter || r.desc); }).map(function (r) {
+        return { nr: String(r.nr || ""), chapter: String(r.chapter || ""), desc: String(r.desc || ""), status: String(r.status || "offen"),
+          screenIds: Array.isArray(r.screenIds) ? r.screenIds.filter(function (x) { return typeof x === "number"; }) : [], scores: r.scores && typeof r.scores === "object" ? r.scores : {}, manual: !!r.manual, via: r.via || "" };
+      }) : [] };
+  }
+  function SP() { if (!app.screenPh) app.screenPh = screenPhNormalize(null); return app.screenPh; }
+  var SCREENPH_STOP = ["der", "die", "das", "den", "dem", "des", "und", "oder", "mit", "von", "vom", "zum", "zur", "für", "fuer", "auf", "aus", "bei", "nach", "ein", "eine", "einer", "eines", "einem", "einen", "ist", "sind", "wird", "werden", "wie", "was", "wo", "sie", "ihre", "ihr", "ihren", "noch", "nicht", "als", "auch", "über", "ueber", "unter", "the", "and", "for", "screenshot", "screen", "bild", "ansicht", "anzeige", "warum"];
+  function screenPhStem(w) { w = w.replace(/(ungen|ung|en|er|es|e|n|s)$/, ""); return w.length > 7 ? w.slice(0, 7) : w; }
+  function screenPhWords(text) {
+    return String(text || "").toLowerCase().replace(/[^a-zäöüß0-9]+/g, " ").split(" ").filter(function (w) { return w.length >= 3 && SCREENPH_STOP.indexOf(w) === -1 && !/^\d+$/.test(w); });
+  }
+  function screenPhScreenText(img) {
+    return [img.description, img.ocrText, img.chapter, img.subchapter, img.processStep, (img.finalPageHeadings || []).join(" ")].filter(Boolean).join(" \n ");
+  }
+  function screenPhPool() {
+    var r = els.screenphRolle.value, l = els.screenphSprache.value;
+    return app.uploadedImages.filter(function (img) {
+      return img.dataUrl && (img.sourceFile || img.finalScreensFileId) && (!r || !img.rolle || img.rolle === r) && (!l || !img.sprache || img.sprache === l);
+    });
+  }
+  function screenPhChapterNum(ch) { var m = String(ch || "").match(/^\s*(\d+(?:\.\d+)*)/); return m ? m[1] : ""; }
+  // Bewertet alle Screens fuer einen Platzhalter: idf-gewichtete Wortstaemme (Beschreibung doppelt), Teilwort-Treffer, Kapitel-Bonus.
+  function screenPhRank(row, pool, idf, raw, stems, unseen) {
+    var desc = screenPhWords(row.desc.replace(/^\s*(screenshot|screen|bild|abbildung)\s*[:\-–]\s*/i, "")), chap = screenPhWords(row.chapter.replace(/^\s*\d+(\.\d+)*\s*/, ""));
+    var terms = {};
+    desc.forEach(function (w) { var st = screenPhStem(w); terms[st] = Math.max(terms[st] || 0, 2); });
+    chap.forEach(function (w) { var st = screenPhStem(w); terms[st] = Math.max(terms[st] || 0, 1); });
+    var keys = Object.keys(terms), num = screenPhChapterNum(row.chapter);
+    var wOf = function (k) { return idf[k] != null ? idf[k] : (unseen || 1); };
+    var totalW = keys.reduce(function (n, k) { return n + terms[k] * wOf(k); }, 0) || 1;
+    return pool.map(function (img, i) {
+      var sc = 0;
+      keys.forEach(function (k) {
+        var w = terms[k] * wOf(k);
+        if (stems[i][k]) sc += w; else if (k.length >= 5 && raw[i].indexOf(k) !== -1) sc += 0.6 * w;
+      });
+      var chapHay = ((img.chapter || "") + " " + (img.subchapter || "")).toLowerCase();
+      var bonus = num && chapHay && (new RegExp("(^|[^0-9.])" + num.replace(/\./g, "\\.") + "([^0-9]|$)").test(chapHay)) ? 0.5 * totalW : 0;
+      return { img: img, score: sc + bonus, pct: Math.min(100, Math.round(100 * (sc + bonus) / totalW)) };
+    }).filter(function (x) { return x.score > 0; }).sort(function (a, b) { return b.score - a.score; });
+  }
+  function screenPhIndex(pool) {
+    var df = {}, raw = [], stems = [];
+    pool.forEach(function (img) {
+      var t = screenPhScreenText(img).toLowerCase(), set = {};
+      screenPhWords(t).forEach(function (w) { set[screenPhStem(w)] = true; });
+      Object.keys(set).forEach(function (k) { df[k] = (df[k] || 0) + 1; });
+      raw.push(t); stems.push(set);
+    });
+    var idf = {}, n = pool.length;
+    Object.keys(df).forEach(function (k) { idf[k] = Math.log((n + 1) / (df[k] + 0.5)) + 0.2; });
+    // Begriffe, die in keinem Screen vorkommen, sind die spezifischsten: hoechstes Gewicht (nicht 1).
+    return { idf: idf, raw: raw, stems: stems, unseen: Math.log((n + 1) / 0.5) + 0.2 };
+  }
+  function screenPhMatchAll(onlyAuto) {
+    var st = SP(), pool = screenPhPool(), max = parseInt(els.screenphMax.value, 10) || 3;
+    if (!pool.length) return { matched: 0, pool: 0 };
+    var ix = screenPhIndex(pool), used = {}, matched = 0;
+    st.rows.forEach(function (row) {
+      if (onlyAuto && row.manual) { row.screenIds.forEach(function (id) { used[id] = true; }); if (row.screenIds.length) matched++; return; }
+      var ranked = screenPhRank(row, pool, ix.idf, ix.raw, ix.stems, ix.unseen).map(function (x) { return { img: x.img, pct: x.pct, score: used[x.img.id] ? x.score * 0.7 : x.score }; })
+        .sort(function (a, b) { return b.score - a.score; });
+      var top = ranked.length ? ranked[0].score : 0;
+      var pick = ranked.filter(function (x) { return x.pct >= 25 && x.score >= 0.45 * top; }).slice(0, max);
+      row.screenIds = pick.map(function (x) { return x.img.id; });
+      row.scores = {}; pick.forEach(function (x) { row.scores[x.img.id] = x.pct; });
+      row.manual = false; row.via = "Text";
+      pick.forEach(function (x) { used[x.img.id] = true; });
+      if (pick.length) matched++;
+    });
+    return { matched: matched, pool: pool.length };
+  }
+  function screenPhImgById(id) { return app.uploadedImages.filter(function (i) { return i.id === id; })[0] || null; }
+  function renderScreenPh() {
+    if (!els.screenphSection) return;
+    var st = SP();
+    els.screenphRolle.innerHTML = editorMetaOptions("rolle", els.screenphRolle.value, "alle");
+    els.screenphSprache.innerHTML = editorMetaOptions("sprache", els.screenphSprache.value, "alle");
+    var has = st.rows.length > 0, any = st.rows.some(function (r) { return r.screenIds.length; });
+    els.screenphMatchBtn.disabled = !has;
+    els.screenphAiBtn.disabled = !has;
+    els.screenphDocxBtn.disabled = !has;
+    els.screenphFileNote.textContent = has ? (st.filename || "eingefügte Zeilen") + " · " + st.rows.length + " Platzhalter" + (st.at ? " · eingelesen " + st.at : "") : "";
+    els.screenphTableWrap.hidden = !has;
+    if (!has) return;
+    var pool = screenPhPool(), ix = pool.length ? screenPhIndex(pool) : null;
+    els.screenphTbody.innerHTML = st.rows.map(function (r, i) {
+      var thumbs = r.screenIds.map(function (id) {
+        var img = screenPhImgById(id);
+        if (!img) return "";
+        return '<div class="screenph-thumb" title="' + escapeHtml(img.description || img.filename || "") + '"><img src="' + screenPreviewUrl(img) + '" loading="lazy" decoding="async" alt="Screen"><span class="screenph-score">' +
+          (r.scores[id] != null ? r.scores[id] + " % · " : "") + escapeHtml(truncate(img.description || img.filename || "", 30)) + '</span><button class="variante-x" type="button" data-screenph-remove="' + i + '" data-id="' + id + '" title="Screen entfernen" aria-label="Screen entfernen">×</button></div>';
+      }).join("");
+      var cands = ix ? screenPhRank(r, pool, ix.idf, ix.raw, ix.stems, ix.unseen).filter(function (x) { return r.screenIds.indexOf(x.img.id) === -1; }).slice(0, 12) : [];
+      var add = r.screenIds.length < 3 && cands.length ? '<select data-screenph-add="' + i + '" aria-label="Screen hinzufügen"><option value="">+ Screen …</option>' +
+        cands.map(function (x) { return '<option value="' + x.img.id + '">' + x.pct + " % – " + escapeHtml(truncate(x.img.description || x.img.filename || "", 50)) + "</option>"; }).join("") + "</select>" : "";
+      var ok = r.screenIds.length > 0;
+      return '<tr data-screenph-row="' + i + '"><td class="mono">' + escapeHtml(r.nr) + "</td><td>" + escapeHtml(r.chapter) + "</td><td>" + escapeHtml(r.desc) + "</td>" +
+        '<td><div class="screenph-thumbs">' + thumbs + "</div>" + add + "</td>" +
+        '<td><span class="' + (ok ? "screenph-status-ok" : "screenph-status-open") + '">' + (ok ? "zugeordnet (" + r.screenIds.length + ")" : escapeHtml(r.status || "offen")) + "</span>" +
+        (r.manual ? '<div class="step-note">manuell</div>' : r.via === "KI" ? '<div class="step-note">KI</div>' : "") + "</td></tr>";
+    }).join("");
+    if (!any && !els.screenphStatus.textContent) els.screenphStatus.textContent = "Noch keine Zuordnung – „Screens zuordnen“ klicken.";
+  }
+  function screenPhSplitLine(line) {
+    if (line.indexOf("\t") !== -1) return line.split("\t");
+    if (/\|/.test(line)) return line.replace(/^\s*\||\|\s*$/g, "").split("|");
+    if (line.indexOf(";") !== -1) return line.split(";");
+    return line.split(/\s{2,}/);
+  }
+  function screenPhParseRows(rows) {
+    var out = [];
+    rows.forEach(function (cells) {
+      cells = (cells || []).map(function (c) { return String(c == null ? "" : c).replace(/\s+/g, " ").trim(); });
+      if (!cells.some(Boolean)) return;
+      var chapIdx = cells.findIndex(function (c) { return /^\d+(\.\d+)*\.?\s+\S/.test(c); });
+      var descIdx = cells.findIndex(function (c) { return /^(screenshot|screen|bild|abbildung)\s*[:\-–]/i.test(c); });
+      if (chapIdx < 0 && descIdx < 0) return;
+      var nrIdx = cells.findIndex(function (c, i) { return i !== chapIdx && /^\d+$/.test(c); });
+      var statusIdx = cells.findIndex(function (c, i) { return i !== chapIdx && i !== descIdx && /^(offen|erledigt|zugeordnet|fertig|done|open|in arbeit|vorhanden)$/i.test(c); });
+      if (descIdx < 0) {
+        var best = -1;
+        cells.forEach(function (c, i) { if (i !== chapIdx && i !== nrIdx && i !== statusIdx && c && (best < 0 || c.length > cells[best].length)) best = i; });
+        descIdx = best;
+      }
+      out.push({ nr: nrIdx >= 0 ? cells[nrIdx] : String(out.length + 1), chapter: chapIdx >= 0 ? cells[chapIdx] : "", desc: descIdx >= 0 ? cells[descIdx] : "",
+        status: statusIdx >= 0 ? cells[statusIdx] : "offen", screenIds: [], scores: {}, manual: false, via: "" });
+    });
+    return out;
+  }
+  async function screenPhReadFile(file) {
+    var name = file.name || "", buf = await readFileAsArrayBuffer(file);
+    if (/\.xlsx$/i.test(name)) return finalReadXlsxRows(buf);
+    if (/\.docx$/i.test(name)) {
+      var zip = await JSZip.loadAsync(buf), entry = zip.file("word/document.xml");
+      if (!entry) throw new Error("Keine gültige Word-Datei.");
+      var xml = await entry.async("string"), tables = docxXmlToTables(xml), rows = [];
+      tables.forEach(function (t) { rows = rows.concat(t.rows); });
+      if (rows.length) return rows;
+      var d = new DOMParser().parseFromString(xml, "application/xml");
+      return Array.prototype.map.call(d.getElementsByTagName("w:p"), function (pnode) {
+        var parts = [], cur = "";
+        Array.prototype.forEach.call(pnode.getElementsByTagName("*"), function (n) { if (n.tagName === "w:t") cur += n.textContent; else if (n.tagName === "w:tab") { parts.push(cur); cur = ""; } });
+        parts.push(cur);
+        return parts;
+      });
+    }
+    var text = new TextDecoder("utf-8").decode(new Uint8Array(buf));
+    return text.split(/\r?\n/).map(screenPhSplitLine);
+  }
+  function screenPhSetRows(rows, filename) {
+    var parsed = screenPhParseRows(rows);
+    if (!parsed.length) { showToast("Keine Platzhalter erkannt", "Erwartet werden Zeilen mit Kapitel (z. B. „5.1 Produkt konfigurieren“) und/oder Beschreibung („Screenshot: …“).", true); return false; }
+    app.screenPh = { filename: filename, at: nowLabel(), rows: parsed };
+    els.screenphStatus.textContent = parsed.length + " Platzhalter eingelesen – jetzt „Screens zuordnen“.";
+    addLog("Screens-Import: " + parsed.length + " Platzhalter aus „" + filename + "“ eingelesen.");
+    renderScreenPh();
+    return true;
+  }
+  els.screenphUploadBtn.addEventListener("click", function () { els.screenphFileInput.click(); });
+  els.screenphFileInput.addEventListener("change", async function () {
+    var file = els.screenphFileInput.files && els.screenphFileInput.files[0];
+    els.screenphFileInput.value = "";
+    if (!file) return;
+    try { screenPhSetRows(await screenPhReadFile(file), file.name); }
+    catch (err) { showToast("Datei nicht lesbar", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
+  els.screenphPasteBtn.addEventListener("click", function () {
+    var text = els.screenphPaste.value;
+    if (!text.trim()) return;
+    if (screenPhSetRows(text.split(/\r?\n/).map(screenPhSplitLine), "eingefügte Zeilen")) els.screenphPaste.value = "";
+  });
+  [els.screenphRolle, els.screenphSprache].forEach(function (el) { el.addEventListener("change", renderScreenPh); });
+  els.screenphMatchBtn.addEventListener("click", function () {
+    var res = screenPhMatchAll(true), st = SP();
+    if (!res.pool) { els.screenphStatus.textContent = "Keine Screens vorhanden (bzw. keine zur gewählten Rolle/Sprache) – zuerst oben Dateien mit Screens einlesen."; renderScreenPh(); return; }
+    var manual = st.rows.filter(function (r) { return r.manual; }).length;
+    els.screenphStatus.textContent = res.matched + " von " + st.rows.length + " Platzhalter(n) mit Screens belegt (aus " + res.pool + " Screens)" + (manual ? ", " + manual + " manuell bearbeitete unverändert" : "") + ". Bitte prüfen – Screens lassen sich entfernen (×) oder ergänzen.";
+    addLog("Screens-Import: " + res.matched + " von " + st.rows.length + " Platzhaltern mit Screens belegt.");
+    renderScreenPh();
+  });
+  els.screenphTbody.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-screenph-remove]");
+    if (!b) return;
+    var r = SP().rows[parseInt(b.getAttribute("data-screenph-remove"), 10)], id = parseInt(b.getAttribute("data-id"), 10);
+    if (!r) return;
+    r.screenIds = r.screenIds.filter(function (x) { return x !== id; });
+    r.manual = true;
+    renderScreenPh();
+  });
+  els.screenphTbody.addEventListener("change", function (e) {
+    var sel = e.target.closest("[data-screenph-add]");
+    if (!sel || !sel.value) return;
+    var r = SP().rows[parseInt(sel.getAttribute("data-screenph-add"), 10)], id = parseInt(sel.value, 10);
+    if (!r || r.screenIds.indexOf(id) !== -1 || r.screenIds.length >= 3) return;
+    r.screenIds.push(id);
+    var opt = sel.selectedOptions[0];
+    r.scores[id] = parseInt(opt.textContent, 10) || null;
+    r.manual = true;
+    renderScreenPh();
+  });
+  els.screenphAiBtn.addEventListener("click", async function () {
+    var st = SP(), pool = screenPhPool(), max = parseInt(els.screenphMax.value, 10) || 3;
+    if (!pool.length) { els.screenphStatus.textContent = "Keine Screens für die KI-Verfeinerung vorhanden."; return; }
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
+    var ix = screenPhIndex(pool), rows = st.rows.filter(function (r) { return !r.manual; }).slice(0, 40), allowed = {};
+    var body = rows.map(function (r) {
+      var cands = screenPhRank(r, pool, ix.idf, ix.raw, ix.stems, ix.unseen).slice(0, 8);
+      if (cands.length < 8) pool.forEach(function (img) { if (cands.length < 8 && !cands.some(function (c) { return c.img.id === img.id; })) cands.push({ img: img, pct: 0 }); });
+      allowed[r.nr] = cands.map(function (c) { return c.img.id; });
+      return "PLATZHALTER " + r.nr + ": " + r.chapter + " – " + r.desc + "\n" + cands.map(function (c) { return "  ID " + c.img.id + ": " + truncate(screenPhScreenText(c.img).replace(/\s+/g, " "), 260); }).join("\n");
+    }).join("\n\n");
+    els.screenphAiBtn.disabled = true; els.screenphAiSpinner.hidden = false;
+    try {
+      var res = await sampleApi(ragPromptFor("screenPhMatch").replace("MAX", String(max)) + "\n\nMAX = " + max + "\n\n" + body, { modelTier: "default", cache: false });
+      var obj = rlParseJsonObject(res && res.text);
+      if (!obj) throw new Error("Antwort der KI war kein gültiges JSON.");
+      var changed = 0;
+      rows.forEach(function (r) {
+        var ids = Array.isArray(obj[r.nr]) ? obj[r.nr].map(Number).filter(function (id) { return allowed[r.nr].indexOf(id) !== -1; }).slice(0, max) : null;
+        if (!ids) return;
+        var pctMap = {};
+        screenPhRank(r, pool, ix.idf, ix.raw, ix.stems, ix.unseen).forEach(function (x) { pctMap[x.img.id] = x.pct; });
+        r.screenIds = ids; r.scores = {}; ids.forEach(function (id) { r.scores[id] = pctMap[id] != null ? pctMap[id] : null; });
+        r.via = "KI"; changed++;
+      });
+      els.screenphStatus.textContent = "KI-Verfeinerung: " + changed + " von " + rows.length + " Platzhalter(n) neu bewertet" + (st.rows.length > rows.length ? " (manuell bearbeitete bzw. über 40 hinaus unverändert)" : "") + ".";
+      addLog("Screens-Import: KI-Verfeinerung für " + changed + " Platzhalter.");
+    } catch (err) {
+      els.screenphStatus.textContent = "KI-Verfeinerung fehlgeschlagen: " + ((err && err.message) || "Unbekannter Fehler.");
+    } finally {
+      els.screenphAiSpinner.hidden = true;
+      renderScreenPh();
+    }
+  });
+  function screenPhCellXml(paras, widthTw, shade) {
+    return '<w:tc><w:tcPr><w:tcW w:w="' + widthTw + '" w:type="dxa"/>' + (shade ? '<w:shd w:val="clear" w:color="auto" w:fill="E7EEF5"/>' : "") + "</w:tcPr>" + (paras || '<w:p/>') + "</w:tc>";
+  }
+  function screenPhTextPara(text, bold) {
+    return "<w:p><w:r>" + (bold ? "<w:rPr><w:b/></w:rPr>" : "") + '<w:t xml:space="preserve">' + xmlEsc(text || "") + "</w:t></w:r></w:p>";
+  }
+  els.screenphDocxBtn.addEventListener("click", async function () {
+    var st = SP();
+    if (!st.rows.length) return;
+    try {
+      var all = [], seen = {};
+      st.rows.forEach(function (r) { r.screenIds.forEach(function (id) { var img = screenPhImgById(id); if (img && !seen[id]) { seen[id] = true; all.push(img); } }); });
+      var dims = await Promise.all(all.map(function (img) { return loadImageNaturalSize(img.dataUrl); })), mediaById = {}, media = [];
+      all.forEach(function (img, k) {
+        var w = (dims[k] && dims[k].width) || 800, h = (dims[k] && dims[k].height) || 600, wEmu = 1950000;
+        var m = { num: k + 1, rId: "rIdBild" + (k + 1), screen: { dataUrl: img.dataUrl, description: (img.description || img.filename || "Screen") + (img.sourceFile ? " (" + img.sourceFile + ")" : "") }, ext: manualImageExtFromDataUrl(img.dataUrl), widthEmu: wEmu, heightEmu: Math.round(wEmu * h / w) };
+        mediaById[img.id] = m; media.push(m);
+      });
+      var W = [500, 1700, 2250, 3500, 1076]; // = 9026 Twips (A4 hoch, Standardraender)
+      var head = "<w:tr>" + ["Nr.", "Kapitel", "Beschreibung", "Screens", "Status"].map(function (t, i) { return screenPhCellXml(screenPhTextPara(t, true), W[i], true); }).join("") + "</w:tr>";
+      var rowsXml = st.rows.map(function (r) {
+        var shots = r.screenIds.map(function (id) { return mediaById[id] ? manualImageDrawingParagraphXml(mediaById[id]) : ""; }).join("");
+        return "<w:tr>" + screenPhCellXml(screenPhTextPara(r.nr), W[0]) + screenPhCellXml(screenPhTextPara(r.chapter), W[1]) + screenPhCellXml(screenPhTextPara(r.desc), W[2]) +
+          screenPhCellXml(shots || screenPhTextPara("– kein passender Screen –"), W[3]) + screenPhCellXml(screenPhTextPara(r.screenIds.length ? "zugeordnet (" + r.screenIds.length + ")" : (r.status || "offen")), W[4]) + "</w:tr>";
+      }).join("");
+      var borders = ["top", "left", "bottom", "right", "insideH", "insideV"].map(function (b) { return "<w:" + b + ' w:val="single" w:sz="4" w:color="999999"/>'; }).join("");
+      var done = st.rows.filter(function (r) { return r.screenIds.length; }).length;
+      var bodyXml = '<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t xml:space="preserve">' + xmlEsc("Screens zu Platzhaltern – " + (st.filename || "Platzhalter")) + "</w:t></w:r></w:p>" +
+        screenPhTextPara("Erstellt " + nowLabel() + " · " + done + " von " + st.rows.length + " Platzhalter(n) mit Screens belegt · max. " + (parseInt(els.screenphMax.value, 10) || 3) + " Screens je Platzhalter") +
+        '<w:tbl><w:tblPr><w:tblW w:w="' + W.reduce(function (a, b) { return a + b; }, 0) + '" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblBorders>' + borders + "</w:tblBorders></w:tblPr><w:tblGrid>" +
+        W.map(function (w) { return '<w:gridCol w:w="' + w + '"/>'; }).join("") + "</w:tblGrid>" + head + rowsXml + "</w:tbl>";
+      var blob = await buildDocxBlobFromBodyAndMedia(bodyXml.replace(/<w:body>/, ""), media);
+      var base = (st.filename || "Platzhalter").replace(/\.[a-z0-9]+$/i, "");
+      var fn = safeFilename(base) + "_mit_Screens_" + dateStampForFilename() + ".docx";
+      if (await saveOrWarn(fn, blob)) {
+        els.screenphStatus.textContent = "„" + fn + "“ heruntergeladen – " + done + " von " + st.rows.length + " Platzhalter(n) mit insgesamt " + all.length + " Screen(s).";
+        addLog("Screens-Import: Datei „" + fn + "“ mit " + all.length + " Screens erzeugt.");
+      }
+    } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
+
   /* ============ Teil 10: Navigation ============ */
 
   var viewPanels = document.querySelectorAll("[data-view-panel]");
@@ -31653,7 +32067,7 @@
     if (typeof DOC_NOTE_HOSTS !== "undefined" && DOC_NOTE_HOSTS[name]) renderDocNotes(name);
     if (name === "dashboard" && typeof renderDashboardNotesDue === "function" && els.dashboardNotesDue) renderDashboardNotesDue();
     if (name === "output-md" || name === "output-pdf") renderOutputCounts();
-    if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); renderBildband(); }
+    if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); renderBildband(); renderScreenPh(); }
     if (name === "bildband") renderBildband();
     if (name === "edito") { renderEditoVersionSelect(); renderEditoBaseDocSelect(); renderEditoChapters(); renderEditoFiles(); renderEditoFinalDocs(); }
     if (name === "unterkapitel") { renderSubchapterVersionSelect(); renderSubchapterPanel(); }
