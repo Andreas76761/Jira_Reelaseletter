@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.133.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.134.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,6 +2031,26 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **Register CROSS_X – Wissensagent für Cross-Reference-Prüfungen über Kapitel und Rollen (v2.134.0)**:
+  Neues Register nach „Mitteilungen“. (1) **Wissensbasis** aus wählbaren Quellen: Kapiteltexte der
+  gewählten FINAL-Stände (Basis + Varianten, inkl. interner Vermerke als ⟦INTERN: …⟧ und
+  Rollen-Bedingungen), Matrix (aktive Rollen je Kapitel), Varianten (Inhaltsverzeichnis, Verweise,
+  Status), interne Mitteilungen, ROVO-Verbesserungen mit Status, Prüfberichte und letzte
+  Review-Ergebnisse, Jira-Tickets mit Rollen (inkl. manueller Zuordnung), Rollen-Navigation, Glossar;
+  interne Quellen sind als INTERN gekennzeichnet und per Schalter ausschließbar; Einträge mit
+  Nummer [#n] einsehbar. (2) **Cross-Reference-Prüfung nach Regeln (ohne KI)**: Kapitelverweise
+  („siehe/vgl. Kapitel n“) ins Leere, auf je Rolle ausgeblendete Kapitel oder mit geänderter Nummer
+  in der Rollen-Variante; Rollen-Verweise ohne passende Rollen-Variante in derselben Sprache; Themen
+  in keiner Rolle; unbekannte Rollen in Rollen-Bedingungen; Kapitel, die durch Rollen-Bedingungen
+  leer würden; Jira-Tickets im Text, deren Rolle nicht zu den aktiven Rollen des Kapitels passt bzw.
+  nicht geladen sind; offene ROVO-Punkte in veröffentlichten Varianten; fällige interne Mitteilungen –
+  mit Schweregrad (Fehler/Warnung/Hinweis) und Filter. (3) **Wissensagent (KI)**: Fragen über alle
+  Kapitel und Rollen; die passendsten Einträge werden ausgewählt, die Antwort belegt Aussagen mit
+  [#n] (zitierte Quellen aufklappbar, interne markiert); **KI-Cross-Check** über Kapitel & Rollen auf
+  Basis von Wissensbasis und Regel-Befunden. Zwei neue, unter RAG editierbare Prompts. (4) **Interner
+  Prüfbericht** als Markdown/Word (als INTERN gekennzeichnet). Verlauf, Quellen- und Stand-Auswahl
+  werden in der Sitzung gespeichert; nichts davon gelangt in Dokumente, Releaseletter oder das
+  Release-Paket. Test: `webapp/tests/crossx_test.js`.
 - **Release-Paket – alle Ergebnisse eines Releases in einer ZIP (v2.133.0)**: Neuer Schritt
   „5. Release-Paket“ im Register VARIANTE. Bündelt die Releaseletter je Rolle (aus dem Register
   Releaseletter, Word und optional Markdown), die erzeugten Benutzerhandbuch-Varianten (Word im

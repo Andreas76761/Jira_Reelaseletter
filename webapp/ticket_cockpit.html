@@ -518,6 +518,23 @@
   .final-role-badge.final-role-end { background: var(--surface-2); color: var(--text-faint); }
   .final-role-hidden { opacity: .42; text-decoration: line-through; }
   .final-role-view { margin-top: 6px; flex-wrap: wrap; }
+  .crossx-srcs { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; }
+  .crossx-src { display: flex; gap: 8px; align-items: flex-start; border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; background: var(--surface); cursor: pointer; }
+  .crossx-src input { margin-top: 3px; }
+  .crossx-src small { display: block; color: var(--text-faint); font-size: 12px; }
+  .crossx-intern { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .05em; color: #b45309; background: color-mix(in srgb, #f59e0b 16%, transparent); border-radius: 5px; padding: 0 5px; }
+  .crossx-kb-list { margin-top: 8px; max-height: 420px; overflow: auto; border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; }
+  .crossx-kb-list details { border-bottom: 1px solid var(--border); padding: 4px 0; font-size: 13px; }
+  .crossx-kb-list pre, .crossx-answer-body, .crossx-source-body { white-space: pre-wrap; font-family: inherit; font-size: 13px; margin: 4px 0; }
+  .crossx-sev { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 0 6px; }
+  .crossx-sev-Fehler { background: color-mix(in srgb, #dc2626 14%, transparent); color: #b91c1c; }
+  .crossx-sev-Warnung { background: color-mix(in srgb, #f59e0b 16%, transparent); color: #b45309; }
+  .crossx-sev-Hinweis { background: var(--surface-2); color: var(--text-faint); }
+  .crossx-answer { border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; margin-top: 10px; background: var(--surface); }
+  .crossx-answer-q { font-weight: 700; }
+  .crossx-answer-meta { font-size: 12px; color: var(--text-faint); }
+  .crossx-sources { margin-top: 6px; font-size: 12px; }
+  .crossx-sources details { margin: 2px 0; }
   .variante-actions { flex-wrap: wrap; min-width: 220px; max-width: 300px; }
   #variante-table-wrap td, #variante-table-wrap th { white-space: normal; }
   #variante-table-wrap td:first-child { min-width: 180px; }
@@ -839,6 +856,7 @@
       <li><button class="nav-item" data-view="final" type="button">FINAL</button></li>
       <li><button class="nav-item" data-view="variante" type="button">VARIANTE</button></li>
       <li><button class="nav-item" data-view="mitteilungen" type="button">Mitteilungen<span class="count-badge" id="nav-badge-notes" hidden title="fällige interne Mitteilungen">0</span></button></li>
+      <li><button class="nav-item" data-view="crossx" type="button">CROSS_X</button></li>
       <li><button class="nav-item" data-view="bilder" type="button">Bilder</button></li>
       <li><button class="nav-item" data-view="tabellen" type="button">Tabelle</button></li>
       <li class="nav-sep">Output</li>
@@ -3551,6 +3569,58 @@
         </section>
       </section>
 
+      <!-- ================= CROSS_X ================= -->
+      <section class="view-panel" data-view-panel="crossx" hidden>
+        <div class="view-head"><h2>CROSS_X</h2><p class="desc">Wissensagent für <b>Cross-Reference-Prüfungen über Kapitel und Rollen hinweg</b>. Grundlage ist eine Wissensbasis aus den Dokumenten (FINAL-Stände, Matrix, Varianten) <b>und internen Informationen</b> (interne Mitteilungen, ROVO-Verbesserungen, Prüfberichte, Jira-Tickets). Interne Inhalte sind als INTERN gekennzeichnet; Ergebnisse dieses Registers sind interne Arbeitsstände und erscheinen in keinem Dokument, Releaseletter oder Release-Paket.</p></div>
+
+        <section class="panel variante-step">
+          <p class="section-label">1. Wissensbasis</p>
+          <div class="crossx-srcs" id="crossx-srcs"><label class="crossx-src"><input type="checkbox" data-cx-src="stands" checked><span><b>Kapiteltexte der gewählten Stände</b><small>inkl. interner Vermerke und Rollen-Bedingungen · <span data-cx-src-count="stands">0</span> Einträge</small></span></label><label class="crossx-src"><input type="checkbox" data-cx-src="matrix" checked><span><b>Matrix Domäne · Rolle · Kapitel</b><small>aktive Rollen je Kapitel (VARIANTE) · <span data-cx-src-count="matrix">0</span> Einträge</small></span></label><label class="crossx-src"><input type="checkbox" data-cx-src="variants" checked><span><b>Varianten</b><small>Rolle, Sprache, Inhaltsverzeichnis, Verweise, Status · <span data-cx-src-count="variants">0</span> Einträge</small></span></label><label class="crossx-src"><input type="checkbox" data-cx-src="notes" checked><span><b>Interne Mitteilungen</b> <span class="crossx-intern">INTERN</span><small>FINAL-Stände und Register · <span data-cx-src-count="notes">0</span> Einträge</small></span></label><label class="crossx-src"><input type="checkbox" data-cx-src="improvements" checked><span><b>ROVO-Verbesserungen</b> <span class="crossx-intern">INTERN</span><small>je Kapitel mit Umsetzungsstatus · <span data-cx-src-count="improvements">0</span> Einträge</small></span></label><label class="crossx-src"><input type="checkbox" data-cx-src="reviews" checked><span><b>Prüfberichte</b> <span class="crossx-intern">INTERN</span><small>angehängte Berichte und letzte Agenten-Ergebnisse · <span data-cx-src-count="reviews">0</span> Einträge</small></span></label><label class="crossx-src"><input type="checkbox" data-cx-src="tickets" checked><span><b>Jira-Tickets</b> <span class="crossx-intern">INTERN</span><small>Schlüssel, Zusammenfassung, Rollen, Domäne, Status · <span data-cx-src-count="tickets">0</span> Einträge</small></span></label><label class="crossx-src"><input type="checkbox" data-cx-src="rolenav" checked><span><b>Rollen-Navigation</b><small>oneSCM-Module je Rolle mit Dokumentationslücken · <span data-cx-src-count="rolenav">0</span> Einträge</small></span></label><label class="crossx-src"><input type="checkbox" data-cx-src="glossary" checked><span><b>Glossar</b><small>Fachbegriffe je Sprache · <span data-cx-src-count="glossary">0</span> Einträge</small></span></label></div>
+          <div class="controls" style="flex-wrap:wrap; margin-top:8px;"><span class="step-note" style="margin:0;">Stände:</span><span id="crossx-stands" class="variante-checks"></span></div>
+          <div class="controls" style="flex-wrap:wrap;">
+            <label class="variante-inline-check"><input type="checkbox" id="crossx-include-intern" checked> Interne Informationen einbeziehen</label>
+            <button class="btn ghost btn-tiny" id="crossx-kb-btn" type="button">Wissensbasis anzeigen</button>
+          </div>
+          <p class="step-note" id="crossx-kb-summary"></p>
+          <div class="crossx-kb-list" id="crossx-kb-list" hidden></div>
+        </section>
+
+        <section class="panel variante-step">
+          <p class="section-label">2. Cross-Reference-Prüfung (Regeln, ohne KI)</p>
+          <p class="step-note" style="margin-top:0;">Prüft Kapitelverweise („siehe Kapitel 3“) gegen Struktur und Rollen-Varianten (ins Leere, auf ausgeblendete Kapitel, geänderte Nummern), Rollen-Verweise ohne passendes Handbuch, Themen in keiner Rolle, unbekannte Rollen in Rollen-Bedingungen, Jira-Tickets mit abweichender Rolle, offene ROVO-Punkte in veröffentlichten Varianten und fällige interne Mitteilungen. Grundlage: Basisdokument aus VARIANTE (sonst der aktive FINAL-Stand).</p>
+          <div class="controls" style="flex-wrap:wrap;">
+            <button class="btn primary" id="crossx-check-btn" type="button">Prüfung starten</button>
+            <label for="crossx-sev-filter" style="margin:0;">Anzeigen</label>
+            <select id="crossx-sev-filter" aria-label="Schweregrad-Filter"><option value="">alle</option><option value="Fehler">nur Fehler</option><option value="Warnung">Fehler + Warnungen</option></select>
+          </div>
+          <p class="step-note" id="crossx-check-summary"></p>
+          <div class="table-wrap" id="crossx-findings-wrap" hidden><table class="simple-table"><thead><tr><th>Schwere</th><th>Regel</th><th>Kapitel</th><th>Rolle</th><th>Befund</th></tr></thead><tbody id="crossx-findings-tbody"></tbody></table></div>
+        </section>
+
+        <section class="panel variante-step">
+          <p class="section-label">3. Wissensagent (KI)</p>
+          <p class="step-note" style="margin-top:0;">Stellt Fragen an die Wissensbasis – z. B. „Wo widersprechen sich die Beschreibungen der Vertragsfreigabe zwischen Retail und MO?“ oder „Welche internen Mitteilungen betreffen Kapitel, die in der MO-Variante fehlen?“. Der Agent nutzt die passendsten Einträge der Wissensbasis und nennt seine Quellen als [#n].</p>
+          <textarea class="text-input" id="crossx-question" rows="3" style="width:100%; font-family:inherit;" placeholder="Frage an den Wissensagenten"></textarea>
+          <div class="controls" style="flex-wrap:wrap; margin-top:6px;">
+            <button class="btn primary" id="crossx-ask-btn" type="button"><span class="btn-spinner" id="crossx-spinner" hidden></span>Fragen</button>
+            <button class="btn ghost" id="crossx-ai-check-btn" type="button" title="KI prüft Kapitel und Rollen auf Widersprüche, fehlende Querverweise und Lücken – inkl. der Regel-Befunde aus Schritt 2">KI-Cross-Check über Kapitel &amp; Rollen</button>
+            <button class="btn ghost" id="crossx-stop-btn" type="button" hidden>Stopp</button>
+            <button class="btn ghost btn-tiny" id="crossx-clear-btn" type="button">Verlauf leeren</button>
+          </div>
+          <p class="step-note" id="crossx-agent-status"></p>
+          <div id="crossx-answers"></div>
+        </section>
+
+        <section class="panel variante-step">
+          <p class="section-label">4. Interner Prüfbericht</p>
+          <div class="controls" style="flex-wrap:wrap;">
+            <button class="btn ghost" id="crossx-report-md-btn" type="button">Als Markdown</button>
+            <button class="btn ghost" id="crossx-report-docx-btn" type="button">Als Word</button>
+            <span class="step-note" style="margin:0;">Enthält Regel-Befunde und den Agenten-Verlauf – gekennzeichnet als INTERN.</span>
+          </div>
+        </section>
+      </section>
+
       <!-- ================= Mitteilungen ================= -->
       <section class="view-panel" data-view-panel="mitteilungen" hidden>
         <div class="view-head"><h2>Mitteilungen</h2><p class="desc">Übersicht aller <b>internen Mitteilungen</b> – aus den FINAL-Ständen und den Registern Releaseletter, Benutzerhandbuch, Prozessbild und Clickanweisung. Fällige zuerst. Mitteilungen bleiben intern: sie erscheinen in keinem Dokument und keinem Export der Register; die Excel-/Markdown-Liste hier ist ausdrücklich nur für den internen Gebrauch.</p></div>
@@ -6228,7 +6298,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.133.0";
+  var APP_VERSION = "2.134.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7832,7 +7902,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "paket-step", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "crossx-srcs", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -7972,6 +8042,7 @@
     docNotes: { releaseletter: [], benutzerhandbuch: [], prozessbild: [], clickanweisung: [] },
     variante: null,
     rlRoleOverrides: {},
+    crossx: null,
     tickets: [],
     view: { bucket: "all", domain: "", label: "", query: "", issueType: "", excludeTypes: {}, sortKey: "created", sortDir: "desc" },
     domainCounts: {}, domainList: [],
@@ -8512,6 +8583,7 @@
     app.docNotes = docNotesNormalize(null);
     app.variante = varianteNormalize(null);
     app.rlRoleOverrides = {};
+    app.crossx = crossxNormalize(null);
     editoFinalWork = null;
     els.finalAssignImagesStatusNote.textContent = "";
     renderFinal();
@@ -8625,6 +8697,7 @@
     app.docNotes = docNotesNormalize(null);
     app.variante = varianteNormalize(null);
     app.rlRoleOverrides = {};
+    app.crossx = crossxNormalize(null);
     editoFinalWork = null;
     els.finalAssignImagesStatusNote.textContent = "";
     renderFinal();
@@ -8711,6 +8784,7 @@
       docNotes: app.docNotes,
       variante: app.variante,
       rlRoleOverrides: app.rlRoleOverrides,
+      crossx: app.crossx,
       selectedKeys: app.selectedKeys,
       savedLists: app.savedLists,
       nextSavedListId: app.nextSavedListId,
@@ -8820,6 +8894,7 @@
     app.docNotes = docNotesNormalize(data.docNotes);
     app.variante = varianteNormalize(data.variante);
     app.rlRoleOverrides = rlNormalizeOverrides(data.rlRoleOverrides);
+    app.crossx = crossxNormalize(data.crossx);
     app.selectedKeys = data.selectedKeys || {};
     app.savedLists = data.savedLists || [];
     app.nextSavedListId = data.nextSavedListId || 1;
@@ -8926,6 +9001,7 @@
     renderFinal();
     renderAllDocNotes();
     renderVariante();
+    renderCrossx();
     renderMassFiles();
     renderMassTicketSourceWrap();
     els.massMergeOutput.value = app.massMergedDoc;
@@ -20075,6 +20151,8 @@
     finalReviewCompleteness: "Du bist Qualitätsprüfer für das Benutzerhandbuch der Anwendung oneSCM. Unten stehen alle Kapitel des Gesamtdokuments, je Kapitel mit den Verbesserungen aus ROVO (mit Umsetzungsstatus), den zugeordneten Jira-Tickets (falls vorhanden), der Zahl der zugeordneten Screens und dem Kapiteltext. Gib AUSSCHLIESSLICH die folgenden Abschnitte aus:\n\n### Nicht umgesetzte Verbesserungen\n- (je Kapitel: Verbesserung aus ROVO, die im Kapiteltext nicht erkennbar umgesetzt ist)\n\n### Nicht abgedeckte Tickets\n- (je Kapitel: Ticket, dessen Inhalt im Kapiteltext nicht erkennbar aufgegriffen wird)\n\n### Lücken im Ablauf\n- (je Kapitel: fehlende Schritte, fehlende Voraussetzungen oder Beschreibungen ohne passenden Screen)\n\nIst ein Abschnitt leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme:",
     variantTranslate: "Du bist Fachübersetzer für das Benutzerhandbuch der Anwendung oneSCM. Übersetze das folgende Kapitel vollständig und sinngemäß in die angegebene Zielsprache, in klarer Anwender-Sprache. Regeln: Zeilen, die nur [Bild] enthalten, unverändert und in gleicher Anzahl und Reihenfolge übernehmen; Jira-Nummern (z. B. ONESCM-123), Menü-/Feldnamen in Anführungszeichen der Oberfläche und Produktnamen unverändert lassen; Absätze und Aufzählungen beibehalten; nichts hinzufügen oder weglassen. Antworte ausschließlich in diesem Format: erste Zeile \"TITEL: <übersetzter Kapiteltitel>\", danach eine Leerzeile, danach der übersetzte Kapiteltext.",
     rlRoleSuggest: "Du ordnest Jira-Tickets der Anwendung oneSCM (Fuhrpark-/Servicevertrags-Management) den Anwender-Rollen zu, für die die Änderung relevant ist. Rollen: Retail (Händler/Dealer: Verträge anlegen und verwalten, Kunden), Markt (Markt-/Ländergesellschaft: Produkte, Markteinstellungen, Vorlagen), MO (Market Operation: Prüfungen/MO-Checks, Freigaben, Finanzen), HQ (Headquarters: zentrale Steuerung, Auswertungen, Administration), IT (technische Änderungen ohne fachliche Oberfläche: Schnittstellen, Batch, Performance). Ein Ticket kann mehrere Rollen haben. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt der Form {\"TICKET-KEY\": [\"Rolle\", ...], ...} mit genau den unten genannten Ticket-Keys und nur den Rollennamen Retail, Markt, MO, HQ, IT. Ist keine Rolle erkennbar, gib eine leere Liste zurück. Erfinde nichts.",
+    crossxAgent: "Du bist der interne Wissensagent für das Benutzerhandbuch und die Releaseletter der Anwendung oneSCM. Du beantwortest Fragen AUSSCHLIESSLICH auf Basis der unten stehenden Wissensbasis. Jeder Eintrag beginnt mit [#Nummer], Quelle und ggf. INTERN. Arbeite kapitel- und rollenübergreifend: Vergleiche Aussagen zwischen Kapiteln, Rollen-Varianten, internen Mitteilungen, ROVO-Verbesserungen, Prüfberichten und Jira-Tickets. Belege jede Aussage mit den Eintragsnummern in eckigen Klammern, z. B. [#12]. Kennzeichne Aussagen, die nur auf INTERNEN Einträgen beruhen, mit (intern). Wenn die Wissensbasis die Frage nicht beantwortet, sag das deutlich. Erfinde nichts. Antworte auf Deutsch, knapp und strukturiert.",
+    crossxCheck: "Du bist Prüfer für Querverweise (Cross-Reference-Check) in einem rollenbasierten Benutzerhandbuch der Anwendung oneSCM. Prüfe anhand der Wissensbasis (Kapitel, Matrix: welche Kapitel in welcher Rolle aktiv sind, Varianten, interne Mitteilungen, ROVO-Verbesserungen, Prüfberichte, Jira-Tickets) und der bereits automatisch gefundenen Regel-Befunde, und gib AUSSCHLIESSLICH diese Abschnitte aus:\n\n### Widersprüche zwischen Kapiteln oder Rollen\n### Fehlende oder falsche Querverweise\n### Inhalte, die in einer Rolle fehlen, obwohl sie dort gebraucht werden\n### Interne Hinweise mit Auswirkung auf Kapitel oder Rollen\n\nJe Befund ein Stichpunkt mit Kapitel, Rolle(n) und Belegen [#n]; Befunde, die nur auf internen Einträgen beruhen, mit (intern) kennzeichnen. Ist ein Abschnitt leer, schreibe \"Keine gefunden.\" Wiederhole die Regel-Befunde nicht einzeln, sondern ergänze sie. Erfinde nichts.",
     finalCompareVersions: "Du vergleichst zwei Fassungen (Stand A und Stand B) eines Benutzerhandbuchs der Anwendung oneSCM. Die Fassungen können in unterschiedlichen Sprachen oder für unterschiedliche Rollen/Märkte geschrieben sein - vergleiche den INHALT, nicht den Wortlaut. Gehe Kapitel für Kapitel vor (Kapitel über Titel bzw. Reihenfolge zuordnen) und nenne je Kapitel: Inhalte, die nur in A stehen; Inhalte, die nur in B stehen; inhaltliche Abweichungen oder Widersprüche. Kapitel ohne inhaltlichen Unterschied mit einer Zeile \"keine inhaltlichen Unterschiede\" erwähnen. Schließe mit einer kurzen Gesamteinschätzung. Erfinde nichts."
   };
   var RAG_PROMPT_LABELS = {
@@ -20116,6 +20194,8 @@
     finalReviewCompleteness: "FINAL Review: Vollständigkeit (ROVO-Verbesserungen, Tickets, Ablauf) prüfen",
     variantTranslate: "VARIANTE: Kapitel in die Sprache der Variante übersetzen",
     rlRoleSuggest: "Releaseletter je Rolle: Rollen für Tickets vorschlagen",
+    crossxAgent: "CROSS_X: Wissensagent (Fragen über Kapitel und Rollen, inkl. interner Informationen)",
+    crossxCheck: "CROSS_X: KI-Cross-Check über Kapitel und Rollen",
     finalCompareVersions: "FINAL: Zwei Stände inhaltlich vergleichen"
   };
   function ragPromptFor(promptKey) {
@@ -31242,6 +31322,326 @@
     finally { els.paketBuildBtn.disabled = false; els.paketSpinner.hidden = true; }
   });
 
+  // ===================== v2.134: CROSS_X – Wissensagent fuer Cross-Reference-Pruefungen ueber Kapitel und Rollen =====================
+  var CROSSX_SOURCES = ["stands", "matrix", "variants", "notes", "improvements", "reviews", "tickets", "rolenav", "glossary"];
+  var CROSSX_SRC_LABEL = { stands: "Kapitel", matrix: "Matrix", variants: "Variante", notes: "Mitteilung", improvements: "ROVO", reviews: "Prüfbericht", tickets: "Jira", rolenav: "Rollen-Navigation", glossary: "Glossar" };
+  var CROSSX_STOP = ["eine", "einer", "einem", "einen", "der", "die", "das", "und", "oder", "nicht", "werden", "wird", "sind", "welche", "welcher", "welches", "zwischen", "über", "ueber", "kapitel", "rolle", "rollen", "gibt", "haben", "dass", "diese", "dieser", "auch", "noch", "wenn", "with", "what", "which", "where"];
+  function crossxNormalize(d) {
+    d = d && typeof d === "object" ? d : {};
+    var src = {};
+    CROSSX_SOURCES.forEach(function (k) { src[k] = !(d.sources && d.sources[k] === false); });
+    return { sources: src, includeIntern: d.includeIntern !== false, standIds: Array.isArray(d.standIds) ? d.standIds.filter(function (x) { return typeof x === "number"; }) : null,
+      history: Array.isArray(d.history) ? d.history.filter(function (h) { return h && typeof h.a === "string"; }).slice(-50) : [] };
+  }
+  function CX() { if (!app.crossx) app.crossx = crossxNormalize(null); return app.crossx; }
+  var crossxFindings = null, crossxAbort = null, crossxBusy = false;
+  function crossxBase() { return varianteBase() || finalActiveVersion(); }
+  function crossxRoles() { return VS().roles.slice(); }
+  function crossxStandIds() {
+    var c = CX();
+    if (Array.isArray(c.standIds)) return c.standIds.filter(function (id) { return !!finalVersionById(id); });
+    var base = crossxBase(), ids = base ? [base.id] : [];
+    VS().variants.forEach(function (v) { if (v.standId && finalVersionById(v.standId) && ids.indexOf(v.standId) === -1) ids.push(v.standId); });
+    return ids;
+  }
+  function crossxText(raw, withIntern) {
+    var t = String(raw || "");
+    return withIntern ? t.replace(/\u0001/g, "⟦INTERN: ").replace(/\u0002/g, "⟧") : t.replace(/\u0001[\s\S]*?\u0002/g, "");
+  }
+  function crossxStatusOf(v) { var st = v.standId ? finalVersionById(v.standId) : null, r = variantStaleReasons(v); return !st ? "nicht erzeugt" : r.length ? "veraltet (" + r.join(", ") + ")" : "aktuell, Stand-Status " + st.status; }
+  // Wissensbasis: [{ id, source, label, text, intern }]
+  function crossxBuildKb() {
+    var c = CX(), withIntern = c.includeIntern, entries = [], id = 0;
+    function add(source, label, text, intern) { if (!c.sources[source] || (intern && !withIntern)) return; entries.push({ id: ++id, source: source, label: label, text: String(text || ""), intern: !!intern }); }
+    var stands = crossxStandIds().map(finalVersionById).filter(Boolean), base = crossxBase(), roles = crossxRoles();
+    stands.forEach(function (v) {
+      var tag = v.config && v.config.variant ? " (Variante " + v.config.variant.role + " · " + v.config.variant.lang + ")" : "";
+      v.chapters.forEach(function (ch) {
+        var raw = typeof ch.markedText === "string" ? ch.markedText : ch.text;
+        add("stands", "Stand „" + v.name + "“" + tag + " › " + ch.title, crossxText(raw, withIntern), false);
+      });
+    });
+    if (base) {
+      var chs = base.chapters;
+      chs.forEach(function (ch, i) {
+        var m = vrMapping(chs, i), on = roles.filter(function (r) { return vrActive(chs, i, r); });
+        add("matrix", "Matrix › " + ch.title, "Domäne: " + (m ? m.dom + (m.sub ? " › " + m.sub : "") : "Allgemein") + "\nAktiv in Rollen: " + (on.join(", ") || "keiner") +
+          "\nNicht aktiv in: " + (roles.filter(function (r) { return on.indexOf(r) === -1; }).join(", ") || "–") + (variantCondCount(ch.text) ? "\nRollen-Bedingungen im Text: " + variantCondCount(ch.text) : ""), false);
+      });
+    }
+    if (varianteBase()) VS().variants.filter(function (v) { return v.baseVersionId === VS().baseVersionId; }).forEach(function (v) {
+      var plan = variantPlan(v);
+      add("variants", "Variante " + v.name, "Rolle: " + v.role + " · Sprache: " + v.lang + " · " + crossxStatusOf(v) + "\nInhaltsverzeichnis:\n" +
+        plan.items.map(function (x) { return x.include ? "  " + x.title : "  (ausgelassen: " + x.clean + (x.refRoles.length ? " → Verweis auf " + x.refRoles.join(", ") : " → in keiner anderen Rolle") + ")"; }).join("\n"), false);
+    });
+    app.final.versions.forEach(function (v) {
+      (v.notes || []).forEach(function (n) { add("notes", "Mitteilung › Stand „" + v.name + "“ › " + (n.category || "") + ": " + (n.title || ""), (n.text || "") + (finalNoteOverdue(n) ? "\n(Aktualisierung fällig)" : ""), true); });
+    });
+    Object.keys(DOC_NOTE_HOSTS).forEach(function (h) { docNotesList(h).forEach(function (n) { add("notes", "Mitteilung › " + DOC_NOTE_HOSTS[h] + " › " + (n.category || "") + ": " + (n.title || ""), (n.text || "") + (finalNoteOverdue(n) ? "\n(Aktualisierung fällig)" : ""), true); }); });
+    stands.forEach(function (v) {
+      Object.keys(v.improvements || {}).forEach(function (t) {
+        var imps = v.improvements[t] || [];
+        if (imps.length) add("improvements", "ROVO › Stand „" + v.name + "“ › " + t, imps.map(function (x, k) { return "- [" + finalImpStatus(v, t, k) + "] " + x; }).join("\n"), true);
+      });
+      (v.reviews || []).slice(-2).forEach(function (r) { add("reviews", "Prüfbericht › Stand „" + v.name + "“ › " + (r.at || ""), truncate(r.text || "", 4000), true); });
+      if (v.lastReview && v.lastReview.results) Object.keys(v.lastReview.results).forEach(function (k) {
+        var def = finalReviewAgentDef(k), r = v.lastReview.results[k];
+        add("reviews", "Review › Stand „" + v.name + "“ › " + (def ? def.label : k) + " (" + (r.at || v.lastReview.at || "") + ")", truncate(r.text || "", 4000), true);
+      });
+    });
+    var map = rlWrapperMap();
+    app.tickets.slice(0, 400).forEach(function (w) {
+      var raw = w.raw || {};
+      add("tickets", "Jira › " + w.key + ": " + (raw.summary || w.summary || ""), "Status: " + (raw.status || w.status || "–") + " · Domäne: " + (w.domain || (raw.custom_fields && raw.custom_fields.Domain) || "–") +
+        " · Rollen: " + (rlTicketRoles(raw.key ? raw : { key: w.key }, map).join(", ") || "keine") + (raw.description ? "\n" + truncate(String(raw.description).replace(/\s+/g, " "), 300) : ""), true);
+    });
+    (app.roleNavigation || []).forEach(function (r) {
+      add("rolenav", "Rollen-Navigation › " + r.label, (r.modules || []).map(function (m) { return "- " + m.title + (m.gap ? " ⚠ Lücke: " + (m.gapNote || "") : ""); }).join("\n"), false);
+    });
+    if (VS().glossary.length) add("glossary", "Glossar", VS().glossary.map(function (g) { return "- " + g.src + " → " + g.target + " (" + g.lang + ")"; }).join("\n"), false);
+    return entries;
+  }
+  // ----- Regel-Pruefung (ohne KI) -----
+  function crossxChapterNum(title) {
+    var m = String(title || "").match(/^\s*(?:kapitel|chapter)\s*(\d+(?:\.\d+)*)/i) || String(title || "").match(/^\s*(\d+(?:\.\d+)*)\.?\s/);
+    return m ? m[1] : "";
+  }
+  var CROSSX_REF_RE = /\b(?:siehe|s\.|vgl\.?|see|cf\.?)\s+(?:auch\s+|also\s+)?(?:Kapitel|Abschnitt|Chapter|Section)\s+(\d+(?:\.\d+)*)/gi;
+  var CROSSX_SEV_ORDER = { Fehler: 0, Warnung: 1, Hinweis: 2 };
+  function crossxRunChecks() {
+    var base = crossxBase(), out = [], c = CX(), withIntern = c.includeIntern;
+    function f(sev, rule, chapter, role, text, intern) { if (intern && !withIntern) return; out.push({ sev: sev, rule: rule, chapter: chapter || "", role: role || "", text: text, intern: !!intern }); }
+    if (!base) return out;
+    var chs = base.chapters, roles = crossxRoles(), st = VS(), isVarBase = varianteBase() && varianteBase().id === base.id;
+    var baseVariants = isVarBase ? st.variants.filter(function (v) { return v.baseVersionId === base.id; }) : [];
+    var checkRoles = [];
+    baseVariants.forEach(function (v) { if (checkRoles.indexOf(v.role) === -1) checkRoles.push(v.role); });
+    if (!checkRoles.length) checkRoles = roles;
+    var numIdx = {};
+    chs.forEach(function (ch, i) { var n = crossxChapterNum(ch.title); if (n && numIdx[n] === undefined) numIdx[n] = i; });
+    var plans = {};
+    if (isVarBase && st.opts.renumber) checkRoles.forEach(function (r) { plans[r] = variantPlan({ role: r, lang: st.baseLang }); });
+    var map = rlWrapperMap(), roleLow = roles.map(function (r) { return r.toLowerCase(); });
+    chs.forEach(function (ch, i) {
+      var text = ch.text || "", m;
+      // Kapitelverweise
+      CROSSX_REF_RE.lastIndex = 0;
+      var seen = {};
+      while ((m = CROSSX_REF_RE.exec(text))) {
+        var n = m[1];
+        if (seen[n]) continue;
+        seen[n] = true;
+        var j = numIdx[n];
+        if (j === undefined) { f("Fehler", "Kapitelverweis ins Leere", ch.title, "", "„" + m[0] + "“ – im Basisdokument gibt es kein Kapitel " + n + "."); continue; }
+        checkRoles.forEach(function (r) {
+          if (!vrActive(chs, i, r)) return;
+          if (!vrActive(chs, j, r)) f("Warnung", "Verweis auf ausgeblendetes Kapitel", ch.title, r, "In der Variante für " + r + " verweist das Kapitel auf Kapitel " + n + " („" + chs[j].title + "“), das für " + r + " ausgeblendet ist.");
+          else if (plans[r] && plans[r].items[j] && plans[r].items[j].num && plans[r].items[j].num !== n) f("Hinweis", "Kapitelnummer ändert sich", ch.title, r, "In der Variante für " + r + " wird Kapitel " + n + " zu " + plans[r].items[j].num + " – Verweis „" + m[0] + "“ anpassen.");
+        });
+      }
+      // Thema in keiner Rolle
+      if (roles.length && roles.every(function (r) { return !vrActive(chs, i, r); })) f("Warnung", "Thema in keiner Rolle", ch.title, "", "Das Kapitel ist in keiner Rolle aktiv und erscheint in keiner Variante.");
+      // Unbekannte Rollen in Rollen-Bedingungen
+      text.split("\n").forEach(function (line) {
+        var cm = line.match(VR_COND_RE);
+        if (!cm) return;
+        vrParseCond(cm).roles.forEach(function (r) { if (roleLow.indexOf(r.toLowerCase()) === -1) f("Fehler", "Unbekannte Rolle in Bedingung", ch.title, r, "„" + line.trim().slice(0, 80) + "“ nennt die Rolle „" + r + "“, die es in der Matrix nicht gibt."); });
+      });
+      // Rollen-Bedingung blendet Kapitel komplett aus
+      checkRoles.forEach(function (r) {
+        if (vrActive(chs, i, r) && text.trim() && variantCondCount(text) && !variantFilterRoleText(text, ch.screenIds, r).text.trim()) f("Hinweis", "Kapitel ohne Inhalt für Rolle", ch.title, r, "Für " + r + " blenden die Rollen-Bedingungen den gesamten Text aus – das Kapitel bliebe leer.");
+      });
+      // Jira-Tickets vs. Rollen des Kapitels (intern)
+      var active = roles.filter(function (r) { return vrActive(chs, i, r); }), keys = {};
+      (text.match(new RegExp(ROVO_JIRA_KEY_RE.source, "g")) || []).forEach(function (k) { keys[k] = true; });
+      Object.keys(keys).forEach(function (k) {
+        var w = map[k];
+        if (!w) { f("Hinweis", "Ticket nicht geladen", ch.title, "", k + " wird im Kapitel genannt, ist aber nicht unter den geladenen Tickets.", true); return; }
+        var tr = rlTicketRoles(w.raw || { key: k }, map);
+        if (tr.length && active.length && !tr.some(function (r) { return active.indexOf(r) !== -1; })) f("Warnung", "Ticket-Rolle passt nicht", ch.title, tr.join(", "), k + " betrifft " + tr.join(", ") + ", das Kapitel ist aber nur in " + active.join(", ") + " aktiv.", true);
+      });
+    });
+    // Rollen-Verweise ohne passendes Handbuch
+    var seenRef = {};
+    baseVariants.forEach(function (v) {
+      variantPlan(v).refs.forEach(function (x) {
+        x.refRoles.forEach(function (q) {
+          var key = v.role + "|" + v.lang + "|" + q;
+          if (seenRef[key] || baseVariants.some(function (o) { return o.role === q && o.lang === v.lang; })) return;
+          seenRef[key] = true;
+          f("Warnung", "Rollen-Verweis ohne Handbuch", x.clean, v.role, "Die Variante " + v.role + " (" + v.lang + ") verweist u. a. für „" + x.clean + "“ auf " + q + " – es gibt aber keine " + q + "-Variante in " + v.lang + ".");
+        });
+      });
+    });
+    // Veroeffentlichte Varianten mit offenen ROVO-Punkten, faellige Mitteilungen (intern)
+    baseVariants.forEach(function (v) {
+      var sv = v.standId ? finalVersionById(v.standId) : null;
+      if (!sv) return;
+      var open = 0;
+      Object.keys(sv.improvements || {}).forEach(function (t) { (sv.improvements[t] || []).forEach(function (_, k) { if (finalImpStatus(sv, t, k) === "offen") open++; }); });
+      if (open && sv.status === "Veröffentlicht") f("Warnung", "Offene ROVO-Punkte in veröffentlichter Variante", "", v.role, "„" + sv.name + "“ ist veröffentlicht, hat aber " + open + " offene ROVO-Verbesserung(en).", true);
+      (sv.notes || []).filter(finalNoteOverdue).forEach(function (n) { f("Hinweis", "Fällige interne Mitteilung", "", v.role, "„" + (n.title || n.category) + "“ an „" + sv.name + "“ ist zur Aktualisierung fällig.", true); });
+    });
+    (base.notes || []).filter(finalNoteOverdue).forEach(function (n) { f("Hinweis", "Fällige interne Mitteilung", "", "", "„" + (n.title || n.category) + "“ am Basisdokument „" + base.name + "“ ist zur Aktualisierung fällig.", true); });
+    return out.sort(function (a, b) { return CROSSX_SEV_ORDER[a.sev] - CROSSX_SEV_ORDER[b.sev]; });
+  }
+  // ----- Render -----
+  function renderCrossx() {
+    if (!els.crossxSrcs) return;
+    var c = CX(), base = crossxBase(), ids = crossxStandIds();
+    Array.prototype.forEach.call(els.crossxSrcs.querySelectorAll("[data-cx-src]"), function (cb) { cb.checked = c.sources[cb.getAttribute("data-cx-src")]; });
+    els.crossxIncludeIntern.checked = c.includeIntern;
+    els.crossxStands.innerHTML = app.final.versions.length ? app.final.versions.map(function (v) {
+      return '<label class="variante-inline-check"><input type="checkbox" data-cx-stand="' + v.id + '"' + (ids.indexOf(v.id) !== -1 ? " checked" : "") + "> " + escapeHtml(v.name) + (base && base.id === v.id ? " (Basis)" : "") + "</label>";
+    }).join("") : '<span class="step-note" style="margin:0;">keine FINAL-Stände</span>';
+    var kb = crossxBuildKb(), counts = {};
+    kb.forEach(function (e) { counts[e.source] = (counts[e.source] || 0) + 1; });
+    Array.prototype.forEach.call(els.crossxSrcs.querySelectorAll("[data-cx-src-count]"), function (sp) { sp.textContent = counts[sp.getAttribute("data-cx-src-count")] || 0; });
+    var chars = kb.reduce(function (n, e) { return n + e.text.length + e.label.length; }, 0), intern = kb.filter(function (e) { return e.intern; }).length;
+    els.crossxKbSummary.textContent = "Wissensbasis: " + kb.length + " Einträge (" + intern + " intern), ca. " + Math.round(chars / 1000) + " Tsd. Zeichen" + (base ? " · Basis „" + base.name + "“" : " · kein Basisdokument");
+    if (!els.crossxKbList.hidden) renderCrossxKbList(kb);
+    renderCrossxFindings();
+    renderCrossxAnswers();
+  }
+  function renderCrossxKbList(kb) {
+    els.crossxKbList.innerHTML = kb.map(function (e) {
+      return "<details><summary>[#" + e.id + "] <b>" + escapeHtml(CROSSX_SRC_LABEL[e.source]) + "</b> " + (e.intern ? '<span class="crossx-intern">INTERN</span> ' : "") + escapeHtml(e.label) + "</summary><pre>" + escapeHtml(truncate(e.text, 3000)) + "</pre></details>";
+    }).join("") || '<p class="step-note">Leer – Quellen wählen.</p>';
+  }
+  function renderCrossxFindings() {
+    if (!crossxFindings) { els.crossxFindingsWrap.hidden = true; return; }
+    var flt = els.crossxSevFilter.value, list = crossxFindings.filter(function (x) { return !flt || (flt === "Fehler" ? x.sev === "Fehler" : x.sev !== "Hinweis"); });
+    var cnt = { Fehler: 0, Warnung: 0, Hinweis: 0 };
+    crossxFindings.forEach(function (x) { cnt[x.sev]++; });
+    els.crossxCheckSummary.textContent = crossxFindings.length ? cnt.Fehler + " Fehler, " + cnt.Warnung + " Warnung(en), " + cnt.Hinweis + " Hinweis(e)" + (list.length !== crossxFindings.length ? " · " + list.length + " angezeigt" : "") + "." : "Keine Befunde – alle Querverweise passen.";
+    els.crossxFindingsWrap.hidden = !list.length;
+    els.crossxFindingsTbody.innerHTML = list.map(function (x) {
+      return '<tr data-cx-finding><td><span class="crossx-sev crossx-sev-' + x.sev + '">' + x.sev + "</span></td><td>" + escapeHtml(x.rule) + (x.intern ? ' <span class="crossx-intern">INTERN</span>' : "") + "</td><td>" + escapeHtml(x.chapter || "–") + "</td><td>" + escapeHtml(x.role || "–") + "</td><td>" + escapeHtml(x.text) + "</td></tr>";
+    }).join("");
+  }
+  function crossxAnswerHtml(text) { return escapeHtml(text).replace(/\[#(\d+)\]/g, '<b class="crossx-cite">[#$1]</b>'); }
+  function renderCrossxAnswers() {
+    var h = CX().history.slice().reverse();
+    els.crossxAnswers.innerHTML = h.map(function (x) {
+      return '<div class="crossx-answer" data-cx-answer><div class="crossx-answer-q">' + escapeHtml(x.kind === "check" ? "KI-Cross-Check über Kapitel & Rollen" : x.q) + '</div><div class="crossx-answer-meta">' + escapeHtml(x.at) + " · " + x.used + " Einträge genutzt" + (x.internUsed ? " (davon " + x.internUsed + " intern)" : "") + "</div>" +
+        '<div class="crossx-answer-body">' + crossxAnswerHtml(x.a) + "</div>" +
+        ((x.cites || []).length ? '<div class="crossx-sources"><b>Quellen:</b>' + x.cites.map(function (cc) {
+          return "<details><summary>[#" + cc.id + "] " + escapeHtml(CROSSX_SRC_LABEL[cc.source] || "") + " " + (cc.intern ? '<span class="crossx-intern">INTERN</span> ' : "") + escapeHtml(cc.label) + '</summary><div class="crossx-source-body">' + escapeHtml(cc.text) + "</div></details>";
+        }).join("") + "</div>" : "") + "</div>";
+    }).join("");
+    els.crossxClearBtn.disabled = !h.length;
+  }
+  // ----- Auswahl fuer den Agenten -----
+  function crossxSelect(kb, question, budget, priority) {
+    var words = (String(question || "").toLowerCase().match(/[a-zäöüß0-9][a-zäöüß0-9-]{3,}/g) || []).filter(function (w) { return CROSSX_STOP.indexOf(w) === -1; });
+    var scored = kb.map(function (e) {
+      var hay = (e.label + "\n" + e.text).toLowerCase(), sc = 0;
+      words.forEach(function (w) { var k = hay.split(w).length - 1; if (k) sc += 2 + Math.min(k, 5); });
+      if (priority && priority[e.source]) sc += priority[e.source];
+      return { e: e, sc: sc };
+    }).sort(function (a, b) { return b.sc - a.sc || a.e.id - b.e.id; });
+    var out = [], used = 0;
+    scored.forEach(function (x) {
+      var size = Math.min(x.e.text.length, 3000) + x.e.label.length + 40;
+      if (used + size > budget) return;
+      out.push(x.e); used += size;
+    });
+    return out.sort(function (a, b) { return a.id - b.id; });
+  }
+  function crossxKbText(entries) {
+    return entries.map(function (e) { return "[#" + e.id + "] (" + CROSSX_SRC_LABEL[e.source] + (e.intern ? ", INTERN" : "") + ") " + e.label + "\n" + truncate(e.text, 3000); }).join("\n\n");
+  }
+  async function crossxRun(kind) {
+    if (crossxBusy) return;
+    var q = els.crossxQuestion.value.trim();
+    if (kind === "ask" && !q) { showToast("Frage fehlt", "Bitte eine Frage an den Wissensagenten eingeben.", true); return; }
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
+    var kb = crossxBuildKb();
+    if (!kb.length) { showToast("Wissensbasis leer", "Bitte Quellen bzw. Stände auswählen.", true); return; }
+    var prompt, sel;
+    if (kind === "check") {
+      crossxFindings = crossxRunChecks();
+      renderCrossxFindings();
+      sel = crossxSelect(kb, "", 70000, { matrix: 30, variants: 25, stands: 10, notes: 6, improvements: 6, reviews: 4, tickets: 2, rolenav: 3, glossary: 1 });
+      prompt = ragPromptFor("crossxCheck") + "\n\nREGEL-BEFUNDE (automatisch, " + crossxFindings.length + "):\n" +
+        (crossxFindings.length ? crossxFindings.map(function (x) { return "- [" + x.sev + "] " + x.rule + (x.chapter ? " – " + x.chapter : "") + (x.role ? " – " + x.role : "") + ": " + x.text; }).join("\n") : "(keine)") +
+        "\n\nWISSENSBASIS (" + sel.length + " von " + kb.length + " Einträgen):\n\n" + crossxKbText(sel);
+    } else {
+      sel = crossxSelect(kb, q, 60000, { matrix: 1, variants: 1 });
+      prompt = ragPromptFor("crossxAgent") + "\n\nWISSENSBASIS (" + sel.length + " von " + kb.length + " Einträgen):\n\n" + crossxKbText(sel) + "\n\nFRAGE: " + q;
+    }
+    crossxBusy = true; crossxAbort = new AbortController();
+    els.crossxSpinner.hidden = false; els.crossxStopBtn.hidden = false; els.crossxAskBtn.disabled = els.crossxAiCheckBtn.disabled = true;
+    els.crossxAgentStatus.textContent = (kind === "check" ? "KI-Cross-Check läuft" : "Wissensagent arbeitet") + " (" + sel.length + " Einträge) …";
+    try {
+      var res = await sampleApi(prompt, { modelTier: "default", cache: false, signal: crossxAbort.signal });
+      var a = String((res && res.text) || "").trim() || "(leere Antwort)";
+      var byId = {};
+      sel.forEach(function (e) { byId[e.id] = e; });
+      var cites = [], seen = {};
+      (a.match(/\[#(\d+)\]/g) || []).forEach(function (m) { var n = parseInt(m.slice(2), 10); if (!seen[n] && byId[n]) { seen[n] = true; var e = byId[n]; cites.push({ id: e.id, source: e.source, label: e.label, intern: e.intern, text: truncate(e.text, 1500) }); } });
+      CX().history.push({ kind: kind, q: kind === "check" ? "" : q, a: a, at: nowLabel(), used: sel.length, internUsed: sel.filter(function (e) { return e.intern; }).length, cites: cites });
+      if (CX().history.length > 50) CX().history = CX().history.slice(-50);
+      els.crossxAgentStatus.textContent = "Fertig (" + nowLabel() + ") – " + cites.length + " Quelle(n) zitiert.";
+      if (kind === "ask") els.crossxQuestion.value = "";
+      addLog("CROSS_X: " + (kind === "check" ? "KI-Cross-Check" : "Frage an den Wissensagenten") + " beantwortet (" + sel.length + " Einträge, " + cites.length + " Quellen).");
+    } catch (err) {
+      els.crossxAgentStatus.textContent = crossxAbort && crossxAbort.signal.aborted ? "Abgebrochen." : "Fehlgeschlagen: " + ((err && err.message) || "Unbekannter Fehler.");
+    } finally {
+      crossxBusy = false; crossxAbort = null;
+      els.crossxSpinner.hidden = true; els.crossxStopBtn.hidden = true; els.crossxAskBtn.disabled = els.crossxAiCheckBtn.disabled = false;
+      renderCrossxAnswers();
+    }
+  }
+  // ----- Ereignisse -----
+  els.crossxSrcs.addEventListener("change", function (e) { var cb = e.target.closest("[data-cx-src]"); if (!cb) return; CX().sources[cb.getAttribute("data-cx-src")] = cb.checked; renderCrossx(); });
+  els.crossxStands.addEventListener("change", function () {
+    CX().standIds = Array.prototype.filter.call(els.crossxStands.querySelectorAll("[data-cx-stand]"), function (cb) { return cb.checked; }).map(function (cb) { return parseInt(cb.getAttribute("data-cx-stand"), 10); });
+    renderCrossx();
+  });
+  els.crossxIncludeIntern.addEventListener("change", function () { CX().includeIntern = els.crossxIncludeIntern.checked; if (crossxFindings) crossxFindings = crossxRunChecks(); renderCrossx(); });
+  els.crossxKbBtn.addEventListener("click", function () {
+    els.crossxKbList.hidden = !els.crossxKbList.hidden;
+    els.crossxKbBtn.textContent = els.crossxKbList.hidden ? "Wissensbasis anzeigen" : "Wissensbasis ausblenden";
+    if (!els.crossxKbList.hidden) renderCrossxKbList(crossxBuildKb());
+  });
+  els.crossxCheckBtn.addEventListener("click", function () {
+    crossxFindings = crossxRunChecks();
+    renderCrossxFindings();
+    addLog("CROSS_X: Regel-Prüfung – " + crossxFindings.length + " Befund(e).");
+  });
+  els.crossxSevFilter.addEventListener("change", renderCrossxFindings);
+  els.crossxAskBtn.addEventListener("click", function () { crossxRun("ask"); });
+  els.crossxAiCheckBtn.addEventListener("click", function () { crossxRun("check"); });
+  els.crossxStopBtn.addEventListener("click", function () { if (crossxAbort) crossxAbort.abort(); });
+  els.crossxClearBtn.addEventListener("click", async function () {
+    if (!(await confirmDialog("Verlauf des Wissensagenten leeren?", "Leeren"))) return;
+    CX().history = [];
+    renderCrossxAnswers();
+  });
+  function crossxReportMd() {
+    var base = crossxBase(), lines = ["# CROSS_X – Interner Prüfbericht", "", "> INTERN – enthält interne Informationen (Mitteilungen, ROVO, Prüfberichte, Jira). Nicht zur Veröffentlichung.", "",
+      "- Erstellt: " + nowLabel(), "- Basisdokument: " + (base ? base.name : "–"), "- Rollen: " + crossxRoles().join(", "), ""];
+    var fs = crossxFindings || crossxRunChecks();
+    lines.push("## Regel-Befunde (" + fs.length + ")", "");
+    if (fs.length) { lines.push("| Schwere | Regel | Kapitel | Rolle | Befund |", "|---|---|---|---|---|"); fs.forEach(function (x) { lines.push("| " + x.sev + " | " + x.rule + (x.intern ? " (intern)" : "") + " | " + (x.chapter || "–") + " | " + (x.role || "–") + " | " + x.text.replace(/\|/g, "/") + " |"); }); }
+    else lines.push("Keine Befunde.");
+    lines.push("", "## Wissensagent (" + CX().history.length + ")", "");
+    CX().history.forEach(function (h) {
+      lines.push("### " + (h.kind === "check" ? "KI-Cross-Check über Kapitel & Rollen" : h.q), "", "*" + h.at + " · " + h.used + " Einträge*", "", h.a, "");
+      if ((h.cites || []).length) lines.push("Quellen: " + h.cites.map(function (cc) { return "[#" + cc.id + "] " + cc.label + (cc.intern ? " (intern)" : ""); }).join("; "), "");
+    });
+    return lines.join("\n");
+  }
+  els.crossxReportMdBtn.addEventListener("click", async function () {
+    if (await saveOrWarn("CROSS_X_Pruefbericht_INTERN_" + dateStampForFilename() + ".md", crossxReportMd())) addLog("CROSS_X: Interner Prüfbericht (Markdown) heruntergeladen.");
+  });
+  els.crossxReportDocxBtn.addEventListener("click", async function () {
+    try {
+      if (await saveOrWarn("CROSS_X_Pruefbericht_INTERN_" + dateStampForFilename() + ".docx", await buildMarkdownDocxBlob("CROSS_X – Interner Prüfbericht", crossxReportMd()))) addLog("CROSS_X: Interner Prüfbericht (Word) heruntergeladen.");
+    } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  });
+
   /* ============ Teil 10: Navigation ============ */
 
   var viewPanels = document.querySelectorAll("[data-view-panel]");
@@ -31262,6 +31662,7 @@
     if (name === "final") renderFinal();
     if (name === "mitteilungen") renderNotesOverview();
     if (name === "variante") renderVariante();
+    if (name === "crossx") renderCrossx();
     if (name === "tabellen") renderRovoTables();
     if (window.innerWidth <= 900) setSidebar(false);
   }
