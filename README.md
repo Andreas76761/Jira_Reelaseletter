@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.132.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.133.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,6 +2031,17 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **Release-Paket – alle Ergebnisse eines Releases in einer ZIP (v2.133.0)**: Neuer Schritt
+  „5. Release-Paket“ im Register VARIANTE. Bündelt die Releaseletter je Rolle (aus dem Register
+  Releaseletter, Word und optional Markdown), die erzeugten Benutzerhandbuch-Varianten (Word im
+  Design aus FINAL) und die Übersichten als Excel (Varianten-Übersicht, Tickets je Rolle) – wahlweise
+  in Ordnern je Rolle (`Retail/…`, `MO/…`, `Uebersichten/…`) oder je Dokumentart (`Releaseletter/…`,
+  `Benutzerhandbuch/…`). „Paket-Inhalt anzeigen“ listet jede Datei mit Art, Rolle, Sprache und Hinweis;
+  die beiliegende `LIESMICH.md` enthält diese Tabelle und Hinweise auf veraltete Varianten, Stände
+  noch nicht im Status „Veröffentlicht“ und Rolle/Sprache-Kombinationen, für die nur ein Releaseletter
+  oder nur ein Benutzerhandbuch vorliegt. Release-Name frei wählbar (Vorgabe aus dem Releaseletter);
+  interne Mitteilungen und Prüfberichte sind nie enthalten.
+  Test: `webapp/tests/release_package_test.js`.
 - **Releaseletter je Rolle – Rollen-Zuordnung prüfen, manuell setzen, per KI vorschlagen (v2.132.0)**:
   Der aufklappbare Bereich „Rollen-Zuordnung prüfen (n manuell)“ zeigt die Tickets der aktuellen
   Auswahl (wahlweise nur die ohne Rolle) mit den Rollen aus Jira-/automatischen Labels und je Rolle

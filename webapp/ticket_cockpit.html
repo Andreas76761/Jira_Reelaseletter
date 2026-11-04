@@ -3528,6 +3528,27 @@
             <div class="variante-fulltext" id="variante-preview-full" hidden></div>
           </div>
         </section>
+
+        <section class="panel variante-step" id="paket-step">
+          <p class="section-label">5. Release-Paket</p>
+          <p class="desc" style="margin-top:0;">Alle Ergebnisse eines Releases in einer ZIP-Datei: Releaseletter je Rolle (zuvor im Register Releaseletter unter „Releaseletter je Rolle“ erzeugen), die erzeugten Benutzerhandbuch-Varianten (Word, Design aus FINAL) und die Übersichten als Excel – geordnet in Ordnern je Rolle oder je Dokumentart, mit einer LIESMICH.md als Inhaltsverzeichnis. Interne Mitteilungen sind nie enthalten.</p>
+          <div class="controls" style="flex-wrap:wrap; align-items:flex-end;">
+            <div><label for="paket-name">Release</label><input class="text-input" id="paket-name" type="text" placeholder="z. B. 2026.5"></div>
+            <div><label for="paket-group">Ordner</label><select id="paket-group" aria-label="Ordnerstruktur"><option value="role">je Rolle</option><option value="type">je Dokumentart</option></select></div>
+          </div>
+          <div class="controls" style="flex-wrap:wrap;">
+            <label class="variante-inline-check"><input type="checkbox" id="paket-inc-rl" checked> Releaseletter je Rolle (<span id="paket-rl-count">0</span>)</label>
+            <label class="variante-inline-check"><input type="checkbox" id="paket-inc-rl-md"> zusätzlich als Markdown</label>
+            <label class="variante-inline-check"><input type="checkbox" id="paket-inc-variants" checked> Benutzerhandbuch-Varianten (<span id="paket-variant-count">0</span>)</label>
+            <label class="variante-inline-check"><input type="checkbox" id="paket-inc-overview" checked> Übersichten (Excel)</label>
+          </div>
+          <div class="controls" style="flex-wrap:wrap;">
+            <button class="btn ghost" id="paket-preview-btn" type="button">Paket-Inhalt anzeigen</button>
+            <button class="btn primary" id="paket-build-btn" type="button" disabled><span class="btn-spinner" id="paket-spinner" hidden></span>Release-Paket herunterladen</button>
+          </div>
+          <p class="step-note" id="paket-status"></p>
+          <div class="table-wrap" id="paket-list-wrap" hidden><table class="simple-table"><thead><tr><th>Datei im Paket</th><th>Art</th><th>Rolle</th><th>Sprache</th><th>Hinweis</th></tr></thead><tbody id="paket-list-tbody"></tbody></table></div>
+        </section>
       </section>
 
       <!-- ================= Mitteilungen ================= -->
@@ -6207,7 +6228,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.132.0";
+  var APP_VERSION = "2.133.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7811,7 +7832,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "paket-step", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -30282,6 +30303,7 @@
   function renderVarianteVariants() {
     var st = VS();
     renderVarianteGlossary();
+    renderPaket();
     els.varianteNewRole.innerHTML = vrOptions(st.roles, els.varianteNewRole.value || st.roles[0]);
     els.varianteNewLang.innerHTML = vrOptions(VARIANT_LANGS, els.varianteNewLang.value || st.baseLang);
     var prevR = {}, prevL = {};
@@ -30696,10 +30718,10 @@
     } catch (err) { showToast("ZIP fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
     renderVarianteVariants();
   });
-  els.varianteOverviewXlsxBtn.addEventListener("click", async function () {
+  function variantOverviewSections() {
     var st = VS(), chs = varianteChapters(), base = varianteBase();
     var list = st.variants.filter(function (v) { return v.baseVersionId === st.baseVersionId; });
-    if (!base || !list.length) return;
+    if (!base || !list.length) return null;
     var plans = list.map(function (v) { return variantPlan(v); });
     var rows = chs.map(function (c, i) {
       var m = vrMapping(chs, i);
@@ -30713,10 +30735,16 @@
       return [v.name, v.role, v.lang, plans[k].included, plans[k].excluded, plans[k].refs.length, stand ? stand.name : "", v.generatedAt || "",
         !stand ? "nicht erzeugt" : reasons.length ? "veraltet: " + reasons.join(", ") : "aktuell"];
     });
+    return { base: base, count: list.length, chapters: chs.length, sections: [
+      { title: "Kapitel je Variante", headers: ["Kapitel (Basis „" + base.name + "“)", "Domäne"].concat(list.map(function (v) { return v.name; })), rows: rows },
+      { title: "Varianten", headers: ["Variante", "Rolle", "Sprache", "Kapitel aktiv", "ausgelassen", "Verweise", "Stand in FINAL", "Erzeugt", "Status"], rows: meta }] };
+  }
+  els.varianteOverviewXlsxBtn.addEventListener("click", async function () {
+    var ov = variantOverviewSections();
+    if (!ov) return;
+    var base = ov.base, list = { length: ov.count }, chs = { length: ov.chapters };
     try {
-      var blob = await buildXlsxBlob([
-        { title: "Kapitel je Variante", headers: ["Kapitel (Basis „" + base.name + "“)", "Domäne"].concat(list.map(function (v) { return v.name; })), rows: rows },
-        { title: "Varianten", headers: ["Variante", "Rolle", "Sprache", "Kapitel aktiv", "ausgelassen", "Verweise", "Stand in FINAL", "Erzeugt", "Status"], rows: meta }]);
+      var blob = await buildXlsxBlob(ov.sections);
       var fn = "Varianten_Uebersicht_" + editoFinalSafeName(base.name) + "_" + dateStampForFilename() + ".xlsx";
       if (await saveOrWarn(fn, blob)) { els.varianteStatus.textContent = "Varianten-Übersicht „" + fn + "“ heruntergeladen (" + list.length + " Variante(n), " + chs.length + " Kapitel)."; addLog("VARIANTE: Übersicht „" + fn + "“ exportiert."); }
     } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
@@ -30985,6 +31013,7 @@
     els.rlRolesStatus.textContent = rlRoleResults.length + " Releaseletter erzeugt (" + roles.length + " Rolle(n) × " + langs.length + " Sprache(n)) aus " + tickets.length + " Ticket(s)" +
       (noTag ? "; " + noTag + " ohne Rollen-Label " + (untagged ? "(in allen enthalten)" : "(nicht enthalten)") : "") + ".";
     addLog("Releaseletter: " + rlRoleResults.length + " Releaseletter je Rolle erzeugt.");
+    if (typeof renderPaket === "function") renderPaket();
     renderRlRoleResults();
   });
   els.rlRolesTbody.addEventListener("click", async function (e) {
@@ -31012,14 +31041,18 @@
       if (await saveOrWarn(fn, await zip.generateAsync({ type: "blob" }))) { els.rlRolesStatus.textContent = rlRoleResults.length + " Releaseletter als „" + fn + "“ heruntergeladen (je Word + Markdown)."; addLog("Releaseletter: ZIP „" + fn + "“ heruntergeladen."); }
     } catch (err) { showToast("ZIP fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
   });
-  els.rlRolesXlsxBtn.addEventListener("click", async function () {
+  function rlOverviewSections() {
     var roles = []; rlRoleResults.forEach(function (r) { if (roles.indexOf(r.role) === -1) roles.push(r.role); });
     var inRole = {};
     rlRoleResults.forEach(function (r) { r.own.forEach(function (x) { inRole[x.t.key + "|" + r.role] = true; }); });
+    return { roles: roles, sections: [{ title: "Ticket je Rolle", headers: ["Ticket", "Zusammenfassung", "Rollen-Label", "Quelle"].concat(roles), rows: rlRoleTickets.map(function (x) {
+      return [x.t.key, x.t.summary || "", x.roles.join(", ") || "(ohne – gilt für alle)", Array.isArray((app.rlRoleOverrides || {})[x.t.key]) ? "manuell" : "Label"].concat(roles.map(function (r) { return inRole[x.t.key + "|" + r] ? "x" : ""; }));
+    }) }] };
+  }
+  els.rlRolesXlsxBtn.addEventListener("click", async function () {
+    var ov = rlOverviewSections(), roles = ov.roles;
     try {
-      var blob = await buildXlsxBlob([{ title: "Ticket je Rolle", headers: ["Ticket", "Zusammenfassung", "Rollen-Label", "Quelle"].concat(roles), rows: rlRoleTickets.map(function (x) {
-        return [x.t.key, x.t.summary || "", x.roles.join(", ") || "(ohne – gilt für alle)", Array.isArray((app.rlRoleOverrides || {})[x.t.key]) ? "manuell" : "Label"].concat(roles.map(function (r) { return inRole[x.t.key + "|" + r] ? "x" : ""; }));
-      }) }]);
+      var blob = await buildXlsxBlob(ov.sections);
       var fn = safeFilename(rlRoleTitle) + "_Tickets_je_Rolle_" + dateStampForFilename() + ".xlsx";
       if (await saveOrWarn(fn, blob)) els.rlRolesStatus.textContent = "Übersicht „" + fn + "“ heruntergeladen (" + rlRoleTickets.length + " Tickets × " + roles.length + " Rollen).";
     } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
@@ -31112,6 +31145,102 @@
     }
   });
   renderRlAssign();
+
+  // ===================== v2.133: Release-Paket (Releaseletter je Rolle + Handbuch-Varianten + Uebersichten) =====================
+  var paketPlanCache = null;
+  function paketName() {
+    var n = els.paketName.value.trim();
+    if (n) return n;
+    var rl = document.getElementById("releaseletter-name");
+    return (rlRoleResults.length ? rlRoleTitle : (rl && rl.value.trim())) || "Release";
+  }
+  function paketVariantsReady() { return VS().variants.filter(function (v) { return v.standId && finalVersionById(v.standId); }); }
+  function renderPaket() {
+    if (!els.paketStep || !Array.isArray(rlRoleResults)) return;
+    els.paketRlCount.textContent = rlRoleResults.length;
+    els.paketVariantCount.textContent = paketVariantsReady().length;
+    if (!els.paketName.value && document.activeElement !== els.paketName) els.paketName.placeholder = "z. B. " + paketName();
+  }
+  // Plant die Dateien des Pakets (ohne sie zu erzeugen): { path, kind, role, lang, note, make: async () => Blob|string }
+  function paketPlan() {
+    var byRole = els.paketGroup.value === "role", name = paketName(), files = [], notes = [];
+    function folder(role, type) { return byRole ? safeFilename(role || "Alle") + "/" : type + "/"; }
+    if (els.paketIncRl.checked) {
+      rlRoleResults.forEach(function (r) {
+        var lang = r.lang.toUpperCase(), base = folder(r.role, "Releaseletter") + safeFilename(name) + "_Releaseletter_" + safeFilename(r.role) + "_" + lang;
+        files.push({ path: base + ".docx", kind: "Releaseletter", role: r.role, lang: lang, note: r.own.length + " Ticket(s)", make: function () { return buildMarkdownDocxBlob(rlRoleTitle + " – " + r.role, r.content); } });
+        if (els.paketIncRlMd.checked) files.push({ path: base + ".md", kind: "Releaseletter (Markdown)", role: r.role, lang: lang, note: "", make: function () { return Promise.resolve(r.content); } });
+      });
+    }
+    if (els.paketIncVariants.checked) {
+      paketVariantsReady().forEach(function (v) {
+        var stale = variantStaleReasons(v), stand = finalVersionById(v.standId);
+        files.push({ path: folder(v.role, "Benutzerhandbuch") + safeFilename(name) + "_Benutzerhandbuch_" + safeFilename(v.role) + "_" + v.lang + ".docx", kind: "Benutzerhandbuch", role: v.role, lang: v.lang,
+          note: (stale.length ? "⚠ veraltet: " + stale.join(", ") : "aktuell") + " · Stand „" + stand.name + "“ (" + stand.status + ")", make: function () { return variantDocxBlob(v, stand); } });
+        if (stale.length) notes.push("Benutzerhandbuch " + v.role + " " + v.lang + " ist veraltet (" + stale.join(", ") + ").");
+        if (stand.status !== "Veröffentlicht") notes.push("Benutzerhandbuch " + v.role + " " + v.lang + " hat den Status „" + stand.status + "“.");
+      });
+    }
+    if (els.paketIncOverview.checked) {
+      var ov = variantOverviewSections();
+      if (ov) files.push({ path: (byRole ? "Uebersichten/" : "Uebersichten/") + safeFilename(name) + "_Varianten_Uebersicht.xlsx", kind: "Übersicht", role: "", lang: "", note: ov.count + " Variante(n) × " + ov.chapters + " Kapitel", make: function () { return buildXlsxBlob(ov.sections); } });
+      if (rlRoleResults.length) { var ro = rlOverviewSections(); files.push({ path: "Uebersichten/" + safeFilename(name) + "_Tickets_je_Rolle.xlsx", kind: "Übersicht", role: "", lang: "", note: rlRoleTickets.length + " Ticket(s) × " + ro.roles.length + " Rolle(n)", make: function () { return buildXlsxBlob(ro.sections); } }); }
+    }
+    // Luecken: Rolle/Sprache mit Releaseletter, aber ohne Handbuch (und umgekehrt)
+    if (els.paketIncRl.checked && els.paketIncVariants.checked && rlRoleResults.length && paketVariantsReady().length) {
+      var has = {};
+      files.forEach(function (f) { if (f.kind === "Releaseletter" || f.kind === "Benutzerhandbuch") has[f.kind + "|" + f.role + "|" + f.lang] = true; });
+      Object.keys(has).forEach(function (k) {
+        var p = k.split("|"), other = p[0] === "Releaseletter" ? "Benutzerhandbuch" : "Releaseletter";
+        if (!has[other + "|" + p[1] + "|" + p[2]]) notes.push(p[1] + " " + p[2] + ": " + p[0] + " vorhanden, aber kein " + other + ".");
+      });
+    }
+    var dupe = {};
+    files.forEach(function (f) { if (dupe[f.path]) f.path = f.path.replace(/(\.[a-z]+)$/, "_" + (dupe[f.path]++) + "$1"); else dupe[f.path] = 1; });
+    return { name: name, files: files, notes: notes };
+  }
+  function paketReadme(plan) {
+    var lines = ["# Release-Paket " + plan.name, "", "Erstellt: " + nowLabel(), "", "## Inhalt", "", "| Datei | Art | Rolle | Sprache | Hinweis |", "|---|---|---|---|---|"];
+    plan.files.forEach(function (f) { lines.push("| " + f.path + " | " + f.kind + " | " + (f.role || "–") + " | " + (f.lang || "–") + " | " + (f.note || "") + " |"); });
+    lines.push("", "## Hinweise", "");
+    if (plan.notes.length) plan.notes.forEach(function (n) { lines.push("- " + n); }); else lines.push("- Keine.");
+    lines.push("", "Interne Mitteilungen und Prüfberichte sind nicht Teil dieses Pakets.");
+    return lines.join("\n");
+  }
+  function renderPaketPlan(plan) {
+    els.paketListWrap.hidden = !plan.files.length;
+    els.paketBuildBtn.disabled = !plan.files.length;
+    els.paketListTbody.innerHTML = plan.files.concat([{ path: "LIESMICH.md", kind: "Inhaltsverzeichnis", role: "", lang: "", note: plan.notes.length + " Hinweis(e)" }]).map(function (f) {
+      return "<tr><td>" + escapeHtml(f.path) + "</td><td>" + escapeHtml(f.kind) + "</td><td>" + escapeHtml(f.role || "–") + "</td><td>" + escapeHtml(f.lang || "–") + "</td><td>" + escapeHtml(f.note || "") + "</td></tr>";
+    }).join("");
+    els.paketStatus.textContent = plan.files.length ? "Paket „" + plan.name + "“: " + (plan.files.length + 1) + " Datei(en)" + (plan.notes.length ? " · " + plan.notes.length + " Hinweis(e): " + plan.notes.join(" ") : "") + "." :
+      "Noch nichts für das Paket vorhanden – Releaseletter je Rolle (Register Releaseletter) bzw. Varianten (Schritt 4) erzeugen.";
+  }
+  els.paketPreviewBtn.addEventListener("click", function () { paketPlanCache = paketPlan(); renderPaketPlan(paketPlanCache); });
+  [els.paketGroup, els.paketIncRl, els.paketIncRlMd, els.paketIncVariants, els.paketIncOverview].forEach(function (el) {
+    el.addEventListener("change", function () { if (!els.paketListWrap.hidden || paketPlanCache) { paketPlanCache = paketPlan(); renderPaketPlan(paketPlanCache); } });
+  });
+  els.paketBuildBtn.addEventListener("click", async function () {
+    if (typeof JSZip === "undefined") return;
+    var plan = paketPlan();
+    renderPaketPlan(plan);
+    if (!plan.files.length) return;
+    els.paketBuildBtn.disabled = true; els.paketSpinner.hidden = false;
+    try {
+      var zip = new JSZip();
+      for (var i = 0; i < plan.files.length; i++) {
+        els.paketStatus.textContent = "Paket: Datei " + (i + 1) + " von " + plan.files.length + " – " + plan.files[i].path + " …";
+        zip.file(plan.files[i].path, await plan.files[i].make());
+      }
+      zip.file("LIESMICH.md", paketReadme(plan));
+      var fn = safeFilename(plan.name) + "_Release-Paket_" + dateStampForFilename() + ".zip";
+      if (await saveOrWarn(fn, await zip.generateAsync({ type: "blob" }))) {
+        els.paketStatus.textContent = "Release-Paket „" + fn + "“ heruntergeladen (" + (plan.files.length + 1) + " Dateien)" + (plan.notes.length ? " – " + plan.notes.length + " Hinweis(e) in der LIESMICH.md." : ".");
+        addLog("Release-Paket „" + fn + "“ mit " + (plan.files.length + 1) + " Dateien heruntergeladen.");
+      }
+    } catch (err) { showToast("Paket fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+    finally { els.paketBuildBtn.disabled = false; els.paketSpinner.hidden = true; }
+  });
 
   /* ============ Teil 10: Navigation ============ */
 
