@@ -3644,6 +3644,7 @@
             <label class="variante-inline-check"><input type="checkbox" id="paket-inc-rl-md"> zusätzlich als Markdown</label>
             <label class="variante-inline-check"><input type="checkbox" id="paket-inc-variants" checked> Benutzerhandbuch-Varianten (<span id="paket-variant-count">0</span>)</label>
             <label class="variante-inline-check"><input type="checkbox" id="paket-inc-overview" checked> Übersichten (Excel)</label>
+            <label class="variante-inline-check"><input type="checkbox" id="paket-inc-review" checked> Geprüfte Dokumente aus dem Review (<span id="paket-review-count">0</span>)</label>
           </div>
           <div class="controls" style="flex-wrap:wrap;">
             <button class="btn ghost" id="paket-preview-btn" type="button">Paket-Inhalt anzeigen</button>
@@ -3665,7 +3666,7 @@
           <p class="step-note" id="vrev-import-note"></p>
           <p class="section-label" style="margin-top:10px;">Ablage</p>
           <div class="controls" style="margin-top:0;"><button class="btn ghost btn-tiny" id="vrev-xlsx-btn" type="button" disabled>Ablage als Excel (alle Prüfergebnisse)</button></div>
-          <div class="table-wrap" id="vrev-docs-wrap" hidden><table class="simple-table"><thead><tr><th>Dokument</th><th>Version</th><th>Status</th><th>Quelle</th><th>Qualität</th><th>Stufen</th><th>Änderungen</th><th>Geprüft</th><th>Aktion</th></tr></thead><tbody id="vrev-docs-tbody"></tbody></table></div>
+          <div class="table-wrap" id="vrev-docs-wrap" hidden><table class="simple-table"><thead><tr><th>Dokument</th><th>Version</th><th>Status</th><th>Quelle</th><th>Qualität</th><th>Stufen</th><th>Änderungen</th><th>Dateien</th><th>Geprüft</th><th>Aktion</th></tr></thead><tbody id="vrev-docs-tbody"></tbody></table></div>
           <div class="empty-hint" id="vrev-docs-empty">Noch keine Dokumente im Review.</div>
           <div id="vrev-work" hidden>
             <div class="controls" style="justify-content:space-between; flex-wrap:wrap; margin-top:12px;">
@@ -6418,7 +6419,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.139.0";
+  var APP_VERSION = "2.140.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8022,7 +8023,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -31480,9 +31481,11 @@
     if (!els.paketStep || !Array.isArray(rlRoleResults)) return;
     els.paketRlCount.textContent = rlRoleResults.length;
     els.paketVariantCount.textContent = paketVariantsReady().length;
+    if (els.paketReviewCount) els.paketReviewCount.textContent = paketReviewDocs().length;
     if (!els.paketName.value && document.activeElement !== els.paketName) els.paketName.placeholder = "z. B. " + paketName();
   }
   // Plant die Dateien des Pakets (ohne sie zu erzeugen): { path, kind, role, lang, note, make: async () => Blob|string }
+  function paketReviewDocs() { return typeof VR === "function" ? VR().docs.filter(function (d) { return d.status === "Freigegeben" || d.status === "Verteilt"; }) : []; }
   function paketPlan() {
     var byRole = els.paketGroup.value === "role", name = paketName(), files = [], notes = [];
     function folder(role, type) { return byRole ? safeFilename(role || "Alle") + "/" : type + "/"; }
@@ -31500,6 +31503,13 @@
           note: (stale.length ? "⚠ veraltet: " + stale.join(", ") : "aktuell") + " · Stand „" + stand.name + "“ (" + stand.status + ")", make: function () { return variantDocxBlob(v, stand); } });
         if (stale.length) notes.push("Benutzerhandbuch " + v.role + " " + v.lang + " ist veraltet (" + stale.join(", ") + ").");
         if (stand.status !== "Veröffentlicht") notes.push("Benutzerhandbuch " + v.role + " " + v.lang + " hat den Status „" + stand.status + "“.");
+      });
+    }
+    if (els.paketIncReview && els.paketIncReview.checked) {
+      paketReviewDocs().forEach(function (d) {
+        files.push({ path: folder("Alle", "Dokumente") + safeFilename(name) + "_" + vrevFileBase(d) + ".docx", kind: "Dokument (Review)", role: "", lang: d.lang,
+          note: "v" + d.version + " · " + d.status + (d.score != null ? " · Qualität " + d.score : "") + " · " + vrevStepsDone(d) + "/7 Stufen", make: function () { return vrevBuildWord(d, false, false); } });
+        if (vrevStepsDone(d) < 7) notes.push("Dokument „" + d.name + "“ v" + d.version + ": nur " + vrevStepsDone(d) + " von 7 Review-Stufen abgeschlossen.");
       });
     }
     if (els.paketIncOverview.checked) {
@@ -31535,10 +31545,10 @@
       return "<tr><td>" + escapeHtml(f.path) + "</td><td>" + escapeHtml(f.kind) + "</td><td>" + escapeHtml(f.role || "–") + "</td><td>" + escapeHtml(f.lang || "–") + "</td><td>" + escapeHtml(f.note || "") + "</td></tr>";
     }).join("");
     els.paketStatus.textContent = plan.files.length ? "Paket „" + plan.name + "“: " + (plan.files.length + 1) + " Datei(en)" + (plan.notes.length ? " · " + plan.notes.length + " Hinweis(e): " + plan.notes.join(" ") : "") + "." :
-      "Noch nichts für das Paket vorhanden – Releaseletter je Rolle (Register Releaseletter) bzw. Varianten (Schritt 4) erzeugen.";
+      "Noch nichts für das Paket vorhanden – Releaseletter je Rolle (Register Releaseletter), Varianten (Schritt 4) oder freigegebene Dokumente (Schritt 6) erzeugen.";
   }
   els.paketPreviewBtn.addEventListener("click", function () { paketPlanCache = paketPlan(); renderPaketPlan(paketPlanCache); });
-  [els.paketGroup, els.paketIncRl, els.paketIncRlMd, els.paketIncVariants, els.paketIncOverview].forEach(function (el) {
+  [els.paketGroup, els.paketIncRl, els.paketIncRlMd, els.paketIncVariants, els.paketIncOverview, els.paketIncReview].forEach(function (el) {
     el.addEventListener("change", function () { if (!els.paketListWrap.hidden || paketPlanCache) { paketPlanCache = paketPlan(); renderPaketPlan(paketPlanCache); } });
   });
   els.paketBuildBtn.addEventListener("click", async function () {
@@ -32321,13 +32331,13 @@
     icon: /[←-⇿☀-➿⬀-⯿ℹ]|[\uD83C-\uD83E][\uDC00-\uDFFF]/g,
     placeholder: /^\s*(\[Bild(?::\s*([^\]]*))?\]|(Screenshot|Abbildung)\s*:\s*(.+))\s*$/i
   };
-  var vrevBusy = false, vrevAbort = null, vrevTextChapter = 0;
+  var vrevBusy = false, vrevAbort = null, vrevTextChapter = 0, vrevFilesOpen = {};
 
   function vrevNormalize(d) {
     d = d && typeof d === "object" ? d : {};
     var docs = Array.isArray(d.docs) ? d.docs.filter(function (x) { return x && typeof x.id === "number" && Array.isArray(x.chapters); }).map(function (x) {
       return Object.assign({ name: "Dokument", filename: "", source: "Upload", sourceRef: null, version: "1.0", status: "Entwurf", createdAt: "", updatedAt: "", original: [], ph: {}, design: null, wordDesign: null,
-        checks: {}, steps: {}, stage: 1, changes: [], history: [], ai: null, translationNotNeeded: false, legend: false, designKey: "", designOut: null, designOutLabel: "", lang: "DE", translations: [], baseDocId: null, scoreInitial: null, score: null, checkedAt: "" }, x);
+        checks: {}, steps: {}, stage: 1, changes: [], history: [], ai: null, translationNotNeeded: false, legend: false, designKey: "", designOut: null, designOutLabel: "", files: [], finalVersionId: null, lang: "DE", translations: [], baseDocId: null, scoreInitial: null, score: null, checkedAt: "" }, x);
     }) : [];
     return { docs: docs, activeId: typeof d.activeId === "number" ? d.activeId : null };
   }
@@ -32705,8 +32715,8 @@
       return { title: c.title, level: Math.max(1, c.level || 1), text: vrevExportText(doc, c, ci, withInternal), screens: screens, tables: tables };
     });
   }
-  async function vrevBuildWord(doc, withInternal, plain) {
-    var blob = await buildFinalMasterDocxBlob(vrevExportChapters(doc, withInternal), {
+  async function vrevBuildWord(doc, withInternal, plain, coverDate) {
+    var blob = await buildFinalMasterDocxBlob(vrevExportChapters(doc, withInternal), { coverDate: coverDate || undefined,
       coverTitle: doc.name, coverSubtitle: "Version " + doc.version + " · " + doc.status + (withInternal ? " · INTERN – mit internen Vermerken" : ""),
       footerTitle: doc.name + " v" + doc.version + (withInternal ? " – INTERN" : ""), rich: true
     });
@@ -32728,6 +32738,32 @@
   async function vrevAnalyzeOutput(doc) {
     try { doc.designOut = await vrevAnalyzeDocxZip(await JSZip.loadAsync(await (await vrevBuildWord(doc, false, false)).arrayBuffer())); doc.designOutLabel = vrevDesignLabel(doc); }
     catch (e) { doc.designOut = null; }
+  }
+  var VREV_MAX_FILES = 25;
+  function vrevSnapshot(doc) {
+    return JSON.parse(JSON.stringify({ name: doc.name, version: doc.version, status: doc.status, chapters: doc.chapters, ph: doc.ph, legend: doc.legend, designKey: doc.designKey, lang: doc.lang }));
+  }
+  function vrevKeepFile(doc, kind, filename, snap, at) {
+    doc.files = doc.files || [];
+    var id = doc.files.reduce(function (m, f) { return Math.max(m, f.id || 0); }, 0) + 1;
+    doc.files.push({ id: id, at: at || nowLabel(), version: doc.version, status: doc.status, kind: kind, filename: filename, snap: snap });
+    if (doc.files.length > VREV_MAX_FILES) doc.files.splice(0, doc.files.length - VREV_MAX_FILES);
+  }
+  // Verteil-/Druckfassung ohne Auszeichnung: Tabellen als Textzeilen, **/__ entfernt (PDF, Stand in FINAL).
+  function vrevPlainExportChapters(doc, withInternal) {
+    return vrevExportChapters(doc, withInternal).map(function (c) {
+      var k = 0;
+      var text = String(c.text || "").split("\n").map(function (line) {
+        if (line.trim() !== "[Tabelle]") return line;
+        var tb = (c.tables || [])[k++];
+        return tb ? tb.rows.map(function (row) { return row.join(" | "); }).join("\n") : "";
+      }).join("\n").replace(/\*\*|__/g, "");
+      return { title: c.title, level: c.level, text: text, screens: c.screens };
+    });
+  }
+  async function vrevBuildPdf(doc, coverDate) {
+    var pdf = await buildFinalMasterPdfDoc(vrevPlainExportChapters(doc, false), { coverDate: coverDate || undefined, coverTitle: doc.name, coverSubtitle: "Version " + doc.version + " · " + doc.status, headerTitle: doc.name + " v" + doc.version });
+    return pdf.output("blob");
   }
   function vrevFileBase(doc) { return editoFinalSafeName(doc.name) + "_v" + String(doc.version).replace(/[^\w.]/g, ""); }
 
@@ -32810,13 +32846,21 @@
         VREV_STATUSES.map(function (s) { return '<option value="' + s + '"' + (s === x.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select></div></td>" +
         "<td>" + escapeHtml(x.source) + (x.source === "Übersetzung" || x.lang !== "DE" ? " · " + escapeHtml(x.lang) : "") + "</td>" +
         "<td>" + (x.score == null ? "–" : '<b class="vrev-score-' + (x.score >= 85 ? "ok" : x.score >= 70 ? "warn" : "fail") + '">' + x.score + "</b>") + '<div class="step-note">' + c.ok + "✓ " + c.warn + "! " + c.fail + "✕</div></td>" +
-        "<td>" + vrevStepsDone(x) + "/7</td><td>" + vrevChangeCount(x) + "</td><td>" + escapeHtml(x.checkedAt || "–") + "</td>" +
+        "<td>" + vrevStepsDone(x) + "/7</td><td>" + vrevChangeCount(x) + "</td>" +
+        '<td><button class="btn ghost btn-tiny" type="button" data-vrev-act="files" data-id="' + x.id + '"' + ((x.files || []).length ? "" : " disabled") + ">" + (x.files || []).length + (vrevFilesOpen[x.id] ? " ▴" : " ▾") + "</button></td>" +
+        "<td>" + escapeHtml(x.checkedAt || "–") + "</td>" +
         '<td><div class="final-row-actions">' + (active ? "" : '<button class="btn ghost btn-tiny" type="button" data-vrev-act="open" data-id="' + x.id + '">Öffnen</button>') +
         '<button class="btn ghost btn-tiny" type="button" data-vrev-act="report-docx" data-id="' + x.id + '"' + (x.checkedAt ? "" : " disabled") + ">Reviewbericht</button>" +
         '<button class="btn ghost btn-tiny" type="button" data-vrev-act="word-dist" data-id="' + x.id + '">Word</button>' +
         '<button class="btn ghost btn-tiny" type="button" data-vrev-act="new-version" data-id="' + x.id + '">Neue Version</button>' +
-        '<button class="btn ghost btn-tiny final-btn-danger" type="button" data-vrev-act="delete" data-id="' + x.id + '">Löschen</button></div></td></tr>';
+        '<button class="btn ghost btn-tiny final-btn-danger" type="button" data-vrev-act="delete" data-id="' + x.id + '">Löschen</button></div></td></tr>' +
+        (vrevFilesOpen[x.id] && (x.files || []).length ? '<tr class="vrev-files-row" data-vrev-files="' + x.id + '"><td colspan="10"><table class="simple-table"><thead><tr><th>Abgelegt</th><th>Art</th><th>Datei</th><th>Version · Status</th><th></th></tr></thead><tbody>' +
+          x.files.slice().reverse().map(function (f) {
+            return "<tr><td>" + escapeHtml(f.at) + "</td><td>" + escapeHtml(f.kind) + '</td><td class="mono">' + escapeHtml(f.filename) + "</td><td>v" + escapeHtml(f.version) + (f.status ? " · " + escapeHtml(f.status) : "") + "</td>" +
+              '<td><button class="btn ghost btn-tiny" type="button" data-vrev-act="file-dl" data-id="' + x.id + '" data-file="' + f.id + '">Herunterladen</button></td></tr>';
+          }).join("") + '</tbody></table><p class="step-note">Abgelegte Dateien werden aus dem damaligen Stand neu erzeugt (Text, Bilder, Design-Wahl) – spätere Änderungen fließen nicht ein.</p></td></tr>' : "");
     }).join("");
+    if (typeof renderPaket === "function") renderPaket();
     els.vrevWork.hidden = !doc;
     if (!doc) return;
     els.vrevDocTitle.textContent = doc.name + " · v" + doc.version + " · " + doc.status;
@@ -32945,9 +32989,12 @@
     } else if (n === 7) {
       h += '<div class="controls" style="flex-wrap:wrap;"><button class="btn primary" type="button" data-vrev-act="word-dist">Word für die Verteilung (ohne interne Vermerke)</button>' +
         '<button class="btn ghost" type="button" data-vrev-act="word-intern">Word intern (mit internen Vermerken)</button>' +
+        '<button class="btn ghost" type="button" data-vrev-act="pdf-dist">PDF für die Verteilung</button>' +
+        '<button class="btn ghost" type="button" data-vrev-act="to-final">' + (doc.finalVersionId && finalVersionById(doc.finalVersionId) ? "Erneut als Stand nach FINAL" : "Als Stand nach FINAL übernehmen") + "</button>" +
         '<button class="btn ghost" type="button" data-vrev-act="report-docx">Reviewbericht (Word)</button></div>' +
         '<label class="variante-inline-check"><input type="checkbox" data-vrev-act="legend"' + (doc.legend ? " checked" : "") + "> Kapitel „Statusangaben“ mit Erklärung (verfügbar, in Abnahme, in Entwicklung, geplant) am Anfang einfügen</label>" +
-        '<p class="step-note">Verteilfassung: ohne Kommentarbereiche, ohne Zeilen „Intern:“/„TODO“/„[Intern]“, ohne Jira-Nummern, Bilder an den Platzhaltern, Design ' + (doc.wordDesign ? "aus dem hochgeladenen Entwurf" : "aus FINAL") + ". Die interne Fassung zeigt Vermerke als „[Intern: …]“.</p>";
+        (doc.finalVersionId && finalVersionById(doc.finalVersionId) ? '<p class="step-note">In FINAL als Stand „' + escapeHtml(finalVersionById(doc.finalVersionId).name) + "“ (" + escapeHtml(finalVersionById(doc.finalVersionId).status) + ") – auch für Varianten und CROSS_X nutzbar.</p>" : "") +
+        '<p class="step-note">Freigegebene und verteilte Dokumente können im Release-Paket (Schritt 5) mitgeliefert werden. Verteilfassung: ohne Kommentarbereiche, ohne Zeilen „Intern:“/„TODO“/„[Intern]“, ohne Jira-Nummern, Bilder an den Platzhaltern, Design ' + (doc.wordDesign ? "aus dem hochgeladenen Entwurf" : "aus FINAL") + ". Die interne Fassung zeigt Vermerke als „[Intern: …]“.</p>";
     }
     return h;
   }
@@ -33148,7 +33195,7 @@
   function vrevNewVersion(doc) {
     var copy = JSON.parse(JSON.stringify(doc));
     delete copy.id;
-    var nd = vrevAddDoc(Object.assign(copy, { version: vrevBumpVersion(doc.version), status: "Entwurf", createdAt: nowLabel(), updatedAt: nowLabel(), steps: {}, stage: 1, changes: [], ai: null, translations: [], scoreInitial: null, score: null, checks: {}, checkedAt: "", baseDocId: doc.id, history: [] }));
+    var nd = vrevAddDoc(Object.assign(copy, { version: vrevBumpVersion(doc.version), status: "Entwurf", createdAt: nowLabel(), updatedAt: nowLabel(), files: [], finalVersionId: null, steps: {}, stage: 1, changes: [], ai: null, translations: [], scoreInitial: null, score: null, checks: {}, checkedAt: "", baseDocId: doc.id, history: [] }));
     nd.history = [{ at: nowLabel(), version: nd.version, status: nd.status, what: "Neue Version aus v" + doc.version }];
     vrevRunChecks(nd);
     return nd;
@@ -33237,8 +33284,10 @@
   }
   async function vrevSaveWord(doc, withInternal) {
     try {
-      var blob = await vrevBuildWord(doc, withInternal, false), fn = vrevFileBase(doc) + (withInternal ? "_INTERN" : "") + "_" + dateStampForFilename() + ".docx";
+      var at = nowLabel(), blob = await vrevBuildWord(doc, withInternal, false, at), fn = vrevFileBase(doc) + (withInternal ? "_INTERN" : "") + "_" + dateStampForFilename() + ".docx";
+      var snap = vrevSnapshot(doc);
       if (await saveOrWarn(fn, blob)) {
+        vrevKeepFile(doc, withInternal ? "Word intern" : "Word Verteilung", fn, snap, at);
         vrevHistory(doc, (withInternal ? "Word intern" : "Word für die Verteilung") + " erzeugt: " + fn);
         if (!withInternal && doc.status === "Freigegeben") { doc.status = "Verteilt"; vrevHistory(doc, "Verteilt"); }
         els.vrevStatus.textContent = "„" + fn + "“ heruntergeladen.";
@@ -33252,7 +33301,11 @@
     var md = vrevReportMd(doc), fn = "Reviewbericht_" + vrevFileBase(doc) + "_" + dateStampForFilename() + (asWord ? ".docx" : ".md");
     try {
       var data = asWord ? await buildMarkdownDocxBlob("Reviewbericht – " + doc.name, md) : new Blob([md], { type: "text/markdown" });
-      if (await saveOrWarn(fn, data)) { els.vrevStatus.textContent = "„" + fn + "“ heruntergeladen."; addLog("VARIANTE Review: Reviewbericht " + fn + "."); }
+      if (await saveOrWarn(fn, data)) {
+        vrevKeepFile(doc, "Reviewbericht", fn, { md: md, name: doc.name, version: doc.version });
+        els.vrevStatus.textContent = "„" + fn + "“ heruntergeladen und in der Ablage aufbewahrt."; addLog("VARIANTE Review: Reviewbericht " + fn + ".");
+        renderVrev();
+      }
     } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
   }
   els.vrevXlsxBtn.addEventListener("click", async function () {
@@ -33279,6 +33332,41 @@
       if (await saveOrWarn(fn, blob)) { els.vrevImportNote.textContent = "„" + fn + "“ heruntergeladen (" + docs.length + " Dokument(e))."; addLog("VARIANTE Review: Ablage als Excel exportiert."); }
     } catch (err) { showToast("Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
   });
+  async function vrevSavePdf(doc) {
+    try {
+      var at = nowLabel(), snap = vrevSnapshot(doc), blob = await vrevBuildPdf(doc, at), fn = vrevFileBase(doc) + "_" + dateStampForFilename() + ".pdf";
+      if (await saveOrWarn(fn, blob)) {
+        vrevKeepFile(doc, "PDF Verteilung", fn, snap, at);
+        vrevHistory(doc, "PDF für die Verteilung erzeugt: " + fn);
+        els.vrevStatus.textContent = "„" + fn + "“ heruntergeladen.";
+        addLog("VARIANTE Review: " + fn + " heruntergeladen.");
+        renderVrev();
+      }
+    } catch (err) { showToast("PDF-Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  }
+  // Abgelegte Datei erneut erzeugen - aus dem damaligen Stand (nicht aus dem aktuellen Text).
+  async function vrevRedownload(doc, f) {
+    try {
+      var data;
+      if (f.kind === "Reviewbericht") data = /\.docx$/i.test(f.filename) ? await buildMarkdownDocxBlob("Reviewbericht – " + f.snap.name, f.snap.md) : new Blob([f.snap.md], { type: "text/markdown" });
+      else {
+        var tmp = Object.assign({}, doc, JSON.parse(JSON.stringify(f.snap)));
+        data = f.kind === "PDF Verteilung" ? await vrevBuildPdf(tmp, f.at) : await vrevBuildWord(tmp, f.kind === "Word intern", false, f.at);
+      }
+      if (await saveOrWarn(f.filename, data)) els.vrevImportNote.textContent = "„" + f.filename + "“ (abgelegt " + f.at + ", v" + f.version + ") erneut heruntergeladen.";
+    } catch (err) { showToast("Download fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
+  }
+  // Stand nach FINAL uebernehmen (Verteilfassung: ohne interne Vermerke/Jira, Bilder als [Bild] + Screens).
+  function vrevToFinal(doc) {
+    var chs = vrevPlainExportChapters(doc, false).map(function (c) {
+      return { title: c.title, level: c.level, text: c.text, markedText: c.text, screenIds: c.screens.map(function (img) { return img.id; }) };
+    });
+    var v = finalCreateVersion(chs, { name: doc.name + " v" + doc.version + " (Review)", origin: "Review", config: {} });
+    doc.finalVersionId = v.id;
+    vrevHistory(doc, "Als Stand „" + v.name + "“ nach FINAL übernommen");
+    if (typeof renderFinal === "function") renderFinal();
+    return v;
+  }
   els.vrevUploadBtn.addEventListener("click", function () { els.vrevFileInput.click(); });
   els.vrevFileInput.addEventListener("change", function () {
     var files = Array.prototype.slice.call(els.vrevFileInput.files || []);
@@ -33356,6 +33444,10 @@
     if (act === "report-docx") { vrevSaveReport(doc, true); return; }
     if (act === "word-dist") { vrevSaveWord(doc, false); return; }
     if (act === "word-intern") { vrevSaveWord(doc, true); return; }
+    if (act === "pdf-dist") { vrevSavePdf(doc); return; }
+    if (act === "to-final") { var fv = vrevToFinal(doc); els.vrevStatus.textContent = "Stand „" + fv.name + "“ in FINAL angelegt (Status Entwurf)."; addLog("VARIANTE Review: „" + doc.name + "“ als FINAL-Stand übernommen."); renderVrev(); return; }
+    if (act === "files") { vrevFilesOpen[doc.id] = !vrevFilesOpen[doc.id]; renderVrev(); return; }
+    if (act === "file-dl") { var ff = (doc.files || []).filter(function (x) { return x.id === parseInt(b.getAttribute("data-file"), 10); })[0]; if (ff) vrevRedownload(doc, ff); return; }
     if (act === "stop") { if (vrevAbort) vrevAbort.abort(); return; }
     if (act === "goto-stage") { doc.stage = parseInt(b.getAttribute("data-stage"), 10) || 1; renderVrev(); return; }
     if (act === "complete-stage") {

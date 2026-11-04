@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.139.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.140.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,17 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Dokument-Review: Dateien je Version, PDF, Übergabe an FINAL und Release-Paket (v2.140.0)**: **Ablage bewahrt
+  Dateien auf** – jedes erzeugte Word (Verteilung/intern), PDF und jeder Reviewbericht wird mit Zeitpunkt, Version und
+  Status beim Dokument abgelegt (Spalte „Dateien“, aufklappbare Liste, höchstens 25 je Dokument) und lässt sich später
+  erneut herunterladen – aus dem damaligen Stand (Text, Bilder, Design-Wahl, Deckblatt-Datum), auch wenn der Text
+  inzwischen geändert wurde. Eine neue Version startet ohne abgelegte Dateien. **PDF für die Verteilung** in Stufe 7
+  (Deckblatt, Inhaltsverzeichnis, Seitenzahlen; ohne interne Vermerke und Jira-Nummern; Tabellen als Textzeilen).
+  **Als Stand nach FINAL übernehmen**: legt die Verteilfassung als neuen FINAL-Stand (Herkunft „Review“, Status
+  Entwurf) mit den zugeordneten Bildern an – nutzbar für Varianten und CROSS_X. **Release-Paket** (Schritt 5): neue
+  Option „Geprüfte Dokumente aus dem Review“ – freigegebene und verteilte Dokumente kommen als Word in den Ordner
+  „Dokumente“ (bzw. „Alle“ bei Ordnern je Rolle); die LIESMICH.md weist auf nicht abgeschlossene Review-Stufen hin.
 
 - **Dokument-Review: Formatierung erhalten, Inhalt bereinigen, Design korrigieren (v2.139.0)**: **Formatierung** – beim
   Einlesen eines Entwurfs bleiben Fett (`**…**`), Kursiv (`__…__`), Aufzählungen (• / ◦ / ▪ je Ebene, nummerierte
