@@ -1,4 +1,4 @@
-// v2.157.0 (1) Label "Neu" verschwindet nach dem Oeffnen des Registers, (2) Screens-Import prueft neue Screens mit OpenCV,
+// v2.157.0 (+ v2.165: Verweise auf gelöschte Bilder in der Vorprüfung): (1) Label "Neu" verschwindet nach dem Oeffnen des Registers, (2) Screens-Import prueft neue Screens mit OpenCV,
 // (3) Release-Paket: Vorpruefung (Jira-Nummern, offene Bild-Platzhalter, unscharfe/ungepruefte Bilder) – echtes OpenCV.
 const fs = require("fs");
 const path = require("path");
@@ -130,6 +130,25 @@ async function screensDocx(list) {
   const z = await JSZipNode.loadAsync(Buffer.from(await savedFiles[0].data.arrayBuffer()));
   const readme = await z.file("LIESMICH.md").async("string");
   check("LIESMICH.md enthält die Vorprüfung", readme.includes("Vorprüfung Benutzerhandbuch Retail DE: 1 Jira-Nummer(n)") && readme.includes("Vorprüfung Dokument „Handbuch“ v1.0"));
+
+  // v2.165: Verweise auf geloeschte Bilder (4242 in FINAL, 4343 als einziges Bild eines Review-Platzhalters)
+  s = await session();
+  s.final.versions[0].chapters[0].screenIds = [blurId, 4242];
+  s.vrev.docs[0].ph["0:1"] = [4343];
+  Object.defineProperty(imp, "files", { value: [new win.File([JSON.stringify(s)], "s2.json")], configurable: true });
+  fire(imp, "change");
+  if (await waitUntil(() => !$("confirm-modal-overlay").hidden, 5000)) fire($("confirm-modal-ok-btn"), "click");
+  await wait(400);
+  nav("variante"); await wait(30);
+  $("variante-status").textContent = "";
+  fire($("variante-generate-all-btn"), "click");
+  await waitUntil(() => /erzeugt/.test($("variante-status").textContent), 10000);
+  ["paket-inc-variants", "paket-inc-review"].forEach((id) => { $(id).checked = true; });
+  fire($("paket-preview-btn"), "click"); await wait(50);
+  const st2 = $("paket-status").textContent;
+  console.log("   " + st2);
+  check("Vorprüfung Variante nennt Verweis auf gelöschtes Bild", st2.includes("Vorprüfung Benutzerhandbuch Retail DE: 1 Jira-Nummer(n), 1 offene(r) Bild-Platzhalter, 1 Verweis(e) auf gelöschte Bilder (Dashboard → Aufräumen)"));
+  check("Review-Dokument: Platzhalter nur mit gelöschtem Bild zählt als offen (vorher „zugeordnet“)", st2.includes("Vorprüfung Dokument „Handbuch“ v1.0: 1 offene(r) Bild-Platzhalter, 1 Verweis(e) auf gelöschte Bilder"));
 
   check("Statuszeile ohne doppelten Punkt", !/\.\.$/.test($("paket-status").textContent) && !st.endsWith(".."));
   check("Keine Skriptfehler", errors.length === 0);

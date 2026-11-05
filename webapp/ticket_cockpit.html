@@ -6627,7 +6627,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.164.0";
+  var APP_VERSION = "2.165.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -32747,8 +32747,9 @@
   function paketReviewDocs() { return typeof VR === "function" ? VR().docs.filter(function (d) { return d.status === "Freigegeben" || d.status === "Verteilt"; }) : []; }
   // v2.157: Vorpruefung je Dokument – Jira-Nummern, offene Bild-Platzhalter, unscharfe/kontrastarme bzw. ungepruefte Bilder
   function paketCheckChapters(chs) {
-    var jiraRe = new RegExp(ROVO_JIRA_KEY_RE.source, "g"), jira = 0, open = 0, imgs = {};
+    var jiraRe = new RegExp(ROVO_JIRA_KEY_RE.source, "g"), jira = 0, open = 0, imgs = {}, missing = 0;
     chs.forEach(function (c) {
+      missing += paketMissingIds(c.ids).length;
       var text = String(c.text || "");
       jira += (text.match(jiraRe) || []).length;
       var lines = text.split("\n").map(function (l) { return l.trim(); });
@@ -32757,16 +32758,19 @@
       (c.imgs || []).forEach(function (i) { if (i) imgs[i.id] = i; });
     });
     var list = Object.keys(imgs).map(function (k) { return imgs[k]; });
-    return { jira: jira, open: open, images: list, blurry: list.filter(cvIsBlurry).length, flat: list.filter(cvIsFlat).length, unchecked: list.filter(function (i) { return !i.cvAt; }).length };
+    return { jira: jira, open: open, missing: missing, images: list, blurry: list.filter(cvIsBlurry).length, flat: list.filter(cvIsFlat).length, unchecked: list.filter(function (i) { return !i.cvAt; }).length };
   }
   function paketCheckText(r) {
     var p = [];
     if (r.jira) p.push(r.jira + " Jira-Nummer(n)");
     if (r.open) p.push(r.open + " offene(r) Bild-Platzhalter");
+    if (r.missing) p.push(r.missing + " Verweis(e) auf gelöschte Bilder (Dashboard → Aufräumen)");
     if (r.blurry) p.push(r.blurry + " unscharfe(s) Bild(er)");
     if (r.flat) p.push(r.flat + " kontrastarme(s) Bild(er)");
     return p;
   }
+  // v2.165: IDs, zu denen es kein Bild mehr gibt (verwaiste Verweise)
+  function paketMissingIds(ids) { var have = {}; app.uploadedImages.forEach(function (i) { have[i.id] = true; }); return (ids || []).filter(function (id) { return typeof id === "number" && !have[id]; }); }
   function paketImgsOf(ids) { return (ids || []).map(function (id) { return app.uploadedImages.filter(function (i) { return i.id === id; })[0]; }).filter(Boolean); }
   var paketUnchecked = [];
   function paketPlan() {
@@ -32791,7 +32795,7 @@
         var stale = variantStaleReasons(v), stand = finalVersionById(v.standId);
         files.push({ path: folder(v.role, "Benutzerhandbuch") + safeFilename(name) + "_Benutzerhandbuch_" + safeFilename(v.role) + "_" + v.lang + ".docx", kind: "Benutzerhandbuch", role: v.role, lang: v.lang,
           note: (stale.length ? "⚠ veraltet: " + stale.join(", ") : "aktuell") + " · Stand „" + stand.name + "“ (" + stand.status + ")", make: function () { return variantDocxBlob(v, stand); } });
-        preflight("Benutzerhandbuch " + v.role + " " + v.lang, paketCheckChapters((stand.chapters || []).map(function (c) { return { text: variantStripRoleMarkers(c.text || ""), imgs: paketImgsOf(c.screenIds) }; })), files[files.length - 1]);
+        preflight("Benutzerhandbuch " + v.role + " " + v.lang, paketCheckChapters((stand.chapters || []).map(function (c) { return { text: variantStripRoleMarkers(c.text || ""), imgs: paketImgsOf(c.screenIds), ids: c.screenIds }; })), files[files.length - 1]);
         if (stale.length) notes.push("Benutzerhandbuch " + v.role + " " + v.lang + " ist veraltet (" + stale.join(", ") + ").");
         if (stand.status !== "Veröffentlicht") notes.push("Benutzerhandbuch " + v.role + " " + v.lang + " hat den Status „" + stand.status + "“.");
       });
@@ -32801,8 +32805,10 @@
         files.push({ path: folder("Alle", "Dokumente") + safeFilename(name) + "_" + vrevFileBase(d) + ".docx", kind: "Dokument (Review)", role: "", lang: d.lang,
           note: "v" + d.version + " · " + d.status + (d.score != null ? " · Qualität " + d.score : "") + " · " + vrevStepsDone(d) + "/7 Stufen", make: function () { return vrevBuildWord(d, false, false); } });
         // Verteilfassung entfernt Jira-Nummern selbst; offen = Platzhalter ohne Bild
-        var openPh = vrevAllPlaceholders(d).filter(function (p) { return !(d.ph[p.key] || []).length; }).length;
-        var rv = paketCheckChapters([{ text: "", imgs: paketImgsOf([].concat.apply([], Object.keys(d.ph || {}).map(function (k) { return d.ph[k] || []; }))) }]);
+        // offen = Platzhalter ohne vorhandenes Bild (nur verwaiste Verweise zaehlen als offen)
+        var openPh = vrevAllPlaceholders(d).filter(function (p) { return !paketImgsOf(d.ph[p.key]).length; }).length;
+        var phIds = [].concat.apply([], Object.keys(d.ph || {}).map(function (k) { return d.ph[k] || []; }));
+        var rv = paketCheckChapters([{ text: "", imgs: paketImgsOf(phIds), ids: phIds }]);
         rv.open = openPh;
         preflight("Dokument „" + d.name + "“ v" + d.version, rv, files[files.length - 1]);
         if (vrevStepsDone(d) < 7) notes.push("Dokument „" + d.name + "“ v" + d.version + ": nur " + vrevStepsDone(d) + " von 7 Review-Stufen abgeschlossen.");

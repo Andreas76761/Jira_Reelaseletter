@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.164.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.165.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,11 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Release-Paket: Vorprüfung auf Verweise zu gelöschten Bildern (v2.165.0)**: Die Vorprüfung je Dokument nennt jetzt
+  auch **Verweise auf gelöschte Bilder** („1 Verweis(e) auf gelöschte Bilder (Dashboard → Aufräumen)“) – in Varianten
+  und Review-Dokumenten, in Statuszeile, Paket-Liste und LIESMICH.md. **Behoben**: Im Review-Dokument galt ein
+  Bild-Platzhalter, dessen einziges Bild gelöscht war, als zugeordnet; er zählt jetzt als offen.
 
 - **Dashboard: verwaiste Bild-Verweise aufräumen (v2.164.0)**: „Aufräumen“ zeigt zusätzlich **Verweise auf gelöschte
   Bilder** – Reste aus Löschungen vor v2.161 in FINAL-Kapiteln, Screens-Platzhaltern (inkl. Trefferwert) und im
