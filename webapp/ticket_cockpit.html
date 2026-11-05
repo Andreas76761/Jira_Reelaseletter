@@ -6513,7 +6513,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.148.0";
+  var APP_VERSION = "2.149.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -12721,6 +12721,61 @@
     return chapters.map(function (c) {
       return { level: c.level, title: c.title, fullText: c.fullParas.join("\n"), cleanText: c.cleanParas.join("\n"), markedText: c.markedParas.join("\n") };
     });
+  }
+  // v2.149: eingebettete Bilder eines FINAL-Handbuchs an ihrer Stelle behalten – Bild ins Bildarchiv, im Kapiteltext
+  // als "[Bild: Bildtext]" (wie im Dokument-Review); entry.embedded = [{ id, ph }] in Reihenfolge des Textes.
+  var FINAL_IMG_MARK_RE = /\[Bild: #finimg(\d+)#\]/g;
+  async function finalReadManualDocx(buf, filename, manualId) {
+    var zip;
+    try { zip = await JSZip.loadAsync(buf); } catch (e) { return { chapters: await extractFinalManualChapters(buf), images: [] }; }
+    var entry = zip.file("word/document.xml");
+    if (!entry) return { chapters: await extractFinalManualChapters(buf), images: [] };
+    var xml = await entry.async("string"), numFmt = await vrevNumberingFormats(zip);
+    var relsMap = await loadZipRelationships(zip, "word/_rels/document.xml.rels");
+    var dom = new DOMParser().parseFromString(xml, "application/xml"), body = dom.getElementsByTagName("w:body")[0];
+    if (dom.querySelector("parsererror") || !body) return { chapters: docxXmlToFinalChapters(xml, numFmt), images: [] };
+    var W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main", pend = [], lastHeading = "";
+    var nodes = Array.prototype.filter.call(body.childNodes, function (n) { return n.nodeType === 1 && n.tagName === "w:p"; });
+    nodes.forEach(function (node, ni) {
+      var text = docxParagraphText(node), level = docxHeadingLevel(docxParagraphStyleId(node));
+      var ps = level > 0 ? [] : blipImagePromises(node, relsMap, "word/document.xml", zip);
+      if (ps.length) {
+        var next = nodes[ni + 1] ? docxParagraphText(nodes[ni + 1]) : "";
+        var cap = (text || (/^(Abbildung|Abb\.|Bild|Screenshot|Figure)\b/i.test(next) ? next : "") || lastHeading).replace(/[\[\]]/g, "").trim();
+        var after = node.nextSibling;
+        ps.forEach(function (pr) {
+          var p = dom.createElementNS(W, "w:p"), r = dom.createElementNS(W, "w:r"), t = dom.createElementNS(W, "w:t");
+          t.textContent = "[Bild: #finimg" + pend.length + "#]";
+          pend.push({ pr: pr, cap: cap || "Bild" });
+          r.appendChild(t); p.appendChild(r);
+          body.insertBefore(p, after);
+        });
+      }
+      if (level > 0 && text) lastHeading = text;
+    });
+    var chapters = docxXmlToFinalChapters(pend.length ? new XMLSerializer().serializeToString(dom) : xml, numFmt);
+    if (!pend.length) return { chapters: chapters, images: [] };
+    var loaded = await Promise.all(pend.map(function (x) { return x.pr.catch(function () { return null; }); }));
+    var images = [], idOf = {};
+    pend.forEach(function (x, k) {
+      var im = loaded[k];
+      if (!im || !im.dataUrl) return;
+      var img = { id: nextImageId++, filename: filename + " - Bild " + (k + 1), dataUrl: im.dataUrl, mimeType: (/^data:([^;]+);/.exec(im.dataUrl) || [])[1] || "unbekannt",
+        sizeBytes: Math.round((im.dataUrl.length - im.dataUrl.indexOf(",") - 1) * 0.75), when: nowLabel(), domain: "", processStep: "", chapter: "", subchapter: "", description: x.cap,
+        width: null, height: null, avgColor: null, brightnessPct: null, metadataComputed: false, metadataError: null, ocrText: null, ocrError: null, ocrRanAt: null,
+        imageNumber: k + 1, sourceFile: filename, editorFileId: null, rolle: "", sprache: "", finalManualId: manualId };
+      if (im.blob) setScreenPreviewBlob(img, im.blob);
+      images.push(img); idOf[k] = img;
+    });
+    chapters.forEach(function (c) {
+      var emb = [];
+      String(c.fullText || "").replace(FINAL_IMG_MARK_RE, function (m, k) { var img = idOf[k]; if (img) { img.finalChapter = c.title; emb.push({ id: img.id, ph: "[Bild: " + img.description + "]" }); } return m; });
+      ["fullText", "cleanText", "markedText"].forEach(function (f) {
+        c[f] = String(c[f] || "").replace(FINAL_IMG_MARK_RE, function (m, k) { return idOf[k] ? "[Bild: " + idOf[k].description + "]" : ""; }).replace(/\n{3,}/g, "\n\n");
+      });
+      if (emb.length) c.embedded = emb;
+    });
+    return { chapters: chapters, images: images };
   }
   async function docxArrayBufferToFinalChapters(buf) {
     if (typeof JSZip === "undefined") throw new Error("ZIP-Bibliothek (JSZip) nicht geladen - .docx kann nicht gelesen werden.");
@@ -27225,16 +27280,20 @@
   async function handleFinalManualFiles(fileList) {
     var files = Array.prototype.filter.call(fileList || [], function (f) { return /\.docx$/i.test(f.name || ""); });
     if (!files.length) { showToast("Keine passende Datei", "Bitte eine .docx-Datei auswählen.", true); return; }
-    var added = 0;
+    var added = 0, embeddedTotal = 0;
     for (var i = 0; i < files.length; i++) {
       var file = files[i];
       try {
         var buf = await readFileAsArrayBuffer(file);
-        var chapters = await extractFinalManualChapters(buf);
+        if (classifyWordBuffer(buf) !== "zip") await extractFinalManualChapters(buf); // verstaendliche Fehlermeldung fuer .doc/HTML
+        var manualId = nextFinalManualId++;
+        var read = await finalReadManualDocx(buf, file.name, manualId);
+        var chapters = read.chapters;
         var design = await finalExtractWordDesignFromBuffer(buf);
         var pageCount = await finalDocxPageCountFromBuffer(buf);
+        if (read.images.length) { app.uploadedImages = app.uploadedImages.concat(read.images); embeddedTotal += read.images.length; }
         app.final.manuals.push({
-          id: nextFinalManualId++, filename: file.name, chapters: chapters, design: design, pageCount: pageCount, addedAt: nowLabel(),
+          id: manualId, filename: file.name, chapters: chapters, design: design, pageCount: pageCount, addedAt: nowLabel(), embeddedImages: read.images.length,
           rolle: els.finalManualRolleSelect.value, sparte: els.finalManualSparteSelect.value,
           sprache: els.finalManualSpracheInput.value.trim(), markt: els.finalManualMarktInput.value.trim()
         });
@@ -27247,8 +27306,8 @@
     if (added) {
       // Verbesserungs-Excel ohne Quelldatei (vor dem ersten Handbuch hochgeladen) jetzt zuordnen.
       app.final.improvementFiles.forEach(function (f) { if (!f.sourceManualId) { f.sourceManualId = finalBestManualForImprovements(f.rows); finalRemapImprovementFile(f); } });
-      addLog("FINAL: " + added + " Benutzerhandbuch-Datei(en) hochgeladen.");
-      showToast("Hochgeladen", added + " Datei(en) hochgeladen.");
+      addLog("FINAL: " + added + " Benutzerhandbuch-Datei(en) hochgeladen" + (embeddedTotal ? ", " + embeddedTotal + " eingebettete(s) Bild(er) an ihrer Stelle übernommen (Bildarchiv)" : "") + ".");
+      showToast("Hochgeladen", added + " Datei(en) hochgeladen." + (embeddedTotal ? " " + embeddedTotal + " eingebettete(s) Bild(er) übernommen." : ""));
     }
     renderFinal();
   }
@@ -29548,8 +29607,34 @@
     return finalTitlesForManual(config.manualId).map(function (title) {
       var marked = finalChapterMarkedText(title, config.manualId);
       var entry = finalChapterEntryFor(title, config.manualId);
-      var screens = finalScreensForChapter(title, config.screensFileId).map(function (img) { return Object.assign({}, img, { description: finalScreenCaption(img) }); });
-      var placeholders = screens.length ? "\n" + screens.map(function () { return "[Bild]"; }).join("\n") : "";
+      var fileScreens = finalScreensForChapter(title, config.screensFileId).map(function (img) { return Object.assign({}, img, { description: finalScreenCaption(img) }); });
+      // v2.149: eingebettete Bilder des Handbuchs an ihrer Stelle; "[Bild]" aus dem Text bekommt (wie bisher) die
+      // naechsten Screens der Screens-Datei, die uebrigen Screens folgen am Kapitelende.
+      var emb = (entry && entry.embedded) || [], ei = 0, fi = 0, screens = [];
+      if (emb.length || /^\s*\[Bild\]\s*$/m.test(marked.replace(FINAL_MARK_RE, ""))) {
+        marked = marked.split("\n").map(function (line) {
+          var plain = line.replace(FINAL_MARK_RE, "").trim();
+          for (var j = ei; j < emb.length; j++) {
+            if (emb[j].ph === plain) {
+              var img = app.uploadedImages.filter(function (x) { return x.id === emb[j].id; })[0];
+              ei = j + 1;
+              if (!img) return line.replace(plain, "[Bild: " + plain.slice(7, -1) + " – Bild nicht mehr im Bildarchiv]");
+              screens.push(img);
+              return line.replace(plain, "[Bild]");
+            }
+          }
+          if (plain === "[Bild]") {
+            if (fi < fileScreens.length) { screens.push(fileScreens[fi++]); return line; }
+            // ohne Screen bleibt der Platzhalter sichtbar offen (Struktur-Pruefung) – nur wenn danach noch ein
+            // eingebettetes Bild kommt, wird er zu Text, damit die Bilder an ihrer Stelle bleiben
+            return ei < emb.length ? line.replace(plain, "[Bild: kein Screen zugeordnet]") : line;
+          }
+          return line;
+        }).join("\n");
+      }
+      var rest = fileScreens.slice(fi);
+      screens = screens.concat(rest);
+      var placeholders = rest.length ? "\n" + rest.map(function () { return "[Bild]"; }).join("\n") : "";
       // Optional: Verbesserungen ohne Agent als interner Vermerk ans Kapitelende.
       var inline = config.inlineImprovements && config.improvementFileId && app.final.showInternal
         ? finalImprovementsFor(config.improvementFileId, title).map(finalImprovementLabel) : [];

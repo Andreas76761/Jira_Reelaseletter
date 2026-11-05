@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.148.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.149.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,17 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **FINAL: eingebettete Bilder des Handbuchs bleiben an ihrer Stelle (v2.149.0)**: bisher übernahm FINAL aus einem
+  hochgeladenen Handbuch nur den Text – eingebettete Bilder fehlten im Master (Word, PDF, PowerPoint), Screens kamen nur
+  aus separaten Screens-Dateien ans Kapitelende. Jetzt kommen eingebettete Bilder ins Bildarchiv (Quelldatei = Handbuch,
+  Bildtext aus der Bildunterschrift „Abbildung N: …“ darunter bzw. der Kapitelüberschrift) und stehen im Kapiteltext als
+  „[Bild: Bildtext]“ genau an ihrer Stelle. Beim Zusammenführen werden sie dort als Bild eingesetzt, mit genau einer
+  Bildunterschrift. „[Bild]“-Platzhalter aus dem Text erhalten wie bisher die Screens der gewählten Screens-Datei,
+  übrige Screens folgen am Kapitelende; ein „[Bild]“ ohne Screen bleibt offen (Struktur-Prüfung zählt ihn) – nur wenn
+  danach im Kapitel noch ein eingebettetes Bild folgt, steht dort „[Bild: kein Screen zugeordnet]“, damit die Bilder
+  nicht verrutschen. Hinweis beim Hochladen nennt die Zahl der übernommenen Bilder. Im Beispiel (12 Kapitel, 6 Bilder)
+  enthält das FINAL-Word jetzt alle 6 Bilder (vorher 0).
 
 - **FINAL: nummerierte Listen und Aufzählungen bleiben erhalten (v2.148.0)**: beim Hochladen eines Handbuchs in FINAL
   gingen die Nummern Word-nummerierter Listen verloren („Daten erfassen / Prüfen / Speichern“ statt „1. 2. 3.“) –
