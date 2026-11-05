@@ -1,4 +1,4 @@
-// v2.163.0 Dashboard → „Aufräumen – entbehrliche Kopien“: ältere Zwischenversionen (Benutzerhandbuch, Massenverarbeitung;
+// v2.163.0/v2.164.0 Dashboard → „Aufräumen – entbehrliche Kopien“ (v2.164: plus verwaiste Verweise auf gelöschte Bilder): ältere Zwischenversionen (Benutzerhandbuch, Massenverarbeitung;
 // die neueste bleibt), Bild-Originale vor dem Verpixeln und vor dem Zuschneiden – je Zeile Anzahl, Größe, Hinweis, Löschen
 // mit Bestätigung; der aktuelle Stand bleibt unverändert; Belegt im Dashboard sinkt.
 const fs = require("fs");
@@ -105,6 +105,25 @@ const img = (id, name, w, h, g, color) => ({ id, filename: name, dataUrl: shot(w
   check("Nichts mehr aufzuräumen → Abschnitt verborgen", $("dash-clean").hidden);
   nav("bilder"); await wait(50);
   check("Register Bilder öffnet ohne Fehler", !doc.querySelector('[data-view-panel="bilder"]').hidden);
+  // v2.164: verwaiste Verweise (Bilder 777/778 gibt es nicht)
+  s = await session();
+  s.final.versions = [{ id: 1, name: "Basis", createdAt: "x", status: "Entwurf", statusChangedAt: "x", history: [], config: {}, origin: "FINAL", improvements: {}, improvementStatus: {}, reviews: [], notes: [],
+    chapters: [{ title: "1 Vertrag", level: 1, text: "Vertrag", markedText: "Vertrag", screenIds: [501, 777] }] }];
+  s.screenPh = { filename: "ph.xlsx", at: "x", rows: [{ nr: "1", chapter: "Vertrag", desc: "Maske", status: "offen", screenIds: [778], scores: { 778: 90, 501: 50 }, manual: false, via: "" }] };
+  s.vrev = { docs: [{ id: 1, name: "Handbuch", version: "1.0", status: "Entwurf", source: "Upload", lang: "DE", chapters: [{ title: "1 Vertrag", level: 1, text: "[Bild: Maske]" }], ph: { "1 Vertrag|0": [777, 502] }, checks: {}, steps: {}, history: [] }], activeId: null };
+  await load(s);
+  nav("dashboard"); await wait(30); $("dash-store-refresh-btn").click(); await wait(300);
+  const orow = crow("orphan-refs");
+  check("Verwaiste Verweise: 3 gezählt, Register genannt, ohne Größe", !!orow && orow[1] === "3" && orow[2] === "–" && /FINAL/.test(orow[3]) && /Screens-Import/.test(orow[3]) && /Dokument-Review/.test(orow[3]));
+  doc.querySelector('[data-dash-clean="orphan-refs"]').click();
+  await waitUntil(() => !$("confirm-modal-overlay").hidden, 5000);
+  check("Bestätigung ohne Größenangabe", /^Verweise auf gelöschte Bilder: 3 löschen\.\n/.test($("confirm-modal-message").textContent));
+  fire($("confirm-modal-ok-btn"), "click"); await waitUntil(() => $("confirm-modal-overlay").hidden, 3000); await wait(300);
+  s = await session();
+  check("Verwaiste Verweise entfernt, gültige bleiben (FINAL [501], Platzhalter [] ohne Score 778, Review [502])",
+    JSON.stringify(s.final.versions[0].chapters[0].screenIds) === "[501]" && JSON.stringify(s.screenPh.rows[0].screenIds) === "[]" && s.screenPh.rows[0].scores[778] == null && s.screenPh.rows[0].scores[501] === 50 && JSON.stringify(s.vrev.docs[0].ph["1 Vertrag|0"]) === "[502]");
+  check("Danach nichts mehr aufzuräumen", $("dash-clean").hidden && s.log.some((l) => /Verweise auf gelöschte Bilder – 3 gelöscht\./.test(l.message || "")));
+  nav("final"); await wait(100);
   check("Keine JS-Fehler", errors.length === 0);
   if (errors.length) console.log(errors.slice(0, 5));
 

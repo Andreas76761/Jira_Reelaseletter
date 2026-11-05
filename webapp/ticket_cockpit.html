@@ -6627,7 +6627,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.163.0";
+  var APP_VERSION = "2.164.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -30175,6 +30175,24 @@
     if (blur.length) out.push({ key: "img-blur", label: "Bilder – Originale vor dem Verpixeln", count: blur.length, bytes: dashSum(blur.map(function (i) { return cvDataUrlBytes(i.originalDataUrl); })),
       hint: "Enthalten die unverpixelten Stellen (Namen, FIN …) – Löschen spart Platz und entfernt sie aus Sitzung und Sitzungsdatei; „Original wiederherstellen“ entfällt.",
       apply: function () { var list = app.uploadedImages.filter(function (i) { return i.originalDataUrl; }); list.forEach(function (i) { i.originalDataUrl = null; }); return list.length; } });
+    // v2.164: Verweise auf Bilder, die es nicht mehr gibt (Loeschen vor v2.161 liess sie stehen)
+    var have = {};
+    app.uploadedImages.forEach(function (i) { have[i.id] = true; });
+    var orphanCount = 0, orphanWhere = {};
+    cvWalkImageRefs(function (ref) {
+      if (ref.kind === "list") ref.obj[ref.key].forEach(function (id) { if (typeof id === "number" && !have[id]) { orphanCount++; orphanWhere[cvRefTopLabel(ref.top)] = true; } });
+    });
+    if (orphanCount) out.push({ key: "orphan-refs", label: "Verweise auf gelöschte Bilder", count: orphanCount, bytes: 0, always: true,
+      hint: "In " + Object.keys(orphanWhere).join(", ") + " – stammen aus früher gelöschten Bildern; Bild-Platzhalter erscheinen dadurch zugeordnet, obwohl das Bild fehlt. Entfernen macht sie wieder offen.",
+      apply: function () {
+        var live = {}, map = {};
+        app.uploadedImages.forEach(function (i) { live[i.id] = true; });
+        cvWalkImageRefs(function (ref) {
+          if (ref.kind === "list") ref.obj[ref.key].forEach(function (id) { if (typeof id === "number" && !live[id]) map[id] = null; });
+          else if (ref.kind === "keys") Object.keys(ref.obj).forEach(function (k) { if (/^\d+$/.test(k) && !live[k]) map[k] = null; });
+        });
+        return cvRemapImageRefs(map);
+      } });
     var crop = app.uploadedImages.filter(function (i) { return i.cvUncropped; });
     if (crop.length) out.push({ key: "img-crop", label: "Bilder – Originale vor dem Zuschneiden", count: crop.length, bytes: dashSum(crop.map(function (i) { return cvDataUrlBytes(i.cvUncropped); })),
       hint: "„Original wiederherstellen“ nach dem Zuschneiden mit OpenCV entfällt.",
@@ -30183,21 +30201,22 @@
   }
   function renderDashClean() {
     if (!els.dashClean) return;
-    var items = dashCleanItems().filter(function (x) { return x.bytes > 0; });
+    var items = dashCleanItems().filter(function (x) { return x.bytes > 0 || (x.always && x.count > 0); });
     els.dashClean.hidden = !items.length;
     els.dashCleanTbody.innerHTML = items.map(function (x) {
-      return '<tr data-dash-clean-row="' + x.key + '"><td>' + escapeHtml(x.label) + '</td><td class="num">' + x.count + '</td><td class="num">' + dashFmtBytes(x.bytes) + "</td><td>" + escapeHtml(x.hint) +
+      return '<tr data-dash-clean-row="' + x.key + '"><td>' + escapeHtml(x.label) + '</td><td class="num">' + x.count + '</td><td class="num">' + (x.bytes ? dashFmtBytes(x.bytes) : "–") + "</td><td>" + escapeHtml(x.hint) +
         '</td><td><button class="btn ghost btn-tiny" type="button" data-dash-clean="' + x.key + '">Löschen</button></td></tr>';
     }).join("");
   }
   async function dashCleanRun(key) {
     var x = dashCleanItems().filter(function (i) { return i.key === key; })[0];
     if (!x) return null;
-    var ok = await confirmDialog(x.label + ": " + x.count + " löschen (" + dashFmtBytes(x.bytes) + ").\n" + x.hint + "\nDas lässt sich nicht rückgängig machen.", "Löschen");
+    var ok = await confirmDialog(x.label + ": " + x.count + " löschen" + (x.bytes ? " (" + dashFmtBytes(x.bytes) + ")" : "") + ".\n" + x.hint + "\nDas lässt sich nicht rückgängig machen.", "Löschen");
     if (!ok) return null;
     var n = x.apply();
-    addLog("Dashboard – Aufräumen: " + x.label + " – " + n + " gelöscht, " + dashFmtBytes(x.bytes) + " frei.");
-    showToast("Aufgeräumt", x.label + ": " + dashFmtBytes(x.bytes) + " frei.");
+    addLog("Dashboard – Aufräumen: " + x.label + " – " + n + " gelöscht" + (x.bytes ? ", " + dashFmtBytes(x.bytes) + " frei" : "") + ".");
+    showToast("Aufgeräumt", x.label + ": " + (x.bytes ? dashFmtBytes(x.bytes) + " frei." : n + " entfernt."));
+    renderWhenVisible("final", "final", renderFinal);
     renderGallery();
     await renderDashStore();
     return { n: n, bytes: x.bytes };
@@ -36182,7 +36201,7 @@
     bilder: "Neu in v2.153–2.162: Bildverarbeitung mit OpenCV (Schärfe, Kontrast, leere Ränder, sehr ähnliche Bilder, OCR-Vorverarbeitung); Speicher sparen; sehr ähnliche Bilder bereinigen; Prüfung beim Hochladen",
     variante: "Neu in v2.152/2.155: Dokument-Review – Bilder mit KI auswählen, Bildqualität mit OpenCV prüfen",
     final: "Neu in v2.148–2.151: Listen, eingebettete Bilder und Tabellen aus dem Handbuch; PowerPoint überarbeitet",
-    dashboard: "Neu in v2.147/2.160/2.163: Einträge und Speicherplatz je Register; Status des automatischen Speicherns; Aufräumen entbehrlicher Kopien",
+    dashboard: "Neu in v2.147/2.160/2.163: Einträge und Speicherplatz je Register; Status des automatischen Speicherns; Aufräumen entbehrlicher Kopien und verwaister Bild-Verweise",
     crossx: "Neu in v2.145: Chat mit allen Registern, Quellen nach jeder Antwort",
     agent: "Neu in v2.141: 8 Agenten mit Orchestrator"
   };
