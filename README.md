@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.165.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.166.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,14 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Dashboard: alte FINAL-Stände archivieren (v2.166.0)**: Varianten und Review-Übernahmen werden als FINAL-Stände
+  gespeichert – nach den Bildern meist der größte Posten. „Aufräumen“ zeigt jetzt **„FINAL – nicht mehr benötigte
+  Stände“** mit Anzahl und Größe. **„Sichern und löschen“** speichert sie zuerst als Archivdatei
+  (`FINAL-Staende-Archiv_<Datum>_<n>.json`) und entfernt sie erst danach; wird der Download abgelehnt, bleibt alles.
+  **Geschützt** sind immer: aktiver Stand, veröffentlichte Stände, Basis und Ergebnisse von Varianten, der Stand im
+  Editor und Stände aus dem Dokument-Review. **„FINAL-Stände-Archiv einlesen“** holt archivierte Stände mit neuen IDs
+  zurück (Vermerk in der Status-Historie).
 
 - **Release-Paket: Vorprüfung auf Verweise zu gelöschten Bildern (v2.165.0)**: Die Vorprüfung je Dokument nennt jetzt
   auch **Verweise auf gelöschte Bilder** („1 Verweis(e) auf gelöschte Bilder (Dashboard → Aufräumen)“) – in Varianten
