@@ -34,7 +34,7 @@ async function docx(body) {
   z.file("word/document.xml", '<?xml version="1.0" encoding="UTF-8"?><w:document ' + NS + "><w:body>" + body + "<w:sectPr/></w:body></w:document>");
   return z.generateAsync({ type: "nodebuffer" });
 }
-const BODY = H("1 Verträge anlegen") + P("Die wichtigsten Felder:") + TBL([["Feld", "Bedeutung"], ["Laufzeit", "Monate"], ["Laufleistung", "km pro Jahr"]]) + P("Danach speichern.") +
+const BODY = H("1 Verträge anlegen") + P("1. Daten erfassen") + P("2. Speichern") + P("• Hinweis zur Laufzeit") + P("Die wichtigsten Felder:") + TBL([["Feld", "Bedeutung"], ["Laufzeit", "Monate"], ["Laufleistung", "km pro Jahr"]]) + P("Danach speichern.") +
   H("2 Preise") + TBL([["Paket", "Preis", "Hinweis"], ["Basis", "10 €", ""]]) + P("Ende.");
 
 (async () => {
@@ -71,6 +71,19 @@ const BODY = H("1 Verträge anlegen") + P("Die wichtigsten Felder:") + TBL([["Fe
   await waitUntil(() => savedFiles.length === 1, 10000);
   const pdf = Buffer.from(await savedFiles[0].data.arrayBuffer()).toString("latin1");
   check("PDF: Zellen einzeln gesetzt (Tabelle statt Tabulatorzeile)", pdf.includes("(Laufzeit)") && pdf.includes("(Monate)") && !pdf.includes("Laufzeit\tMonate") && !pdf.includes("Laufzeit\\tMonate"));
+
+  // PowerPoint
+  savedFiles.length = 0;
+  $("final-design-pptx-btn").click();
+  await waitUntil(() => savedFiles.length === 1, 10000);
+  const pz = await JSZipNode.loadAsync(Buffer.from(await savedFiles[0].data.arrayBuffer()));
+  const slides = await Promise.all(Object.keys(pz.files).filter((f) => /^ppt\/slides\/slide\d+\.xml$/.test(f)).map((f) => pz.file(f).async("string")));
+  const tblSlides = slides.filter((x) => x.includes("<a:tbl>"));
+  check("PowerPoint: Tabellen als echte Tabelle auf eigener Folie (Kopfzeile fett)", tblSlides.length === 2 && /b="1" dirty="0"\/><a:t>Feld<\/a:t>/.test(tblSlides[0]) && tblSlides[0].includes("<a:t>Laufleistung</a:t>") && !slides.some((x) => /Laufzeit\tMonate/.test(x)));
+  const all = slides.join("");
+  check("PowerPoint: „1. Daten erfassen“ ohne zusätzlichen Aufzählungspunkt", /<a:pPr marL="571500" indent="-228600"><a:buNone\/><\/a:pPr><a:r><a:rPr lang="de-DE" dirty="0"\/><a:t>1\. Daten erfassen<\/a:t>/.test(all));
+  check("PowerPoint: „• Hinweis“ nutzt den Folien-Aufzählungspunkt (kein „•“ im Text)", all.includes("<a:t>Hinweis zur Laufzeit</a:t>") && !all.includes("<a:t>• Hinweis"));
+  check("PowerPoint: Text vor und nach der Tabelle bleibt erhalten", all.includes("<a:t>Die wichtigsten Felder:</a:t>") && all.includes("<a:t>Danach speichern.</a:t>"));
 
   check("Keine Skriptfehler", errors.length === 0);
   if (errors.length) console.log(errors.slice(0, 5));

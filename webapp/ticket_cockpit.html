@@ -6513,7 +6513,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.150.0";
+  var APP_VERSION = "2.151.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -29897,6 +29897,36 @@
     if (!lines.length) return '<a:p><a:endParaRPr lang="de-DE"/></a:p>';
     return lines.map(function (l) { return "<a:p>" + (pPr || "") + '<a:r><a:rPr lang="de-DE" dirty="0"' + (rPr || "/>") + "<a:t>" + xmlEsc(l) + "</a:t></a:r></a:p>"; }).join("");
   }
+  // v2.151: Listenzeilen ohne doppeltes Aufzaehlungszeichen: "1. …" ohne Folien-Bullet, "• …" mit Bullet der Vorlage,
+  // "◦"/"▪" als zweite/dritte Ebene
+  function pptListParas(lines) {
+    if (!lines.length) return pptParas(lines);
+    return lines.map(function (l) {
+      var m = RICH_LIST_RE.exec(l), pPr = "", text = l;
+      if (m && /^\d/.test(m[1])) pPr = '<a:pPr marL="571500" indent="-228600"><a:buNone/></a:pPr>';
+      else if (m) { var lvl = m[1] === "◦" ? 1 : m[1] === "▪" ? 2 : 0; text = l.slice(m[0].length); if (lvl) pPr = '<a:pPr lvl="' + lvl + '"/>'; }
+      return "<a:p>" + pPr + '<a:r><a:rPr lang="de-DE" dirty="0"/><a:t>' + xmlEsc(text) + "</a:t></a:r></a:p>";
+    }).join("");
+  }
+  function pptTableFrame(rows, header, x, y, w) {
+    var n = rows.reduce(function (m, r) { return Math.max(m, r.length); }, 1);
+    var lens = []; for (var i = 0; i < n; i++) lens.push(Math.max(4, Math.min(40, rows.reduce(function (m, r) { return Math.max(m, String(r[i] || "").length); }, 0))));
+    var tot = lens.reduce(function (a, b) { return a + b; }, 0), colW = lens.map(function (l) { return Math.round(w * l / tot); });
+    var sz = n > 5 ? 1100 : n > 3 ? 1300 : 1500, rowH = Math.round(sz * 280);
+    var ln = function (side) { return "<a:" + side + ' w="9525"><a:solidFill><a:srgbClr val="999999"/></a:solidFill></a:' + side + ">"; };
+    var tcPr = "<a:tcPr>" + ln("lnL") + ln("lnR") + ln("lnT") + ln("lnB") + "</a:tcPr>";
+    var trs = rows.map(function (r, ri) {
+      var bold = header && ri === 0;
+      return '<a:tr h="' + rowH + '">' + colW.map(function (cw, ci) {
+        return '<a:tc><a:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr lang="de-DE" sz="' + sz + '"' + (bold ? ' b="1"' : "") + ' dirty="0"/><a:t>' + xmlEsc(String(r[ci] == null ? "" : r[ci])) + "</a:t></a:r></a:p></a:txBody>" +
+          (bold ? tcPr.replace("</a:tcPr>", '<a:solidFill><a:srgbClr val="EEF2F6"/></a:solidFill></a:tcPr>') : tcPr) + "</a:tc>";
+      }).join("") + "</a:tr>";
+    }).join("");
+    return '<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="5" name="Tabelle"/><p:cNvGraphicFramePr><a:graphicFrameLocks noGrp="1"/></p:cNvGraphicFramePr><p:nvPr/></p:nvGraphicFramePr>' +
+      '<p:xfrm><a:off x="' + Math.round(x) + '" y="' + Math.round(y) + '"/><a:ext cx="' + Math.round(w) + '" cy="' + rowH * rows.length + '"/></p:xfrm>' +
+      '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table"><a:tbl><a:tblPr firstRow="' + (header ? 1 : 0) + '"/><a:tblGrid>' +
+      colW.map(function (cw) { return '<a:gridCol w="' + cw + '"/>'; }).join("") + "</a:tblGrid>" + trs + "</a:tbl></a:graphicData></a:graphic></p:graphicFrame>";
+  }
   function pptPlaceholder(id, name, ph, xfrm, bodyPr, paras) {
     return '<p:sp><p:nvSpPr><p:cNvPr id="' + id + '" name="' + name + '"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr>' + ph + "</p:nvPr></p:nvSpPr>" +
       "<p:spPr>" + (xfrm || "") + "</p:spPr><p:txBody>" + (bodyPr || "<a:bodyPr/>") + "<a:lstStyle/>" + paras + "</p:txBody></p:sp>";
@@ -29962,14 +29992,24 @@
     var slides = [{ kind: "title" }];
     for (var ci = 0; ci < chapters.length; ci++) {
       var c = chapters[ci];
-      var lines = c.text.split("\n").map(function (l) { return l.trim(); }).filter(function (l) { return l && l !== "[Bild]"; });
-      var chunks = [], cur = [], len = 0;
-      lines.forEach(function (l) {
-        if (cur.length && (cur.length >= 7 || len + l.length > 750)) { chunks.push(cur); cur = []; len = 0; }
+      // v2.151: Original-Bildunterschriften nicht als Textpunkt wiederholen (das Bild steht mit Unterschrift auf eigener Folie),
+      // Tabellenzeilen als echte Tabelle auf eigener Folie
+      var capKeys = {};
+      (c.screens || []).forEach(function (sc) { var k = captionKey(sc); if (k) capKeys[k] = true; });
+      var lines = c.text.split("\n").map(function (l) { return l.trim(); }).filter(function (l) { return l && l !== "[Bild]" && !capKeys[captionKey({ description: l })]; });
+      var chunks = [], cur = [], len = 0, part = 0;
+      function flush(force) { if (cur.length || (force && !part)) { slides.push({ kind: "content", title: c.title + (part ? " (Fortsetzung)" : ""), lines: cur }); part++; } cur = []; len = 0; }
+      manualGroupTableRows(lines).forEach(function (l) {
+        if (typeof l !== "string") {
+          flush(false);
+          var head = l.tabRows.length > 1 ? l.tabRows[0] : null, body = head ? l.tabRows.slice(1) : l.tabRows;
+          for (var r = 0; r < body.length; r += 10) { slides.push({ kind: "table", title: c.title + (part ? " (Fortsetzung)" : ""), rows: (head ? [head] : []).concat(body.slice(r, r + 10)), header: !!head }); part++; }
+          return;
+        }
+        if (cur.length && (cur.length >= 7 || len + l.length > 750)) flush(false);
         cur.push(l); len += l.length;
       });
-      if (cur.length || !chunks.length) chunks.push(cur);
-      chunks.forEach(function (chunk, i) { slides.push({ kind: "content", title: c.title + (i ? " (Fortsetzung)" : ""), lines: chunk }); });
+      flush(true);
       var media = await manualPrepareMediaForScreens(c.screens);
       media.forEach(function (m) { slides.push({ kind: "image", title: c.title, media: m }); });
     }
@@ -29986,7 +30026,11 @@
       } else if (sl.kind === "content") {
         layout = contentLayout;
         shapes += pptPlaceholder(2, "Titel 1", '<p:ph type="title"/>', hasPh(layout, /type="title"/) ? "" : titleBox, "", pptParas([sl.title], titleRPr));
-        shapes += pptPlaceholder(3, "Inhalt 2", '<p:ph idx="1"/>', hasPh(layout, /idx="1"/) ? "" : bodyBox, "<a:bodyPr><a:normAutofit/></a:bodyPr>", pptParas(sl.lines));
+        shapes += pptPlaceholder(3, "Inhalt 2", '<p:ph idx="1"/>', hasPh(layout, /idx="1"/) ? "" : bodyBox, "<a:bodyPr><a:normAutofit/></a:bodyPr>", pptListParas(sl.lines));
+      } else if (sl.kind === "table") {
+        layout = contentLayout;
+        shapes += pptPlaceholder(2, "Titel 1", '<p:ph type="title"/>', hasPh(layout, /type="title"/) ? "" : titleBox, "", pptParas([sl.title], titleRPr));
+        shapes += pptTableFrame(sl.rows, sl.header, W * 0.06, H * 0.24, W * 0.88);
       } else {
         layout = imageLayout;
         imageNum++;

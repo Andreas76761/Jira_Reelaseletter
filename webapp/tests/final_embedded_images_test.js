@@ -102,6 +102,15 @@ const BODY = H("1 Verträge anlegen") + P("Öffnen Sie die Vertragsmaske.") + IM
   const pdfImgs = (pdf.match(/\/Subtype \/Image/g) || []).length - (pdf.match(/\/SMask \d+ 0 R/g) || []).length;
   check("PDF mit beiden Bildern (ohne Transparenzmasken gezählt)", pdfImgs === 2);
 
+  // PowerPoint: Bild mit Unterschrift auf eigener Folie, Original-Unterschrift nicht als Textpunkt
+  savedFiles.length = 0;
+  $("final-design-pptx-btn").click();
+  await waitUntil(() => savedFiles.length === 1, 10000);
+  const pz = await JSZipNode.loadAsync(Buffer.from(await savedFiles[0].data.arrayBuffer()));
+  const sl = (await Promise.all(Object.keys(pz.files).filter((f) => /^ppt\/slides\/slide\d+\.xml$/.test(f)).map((f) => pz.file(f).async("string")))).join("");
+  check("PowerPoint: 2 Bilder, Bildunterschrift nur am Bild (nicht als Textpunkt)", Object.keys(pz.files).filter((f) => /^ppt\/media\/final_bild/.test(f)).length === 2 &&
+    (sl.match(/<a:t>Abbildung 1: Vertragsmaske<\/a:t>/g) || []).length === 1 && sl.includes("<a:t>Öffnen Sie die Vertragsmaske.</a:t>"));
+
   // Sitzung speichern/laden: Stand behaelt die Bilder
   savedFiles.length = 0;
   fire($("session-export-btn"), "click");

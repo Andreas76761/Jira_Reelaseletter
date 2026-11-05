@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.150.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.151.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,15 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **PowerPoint aus FINAL: Listen, Bildunterschriften, Tabellen (v2.151.0)**: die PowerPoint-Fassung wurde mit
+  LibreOffice gerendert und Folie für Folie angesehen. Behoben: nummerierte Listen hatten zusätzlich einen
+  Aufzählungspunkt („• 1. Daten erfassen“) – jetzt Nummer ohne Folien-Aufzählungszeichen, „•“-Zeilen nutzen das
+  Aufzählungszeichen der Vorlage, „◦“/„▪“ werden zweite/dritte Ebene. Die Original-Bildunterschrift stand zusätzlich
+  als Textpunkt auf der Folie, obwohl das Bild mit Unterschrift auf eigener Folie folgt – jetzt nur noch am Bild.
+  Tabellen (vorher Tabulator-Textzeilen) kommen als echte PowerPoint-Tabelle auf eine eigene Folie (Kopfzeile fett und
+  hinterlegt, Rahmen, Spaltenbreite nach Inhalt, Schriftgröße nach Spaltenzahl; mehr als 10 Zeilen werden auf
+  Folgefolien mit wiederholter Kopfzeile verteilt); Text davor und danach bleibt in der Reihenfolge.
 
 - **Echte Tabellen in FINAL und im Review-PDF, fortlaufende Abbildungsnummern im PDF (v2.150.0)**: Tabellen aus einem
   in FINAL hochgeladenen Handbuch erschienen im Word/PDF als zusammengeklebte Textzeilen („Feld Bedeutung“,
