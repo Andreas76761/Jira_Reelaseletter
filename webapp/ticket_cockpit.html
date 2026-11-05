@@ -3634,7 +3634,7 @@
           <p class="section-label">Bildverarbeitung mit OpenCV</p>
           <div class="callout">
             Analysiert alle Bilder mit <b>OpenCV</b> (OpenCV.js, läuft im Browser per WebAssembly, wird beim ersten Klick
-            geladen – ca. 11 MB): <b>Schärfe</b> (unscharfe Screenshots), <b>Kontrast</b>, <b>leere Ränder</b> und
+            geladen – ca. 11 MB, zuerst aus der mit der App veröffentlichten Kopie, sonst aus dem Internet): <b>Schärfe</b> (unscharfe Screenshots), <b>Kontrast</b>, <b>leere Ränder</b> und
             <b>sehr ähnliche Bilder</b> (mögliche Dubletten: dasselbe Bild mehrfach, auch neu gespeichert oder verkleinert – aber
             auch Screens, die sich nur in einer Zahl oder einem Wort unterscheiden; die Abweichung in % hilft bei der Entscheidung). Leere Ränder lassen sich zuschneiden (rückgängig machbar). Optional
             bereitet OpenCV Bilder vor der Texterkennung auf (Graustufen, kleine Bilder vergrößern, Binarisierung) – das
@@ -6629,7 +6629,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.168.0";
+  var APP_VERSION = "2.169.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -18841,7 +18841,11 @@
     });
   }
   // ===================== v2.153: Bildverarbeitung mit OpenCV (OpenCV.js, bei Bedarf geladen) =====================
-  var CV_SRC = ["https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.11.0-release.1/dist/opencv.js", "https://unpkg.com/@techstark/opencv-js@4.11.0-release.1/dist/opencv.js"];
+  // v2.169: zuerst die mit der App veroeffentlichte Kopie (Artifact-Datei neben der Seite), dann die CDNs – so funktioniert
+  // die Bildpruefung auch, wenn cdn.jsdelivr.net/unpkg.com in der Umgebung gesperrt sind. Lizenz: vendor/opencv-LICENSE.txt
+  var CV_LOCAL_SRC = "vendor/opencv-4.11.0.js";
+  var CV_SRC = [CV_LOCAL_SRC, "https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.11.0-release.1/dist/opencv.js", "https://unpkg.com/@techstark/opencv-js@4.11.0-release.1/dist/opencv.js"];
+  var cvLoadedFrom = "";
   var CV_BLUR_THRESHOLD = 60, CV_CONTRAST_MIN = 20, CV_DUP_MAX_BITS = 32, CV_DUP_MAX_DIFF = 0.002, CV_BORDER_MIN = 0.04, CV_MAX_EDGE = 1200;
   var cvLoadPromise = null;
   // Liefert { cv } (Wrapper, weil das Emscripten-Modul selbst ein "then" hat und ein Promise sonst endlos aufloest).
@@ -18860,10 +18864,10 @@
       if (window.cv) { cvWhenReady(window.cv).then(resolve, reject); return; }
       var i = 0, timer = null;
       function attempt() {
-        if (i >= CV_SRC.length) { reject(new Error("OpenCV.js konnte nicht geladen werden – Internetzugriff auf cdn.jsdelivr.net bzw. unpkg.com erforderlich.")); return; }
-        var sc = document.createElement("script");
-        sc.src = CV_SRC[i++]; sc.async = true;
-        sc.onload = function () { clearTimeout(timer); cvWhenReady(window.cv).then(resolve, function () { attempt(); }); };
+        if (i >= CV_SRC.length) { reject(new Error("OpenCV.js konnte nicht geladen werden – weder neben der App (" + CV_LOCAL_SRC + ") noch von cdn.jsdelivr.net bzw. unpkg.com.")); return; }
+        var sc = document.createElement("script"), src = CV_SRC[i++];
+        sc.src = src; sc.async = true;
+        sc.onload = function () { clearTimeout(timer); cvWhenReady(window.cv).then(function (r) { cvLoadedFrom = src === CV_LOCAL_SRC ? "mit der App veröffentlichte Kopie" : src.replace(/^https:\/\/([^/]+).*/, "$1"); resolve(r); }, function () { attempt(); }); };
         sc.onerror = function () { clearTimeout(timer); attempt(); };
         timer = setTimeout(function () { sc.onload = sc.onerror = null; attempt(); }, 90000);
         document.head.appendChild(sc);
@@ -19018,7 +19022,7 @@
       var res = await cvAnalyzeImages(imgs, function (i, n) { els.cvStatus.textContent = "Analysiere … " + i + " von " + n; });
       res.groups.forEach(function (g, gi) { g.forEach(function (x) { x.cvDupGroup = gi + 1; }); });
       imgs.forEach(function (x) { if (!res.groups.some(function (g) { return g.indexOf(x) !== -1; })) { x.cvDupGroup = null; x.cvDupDiff = null; } });
-      els.cvStatus.textContent = res.done + " Bild(er) analysiert: " + res.blurry + " unscharf, " + res.flat + " kontrastarm, " + res.bordered + " mit leerem Rand, " + res.groups.length + " Gruppe(n) sehr ähnlicher Bilder (mögliche Dubletten – bitte prüfen)" + (res.failed ? ", " + res.failed + " nicht lesbar" : "") + ".";
+      els.cvStatus.textContent = res.done + " Bild(er) analysiert: " + res.blurry + " unscharf, " + res.flat + " kontrastarm, " + res.bordered + " mit leerem Rand, " + res.groups.length + " Gruppe(n) sehr ähnlicher Bilder (mögliche Dubletten – bitte prüfen)" + (res.failed ? ", " + res.failed + " nicht lesbar" : "") + "." + (cvLoadedFrom ? " OpenCV geladen aus: " + cvLoadedFrom + "." : "");
       addLog("Bilder: OpenCV-Analyse von " + res.done + " Bild(ern) – " + res.blurry + " unscharf, " + res.bordered + " mit leerem Rand, " + res.groups.length + " Gruppe(n) sehr ähnlicher Bilder.");
     } catch (err) {
       els.cvStatus.textContent = "OpenCV-Analyse fehlgeschlagen: " + ((err && err.message) || "Unbekannter Fehler.");

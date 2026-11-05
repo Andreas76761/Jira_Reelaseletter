@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.168.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.169.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,13 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **OpenCV ohne Internet-CDN (v2.169.0)**: OpenCV.js (4.11, Apache-2.0, ca. 11 MB) wird jetzt **zusammen mit dem
+  Artifact veröffentlicht** (`vendor/opencv-4.11.0.js`, Lizenz in `vendor/opencv-LICENSE.txt`) und zuerst von dort
+  geladen; cdn.jsdelivr.net und unpkg.com dienen nur noch als Rückfall. Damit funktioniert die Bildprüfung auch, wenn
+  diese CDNs gesperrt sind (in Chromium mit vollständig gesperrtem Internet nachgeprüft). Geladen wird weiterhin erst
+  beim ersten Gebrauch; die Statuszeile nennt die Quelle („OpenCV geladen aus: …“). Beim lokalen Bauen ohne die Datei
+  greift wie bisher das CDN.
 
 - **„Speicher voll“ im echten Browser nachgeprüft (v2.168.0)**: In Chromium mit auf 2 MB begrenztem Speicher (per
   DevTools) zeigte sich zweierlei: (1) Der Browser **schätzt 3 GB frei**, lehnt aber trotzdem ab – die Warnleiste nennt
