@@ -19,7 +19,7 @@ const fragment = fs.readFileSync(BUILD_HTML, "utf-8");
 const full = `<!doctype html><html><head><meta charset="utf-8"></head><body>${fragment}</body></html>`;
 const errors = [];
 const vc = new VirtualConsole();
-vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract|pdf\.js|pdf\.worker/i)) errors.push(e.message); });
+vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract|pdf\.js|pdf\.worker|opencv/i)) errors.push(e.message); });
 
 async function sampleImpl(promptText) {
   // Liefert bewusst 3x "[Bild]" bei nur 2 zugeordneten Screenshots (1

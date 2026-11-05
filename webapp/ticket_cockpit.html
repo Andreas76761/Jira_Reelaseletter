@@ -2775,6 +2775,8 @@
             <div><label for="editor-meta-sprache">Sprache (Metadaten)</label><select id="editor-meta-sprache" aria-label="Sprache für neu hochgeladene Dateien"></select></div>
             <span class="step-note" style="margin:0; align-self:flex-end;">Gilt für die nächsten hochgeladenen Dateien; je Datei in der Übersicht änderbar.</span>
           </div>
+          <label class="variante-inline-check" style="margin-bottom:6px;"><input type="checkbox" id="editor-cv-check" checked> Screens beim Import mit OpenCV prüfen (unscharf, kontrastarm, leerer Rand, sehr ähnlich)</label>
+          <p class="step-note" id="editor-cv-note" hidden></p>
           <div class="dropzone" id="editor-dropzone" tabindex="0" role="button" aria-label="Word-/PowerPoint-Datei(en) auswählen">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
             <span class="txt">
@@ -3750,6 +3752,7 @@
           </div>
           <div class="controls" style="flex-wrap:wrap;">
             <button class="btn ghost" id="paket-preview-btn" type="button">Paket-Inhalt anzeigen</button>
+            <button class="btn ghost" id="paket-cv-btn" type="button" hidden title="Prüft die Bilder der Paket-Dokumente mit OpenCV (Schärfe, Kontrast).">Bilder mit OpenCV prüfen</button>
             <button class="btn primary" id="paket-build-btn" type="button" disabled><span class="btn-spinner" id="paket-spinner" hidden></span>Release-Paket herunterladen</button>
           </div>
           <p class="step-note" id="paket-status"></p>
@@ -6575,7 +6578,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.156.0";
+  var APP_VERSION = "2.157.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8198,7 +8201,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "cv-section", "cv-analyze-btn", "cv-spinner", "cv-crop-all-btn", "cv-ocr-pre", "cv-status", "cv-table-wrap", "cv-tbody", "dash-store", "dash-store-head", "dash-store-tiles", "dash-store-warn", "dash-store-tbody", "dash-store-tfoot", "dash-store-refresh-btn", "dash-store-at", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-opt-strip-jira", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "editor-cv-check", "editor-cv-note", "cv-section", "cv-analyze-btn", "cv-spinner", "cv-crop-all-btn", "cv-ocr-pre", "cv-status", "cv-table-wrap", "cv-tbody", "dash-store", "dash-store-head", "dash-store-tiles", "dash-store-warn", "dash-store-tbody", "dash-store-tfoot", "dash-store-refresh-btn", "dash-store-at", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-opt-strip-jira", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-cv-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -8338,7 +8341,7 @@
     docNotes: { releaseletter: [], benutzerhandbuch: [], prozessbild: [], clickanweisung: [] },
     variante: null,
     vrev: null,
-    cvSettings: { ocrPre: false },
+    cvSettings: { ocrPre: false, importCheck: true },
     agent: null,
     rlRoleOverrides: {},
     crossx: null,
@@ -9204,8 +9207,9 @@
     app.docNotes = docNotesNormalize(data.docNotes);
     app.variante = varianteNormalize(data.variante);
     app.vrev = vrevNormalize(data.vrev);
-    app.cvSettings = { ocrPre: !!(data.cvSettings && data.cvSettings.ocrPre) };
+    app.cvSettings = { ocrPre: !!(data.cvSettings && data.cvSettings.ocrPre), importCheck: !(data.cvSettings && data.cvSettings.importCheck === false) };
     if (els.cvOcrPre) els.cvOcrPre.checked = app.cvSettings.ocrPre;
+    if (els.editorCvCheck) els.editorCvCheck.checked = app.cvSettings.importCheck;
     app.agent = agentNormalize(data.agent);
     app.rlRoleOverrides = rlNormalizeOverrides(data.rlRoleOverrides);
     app.crossx = crossxNormalize(data.crossx);
@@ -18960,6 +18964,10 @@
     if (!(app.cvSettings && app.cvSettings.ocrPre)) return small;
     try { return await cvPrepareOcr(small); } catch (e) { return small; } // ohne OpenCV: unveraendert weiter
   }
+  if (els.editorCvCheck) {
+    els.editorCvCheck.addEventListener("change", function () { app.cvSettings = app.cvSettings || {}; app.cvSettings.importCheck = els.editorCvCheck.checked; });
+    els.editorCvNote.addEventListener("click", function (e) { if (e.target.closest("[data-editor-cv-goto]")) showView("bilder"); });
+  }
   if (els.cvAnalyzeBtn) {
     els.cvAnalyzeBtn.addEventListener("click", function () { if (!cvBusy) cvAnalyzeAll(); });
     els.cvCropAllBtn.addEventListener("click", function () { if (!cvBusy) cvCropAll(); });
@@ -19500,7 +19508,7 @@
       return "<tr>" +
         '<td><img src="' + screenPreviewUrl(s) + '" alt="Screen" loading="lazy" decoding="async" style="max-width:90px; max-height:60px; object-fit:contain; border:1px solid var(--border); border-radius:4px;"></td>' +
         '<td class="mono">' + s.imageNumber + "</td>" +
-        "<td>" + escapeHtml(s.description || "–") + "</td>" +
+        "<td>" + escapeHtml(s.description || "–") + cvImgBadges(s) + "</td>" +
         "<td>" + escapeHtml(s.sourceFile) + "</td>" +
         "<td>" + escapeHtml(s.domain || "–") + "</td>" +
         '<td><select class="editor-screen-chapter-select" data-id="' + s.id + '" aria-label="Kapitel">' + ragLibraryOptionsHtml(chapters, s.chapter, "Ohne Kapitel") + "</select></td>" +
@@ -19536,6 +19544,7 @@
     var files = Array.prototype.filter.call(fileList || [], function (f) { return /\.(docx|pptx)$/i.test(f.name || ""); });
     if (!files.length) { showToast("Keine passende Datei", "Bitte eine .docx- oder .pptx-Datei auswählen.", true); return; }
     var domain = els.editorDomainSelect.value, rolle = els.editorMetaRolle ? els.editorMetaRolle.value : "", sprache = els.editorMetaSprache ? els.editorMetaSprache.value : "";
+    var knownIds = {}; app.uploadedImages.forEach(function (i) { knownIds[i.id] = true; });
     // Alle Dateien sofort mit Status "Wartet" listen; Darstellung der Screens/Bilder erst am Ende (Performance).
     var entries = files.map(function (file) {
       var e = { id: nextEditorFileId++, filename: file.name, format: "", domain: domain, rolle: rolle, sprache: sprache, status: "Wartet …", screenCount: 0, when: nowLabel() };
@@ -19581,6 +19590,26 @@
     renderWhenVisible("bilder", "gallery", renderGallery);
     if (typeof renderScreenPh === "function") renderScreenPh();
     addLog("Editor: " + files.length + " Datei(en), " + total + " Screen(s) in " + ((Date.now() - t0) / 1000).toFixed(1) + " s eingelesen.");
+    var fresh = app.uploadedImages.filter(function (i) { return !knownIds[i.id] && i.dataUrl; });
+    if (fresh.length && els.editorCvCheck && els.editorCvCheck.checked) editorCvImportCheck(fresh, files.map(function (f) { return f.name; }));
+  }
+  // v2.157: neu importierte Screens gleich mit OpenCV pruefen (Ergebnis als Hinweis + Kennzeichnung in der Tabelle)
+  async function editorCvImportCheck(imgs, names) {
+    var note = els.editorCvNote;
+    note.hidden = false; note.innerHTML = "OpenCV prüft " + imgs.length + " neue(n) Screen(s) …";
+    try {
+      var res = await cvAnalyzeImages(imgs, function (i, n) { note.textContent = "OpenCV prüft … " + i + " von " + n; });
+      var sim = 0;
+      res.groups.forEach(function (g, gi) { g.forEach(function (x) { x.cvDupGroup = "I" + (gi + 1); sim++; }); });
+      var bad = imgs.filter(function (x) { return cvIsBlurry(x) || cvIsFlat(x); });
+      note.innerHTML = "OpenCV-Prüfung „" + escapeHtml(names.join(", ")) + "“: " + res.done + " Screen(s) – <b>" + res.blurry + " unscharf</b>, " + res.flat + " kontrastarm, " + res.bordered + " mit leerem Rand, " + sim + " sehr ähnliche(r) Screen(s)" +
+        (bad.length ? " (" + bad.slice(0, 5).map(function (x) { return escapeHtml("Nr. " + x.imageNumber + (x.description ? " " + truncate(x.description, 30) : "")); }).join("; ") + (bad.length > 5 ? " …" : "") + ")" : "") +
+        (res.blurry + res.flat + res.bordered + sim ? ' <button class="btn ghost btn-tiny" type="button" data-editor-cv-goto="1">→ Bilder</button>' : " – keine Auffälligkeiten.");
+      addLog("Screens-Import: OpenCV-Prüfung von " + res.done + " Screen(s) – " + res.blurry + " unscharf, " + res.flat + " kontrastarm, " + res.bordered + " mit leerem Rand.");
+      renderEditorScreens();
+    } catch (err) {
+      note.textContent = "OpenCV-Prüfung nicht möglich (" + ((err && err.message) || "Unbekannter Fehler") + ") – später im Register Bilder nachholen.";
+    }
   }
   els.editorFilesTbody.addEventListener("change", function (e) {
     var sel = e.target.closest("[data-editor-file-meta]");
@@ -32261,8 +32290,39 @@
   }
   // Plant die Dateien des Pakets (ohne sie zu erzeugen): { path, kind, role, lang, note, make: async () => Blob|string }
   function paketReviewDocs() { return typeof VR === "function" ? VR().docs.filter(function (d) { return d.status === "Freigegeben" || d.status === "Verteilt"; }) : []; }
+  // v2.157: Vorpruefung je Dokument – Jira-Nummern, offene Bild-Platzhalter, unscharfe/kontrastarme bzw. ungepruefte Bilder
+  function paketCheckChapters(chs) {
+    var jiraRe = new RegExp(ROVO_JIRA_KEY_RE.source, "g"), jira = 0, open = 0, imgs = {};
+    chs.forEach(function (c) {
+      var text = String(c.text || "");
+      jira += (text.match(jiraRe) || []).length;
+      var lines = text.split("\n").map(function (l) { return l.trim(); });
+      var ph = lines.filter(function (l) { return l === "[Bild]"; }).length;
+      open += Math.max(0, ph - (c.imgs || []).length) + lines.filter(function (l) { return /^\[Bild: kein Screen zugeordnet\]$/.test(l); }).length;
+      (c.imgs || []).forEach(function (i) { if (i) imgs[i.id] = i; });
+    });
+    var list = Object.keys(imgs).map(function (k) { return imgs[k]; });
+    return { jira: jira, open: open, images: list, blurry: list.filter(cvIsBlurry).length, flat: list.filter(cvIsFlat).length, unchecked: list.filter(function (i) { return !i.cvAt; }).length };
+  }
+  function paketCheckText(r) {
+    var p = [];
+    if (r.jira) p.push(r.jira + " Jira-Nummer(n)");
+    if (r.open) p.push(r.open + " offene(r) Bild-Platzhalter");
+    if (r.blurry) p.push(r.blurry + " unscharfe(s) Bild(er)");
+    if (r.flat) p.push(r.flat + " kontrastarme(s) Bild(er)");
+    return p;
+  }
+  function paketImgsOf(ids) { return (ids || []).map(function (id) { return app.uploadedImages.filter(function (i) { return i.id === id; })[0]; }).filter(Boolean); }
+  var paketUnchecked = [];
   function paketPlan() {
     var byRole = els.paketGroup.value === "role", name = paketName(), files = [], notes = [];
+    var allImgs = {};
+    function preflight(label, r, f) {
+      r.images.forEach(function (i) { allImgs[i.id] = i; });
+      var p = paketCheckText(r);
+      if (p.length) { f.note += " · ⚠ Vorprüfung: " + p.join(", "); notes.push("Vorprüfung " + label + ": " + p.join(", ") + "."); }
+      if (r.unchecked) f.note += " · " + r.unchecked + " Bild(er) nicht mit OpenCV geprüft";
+    }
     function folder(role, type) { return byRole ? safeFilename(role || "Alle") + "/" : type + "/"; }
     if (els.paketIncRl.checked) {
       rlRoleResults.forEach(function (r) {
@@ -32276,6 +32336,7 @@
         var stale = variantStaleReasons(v), stand = finalVersionById(v.standId);
         files.push({ path: folder(v.role, "Benutzerhandbuch") + safeFilename(name) + "_Benutzerhandbuch_" + safeFilename(v.role) + "_" + v.lang + ".docx", kind: "Benutzerhandbuch", role: v.role, lang: v.lang,
           note: (stale.length ? "⚠ veraltet: " + stale.join(", ") : "aktuell") + " · Stand „" + stand.name + "“ (" + stand.status + ")", make: function () { return variantDocxBlob(v, stand); } });
+        preflight("Benutzerhandbuch " + v.role + " " + v.lang, paketCheckChapters((stand.chapters || []).map(function (c) { return { text: variantStripRoleMarkers(c.text || ""), imgs: paketImgsOf(c.screenIds) }; })), files[files.length - 1]);
         if (stale.length) notes.push("Benutzerhandbuch " + v.role + " " + v.lang + " ist veraltet (" + stale.join(", ") + ").");
         if (stand.status !== "Veröffentlicht") notes.push("Benutzerhandbuch " + v.role + " " + v.lang + " hat den Status „" + stand.status + "“.");
       });
@@ -32284,6 +32345,11 @@
       paketReviewDocs().forEach(function (d) {
         files.push({ path: folder("Alle", "Dokumente") + safeFilename(name) + "_" + vrevFileBase(d) + ".docx", kind: "Dokument (Review)", role: "", lang: d.lang,
           note: "v" + d.version + " · " + d.status + (d.score != null ? " · Qualität " + d.score : "") + " · " + vrevStepsDone(d) + "/7 Stufen", make: function () { return vrevBuildWord(d, false, false); } });
+        // Verteilfassung entfernt Jira-Nummern selbst; offen = Platzhalter ohne Bild
+        var openPh = vrevAllPlaceholders(d).filter(function (p) { return !(d.ph[p.key] || []).length; }).length;
+        var rv = paketCheckChapters([{ text: "", imgs: paketImgsOf([].concat.apply([], Object.keys(d.ph || {}).map(function (k) { return d.ph[k] || []; }))) }]);
+        rv.open = openPh;
+        preflight("Dokument „" + d.name + "“ v" + d.version, rv, files[files.length - 1]);
         if (vrevStepsDone(d) < 7) notes.push("Dokument „" + d.name + "“ v" + d.version + ": nur " + vrevStepsDone(d) + " von 7 Review-Stufen abgeschlossen.");
       });
     }
@@ -32303,6 +32369,8 @@
     }
     var dupe = {};
     files.forEach(function (f) { if (dupe[f.path]) f.path = f.path.replace(/(\.[a-z]+)$/, "_" + (dupe[f.path]++) + "$1"); else dupe[f.path] = 1; });
+    paketUnchecked = Object.keys(allImgs).map(function (k) { return allImgs[k]; }).filter(function (i) { return !i.cvAt && i.dataUrl; });
+    if (paketUnchecked.length) notes.push(paketUnchecked.length + " Bild(er) der Paket-Dokumente noch nicht mit OpenCV geprüft (Schärfe, Kontrast).");
     return { name: name, files: files, notes: notes };
   }
   function paketReadme(plan) {
@@ -32314,15 +32382,27 @@
     return lines.join("\n");
   }
   function renderPaketPlan(plan) {
+    els.paketCvBtn.hidden = !paketUnchecked.length;
+    els.paketCvBtn.textContent = "Bilder mit OpenCV prüfen (" + paketUnchecked.length + ")";
     els.paketListWrap.hidden = !plan.files.length;
     els.paketBuildBtn.disabled = !plan.files.length;
     els.paketListTbody.innerHTML = plan.files.concat([{ path: "LIESMICH.md", kind: "Inhaltsverzeichnis", role: "", lang: "", note: plan.notes.length + " Hinweis(e)" }]).map(function (f) {
       return "<tr><td>" + escapeHtml(f.path) + "</td><td>" + escapeHtml(f.kind) + "</td><td>" + escapeHtml(f.role || "–") + "</td><td>" + escapeHtml(f.lang || "–") + "</td><td>" + escapeHtml(f.note || "") + "</td></tr>";
     }).join("");
-    els.paketStatus.textContent = plan.files.length ? "Paket „" + plan.name + "“: " + (plan.files.length + 1) + " Datei(en)" + (plan.notes.length ? " · " + plan.notes.length + " Hinweis(e): " + plan.notes.join(" ") : "") + "." :
+    var pst = "Paket „" + plan.name + "“: " + (plan.files.length + 1) + " Datei(en)" + (plan.notes.length ? " · " + plan.notes.length + " Hinweis(e): " + plan.notes.join(" ") : "");
+    els.paketStatus.textContent = plan.files.length ? pst + (/[.!?]$/.test(pst) ? "" : ".") :
       "Noch nichts für das Paket vorhanden – Releaseletter je Rolle (Register Releaseletter), Varianten (Schritt 4) oder freigegebene Dokumente (Schritt 6) erzeugen.";
   }
   els.paketPreviewBtn.addEventListener("click", function () { paketPlanCache = paketPlan(); renderPaketPlan(paketPlanCache); });
+  els.paketCvBtn.addEventListener("click", async function () {
+    var list = paketUnchecked.slice();
+    if (!list.length) return;
+    els.paketCvBtn.disabled = true; els.paketStatus.textContent = "OpenCV prüft " + list.length + " Bild(er) …";
+    try { await cvAnalyzeImages(list, function (i, n) { els.paketStatus.textContent = "OpenCV prüft … " + i + " von " + n; }); }
+    catch (err) { els.paketStatus.textContent = "OpenCV-Prüfung nicht möglich: " + ((err && err.message) || "Unbekannter Fehler."); els.paketCvBtn.disabled = false; return; }
+    els.paketCvBtn.disabled = false;
+    paketPlanCache = paketPlan(); renderPaketPlan(paketPlanCache);
+  });
   [els.paketGroup, els.paketIncRl, els.paketIncRlMd, els.paketIncVariants, els.paketIncOverview, els.paketIncReview].forEach(function (el) {
     el.addEventListener("change", function () { if (!els.paketListWrap.hidden || paketPlanCache) { paketPlanCache = paketPlan(); renderPaketPlan(paketPlanCache); } });
   });
@@ -34173,12 +34253,22 @@
     Object.keys(doc.ph || {}).forEach(function (k) { (doc.ph[k] || []).forEach(function (id) { if (!seen[id] && screenPhImgById(id)) { seen[id] = true; out.push(id); } }); });
     return out;
   }
-  function vrevCvBadges(doc, img) {
-    if (!doc.cvCheck || !img.cvAt) return "";
+  function cvBadgeList(img) {
     var b = [];
+    if (!img || !img.cvAt) return b;
     if (cvIsBlurry(img)) b.push('<span class="cv-badge cv-bad">unscharf</span>');
     if (cvIsFlat(img)) b.push('<span class="cv-badge cv-warn">kontrastarm</span>');
     if (img.cvBorder) b.push('<span class="cv-badge cv-warn">' + img.cvBorder.pct + " % Rand</span>");
+    return b;
+  }
+  function cvImgBadges(img) {
+    var b = cvBadgeList(img);
+    if (img && img.cvAt && img.cvDupGroup) b.push('<span class="cv-badge cv-warn" title="sehr ähnlich zu einem anderen Screen">ähnlich ' + escapeHtml(String(img.cvDupGroup)) + "</span>");
+    return b.length ? '<span class="cv-badges">' + b.join("") + "</span>" : "";
+  }
+  function vrevCvBadges(doc, img) {
+    if (!doc.cvCheck || !img.cvAt) return "";
+    var b = cvBadgeList(img);
     if (doc.cvCheck.sim && doc.cvCheck.sim[img.id]) b.push('<span class="cv-badge cv-warn" title="sehr ähnlich zu einem anderen Bild in diesem Dokument">ähnlich ' + doc.cvCheck.sim[img.id] + "</span>");
     return b.length ? '<span class="cv-badges">' + b.join("") + "</span>" : "";
   }
@@ -35612,6 +35702,7 @@
     if (name === "dashboard" && typeof scheduleDashStore === "function") scheduleDashStore();
     if (name === "bilder" && typeof renderCvTable === "function") renderCvTable();
     if (typeof refreshNav === "function" && els.navList && els.navList.querySelector("[data-nav-count]")) { navApplyFolded(); refreshNav(); }
+    if (typeof navMarkSeen === "function" && navStartupDone) navMarkSeen(name);
     if (name === "output-md" || name === "output-pdf") renderOutputCounts();
     if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); renderBildband(); renderScreenPh(); }
     if (name === "bildband") renderBildband();
@@ -35703,6 +35794,16 @@
     var items = withCount.reduce(function (a, v) { return a + navCountOf(v); }, 0);
     return { filled: filled.length, total: withCount.length, items: items, cls: !filled.length ? "" : filled.length === withCount.length ? "full" : "part" };
   }
+  // v2.157: "Neu" verschwindet, sobald das Register geoeffnet wurde (je Funktion gemerkt; neue Funktion -> wieder "Neu")
+  var navSeen = {}, navStartupDone = false;
+  try { navSeen = JSON.parse(localStorage.getItem("ticketCockpit.navSeen") || "{}") || {}; } catch (e) { navSeen = {}; }
+  function navMarkSeen(view) {
+    if (!NAV_NEW[view] || navSeen[view] === NAV_NEW[view]) return;
+    navSeen[view] = NAV_NEW[view];
+    try { localStorage.setItem("ticketCockpit.navSeen", JSON.stringify(navSeen)); } catch (e) { /* ohne Speicher nur fuer diese Sitzung */ }
+    var nw = document.querySelector('.nav-item[data-view="' + view + '"] .nav-new');
+    if (nw) nw.parentNode.removeChild(nw);
+  }
   var navFolded = {};
   try { navFolded = JSON.parse(localStorage.getItem("ticketCockpit.navFolded") || "{}") || {}; } catch (e) { navFolded = {}; }
   function navSaveFolded() { try { localStorage.setItem("ticketCockpit.navFolded", JSON.stringify(navFolded)); } catch (e) { /* ohne Speicher weiter */ } }
@@ -35716,7 +35817,7 @@
       if (group) li.setAttribute("data-nav-group", group);
       var btn = li.querySelector(".nav-item");
       if (!btn.querySelector(".nav-count") && NAV_COUNT[view]) { var c = document.createElement("span"); c.className = "nav-count"; c.setAttribute("data-nav-count", view); var badge = btn.querySelector(".count-badge"); btn.insertBefore(c, badge || null); }
-      if (NAV_NEW[view] && !btn.querySelector(".nav-new")) { var nw = document.createElement("span"); nw.className = "nav-new"; nw.title = NAV_NEW[view]; btn.setAttribute("aria-description", NAV_NEW[view]); btn.insertBefore(nw, btn.querySelector(".nav-count") || btn.querySelector(".count-badge") || null); }
+      if (NAV_NEW[view] && navSeen[view] !== NAV_NEW[view] && !btn.querySelector(".nav-new")) { var nw = document.createElement("span"); nw.className = "nav-new"; nw.title = NAV_NEW[view]; btn.setAttribute("aria-description", NAV_NEW[view]); btn.insertBefore(nw, btn.querySelector(".nav-count") || btn.querySelector(".count-badge") || null); }
       frag.appendChild(li);
     }
     function sep(text, cls, group, html) { var li = document.createElement("li"); li.className = cls; if (group) li.setAttribute("data-nav-group", group); if (html) li.innerHTML = html; else li.textContent = text; frag.appendChild(li); return li; }
@@ -35817,6 +35918,7 @@
 
   els.appVersion.textContent = "v" + APP_VERSION;
   showView("dashboard");
+  navStartupDone = true; // das automatisch geoeffnete Dashboard zaehlt nicht als Besuch
   renderDomainAliases();
   renderPointsTable();
   renderLabelsList();

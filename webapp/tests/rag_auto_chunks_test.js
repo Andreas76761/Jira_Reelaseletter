@@ -18,7 +18,7 @@ const fragment = fs.readFileSync(BUILD_HTML, "utf-8");
 const full = `<!doctype html><html><head><meta charset="utf-8"></head><body>${fragment}</body></html>`;
 const errors = [];
 const vc = new VirtualConsole();
-vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract|pdf\.js|pdf\.worker/i)) errors.push(e.message); });
+vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract|pdf\.js|pdf\.worker|opencv/i)) errors.push(e.message); });
 
 const RAG_ANALYSIS_MOCK = "### Zusammenhänge\n- Testzusammenhang zwischen mehreren Chunks.\n\n### Genauigkeit\n- Testbefund zur Genauigkeit.\n\n### Priorität\n- Testbefund zur Priorität.\n\n### Klärungsbedarf\n- Testbefund zum Klärungsbedarf.";
 

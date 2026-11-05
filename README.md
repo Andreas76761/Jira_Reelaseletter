@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.156.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.157.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,21 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **„Neu“ verschwindet nach dem Besuch, OpenCV beim Screens-Import, Vorprüfung im Release-Paket (v2.157.0)**:
+  (1) Das Label **„Neu“** in der Navigation verschwindet, sobald das Register geöffnet wurde (im Browser gemerkt; das beim
+  Start automatisch geöffnete Dashboard zählt nicht; kommt eine neue Funktion hinzu, erscheint es wieder).
+  (2) **Screens-Import**: neue Option „Screens beim Import mit OpenCV prüfen“ (standardmäßig an, in der Sitzung
+  gespeichert). Nach dem Import prüft OpenCV die neuen Screens und meldet z. B. „2 Screen(s) – 1 unscharf, 0 kontrastarm,
+  2 mit leerem Rand, 0 sehr ähnliche Screen(s) (Nr. 2 Vertragsmaske unscharf)“ mit Sprung ins Register Bilder; in der
+  Screens-Tabelle tragen auffällige Screens einen Hinweis. Ohne OpenCV (offline) erscheint nur ein Hinweis, die Prüfung
+  lässt sich im Register Bilder nachholen.
+  (3) **Release-Paket – Vorprüfung** je Dokument: Varianten auf **Jira-Nummern**, **offene Bild-Platzhalter** und
+  **unscharfe/kontrastarme Bilder**, Review-Dokumente auf offene Platzhalter und Bildqualität (Jira-Nummern entfernt die
+  Verteilfassung dort selbst). Ergebnis als Hinweis je Datei in der Paket-Liste, in der Statuszeile und in der
+  **LIESMICH.md**; noch nicht mit OpenCV geprüfte Bilder werden gezählt, Knopf **„Bilder mit OpenCV prüfen (n)“** prüft
+  sie direkt. Das Paket wird trotzdem erstellt – die Vorprüfung warnt, sie blockiert nicht. Nebenbei: doppelter Punkt am
+  Ende der Paket-Statuszeile behoben.
 
 - **VARIANTE: Jira-Nummern entfernen (v2.156.0)**: Varianten gehen an Kunden, übernahmen aber bisher Jira-Nummern aus
   dem FINAL-Stand (z. B. „km pro Jahr (ONESCM-73)“), solange dort „Jira-Nummern ausblenden“ aus war – gefunden beim
