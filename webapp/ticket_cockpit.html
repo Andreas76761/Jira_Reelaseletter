@@ -6513,7 +6513,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.149.0";
+  var APP_VERSION = "2.150.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -23702,6 +23702,32 @@
   function manualParseParagraphs(text) {
     return (text || "").split(/\n+/).map(function (line) { return line.trim(); }).filter(Boolean);
   }
+  // v2.150: Tabellenzeilen aus Word-Tabellen stehen im Kapiteltext als tab-getrennte Zeilen (normale Absaetze
+  // enthalten nie Tabulatoren) – aufeinanderfolgende Zeilen werden in Word/PDF wieder zu einer echten Tabelle.
+  function manualGroupTableRows(lines) {
+    var out = [], cur = null;
+    lines.forEach(function (line) {
+      if (line.indexOf("\t") !== -1 && !manualIsImagePlaceholder(line) && !manualIsTablePlaceholder(line)) {
+        if (!cur) { cur = { tabRows: [] }; out.push(cur); }
+        cur.tabRows.push(line.split("\t").map(function (c) { return c.trim(); }));
+        return;
+      }
+      cur = null;
+      out.push(line);
+    });
+    out.forEach(function (it) {
+      if (typeof it === "string") return;
+      var n = it.tabRows.reduce(function (m, r) { return Math.max(m, r.length); }, 0);
+      it.tabRows = it.tabRows.map(function (r) { while (r.length < n) r.push(""); return r; });
+    });
+    return out;
+  }
+  function manualTabTableXml(rows) {
+    var xml = printableDocxTableXml(rows, rovoTableColumnWidthsTwips(rows, MANUAL_CHAPTER_TABLE_USABLE_TWIPS));
+    var cut = xml.indexOf("</w:tr>");
+    if (rows.length > 1 && cut > 0) xml = xml.slice(0, cut).replace(/<w:r><w:t /g, "<w:r><w:rPr><w:b/></w:rPr><w:t ") + xml.slice(cut);
+    return xml + '<w:p><w:pPr><w:spacing w:after="60"/></w:pPr></w:p>';
+  }
   function manualIsHeading(line) { return /^##\s+/.test(line); }
   function manualHeadingText(line) { return line.replace(/^##\s+/, ""); }
   // Bildband: "[Bild]" als eigene Zeile im Kapiteltext ist ein Platzhalter,
@@ -23991,7 +24017,8 @@
     var mediaIdx = 0;
     var tableIdx = 0;
     var skipCap = null;
-    manualParseParagraphs(text).forEach(function (line) {
+    manualGroupTableRows(manualParseParagraphs(text)).forEach(function (line) {
+      if (typeof line !== "string") { skipCap = null; body += manualTabTableXml(line.tabRows); return; }
       var sc = skipCap; skipCap = null;
       if (sc && captionKey({ description: line }) === sc) return; // v2.146: Bildunterschrift des Originals nicht doppelt
       if (manualIsImagePlaceholder(line)) {
@@ -24224,7 +24251,25 @@
     var titleLines = doc.splitTextToSize(title, pageW - margin * 2);
     doc.text(titleLines, margin, y); y += titleLines.length * tSize * 0.45 + 6;
     var roleFill = null;
-    manualParseParagraphs(text).forEach(function (line) {
+    function pdfTable(rows, header) {
+      var tableColWidths = rovoTableColumnWidthsMm(rows, pageW - margin * 2);
+      var tableFontSize = rovoTableFontSizeForCols(rovoTableNumCols(rows));
+      var cellPad = 1.5, lineHeight = tableFontSize * 0.42 + 1.4;
+      function tableColX(i) { var x = margin; for (var k = 0; k < i; k++) x += tableColWidths[k]; return x; }
+      rows.forEach(function (row, ri) {
+        doc.setFont("helvetica", header && ri === 0 && rows.length > 1 ? "bold" : "normal"); doc.setFontSize(tableFontSize); doc.setTextColor(0, 0, 0);
+        var cellLines = row.map(function (cell, i) { return doc.splitTextToSize(String(cell == null ? "" : cell), Math.max(5, tableColWidths[i] - cellPad * 2)); });
+        var rowH = cellLines.reduce(function (mx, l) { return Math.max(mx, l.length); }, 1) * lineHeight + cellPad * 2;
+        if (y + rowH > pageHLimit) { doc.addPage(); y = margin; }
+        cellLines.forEach(function (lines, i) {
+          doc.rect(tableColX(i), y, tableColWidths[i], rowH);
+          doc.text(lines, tableColX(i) + cellPad, y + lineHeight - cellPad * 0.4);
+        });
+        y += rowH;
+      });
+    }
+    manualGroupTableRows(manualParseParagraphs(text)).forEach(function (line) {
+      if (typeof line !== "string") { skipCap = null; pdfTable(line.tabRows, true); y += 4; return; }
       var sc = skipCap; skipCap = null;
       if (sc && captionKey({ description: line }) === sc) return; // v2.146: Bildunterschrift des Originals nicht doppelt
       if (manualIsImagePlaceholder(line)) {
@@ -29677,13 +29722,14 @@
     var tocPageCount = includeToc ? editoMergedTocPageCount(tocChapters) : 0;
     var totalFrontPages = coverPages + tocPageCount;
     for (var t = 1; t < totalFrontPages; t++) doc.addPage();
-    var startPages = [], yEnd = 0;
+    var startPages = [], yEnd = 0, mediaNum = 0;
     for (var i = 0; i < chapters.length; i++) {
       var c = chapters[i], sub = (c.level || 1) > 1, startY = 18;
       if (i > 0 && sub && yEnd && yEnd < 230) startY = yEnd + 6;
       else doc.addPage();
       startPages.push(doc.internal.getNumberOfPages());
-      var media = await manualPrepareMediaForScreens(c.screens);
+      // v2.150: Abbildungen ueber das ganze Dokument fortlaufend nummerieren (wie im Word; vorher je Kapitel ab 1)
+      var media = (await manualPrepareMediaForScreens(c.screens)).map(function (m) { m.num = ++mediaNum; return m; });
       yEnd = manualWriteChapterPdfBody(doc, c.title, c.text, media, [], startY, sub ? 14 : 18);
     }
     if (includeCover) writePdfCoverPage(doc, opts.coverTitle || "FINAL-Gesamtdokument", opts.coverSubtitle || "", opts.coverDate);
@@ -33253,7 +33299,8 @@
       var text = String(c.text || "").split("\n").map(function (line) {
         if (line.trim() !== "[Tabelle]") return line;
         var tb = (c.tables || [])[k++];
-        return tb ? tb.rows.map(function (row) { return row.join(" | "); }).join("\n") : "";
+        // v2.150: Zellen tab-getrennt – PDF und FINAL setzen daraus wieder eine echte Tabelle (vorher "a | b"-Textzeilen)
+        return tb ? tb.rows.map(function (row) { return row.map(function (v) { return String(v == null ? "" : v).replace(/[\t\n]+/g, " "); }).join("\t"); }).join("\n") : "";
       }).join("\n").replace(/\*\*|__/g, "");
       return { title: c.title, level: c.level, text: text, screens: c.screens };
     });

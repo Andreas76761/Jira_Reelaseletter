@@ -96,6 +96,7 @@ const ptext = (p) => [...p.matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)].map((m) => m[1
   const pdf = Buffer.from(await savedFiles[0].data.arrayBuffer()).toString("latin1");
   const pages = (pdf.match(/\/Type \/Page[^s]/g) || []).length;
   check("PDF: Deckblatt, Inhaltsverzeichnis, Kapitel 1 mit 1.1, Kapitel 2 = 4 Seiten", pages === 4);
+  check("PDF: zweites Bild trägt „Abbildung 2“ (vorher je Kapitel wieder 1)", pdf.includes("Abbildung 2:") && (pdf.match(/Abbildung 1:/g) || []).length === 1);
 
   // Reviewbericht (Markdown -> Word) mit Formatvorlagen und farbigen Status
   savedFiles.length = 0;

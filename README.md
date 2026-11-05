@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.149.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.150.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,14 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Echte Tabellen in FINAL und im Review-PDF, fortlaufende Abbildungsnummern im PDF (v2.150.0)**: Tabellen aus einem
+  in FINAL hochgeladenen Handbuch erschienen im Word/PDF als zusammengeklebte Textzeilen („Feld Bedeutung“,
+  „LaufzeitMonate“) – jetzt setzt die Ausgabe aufeinanderfolgende Tabellenzeilen wieder als echte Tabelle (Spaltenbreiten
+  nach Inhalt, Kopfzeile fett, leere Zellen bleiben erhalten), an derselben Stelle im Kapitel. Dasselbe gilt für das PDF
+  des Dokument-Reviews und für Stände, die aus dem Review nach FINAL übernommen werden (vorher „Feld | Wert“-Textzeilen).
+  Im PDF waren die Abbildungen je Kapitel neu ab 1 nummeriert („Abbildung 1“ in Kapitel 4) – jetzt fortlaufend über das
+  ganze Dokument wie im Word.
 
 - **FINAL: eingebettete Bilder des Handbuchs bleiben an ihrer Stelle (v2.149.0)**: bisher übernahm FINAL aus einem
   hochgeladenen Handbuch nur den Text – eingebettete Bilder fehlten im Master (Word, PDF, PowerPoint), Screens kamen nur
