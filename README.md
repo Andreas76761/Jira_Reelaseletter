@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.147.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.148.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,14 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **FINAL: nummerierte Listen und Aufzählungen bleiben erhalten (v2.148.0)**: beim Hochladen eines Handbuchs in FINAL
+  gingen die Nummern Word-nummerierter Listen verloren („Daten erfassen / Prüfen / Speichern“ statt „1. 2. 3.“) –
+  gefunden beim Rendern der Word-Ausgaben in v2.146. Jetzt liest FINAL die Listenformate des Dokuments (wie das
+  Dokument-Review): nummerierte Listen erhalten „1.“, „2.“ …, Unterebenen werden eigenständig gezählt, Aufzählungen
+  erhalten „•“ (Unterebenen „◦“, „▪“); jede neue Liste beginnt wieder bei 1. Ohne Listenformat-Definition in der Datei
+  wird eine Liste als Aufzählung übernommen. Im Word-Export stehen Listenzeilen mit hängendem Einzug (Nummer, Tabulator,
+  Text) – auch in Editor-, Unterkapitel- und Varianten-Ausgaben, die Listenzeilen enthalten.
 
 - **Dashboard: Einträge und Speicherplatz je Register (v2.147.0)**: neuer, aufklappbarer Bereich „Register – Einträge
   und Speicherplatz“ im Dashboard. Kacheln: Register mit Inhalt (und Einträge gesamt), **belegt** (Größe der Sitzung =

@@ -6513,7 +6513,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.147.0";
+  var APP_VERSION = "2.148.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -12675,11 +12675,15 @@
     var marked = markedParts.join("").trim().replace(new RegExp(FINAL_MARK_START + FINAL_MARK_END, "g"), "");
     return { full: fullParts.join("").trim(), clean: cleanParts.join("").replace(/ {2,}/g, " ").trim(), marked: marked };
   }
-  function docxXmlToFinalChapters(xmlText) {
+  function docxXmlToFinalChapters(xmlText, numFmt) {
     var doc = new DOMParser().parseFromString(xmlText, "application/xml");
     if (doc.querySelector("parsererror")) throw new Error("word/document.xml konnte nicht gelesen werden (beschädigte .docx-Datei?).");
     var body = doc.getElementsByTagName("w:body")[0];
     if (!body) throw new Error("Kein Dokumentinhalt (w:body) in der .docx-Datei gefunden.");
+    if (numFmt) {
+      var listCounters = {};
+      Array.prototype.forEach.call(body.childNodes, function (n) { if (n.nodeType === 1 && n.tagName === "w:p" && !docxHeadingLevel(docxParagraphStyleId(n))) docxApplyListPrefix(n, numFmt, listCounters); });
+    }
     var chapters = [];
     var current = { level: 0, title: "Vorspann (Text vor der ersten Überschrift)", fullParas: [], cleanParas: [], markedParas: [] };
     chapters.push(current);
@@ -12726,7 +12730,7 @@
     var docXmlEntry = zip.file("word/document.xml");
     if (!docXmlEntry) throw new Error("Kein word/document.xml in der .docx-Datei gefunden - ist es wirklich ein Word-Dokument?");
     var xmlText = await docXmlEntry.async("string");
-    return docxXmlToFinalChapters(xmlText);
+    return docxXmlToFinalChapters(xmlText, await vrevNumberingFormats(zip));
   }
   async function extractFinalManualChapters(buf) {
     var kind = classifyWordBuffer(buf);
@@ -23962,6 +23966,13 @@
         return;
       }
       if (rich) { body += richParagraphXml(line, roleShd ? '<w:shd w:val="clear" w:fill="' + roleShd + '"/>' : ""); return; }
+      // v2.148: Listenzeilen ("1. …", "• …") auch ohne Auszeichnung mit haengendem Einzug
+      var lm = RICH_LIST_RE.exec(line);
+      if (lm) {
+        var llvl = lm[1] === "◦" ? 1 : lm[1] === "▪" ? 2 : 0;
+        body += '<w:p><w:pPr><w:ind w:left="' + (360 * (llvl + 1) + 360) + '" w:hanging="360"/>' + (roleShd ? '<w:shd w:val="clear" w:fill="' + roleShd + '"/>' : "") + '</w:pPr><w:r><w:t xml:space="preserve">' + xmlEsc(lm[1]) + '</w:t></w:r><w:r><w:tab/><w:t xml:space="preserve">' + xmlEsc(line.slice(lm[0].length)) + "</w:t></w:r></w:p>";
+        return;
+      }
       var rolePPr = roleShd ? '<w:pPr><w:shd w:val="clear" w:fill="' + roleShd + '"/></w:pPr>' : "";
       body += '<w:p>' + rolePPr + '<w:r><w:t xml:space="preserve">' + xmlEsc(line) + "</w:t></w:r></w:p>";
     });
@@ -33549,21 +33560,27 @@
         first.textContent = lead + open + first.textContent.slice(lead.length);
         last.textContent = last.textContent.slice(0, last.textContent.length - trail.length) + close + trail;
       });
-      var pPr = vrevChild(p, "w:pPr"), numPr = vrevChild(pPr, "w:numPr");
-      if (!numPr) { counters = {}; return; }
-      var idEl = vrevChild(numPr, "w:numId"), lvEl = vrevChild(numPr, "w:ilvl"), numId = idEl ? idEl.getAttribute("w:val") : "", lvl = lvEl ? parseInt(lvEl.getAttribute("w:val"), 10) || 0 : 0;
-      if (!numId || numId === "0") return;
-      var fmt = (numFmt[numId] || {})[String(lvl)] || "bullet", prefix;
-      if (fmt === "bullet" || fmt === "none") prefix = lvl === 0 ? "• " : lvl === 1 ? "◦ " : "▪ ";
-      else {
-        var key = numId + ":" + lvl;
-        Object.keys(counters).forEach(function (k) { var parts = k.split(":"); if (parts[0] === numId && parseInt(parts[1], 10) > lvl) delete counters[k]; });
-        counters[key] = (counters[key] || 0) + 1;
-        prefix = counters[key] + ". ";
-      }
-      var firstT = p.getElementsByTagName("w:t")[0];
-      if (firstT) firstT.textContent = prefix + firstT.textContent;
+      docxApplyListPrefix(p, numFmt, counters);
     });
+  }
+  // v2.148: Word-Aufzaehlung/-Nummerierung (w:numPr) als "• "/"◦ "/"▪ " bzw. "1. " vor den Absatztext schreiben –
+  // gemeinsam fuer Dokument-Review und FINAL-Import (vorher verlor FINAL die Nummern nummerierter Listen).
+  // counters: Zaehlerstand je Liste/Ebene; ein Absatz ohne Listenformat beendet die laufende Nummerierung.
+  function docxApplyListPrefix(p, numFmt, counters) {
+    var pPr = vrevChild(p, "w:pPr"), numPr = vrevChild(pPr, "w:numPr");
+    if (!numPr) { Object.keys(counters).forEach(function (k) { delete counters[k]; }); return; }
+    var idEl = vrevChild(numPr, "w:numId"), lvEl = vrevChild(numPr, "w:ilvl"), numId = idEl ? idEl.getAttribute("w:val") : "", lvl = lvEl ? parseInt(lvEl.getAttribute("w:val"), 10) || 0 : 0;
+    if (!numId || numId === "0") return;
+    var fmt = (numFmt[numId] || {})[String(lvl)] || "bullet", prefix;
+    if (fmt === "bullet" || fmt === "none") prefix = lvl === 0 ? "• " : lvl === 1 ? "◦ " : "▪ ";
+    else {
+      var key = numId + ":" + lvl;
+      Object.keys(counters).forEach(function (k) { var parts = k.split(":"); if (parts[0] === numId && parseInt(parts[1], 10) > lvl) delete counters[k]; });
+      counters[key] = (counters[key] || 0) + 1;
+      prefix = counters[key] + ". ";
+    }
+    var firstT = p.getElementsByTagName("w:t")[0];
+    if (firstT) firstT.textContent = prefix + firstT.textContent;
   }
   function vrevCleanRich(text) {
     return String(text || "").replace(/(\*\*|__)(\s*)\1/g, "$2").replace(/\*\*\*\*|____/g, "");
