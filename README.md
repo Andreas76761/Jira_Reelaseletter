@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.157.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.158.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,15 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Bilder: Speicher sparen (v2.158.0)**: Neuer Abschnitt **„Speicher sparen“** im Register Bilder. Er verkleinert
+  übergroße Bilder auf eine **maximale Kantenlänge** (1280/1600/**1920**/2560 px oder „nicht verkleinern“) und speichert
+  Bilder ohne Transparenz als **JPEG** (Qualität 90 %), wenn das deutlich kleiner ist. Ersetzt wird ein Bild nur, wenn es
+  mindestens **15 % kleiner** wird; Bild-IDs, Zuordnungen und ein erkannter leerer Rand (mitskaliert) bleiben erhalten.
+  Optional werden die beim Zuschneiden aufbewahrten **Originale verworfen**. Vorher fragt eine Bestätigung mit Anzahl,
+  Größe vorher → nachher und Ersparnis; „Abbrechen“ ändert nichts. Einstellungen werden in der Sitzung gespeichert; läuft
+  ohne OpenCV-Download. Im **Dashboard** hat die Zeile „Bilder“ den Knopf **„Speicher sparen“**, und der Hinweis bei wenig
+  freiem Speicher verweist darauf.
 
 - **„Neu“ verschwindet nach dem Besuch, OpenCV beim Screens-Import, Vorprüfung im Release-Paket (v2.157.0)**:
   (1) Das Label **„Neu“** in der Navigation verschwindet, sobald das Register geöffnet wurde (im Browser gemerkt; das beim
