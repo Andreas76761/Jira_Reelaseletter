@@ -16,26 +16,16 @@ const vc = new VirtualConsole();
 vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract|pdf\.js|pdf\.worker|mermaid|opencv/i)) errors.push(e.message); });
 const savedFiles = [];
 
-// Foto-artiges Bild (Rauschen in 3-px-Bloecken): als PNG gross, als JPEG deutlich kleiner
-function photo(w, h, seed) {
+// Foto-artiges Bild (weiche Verlaeufe mit feinem Rauschen): als PNG gross, als JPEG deutlich kleiner;
+// mit alpha ist das linke Viertel halbtransparent
+function photo(w, h, seed, alpha) {
   const c = createCanvas(w, h), x = c.getContext("2d"), id = x.createImageData(w, h), d = id.data;
   let r = seed;
   const rnd = () => { r = (r * 1103515245 + 12345) & 0x7fffffff; return r / 0x7fffffff; };
-  const bw = Math.ceil(w / 3), bh = Math.ceil(h / 3), cols = new Uint8Array(bw * bh * 3);
-  for (let i = 0; i < cols.length; i += 3) { cols[i] = 120 + rnd() * 100; cols[i + 1] = 90 + rnd() * 80; cols[i + 2] = 60 + rnd() * 120; }
   for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) {
-    const k = ((yy / 3 | 0) * bw + (xx / 3 | 0)) * 3, o = (yy * w + xx) * 4;
-    d[o] = cols[k]; d[o + 1] = cols[k + 1]; d[o + 2] = cols[k + 2]; d[o + 3] = 255;
-  }
-  x.putImageData(id, 0, 0);
-  return c;
-}
-// Grosse Grafik mit Transparenz (Verlauf, linkes Viertel halbtransparent)
-function alphaGraphic(w, h) {
-  const c = createCanvas(w, h), x = c.getContext("2d"), id = x.createImageData(w, h), d = id.data;
-  for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) {
-    const o = (yy * w + xx) * 4;
-    d[o] = (xx * 255 / w) | 0; d[o + 1] = (yy * 255 / h) | 0; d[o + 2] = ((xx + yy) * 7) & 255; d[o + 3] = xx < w / 4 ? 128 : 255;
+    const o = (yy * w + xx) * 4, n = (rnd() - 0.5) * 16;
+    d[o] = 128 + 90 * Math.sin(xx / 97 + seed) + n; d[o + 1] = 120 + 80 * Math.cos(yy / 71 + xx / 203) + n; d[o + 2] = 110 + 70 * Math.sin((xx + yy) / 151) + n;
+    d[o + 3] = alpha && xx < w / 4 ? 128 : 255;
   }
   x.putImageData(id, 0, 0);
   return c;
@@ -49,11 +39,11 @@ function ui() {
 }
 const bytes = (url) => Math.round((url.length - url.indexOf(",") - 1) * 0.75);
 const BIG = photo(2400, 1600, 7).toDataURL("image/png");
-const ALPHA = alphaGraphic(2600, 1000).toDataURL("image/png");
+const ALPHA = photo(2600, 1000, 11, true).toDataURL("image/png");
 const JPG = photo(2560, 1440, 13).toDataURL("image/jpeg", 0.95);
 const UI = ui();
 const ORIG = photo(600, 400, 17).toDataURL("image/png");
-const CROPPED = photo(500, 300, 18).toDataURL("image/png");
+const CROPPED = UI; // zugeschnittener Screen (Flaechen): bleibt selbst unveraendert
 
 (async () => {
   const dom = new JSDOM(full, {
