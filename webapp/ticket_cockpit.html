@@ -6629,7 +6629,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.167.0";
+  var APP_VERSION = "2.168.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -9527,9 +9527,13 @@
     try { size = dashUtf8Len(JSON.stringify(data)); } catch (e) { size = 0; }
     var est = await dashBrowserEstimate();
     var quota = err === "QuotaExceededError";
-    var msg = (quota ? "Der Browser-Speicher ist voll" : "Grund: " + err) + " – die Sitzung (" + dashFmtBytes(size) + (est ? ", frei laut Browser " + dashFmtBytes(est.free) : "") + ") ist nur noch in diesem Fenster. " +
+    // Die Schaetzung des Browsers (navigator.storage.estimate) ist kein Versprechen: Chromium meldet z. B. Gigabytes frei
+    // und lehnt trotzdem ab, und ein fehlgeschlagener Versuch zaehlt bis zum Aufraeumen weiter als belegt.
+    var estOdd = quota && est && est.free > Math.max(size * 3, 5 * 1048576); // Speichern braucht kurz Platz fuer alt + neu
+    var msg = (quota ? "Der Browser lehnt weitere Daten ab (Speicher voll)" : "Grund: " + err) + " – die Sitzung (" + dashFmtBytes(size) + (est && !estOdd ? ", frei laut Browser " + dashFmtBytes(est.free) : "") + ") ist nur noch in diesem Fenster. " +
+      (estOdd ? "Die Schätzung des Browsers (" + dashFmtBytes(est.free) + " frei) ist hier nicht verlässlich. " : "") +
       (autoSaveState.lastOkAt ? "Zuletzt erfolgreich gespeichert: " + autoSaveState.lastOkAt + ". " : "In dieser Sitzung noch nicht automatisch gespeichert. ") +
-      "Sitzung als Datei speichern" + (quota ? " und Speicher freigeben (z. B. Bilder verkleinern oder nicht mehr benötigte Stände löschen)." : ".") +
+      "Sitzung als Datei speichern" + (quota ? " und Speicher freigeben (z. B. Bilder verkleinern oder nicht mehr benötigte Stände löschen). „Erneut versuchen“ gibt auch den Platz frei, den der fehlgeschlagene Versuch noch belegt – die alte Sicherung wird dabei ersetzt." : ".") +
       (autoSaveState.failCount > 1 ? " (" + autoSaveState.failCount + " Versuche fehlgeschlagen)" : "");
     if (els.autosaveFail) { els.autosaveFailMsg.textContent = msg; els.autosaveFail.hidden = autoSaveState.dismissed; }
     if (first) {
@@ -9542,7 +9546,15 @@
     els.autosaveFailExportBtn.addEventListener("click", function () { els.sessionExportBtn.click(); });
     els.autosaveFailShrinkBtn.addEventListener("click", function () { showView("bilder"); if (els.cvShrink && els.cvShrink.scrollIntoView) els.cvShrink.scrollIntoView({ block: "start" }); });
     els.autosaveFailDashBtn.addEventListener("click", function () { showView("dashboard"); if (els.dashStore && els.dashStore.scrollIntoView) els.dashStore.scrollIntoView({ block: "start" }); });
-    els.autosaveFailRetryBtn.addEventListener("click", function () { autoSaveNow(); });
+    els.autosaveFailRetryBtn.addEventListener("click", async function () {
+      // v2.168: nach „Speicher voll“ zuerst die alte Sicherung in eigener Transaktion entfernen – Chromium zaehlt den
+      // fehlgeschlagenen Versuch sonst weiter als belegt und lehnt selbst kleine Sitzungen ab (im echten Browser geprueft)
+      if (autoSaveState.lastError === "QuotaExceededError") {
+        var db = await openAutoSaveDb();
+        if (db) { await autoSaveDelete(db); addLog("Automatisches Speichern: alte Sicherung entfernt, um belegten Speicher freizugeben."); }
+      }
+      autoSaveNow();
+    });
     els.autosaveFailCloseBtn.addEventListener("click", function () { autoSaveState.dismissed = true; els.autosaveFail.hidden = true; });
   }
   async function autoSaveNow() {
@@ -30154,7 +30166,8 @@
     var free = est ? est.free : null, total = stats.total;
     var items = dashSum(stats.rows.map(function (r) { return r.items; }));
     function tile(label, value, sub, cls) { return '<div class="vrev-tile' + (cls ? " " + cls : "") + '"><span class="vrev-tile-label">' + escapeHtml(label) + '</span><b class="vrev-tile-value">' + escapeHtml(value) + '</b>' + (sub ? '<span class="vrev-tile-sub">' + escapeHtml(sub) + "</span>" : "") + "</div>"; }
-    var low = est && free < total * 2;
+    var quotaFail = autoSaveState.failing && autoSaveState.lastError === "QuotaExceededError";
+    var low = (est && free < total * 2) || quotaFail;
     els.dashStoreTiles.innerHTML =
       tile("Register mit Inhalt", String(stats.rows.filter(function (r) { return r.items > 0; }).length) + " von " + stats.rows.length, items.toLocaleString("de-DE") + " Einträge") +
       tile("Belegt (Sitzung)", dashFmtBytes(total), "Größe der Sitzungsdatei bzw. des automatischen Speicherns") +
@@ -30165,7 +30178,7 @@
         autoSaveState.failing ? "vrev-tile-fail" : autoSaveState.lastOkAt ? "vrev-tile-ok" : "");
     els.dashStoreHead.textContent = "· " + items.toLocaleString("de-DE") + " Einträge · belegt " + dashFmtBytes(total) + (est ? " · frei " + dashFmtBytes(free) : "");
     els.dashStoreWarn.hidden = !low;
-    if (low) els.dashStoreWarn.textContent = "Wenig freier Speicher: frei " + dashFmtBytes(free) + " bei einer Sitzung von " + dashFmtBytes(total) + ". Das automatische Speichern kann fehlschlagen – Sitzung als Datei speichern, unter Bilder → „Speicher sparen“ übergroße Bilder verkleinern, unten unter „Aufräumen“ entbehrliche Kopien löschen und nicht mehr benötigte Bilder, Dateien oder Stände löschen (größte Register oben).";
+    if (low) els.dashStoreWarn.textContent = (quotaFail && !(est && free < total * 2) ? "Das automatische Speichern scheitert am Browser-Speicher, obwohl der Browser " + (est ? dashFmtBytes(free) : "genug") + " frei schätzt (Sitzung " + dashFmtBytes(total) + ")." : "Wenig freier Speicher: frei " + dashFmtBytes(free) + " bei einer Sitzung von " + dashFmtBytes(total) + ".") + " Das automatische Speichern kann fehlschlagen – Sitzung als Datei speichern, unter Bilder → „Speicher sparen“ übergroße Bilder verkleinern, unten unter „Aufräumen“ entbehrliche Kopien löschen und nicht mehr benötigte Bilder, Dateien oder Stände löschen (größte Register oben).";
     var rows = stats.rows.slice().sort(function (a, b) { return b.bytes - a.bytes; });
     var maxShare = rows.length ? rows[0].bytes : 0;
     els.dashStoreTbody.innerHTML = rows.map(function (r) {

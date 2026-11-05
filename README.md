@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.167.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.168.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,14 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **„Speicher voll“ im echten Browser nachgeprüft (v2.168.0)**: In Chromium mit auf 2 MB begrenztem Speicher (per
+  DevTools) zeigte sich zweierlei: (1) Der Browser **schätzt 3 GB frei**, lehnt aber trotzdem ab – die Warnleiste nennt
+  das jetzt ehrlich („Die Schätzung des Browsers … ist hier nicht verlässlich“) statt „voll … frei 3 GB“; Dashboard-Kachel
+  „Frei“ und Hinweis reagieren auf den tatsächlichen Fehler, nicht nur auf die Schätzung. (2) Ein **fehlgeschlagener
+  Versuch zählt weiter als belegt** (6,2 MB bei einer 40-KB-Sitzung), sodass danach selbst kleine Sitzungen abgelehnt
+  werden. **„Erneut versuchen“** entfernt nach „Speicher voll“ deshalb zuerst die alte Sicherung und speichert dann neu
+  (Belegt danach 86 KB) – nur auf Klick, mit Hinweis in der Leiste.
 
 - **OpenCV und SVG (v2.167.0)**: SVG-Grafiken werden jetzt auch geprüft (beim Hochladen in Bilder und bei „Alle Bilder
   analysieren“): sehr ähnliche Bilder / schon im Archiv und Kontrast. SVGs ohne width/height bekommen für die Analyse

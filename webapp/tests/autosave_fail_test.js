@@ -1,4 +1,4 @@
-// v2.160.0 Automatisches Speichern fehlgeschlagen → sichtbare Warnleiste oben (Grund, Sitzungsgröße, freier Speicher,
+// v2.160.0/v2.168.0 Automatisches Speichern fehlgeschlagen → sichtbare Warnleiste oben (Grund, Sitzungsgröße, freier Speicher,
 // letztes erfolgreiches Speichern), einmal je Fehlerserie Hinweis + Protokoll, Knöpfe (Datei speichern, Speicher sparen,
 // Dashboard, erneut versuchen, ausblenden), Kachel im Dashboard; nach Erfolg verschwindet die Leiste.
 // Echte IndexedDB-Implementierung (fake-indexeddb); „Speicher voll“ wird über put() → QuotaExceededError nachgestellt.
@@ -31,7 +31,8 @@ FIDB.IDBObjectStore.prototype.put = function () {
       window.JSZip = JSZipNode;
       window.jspdf = { jsPDF: function () {} };
       window.indexedDB = new FIDB.IDBFactory();
-      window.navigator.storage = { estimate: () => Promise.resolve({ usage: 49.9 * 1048576, quota: 50 * 1048576 }) };
+      window.__est = { usage: 49.9 * 1048576, quota: 50 * 1048576 };
+      window.navigator.storage = { estimate: () => Promise.resolve(window.__est) };
       window.claude = { use: (name) => Promise.resolve(name === "downloads" ? { save: (req) => { savedFiles.push(req); return Promise.resolve({ status: "saved" }); } } : null) };
     },
   });
@@ -61,7 +62,7 @@ FIDB.IDBObjectStore.prototype.put = function () {
   await waitUntil(() => !$("autosave-fail").hidden, 6000);
   const msg = $("autosave-fail-msg").textContent;
   check("Speicher voll: Warnleiste sichtbar mit Grund, Sitzungsgröße, freiem Speicher und letztem Erfolg",
-    !$("autosave-fail").hidden && /^Der Browser-Speicher ist voll – die Sitzung \([\d,]+ (KB|MB), frei laut Browser 102,4 KB\) ist nur noch in diesem Fenster\./.test(msg) && /Zuletzt erfolgreich gespeichert: /.test(msg) && /Speicher freigeben/.test(msg));
+    !$("autosave-fail").hidden && /^Der Browser lehnt weitere Daten ab \(Speicher voll\) – die Sitzung \([\d,]+ (KB|MB), frei laut Browser 102,4 KB\) ist nur noch in diesem Fenster\./.test(msg) && !/nicht verlässlich/.test(msg) && /Zuletzt erfolgreich gespeichert: /.test(msg) && /Speicher freigeben/.test(msg));
   check("Status in den Einstellungen nennt den Grund", /fehlgeschlagen – Browser-Speicher voll/.test(status()));
   check("Fehler-Hinweis (Toast) einmal", $("toast").classList.contains("error") && /Browser-Speicher voll/.test($("toast").textContent));
   await wait(100);
@@ -106,6 +107,29 @@ FIDB.IDBObjectStore.prototype.put = function () {
   await waitUntil(() => !$("autosave-fail").hidden, 6000);
   check("Anderer Fehler: Leiste wieder sichtbar mit Grund", !$("autosave-fail").hidden && /^Grund: DataCloneError – die Sitzung/.test($("autosave-fail-msg").textContent) && !/Speicher freigeben/.test($("autosave-fail-msg").textContent));
   failMode = null;
+  $("autosave-fail-retry-btn").click();
+  await waitUntil(() => /Zuletzt automatisch gespeichert/.test(status()), 6000);
+
+  // 9) v2.168: Browser schaetzt viel frei, lehnt aber ab → ehrliche Meldung; „Erneut versuchen“ entfernt zuerst die alte Sicherung
+  dom.window.__est = { usage: 1048576, quota: 3 * 1073741824 };
+  failMode = "quota";
+  await change();
+  await waitUntil(() => !$("autosave-fail").hidden, 6000);
+  const m2 = $("autosave-fail-msg").textContent;
+  check("Schätzung „3 GB frei“ trotz Ablehnung: als nicht verlässlich benannt, keine widersprüchliche Angabe", /^Der Browser lehnt weitere Daten ab \(Speicher voll\) – die Sitzung \([\d,]+ (KB|MB)\) ist nur/.test(m2) && /Die Schätzung des Browsers \(3,00 GB frei\) ist hier nicht verlässlich\./.test(m2) && /„Erneut versuchen“ gibt auch den Platz frei/.test(m2));
+  doc.querySelector('.nav-item[data-view="dashboard"]').click(); await wait(30);
+  $("dash-store-refresh-btn").click(); await wait(200);
+  check("Dashboard: Warnung trotz großer Schätzung, Kachel „Frei“ rot", !$("dash-store-warn").hidden && /scheitert am Browser-Speicher, obwohl der Browser 3,00 GB frei schätzt/.test($("dash-store-warn").textContent) && tile(3).classList.contains("vrev-tile-fail"));
+  const deletes = [];
+  const origDel = FIDB.IDBObjectStore.prototype.delete;
+  FIDB.IDBObjectStore.prototype.delete = function (k) { deletes.push(k); return origDel.apply(this, arguments); };
+  failMode = null;
+  $("autosave-fail-retry-btn").click();
+  await waitUntil(() => /Zuletzt automatisch gespeichert/.test(status()), 6000);
+  check("„Erneut versuchen“ nach „Speicher voll“: alte Sicherung zuerst entfernt, dann gespeichert, Leiste weg", deletes.includes("current") && $("autosave-fail").hidden && /alte Sicherung entfernt, um belegten Speicher freizugeben/.test(logText()));
+  FIDB.IDBObjectStore.prototype.delete = origDel;
+  $("dash-store-refresh-btn").click(); await wait(200);
+  check("Dashboard danach ohne Warnung", $("dash-store-warn").hidden);
 
   check("Keine JS-Fehler", errors.length === 0);
   if (errors.length) console.log(errors.slice(0, 5));
