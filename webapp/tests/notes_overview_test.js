@@ -42,7 +42,9 @@ function note(id, category, title, text, intervalDays, daysAgo) {
   const setSel = (id, v) => { const el = doc.getElementById(id); el.value = v; fire(el, "change"); };
 
   const navItems = Array.from(doc.querySelectorAll(".nav-item")).map((b) => b.getAttribute("data-view"));
-  check("Nav: FINAL → VARIANTE → Mitteilungen", navItems.indexOf("variante") === navItems.indexOf("final") + 1 && navItems.indexOf("mitteilungen") === navItems.indexOf("variante") + 1);
+  // v2.154: Navigation nach Workflow-Stufen – FINAL → VARIANTE in E2E-QA, Mitteilungen in Traceability
+  const stageOf = (view) => { let li = doc.querySelector('.nav-item[data-view="' + view + '"]').closest("li").previousElementSibling; while (li && !li.classList.contains("nav-stage")) li = li.previousElementSibling; return li ? li.textContent.replace(/[\d/\s]+$/, "").replace(/^\d+/, "").trim() : ""; };
+  check("Nav: FINAL → VARIANTE (E2E-QA), Mitteilungen (Traceability)", navItems.indexOf("variante") === navItems.indexOf("final") + 1 && stageOf("final") === "E2E-QA" && stageOf("mitteilungen") === "Traceability");
   nav("mitteilungen");
   check("Leere Übersicht: Hinweis sichtbar, Exporte deaktiviert", !doc.getElementById("notes-ov-empty").hidden && doc.getElementById("notes-ov-xlsx-btn").disabled && doc.getElementById("notes-ov-summary").textContent.startsWith("0 interne"));
 

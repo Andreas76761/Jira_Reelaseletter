@@ -68,7 +68,9 @@ const xml = `<?xml version="1.0"?><rss><channel>
   // ===================== Navigation zeigt "Ticket Graph" direkt nach Dashboard =====================
   const navLabels = Array.from(doc.querySelectorAll(".nav-item")).map((b) => b.textContent.trim());
   const dashIdx = navLabels.indexOf("Dashboard");
-  check("Nav-Eintrag 'Ticket Graph' vorhanden, direkt nach 'Dashboard'", navLabels[dashIdx + 1] === "Ticket Graph");
+  // v2.154: Navigation nach Workflow-Stufen – Ticket Graph ist erster Eintrag der Stufe Traceability
+  const stageOf = (view) => { let li = doc.querySelector('.nav-item[data-view="' + view + '"]').closest("li").previousElementSibling; while (li && !li.classList.contains("nav-stage")) li = li.previousElementSibling; return li ? li.textContent.replace(/[\d/\s]+$/, "").replace(/^\d+/, "").trim() : ""; };
+  check("Nav-Eintrag 'Ticket Graph' vorhanden, erster Eintrag der Stufe Traceability", navLabels.includes("Ticket Graph") && stageOf("ticketgraph") === "Traceability" && doc.querySelector('.nav-item[data-view="ticketgraph"]').closest("li").previousElementSibling.classList.contains("nav-stage"));
 
   doc.querySelector('.nav-item[data-view="ticketgraph"]').click();
   await wait(150);

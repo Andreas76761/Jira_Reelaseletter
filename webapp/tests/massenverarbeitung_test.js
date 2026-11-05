@@ -137,7 +137,9 @@ const xml = `<?xml version="1.0"?><rss><channel>
   // ===================== (1) Navigation: neuer Punkt VOR 'Verarbeitung' =====================
   const navList = Array.from(doc.querySelectorAll(".nav-item[data-view]")).map((b) => b.getAttribute("data-view"));
   check("(1) Navigationspunkt 'massenverarbeitung' vorhanden", navList.includes("massenverarbeitung"));
-  check("(1) Steht direkt VOR 'verarbeitung' in der Navigation", navList.indexOf("massenverarbeitung") === navList.indexOf("verarbeitung") - 1);
+  // v2.154: Navigation nach Workflow-Stufen – Massenverarbeitung und Verarbeitung gehoeren zur Stufe Extraktion
+  const stageOf = (view) => { let li = doc.querySelector('.nav-item[data-view="' + view + '"]').closest("li").previousElementSibling; while (li && !li.classList.contains("nav-stage")) li = li.previousElementSibling; return li ? li.textContent.replace(/[\d/\s]+$/, "").replace(/^\d+/, "").trim() : ""; };
+  check("(1) Steht in der Stufe Extraktion (zusammen mit 'verarbeitung')", stageOf("massenverarbeitung") === "Extraktion" && stageOf("verarbeitung") === "Extraktion");
 
   doc.querySelector('.nav-item[data-view="massenverarbeitung"]').click();
   await wait(50);
