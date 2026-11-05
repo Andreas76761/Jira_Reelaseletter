@@ -38,9 +38,9 @@ function ui() {
   return c.toDataURL("image/png");
 }
 const bytes = (url) => Math.round((url.length - url.indexOf(",") - 1) * 0.75);
-const BIG = photo(2400, 1600, 7).toDataURL("image/png");
-const ALPHA = photo(2600, 1000, 11, true).toDataURL("image/png");
-const JPG = photo(2560, 1440, 13).toDataURL("image/jpeg", 0.95);
+const BIG = photo(1600, 1000, 7).toDataURL("image/png");
+const ALPHA = photo(1600, 640, 11, true).toDataURL("image/png");
+const JPG = photo(1600, 900, 13).toDataURL("image/jpeg", 0.95);
 const UI = ui();
 const ORIG = photo(600, 400, 17).toDataURL("image/png");
 const CROPPED = UI; // zugeschnittener Screen (Flaechen): bleibt selbst unveraendert
@@ -78,7 +78,7 @@ const CROPPED = UI; // zugeschnittener Screen (Flaechen): bleibt selbst unveraen
 
   let s = await session();
   s.uploadedImages = [
-    { id: 201, filename: "foto.png", dataUrl: BIG, description: "gross", mimeType: "image/png", cvAt: "x", cvBorder: { x: 300, y: 200, w: 1800, h: 1200, pct: 44 } },
+    { id: 201, filename: "foto.png", dataUrl: BIG, description: "gross", mimeType: "image/png", cvAt: "x", cvBorder: { x: 300, y: 200, w: 1000, h: 600, pct: 44 } },
     { id: 202, filename: "transparent.png", dataUrl: ALPHA, description: "alpha", mimeType: "image/png" },
     { id: 203, filename: "kamera.jpg", dataUrl: JPG, description: "jpeg", mimeType: "image/jpeg" },
     { id: 204, filename: "maske.png", dataUrl: UI, description: "ui", mimeType: "image/png" },
@@ -96,6 +96,8 @@ const CROPPED = UI; // zugeschnittener Screen (Flaechen): bleibt selbst unveraen
 
   check("Abschnitt „Speicher sparen“ mit Voreinstellungen 1920 px, JPEG an, Originale verwerfen an",
     !!$("cv-shrink") && $("cv-shrink-edge").value === "1920" && $("cv-shrink-jpeg").checked && $("cv-shrink-drop-orig").checked);
+  // Für die Laufzeit des Tests mit 1280 px statt 1920 px (gleiche Logik, weniger als halb so viele Pixel je Bild)
+  $("cv-shrink-edge").value = "1280"; fire($("cv-shrink-edge"), "change");
 
   // 1) Abbrechen
   $("cv-shrink-btn").click();
@@ -116,14 +118,14 @@ const CROPPED = UI; // zugeschnittener Screen (Flaechen): bleibt selbst unveraen
   s = await session();
   const big = byId(s, 201), al = byId(s, 202), jp = byId(s, 203), u = byId(s, 204), cr = byId(s, 205);
   const [bw, bh] = await dims(big.dataUrl), [aw, ah] = await dims(al.dataUrl), [jw, jh] = await dims(jp.dataUrl);
-  check("Großes Bild ohne Transparenz: 2400×1600 → 1920×1280, als JPEG, deutlich kleiner, gleiche ID",
-    bw === 1920 && bh === 1280 && /^data:image\/jpeg/.test(big.dataUrl) && big.mimeType === "image/jpeg" && big.sizeBytes < bytes(BIG) * 0.5 && big.id === 201);
-  check("Bild mit Transparenz bleibt PNG, nur verkleinert (2600×1000 → 1920×738)", /^data:image\/png/.test(al.dataUrl) && aw === 1920 && ah === 738);
-  check("JPEG wird verkleinert (2560×1440 → 1920×1080) und bleibt JPEG", /^data:image\/jpeg/.test(jp.dataUrl) && jw === 1920 && jh === 1080 && bytes(jp.dataUrl) < bytes(JPG));
+  check("Großes Bild ohne Transparenz: 1600×1000 → 1280×800, als JPEG, deutlich kleiner, gleiche ID",
+    bw === 1280 && bh === 800 && /^data:image\/jpeg/.test(big.dataUrl) && big.mimeType === "image/jpeg" && big.sizeBytes < bytes(BIG) * 0.5 && big.id === 201);
+  check("Bild mit Transparenz bleibt PNG, nur verkleinert (1600×640 → 1280×512)", /^data:image\/png/.test(al.dataUrl) && aw === 1280 && ah === 512);
+  check("JPEG wird verkleinert (1600×900 → 1280×720) und bleibt JPEG", /^data:image\/jpeg/.test(jp.dataUrl) && jw === 1280 && jh === 720 && bytes(jp.dataUrl) < bytes(JPG));
   check("Kleiner Screen (Flächen, PNG klein) bleibt unverändert", u.dataUrl === UI && !u.cvShrunk);
   check("Original des zugeschnittenen Bildes verworfen, Bild selbst unverändert", !cr.cvUncropped && cr.dataUrl === CROPPED);
   check("Leerer Rand wird mitskaliert (×0,8), Verkleinerung am Bild vermerkt",
-    big.cvBorder && big.cvBorder.x === 240 && big.cvBorder.y === 160 && big.cvBorder.w === 1440 && big.cvBorder.h === 960 && big.cvShrunk && big.cvShrunk.kind === "JPEG" && big.cvShrunk.from === "2400 × 1600");
+    big.cvBorder && big.cvBorder.x === 240 && big.cvBorder.y === 160 && big.cvBorder.w === 800 && big.cvBorder.h === 480 && big.cvShrunk && big.cvShrunk.kind === "JPEG" && big.cvShrunk.from === "1600 × 1000");
   check("Protokoll-Eintrag", s.log.some((l) => /Speicher sparen – 3 Bild\(er\) verkleinert, 1 Original\(e\) verworfen/.test(l.message || l.text || JSON.stringify(l))));
 
   // Dashboard nachher
