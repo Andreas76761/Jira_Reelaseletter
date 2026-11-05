@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.146.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.147.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,20 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Dashboard: Einträge und Speicherplatz je Register (v2.147.0)**: neuer, aufklappbarer Bereich „Register – Einträge
+  und Speicherplatz“ im Dashboard. Kacheln: Register mit Inhalt (und Einträge gesamt), **belegt** (Größe der Sitzung =
+  Sitzungsdatei bzw. automatisches Speichern), **Browser-Speicher belegt** (mit Anteil an der Obergrenze) und **frei**
+  (Obergrenze minus belegt, aus `navigator.storage.estimate`). Tabelle mit allen 23 Registern (Import/Tickets, Rovo
+  Knowledge, Rovo Summary, Dateiverwaltung, Listenauswahl, Gliederung, Massenverarbeitung, Verarbeitung/RAG, Releaseletter,
+  Benutzerhandbuch, Screens-Import, Editor, Unterkapitel, FINAL, VARIANTE, Dokument-Review, Mitteilungen, CROSS_X, AGENT,
+  Bilder, Tabelle, Glossar/Synonyme/Abkürzungen, Einstellungen & Protokoll), größtes zuerst: **Einträge**, **belegt**,
+  Anteil an der Sitzung (Balken), Ø je Eintrag, **frei** und „Platz für ca. N weitere“ (freier Speicher geteilt durch die
+  Durchschnittsgröße des Registers), „→ öffnen“ springt ins Register; Summenzeile. Jedes Feld der Sitzung ist genau einem
+  Register zugeordnet, die Summe entspricht der Sitzungsdatei. **Warnung**, wenn der freie Speicher kleiner als die
+  doppelte Sitzung ist (automatisches Speichern kann dann fehlschlagen). Liefert der Browser keine Angabe, steht dort
+  „unbekannt“. Wird beim Öffnen des Dashboards und per „Aktualisieren“ neu berechnet (bei 3 MB Sitzung ohne spürbare
+  Blockade).
 
 - **Optik der Word- und PDF-Ausgaben (v2.146.0)**: die erzeugten Dateien wurden mit LibreOffice gerendert und
   Seite für Seite angesehen (großes Handbuch, 60 Kapitel mit Unterkapiteln, 30 Bilder, Tabellen). Behoben:

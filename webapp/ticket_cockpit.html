@@ -643,6 +643,16 @@
   .doc-notes > summary { cursor: pointer; padding: 9px 12px; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); }
   .doc-notes-body { padding: 0 12px 12px; }
   .dashboard-notes-due-list { margin: 0; padding-left: 18px; font-size: 13px; }
+  .dash-store { padding: 10px 14px; margin: 14px 0; }
+  .dash-store summary { cursor: pointer; }
+  .dash-store-desc { font-size: 13px; }
+  .dash-store-head { font-size: 12.5px; color: var(--text-faint); margin-left: 6px; }
+  .dash-store-table td.num, .dash-store-table th.num { text-align: right; white-space: nowrap; }
+  .dash-store-bar { display: inline-block; vertical-align: middle; width: 120px; height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; margin-right: 6px; }
+  .dash-store-bar > i { display: block; height: 100%; background: #0e7490; }
+  .dash-store-bar.free > i { background: #15803d; } .dash-store-bar.low > i { background: #b91c1c; }
+  .dash-store-warn { border-left: 4px solid #b45309; padding: 6px 10px; margin: 6px 0; font-size: 13px; background: var(--surface); }
+  .dash-store-table tfoot td { font-weight: 600; border-top: 2px solid var(--border); }
   .dashboard-notes-due-list li { margin: 4px 0; }
   .final-notes-badge { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #fef3c7; color: #92400e; }
   .final-team-comment-list { list-style: none; margin: 0 0 8px; padding: 0; max-height: 260px; overflow: auto; }
@@ -961,6 +971,19 @@
         <section class="panel" id="dashboard-notes-due" hidden style="padding:12px 14px; margin-bottom:14px;"><p class="section-label" style="margin-top:0;">Interne Mitteilungen – Aktualisierung fällig (<span id="dashboard-notes-due-count">0</span>)</p><ul class="dashboard-notes-due-list" id="dashboard-notes-due-list"></ul></section>
 
         <div class="tiles" id="tiles"></div>
+
+        <details class="panel dash-store" id="dash-store" open>
+          <summary><b>Register – Einträge und Speicherplatz</b> <span class="dash-store-head" id="dash-store-head"></span></summary>
+          <p class="desc dash-store-desc" style="margin:6px 0 8px;">Je Register: Anzahl der Einträge und der belegte Speicher in der Sitzung (so groß wird der Anteil in der Sitzungsdatei und im automatischen Speichern). Frei ist der noch verfügbare Browser-Speicher dieser App – alle Register teilen ihn sich; „Platz für“ schätzt, wie viele weitere Einträge mit der bisherigen Durchschnittsgröße des Registers noch hineinpassen.</p>
+          <div class="vrev-tiles" id="dash-store-tiles"></div>
+          <div class="dash-store-warn" id="dash-store-warn" hidden></div>
+          <div class="table-wrap"><table class="simple-table dash-store-table">
+            <thead><tr><th>Register</th><th class="num">Einträge</th><th class="num">Belegt</th><th>Anteil an der Sitzung</th><th class="num">Ø je Eintrag</th><th class="num">Frei</th><th class="num">Platz für ca.</th><th></th></tr></thead>
+            <tbody id="dash-store-tbody"></tbody>
+            <tfoot id="dash-store-tfoot"></tfoot>
+          </table></div>
+          <div class="controls" style="margin-top:8px;"><button class="btn ghost btn-tiny" id="dash-store-refresh-btn" type="button">Aktualisieren</button><span class="desc" id="dash-store-at"></span></div>
+        </details>
 
         <section id="type-section">
           <p class="section-label">Typ-Schnellfilter</p>
@@ -6490,7 +6513,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.146.0";
+  var APP_VERSION = "2.147.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8113,7 +8136,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dash-store", "dash-store-head", "dash-store-tiles", "dash-store-warn", "dash-store-tbody", "dash-store-tfoot", "dash-store-refresh-btn", "dash-store-at", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -29190,6 +29213,104 @@
     Object.keys(DOC_NOTE_HOSTS).forEach(function (h) { docNotesList(h).forEach(function (n) { if (finalNoteOverdue(n)) out.push({ where: DOC_NOTE_HOSTS[h], view: h, n: n }); }); });
     return out;
   }
+  // v2.147: Dashboard – je Register Einträge, belegter Speicher (Anteil an der Sitzung) und freier Browser-Speicher
+  function dashCount(v) { return Array.isArray(v) ? v.length : v && typeof v === "object" ? Object.keys(v).length : typeof v === "string" ? (v.trim() ? 1 : 0) : 0; }
+  function dashSum(list) { return list.reduce(function (a, b) { return a + b; }, 0); }
+  var DASH_STORE_REGS = [
+    { label: "Import / Tickets", view: "import", unit: "Tickets", fields: ["ticketStoreEntries", "imports", "changes", "ticketClassificationOverrides", "ticketRefSeq", "ticketRefIds", "priorityPoints", "statusColors", "domainColors", "domainAbbreviations", "importFormats", "activeImportIds", "inactiveImportIds", "appliedInactiveImportIds", "nextImportId", "selectedKeys", "activeSparteFilter", "activeRoleFilter"], items: function (d) { return dashCount(d.ticketStoreEntries); } },
+    { label: "Rovo Knowledge", view: "rovoknowledge", unit: "Einträge", fields: ["rovoEntries", "rovoChapterSummaries"], items: function (d) { return dashCount(d.rovoEntries); } },
+    { label: "Rovo Summary", view: "rovosummary", unit: "Quellen", fields: ["rovoSummary"], items: function (d) { return dashCount(d.rovoSummary && d.rovoSummary.sources); } },
+    { label: "Dateiverwaltung", view: "dateiverwaltung", unit: "Übersetzungen/Zusammenfassungen", fields: ["fileviewTranslations", "fileviewSummaries"], items: function (d) { return dashCount(d.fileviewTranslations) + dashCount(d.fileviewSummaries); } },
+    { label: "Listenauswahl", view: "listenauswahl", unit: "Listen", fields: ["savedLists", "nextSavedListId", "listPreviewFilter", "activeListIds"], items: function (d) { return dashCount(d.savedLists); } },
+    { label: "Gliederung", view: "gliederung", unit: "Kapitel", fields: ["outline", "outlineTransitions", "uploadedOutlines", "outlineCompareActiveId", "outlineVersionsGenerated"], items: function (d) { return dashCount(d.outline) + dashCount(d.uploadedOutlines); } },
+    { label: "Massenverarbeitung", view: "massenverarbeitung", unit: "Dateien", fields: ["massFiles", "massMergedDoc", "massDomainDocs", "massDomainDocsMerged", "massCheckpoints"], items: function (d) { return dashCount(d.massFiles); } },
+    { label: "Verarbeitung / RAG", view: "verarbeitung", unit: "RAG-Einträge", fields: ["ragLibrary", "ragMergedDoc", "ragAnalysis", "jobState"], items: function (d) { return dashCount(d.ragLibrary); } },
+    { label: "Releaseletter", view: "releaseletter", unit: "Rollen-Anpassungen", fields: ["rlRoleOverrides"], items: function (d) { return dashCount(d.rlRoleOverrides); } },
+    { label: "Benutzerhandbuch", view: "benutzerhandbuch", unit: "Kapitel", fields: ["manualChapters", "manualCheckpoints", "manualMergedDoc", "chapterKeywords", "referenceManuals", "refCompareActiveManualId"], items: function (d) { return dashCount(d.manualChapters) + dashCount(d.referenceManuals); } },
+    { label: "Screens-Import", view: "editor", unit: "Dateien/Platzhalter", fields: ["editorFiles", "screenPh"], items: function (d) { return dashCount(d.editorFiles) + dashCount(d.screenPh && d.screenPh.rows); } },
+    { label: "Editor (EDITO)", view: "edito", unit: "Kapitel", fields: ["editoChapters", "editoVersionKey", "editoFinalDocId", "editoBaseDocId"], items: function (d) { return dashCount(d.editoChapters); } },
+    { label: "Unterkapitel", view: "unterkapitel", unit: "Entwürfe", fields: ["subchapterDrafts"], items: function (d) { return dashCount(d.subchapterDrafts); } },
+    { label: "FINAL", view: "final", unit: "Stände/Dateien", fields: ["final"], items: function (d) { var f = d.final || {}; return dashCount(f.versions) + dashCount(f.manuals) + dashCount(f.screensFiles) + dashCount(f.improvementFiles); } },
+    { label: "VARIANTE", view: "variante", unit: "Varianten", fields: ["variante"], items: function (d) { return dashCount(d.variante && d.variante.variants); } },
+    { label: "Dokument-Review", view: "variante", unit: "Dokumente", fields: ["vrev"], items: function (d) { return dashCount(d.vrev && d.vrev.docs); } },
+    { label: "Mitteilungen", view: "mitteilungen", unit: "Mitteilungen", fields: ["docNotes"], items: function (d) { var n = d.docNotes || {}; return dashSum(Object.keys(n).map(function (k) { return dashCount(n[k]); })); } },
+    { label: "CROSS_X", view: "crossx", unit: "Fragen/Antworten", fields: ["crossx"], items: function (d) { return dashCount(d.crossx && d.crossx.history); } },
+    { label: "AGENT", view: "agent", unit: "Uploads/Wissensobjekte", fields: ["agent"], items: function (d) { var a = d.agent || {}; return dashCount(a.uploads) + dashCount(a.knowledge && a.knowledge.items); } },
+    { label: "Bilder", view: "bilder", unit: "Bilder", fields: ["uploadedImages", "generatedImages"], items: function (d) { return dashCount(d.uploadedImages) + dashCount(d.generatedImages); } },
+    { label: "Tabelle", view: "tabellen", unit: "Tabellen", fields: ["rovoTables"], items: function (d) { return dashCount(d.rovoTables); } },
+    { label: "Glossar, Synonyme, Abkürzungen", view: "glossar", unit: "Begriffe", fields: ["labels", "synonyms", "glossaryTranslations", "abbrevTranslations", "extracted"], items: function (d) { return dashCount(d.labels) + dashCount(d.synonyms) + dashCount(d.glossaryTranslations) + dashCount(d.abbrevTranslations); } },
+    { label: "Einstellungen & Protokoll", view: "einstellungen", unit: "Protokolleinträge", fields: ["log", "ragPrompts", "languageStyle", "negativeWordsRaw", "view", "sessionFileFormat", "savedAt", "appVersion"], items: function (d) { return dashCount(d.log); } }
+  ];
+  // UTF-8-Bytes (so gross wird der Teil in der Sitzungsdatei), ohne den String zu kopieren
+  function dashUtf8Len(str) {
+    var n = 0;
+    for (var i = 0; i < str.length; i++) { var c = str.charCodeAt(i); if (c < 0x80) n++; else if (c < 0x800) n += 2; else if (c >= 0xD800 && c < 0xDC00) { n += 4; i++; } else n += 3; }
+    return n;
+  }
+  function dashFmtBytes(n) {
+    if (n == null || !isFinite(n)) return "–";
+    if (n < 1024) return Math.round(n) + " B";
+    if (n < 1048576) return (n / 1024).toFixed(1).replace(".", ",") + " KB";
+    if (n < 1073741824) return (n / 1048576).toFixed(n < 10485760 ? 2 : 1).replace(".", ",") + " MB";
+    return (n / 1073741824).toFixed(2).replace(".", ",") + " GB";
+  }
+  function dashStorageStats() {
+    var d = serializeSessionState(), size = {}, used = {};
+    Object.keys(d).forEach(function (k) { var j = JSON.stringify(d[k]); size[k] = j == null ? 0 : dashUtf8Len(j) + dashUtf8Len(k) + 4; });
+    var rows = DASH_STORE_REGS.map(function (r) {
+      r.fields.forEach(function (f) { used[f] = true; });
+      return { label: r.label, view: r.view, unit: r.unit, items: r.items(d), bytes: dashSum(r.fields.map(function (f) { return size[f] || 0; })) };
+    });
+    var restKeys = Object.keys(size).filter(function (k) { return !used[k]; });
+    var rest = dashSum(restKeys.map(function (k) { return size[k]; }));
+    if (rest > 0) rows.push({ label: "Sonstiges", view: "", unit: "Felder", items: restKeys.length, bytes: rest, keys: restKeys });
+    return { rows: rows, total: dashSum(Object.keys(size).map(function (k) { return size[k]; })) + 2 };
+  }
+  async function dashBrowserEstimate() {
+    try {
+      var st = navigator.storage;
+      if (!st || typeof st.estimate !== "function") return null;
+      var e = await st.estimate();
+      if (!e || !isFinite(e.quota) || !e.quota) return null;
+      return { usage: Number(e.usage) || 0, quota: Number(e.quota), free: Math.max(0, Number(e.quota) - (Number(e.usage) || 0)) };
+    } catch (err) { return null; }
+  }
+  var dashStoreSeq = 0;
+  async function renderDashStore() {
+    if (!els.dashStore) return;
+    var seq = ++dashStoreSeq;
+    var stats = dashStorageStats(), est = await dashBrowserEstimate();
+    if (seq !== dashStoreSeq) return;
+    var free = est ? est.free : null, total = stats.total;
+    var items = dashSum(stats.rows.map(function (r) { return r.items; }));
+    function tile(label, value, sub, cls) { return '<div class="vrev-tile' + (cls ? " " + cls : "") + '"><span class="vrev-tile-label">' + escapeHtml(label) + '</span><b class="vrev-tile-value">' + escapeHtml(value) + '</b>' + (sub ? '<span class="vrev-tile-sub">' + escapeHtml(sub) + "</span>" : "") + "</div>"; }
+    var low = est && free < total * 2;
+    els.dashStoreTiles.innerHTML =
+      tile("Register mit Inhalt", String(stats.rows.filter(function (r) { return r.items > 0; }).length) + " von " + stats.rows.length, items.toLocaleString("de-DE") + " Einträge") +
+      tile("Belegt (Sitzung)", dashFmtBytes(total), "Größe der Sitzungsdatei bzw. des automatischen Speicherns") +
+      tile("Browser-Speicher belegt", est ? dashFmtBytes(est.usage) : "unbekannt", est ? String(Math.round(est.usage / est.quota * 1000) / 10).replace(".", ",") + " % von " + dashFmtBytes(est.quota) : "Browser liefert keine Angabe") +
+      tile("Frei", est ? dashFmtBytes(free) : "unbekannt", est ? "noch verfügbar für alle Register" : "Sitzung regelmäßig als Datei speichern", est ? (low ? "vrev-tile-fail" : "vrev-tile-ok") : "");
+    els.dashStoreHead.textContent = "· " + items.toLocaleString("de-DE") + " Einträge · belegt " + dashFmtBytes(total) + (est ? " · frei " + dashFmtBytes(free) : "");
+    els.dashStoreWarn.hidden = !low;
+    if (low) els.dashStoreWarn.textContent = "Wenig freier Speicher: frei " + dashFmtBytes(free) + " bei einer Sitzung von " + dashFmtBytes(total) + ". Das automatische Speichern kann fehlschlagen – Sitzung als Datei speichern und nicht mehr benötigte Bilder, Dateien oder Stände löschen (größte Register oben).";
+    var rows = stats.rows.slice().sort(function (a, b) { return b.bytes - a.bytes; });
+    var maxShare = rows.length ? rows[0].bytes : 0;
+    els.dashStoreTbody.innerHTML = rows.map(function (r) {
+      var share = total ? r.bytes / total * 100 : 0, avg = r.items ? r.bytes / r.items : null;
+      var room = est && avg ? Math.floor(free / avg) : null;
+      return '<tr data-dash-store-row="' + escapeHtml(r.label) + '"><td>' + escapeHtml(r.label) + (r.keys ? '<div class="desc">' + escapeHtml(r.keys.join(", ")) + "</div>" : "") + '</td><td class="num">' + r.items.toLocaleString("de-DE") + '</td><td class="num">' + dashFmtBytes(r.bytes) +
+        '</td><td><span class="dash-store-bar"><i style="width:' + (maxShare ? Math.max(r.bytes ? 1 : 0, Math.round(r.bytes / maxShare * 100)) : 0) + '%"></i></span>' + (r.bytes && share < 0.1 ? "< 0,1" : (Math.round(share * 10) / 10).toString().replace(".", ",")) + ' %</td><td class="num">' + (avg == null ? "–" : dashFmtBytes(avg)) +
+        '</td><td class="num">' + (est ? dashFmtBytes(free) : "unbekannt") + '</td><td class="num">' + (room == null ? "–" : (room > 999999 ? "> 1 Mio." : room.toLocaleString("de-DE")) + " " + escapeHtml(r.unit)) +
+        "</td><td>" + (r.view ? '<button class="btn ghost btn-tiny" type="button" data-dash-store-open="' + r.view + '">→ öffnen</button>' : "") + "</td></tr>";
+    }).join("");
+    els.dashStoreTfoot.innerHTML = '<tr><td>Gesamt</td><td class="num">' + items.toLocaleString("de-DE") + '</td><td class="num">' + dashFmtBytes(total) + "</td><td>100 %</td><td></td><td class=\"num\">" + (est ? dashFmtBytes(free) : "unbekannt") + "</td><td></td><td></td></tr>";
+    els.dashStoreAt.textContent = "Stand: " + nowLabel();
+  }
+  function scheduleDashStore() { setTimeout(function () { var pnl = document.querySelector('[data-view-panel="dashboard"]'); if (pnl && !pnl.hidden) renderDashStore(); }, 30); }
+  if (els.dashStore) {
+    els.dashStoreRefreshBtn.addEventListener("click", function () { renderDashStore(); });
+    els.dashStoreTbody.addEventListener("click", function (e) { var b = e.target.closest("[data-dash-store-open]"); if (b) showView(b.getAttribute("data-dash-store-open")); });
+  }
   function renderDashboardNotesDue() {
     if (!els.dashboardNotesDue) return;
     var due = allOverdueNotes();
@@ -34902,6 +35023,7 @@
     flushDeferredRenders(name);
     if (typeof DOC_NOTE_HOSTS !== "undefined" && DOC_NOTE_HOSTS[name]) renderDocNotes(name);
     if (name === "dashboard" && typeof renderDashboardNotesDue === "function" && els.dashboardNotesDue) renderDashboardNotesDue();
+    if (name === "dashboard" && typeof scheduleDashStore === "function") scheduleDashStore();
     if (name === "output-md" || name === "output-pdf") renderOutputCounts();
     if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); renderBildband(); renderScreenPh(); }
     if (name === "bildband") renderBildband();
