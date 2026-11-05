@@ -17,14 +17,27 @@ vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract
 const savedFiles = [];
 
 // Foto-artiges Bild (Rauschen in 3-px-Bloecken): als PNG gross, als JPEG deutlich kleiner
-function photo(w, h, seed, alpha) {
-  const c = createCanvas(w, h), x = c.getContext("2d");
+function photo(w, h, seed) {
+  const c = createCanvas(w, h), x = c.getContext("2d"), id = x.createImageData(w, h), d = id.data;
   let r = seed;
   const rnd = () => { r = (r * 1103515245 + 12345) & 0x7fffffff; return r / 0x7fffffff; };
-  for (let yy = 0; yy < h; yy += 3) for (let xx = 0; xx < w; xx += 3) {
-    x.fillStyle = "rgba(" + Math.round(120 + rnd() * 100) + "," + Math.round(90 + rnd() * 80) + "," + Math.round(60 + rnd() * 120) + "," + (alpha && xx < w / 4 ? 0.5 : 1) + ")";
-    x.fillRect(xx, yy, 3, 3);
+  const bw = Math.ceil(w / 3), bh = Math.ceil(h / 3), cols = new Uint8Array(bw * bh * 3);
+  for (let i = 0; i < cols.length; i += 3) { cols[i] = 120 + rnd() * 100; cols[i + 1] = 90 + rnd() * 80; cols[i + 2] = 60 + rnd() * 120; }
+  for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) {
+    const k = ((yy / 3 | 0) * bw + (xx / 3 | 0)) * 3, o = (yy * w + xx) * 4;
+    d[o] = cols[k]; d[o + 1] = cols[k + 1]; d[o + 2] = cols[k + 2]; d[o + 3] = 255;
   }
+  x.putImageData(id, 0, 0);
+  return c;
+}
+// Grosse Grafik mit Transparenz (Verlauf, linkes Viertel halbtransparent)
+function alphaGraphic(w, h) {
+  const c = createCanvas(w, h), x = c.getContext("2d"), id = x.createImageData(w, h), d = id.data;
+  for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) {
+    const o = (yy * w + xx) * 4;
+    d[o] = (xx * 255 / w) | 0; d[o + 1] = (yy * 255 / h) | 0; d[o + 2] = ((xx + yy) * 7) & 255; d[o + 3] = xx < w / 4 ? 128 : 255;
+  }
+  x.putImageData(id, 0, 0);
   return c;
 }
 function ui() {
@@ -35,12 +48,12 @@ function ui() {
   return c.toDataURL("image/png");
 }
 const bytes = (url) => Math.round((url.length - url.indexOf(",") - 1) * 0.75);
-const BIG = photo(2400, 1600, 7, false).toDataURL("image/png");
-const ALPHA = photo(2600, 1000, 11, true).toDataURL("image/png");
-const JPG = photo(2560, 1440, 13, false).toDataURL("image/jpeg", 0.95);
+const BIG = photo(2400, 1600, 7).toDataURL("image/png");
+const ALPHA = alphaGraphic(2600, 1000).toDataURL("image/png");
+const JPG = photo(2560, 1440, 13).toDataURL("image/jpeg", 0.95);
 const UI = ui();
-const ORIG = photo(600, 400, 17, false).toDataURL("image/png");
-const CROPPED = photo(500, 300, 17, false).toDataURL("image/png");
+const ORIG = photo(600, 400, 17).toDataURL("image/png");
+const CROPPED = photo(500, 300, 18).toDataURL("image/png");
 
 (async () => {
   const dom = new JSDOM(full, {
@@ -64,8 +77,9 @@ const CROPPED = photo(500, 300, 17, false).toDataURL("image/png");
   async function load(s) {
     const imp = $("session-import-input");
     Object.defineProperty(imp, "files", { value: [new win.File([JSON.stringify(s)], "s.json")], configurable: true });
-    fire(imp, "change"); await wait(80);
-    if (!$("confirm-modal-overlay").hidden) fire($("confirm-modal-ok-btn"), "click");
+    fire(imp, "change");
+    if (await waitUntil(() => !$("confirm-modal-overlay").hidden, 15000)) fire($("confirm-modal-ok-btn"), "click");
+    await waitUntil(() => $("confirm-modal-overlay").hidden, 5000);
     await wait(600);
   }
   const dashRow = (label) => { const tr = doc.querySelector('#dash-store-tbody tr[data-dash-store-row="' + label + '"]'); return tr ? Array.from(tr.children).map((c) => c.textContent.trim()) : null; };
@@ -139,7 +153,7 @@ const CROPPED = photo(500, 300, 17, false).toDataURL("image/png");
   s = await session();
   check("Einstellungen in der Sitzung gespeichert", s.cvSettings.shrinkEdge === 0 && s.cvSettings.shrinkJpeg === true && s.cvSettings.dropOrig === false);
   s.cvSettings.shrinkEdge = 1280; s.cvSettings.shrinkJpeg = false;
-  s.uploadedImages.push({ id: 206, filename: "neu.png", dataUrl: photo(900, 600, 19, false).toDataURL("image/png"), mimeType: "image/png" });
+  s.uploadedImages.push({ id: 206, filename: "neu.png", dataUrl: photo(900, 600, 19).toDataURL("image/png"), mimeType: "image/png" });
   await load(s);
   check("Laden stellt Einstellungen wieder her", $("cv-shrink-edge").value === "1280" && !$("cv-shrink-jpeg").checked && !$("cv-shrink-drop-orig").checked);
 
