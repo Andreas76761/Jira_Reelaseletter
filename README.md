@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.155.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.156.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,14 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **VARIANTE: Jira-Nummern entfernen (v2.156.0)**: Varianten gehen an Kunden, übernahmen aber bisher Jira-Nummern aus
+  dem FINAL-Stand (z. B. „km pro Jahr (ONESCM-73)“), solange dort „Jira-Nummern ausblenden“ aus war – gefunden beim
+  Rendern der Varianten-Word-Dateien. Neue Option **„Jira-Nummern entfernen“** in VARIANTE (Schritt 4), **standardmäßig
+  an** (wie in der Verteilfassung des Dokument-Reviews), abschaltbar und in der Sitzung gespeichert; der FINAL-Stand
+  selbst behält die Nummern. Das Entfernen räumt jetzt auch Reste mehrerer Nummern auf („(ONESCM-73, ONESCM-74)“ →
+  nichts statt „(, )“) und entfernt Leerzeichen vor Satzzeichen („angelegt (ONESCM-12).“ → „angelegt.“) – das gilt auch
+  für „Jira-Nummern ausblenden“ in FINAL und „Jira-Nummern löschen“ im Dokument-Review.
 
 - **Dokument-Review: Bildqualität mit OpenCV prüfen (v2.155.0)**: Stufe 3 (Bilder) hat den Knopf **„Bildqualität mit
   OpenCV prüfen“**. Er prüft nur die im Dokument verwendeten Bilder (gleiche Analyse wie im Register Bilder, v2.153):

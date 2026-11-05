@@ -171,7 +171,8 @@ async function docText(data) {
 
   // Stufe 4 Qualitaet
   gotoStage(4); await wait(20);
-  check("Q1 Formfehler erkannt (doppeltes Wort, Leerzeichen vor Satzzeichen nach Jira-Löschung)", chk("Q1") !== "OK" && $("vrev-stage").textContent.includes("doppeltes Wort: „Die die“") && $("vrev-stage").textContent.includes("Leerzeichen vor Satzzeichen"));
+  // v2.156: das Loeschen der Jira-Nummern raeumt Leerzeichen vor Satzzeichen selbst auf – Q1 meldet nur noch das doppelte Wort
+  check("Q1 Formfehler erkannt (doppeltes Wort); Jira-Löschung hinterlässt kein Leerzeichen vor Satzzeichen", chk("Q1") !== "OK" && $("vrev-stage").textContent.includes("doppeltes Wort: „Die die“") && !$("vrev-stage").textContent.includes("Leerzeichen vor Satzzeichen"));
   check("Q2 KI noch offen, Q3 leeres Kapitel 'Ausblick' als Fehler", chk("Q2") === "offen" && chk("Q3") === "Fehler" && doc.querySelector('[data-vrev-check="Q3"]').textContent.includes("3 Ausblick"));
   act("autofix"); await wait(20);
   check("Formfehler automatisch korrigiert", !$("vrev-stage").textContent.includes("doppeltes Wort") && chk("Q1") === "OK");
