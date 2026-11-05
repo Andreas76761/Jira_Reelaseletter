@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.151.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.152.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,14 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Dokument-Review: Bilder mit KI auswählen (v2.152.0)**: Stufe 3 hat neben „Bildvorschläge übernehmen“
+  (Textähnlichkeit) den Knopf **„Bilder mit KI auswählen“**: für jeden leeren Platzhalter (bis zu 40 je Lauf) bekommt
+  die KI die 8 besten Kandidaten aus dem Bildarchiv (Bildtext, OCR-Text, Kapitel) und wählt höchstens 3, die den
+  beschriebenen Bildschirm wirklich zeigen – im Zweifel keines (gleiche Regeln wie „Mit KI verfeinern“ im
+  Screens-Import, Prompt „screenPhMatch“ editierbar). Nur IDs aus der Kandidatenliste werden übernommen, doppelte nur
+  einmal; Ergebnis wird protokolliert (Stufe 3), B1 neu bewertet, ein erneuter Lauf fragt nur noch leere Platzhalter
+  an. Ohne Bildarchiv ist der Knopf gesperrt; eine ungültige KI-Antwort ändert nichts und wird gemeldet.
 
 - **PowerPoint aus FINAL: Listen, Bildunterschriften, Tabellen (v2.151.0)**: die PowerPoint-Fassung wurde mit
   LibreOffice gerendert und Folie für Folie angesehen. Behoben: nummerierte Listen hatten zusätzlich einen

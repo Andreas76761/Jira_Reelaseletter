@@ -6513,7 +6513,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.151.0";
+  var APP_VERSION = "2.152.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -33526,6 +33526,7 @@
     } else if (n === 3) {
       var phs = vrevAllPlaceholders(doc), pool = vrevImagePool(doc), ix = pool.length ? screenPhIndex(pool) : null;
       h += '<div class="controls" style="flex-wrap:wrap;"><button class="btn ghost" type="button" data-vrev-act="ph-suggest"' + (phs.length && pool.length ? "" : " disabled") + ">Bildvorschläge für leere Platzhalter übernehmen</button>" +
+        '<button class="btn ghost" type="button" data-vrev-act="ph-ai"' + (phs.length && pool.length && !vrevBusy ? "" : " disabled") + ' title="Die KI wählt je leerem Platzhalter aus den 8 besten Kandidaten des Bildarchivs höchstens 3 passende Bilder – im Zweifel keines.">Bilder mit KI auswählen</button>' +
         '<span class="step-note" style="margin:0;">Bildarchiv: ' + pool.length + " Bild(er) (Register Screens-Import/Bilder)" + "</span></div>";
       h += phs.length ? '<table class="simple-table vrev-ph-table"><thead><tr><th>Kapitel</th><th>Platzhalter</th><th>Bilder (max. 3)</th><th>Vorschlag</th></tr></thead><tbody>' + phs.map(function (p) {
         var ids = doc.ph[p.key] || [];
@@ -33840,6 +33841,39 @@
     var n = 0;
     doc.chapters.forEach(function (c) { var t = fn(c.text); if (t !== c.text) { c.text = t; n++; } });
     return n;
+  }
+  // v2.152: KI waehlt Bilder fuer leere Platzhalter (Stufe 3) – Kandidaten aus der Textaehnlichkeit, nur deren IDs erlaubt
+  async function vrevAiImages(doc) {
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
+    var pool = vrevImagePool(doc), ix = pool.length ? screenPhIndex(pool) : null;
+    if (!ix) return;
+    var empty = vrevAllPlaceholders(doc).filter(function (p) { return !(doc.ph[p.key] || []).length; }), rows = empty.slice(0, 40), allowed = {};
+    if (!rows.length) { els.vrevStatus.textContent = "Alle Platzhalter sind bereits belegt."; return; }
+    var body = rows.map(function (p, i) {
+      var cands = vrevRank(p, pool, ix).slice(0, 8);
+      if (cands.length < 8) pool.forEach(function (img) { if (cands.length < 8 && !cands.some(function (c) { return c.img.id === img.id; })) cands.push({ img: img, pct: 0 }); });
+      allowed[i + 1] = cands.map(function (c) { return c.img.id; });
+      return "PLATZHALTER " + (i + 1) + ": " + p.chapter + " – " + (p.desc || p.context || "[Bild]") + "\n" + cands.map(function (c) { return "  ID " + c.img.id + ": " + truncate(screenPhScreenText(c.img).replace(/\s+/g, " "), 260); }).join("\n");
+    }).join("\n\n");
+    vrevBusy = true; renderVrev();
+    els.vrevStatus.textContent = "KI wählt Bilder für " + rows.length + " Platzhalter …";
+    try {
+      var res = await sampleApi(ragPromptFor("screenPhMatch").replace("MAX", "3") + "\n\nMAX = 3\n\n" + body, { modelTier: "default", cache: false });
+      var obj = rlParseJsonObject(res && res.text);
+      if (!obj) throw new Error("Antwort der KI war kein gültiges JSON.");
+      var filled = 0, added = 0, none = 0;
+      rows.forEach(function (p, i) {
+        var raw = obj[i + 1] != null ? obj[i + 1] : obj[String(i + 1)];
+        var ids = Array.isArray(raw) ? raw.map(Number).filter(function (id, k, a) { return allowed[i + 1].indexOf(id) !== -1 && a.indexOf(id) === k; }).slice(0, 3) : [];
+        if (ids.length) { doc.ph[p.key] = ids; filled++; added += ids.length; } else none++;
+      });
+      if (added) vrevLog(doc, 3, "Bilder per KI ausgewählt", added);
+      vrevRunChecks(doc);
+      els.vrevStatus.textContent = "KI-Auswahl: " + filled + " Platzhalter mit " + added + " Bild(ern) belegt – bitte prüfen." + (none ? " " + none + " ohne passendes Bild." : "") + (empty.length > rows.length ? " " + (empty.length - rows.length) + " weitere Platzhalter (über 40) erneut starten." : "");
+      addLog("Dokument-Review: KI-Bildauswahl für „" + doc.name + "“ – " + filled + " Platzhalter belegt.");
+    } catch (err) {
+      els.vrevStatus.textContent = "KI-Bildauswahl fehlgeschlagen: " + ((err && err.message) || "Unbekannter Fehler.");
+    } finally { vrevBusy = false; renderVrev(); }
   }
   async function vrevAiQuality(doc) {
     if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
@@ -34358,6 +34392,7 @@
       renderVrev(); return;
     }
     if (act === "ai-quality") { vrevAiQuality(doc); return; }
+    if (act === "ph-ai") { vrevAiImages(doc); return; }
     if (act === "ai-consistency") { vrevAiConsistency(doc); return; }
     if (act === "cons-done") { var cf = doc.aiConsistency && doc.aiConsistency.findings[parseInt(b.getAttribute("data-i"), 10)]; if (cf) { cf.done = true; vrevLog(doc, 6, "KI-Widerspruch erledigt", 1); vrevRunChecks(doc); renderVrev(); } return; }
     if (act === "ai-adopt" || act === "ai-dismiss") {
