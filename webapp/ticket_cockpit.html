@@ -4159,6 +4159,26 @@
           <button class="import-tab" data-esub="dokumentation" type="button">Dokumentation</button>
         </div>
 
+        <section data-esub-panel="verwaltung" id="selftest-section">
+          <p class="section-label">Selbsttest der Umgebung</p>
+          <div class="callout">
+            Prüft in <b>dieser</b> Umgebung, ob alles funktioniert, was sich nur hier prüfen lässt: Export-Bibliotheken (ZIP, PDF,
+            Word), Bildprüfung (OpenCV), Texterkennung (Tesseract) mit einem erzeugten Testbild, KI-Zugang (eine kurze echte
+            Anfrage), Browser-Speicher (Schreib-/Lesetest) und Downloads. Lädt dabei ggf. OpenCV und Tesseract nach (je ca. 11 MB).
+            Der Bericht lässt sich kopieren oder speichern – z. B. zum Weitergeben bei Problemen.
+          </div>
+          <div class="controls" style="flex-wrap:wrap;">
+            <button class="btn primary" id="selftest-run-btn" type="button"><span class="btn-spinner" id="selftest-spinner" hidden></span>Selbsttest starten</button>
+            <button class="btn ghost" id="selftest-copy-btn" type="button" disabled>Bericht kopieren</button>
+            <button class="btn ghost" id="selftest-md-btn" type="button" disabled>Bericht speichern (.md)</button>
+          </div>
+          <p class="step-note" id="selftest-status"></p>
+          <div class="table-wrap" id="selftest-wrap" hidden><table class="simple-table">
+            <thead><tr><th>Prüfung</th><th>Ergebnis</th><th>Details</th><th class="num">Dauer</th></tr></thead>
+            <tbody id="selftest-tbody"></tbody>
+          </table></div>
+        </section>
+
         <section data-esub-panel="verwaltung">
           <p class="section-label">Sitzung speichern/laden</p>
           <div class="callout">
@@ -6629,7 +6649,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.170.0";
+  var APP_VERSION = "2.171.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8252,7 +8272,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "editor-cv-check", "editor-cv-note", "cv-section", "cv-analyze-btn", "cv-spinner", "cv-crop-all-btn", "cv-ocr-pre", "cv-status", "cv-table-wrap", "cv-tbody", "images-cv-check", "images-cv-note", "autosave-fail", "autosave-fail-msg", "autosave-fail-export-btn", "autosave-fail-shrink-btn", "autosave-fail-dash-btn", "autosave-fail-retry-btn", "autosave-fail-close-btn", "cv-dup-wrap", "cv-dup-count", "cv-dup-list", "cv-shrink", "cv-shrink-edge", "cv-shrink-jpeg", "cv-shrink-drop-orig", "cv-shrink-btn", "cv-shrink-spinner", "cv-shrink-status", "dash-store", "dash-store-head", "dash-store-tiles", "dash-store-warn", "dash-store-tbody", "dash-store-tfoot", "dash-store-refresh-btn", "dash-store-at", "dash-clean", "dash-clean-tbody", "dash-archive-import-btn", "dash-archive-input", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-opt-strip-jira", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-cv-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "editor-cv-check", "editor-cv-note", "cv-section", "cv-analyze-btn", "cv-spinner", "cv-crop-all-btn", "cv-ocr-pre", "cv-status", "cv-table-wrap", "cv-tbody", "selftest-run-btn", "selftest-spinner", "selftest-copy-btn", "selftest-md-btn", "selftest-status", "selftest-wrap", "selftest-tbody", "images-cv-check", "images-cv-note", "autosave-fail", "autosave-fail-msg", "autosave-fail-export-btn", "autosave-fail-shrink-btn", "autosave-fail-dash-btn", "autosave-fail-retry-btn", "autosave-fail-close-btn", "cv-dup-wrap", "cv-dup-count", "cv-dup-list", "cv-shrink", "cv-shrink-edge", "cv-shrink-jpeg", "cv-shrink-drop-orig", "cv-shrink-btn", "cv-shrink-spinner", "cv-shrink-status", "dash-store", "dash-store-head", "dash-store-tiles", "dash-store-warn", "dash-store-tbody", "dash-store-tfoot", "dash-store-refresh-btn", "dash-store-at", "dash-clean", "dash-clean-tbody", "dash-archive-import-btn", "dash-archive-input", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-opt-strip-jira", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-cv-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -30097,6 +30117,118 @@
   });
 
 
+  // ===================== v2.171: Selbsttest der Umgebung (Einstellungen) =====================
+  // Prueft das, was sich nur in der echten Umgebung pruefen laesst (CDN/Dateien, KI-Zugang, Browser-Speicher, Downloads).
+  var selftestResults = [], selftestAt = "";
+  function selftestTimeout(p, ms, what) {
+    return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej(new Error(what + ": keine Antwort nach " + Math.round(ms / 1000) + " s")); }, ms); })]);
+  }
+  function selftestCanvasText(text) {
+    var c = document.createElement("canvas"); c.width = 420; c.height = 110;
+    var x = c.getContext("2d");
+    x.fillStyle = "#ffffff"; x.fillRect(0, 0, c.width, c.height);
+    x.fillStyle = "#111111"; x.font = "bold 44px sans-serif"; x.fillText(text, 24, 72);
+    return c.toDataURL("image/png");
+  }
+  var SELFTEST_CHECKS = [
+    { name: "ZIP-Export (JSZip)", run: async function () {
+      if (typeof JSZip === "undefined") throw new Error("JSZip nicht geladen (CDN gesperrt?)");
+      var z = new JSZip(); z.file("t.txt", "Selbsttest");
+      var back = await JSZip.loadAsync(await z.generateAsync({ type: "uint8array" }));
+      if ((await back.file("t.txt").async("string")) !== "Selbsttest") throw new Error("ZIP-Inhalt stimmt nicht");
+      return "ZIP erzeugt und wieder gelesen";
+    } },
+    { name: "PDF-Export (jsPDF)", run: async function () {
+      if (!window.jspdf || !window.jspdf.jsPDF) throw new Error("jsPDF nicht geladen (CDN gesperrt?)");
+      var d = new window.jspdf.jsPDF(); d.text("Selbsttest", 10, 10);
+      var n = d.output("arraybuffer").byteLength;
+      if (!n) throw new Error("PDF leer");
+      return "PDF erzeugt (" + dashFmtBytes(n) + ")";
+    } },
+    { name: "Word-Export (DOCX)", run: async function () {
+      var blob = await buildMarkdownDocxBlob("Selbsttest", "# Selbsttest\n\nEin Absatz mit **fett**.");
+      var z = await JSZip.loadAsync(blob);
+      if (!z.file("word/document.xml")) throw new Error("document.xml fehlt");
+      return "Word-Datei erzeugt (" + dashFmtBytes(blob.size) + ")";
+    } },
+    { name: "Bildprüfung (OpenCV)", run: async function () {
+      var cv = (await selftestTimeout(loadOpenCv(), 120000, "OpenCV")).cv;
+      var r = cvAnalyzePixels(cv, await cvImageData(selftestCanvasText("Test 123"), CV_MAX_EDGE));
+      if (!(r.sharp > 0) || !r.hash) throw new Error("Analyse ohne Ergebnis");
+      return "geladen" + (cvLoadedFrom ? " aus: " + cvLoadedFrom : "") + "; Testbild analysiert (Schärfe " + Math.round(r.sharp) + ")";
+    } },
+    { name: "Texterkennung (Tesseract)", run: async function () {
+      if (typeof Tesseract === "undefined" && !(await ensureTesseract())) throw new Error("Tesseract.js weder neben der App (" + OCR_LOCAL_DIR + ") noch aus dem Internet ladbar");
+      var pool = await selftestTimeout(getOcrWorkerPool(), 180000, "Tesseract");
+      var res = await selftestTimeout(pool[0].recognize(selftestCanvasText("Test 123")), 60000, "Erkennung");
+      var t = ((res && res.data && res.data.text) || "").trim();
+      if (!/123/.test(t)) throw new Error("Testtext nicht erkannt (gelesen: „" + truncate(t, 40) + "“)");
+      return "„" + truncate(t, 40) + "“ erkannt" + (ocrSource ? "; Quelle: " + ocrSource : "");
+    } },
+    { name: "KI (Claude)", run: async function () {
+      if (!sampleApi) return { warn: true, detail: "nicht verfügbar – lokal geöffnet oder KI-Zugang nicht freigegeben; KI-Funktionen zeigen dann einen Hinweis" };
+      var r = await selftestTimeout(sampleApi("Antworte nur mit dem Wort OK.", { modelTier: "quick", cache: false }), 90000, "KI");
+      var t = String((r && r.text) || "").trim();
+      if (!/\bOK\b/i.test(t)) throw new Error("unerwartete Antwort: „" + truncate(t, 40) + "“");
+      return "Antwort „" + truncate(t, 20) + "“";
+    } },
+    { name: "Browser-Speicher (automatisches Speichern)", run: async function () {
+      var db = await openAutoSaveDb();
+      if (!db) return { warn: true, detail: "IndexedDB nicht verfügbar – automatisches Speichern aus; Sitzung als Datei speichern" };
+      var key = "selftest", val = { at: new Date().toISOString(), pad: "x".repeat(2048) };
+      await new Promise(function (res, rej) { var tx = db.transaction(AUTOSAVE_STORE, "readwrite"); tx.objectStore(AUTOSAVE_STORE).put(val, key); tx.oncomplete = res; tx.onerror = tx.onabort = function () { rej(new Error((tx.error && tx.error.name) || "Schreiben fehlgeschlagen")); }; });
+      var got = await new Promise(function (res) { var tx = db.transaction(AUTOSAVE_STORE, "readonly"), rq = tx.objectStore(AUTOSAVE_STORE).get(key); rq.onsuccess = function () { res(rq.result); }; rq.onerror = function () { res(null); }; });
+      await new Promise(function (res) { var tx = db.transaction(AUTOSAVE_STORE, "readwrite"); tx.objectStore(AUTOSAVE_STORE).delete(key); tx.oncomplete = res; tx.onerror = res; });
+      if (!got || got.at !== val.at) throw new Error("Gelesener Wert stimmt nicht");
+      var est = await dashBrowserEstimate();
+      return "Schreiben/Lesen ok" + (est ? "; belegt " + dashFmtBytes(est.usage) + ", frei laut Browser " + dashFmtBytes(est.free) : "");
+    } },
+    { name: "Downloads", run: async function () {
+      if (!downloadsApi) return { warn: true, detail: "Download-Funktion nicht verfügbar (nur in der Artifact-Laufzeit) – Exporte nicht möglich" };
+      return "verfügbar (nicht ausgelöst)";
+    } }
+  ];
+  async function runSelftest() {
+    els.selftestRunBtn.disabled = true; els.selftestSpinner.hidden = false; els.selftestWrap.hidden = false;
+    selftestResults = SELFTEST_CHECKS.map(function (c) { return { name: c.name, state: "läuft", detail: "", ms: null }; });
+    renderSelftest();
+    for (var i = 0; i < SELFTEST_CHECKS.length; i++) {
+      var t0 = Date.now(), r = selftestResults[i];
+      els.selftestStatus.textContent = "Prüfe " + (i + 1) + " von " + SELFTEST_CHECKS.length + ": " + r.name + " …";
+      try {
+        var out = await SELFTEST_CHECKS[i].run();
+        if (out && out.warn) { r.state = "Hinweis"; r.detail = out.detail; } else { r.state = "ok"; r.detail = String(out || ""); }
+      } catch (err) { r.state = "Fehler"; r.detail = (err && err.message) || String(err); }
+      r.ms = Date.now() - t0;
+      renderSelftest();
+    }
+    selftestAt = nowLabel();
+    var n = function (st) { return selftestResults.filter(function (x) { return x.state === st; }).length; };
+    els.selftestStatus.textContent = "Selbsttest " + selftestAt + ": " + n("ok") + " ok, " + n("Hinweis") + " Hinweis(e), " + n("Fehler") + " Fehler.";
+    addLog("Selbsttest: " + n("ok") + " ok, " + n("Hinweis") + " Hinweis(e), " + n("Fehler") + " Fehler" + (n("Fehler") ? " (" + selftestResults.filter(function (x) { return x.state === "Fehler"; }).map(function (x) { return x.name; }).join(", ") + ")" : "") + ".");
+    els.selftestRunBtn.disabled = false; els.selftestSpinner.hidden = true;
+    els.selftestCopyBtn.disabled = false; els.selftestMdBtn.disabled = false;
+  }
+  function renderSelftest() {
+    var cls = { ok: "cv-ok", Hinweis: "cv-warn", Fehler: "cv-bad", "läuft": "" };
+    els.selftestTbody.innerHTML = selftestResults.map(function (r) {
+      return '<tr data-selftest="' + escapeHtml(r.name) + '"><td>' + escapeHtml(r.name) + '</td><td><span class="' + (cls[r.state] || "") + '">' + escapeHtml(r.state) + "</span></td><td>" + escapeHtml(r.detail) + '</td><td class="num">' + (r.ms == null ? "–" : (r.ms / 1000).toFixed(1).replace(".", ",") + " s") + "</td></tr>";
+    }).join("");
+  }
+  function selftestMarkdown() {
+    return "# Selbsttest ONESCM Ticket-Cockpit\n\n- Version: " + APP_VERSION + "\n- Zeitpunkt: " + selftestAt + "\n- Browser: " + navigator.userAgent + "\n- Seite: " + location.origin + "\n\n| Prüfung | Ergebnis | Details | Dauer |\n|---|---|---|---|\n" +
+      selftestResults.map(function (r) { return "| " + r.name + " | " + r.state + " | " + String(r.detail).replace(/\|/g, "/") + " | " + (r.ms == null ? "–" : (r.ms / 1000).toFixed(1) + " s") + " |"; }).join("\n") + "\n";
+  }
+  if (els.selftestRunBtn) {
+    els.selftestRunBtn.addEventListener("click", function () { runSelftest(); });
+    els.selftestCopyBtn.addEventListener("click", async function () {
+      try { await navigator.clipboard.writeText(selftestMarkdown()); showToast("Kopiert", "Bericht des Selbsttests in der Zwischenablage."); }
+      catch (e) { showToast("Nicht kopiert", "Zwischenablage nicht verfügbar – „Bericht speichern“ nutzen.", true); }
+    });
+    els.selftestMdBtn.addEventListener("click", async function () {
+      if (await saveOrWarn("Selbsttest_" + new Date().toISOString().slice(0, 10) + ".md", selftestMarkdown())) showToast("Gespeichert", "Bericht des Selbsttests gespeichert.");
+    });
+  }
   // ===================== v2.121: Interne Mitteilungen in den Registern + Dashboard-Uebersicht =====================
   var DOC_NOTE_HOSTS = { releaseletter: "Releaseletter", benutzerhandbuch: "Benutzerhandbuch", prozessbild: "Prozessbild", clickanweisung: "Clickanweisung" };
   function docNotesNormalize(d) {
@@ -36329,6 +36461,7 @@
   var NAV_GROUPS = ["Input", "Operation", "Output"];
   // Neue Funktionen (Label "Neu" mit Hinweis)
   var NAV_NEW = {
+    einstellungen: "Neu in v2.171: Selbsttest der Umgebung (Bibliotheken, OpenCV, Texterkennung, KI, Browser-Speicher, Downloads)",
     bilder: "Neu in v2.153–2.162: Bildverarbeitung mit OpenCV (Schärfe, Kontrast, leere Ränder, sehr ähnliche Bilder, OCR-Vorverarbeitung); Speicher sparen; sehr ähnliche Bilder bereinigen; Prüfung beim Hochladen",
     variante: "Neu in v2.152/2.155: Dokument-Review – Bilder mit KI auswählen, Bildqualität mit OpenCV prüfen",
     final: "Neu in v2.148–2.151: Listen, eingebettete Bilder und Tabellen aus dem Handbuch; PowerPoint überarbeitet",
