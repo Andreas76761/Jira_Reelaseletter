@@ -153,7 +153,7 @@ const CROPPED = UI; // zugeschnittener Screen (Flaechen): bleibt selbst unveraen
   $("cv-shrink-btn").click();
   await waitUntil(() => !$("confirm-modal-overlay").hidden || /^Nichts zu sparen/.test($("cv-shrink-status").textContent), 300000);
   if (!/^1 von 6 Bild\(ern\) verkleinern/.test($("confirm-modal-message").textContent) || $("confirm-modal-overlay").hidden) console.log("  Status: " + $("cv-shrink-status").textContent + " | Meldung: " + ($("confirm-modal-overlay").hidden ? "–" : $("confirm-modal-message").textContent));
-  check("Ohne Verkleinern: nur das neue PNG-Foto wird JPEG", !$("confirm-modal-overlay").hidden && /^1 von 6 Bild\(ern\) verkleinern/.test($("confirm-modal-message").textContent) && !/Original/.test($("confirm-modal-message").textContent));
+  check("Ohne Verkleinern: nur das neue PNG-Foto wird JPEG", !$("confirm-modal-overlay").hidden && /^1 von 6 Bild\(ern\) verkleinern/.test($("confirm-modal-message").textContent) && !/aufbewahrte\(s\) Original/.test($("confirm-modal-message").textContent));
   fire($("confirm-modal-ok-btn"), "click");
   await waitUntil(() => /gespart/.test($("cv-shrink-status").textContent), 300000);
   s = await session();
