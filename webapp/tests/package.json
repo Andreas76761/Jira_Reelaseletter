@@ -8,6 +8,8 @@
   },
   "devDependencies": {
     "@techstark/opencv-js": "4.11.0-release.1",
+    "@tesseract.js-data/deu": "^1.0.0",
+    "@tesseract.js-data/eng": "^1.0.0",
     "canvas": "^3.2.3",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^30.1.0",
@@ -15,6 +17,8 @@
     "jszip": "^3.10.2",
     "mammoth": "^1.12.3",
     "pdf-parse": "^2.4.5",
+    "tesseract.js": "^5.1.1",
+    "tesseract.js-core": "^5.1.1",
     "xlsx": "^0.18.5"
   }
 }

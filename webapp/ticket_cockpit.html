@@ -3594,7 +3594,7 @@
 
       <!-- ================= Bilder ================= -->
       <section class="view-panel" data-view-panel="bilder" hidden>
-        <div class="view-head"><h2>Bilder</h2><p class="desc">Tabelle und Galerie aller in dieser Sitzung erzeugten Prozessdiagramme sowie hochgeladener Bilder, mit Datum. Beschreibungen lassen sich in der Tabelle direkt bearbeiten oder leeren, Bilder dort auch löschen. Hochgeladene Bilder lassen sich zusätzlich mit Domäne/Kapitel/Schritt (für Clickanweisung) verschlagworten, per OCR nach Text durchsuchen (Tesseract.js, läuft im Browser, benötigt beim ersten Lauf Internetzugriff zum Nachladen der Erkennungsdaten), mit rein technischen Metadaten (Maße, Dateigröße, Helligkeit/Farbe &ndash; keine KI-Bildinterpretation) anzeigen oder wieder herunterladen. Ein Klick auf das Vorschaubild (Galerie oder Tabelle) öffnet es in einem frei beweglichen, größenveränderbaren Vollbild-Fenster &ndash; dort lassen sich mit der Maus Rechtecke über sensible Stellen (Namen, FIN, Servicenummer) ziehen, um diese dauerhaft zu verpixeln ("Speichern"; die Originalversion bleibt über "Original wiederherstellen" einmalig erhalten).</p></div>
+        <div class="view-head"><h2>Bilder</h2><p class="desc">Tabelle und Galerie aller in dieser Sitzung erzeugten Prozessdiagramme sowie hochgeladener Bilder, mit Datum. Beschreibungen lassen sich in der Tabelle direkt bearbeiten oder leeren, Bilder dort auch löschen. Hochgeladene Bilder lassen sich zusätzlich mit Domäne/Kapitel/Schritt (für Clickanweisung) verschlagworten, per OCR nach Text durchsuchen (Tesseract.js, läuft im Browser; Erkennungsdaten für Deutsch und Englisch werden mit der App veröffentlicht, sonst beim ersten Lauf aus dem Internet geladen), mit rein technischen Metadaten (Maße, Dateigröße, Helligkeit/Farbe &ndash; keine KI-Bildinterpretation) anzeigen oder wieder herunterladen. Ein Klick auf das Vorschaubild (Galerie oder Tabelle) öffnet es in einem frei beweglichen, größenveränderbaren Vollbild-Fenster &ndash; dort lassen sich mit der Maus Rechtecke über sensible Stellen (Namen, FIN, Servicenummer) ziehen, um diese dauerhaft zu verpixeln ("Speichern"; die Originalversion bleibt über "Original wiederherstellen" einmalig erhalten).</p></div>
 
         <section>
           <p class="section-label">Bild hochladen</p>
@@ -6629,7 +6629,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.169.0";
+  var APP_VERSION = "2.170.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -19354,12 +19354,49 @@
       renderCvTable(); renderGallery();
     });
   }
+  // v2.170: Tesseract (Bibliothek, Worker, Engine, Sprachdaten eng+deu) wird mit dem Artifact veroeffentlicht
+  // (vendor/tesseract/…) und zuerst von dort geladen; CDN nur als Rueckfall – OCR funktioniert so auch ohne CDN-Zugriff.
+  var OCR_LOCAL_DIR = "vendor/tesseract/";
+  var ocrSource = "";
+  var tesseractLoadPromise = null;
+  function ocrLoadScript(src) {
+    return new Promise(function (resolve) {
+      var sc = document.createElement("script");
+      sc.src = src; sc.async = true;
+      sc.onload = function () { resolve(typeof Tesseract !== "undefined"); };
+      sc.onerror = function () { resolve(false); };
+      document.head.appendChild(sc);
+    });
+  }
+  function ensureTesseract() {
+    if (typeof Tesseract !== "undefined") return Promise.resolve(true);
+    if (!tesseractLoadPromise) {
+      tesseractLoadPromise = ocrLoadScript(OCR_LOCAL_DIR + "tesseract.min.js").then(function (ok) {
+        return ok || ocrLoadScript("https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js");
+      }).then(function (ok) { if (!ok) tesseractLoadPromise = null; return ok; });
+    }
+    return tesseractLoadPromise;
+  }
+  // Liegen die Dateien neben der App? (nur im Browser pruefbar; ohne fetch: Standard-Pfade von Tesseract.js)
+  async function ocrLocalOptions() {
+    if (typeof fetch !== "function" || typeof URL !== "function") return null;
+    try {
+      var base = new URL(OCR_LOCAL_DIR, location.href).href;
+      var r = await fetch(base + "worker.min.js", { method: "HEAD" });
+      if (!r.ok) return null;
+      return { workerPath: base + "worker.min.js", corePath: base, langPath: base + "lang" };
+    } catch (e) { return null; }
+  }
   var ocrWorkerPoolPromise = null;
   function getOcrWorkerPool() {
     if (!ocrWorkerPoolPromise) {
-      var creations = [];
-      for (var i = 0; i < IMAGES_OCR_CONCURRENCY; i++) creations.push(Tesseract.createWorker("eng+deu"));
-      ocrWorkerPoolPromise = Promise.all(creations).catch(function (err) {
+      ocrWorkerPoolPromise = ocrLocalOptions().then(function (opts) {
+        function make(o) { var c = []; for (var i = 0; i < IMAGES_OCR_CONCURRENCY; i++) c.push(o ? Tesseract.createWorker("eng+deu", 1, o) : Tesseract.createWorker("eng+deu")); return Promise.all(c); }
+        if (!opts) { ocrSource = "Internet (CDN)"; return make(null); }
+        ocrSource = "mit der App veröffentlichte Dateien";
+        return make(opts).catch(function () { ocrSource = "Internet (CDN)"; return make(null); });
+      });
+      ocrWorkerPoolPromise = ocrWorkerPoolPromise.catch(function (err) {
         ocrWorkerPoolPromise = null; // bei Fehlschlag (z. B. kein Internetzugriff) erneuten Versuch beim naechsten Aufruf erlauben
         throw err;
       });
@@ -19384,8 +19421,8 @@
   async function runImageOcr(id, btn) {
     var img = app.uploadedImages.filter(function (i) { return i.id === id; })[0];
     if (!img) return;
-    if (typeof Tesseract === "undefined") {
-      img.ocrError = "OCR-Bibliothek (Tesseract.js) konnte nicht geladen werden - Internetzugriff erforderlich.";
+    if (typeof Tesseract === "undefined" && !(await ensureTesseract())) {
+      img.ocrError = "OCR-Bibliothek (Tesseract.js) konnte nicht geladen werden – weder neben der App (" + OCR_LOCAL_DIR + ") noch aus dem Internet.";
       renderGallery();
       return;
     }
@@ -19452,8 +19489,8 @@
   async function runImagesOcrBatch() {
     var targets = app.uploadedImages.slice();
     if (!targets.length) { showToast("Keine Bilder", "Es sind keine hochgeladenen Bilder vorhanden.", true); return; }
-    if (typeof Tesseract === "undefined") {
-      showToast("Nicht verfügbar", "OCR-Bibliothek (Tesseract.js) konnte nicht geladen werden - Internetzugriff erforderlich.", true);
+    if (typeof Tesseract === "undefined" && !(await ensureTesseract())) {
+      showToast("Nicht verfügbar", "OCR-Bibliothek (Tesseract.js) konnte nicht geladen werden – weder neben der App noch aus dem Internet.", true);
       return;
     }
     var chapters = massChapterOptionsList();
@@ -20175,8 +20212,8 @@
   async function runEditorScreensOcrBatch() {
     var targets = app.uploadedImages.filter(function (i) { return !!i.sourceFile; });
     if (!targets.length) { showToast("Keine Screens", "Es sind keine extrahierten Screens vorhanden.", true); return; }
-    if (typeof Tesseract === "undefined") {
-      showToast("Nicht verfügbar", "OCR-Bibliothek (Tesseract.js) konnte nicht geladen werden - Internetzugriff erforderlich.", true);
+    if (typeof Tesseract === "undefined" && !(await ensureTesseract())) {
+      showToast("Nicht verfügbar", "OCR-Bibliothek (Tesseract.js) konnte nicht geladen werden – weder neben der App noch aus dem Internet.", true);
       return;
     }
     var chapters = massChapterOptionsList();
@@ -33584,7 +33621,7 @@
   async function screenPhOcrMissing() {
     var targets = screenPhPool().filter(function (img) { return !img.ocrText && !img.ocrRanAt; }); // bereits gelesene (auch ohne Text) nicht erneut
     if (!targets.length) return { done: 0, failed: 0, skipped: false };
-    if (typeof Tesseract === "undefined") {
+    if (typeof Tesseract === "undefined" && !(await ensureTesseract())) {
       showToast("OCR nicht verfügbar", "OCR-Bibliothek (Tesseract.js) konnte nicht geladen werden - Zuordnung läuft ohne OCR.", true);
       return { done: 0, failed: 0, skipped: true };
     }

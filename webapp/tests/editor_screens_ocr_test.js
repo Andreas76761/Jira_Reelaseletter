@@ -189,8 +189,9 @@ async function buildDocxWithScreens(n) {
   const realTesseract = win.Tesseract;
   win.Tesseract = undefined;
   fire(doc.getElementById("editor-ocr-batch-btn"), "click");
-  await wait(50);
-  check("Ohne Tesseract: verständlicher Hinweis statt Absturz", doc.getElementById("toast").textContent.includes("Internetzugriff erforderlich"));
+  // v2.170: versucht erst die mit der App veroeffentlichte Kopie, dann das CDN – beides scheitert hier
+  for (let t = 0; t < 300 && !doc.getElementById("toast").textContent.includes("konnte nicht geladen werden"); t++) await wait(50);
+  check("Ohne Tesseract: verständlicher Hinweis statt Absturz", doc.getElementById("toast").textContent.includes("weder neben der App noch aus dem Internet"));
   win.Tesseract = realTesseract;
 
   // ===================== Parallelität: Gesamtlaufzeit nahe der laengsten Einzelverzoegerung =====================

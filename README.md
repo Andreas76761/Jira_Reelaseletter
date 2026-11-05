@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.169.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.170.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2031,12 +2031,18 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
-- **OpenCV ohne Internet-CDN (v2.169.0)**: OpenCV.js (4.11, Apache-2.0, ca. 11 MB) wird jetzt **zusammen mit dem
-  Artifact veröffentlicht** (`vendor/opencv-4.11.0.js`, Lizenz in `vendor/opencv-LICENSE.txt`) und zuerst von dort
-  geladen; cdn.jsdelivr.net und unpkg.com dienen nur noch als Rückfall. Damit funktioniert die Bildprüfung auch, wenn
-  diese CDNs gesperrt sind (in Chromium mit vollständig gesperrtem Internet nachgeprüft). Geladen wird weiterhin erst
-  beim ersten Gebrauch; die Statuszeile nennt die Quelle („OpenCV geladen aus: …“). Beim lokalen Bauen ohne die Datei
-  greift wie bisher das CDN.
+- **Texterkennung ohne Internet-CDN, Bibliotheken selbst bereitstellen (v2.170.0)**: Wie OpenCV sucht jetzt auch die
+  OCR (Tesseract.js) zuerst neben der App (`vendor/tesseract/`: Bibliothek, Worker, Engine, Sprachdaten Deutsch und
+  Englisch) und nutzt das CDN nur als Rückfall – für Einzelbild-OCR, OCR-Stapel in Bilder und Screens-Import sowie die
+  OCR vor der Platzhalter-Zuordnung. In Chromium mit vollständig gesperrtem Internet nachgeprüft: „Vertrag speichern
+  Kundennummer 4711“ in 2,4 s aus den lokalen Dateien erkannt. **Bereitstellen:** `cd webapp/tests && npm install`, dann
+  `node webapp/tests/vendor-copy.js <Ordner der gebauten App>` – legt 10 Dateien (22,7 MB, je mit Lizenz) unter
+  `vendor/` ab. Das veröffentlichte Artifact enthält diese Fremd-Bibliotheken nicht; dort gilt wie bisher das CDN.
+
+- **OpenCV ohne Internet-CDN (v2.169.0)**: Die App lädt OpenCV.js zuerst aus `vendor/opencv-4.11.0.js` neben der Seite
+  und nur, wenn die Datei fehlt, von cdn.jsdelivr.net bzw. unpkg.com. Die Statuszeile nennt die Quelle („OpenCV geladen
+  aus: …“). In Chromium mit vollständig gesperrtem Internet nachgeprüft: mit der Datei funktioniert die Bildprüfung,
+  ohne sie erscheint eine klare Meldung. Das veröffentlichte Artifact enthält die Datei **nicht** (siehe v2.170).
 
 - **„Speicher voll“ im echten Browser nachgeprüft (v2.168.0)**: In Chromium mit auf 2 MB begrenztem Speicher (per
   DevTools) zeigte sich zweierlei: (1) Der Browser **schätzt 3 GB frei**, lehnt aber trotzdem ab – die Warnleiste nennt

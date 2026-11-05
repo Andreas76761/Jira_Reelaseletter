@@ -245,7 +245,8 @@ const PNG_1X1 = Buffer.from(
   // ===================== Ohne Tesseract: ehrlicher Fehler statt Absturz =====================
   delete win.Tesseract;
   fire(doc.getElementById("images-ocr-batch-btn"), "click");
-  await wait(100);
+  // v2.170: erst die mit der App veroeffentlichte Kopie, dann das CDN – beides scheitert hier
+  for (let i = 0; i < 300 && !doc.getElementById("toast").textContent.includes("OCR-Bibliothek"); i++) await wait(50);
   check("Ohne Tesseract: verständlicher Hinweis statt Absturz", doc.getElementById("toast").textContent.includes("OCR-Bibliothek"));
   // Der Worker-Pool wurde durch die beiden erfolgreichen Läufe oben bereits
   // erstellt und bleibt ueber die gesamte Sitzung hinweg zwischengespeichert
