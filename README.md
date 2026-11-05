@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.153.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.154.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,20 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Navigation nach Workflow: Input · Operation · Output (v2.154.0)**: die Navigation ist nach den drei Gruppen
+  **Input**, **Operation**, **Output** und darin nach den 9 Stufen geordnet: 1 Quellen (Import, Dateiverwaltung,
+  Rovo Knowledge, Screens-Import, Bilder, Tabelle) → 2 Extraktion (Verarbeitung, Rovo Summary, Massenverarbeitung,
+  Listenauswahl) → 3 Normalisierung (Gliederung, Glossar, Synonyme, Abkürzungen) → 4 Traceability (Ticket Graph, Trend,
+  Mitteilungen) → 5 Validierung (CROSS_X, AGENT) → 6 Generierung (Releaseletter, Benutzerhandbuch, Prozessbild,
+  Clickanweisung, Editor, Unterkapitel, Bildband) → 7 E2E-QA (FINAL, VARIANTE mit Dokument-Review) → 8 Testing
+  (Datenqualität, Ergebnisse) → 9 Documentation (Output MD/PDF, Infobox); Dashboard oben, Einstellungen unten.
+  **Burger-Menü** klappt die Navigation ein (öffnen über das Burger-Symbol oben links), Gruppen lassen sich einzeln oder
+  alle zusammen einklappen (gemerkt im Browser; das offene Register bleibt sichtbar). Jeder Registereintrag zeigt die
+  **Anzahl seiner Einträge**, neue Funktionen tragen das Label **„Neu“** (Hinweis per Mauszeiger), jede Stufe und Gruppe
+  ihren **Stand** („Register mit Inhalt / Register“, Punkt grau = leer, orange = teilweise, grün = alle). **Oben in jedem
+  Register** steht die **Workflow-Leiste** mit allen 9 Stufen, Stand je Stufe und der aktuellen Stufe hervorgehoben; ein
+  Klick auf eine Stufe öffnet deren erstes Register. Zahlen und Stand aktualisieren sich bei jeder Änderung.
 
 - **Bildverarbeitung mit OpenCV (v2.153.0)**: neuer Abschnitt „Bildverarbeitung mit OpenCV“ im Register **Bilder**.
   OpenCV.js (`@techstark/opencv-js@4.11.0-release.1`, WebAssembly, ca. 11 MB, von jsDelivr bzw. unpkg) wird erst beim

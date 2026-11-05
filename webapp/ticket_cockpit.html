@@ -104,6 +104,32 @@
   }
   .nav-item:hover { background: var(--surface-2); color: var(--text); }
   .nav-item.active { background: var(--accent-soft); color: var(--accent-text); }
+  .nav-head-actions { display: flex; gap: 6px; }
+  .nav-group-btn { display: flex; align-items: center; gap: 6px; width: 100%; padding: 12px 8px 4px; border: none; background: none; cursor: pointer;
+    font-family: inherit; font-size: 11px; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent-text); text-align: left; }
+  .nav-group-btn .nav-chev { transition: transform 0.15s ease; }
+  .nav-group-btn[aria-expanded="false"] .nav-chev { transform: rotate(-90deg); }
+  .nav-group-stand { margin-left: auto; font-size: 10px; font-weight: 700; letter-spacing: 0; color: var(--text-faint); font-family: "IBM Plex Mono", monospace; }
+  .nav-stage { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-faint); padding: 8px 10px 2px; }
+  .nav-stage-no { width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9.5px; letter-spacing: 0; background: var(--surface-2); color: var(--text-muted); }
+  .nav-stage-stand { margin-left: auto; letter-spacing: 0; font-family: "IBM Plex Mono", monospace; }
+  .flow-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: var(--border-strong); flex: none; }
+  .flow-dot.part { background: #d97706; } .flow-dot.full { background: #15803d; }
+  li.nav-folded { display: none; }
+  .nav-count { margin-left: auto; font-size: 10.5px; font-weight: 700; color: var(--text-faint); font-family: "IBM Plex Mono", monospace; }
+  .nav-count.zero { opacity: 0.45; }
+  .nav-new { font-size: 9.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; background: #db2777; border-radius: 100px; padding: 1px 6px; }
+  .nav-item .nav-count + .count-badge { margin-left: 4px; }
+  .flow-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0 0 12px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+  .flow-seg { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  .flow-strip .flow-group { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); margin: 0 2px 0 6px; }
+  .flow-strip .flow-seg:first-child .flow-group { margin-left: 0; }
+  .flow-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 100px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted);
+    font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .flow-chip:hover { border-color: var(--border-strong); color: var(--text); }
+  .flow-chip.current { background: var(--accent-soft); color: var(--accent-text); border-color: var(--accent-text); }
+  .flow-chip .flow-stand { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--text-faint); }
+  .flow-arrow { color: var(--text-faint); font-size: 12px; }
   .nav-item .count-badge {
     margin-left: auto; font-size: 10.5px; font-weight: 700; background: var(--surface-2); color: var(--text-faint);
     border-radius: 100px; padding: 1px 6px; font-family: "IBM Plex Mono", monospace;
@@ -904,9 +930,14 @@
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-head">
       <span class="sidebar-title">Hauptmenü</span>
-      <button class="icon-btn" id="sidebar-toggle" type="button" aria-label="Navigation einklappen">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
-      </button>
+      <span class="nav-head-actions">
+        <button class="icon-btn" id="nav-fold-all-btn" type="button" aria-label="Alle Gruppen ein- oder ausklappen" title="Alle Gruppen ein-/ausklappen">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+        <button class="icon-btn" id="sidebar-toggle" type="button" aria-label="Navigation einklappen" title="Navigation einklappen">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </span>
     </div>
     <ul class="nav-list" id="nav-list">
       <li><button class="nav-item" data-view="dashboard" type="button">Dashboard</button></li>
@@ -6539,7 +6570,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.153.0";
+  var APP_VERSION = "2.154.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -7979,7 +8010,7 @@
 
   var els = {};
   [
-    "sidebar", "sidebar-toggle", "sidebar-open-btn", "nav-list", "nav-badge-changes",
+    "sidebar", "sidebar-toggle", "sidebar-open-btn", "nav-list", "nav-fold-all-btn", "nav-badge-changes",
     "stat-tickets", "stat-imports", "stat-changes", "app-version",
     "tiles", "type-chips", "type-quick-presets", "domain-chart", "domain-section", "domain-label", "domain-select", "label-select", "search-input", "reset-filter-btn",
     "assignment-mode-tabs", "assignment-tbody", "assignment-empty", "assignment-group-count", "assignment-ticket-count",
@@ -35531,6 +35562,7 @@
     if (name === "dashboard" && typeof renderDashboardNotesDue === "function" && els.dashboardNotesDue) renderDashboardNotesDue();
     if (name === "dashboard" && typeof scheduleDashStore === "function") scheduleDashStore();
     if (name === "bilder" && typeof renderCvTable === "function") renderCvTable();
+    if (typeof refreshNav === "function" && els.navList && els.navList.querySelector("[data-nav-count]")) { navApplyFolded(); refreshNav(); }
     if (name === "output-md" || name === "output-pdf") renderOutputCounts();
     if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); renderBildband(); renderScreenPh(); }
     if (name === "bildband") renderBildband();
@@ -35555,6 +35587,174 @@
   els.sidebarToggle.addEventListener("click", function () { setSidebar(false); });
   els.sidebarOpenBtn.addEventListener("click", function () { setSidebar(true); });
   setSidebar(window.innerWidth > 900);
+
+  // ===================== v2.154: Navigation nach Input · Operation · Output und 9 Workflow-Stufen =====================
+  var NAV_FLOW = [
+    { key: "quellen", label: "Quellen", group: "Input", views: ["import", "dateiverwaltung", "rovoknowledge", "editor", "bilder", "tabellen"] },
+    { key: "extraktion", label: "Extraktion", group: "Input", views: ["verarbeitung", "rovosummary", "massenverarbeitung", "listenauswahl"] },
+    { key: "normalisierung", label: "Normalisierung", group: "Operation", views: ["gliederung", "glossar", "synonyme", "abkuerzungen"] },
+    { key: "traceability", label: "Traceability", group: "Operation", views: ["ticketgraph", "trend", "mitteilungen"] },
+    { key: "validierung", label: "Validierung", group: "Operation", views: ["crossx", "agent"] },
+    { key: "generierung", label: "Generierung", group: "Operation", views: ["releaseletter", "benutzerhandbuch", "prozessbild", "clickanweisung", "edito", "unterkapitel", "bildband"] },
+    { key: "e2eqa", label: "E2E-QA", group: "Output", views: ["final", "variante"] },
+    { key: "testing", label: "Testing", group: "Output", views: ["dataquality", "ergebnisse"] },
+    { key: "documentation", label: "Documentation", group: "Output", views: ["output-md", "output-pdf", "infobox"] }
+  ];
+  var NAV_GROUPS = ["Input", "Operation", "Output"];
+  // Neue Funktionen (Label "Neu" mit Hinweis)
+  var NAV_NEW = {
+    bilder: "Neu in v2.153: Bildverarbeitung mit OpenCV (Schärfe, Kontrast, leere Ränder, sehr ähnliche Bilder, OCR-Vorverarbeitung)",
+    variante: "Neu in v2.152: Dokument-Review – Bilder mit KI auswählen",
+    final: "Neu in v2.148–2.151: Listen, eingebettete Bilder und Tabellen aus dem Handbuch; PowerPoint überarbeitet",
+    dashboard: "Neu in v2.147: Einträge und Speicherplatz je Register",
+    crossx: "Neu in v2.145: Chat mit allen Registern, Quellen nach jeder Antwort",
+    agent: "Neu in v2.141: 8 Agenten mit Orchestrator"
+  };
+  function navTxt(id) { var e = document.getElementById(id), t = e ? e.textContent.trim() : ""; return t && !/^Noch kein/.test(t) ? 1 : 0; }
+  // Anzahl Eintraege je Register (null = keine sinnvolle Zahl)
+  var NAV_COUNT = {
+    dashboard: function () { return app.tickets.length; },
+    "import": function () { return app.tickets.length; },
+    dateiverwaltung: function () { return (app.imports || []).length; },
+    rovoknowledge: function () { return (app.rovoEntries || []).length; },
+    editor: function () { return (app.editorFiles || []).length; },
+    bilder: function () { return (app.uploadedImages || []).length + (app.generatedImages || []).length; },
+    tabellen: function () { return (app.rovoTables || []).length; },
+    verarbeitung: function () { return (app.ragLibrary || []).length; },
+    rovosummary: function () { return ((app.rovoSummary && app.rovoSummary.sources) || []).length; },
+    massenverarbeitung: function () { return (app.massFiles || []).length; },
+    listenauswahl: function () { return (app.savedLists || []).length; },
+    gliederung: function () { return (app.outline || []).length; },
+    glossar: function () { return dashCount(app.glossaryTranslations); },
+    synonyme: function () { return dashCount(app.synonyms); },
+    abkuerzungen: function () { return dashCount(app.abbrevTranslations); },
+    ticketgraph: function () { return app.tickets.length; },
+    trend: function () { return app.tickets.length; },
+    mitteilungen: function () { var n = app.docNotes || {}; return Object.keys(n).reduce(function (a, k) { return a + dashCount(n[k]); }, 0); },
+    crossx: function () { return ((app.crossx && app.crossx.history) || []).length; },
+    agent: function () { var a = app.agent || {}; return dashCount(a.uploads) + dashCount(a.knowledge && a.knowledge.items); },
+    releaseletter: function () { return navTxt("releaseletter-preview") + dashCount(app.rlRoleOverrides); },
+    benutzerhandbuch: function () { return dashCount(app.manualChapters); },
+    prozessbild: function () { return (app.generatedImages || []).length; },
+    clickanweisung: function () { return navTxt("clickanweisung-preview"); },
+    edito: function () { return dashCount(app.editoChapters); },
+    unterkapitel: function () { return dashCount(app.subchapterDrafts); },
+    bildband: function () { return (app.uploadedImages || []).filter(function (i) { return i.sourceFile && i.chapter; }).length; },
+    "final": function () { return ((app.final && app.final.versions) || []).length; },
+    variante: function () { return ((app.variante && app.variante.variants) || []).length + ((app.vrev && app.vrev.docs) || []).length; },
+    dataquality: function () { return app.tickets.length; },
+    ergebnisse: function () { return dashCount(app.manualChapters); },
+    "output-md": function () { return app.tickets.length; },
+    "output-pdf": function () { return app.tickets.length; }
+  };
+  function navCountOf(view) { var f = NAV_COUNT[view]; if (!f) return null; try { var n = f(); return typeof n === "number" && isFinite(n) ? n : null; } catch (e) { return null; } }
+  function navStageOf(view) { return NAV_FLOW.filter(function (st) { return st.views.indexOf(view) !== -1; })[0] || null; }
+  function navStageStand(st) {
+    var withCount = st.views.filter(function (v) { return navCountOf(v) != null; }), filled = withCount.filter(function (v) { return navCountOf(v) > 0; });
+    var items = withCount.reduce(function (a, v) { return a + navCountOf(v); }, 0);
+    return { filled: filled.length, total: withCount.length, items: items, cls: !filled.length ? "" : filled.length === withCount.length ? "full" : "part" };
+  }
+  var navFolded = {};
+  try { navFolded = JSON.parse(localStorage.getItem("ticketCockpit.navFolded") || "{}") || {}; } catch (e) { navFolded = {}; }
+  function navSaveFolded() { try { localStorage.setItem("ticketCockpit.navFolded", JSON.stringify(navFolded)); } catch (e) { /* ohne Speicher weiter */ } }
+  function buildNav() {
+    var list = els.navList, liOf = {};
+    Array.prototype.forEach.call(list.querySelectorAll(".nav-item"), function (b) { liOf[b.getAttribute("data-view")] = b.parentNode; });
+    var used = {}, frag = document.createDocumentFragment();
+    function addItem(view, group) {
+      var li = liOf[view]; if (!li) return;
+      used[view] = true;
+      if (group) li.setAttribute("data-nav-group", group);
+      var btn = li.querySelector(".nav-item");
+      if (!btn.querySelector(".nav-count") && NAV_COUNT[view]) { var c = document.createElement("span"); c.className = "nav-count"; c.setAttribute("data-nav-count", view); var badge = btn.querySelector(".count-badge"); btn.insertBefore(c, badge || null); }
+      if (NAV_NEW[view] && !btn.querySelector(".nav-new")) { var nw = document.createElement("span"); nw.className = "nav-new"; nw.textContent = "Neu"; nw.title = NAV_NEW[view]; btn.insertBefore(nw, btn.querySelector(".nav-count") || btn.querySelector(".count-badge") || null); }
+      frag.appendChild(li);
+    }
+    function sep(text, cls, group, html) { var li = document.createElement("li"); li.className = cls; if (group) li.setAttribute("data-nav-group", group); if (html) li.innerHTML = html; else li.textContent = text; frag.appendChild(li); return li; }
+    sep("Übersicht", "nav-sep");
+    addItem("dashboard");
+    NAV_GROUPS.forEach(function (g) {
+      var head = document.createElement("li");
+      head.className = "nav-group";
+      head.innerHTML = '<button class="nav-group-btn" type="button" data-nav-group-btn="' + g + '" aria-expanded="' + (navFolded[g] ? "false" : "true") + '"><svg class="nav-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>' + g + '<span class="nav-group-stand" data-nav-group-stand="' + g + '"></span></button>';
+      frag.appendChild(head);
+      NAV_FLOW.filter(function (st) { return st.group === g; }).forEach(function (st) {
+        sep("", "nav-stage", g, '<span class="nav-stage-no">' + (NAV_FLOW.indexOf(st) + 1) + '</span>' + escapeHtml(st.label) + '<span class="nav-stage-stand" data-nav-stage-stand="' + st.key + '"></span>');
+        st.views.forEach(function (v) { addItem(v, g); });
+      });
+    });
+    var rest = Object.keys(liOf).filter(function (v) { return !used[v]; });
+    if (rest.length) { sep("System", "nav-sep"); rest.forEach(function (v) { addItem(v); }); }
+    list.innerHTML = "";
+    list.appendChild(frag);
+    navApplyFolded();
+    // Workflow-Leiste oben in jedem Register
+    Array.prototype.forEach.call(document.querySelectorAll(".view-panel[data-view-panel]"), function (p) {
+      if (p.querySelector(":scope > .flow-strip")) return;
+      var strip = document.createElement("nav");
+      strip.className = "flow-strip"; strip.setAttribute("aria-label", "Workflow"); strip.setAttribute("data-flow-for", p.getAttribute("data-view-panel"));
+      p.insertBefore(strip, p.firstChild);
+    });
+  }
+  function navApplyFolded() {
+    Array.prototype.forEach.call(els.navList.querySelectorAll("li[data-nav-group]"), function (li) {
+      var g = li.getAttribute("data-nav-group"), activeInside = li.querySelector(".nav-item.active");
+      li.classList.toggle("nav-folded", !!navFolded[g] && !activeInside);
+    });
+    Array.prototype.forEach.call(els.navList.querySelectorAll("[data-nav-group-btn]"), function (b) { b.setAttribute("aria-expanded", navFolded[b.getAttribute("data-nav-group-btn")] ? "false" : "true"); });
+  }
+  function renderFlowStrip(view) {
+    var strip = document.querySelector('.flow-strip[data-flow-for="' + view + '"]');
+    if (!strip) return;
+    var cur = navStageOf(view), lastGroup = null;
+    strip.innerHTML = NAV_FLOW.map(function (st, i) {
+      var sd = navStageStand(st), g = st.group !== lastGroup ? (lastGroup ? '</span><span class="flow-arrow" aria-hidden="true">→</span>' : "") + '<span class="flow-seg"><span class="flow-group">' + st.group + "</span>" : "";
+      lastGroup = st.group;
+      return g + (i && !g ? '<span class="flow-arrow" aria-hidden="true">→</span>' : "") +
+        '<button type="button" class="flow-chip' + (cur === st ? " current" : "") + '" data-flow-stage="' + st.key + '"' + (cur === st ? ' aria-current="step"' : "") +
+        ' title="' + escapeHtml(st.label + ": " + sd.filled + " von " + sd.total + " Register(n) mit Inhalt, " + sd.items + " Einträge – " + st.views.map(function (v) { var b = document.querySelector('.nav-item[data-view="' + v + '"]'); return b ? b.firstChild.textContent.trim() : v; }).join(", ")) + '">' +
+        '<span class="flow-dot ' + sd.cls + '"></span>' + (i + 1) + " " + escapeHtml(st.label) + ' <span class="flow-stand">' + sd.filled + "/" + sd.total + "</span></button>";
+    }).join("") + "</span>";
+  }
+  function refreshNav() {
+    Array.prototype.forEach.call(els.navList.querySelectorAll("[data-nav-count]"), function (c) {
+      var n = navCountOf(c.getAttribute("data-nav-count"));
+      c.textContent = n == null ? "" : n.toLocaleString("de-DE");
+      c.classList.toggle("zero", n === 0);
+    });
+    NAV_FLOW.forEach(function (st) {
+      var sd = navStageStand(st), el = els.navList.querySelector('[data-nav-stage-stand="' + st.key + '"]');
+      if (el) { el.innerHTML = '<span class="flow-dot ' + sd.cls + '"></span> ' + sd.filled + "/" + sd.total; el.title = sd.filled + " von " + sd.total + " Register(n) mit Inhalt · " + sd.items + " Einträge"; }
+    });
+    NAV_GROUPS.forEach(function (g) {
+      var sts = NAV_FLOW.filter(function (st) { return st.group === g; }), f = 0, t = 0;
+      sts.forEach(function (st) { var sd = navStageStand(st); f += sd.filled; t += sd.total; });
+      var el = els.navList.querySelector('[data-nav-group-stand="' + g + '"]');
+      if (el) el.textContent = f + "/" + t;
+    });
+    var vis = document.querySelector(".view-panel[data-view-panel]:not([hidden])");
+    if (vis) renderFlowStrip(vis.getAttribute("data-view-panel"));
+  }
+  var navRefreshTimer = null;
+  function scheduleNavRefresh() { clearTimeout(navRefreshTimer); navRefreshTimer = setTimeout(refreshNav, 400); }
+  buildNav();
+  els.navList.addEventListener("click", function (e) {
+    var gb = e.target.closest("[data-nav-group-btn]");
+    if (!gb) return;
+    var g = gb.getAttribute("data-nav-group-btn");
+    navFolded[g] = !navFolded[g]; navSaveFolded(); navApplyFolded();
+  });
+  els.navFoldAllBtn.addEventListener("click", function () {
+    var anyOpen = NAV_GROUPS.some(function (g) { return !navFolded[g]; });
+    NAV_GROUPS.forEach(function (g) { navFolded[g] = anyOpen; }); navSaveFolded(); navApplyFolded();
+  });
+  document.addEventListener("click", function (e) {
+    var chip = e.target.closest("[data-flow-stage]");
+    if (!chip) return;
+    var st = NAV_FLOW.filter(function (x) { return x.key === chip.getAttribute("data-flow-stage"); })[0];
+    if (st) showView(st.views[0]);
+  });
+  ["change", "click", "input"].forEach(function (evt) { document.addEventListener(evt, scheduleNavRefresh, true); });
 
   function renderDomainAliases() {
     els.domainAliasesTbody.innerHTML = Object.keys(DOMAIN_ALIASES).map(function (k) {
