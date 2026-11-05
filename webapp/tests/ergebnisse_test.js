@@ -87,7 +87,9 @@ const xml = `<?xml version="1.0"?><rss><channel>
   const bhIdx = navItems.findIndex((b) => b.getAttribute("data-view") === "benutzerhandbuch");
   const ergIdx = navItems.findIndex((b) => b.getAttribute("data-view") === "ergebnisse");
   check("Nav-Punkt 'Ergebnisse' vorhanden", ergIdx !== -1);
-  check("'Ergebnisse' steht direkt nach 'Benutzerhandbuch' in der Navigation", ergIdx === bhIdx + 1);
+  // v2.154: Navigation nach Workflow-Stufen – Ergebnisse gehoert zur Stufe Testing (Benutzerhandbuch zu Generierung)
+  const stageOf = (view) => { let li = doc.querySelector('.nav-item[data-view="' + view + '"]').closest("li").previousElementSibling; while (li && !li.classList.contains("nav-stage")) li = li.previousElementSibling; return li ? li.textContent.replace(/[\d/\s]+$/, "").replace(/^\d+/, "").trim() : ""; };
+  check("'Ergebnisse' steht in der Stufe Testing, nach dem Benutzerhandbuch (Generierung)", stageOf("ergebnisse") === "Testing" && stageOf("benutzerhandbuch") === "Generierung" && ergIdx > bhIdx);
 
   // ===================== Vor Kapitel-Erzeugung: leere Übersicht =====================
   doc.querySelector('.nav-item[data-view="ergebnisse"]').click();

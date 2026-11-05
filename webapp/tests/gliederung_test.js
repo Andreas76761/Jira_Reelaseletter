@@ -83,7 +83,9 @@ async function confirmViaModal(doc) {
   const glIdx = navItems.findIndex((b) => b.getAttribute("data-view") === "gliederung");
   const verarbeitungIdx = navItems.findIndex((b) => b.getAttribute("data-view") === "verarbeitung");
   check("Nav-Punkt 'Gliederung' vorhanden", glIdx !== -1);
-  check("'Gliederung' steht VOR 'Verarbeitung' in der Navigation", glIdx !== -1 && verarbeitungIdx !== -1 && glIdx < verarbeitungIdx);
+  // v2.154: Navigation nach Workflow-Stufen – Verarbeitung (Extraktion) vor Gliederung (Normalisierung)
+  const stageOf = (view) => { let li = doc.querySelector('.nav-item[data-view="' + view + '"]').closest("li").previousElementSibling; while (li && !li.classList.contains("nav-stage")) li = li.previousElementSibling; return li ? li.textContent.replace(/[\d/\s]+$/, "").replace(/^\d+/, "").trim() : ""; };
+  check("'Gliederung' steht in der Stufe Normalisierung, nach 'Verarbeitung' (Extraktion)", glIdx !== -1 && verarbeitungIdx !== -1 && stageOf("gliederung") === "Normalisierung" && stageOf("verarbeitung") === "Extraktion" && glIdx > verarbeitungIdx);
   doc.querySelector('.nav-item[data-view="gliederung"]').click();
   await wait(50);
   check("Gliederung-Ansicht sichtbar", !doc.querySelector('[data-view-panel="gliederung"]').hidden);

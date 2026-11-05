@@ -42,7 +42,7 @@ const STAGES = [
   function check(l, ok) { checks.push([l, ok]); console.log((ok ? "OK  " : "FAIL") + " - " + l); }
   const $ = (id) => doc.getElementById(id);
   const nav = (v) => doc.querySelector('.nav-item[data-view="' + v + '"]').click();
-  const count = (v) => { const c = doc.querySelector('[data-nav-count="' + v + '"]'); return c ? c.textContent : null; };
+  const count = (v) => { const c = doc.querySelector('[data-nav-count="' + v + '"]'); return c ? c.getAttribute("data-n") : null; };
   const visStrip = () => doc.querySelector(".view-panel[data-view-panel]:not([hidden]) > .flow-strip");
 
   const groups = Array.from(doc.querySelectorAll("[data-nav-group-btn]")).map((b) => b.getAttribute("data-nav-group-btn"));
@@ -54,6 +54,7 @@ const STAGES = [
   check("Register nach Stufen geordnet (Dashboard oben, Einstellungen unten), keines verloren", JSON.stringify(order) === JSON.stringify(expected));
   check("Bisherige Zähler bleiben (Änderungen, Listen, fällige Mitteilungen)", !!$("nav-badge-changes") && !!$("nav-badge-lists") && !!$("nav-badge-notes"));
   const news = Array.from(doc.querySelectorAll(".nav-new")).map((n) => n.closest(".nav-item").getAttribute("data-view"));
+  check("Eintragstext bleibt der reine Registername (Zahl und „Neu“ nur per CSS)", doc.querySelector('.nav-item[data-view="bilder"]').textContent.trim() === "Bilder" && doc.querySelector('.nav-item[data-view="edito"]').textContent.trim() === "Editor");
   check("Label „Neu“ mit Hinweis an neuen Funktionen (Bilder/OpenCV, VARIANTE, FINAL, Dashboard, CROSS_X, AGENT)", ["bilder", "variante", "final", "dashboard", "crossx", "agent"].every((v) => news.includes(v)) && doc.querySelector('.nav-item[data-view="bilder"] .nav-new').title.includes("OpenCV"));
 
   // Sitzung mit Daten

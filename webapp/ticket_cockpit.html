@@ -118,6 +118,8 @@
   li.nav-folded { display: none; }
   .nav-count { margin-left: auto; font-size: 10.5px; font-weight: 700; color: var(--text-faint); font-family: "IBM Plex Mono", monospace; }
   .nav-count.zero { opacity: 0.45; }
+  .nav-count::before { content: attr(data-n); }
+  .nav-new::before { content: "Neu"; }
   .nav-new { font-size: 9.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; background: #db2777; border-radius: 100px; padding: 1px 6px; }
   .nav-item .nav-count + .count-badge { margin-left: 4px; }
   .flow-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0 0 12px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
@@ -35667,7 +35669,7 @@
       if (group) li.setAttribute("data-nav-group", group);
       var btn = li.querySelector(".nav-item");
       if (!btn.querySelector(".nav-count") && NAV_COUNT[view]) { var c = document.createElement("span"); c.className = "nav-count"; c.setAttribute("data-nav-count", view); var badge = btn.querySelector(".count-badge"); btn.insertBefore(c, badge || null); }
-      if (NAV_NEW[view] && !btn.querySelector(".nav-new")) { var nw = document.createElement("span"); nw.className = "nav-new"; nw.textContent = "Neu"; nw.title = NAV_NEW[view]; btn.insertBefore(nw, btn.querySelector(".nav-count") || btn.querySelector(".count-badge") || null); }
+      if (NAV_NEW[view] && !btn.querySelector(".nav-new")) { var nw = document.createElement("span"); nw.className = "nav-new"; nw.title = NAV_NEW[view]; btn.setAttribute("aria-description", NAV_NEW[view]); btn.insertBefore(nw, btn.querySelector(".nav-count") || btn.querySelector(".count-badge") || null); }
       frag.appendChild(li);
     }
     function sep(text, cls, group, html) { var li = document.createElement("li"); li.className = cls; if (group) li.setAttribute("data-nav-group", group); if (html) li.innerHTML = html; else li.textContent = text; frag.appendChild(li); return li; }
@@ -35719,7 +35721,9 @@
   function refreshNav() {
     Array.prototype.forEach.call(els.navList.querySelectorAll("[data-nav-count]"), function (c) {
       var n = navCountOf(c.getAttribute("data-nav-count"));
-      c.textContent = n == null ? "" : n.toLocaleString("de-DE");
+      // Zahl per CSS (data-n) – der Text des Eintrags bleibt der reine Registername
+      c.setAttribute("data-n", n == null ? "" : n.toLocaleString("de-DE"));
+      c.title = n == null ? "" : n.toLocaleString("de-DE") + " Einträge";
       c.classList.toggle("zero", n === 0);
     });
     NAV_FLOW.forEach(function (st) {
