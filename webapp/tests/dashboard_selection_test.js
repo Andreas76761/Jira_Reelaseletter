@@ -118,7 +118,9 @@ function fire(el, type) { el.dispatchEvent(new dom.window.Event(type, { bubbles:
   const dateiverwaltungIdx = navItems.findIndex((b) => b.getAttribute("data-view") === "dateiverwaltung");
   const listenauswahlIdx = navItems.findIndex((b) => b.getAttribute("data-view") === "listenauswahl");
   check("Nav-Punkt 'Listenauswahl' vorhanden", listenauswahlIdx !== -1);
-  check("'Listenauswahl' steht direkt nach 'Dateiverwaltung' in der Navigation", listenauswahlIdx === dateiverwaltungIdx + 1);
+  // v2.154: Navigation nach Workflow-Stufen – Listenauswahl gehoert zur Stufe Extraktion (Dateiverwaltung zu Quellen)
+  const stageOf = (view) => { let li = doc.querySelector('.nav-item[data-view="' + view + '"]').closest("li").previousElementSibling; while (li && !li.classList.contains("nav-stage")) li = li.previousElementSibling; return li ? li.textContent.replace(/[\d/\s]+$/, "").replace(/^\d+/, "").trim() : ""; };
+  check("'Listenauswahl' steht in der Stufe Extraktion (nach den Quellen mit 'Dateiverwaltung')", stageOf("listenauswahl") === "Extraktion" && stageOf("dateiverwaltung") === "Quellen" && listenauswahlIdx > dateiverwaltungIdx);
 
   // Auswahl erneut setzen (gezielt SEL-1/SEL-2, nicht "erste 2 in der unsortierten
   // Gesamtliste" - die Suche wurde oben bereits wieder geleert) und als Liste speichern

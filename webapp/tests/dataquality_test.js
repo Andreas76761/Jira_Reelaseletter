@@ -110,7 +110,9 @@ const xml = `<?xml version="1.0"?><rss><channel>
   // ===================== Navigation zeigt "Datenqualität" direkt nach "Trend" =====================
   const navLabels = Array.from(doc.querySelectorAll(".nav-item")).map((b) => b.textContent.trim());
   const trendIdx = navLabels.indexOf("Trend");
-  check("Nav-Eintrag 'Datenqualität' vorhanden, direkt nach 'Trend'", navLabels[trendIdx + 1] === "Datenqualität");
+  // v2.154: Navigation nach Workflow-Stufen – Datenqualitaet gehoert zur Stufe Testing
+  const stageOf = (view) => { let li = doc.querySelector('.nav-item[data-view="' + view + '"]').closest("li").previousElementSibling; while (li && !li.classList.contains("nav-stage")) li = li.previousElementSibling; return li ? li.textContent.replace(/[\d/\s]+$/, "").replace(/^\d+/, "").trim() : ""; };
+  check("Nav-Eintrag 'Datenqualität' vorhanden, in der Stufe Testing", !!doc.querySelector('.nav-item[data-view="dataquality"]') && doc.querySelector('.nav-item[data-view="dataquality"]').firstChild.textContent.trim() === "Datenqualität" && stageOf("dataquality") === "Testing");
 
   doc.querySelector('.nav-item[data-view="dataquality"]').click();
   await wait(150);
