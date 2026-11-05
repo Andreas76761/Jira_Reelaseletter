@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.158.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.159.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,14 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Bilder: sehr ähnliche Bilder bereinigen (v2.159.0)**: Nach der OpenCV-Analyse zeigt das Register Bilder je Gruppe sehr
+  ähnlicher Bilder Vorschau, Auflösung, Größe und **Verwendungen mit Register** (FINAL, Screens-Import, Dokument-Review …).
+  Ein Bild ist zum **Behalten** vorgewählt (meiste Verwendungen, dann größte Auflösung, dann ältestes) und lässt sich
+  umstellen. **„Andere entfernen“** entfernt die übrigen Bilder der Gruppe und stellt alle Verweise auf das behaltene Bild
+  um: FINAL-Kapitel-Screens, eingebettete Handbuch-Bilder, Screens-Platzhalter (inkl. Trefferwert, der höhere bleibt) und
+  Bild-Platzhalter im Dokument-Review; doppelte Einträge entfallen. Vorher fragt eine Bestätigung mit Anzahl, Verweisen,
+  Ersparnis und der Abweichung in der Gruppe („sehr ähnlich heißt nicht gleich“).
 
 - **Bilder: Speicher sparen (v2.158.0)**: Neuer Abschnitt **„Speicher sparen“** im Register Bilder. Er verkleinert
   übergroße Bilder auf eine **maximale Kantenlänge** (1280/1600/**1920**/2560 px oder „nicht verkleinern“) und speichert

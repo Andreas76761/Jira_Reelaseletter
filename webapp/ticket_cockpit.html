@@ -683,6 +683,11 @@
   .dash-store-bar { display: inline-block; vertical-align: middle; width: 120px; height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; margin-right: 6px; }
   .dash-store-bar > i { display: block; height: 100%; background: #0e7490; }
   .dash-store-bar.free > i { background: #15803d; } .dash-store-bar.low > i { background: #b91c1c; }
+  .cv-dup-group { border-top: 1px solid var(--border); padding: 8px 0; }
+  .cv-dup-cards { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0; }
+  .cv-dup-card { display: flex; flex-direction: column; gap: 2px; width: 170px; font-size: 12px; padding: 6px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+  .cv-dup-card img { width: 100%; height: 90px; object-fit: contain; background: var(--surface); }
+  .cv-dup-card.cv-dup-keep { border-color: #15803d; box-shadow: 0 0 0 1px #15803d inset; }
   .dash-store-warn { border-left: 4px solid #b45309; padding: 6px 10px; margin: 6px 0; font-size: 13px; background: var(--surface); }
   .dash-store-table tfoot td { font-weight: 600; border-top: 2px solid var(--border); }
   .dashboard-notes-due-list li { margin: 4px 0; }
@@ -3622,6 +3627,13 @@
               <thead><tr><th>Bild</th><th>Größe</th><th>Schärfe</th><th>Kontrast</th><th>Leerer Rand</th><th>Sehr ähnliche Bilder</th><th>Aktion</th></tr></thead>
               <tbody id="cv-tbody"></tbody>
             </table>
+          </div>
+          <div class="panel" id="cv-dup-wrap" hidden>
+            <p class="section-label" style="margin-top:0;">Sehr ähnliche Bilder bereinigen (<span id="cv-dup-count">0</span> Gruppen)</p>
+            <p class="desc">Je Gruppe bleibt das gewählte Bild erhalten (vorgewählt: meiste Verwendungen, dann größte Auflösung); die anderen werden
+              entfernt und alle Verweise – FINAL-Kapitel, eingebettete Handbuch-Bilder, Screens-Platzhalter, Dokument-Review – auf das
+              behaltene Bild umgestellt. Sehr ähnlich heißt nicht gleich: Screens, die sich nur in einer Zahl unterscheiden, vorher vergleichen.</p>
+            <div id="cv-dup-list"></div>
           </div>
           <div class="panel" id="cv-shrink">
             <p class="section-label" style="margin-top:0;">Speicher sparen</p>
@@ -6593,7 +6605,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.158.0";
+  var APP_VERSION = "2.159.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8216,7 +8228,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "editor-cv-check", "editor-cv-note", "cv-section", "cv-analyze-btn", "cv-spinner", "cv-crop-all-btn", "cv-ocr-pre", "cv-status", "cv-table-wrap", "cv-tbody", "cv-shrink", "cv-shrink-edge", "cv-shrink-jpeg", "cv-shrink-drop-orig", "cv-shrink-btn", "cv-shrink-spinner", "cv-shrink-status", "dash-store", "dash-store-head", "dash-store-tiles", "dash-store-warn", "dash-store-tbody", "dash-store-tfoot", "dash-store-refresh-btn", "dash-store-at", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-opt-strip-jira", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-cv-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "editor-cv-check", "editor-cv-note", "cv-section", "cv-analyze-btn", "cv-spinner", "cv-crop-all-btn", "cv-ocr-pre", "cv-status", "cv-table-wrap", "cv-tbody", "cv-dup-wrap", "cv-dup-count", "cv-dup-list", "cv-shrink", "cv-shrink-edge", "cv-shrink-jpeg", "cv-shrink-drop-orig", "cv-shrink-btn", "cv-shrink-spinner", "cv-shrink-status", "dash-store", "dash-store-head", "dash-store-tiles", "dash-store-warn", "dash-store-tbody", "dash-store-tfoot", "dash-store-refresh-btn", "dash-store-at", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-opt-strip-jira", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-cv-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -19032,6 +19044,118 @@
       cvShrinkBusy = false; els.cvShrinkBtn.disabled = false; els.cvShrinkSpinner.hidden = true;
     }
   }
+  // v2.159: sehr aehnliche Bilder bereinigen – eines behalten, Verweise umstellen, die anderen entfernen
+  // Verweise auf Bild-IDs: screenIds/imgIds (Listen), embedded[].id (FINAL-Handbuch), ph{key: [ids]} (Dokument-Review),
+  // scores{id: pct} (Screens-Platzhalter). Durchlaufen wird der ganze Sitzungsstand ausser den Bildlisten selbst.
+  function cvWalkImageRefs(visit) {
+    var d = serializeSessionState(), skip = { uploadedImages: 1, generatedImages: 1, log: 1 };
+    var live = {};
+    Object.keys(d).forEach(function (k) { if (!skip[k] && app[k] && typeof app[k] === "object") live[k] = app[k]; });
+    var seen = new Set();
+    function walk(o, top) {
+      if (!o || typeof o !== "object" || seen.has(o)) return;
+      seen.add(o);
+      if (Array.isArray(o)) { o.forEach(function (x) { walk(x, top); }); return; }
+      Object.keys(o).forEach(function (k) {
+        var v = o[k];
+        if ((k === "screenIds" || k === "imgIds") && Array.isArray(v)) visit({ kind: "list", obj: o, key: k, top: top });
+        else if (k === "embedded" && Array.isArray(v)) v.forEach(function (x) { if (x && typeof x.id === "number") visit({ kind: "field", obj: x, key: "id", top: top }); });
+        else if (k === "ph" && v && typeof v === "object" && !Array.isArray(v)) Object.keys(v).forEach(function (pk) { if (Array.isArray(v[pk])) visit({ kind: "list", obj: v, key: pk, top: top }); });
+        else if (k === "scores" && v && typeof v === "object" && !Array.isArray(v)) visit({ kind: "keys", obj: v, top: top });
+        if (v && typeof v === "object") walk(v, top);
+      });
+    }
+    Object.keys(live).forEach(function (k) { walk(live[k], k); });
+  }
+  function cvRefTopLabel(top) {
+    var r = DASH_STORE_REGS.filter(function (x) { return x.fields.indexOf(top) !== -1; })[0];
+    return r ? r.label : top;
+  }
+  function cvImageRefs() {
+    var count = {}, where = {};
+    function add(id, top) { count[id] = (count[id] || 0) + 1; (where[id] = where[id] || {})[cvRefTopLabel(top)] = true; }
+    cvWalkImageRefs(function (ref) {
+      if (ref.kind === "list") ref.obj[ref.key].forEach(function (id) { if (typeof id === "number") add(id, ref.top); });
+      else if (ref.kind === "field") add(ref.obj.id, ref.top);
+    });
+    return { count: count, where: where };
+  }
+  function cvRemapImageRefs(map) {
+    var n = 0;
+    cvWalkImageRefs(function (ref) {
+      if (ref.kind === "list") {
+        var out = [], changed = false;
+        ref.obj[ref.key].forEach(function (id) { var t = map[id] != null ? map[id] : id; if (t !== id) { changed = true; n++; } if (out.indexOf(t) === -1) out.push(t); else changed = true; });
+        if (changed) ref.obj[ref.key] = out;
+      } else if (ref.kind === "field") {
+        if (map[ref.obj.id] != null) { ref.obj.id = map[ref.obj.id]; n++; }
+      } else if (ref.kind === "keys") {
+        Object.keys(ref.obj).forEach(function (k) { var t = map[k]; if (t != null) { if (ref.obj[t] == null || (typeof ref.obj[k] === "number" && ref.obj[k] > ref.obj[t])) ref.obj[t] = ref.obj[k]; delete ref.obj[k]; } });
+      }
+    });
+    return n;
+  }
+  function cvDupGroupList() {
+    var by = {};
+    app.uploadedImages.forEach(function (i) { if (i.cvDupGroup) (by[i.cvDupGroup] = by[i.cvDupGroup] || []).push(i); });
+    return Object.keys(by).map(Number).sort(function (a, b) { return a - b; }).filter(function (g) { return by[g].length > 1; }).map(function (g) { return { g: g, imgs: by[g] }; });
+  }
+  function cvDupDefaultKeep(imgs, refs) {
+    return imgs.slice().sort(function (a, b) {
+      return (refs.count[b.id] || 0) - (refs.count[a.id] || 0) || ((b.width || b.cvW || 0) * (b.height || b.cvH || 0)) - ((a.width || a.cvW || 0) * (a.height || a.cvH || 0)) || a.id - b.id;
+    })[0];
+  }
+  var cvDupKeep = {};
+  function renderCvDups() {
+    if (!els.cvDupWrap) return;
+    var groups = cvDupGroupList();
+    els.cvDupWrap.hidden = !groups.length;
+    els.cvDupCount.textContent = groups.length;
+    if (!groups.length) { els.cvDupList.innerHTML = ""; return; }
+    var refs = cvImageRefs();
+    els.cvDupList.innerHTML = groups.map(function (gr) {
+      var keep = gr.imgs.filter(function (i) { return i.id === cvDupKeep[gr.g]; })[0] || cvDupDefaultKeep(gr.imgs, refs);
+      cvDupKeep[gr.g] = keep.id;
+      return '<div class="cv-dup-group" data-cv-dup-group="' + gr.g + '"><b>Gruppe ' + gr.g + "</b> · " + gr.imgs.length + " Bilder" +
+        '<div class="cv-dup-cards">' + gr.imgs.map(function (i) {
+          var n = refs.count[i.id] || 0, w = Object.keys(refs.where[i.id] || {});
+          return '<label class="cv-dup-card' + (i.id === keep.id ? " cv-dup-keep" : "") + '" data-cv-dup-img="' + i.id + '"><img src="' + escapeHtml(screenPreviewUrl(i)) + '" alt="">' +
+            '<span><input type="radio" name="cv-dup-keep-' + gr.g + '" value="' + i.id + '"' + (i.id === keep.id ? " checked" : "") + "> behalten</span>" +
+            "<span>" + escapeHtml(truncate(i.filename || ("#" + i.id), 32)) + "</span><span>" + ((i.width || i.cvW) ? (i.width || i.cvW) + " × " + (i.height || i.cvH) + " · " : "") + dashFmtBytes(i.sizeBytes || cvDataUrlBytes(i.dataUrl)) + "</span>" +
+            '<span class="desc">' + (n ? n + " Verwendung(en): " + escapeHtml(w.join(", ")) : "nicht verwendet") + "</span></label>";
+        }).join("") + "</div>" +
+        '<button class="btn ghost btn-tiny" type="button" data-cv-dup-merge="' + gr.g + '">Andere entfernen (' + (gr.imgs.length - 1) + ")</button></div>";
+    }).join("");
+  }
+  async function cvMergeDupGroup(g) {
+    var gr = cvDupGroupList().filter(function (x) { return x.g === g; })[0];
+    if (!gr) return null;
+    var keep = gr.imgs.filter(function (i) { return i.id === cvDupKeep[g]; })[0] || cvDupDefaultKeep(gr.imgs, cvImageRefs());
+    var drop = gr.imgs.filter(function (i) { return i !== keep; }), refs = cvImageRefs();
+    var nRefs = dashSum(drop.map(function (i) { return refs.count[i.id] || 0; }));
+    var where = {};
+    drop.forEach(function (i) { Object.keys(refs.where[i.id] || {}).forEach(function (w) { where[w] = true; }); });
+    var bytes = dashSum(drop.map(function (i) { return cvDataUrlBytes(i.dataUrl) + cvDataUrlBytes(i.cvUncropped); }));
+    var maxDiff = Math.max.apply(null, gr.imgs.map(function (i) { return i.cvDupDiff || 0; }));
+    var ok = await confirmDialog(drop.length + " Bild(er) entfernen, „" + (keep.filename || "#" + keep.id) + "“ bleibt.\n" +
+      (nRefs ? nRefs + " Verweis(e) (" + Object.keys(where).join(", ") + ") werden auf das behaltene Bild umgestellt." : "Die entfernten Bilder werden nirgends verwendet.") +
+      "\nSpart " + dashFmtBytes(bytes) + ". Abweichung in der Gruppe bis " + (maxDiff * 100).toFixed(2).replace(".", ",") + " % – sehr ähnlich heißt nicht gleich.", "Entfernen");
+    if (!ok) return null;
+    var map = {};
+    drop.forEach(function (i) { map[i.id] = keep.id; });
+    var n = cvRemapImageRefs(map);
+    app.uploadedImages = app.uploadedImages.filter(function (i) { return !map[i.id]; });
+    drop.forEach(function (i) { var o = screenPreviewUrls[i.id]; if (o) { try { URL.revokeObjectURL(o.url); } catch (e) { /* egal */ } delete screenPreviewUrls[i.id]; } });
+    keep.cvDupGroup = null; keep.cvDupDiff = null;
+    delete cvDupKeep[g];
+    els.cvStatus.textContent = "Gruppe " + g + ": " + drop.length + " Bild(er) entfernt, „" + (keep.filename || "#" + keep.id) + "“ behalten, " + n + " Verweis(e) umgestellt, " + dashFmtBytes(bytes) + " gespart.";
+    addLog("Bilder: sehr ähnliche Bilder bereinigt – " + drop.length + " entfernt (" + drop.map(function (i) { return i.filename || "#" + i.id; }).join(", ") + "), „" + (keep.filename || "#" + keep.id) + "“ behalten, " + n + " Verweis(e) umgestellt.");
+    renderCvTable(); renderGallery();
+    renderWhenVisible("editor", "screens", renderEditorScreens);
+    renderWhenVisible("bildband", "bildband", renderBildband);
+    renderWhenVisible("final", "final", renderFinal);
+    return { removed: drop.length, refs: n, bytes: bytes, keep: keep.id };
+  }
   function renderCvTable() {
     if (!els.cvTbody) return;
     var imgs = app.uploadedImages.filter(function (i) { return i.cvAt || i.cvUncropped || i.cvError; });
@@ -19052,6 +19176,7 @@
         (i.cvBorder ? '<button class="btn ghost btn-tiny" type="button" data-cv-crop="' + i.id + '">Zuschneiden</button> ' : "") +
         (i.cvUncropped ? '<button class="btn ghost btn-tiny" type="button" data-cv-restore="' + i.id + '">Original wiederherstellen</button>' : "") + "</td></tr>";
     }).join("");
+    renderCvDups();
   }
   // OCR-Vorverarbeitung: Graustufen, kleine Bilder x2 vergroessern, Otsu-Binarisierung (dunkle Schrift auf hell)
   async function cvPrepareOcr(dataUrl) {
@@ -19080,6 +19205,16 @@
     els.cvAnalyzeBtn.addEventListener("click", function () { if (!cvBusy) cvAnalyzeAll(); });
     els.cvCropAllBtn.addEventListener("click", function () { if (!cvBusy) cvCropAll(); });
     els.cvShrinkBtn.addEventListener("click", function () { cvShrinkAll(); });
+    els.cvDupList.addEventListener("change", function (e) {
+      var r = e.target.closest('input[type="radio"]'), gEl = r && r.closest("[data-cv-dup-group]");
+      if (!gEl) return;
+      cvDupKeep[parseInt(gEl.getAttribute("data-cv-dup-group"), 10)] = parseInt(r.value, 10);
+      renderCvDups();
+    });
+    els.cvDupList.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-cv-dup-merge]");
+      if (b && !cvBusy) cvMergeDupGroup(parseInt(b.getAttribute("data-cv-dup-merge"), 10));
+    });
     [els.cvShrinkEdge, els.cvShrinkJpeg, els.cvShrinkDropOrig].forEach(function (el) {
       el.addEventListener("change", function () {
         app.cvSettings = cvSettingsNormalize(app.cvSettings);
@@ -35864,7 +35999,7 @@
   var NAV_GROUPS = ["Input", "Operation", "Output"];
   // Neue Funktionen (Label "Neu" mit Hinweis)
   var NAV_NEW = {
-    bilder: "Neu in v2.153/2.158: Bildverarbeitung mit OpenCV (Schärfe, Kontrast, leere Ränder, sehr ähnliche Bilder, OCR-Vorverarbeitung); Speicher sparen",
+    bilder: "Neu in v2.153/2.158/2.159: Bildverarbeitung mit OpenCV (Schärfe, Kontrast, leere Ränder, sehr ähnliche Bilder, OCR-Vorverarbeitung); Speicher sparen; sehr ähnliche Bilder bereinigen",
     variante: "Neu in v2.152/2.155: Dokument-Review – Bilder mit KI auswählen, Bildqualität mit OpenCV prüfen",
     final: "Neu in v2.148–2.151: Listen, eingebettete Bilder und Tabellen aus dem Handbuch; PowerPoint überarbeitet",
     dashboard: "Neu in v2.147: Einträge und Speicherplatz je Register",
