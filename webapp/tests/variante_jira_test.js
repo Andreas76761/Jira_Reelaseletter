@@ -89,7 +89,7 @@ async function blobBuf(d) { return Buffer.from(await d.arrayBuffer()); }
   }
   let ses = await session();
   ses.final.versions = [{ id: 1, name: "Basis", createdAt: "1.11.2026, 10:00:00", status: "Entwurf", statusChangedAt: "1.11.2026, 10:00:00", history: [], config: {}, origin: "FINAL", improvements: {}, improvementStatus: {},
-    chapters: [{ title: "Kapitel 1: Verträge", level: 1, text: "Verträge werden online angelegt (ONESCM-12).\nDie Laufleistung wird in km pro Jahr erfasst (ONESCM-73, ONESCM-74).", screenIds: [] }] }];
+    chapters: [{ title: "Kapitel 1: Verträge", level: 1, text: "Verträge werden online angelegt (ONESCM-12).\nDie Laufleistung wird in km pro Jahr erfasst (ONESCM-73, ONESCM-74).\nExport als UTF-8 nach ISO-9001, Abgasnorm EURO-6.\nRemarque : texte ; fin !", screenIds: [] }] }];
   ses.final.activeVersionId = 1;
   await load(ses);
   nav("variante"); await wait(50);
@@ -98,6 +98,7 @@ async function blobBuf(d) { return Buffer.from(await d.arrayBuffer()); }
   let t = await variantWord();
   check("Variante ohne Jira-Nummern, Text vollständig und sauber (keine leeren Klammern)", !/ONESCM-\d+/.test(t) && t.includes("Verträge werden online angelegt.") && t.includes("km pro Jahr erfasst.") && !t.includes("()"));
   ses = await session();
+  check("v2.172: Normbezeichnungen bleiben (UTF-8, ISO-9001, EURO-6), Text ohne Jira-Nummer unverändert (franz. „Remarque : …“)", t.includes("Export als UTF-8 nach ISO-9001, Abgasnorm EURO-6.") && t.includes("Remarque : texte ; fin !"));
   check("Einstellung in der Sitzung gespeichert", ses.variante.opts.stripJira === true);
   const cb = $("variante-opt-strip-jira"); cb.checked = false; fire(cb, "change"); await wait(20);
   t = await variantWord();

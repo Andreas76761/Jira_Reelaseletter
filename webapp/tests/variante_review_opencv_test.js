@@ -77,7 +77,7 @@ const IMAGES = { sharp: SHARP, dup: jpegCopy(SHARP, 0.75), blurry: screen({ blur
   check("Nur die 3 im Dokument verwendeten Bilder geprüft (nicht das ungenutzte 4.)", $("vrev-status").textContent.startsWith("Bildqualität geprüft: 1 unscharf, 0 kontrastarm") && doc.querySelector(".vrev-cv-sum").textContent.includes("3 Bild(er) geprüft"));
   const rowOf = (key) => doc.querySelector('#vrev-stage tr[data-vrev-ph="' + key + '"]');
   check("Hinweis am unscharfen Bild", rowOf("0:2").querySelector(".cv-badge.cv-bad").textContent === "unscharf");
-  check("Sehr ähnliche Bilder im Dokument markiert (Original und verkleinerte Kopie, gleiche Gruppe)", /^ähnlich [A-Z]$/.test(rowOf("0:0").textContent.match(/ähnlich [A-Z]/)[0]) && rowOf("0:0").textContent.match(/ähnlich [A-Z]/)[0] === rowOf("0:1").textContent.match(/ähnlich [A-Z]/)[0] && !/ähnlich/.test(rowOf("0:2").textContent));
+  check("Sehr ähnliche Bilder im Dokument markiert (Original und verkleinerte Kopie, gleiche Gruppe)", /^ähnlich \d+$/.test(rowOf("0:0").textContent.match(/ähnlich \d+/)[0]) && rowOf("0:0").textContent.match(/ähnlich \d+/)[0] === rowOf("0:1").textContent.match(/ähnlich \d+/)[0] && !/ähnlich/.test(rowOf("0:2").textContent));
   check("Leerer Rand angezeigt", /\d+ % Rand/.test(rowOf("0:0").textContent));
   check("Zusammenfassung mit Sprung ins Register Bilder", doc.querySelector(".vrev-cv-sum").textContent.includes("2 sehr ähnliche(s) Bild(er)") && !!doc.querySelector('[data-vrev-act="goto-bilder"]'));
   s = await session();

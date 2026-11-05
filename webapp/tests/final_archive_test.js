@@ -58,11 +58,17 @@ const img = (id, name, w, h, g, color) => ({ id, filename: name, dataUrl: shot(w
     chapters: [{ title: "1 Kapitel", level: 1, text: name + " " + "Text ".repeat(2000), markedText: "", screenIds: [] }] });
   let s = await session();
   s.final.versions = [stand(1, "Veröffentlicht", "Veröffentlicht"), stand(2, "Aktiv", "Entwurf"), stand(3, "Varianten-Basis", "Entwurf"), stand(4, "Variante Retail", "Entwurf"),
-    stand(5, "Aus Review", "Entwurf"), stand(6, "Im Editor", "Entwurf"), stand(7, "Alt A", "Entwurf"), stand(8, "Alt B", "Freigegeben")];
+    stand(5, "Aus Review", "Entwurf"), stand(6, "Im Editor", "Entwurf"), stand(7, "Alt A", "Entwurf"), stand(8, "Alt B", "Freigegeben"),
+    stand(9, "Editor-Quelle", "Entwurf"), stand(10, "CROSS_X-Auswahl", "Entwurf"), stand(11, "AGENT alt", "Entwurf")];
+  s.final.versions[6].teamDocId = 77;
+  s.final.versions[6].chapters[0].screenIds = [999];
   s.final.activeVersionId = 2;
   s.variante = { baseVersionId: 3, variants: [{ id: 1, role: "Retail", lang: "DE", name: "Retail DE", standId: 4 }] };
   s.vrev = { docs: [{ id: 1, name: "Handbuch", version: "1.0", status: "Entwurf", source: "Upload", lang: "DE", chapters: [{ title: "1", level: 1, text: "x" }], ph: {}, checks: {}, steps: {}, history: [], finalVersionId: 5 }], activeId: null };
   s.editoFinalDocId = 6;
+  s.editoBaseDocId = 9;
+  s.crossx = Object.assign({}, s.crossx || {}, { standIds: [10] });
+  s.agent = Object.assign({}, s.agent || {}, { impA: "F:11" });
   await load(s);
   nav("dashboard"); await wait(30); $("dash-store-refresh-btn").click(); await wait(300);
   const crow = (key) => { const tr = doc.querySelector('#dash-clean-tbody tr[data-dash-clean-row="' + key + '"]'); return tr ? Array.from(tr.children).map((c) => c.textContent.trim()) : null; };
@@ -77,7 +83,7 @@ const img = (id, name, w, h, g, color) => ({ id, filename: name, dataUrl: shot(w
   check("Bestätigung: „2 sichern und löschen“, Knopf „Sichern und löschen“", /^FINAL – nicht mehr benötigte Stände: 2 sichern und löschen \(/.test($("confirm-modal-message").textContent) && $("confirm-modal-ok-label").textContent === "Sichern und löschen");
   fire($("confirm-modal-ok-btn"), "click"); await waitUntil(() => $("confirm-modal-overlay").hidden, 3000); await wait(300);
   s = await session();
-  check("Download abgelehnt: alle 8 Stände bleiben", s.final.versions.length === 8 && /nicht gespeichert/.test($("toast").textContent));
+  check("Download abgelehnt: alle 11 Stände bleiben", s.final.versions.length === 11 && /nicht gespeichert/.test($("toast").textContent));
 
   // Sichern und loeschen
   savedFiles.length = 0;
@@ -88,7 +94,7 @@ const img = (id, name, w, h, g, color) => ({ id, filename: name, dataUrl: shot(w
   const ad = arch ? JSON.parse(arch.data) : null;
   check("Archivdatei gespeichert mit den 2 alten Ständen", !!ad && ad.type === "final-versions-archive" && ad.versions.map((v) => v.name).join() === "Alt A,Alt B");
   s = await session();
-  check("Nur die alten Stände entfernt, geschützte bleiben", s.final.versions.map((v) => v.id).join() === "1,2,3,4,5,6" && s.final.activeVersionId === 2);
+  check("Nur die alten Stände entfernt, geschützte bleiben (v2.172 auch Editor-Quelle, CROSS_X-Auswahl, AGENT-Revision)", s.final.versions.map((v) => v.id).join() === "1,2,3,4,5,6,9,10,11" && s.final.activeVersionId === 2);
   check("Zeile verschwindet, Protokoll nennt die Archivdatei", !crow("final-old") && s.log.some((l) => /FINAL: 2 Stand\/Stände als „FINAL-Staende-Archiv_.*“ gesichert: Alt A, Alt B/.test(l.message || "")));
 
   // Archiv einlesen
@@ -97,11 +103,16 @@ const img = (id, name, w, h, g, color) => ({ id, filename: name, dataUrl: shot(w
   fire(inp, "change"); await wait(500);
   s = await session();
   const back = s.final.versions.filter((v) => /^Alt /.test(v.name));
-  check("Archiv einlesen: beide Stände zurück, mit neuen IDs und Vermerk in der Historie", back.length === 2 && back.every((v) => v.id > 6) && back.every((v) => v.history.some((h) => /wiederhergestellt aus Stände-Archiv/.test(h.by) && h.when && h.status)) && back[0].chapters[0].text.startsWith("Alt A"));
+  check("v2.172: Team-Verknüpfung nicht übernommen, Verweis auf fehlendes Bild entfernt und gemeldet", back.find((v) => v.name === "Alt A").teamDocId === null && JSON.stringify(back.find((v) => v.name === "Alt A").chapters[0].screenIds) === "[]" && /1 Bild\(er\) nicht mehr im Bildarchiv/.test(s.log.map((l) => l.message).join("\n")));
+  Object.defineProperty(inp, "files", { value: [new win.File([arch.data], arch.filename, { type: "application/json" })], configurable: true });
+  fire(inp, "change"); await wait(500);
+  const s2 = await session();
+  check("v2.172: dasselbe Archiv nochmals eingelesen → keine Doppel", s2.final.versions.filter((v) => /^Alt /.test(v.name)).length === 2 && /2 schon vorhanden/.test($("toast").textContent));
+  check("Archiv einlesen: beide Stände zurück, mit neuen IDs und Vermerk in der Historie", back.length === 2 && back.every((v) => v.id > 11) && back.every((v) => v.history.some((h) => /wiederhergestellt aus Stände-Archiv/.test(h.by) && h.when && h.status)) && back[0].chapters[0].text.startsWith("Alt A"));
   Object.defineProperty(inp, "files", { value: [new win.File(['{"x":1}'], "falsch.json", { type: "application/json" })], configurable: true });
   fire(inp, "change"); await wait(300);
   s = await session();
-  check("Falsche Datei: Hinweis, nichts geändert", /kein FINAL-Stände-Archiv/.test($("toast").textContent) && s.final.versions.length === 8);
+  check("Falsche Datei: Hinweis, nichts geändert", /kein FINAL-Stände-Archiv/.test($("toast").textContent) && s.final.versions.length === 11);
   nav("final"); await wait(100);
   check("FINAL öffnet mit wiederhergestellten Ständen", !doc.querySelector('[data-view-panel="final"]').hidden && /Alt A/.test(doc.querySelector('[data-view-panel="final"]').textContent));
   check("Keine JS-Fehler", errors.length === 0);

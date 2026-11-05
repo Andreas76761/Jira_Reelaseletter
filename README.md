@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.171.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.172.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,32 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Fehlerbehebungen aus dem Code-Review v2.153–2.171 (v2.172.0)**: Drei unabhängige Prüfdurchgänge, jeder Befund am Code
+  bestätigt und mit Test abgesichert:
+  - **Texterkennung hing für immer**, wenn Sprachdaten nicht ladbar waren (Tesseract.js v5 lässt das Worker-Promise dann
+    offen): jetzt Zeitlimit je Worker (90 s), danach Rückfall auf das CDN bzw. klare Fehlermeldung; gestartete Worker
+    werden bei Teil-Fehlschlag beendet; die lokale Prüfung verlangt auch die Sprachdaten und akzeptiert keine HTML-Seite
+    (im echten Browser nachgestellt: Download der deutschen Sprachdaten scheitert → nach 90 s Meldung statt Hängen).
+  - **OpenCV**: ein fehlgeschlagener Start blockierte jeden weiteren Versuch bis zum Neuladen – jetzt nicht mehr.
+  - **Gruppen sehr ähnlicher Bilder**: der Screens-Import begann jedes Mal bei „I1“, sodass fremde Screens zweier Importe
+    in eine Gruppe fielen (Bereinigen hätte Bilder falsch zusammengeführt) – Gruppennummern sind jetzt eindeutig; Analyse,
+    Upload-/Import-/Review-Prüfung, Verkleinern, Zuschneiden und Bereinigen laufen nacheinander statt verschränkt; die
+    Review-Prüfung überschreibt die Abweichungswerte des Registers Bilder nicht mehr; eine Gruppe neuer Bilder wandert beim
+    Archiv-Treffer geschlossen mit.
+  - **Speicher sparen** überschreibt kein inzwischen zugeschnittenes Bild mehr mit einem veralteten Plan.
+  - **Bild löschen**: eingebettete Handbuch-Bilder verlieren den Verweis (statt auf eine später neu vergebene ID zu zeigen);
+    „Aufräumen“ erkennt auch solche Altverweise.
+  - **Alte FINAL-Stände archivieren** schützt jetzt auch Editor-Quelle, CROSS_X-Auswahl und AGENT-Auswahlen
+    (Übersetzung, Auswirkung alt/neu, Veröffentlichung); Archiv einlesen legt keine Doppel an, übernimmt keine
+    Team-Verknüpfung und entfernt/meldet Verweise auf nicht mehr vorhandene Bilder.
+  - **„Erneut versuchen“** nach „Speicher voll“: passt die neue Sicherung weiterhin nicht, wird die alte zurückgeschrieben
+    (vorher konnte die einzige Sicherung verloren gehen); bei ausgeschaltetem Speichern wird nichts gelöscht.
+  - **Jira-Nummern entfernen**: Normbezeichnungen wie UTF-8, ISO-9001, EURO-6, COVID-19 bleiben; Satzzeichen werden nur
+    dort bereinigt, wo eine Nummer entfernt wurde (franz. „Remarque : …“ bleibt unverändert).
+  - **Selbsttest**: Speicherprüfung meldet „Hinweis“, wenn das automatische Speichern fehlschlägt oder aus ist; längere
+    Zeitlimits passend zu den Ladern; Bericht bleibt auch bei mehrzeiligen Meldungen eine gültige Tabelle.
+  - Dashboard-Warnung „wenig Speicher“ misst wie das automatische Speichern (nur die jüngste Massen-Zwischenversion).
 
 - **Selbsttest der Umgebung (v2.171.0)**: Einstellungen → „Selbsttest starten“ prüft in der tatsächlichen Umgebung, was
   sich nur dort prüfen lässt – je mit ok / Hinweis / Fehler, Grund und Dauer: ZIP-, PDF- und Word-Export, Bildprüfung

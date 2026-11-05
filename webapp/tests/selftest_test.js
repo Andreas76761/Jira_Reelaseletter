@@ -85,7 +85,7 @@ const IMAGES = { sharp: SHARP, dup: jpegCopy(SHARP, 0.75), blurry: screen({ blur
   $("selftest-md-btn").click();
   await waitUntil(() => savedFiles.length === 1, 5000);
   const md = savedFiles[0] && savedFiles[0].data;
-  check("Bericht als Markdown mit Version, Browser und Tabelle", /^Selbsttest_\d{4}-\d{2}-\d{2}\.md$/.test(savedFiles[0].filename) && /# Selbsttest ONESCM Ticket-Cockpit/.test(md) && /- Version: 2\.171\.0/.test(md) && /\| Texterkennung \(Tesseract\) \| ok \|/.test(md) && /\| KI \(Claude\) \| ok \|/.test(md));
+  check("Bericht als Markdown mit Version, Browser und Tabelle", /^Selbsttest_\d{4}-\d{2}-\d{2}\.md$/.test(savedFiles[0].filename) && /# Selbsttest ONESCM Ticket-Cockpit/.test(md) && /- Version: 2\.\d+\.\d+/.test(md) && /\| Texterkennung \(Tesseract\) \| ok \|/.test(md) && /\| KI \(Claude\) \| ok \|/.test(md));
 
   // Fehlerfaelle: KI antwortet falsch, Tesseract fehlt, JSZip fehlt
   sampleMode = "bad";

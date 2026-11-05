@@ -6649,7 +6649,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.171.0";
+  var APP_VERSION = "2.172.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -9569,11 +9569,19 @@
     els.autosaveFailRetryBtn.addEventListener("click", async function () {
       // v2.168: nach „Speicher voll“ zuerst die alte Sicherung in eigener Transaktion entfernen – Chromium zaehlt den
       // fehlgeschlagenen Versuch sonst weiter als belegt und lehnt selbst kleine Sitzungen ab (im echten Browser geprueft)
-      if (autoSaveState.lastError === "QuotaExceededError") {
-        var db = await openAutoSaveDb();
-        if (db) { await autoSaveDelete(db); addLog("Automatisches Speichern: alte Sicherung entfernt, um belegten Speicher freizugeben."); }
+      if (!autoSaveEnabled || autoSaveInFlight || autoSaveState.lastError !== "QuotaExceededError") { autoSaveNow(); return; }
+      var db = await openAutoSaveDb();
+      if (!db) { autoSaveNow(); return; }
+      // alte Sicherung merken, entfernen, neu speichern – klappt das nicht, die alte zurueckschreiben (sie passte ja)
+      var old = await autoSaveRead(db);
+      await autoSaveDelete(db);
+      addLog("Automatisches Speichern: alte Sicherung entfernt, um belegten Speicher freizugeben.");
+      await autoSaveNow();
+      if (autoSaveState.failing && old) {
+        var back = await autoSaveWrite(db, old);
+        addLog(back === true ? "Automatisches Speichern: neue Sicherung passt nicht – alte Sicherung wiederhergestellt." : "Automatisches Speichern: alte Sicherung konnte nicht wiederhergestellt werden (" + back + ").");
+        if (back !== true) autoSaveState.lastOkAt = "";
       }
-      autoSaveNow();
     });
     els.autosaveFailCloseBtn.addEventListener("click", function () { autoSaveState.dismissed = true; els.autosaveFail.hidden = true; });
   }
@@ -13001,12 +13009,14 @@
   // bei einem Button-Klick aufgerufen, nie beim Laden), raeumt dabei leer
   // gewordene Klammern/doppelte Leerzeichen durch das Entfernen mit auf.
   function finalStripJiraKeys(text) {
+    // v2.172: Nummer zuerst durch eine Marke ersetzen und nur an diesen Stellen aufraeumen ("(ONESCM-1, ONESCM-2)",
+    // "angelegt (ONESCM-12)." → "angelegt.") – Text ohne Jira-Nummer bleibt unveraendert (z. B. franz. "Remarque :")
     return (text || "")
-      .replace(ROVO_JIRA_KEY_RE, "")
+      .replace(ROVO_JIRA_KEY_RE, "\u0003")
       .replace(/\u0001\s*\u0002/g, "")
-      // v2.156: auch Reste mehrerer Nummern "(, )" bzw. "[; ]" und Leerzeichen vor Satzzeichen ("angelegt .")
-      .replace(/\(\s*[,;/]?(\s*[,;/]\s*)*\)/g, "").replace(/\[\s*[,;/]?(\s*[,;/]\s*)*\]/g, "")
-      .replace(/[ \t]+([.,;:!?])/g, "$1")
+      .replace(/[ \t]*\(\s*\u0003(\s*[,;/]\s*\u0003)*\s*\)/g, "").replace(/[ \t]*\[\s*\u0003(\s*[,;/]\s*\u0003)*\s*\]/g, "")
+      .replace(/[ \t]*\u0003(\s*[,;/]\s*\u0003)*[ \t]*(?=[.,;:!?])/g, "")
+      .replace(/\u0003/g, "")
       .replace(/[ \t]{2,}/g, " ").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n")
       .trim();
   }
@@ -18878,16 +18888,18 @@
       c.onRuntimeInitialized = function () { if (typeof prev === "function") try { prev(); } catch (e) { /* egal */ } resolve({ cv: c }); };
     });
   }
+  // Ein fehlgeschlagener Start (z. B. abgelehntes WASM-Promise in window.cv) darf spaetere Versuche nicht blockieren
+  function cvForget() { try { delete window.cv; } catch (e) { window.cv = undefined; } }
   function loadOpenCv() {
     if (cvLoadPromise) return cvLoadPromise;
     cvLoadPromise = new Promise(function (resolve, reject) {
-      if (window.cv) { cvWhenReady(window.cv).then(resolve, reject); return; }
+      if (window.cv) { cvWhenReady(window.cv).then(resolve, function (err) { cvForget(); reject(err); }); return; }
       var i = 0, timer = null;
       function attempt() {
-        if (i >= CV_SRC.length) { reject(new Error("OpenCV.js konnte nicht geladen werden – weder neben der App (" + CV_LOCAL_SRC + ") noch von cdn.jsdelivr.net bzw. unpkg.com.")); return; }
+        if (i >= CV_SRC.length) { cvForget(); reject(new Error("OpenCV.js konnte nicht geladen werden – weder neben der App (" + CV_LOCAL_SRC + ") noch von cdn.jsdelivr.net bzw. unpkg.com.")); return; }
         var sc = document.createElement("script"), src = CV_SRC[i++];
         sc.src = src; sc.async = true;
-        sc.onload = function () { clearTimeout(timer); cvWhenReady(window.cv).then(function (r) { cvLoadedFrom = src === CV_LOCAL_SRC ? "mit der App veröffentlichte Kopie" : src.replace(/^https:\/\/([^/]+).*/, "$1"); resolve(r); }, function () { attempt(); }); };
+        sc.onload = function () { clearTimeout(timer); cvWhenReady(window.cv).then(function (r) { cvLoadedFrom = src === CV_LOCAL_SRC ? "mit der App veröffentlichte Kopie" : src.replace(/^https:\/\/([^/]+).*/, "$1"); resolve(r); }, function () { cvForget(); attempt(); }); };
         sc.onerror = function () { clearTimeout(timer); attempt(); };
         timer = setTimeout(function () { sc.onload = sc.onerror = null; attempt(); }, 90000);
         document.head.appendChild(sc);
@@ -18995,7 +19007,7 @@
   function cvDiffShare(a, b) { if (!a || !b || a.length !== b.length) return 1; var n = 0; for (var i = 0; i < a.length; i++) if (Math.abs(a[i] - b[i]) > 32) n++; return n / a.length; }
   // Sehr aehnliche Bilder: aehnlicher Fingerabdruck UND hoechstens 0,2 % deutlich abweichende Pixel; jede Gruppe wird
   // am ersten Bild gemessen (keine Ketten A~B~C), damit Screens mit gleichem Layout, aber anderem Inhalt getrennt bleiben.
-  function cvDuplicateGroups(imgs, thumbs) {
+  function cvDuplicateGroups(imgs, thumbs, keepDiff) {
     var groups = [];
     imgs.forEach(function (img) {
       var share = 1, g = null;
@@ -19005,15 +19017,34 @@
         var sh = cvDiffShare(thumbs[lead.id], thumbs[img.id]);
         if (sh <= CV_DUP_MAX_DIFF) { g = groups[gi]; share = sh; }
       }
-      if (g) { img.cvDupDiff = share; g.push(img); } else { img.cvDupDiff = null; groups.push([img]); }
+      if (g) { if (!keepDiff) img.cvDupDiff = share; g.push(img); } else { if (!keepDiff) img.cvDupDiff = null; groups.push([img]); }
     });
     return groups.filter(function (g) { return g.length > 1; });
   }
   var cvBusy = false;
+  // v2.172: naechste freie Gruppennummer ueber alle Bilder (auch „I1“ aus aelteren Screens-Imports) – Gruppen aus
+  // verschiedenen Laeufen duerfen nie dieselbe Kennung bekommen (sonst landen fremde Bilder in einer Gruppe)
+  function cvNextGroupNo() {
+    var max = 0;
+    app.uploadedImages.forEach(function (x) { var m = /^I?(\d+)$/.exec(String(x.cvDupGroup || "")); if (m && +m[1] > max) max = +m[1]; });
+    return max + 1;
+  }
+  // Laeufe, die Bildwerte/Gruppen schreiben, nacheinander ausfuehren (Analyse, Upload-/Import-/Review-Pruefung, Verkleinern, Bereinigen)
+  var cvQueue = Promise.resolve();
+  function cvExclusive(fn) {
+    return function () {
+      var self = this, args = arguments;
+      var p = cvQueue.then(function () { return fn.apply(self, args); });
+      cvQueue = p.catch(function () { /* naechster Lauf trotzdem */ });
+      return p;
+    };
+  }
   function cvIsBlurry(x) { return x.cvSharp != null && x.cvSharp < CV_BLUR_THRESHOLD && !x.cvEmpty && !x.cvVector; }
   function cvIsFlat(x) { return x.cvContrast != null && x.cvContrast < CV_CONTRAST_MIN && !x.cvEmpty; }
   // Analysiert die Bilder (Werte je Bild), liefert Gruppen sehr aehnlicher Bilder innerhalb dieser Menge und Zaehler
-  async function cvAnalyzeImages(imgs, onProgress) {
+  // opts.keepDup: Gruppen nur zurueckgeben, die Abweichungswerte des Registers Bilder (cvDupDiff) nicht anfassen
+  async function cvAnalyzeImages(imgs, onProgress, opts) {
+    opts = opts || {};
     var cv = (await loadOpenCv()).cv, done = 0, failed = 0, thumbs = {};
     for (var i = 0; i < imgs.length; i++) {
       var img = imgs[i];
@@ -19029,8 +19060,8 @@
       } catch (e) { img.cvError = (e && e.message) || "Analyse fehlgeschlagen."; failed++; }
       if (i % 5 === 4) { if (onProgress) onProgress(i + 1, imgs.length); await new Promise(function (r) { setTimeout(r, 0); }); }
     }
-    imgs.forEach(function (x) { x.cvDupDiff = null; });
-    var groups = cvDuplicateGroups(imgs.filter(function (x) { return x.cvHash && thumbs[x.id]; }), thumbs);
+    if (!opts.keepDup) imgs.forEach(function (x) { x.cvDupDiff = null; });
+    var groups = cvDuplicateGroups(imgs.filter(function (x) { return x.cvHash && thumbs[x.id]; }), thumbs, !!opts.keepDup);
     return { done: done, failed: failed, groups: groups, thumbs: thumbs, blurry: imgs.filter(cvIsBlurry).length, flat: imgs.filter(cvIsFlat).length, bordered: imgs.filter(function (x) { return x.cvBorder; }).length };
   }
   async function cvAnalyzeAll() {
@@ -19125,7 +19156,7 @@
     var best = null;
     cands.forEach(function (x) { if (!/^data:image\//.test(x.url)) return; x.bytes = cvDataUrlBytes(x.url); if (!best || x.bytes < best.bytes) best = x; });
     if (!best || best.bytes > before * (1 - CV_SHRINK_MIN_SAVING)) return null;
-    return { img: img, url: best.url, kind: best.kind, before: before, after: best.bytes, scale: sc, w: c.width, h: c.height, srcW: w, srcH: h };
+    return { img: img, srcUrl: img.dataUrl, url: best.url, kind: best.kind, before: before, after: best.bytes, scale: sc, w: c.width, h: c.height, srcW: w, srcH: h };
   }
   function cvApplyShrink(plan) {
     var img = plan.img;
@@ -19163,7 +19194,11 @@
         "\n\nErsparnis gesamt: " + dashFmtBytes(saved) + ". Das lässt sich nicht rückgängig machen – vorher die Sitzung als Datei speichern, wenn die Originale gebraucht werden.";
       els.cvShrinkSpinner.hidden = true;
       if (!(await confirmDialog(msg, "Verkleinern"))) { els.cvShrinkStatus.textContent = "Abgebrochen – nichts geändert (möglich wären " + dashFmtBytes(saved) + ")."; return null; }
+      // inzwischen geaenderte Bilder (z. B. zugeschnitten) nicht mit einem veralteten Plan ueberschreiben
+      var stale = plans.filter(function (pl) { return pl.img.dataUrl !== pl.srcUrl; });
+      plans = plans.filter(function (pl) { return pl.img.dataUrl === pl.srcUrl; });
       plans.forEach(cvApplyShrink);
+      if (stale.length) saved -= dashSum(stale.map(function (pl) { return pl.before - pl.after; }));
       origs.forEach(function (x) { x.cvUncropped = null; });
       els.cvShrinkStatus.textContent = plans.length + " Bild(er) verkleinert" + (origs.length ? ", " + origs.length + " Original(e) verworfen" : "") + " – " + dashFmtBytes(saved) + " gespart" + (failed ? " (" + failed + " nicht lesbar)" : "") + ".";
       addLog("Bilder: Speicher sparen – " + plans.length + " Bild(er) verkleinert, " + origs.length + " Original(e) verworfen, " + dashFmtBytes(saved) + " gespart.");
@@ -19224,7 +19259,8 @@
         });
         if (changed) ref.obj[ref.key] = out;
       } else if (ref.kind === "field") {
-        if (has(ref.obj.id) && map[ref.obj.id] !== null) { ref.obj.id = map[ref.obj.id]; n++; }
+        // entfernt: Verweis leeren (Platzhalter bleibt) – sonst koennte ein spaeter hochgeladenes Bild die alte ID bekommen
+        if (has(ref.obj.id)) { ref.obj.id = map[ref.obj.id]; n++; }
       } else if (ref.kind === "keys") {
         Object.keys(ref.obj).forEach(function (k) { if (has(k) && map[k] === null) { delete ref.obj[k]; return; } var t = map[k]; if (t != null) { if (ref.obj[t] == null || (typeof ref.obj[k] === "number" && ref.obj[k] > ref.obj[t])) ref.obj[t] = ref.obj[k]; delete ref.obj[k]; } });
       }
@@ -19335,6 +19371,13 @@
     if (!(app.cvSettings && app.cvSettings.ocrPre)) return small;
     try { return await cvPrepareOcr(small); } catch (e) { return small; } // ohne OpenCV: unveraendert weiter
   }
+  cvAnalyzeAll = cvExclusive(cvAnalyzeAll);
+  cvCropAll = cvExclusive(cvCropAll);
+  cvShrinkAll = cvExclusive(cvShrinkAll);
+  cvMergeDupGroup = cvExclusive(cvMergeDupGroup);
+  imagesCvUploadCheck = cvExclusive(imagesCvUploadCheck);
+  editorCvImportCheck = cvExclusive(editorCvImportCheck);
+  vrevCvCheck = cvExclusive(vrevCvCheck);
   if (els.editorCvCheck) {
     els.editorCvCheck.addEventListener("change", function () { app.cvSettings = app.cvSettings || {}; app.cvSettings.importCheck = els.editorCvCheck.checked; if (els.imagesCvCheck) els.imagesCvCheck.checked = els.editorCvCheck.checked; });
     els.editorCvNote.addEventListener("click", function (e) { if (e.target.closest("[data-editor-cv-goto]")) showView("bilder"); });
@@ -19402,16 +19445,38 @@
     if (typeof fetch !== "function" || typeof URL !== "function") return null;
     try {
       var base = new URL(OCR_LOCAL_DIR, location.href).href;
-      var r = await fetch(base + "worker.min.js", { method: "HEAD" });
-      if (!r.ok) return null;
-      return { workerPath: base + "worker.min.js", corePath: base, langPath: base + "lang" };
+      // Alle noetigen Dateien pruefen; ein Host, der fuer jeden Pfad eine HTML-Seite liefert, zaehlt nicht
+      var need = ["worker.min.js", "lang/eng.traineddata.gz", "lang/deu.traineddata.gz"];
+      for (var i = 0; i < need.length; i++) {
+        var r = await fetch(base + need[i], { method: "HEAD" });
+        if (!r.ok || /text\/html/i.test(r.headers.get("content-type") || "")) return null;
+      }
+      return { workerPath: base + "worker.min.js", corePath: base, langPath: base + "lang", errorHandler: function () { /* ueber Zeitlimit behandelt */ } };
     } catch (e) { return null; }
+  }
+  var OCR_WORKER_TIMEOUT_MS = 90000;
+  function ocrWithTimeout(p, ms) {
+    var t;
+    return Promise.race([p, new Promise(function (_, rej) { t = setTimeout(function () { rej(new Error("Texterkennung: Start dauert länger als " + Math.round(ms / 1000) + " s (Sprachdaten nicht ladbar?)")); }, ms); })])
+      .finally(function () { clearTimeout(t); });
   }
   var ocrWorkerPoolPromise = null;
   function getOcrWorkerPool() {
     if (!ocrWorkerPoolPromise) {
       ocrWorkerPoolPromise = ocrLocalOptions().then(function (opts) {
-        function make(o) { var c = []; for (var i = 0; i < IMAGES_OCR_CONCURRENCY; i++) c.push(o ? Tesseract.createWorker("eng+deu", 1, o) : Tesseract.createWorker("eng+deu")); return Promise.all(c); }
+        // Tesseract.js v5: createWorker lehnt nur ab, wenn das Worker-Skript nicht laedt – scheitern Sprachdaten oder
+        // Initialisierung, bleibt das Promise fuer immer offen. Daher Zeitlimit je Worker; bei Teil-Fehlschlag die
+        // bereits gestarteten Worker beenden (sonst bleiben WASM-Speicher und Sprachdaten belegt).
+        function make(o) {
+          var c = [];
+          for (var i = 0; i < IMAGES_OCR_CONCURRENCY; i++) c.push(ocrWithTimeout(o ? Tesseract.createWorker("eng+deu", 1, o) : Tesseract.createWorker("eng+deu"), OCR_WORKER_TIMEOUT_MS));
+          return Promise.allSettled(c).then(function (rs) {
+            var bad = rs.filter(function (r) { return r.status === "rejected"; });
+            if (!bad.length) return rs.map(function (r) { return r.value; });
+            rs.forEach(function (r) { if (r.status === "fulfilled" && r.value && r.value.terminate) { try { r.value.terminate(); } catch (e) { /* egal */ } } });
+            throw (bad[0].reason instanceof Error ? bad[0].reason : new Error(String(bad[0].reason || "Texterkennung konnte nicht gestartet werden.")));
+          });
+        }
         if (!opts) { ocrSource = "Internet (CDN)"; return make(null); }
         ocrSource = "mit der App veröffentlichte Dateien";
         return make(opts).catch(function () { ocrSource = "Internet (CDN)"; return make(null); });
@@ -19840,8 +19905,7 @@
     try {
       var res = await cvAnalyzeImages(fresh, function (i, n) { note.textContent = "OpenCV prüft … " + i + " von " + n; });
       var cv = (await loadOpenCv()).cv, thumbs = res.thumbs || {};
-      var nextG = 1;
-      app.uploadedImages.forEach(function (x) { var n = parseInt(x.cvDupGroup, 10); if (String(n) === String(x.cvDupGroup) && n >= nextG) nextG = n + 1; });
+      var nextG = cvNextGroupNo();
       res.groups.forEach(function (g) { var id = String(nextG++); g.forEach(function (x) { x.cvDupGroup = id; }); });
       var archive = app.uploadedImages.filter(function (x) { return fresh.indexOf(x) === -1 && x.cvHash && x.dataUrl; });
       var known = [], unchecked = app.uploadedImages.filter(function (x) { return fresh.indexOf(x) === -1 && !x.cvHash && x.dataUrl; }).length;
@@ -19857,6 +19921,9 @@
         }
         if (best) {
           var gid = best.old.cvDupGroup ? String(best.old.cvDupGroup) : String(nextG++);
+          var prevG = img.cvDupGroup;
+          // war das neue Bild schon mit anderen neuen Bildern gruppiert, wandert die ganze Gruppe mit
+          if (prevG) fresh.forEach(function (x) { if (x !== img && x.cvDupGroup === prevG) x.cvDupGroup = gid; });
           best.old.cvDupGroup = gid; img.cvDupGroup = gid; img.cvDupDiff = best.sh;
           known.push({ img: img, old: best.old, sh: best.sh });
         }
@@ -20078,7 +20145,8 @@
     try {
       var res = await cvAnalyzeImages(imgs, function (i, n) { note.textContent = "OpenCV prüft … " + i + " von " + n; });
       var sim = 0;
-      res.groups.forEach(function (g, gi) { g.forEach(function (x) { x.cvDupGroup = "I" + (gi + 1); sim++; }); });
+      var gno = cvNextGroupNo();
+      res.groups.forEach(function (g) { var id = String(gno++); g.forEach(function (x) { x.cvDupGroup = id; sim++; }); });
       var bad = imgs.filter(function (x) { return cvIsBlurry(x) || cvIsFlat(x); });
       note.innerHTML = "OpenCV-Prüfung „" + escapeHtml(names.join(", ")) + "“: " + res.done + " Screen(s) – <b>" + res.blurry + " unscharf</b>, " + res.flat + " kontrastarm, " + res.bordered + " mit leerem Rand, " + res.groups.length + " Gruppe(n) sehr ähnlicher Screens" +
         (bad.length ? " (" + bad.slice(0, 5).map(function (x) { return escapeHtml("Nr. " + x.imageNumber + (x.description ? " " + truncate(x.description, 30) : "")); }).join("; ") + (bad.length > 5 ? " …" : "") + ")" : "") +
@@ -20355,7 +20423,8 @@
      (zwei getrennte Felder, keine Rate-Heuristik) oder als Markdown-Datei -
      dort trennt eine eigene Zeile "---" Chatverlauf (davor) von Antwort
      (danach); fehlt sie, landet der gesamte Inhalt im Chatverlauf. */
-  var ROVO_JIRA_KEY_RE = /\b[A-Z][A-Z0-9]{1,9}-\d+\b/g;
+  // v2.172: gaengige Norm-/Technikbezeichnungen (UTF-8, ISO-9001, EURO-6, DIN-…, COVID-19 …) sind keine Jira-Nummern
+  var ROVO_JIRA_KEY_RE = /\b(?!(?:UTF|ISO|IEC|EN|DIN|EURO|COVID|SHA|MD|MP|TLS|SSL|IPV|USB|HDMI|PDF|GPS|ABS|ECE|UN|ES|ARM|X)-\d)[A-Z][A-Z0-9]{1,9}-\d+\b/g;
   function rovoDetectJiraKeys(text) {
     var matches = (text || "").match(ROVO_JIRA_KEY_RE) || [];
     return dedupeStrings(matches);
@@ -30121,7 +30190,9 @@
   // Prueft das, was sich nur in der echten Umgebung pruefen laesst (CDN/Dateien, KI-Zugang, Browser-Speicher, Downloads).
   var selftestResults = [], selftestAt = "";
   function selftestTimeout(p, ms, what) {
-    return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej(new Error(what + ": keine Antwort nach " + Math.round(ms / 1000) + " s")); }, ms); })]);
+    var t;
+    return Promise.race([p, new Promise(function (_, rej) { t = setTimeout(function () { rej(new Error(what + ": keine Antwort nach " + Math.round(ms / 1000) + " s")); }, ms); })])
+      .finally(function () { clearTimeout(t); });
   }
   function selftestCanvasText(text) {
     var c = document.createElement("canvas"); c.width = 420; c.height = 110;
@@ -30152,14 +30223,14 @@
       return "Word-Datei erzeugt (" + dashFmtBytes(blob.size) + ")";
     } },
     { name: "Bildprüfung (OpenCV)", run: async function () {
-      var cv = (await selftestTimeout(loadOpenCv(), 120000, "OpenCV")).cv;
+      var cv = (await selftestTimeout(loadOpenCv(), CV_SRC.length * 90000 + 30000, "OpenCV")).cv; // Lader: bis 90 s je Quelle
       var r = cvAnalyzePixels(cv, await cvImageData(selftestCanvasText("Test 123"), CV_MAX_EDGE));
       if (!(r.sharp > 0) || !r.hash) throw new Error("Analyse ohne Ergebnis");
       return "geladen" + (cvLoadedFrom ? " aus: " + cvLoadedFrom : "") + "; Testbild analysiert (Schärfe " + Math.round(r.sharp) + ")";
     } },
     { name: "Texterkennung (Tesseract)", run: async function () {
       if (typeof Tesseract === "undefined" && !(await ensureTesseract())) throw new Error("Tesseract.js weder neben der App (" + OCR_LOCAL_DIR + ") noch aus dem Internet ladbar");
-      var pool = await selftestTimeout(getOcrWorkerPool(), 180000, "Tesseract");
+      var pool = await selftestTimeout(getOcrWorkerPool(), 2 * OCR_WORKER_TIMEOUT_MS + 30000, "Tesseract"); // lokal, dann CDN
       var res = await selftestTimeout(pool[0].recognize(selftestCanvasText("Test 123")), 60000, "Erkennung");
       var t = ((res && res.data && res.data.text) || "").trim();
       if (!/123/.test(t)) throw new Error("Testtext nicht erkannt (gelesen: „" + truncate(t, 40) + "“)");
@@ -30181,7 +30252,10 @@
       await new Promise(function (res) { var tx = db.transaction(AUTOSAVE_STORE, "readwrite"); tx.objectStore(AUTOSAVE_STORE).delete(key); tx.oncomplete = res; tx.onerror = res; });
       if (!got || got.at !== val.at) throw new Error("Gelesener Wert stimmt nicht");
       var est = await dashBrowserEstimate();
-      return "Schreiben/Lesen ok" + (est ? "; belegt " + dashFmtBytes(est.usage) + ", frei laut Browser " + dashFmtBytes(est.free) : "");
+      var info = (est ? "; belegt " + dashFmtBytes(est.usage) + ", frei laut Browser " + dashFmtBytes(est.free) : "");
+      if (autoSaveState.failing) return { warn: true, detail: "Testschreiben ok, aber das automatische Speichern der Sitzung schlägt fehl (" + (autoSaveState.lastError === "QuotaExceededError" ? "Browser-Speicher voll" : autoSaveState.lastError) + ")" + info };
+      if (!autoSaveEnabled) return { warn: true, detail: "Testschreiben ok, aber das automatische Speichern ist ausgeschaltet" + info };
+      return "Schreiben/Lesen ok" + info;
     } },
     { name: "Downloads", run: async function () {
       if (!downloadsApi) return { warn: true, detail: "Download-Funktion nicht verfügbar (nur in der Artifact-Laufzeit) – Exporte nicht möglich" };
@@ -30217,7 +30291,7 @@
   }
   function selftestMarkdown() {
     return "# Selbsttest ONESCM Ticket-Cockpit\n\n- Version: " + APP_VERSION + "\n- Zeitpunkt: " + selftestAt + "\n- Browser: " + navigator.userAgent + "\n- Seite: " + location.origin + "\n\n| Prüfung | Ergebnis | Details | Dauer |\n|---|---|---|---|\n" +
-      selftestResults.map(function (r) { return "| " + r.name + " | " + r.state + " | " + String(r.detail).replace(/\|/g, "/") + " | " + (r.ms == null ? "–" : (r.ms / 1000).toFixed(1) + " s") + " |"; }).join("\n") + "\n";
+      selftestResults.map(function (r) { return "| " + r.name + " | " + r.state + " | " + String(r.detail).replace(/\|/g, "/").replace(/[\r\n]+/g, " ") + " | " + (r.ms == null ? "–" : (r.ms / 1000).toFixed(1) + " s") + " |"; }).join("\n") + "\n";
   }
   if (els.selftestRunBtn) {
     els.selftestRunBtn.addEventListener("click", function () { runSelftest(); });
@@ -30340,7 +30414,9 @@
     var items = dashSum(stats.rows.map(function (r) { return r.items; }));
     function tile(label, value, sub, cls) { return '<div class="vrev-tile' + (cls ? " " + cls : "") + '"><span class="vrev-tile-label">' + escapeHtml(label) + '</span><b class="vrev-tile-value">' + escapeHtml(value) + '</b>' + (sub ? '<span class="vrev-tile-sub">' + escapeHtml(sub) + "</span>" : "") + "</div>"; }
     var quotaFail = autoSaveState.failing && autoSaveState.lastError === "QuotaExceededError";
-    var low = (est && free < total * 2) || quotaFail;
+    // automatisches Speichern behaelt nur die juengste Massenverarbeitungs-Zwischenversion (wie autoSaveNow)
+    var mcp = app.massCheckpoints || [], autoTotal = total - (mcp.length > 1 ? dashSum(mcp.slice(0, -1).map(dashJsonBytes)) : 0);
+    var low = (est && free < autoTotal * 2) || quotaFail;
     els.dashStoreTiles.innerHTML =
       tile("Register mit Inhalt", String(stats.rows.filter(function (r) { return r.items > 0; }).length) + " von " + stats.rows.length, items.toLocaleString("de-DE") + " Einträge") +
       tile("Belegt (Sitzung)", dashFmtBytes(total), "Größe der Sitzungsdatei bzw. des automatischen Speicherns") +
@@ -30351,7 +30427,7 @@
         autoSaveState.failing ? "vrev-tile-fail" : autoSaveState.lastOkAt ? "vrev-tile-ok" : "");
     els.dashStoreHead.textContent = "· " + items.toLocaleString("de-DE") + " Einträge · belegt " + dashFmtBytes(total) + (est ? " · frei " + dashFmtBytes(free) : "");
     els.dashStoreWarn.hidden = !low;
-    if (low) els.dashStoreWarn.textContent = (quotaFail && !(est && free < total * 2) ? "Das automatische Speichern scheitert am Browser-Speicher, obwohl der Browser " + (est ? dashFmtBytes(free) : "genug") + " frei schätzt (Sitzung " + dashFmtBytes(total) + ")." : "Wenig freier Speicher: frei " + dashFmtBytes(free) + " bei einer Sitzung von " + dashFmtBytes(total) + ".") + " Das automatische Speichern kann fehlschlagen – Sitzung als Datei speichern, unter Bilder → „Speicher sparen“ übergroße Bilder verkleinern, unten unter „Aufräumen“ entbehrliche Kopien löschen und nicht mehr benötigte Bilder, Dateien oder Stände löschen (größte Register oben).";
+    if (low) els.dashStoreWarn.textContent = (quotaFail && !(est && free < autoTotal * 2) ? "Das automatische Speichern scheitert am Browser-Speicher, obwohl der Browser " + (est ? dashFmtBytes(free) : "genug") + " frei schätzt (Sitzung " + dashFmtBytes(total) + ")." : "Wenig freier Speicher: frei " + dashFmtBytes(free) + " bei einer Sitzung von " + dashFmtBytes(total) + ".") + " Das automatische Speichern kann fehlschlagen – Sitzung als Datei speichern, unter Bilder → „Speicher sparen“ übergroße Bilder verkleinern, unten unter „Aufräumen“ entbehrliche Kopien löschen und nicht mehr benötigte Bilder, Dateien oder Stände löschen (größte Register oben).";
     var rows = stats.rows.slice().sort(function (a, b) { return b.bytes - a.bytes; });
     var maxShare = rows.length ? rows[0].bytes : 0;
     els.dashStoreTbody.innerHTML = rows.map(function (r) {
@@ -30389,6 +30465,7 @@
     var orphanCount = 0, orphanWhere = {};
     cvWalkImageRefs(function (ref) {
       if (ref.kind === "list") ref.obj[ref.key].forEach(function (id) { if (typeof id === "number" && !have[id]) { orphanCount++; orphanWhere[cvRefTopLabel(ref.top)] = true; } });
+      else if (ref.kind === "field" && !have[ref.obj.id]) { orphanCount++; orphanWhere[cvRefTopLabel(ref.top)] = true; }
     });
     if (orphanCount) out.push({ key: "orphan-refs", label: "Verweise auf gelöschte Bilder", count: orphanCount, bytes: 0, always: true,
       hint: "In " + Object.keys(orphanWhere).join(", ") + " – stammen aus früher gelöschten Bildern; Bild-Platzhalter erscheinen dadurch zugeordnet, obwohl das Bild fehlt. Entfernen macht sie wieder offen.",
@@ -30397,6 +30474,7 @@
         app.uploadedImages.forEach(function (i) { live[i.id] = true; });
         cvWalkImageRefs(function (ref) {
           if (ref.kind === "list") ref.obj[ref.key].forEach(function (id) { if (typeof id === "number" && !live[id]) map[id] = null; });
+          else if (ref.kind === "field" && !live[ref.obj.id]) map[ref.obj.id] = null;
           else if (ref.kind === "keys") Object.keys(ref.obj).forEach(function (k) { if (/^\d+$/.test(k) && !live[k]) map[k] = null; });
         });
         return cvRemapImageRefs(map);
@@ -30404,7 +30482,7 @@
     // v2.166: alte FINAL-Staende – erst als Archivdatei sichern, dann entfernen (geschuetzte Staende bleiben)
     var oldStands = dashFinalArchivable();
     if (oldStands.length) out.push({ key: "final-old", label: "FINAL – nicht mehr benötigte Stände", count: oldStands.length, bytes: dashSum(oldStands.map(dashJsonBytes)), btn: "Sichern und löschen",
-      hint: "Werden zuerst als Archivdatei gespeichert („Stände-Archiv einlesen“ holt sie zurück) und nur danach entfernt. Bleiben immer: aktiver Stand, veröffentlichte Stände, Basis und Ergebnisse von Varianten, Stand im Editor, Stände aus dem Dokument-Review.",
+      hint: "Werden zuerst als Archivdatei gespeichert („Stände-Archiv einlesen“ holt sie zurück) und nur danach entfernt. Bleiben immer: aktiver Stand, veröffentlichte Stände, Basis und Ergebnisse von Varianten, Stände im Editor (Quelle und Ergebnis), Stände aus dem Dokument-Review sowie in CROSS_X und AGENT ausgewählte Stände.",
       apply: async function () {
         var list = dashFinalArchivable();
         var data = JSON.stringify({ type: "final-versions-archive", app: "ONESCM Ticket-Cockpit", appVersion: APP_VERSION, savedAt: new Date().toISOString(), versions: list }, null, 1);
@@ -30424,7 +30502,11 @@
   }
   function dashFinalProtectedIds() {
     var keep = {}, add = function (id) { if (typeof id === "number") keep[id] = true; };
-    add(app.final.activeVersionId); add(app.editoFinalDocId);
+    add(app.final.activeVersionId); add(app.editoFinalDocId); add(app.editoBaseDocId);
+    ((app.crossx && app.crossx.standIds) || []).forEach(add); // CROSS_X: ausgewaehlte Staende
+    var ag = app.agent || {}, addKey = function (k) { var m = /^F:(\d+)$/.exec(String(k || "")); if (m) keep[+m[1]] = true; };
+    [ag.trSource, ag.impA, ag.impB, ag.pubSource].forEach(addKey); // AGENT: Uebersetzung, Auswirkung alt/neu, Veroeffentlichung
+    Object.keys(ag.include || {}).forEach(addKey);
     var vs = app.variante || {};
     add(vs.baseVersionId);
     (vs.variants || []).forEach(function (v) { add(v.standId); });
@@ -30437,16 +30519,27 @@
     var d;
     try { d = JSON.parse(await readFileAsText(file)); } catch (e) { showToast("Nicht lesbar", "Die Datei ist kein Stände-Archiv (JSON).", true); return 0; }
     if (!d || d.type !== "final-versions-archive" || !Array.isArray(d.versions)) { showToast("Kein Stände-Archiv", "„" + file.name + "“ ist kein FINAL-Stände-Archiv.", true); return 0; }
-    var names = [];
+    var names = [], dupes = 0, missingImgs = {};
+    var haveImg = {};
+    app.uploadedImages.forEach(function (i) { haveImg[i.id] = true; });
     d.versions.forEach(function (v) {
       if (!v || !Array.isArray(v.chapters)) return;
+      // schon vorhanden (gleicher Name und Erstellzeitpunkt, z. B. Archiv zweimal eingelesen) → nicht doppelt anlegen
+      if (app.final.versions.some(function (x) { return x.name === v.name && x.createdAt === v.createdAt; })) { dupes++; return; }
       var copy = JSON.parse(JSON.stringify(v));
       copy.id = nextFinalVersionId++;
+      copy.teamDocId = null; // Team-Ablage-Verknuepfung nicht mitnehmen (sonst zwei lokale Staende fuer ein Team-Dokument)
+      copy.chapters.forEach(function (c) {
+        (c.screenIds || []).forEach(function (id) { if (typeof id === "number" && !haveImg[id]) missingImgs[id] = true; });
+        // fehlende Bilder nicht als Verweis behalten – eine spaeter vergebene gleiche ID zeigte sonst ein fremdes Bild
+        if (Array.isArray(c.screenIds)) c.screenIds = c.screenIds.filter(function (id) { return haveImg[id]; });
+      });
       copy.history = (Array.isArray(copy.history) ? copy.history : []).concat([{ status: copy.status, when: nowLabel(), by: "wiederhergestellt aus Stände-Archiv „" + file.name + "“" }]);
       app.final.versions.push(copy); names.push(copy.name);
     });
-    addLog("FINAL: " + names.length + " Stand/Stände aus „" + file.name + "“ wiederhergestellt: " + names.join(", ") + ".");
-    showToast("Wiederhergestellt", names.length + " Stand/Stände aus dem Archiv.");
+    var nMiss = Object.keys(missingImgs).length;
+    addLog("FINAL: " + names.length + " Stand/Stände aus „" + file.name + "“ wiederhergestellt" + (names.length ? ": " + names.join(", ") : "") + (dupes ? "; " + dupes + " bereits vorhanden, übersprungen" : "") + (nMiss ? "; " + nMiss + " Bild(er) nicht mehr im Bildarchiv – Verweise entfernt" : "") + ".");
+    showToast("Wiederhergestellt", names.length + " Stand/Stände aus dem Archiv" + (dupes ? ", " + dupes + " schon vorhanden" : "") + (nMiss ? ", " + nMiss + " Bild(er) fehlen" : "") + ".");
     renderWhenVisible("final", "final", renderFinal);
     await renderDashStore();
     return names.length;
@@ -34996,9 +35089,9 @@
     vrevBusy = true; renderVrev();
     els.vrevStatus.textContent = "OpenCV prüft " + imgs.length + " Bild(er) …";
     try {
-      var res = await cvAnalyzeImages(imgs, function (i, n) { els.vrevStatus.textContent = "OpenCV prüft … " + i + " von " + n; });
+      var res = await cvAnalyzeImages(imgs, function (i, n) { els.vrevStatus.textContent = "OpenCV prüft … " + i + " von " + n; }, { keepDup: true });
       var sim = {};
-      res.groups.forEach(function (g, gi) { g.forEach(function (x) { sim[x.id] = String.fromCharCode(65 + (gi % 26)); }); });
+      res.groups.forEach(function (g, gi) { g.forEach(function (x) { sim[x.id] = String(gi + 1); }); });
       doc.cvCheck = { at: nowLabel(), n: res.done, blurry: res.blurry, flat: res.flat, bordered: res.bordered, similar: Object.keys(sim).length, sim: sim };
       vrevLog(doc, 3, "Bildqualität mit OpenCV geprüft", res.done);
       els.vrevStatus.textContent = "Bildqualität geprüft: " + res.blurry + " unscharf, " + res.flat + " kontrastarm, " + res.bordered + " mit leerem Rand, " + Object.keys(sim).length + " sehr ähnliche(s) Bild(er)" + (res.failed ? ", " + res.failed + " nicht lesbar" : "") + ".";

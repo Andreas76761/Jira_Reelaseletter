@@ -77,6 +77,8 @@ const IMAGES = { sharp: SHARP, dup: jpegCopy(SHARP, 0.75), blurry: screen({ blur
   // Archiv: sharp + flat, analysiert
   let s = await session();
   s.uploadedImages = [{ id: 101, filename: "archiv_maske.png", dataUrl: IMAGES.sharp, mimeType: "image/png" }, { id: 102, filename: "archiv_flach.png", dataUrl: IMAGES.flat, mimeType: "image/png" }];
+  // v2.172: bestehende Gruppe „I7“ aus einem früheren Screens-Import (zwei andere Bilder) darf nicht getroffen werden
+  s.uploadedImages.push({ id: 103, filename: "alt_a.png", dataUrl: IMAGES.text, mimeType: "image/png", cvDupGroup: "I7" }, { id: 104, filename: "alt_b.png", dataUrl: IMAGES.text, mimeType: "image/png", cvDupGroup: "I7" });
   const imp = $("session-import-input");
   Object.defineProperty(imp, "files", { value: [new win.File([JSON.stringify(s)], "s.json")], configurable: true });
   fire(imp, "change");
@@ -96,6 +98,7 @@ const IMAGES = { sharp: SHARP, dup: jpegCopy(SHARP, 0.75), blurry: screen({ blur
   check("Knopf „→ Sehr ähnliche Bilder bereinigen“ im Hinweis", !!$("images-cv-note").querySelector("[data-images-cv-dups]"));
   const kopie = await findImg("kopie.jpg"), archiv = await findImg("archiv_maske.png"), neu = await findImg("neu.png");
   check("Kopie und Archivbild in derselben Gruppe, neues Bild ohne Gruppe", kopie.cvDupGroup && kopie.cvDupGroup === archiv.cvDupGroup && !neu.cvDupGroup);
+  check("v2.172: neue Gruppennummer nach der höchsten vorhandenen (nicht wieder 1/„I1“), fremde Gruppe unberührt", /^\d+$/.test(String(kopie.cvDupGroup)) && +kopie.cvDupGroup !== 7);
   check("Bereinigung zeigt die Gruppe mit Kopie und Archivbild", !$("cv-dup-wrap").hidden && !!doc.querySelector('#cv-dup-list [data-cv-dup-img="' + kopie.id + '"]') && !!doc.querySelector('#cv-dup-list [data-cv-dup-img="101"]'));
   check("Neue Bilder sind analysiert (Ergebnis je Bild)", kopie.cvAt && neu.cvAt && neu.cvHash);
   const log = (await session()).log.map((l) => l.message).join("\n");

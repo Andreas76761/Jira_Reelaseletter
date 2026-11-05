@@ -89,8 +89,8 @@ const img = (id, name, w, h, g, color) => ({ id, filename: name, dataUrl: shot(w
   check("FINAL-Kapitel: 401 entfernt, 402 bleibt", JSON.stringify(s.final.versions[0].chapters[0].screenIds) === "[402]");
   check("Screens-Platzhalter: Zuordnung und Trefferwert entfernt, anderer Wert bleibt", JSON.stringify(s.screenPh.rows[0].screenIds) === "[]" && s.screenPh.rows[0].scores[401] == null && s.screenPh.rows[0].scores[402] === 40);
   check("Dokument-Review: Platzhalter wieder offen", JSON.stringify(s.vrev.docs[0].ph["1 Vertrag|0"]) === "[]");
-  check("Eingebettetes Handbuch-Bild behält seinen Platz", s.final.manuals[0].chapters[0].embedded.length === 1 && s.final.manuals[0].chapters[0].embedded[0].ph === "Maske");
-  check("Protokoll nennt entfernte Verweise", s.log.some((l) => /Hochgeladenes Bild „maske\.png“ gelöscht – 3 Verweis\(e\) entfernt \(/.test(l.message || "")) && s.log.some((l) => /Hochgeladenes Bild „frei\.png“ gelöscht\.$/.test(l.message || "")));
+  check("Eingebettetes Handbuch-Bild behält seinen Platz, Verweis geleert (v2.172: keine Wiederverwendung der alten ID)", s.final.manuals[0].chapters[0].embedded.length === 1 && s.final.manuals[0].chapters[0].embedded[0].ph === "Maske" && s.final.manuals[0].chapters[0].embedded[0].id === null);
+  check("Protokoll nennt entfernte Verweise", s.log.some((l) => /Hochgeladenes Bild „maske\.png“ gelöscht – 4 Verweis\(e\) entfernt \(/.test(l.message || "")) && s.log.some((l) => /Hochgeladenes Bild „frei\.png“ gelöscht\.$/.test(l.message || "")));
   nav("final"); await wait(100);
   check("FINAL lässt sich danach öffnen", !doc.querySelector('[data-view-panel="final"]').hidden);
   check("Keine JS-Fehler", errors.length === 0);

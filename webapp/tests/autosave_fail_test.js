@@ -17,8 +17,10 @@ vc.on("jsdomError", (e) => { if (!String(e.message).match(/jszip|jspdf|tesseract
 const savedFiles = [];
 
 let failMode = null; // null | "quota" | "other"
+let throwsLeft = 0; // v2.172: genau N weitere put() scheitern (dann wieder normal)
 const origPut = FIDB.IDBObjectStore.prototype.put;
 FIDB.IDBObjectStore.prototype.put = function () {
+  if (throwsLeft > 0) { throwsLeft--; throw new DOMException("The quota has been exceeded.", "QuotaExceededError"); }
   if (failMode === "quota") throw new DOMException("The quota has been exceeded.", "QuotaExceededError");
   if (failMode === "other") throw new DOMException("Data clone failed.", "DataCloneError");
   return origPut.apply(this, arguments);
@@ -130,6 +132,20 @@ FIDB.IDBObjectStore.prototype.put = function () {
   FIDB.IDBObjectStore.prototype.delete = origDel;
   $("dash-store-refresh-btn").click(); await wait(200);
   check("Dashboard danach ohne Warnung", $("dash-store-warn").hidden);
+
+  // 10) v2.172: „Erneut versuchen“, neue Sicherung passt weiterhin nicht → alte Sicherung wird zurückgeschrieben
+  failMode = "quota";
+  await change();
+  await waitUntil(() => !$("autosave-fail").hidden, 6000);
+  failMode = null; throwsLeft = 1; // nur der neue Speicherversuch scheitert, das Zurückschreiben klappt
+  const gets = [];
+  $("autosave-fail-retry-btn").click();
+  await waitUntil(() => /alte Sicherung wiederhergestellt|nicht wiederhergestellt/.test(logText()), 6000);
+  const stored = await new Promise((res) => { const o = dom.window.indexedDB.open("ticket-cockpit-autosave", 1); o.onsuccess = () => { const tx = o.result.transaction("session", "readonly"), rq = tx.objectStore("session").get("current"); rq.onsuccess = () => res(rq.result); rq.onerror = () => res(null); }; o.onerror = () => res(null); });
+  check("Erneut versuchen scheitert erneut: alte Sicherung zurückgeschrieben, nicht verloren", /neue Sicherung passt nicht – alte Sicherung wiederhergestellt/.test(logText()) && !!stored && !$("autosave-fail").hidden);
+  failMode = null; throwsLeft = 0;
+  $("autosave-fail-retry-btn").click();
+  await waitUntil(() => $("autosave-fail").hidden, 6000);
 
   check("Keine JS-Fehler", errors.length === 0);
   if (errors.length) console.log(errors.slice(0, 5));
