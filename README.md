@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.160.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.161.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,12 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Bild löschen räumt Verweise auf (v2.161.0)**: Wird im Register Bilder ein Bild gelöscht, das noch verwendet wird,
+  nennt die Bestätigung jetzt die Verwendungen („Es wird 4× verwendet (FINAL, Screens-Import, Dokument-Review)“).
+  Beim Löschen werden die Verweise mit entfernt – FINAL-Kapitel-Screens, Zuordnung und Trefferwert in den
+  Screens-Platzhaltern, Bild-Platzhalter im Dokument-Review (wieder offen); eingebettete Handbuch-Bilder behalten ihren
+  Platz. Bisher blieben verwaiste Verweise zurück. Das Protokoll nennt die Zahl der entfernten Verweise.
 
 - **Warnung, wenn das automatische Speichern fehlschlägt (v2.160.0)**: Bisher stand ein Fehlschlag nur als Statuszeile in
   den Einstellungen – bei vollem Browser-Speicher ging die Arbeit beim nächsten Absturz verloren, ohne dass es auffiel.

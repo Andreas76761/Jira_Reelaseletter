@@ -6617,7 +6617,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.160.0";
+  var APP_VERSION = "2.161.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -18660,9 +18660,18 @@
     var img = findImageEntry(kind, id);
     if (!img) return;
     var label = kind === "uploaded" ? img.filename : img.title;
-    var ok = await confirmDialog((kind === "uploaded" ? "Bild" : "Generiertes Bild") + ' „' + label + '“ wirklich löschen?');
+    // v2.161: Verwendungen nennen und beim Loeschen mit entfernen (FINAL-Kapitel, Screens-Platzhalter, Dokument-Review)
+    var refs = kind === "uploaded" ? cvImageRefs() : null, nUse = refs ? refs.count[id] || 0 : 0;
+    var useWhere = nUse ? Object.keys(refs.where[id] || {}).join(", ") : "";
+    var ok = await confirmDialog((kind === "uploaded" ? "Bild" : "Generiertes Bild") + ' „' + label + '“ wirklich löschen?' +
+      (nUse ? "\n\nEs wird " + nUse + "× verwendet (" + useWhere + "). Diese Verweise werden mit entfernt; Bild-Platzhalter bleiben offen." : ""));
     if (!ok) return;
-    if (kind === "uploaded") { app.uploadedImages = app.uploadedImages.filter(function (i) { return i.id !== id; }); addLog('Hochgeladenes Bild „' + label + '“ gelöscht.'); }
+    if (kind === "uploaded") {
+      var removedRefs = nUse ? cvRemapImageRefs((function () { var m = {}; m[id] = null; return m; })()) : 0;
+      app.uploadedImages = app.uploadedImages.filter(function (i) { return i.id !== id; });
+      addLog('Hochgeladenes Bild „' + label + '“ gelöscht' + (removedRefs ? " – " + removedRefs + " Verweis(e) entfernt (" + useWhere + ")" : "") + ".");
+      renderCvTable();
+    }
     else { app.generatedImages = app.generatedImages.filter(function (i) { return i.id !== id; }); addLog('Generiertes Bild „' + label + '“ gelöscht.'); }
     renderGallery();
     // Gelöschte Bilder auch aus Editor-Screens, Bildband und FINAL entfernen
@@ -19130,17 +19139,24 @@
     });
     return { count: count, where: where };
   }
+  // map: { alteId: neueId } stellt um; { alteId: null } entfernt den Verweis (v2.161: Bild loeschen).
+  // Eingebettete Handbuch-Bilder (embedded[].id) behalten beim Entfernen ihren Platz – ohne Bild bleibt der Platzhalter.
   function cvRemapImageRefs(map) {
-    var n = 0;
+    var n = 0, has = function (k) { return Object.prototype.hasOwnProperty.call(map, k); };
     cvWalkImageRefs(function (ref) {
       if (ref.kind === "list") {
         var out = [], changed = false;
-        ref.obj[ref.key].forEach(function (id) { var t = map[id] != null ? map[id] : id; if (t !== id) { changed = true; n++; } if (out.indexOf(t) === -1) out.push(t); else changed = true; });
+        ref.obj[ref.key].forEach(function (id) {
+          var t = has(id) ? map[id] : id;
+          if (t !== id) { changed = true; n++; }
+          if (t === null) return;
+          if (out.indexOf(t) === -1) out.push(t); else changed = true;
+        });
         if (changed) ref.obj[ref.key] = out;
       } else if (ref.kind === "field") {
-        if (map[ref.obj.id] != null) { ref.obj.id = map[ref.obj.id]; n++; }
+        if (has(ref.obj.id) && map[ref.obj.id] !== null) { ref.obj.id = map[ref.obj.id]; n++; }
       } else if (ref.kind === "keys") {
-        Object.keys(ref.obj).forEach(function (k) { var t = map[k]; if (t != null) { if (ref.obj[t] == null || (typeof ref.obj[k] === "number" && ref.obj[k] > ref.obj[t])) ref.obj[t] = ref.obj[k]; delete ref.obj[k]; } });
+        Object.keys(ref.obj).forEach(function (k) { if (has(k) && map[k] === null) { delete ref.obj[k]; return; } var t = map[k]; if (t != null) { if (ref.obj[t] == null || (typeof ref.obj[k] === "number" && ref.obj[k] > ref.obj[t])) ref.obj[t] = ref.obj[k]; delete ref.obj[k]; } });
       }
     });
     return n;
