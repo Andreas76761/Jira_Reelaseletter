@@ -19602,7 +19602,7 @@
       var sim = 0;
       res.groups.forEach(function (g, gi) { g.forEach(function (x) { x.cvDupGroup = "I" + (gi + 1); sim++; }); });
       var bad = imgs.filter(function (x) { return cvIsBlurry(x) || cvIsFlat(x); });
-      note.innerHTML = "OpenCV-Prüfung „" + escapeHtml(names.join(", ")) + "“: " + res.done + " Screen(s) – <b>" + res.blurry + " unscharf</b>, " + res.flat + " kontrastarm, " + res.bordered + " mit leerem Rand, " + sim + " sehr ähnliche(r) Screen(s)" +
+      note.innerHTML = "OpenCV-Prüfung „" + escapeHtml(names.join(", ")) + "“: " + res.done + " Screen(s) – <b>" + res.blurry + " unscharf</b>, " + res.flat + " kontrastarm, " + res.bordered + " mit leerem Rand, " + res.groups.length + " Gruppe(n) sehr ähnlicher Screens" +
         (bad.length ? " (" + bad.slice(0, 5).map(function (x) { return escapeHtml("Nr. " + x.imageNumber + (x.description ? " " + truncate(x.description, 30) : "")); }).join("; ") + (bad.length > 5 ? " …" : "") + ")" : "") +
         (res.blurry + res.flat + res.bordered + sim ? ' <button class="btn ghost btn-tiny" type="button" data-editor-cv-goto="1">→ Bilder</button>' : " – keine Auffälligkeiten.");
       addLog("Screens-Import: OpenCV-Prüfung von " + res.done + " Screen(s) – " + res.blurry + " unscharf, " + res.flat + " kontrastarm, " + res.bordered + " mit leerem Rand.");
