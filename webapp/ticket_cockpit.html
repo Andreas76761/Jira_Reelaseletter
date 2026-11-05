@@ -19029,7 +19029,7 @@
     app.uploadedImages.forEach(function (x) { var m = /^I?(\d+)$/.exec(String(x.cvDupGroup || "")); if (m && +m[1] > max) max = +m[1]; });
     return max + 1;
   }
-  // Laeufe, die Bildwerte/Gruppen schreiben, nacheinander ausfuehren (Analyse, Upload-/Import-/Review-Pruefung, Verkleinern, Bereinigen)
+  // Laeufe, die Gruppen vergeben oder zusammenfuehren, nacheinander ausfuehren (Analyse, Upload-/Import-/Review-Pruefung, Bereinigen)
   var cvQueue = Promise.resolve();
   function cvExclusive(fn) {
     return function () {
@@ -19371,9 +19371,9 @@
     if (!(app.cvSettings && app.cvSettings.ocrPre)) return small;
     try { return await cvPrepareOcr(small); } catch (e) { return small; } // ohne OpenCV: unveraendert weiter
   }
+  // nur Laeufe, die Gruppen vergeben oder zusammenfuehren, werden serialisiert; „Speicher sparen“ schuetzt sich selbst
+  // (veraltete Plaene werden uebersprungen) und laeuft ohne Warteschlange
   cvAnalyzeAll = cvExclusive(cvAnalyzeAll);
-  cvCropAll = cvExclusive(cvCropAll);
-  cvShrinkAll = cvExclusive(cvShrinkAll);
   cvMergeDupGroup = cvExclusive(cvMergeDupGroup);
   imagesCvUploadCheck = cvExclusive(imagesCvUploadCheck);
   editorCvImportCheck = cvExclusive(editorCvImportCheck);

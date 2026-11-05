@@ -2040,7 +2040,7 @@ RAG-Kontext anreichern").
   - **OpenCV**: ein fehlgeschlagener Start blockierte jeden weiteren Versuch bis zum Neuladen – jetzt nicht mehr.
   - **Gruppen sehr ähnlicher Bilder**: der Screens-Import begann jedes Mal bei „I1“, sodass fremde Screens zweier Importe
     in eine Gruppe fielen (Bereinigen hätte Bilder falsch zusammengeführt) – Gruppennummern sind jetzt eindeutig; Analyse,
-    Upload-/Import-/Review-Prüfung, Verkleinern, Zuschneiden und Bereinigen laufen nacheinander statt verschränkt; die
+    Upload-/Import-/Review-Prüfung und Bereinigen laufen nacheinander statt verschränkt; die
     Review-Prüfung überschreibt die Abweichungswerte des Registers Bilder nicht mehr; eine Gruppe neuer Bilder wandert beim
     Archiv-Treffer geschlossen mit.
   - **Speicher sparen** überschreibt kein inzwischen zugeschnittenes Bild mehr mit einem veralteten Plan.
