@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.145.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.146.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,19 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Optik der Word- und PDF-Ausgaben (v2.146.0)**: die erzeugten Dateien wurden mit LibreOffice gerendert und
+  Seite für Seite angesehen (großes Handbuch, 60 Kapitel mit Unterkapiteln, 30 Bilder, Tabellen). Behoben:
+  **Inhaltsverzeichnis** (Word) ohne doppelte Nummer – Titel mit eigener Nummer werden nicht mehr zusätzlich
+  durchgezählt („1 Verträge anlegen“ statt „1. 1 Verträge anlegen“), Hauptkapitel fett, Unterkapitel eingerückt.
+  **Seitenumbruch nur vor Hauptkapiteln**: Unterkapitel laufen auf derselben Seite weiter (Word und PDF; im PDF
+  beginnt ein Unterkapitel nur dann auf einer neuen Seite, wenn auf der aktuellen kaum noch Platz ist) – im Beispiel
+  Word 124 → 65 Seiten, PDF 143 → 99 Seiten. **Bildunterschrift nicht mehr doppelt**: ein Bildtext, der schon mit
+  „Abbildung N:“ beginnt, ergab „Abbildung 1: Abbildung 1: …“, und die Original-Unterschrift des Entwurfs stand
+  zusätzlich unter dem Bild – jetzt genau eine Unterschrift (Word, PDF, PowerPoint, Vorschau). **Berichte als Word**
+  (Reviewbericht, CROSS_X-Prüfbericht, Releaseletter je Rolle u. a.) mit Formatvorlagen: Überschriften wie im App-Design
+  „Standard“, Seitenränder, echte Aufzählungen, **fett** übernommen, Status-Kennungen farbig ([OK] grün, [Hinweis]
+  orange, [Fehler] rot, [offen] grau); vorher sahen Überschriften wie Fließtext aus.
 
 - **CROSS_X als Chat mit Zugriff auf alle Register (v2.145.0)**: CROSS_X › „3. Chat mit allen Registern (KI)“
   beantwortet Fragen über **alle Register**: zusätzlich zu Ständen, Matrix, Varianten, Notizen, Verbesserungen, Reviews,
