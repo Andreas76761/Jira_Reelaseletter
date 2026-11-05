@@ -3598,7 +3598,9 @@
           <input type="file" id="image-file-input" accept="image/*" multiple hidden>
           <div class="paste-actions" style="margin-top:8px;">
             <button class="btn ghost" id="image-paste-clipboard-btn" type="button">Aus Zwischenablage einfügen</button>
+            <label class="variante-inline-check"><input type="checkbox" id="images-cv-check" checked> Beim Hochladen mit OpenCV prüfen (Schärfe, Kontrast, Rand, schon im Archiv?)</label>
           </div>
+          <p class="step-note" id="images-cv-note" hidden></p>
         </section>
 
         <section>
@@ -6617,7 +6619,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.161.0";
+  var APP_VERSION = "2.162.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8240,7 +8242,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "editor-cv-check", "editor-cv-note", "cv-section", "cv-analyze-btn", "cv-spinner", "cv-crop-all-btn", "cv-ocr-pre", "cv-status", "cv-table-wrap", "cv-tbody", "autosave-fail", "autosave-fail-msg", "autosave-fail-export-btn", "autosave-fail-shrink-btn", "autosave-fail-dash-btn", "autosave-fail-retry-btn", "autosave-fail-close-btn", "cv-dup-wrap", "cv-dup-count", "cv-dup-list", "cv-shrink", "cv-shrink-edge", "cv-shrink-jpeg", "cv-shrink-drop-orig", "cv-shrink-btn", "cv-shrink-spinner", "cv-shrink-status", "dash-store", "dash-store-head", "dash-store-tiles", "dash-store-warn", "dash-store-tbody", "dash-store-tfoot", "dash-store-refresh-btn", "dash-store-at", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-opt-strip-jira", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-cv-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "editor-cv-check", "editor-cv-note", "cv-section", "cv-analyze-btn", "cv-spinner", "cv-crop-all-btn", "cv-ocr-pre", "cv-status", "cv-table-wrap", "cv-tbody", "images-cv-check", "images-cv-note", "autosave-fail", "autosave-fail-msg", "autosave-fail-export-btn", "autosave-fail-shrink-btn", "autosave-fail-dash-btn", "autosave-fail-retry-btn", "autosave-fail-close-btn", "cv-dup-wrap", "cv-dup-count", "cv-dup-list", "cv-shrink", "cv-shrink-edge", "cv-shrink-jpeg", "cv-shrink-drop-orig", "cv-shrink-btn", "cv-shrink-spinner", "cv-shrink-status", "dash-store", "dash-store-head", "dash-store-tiles", "dash-store-warn", "dash-store-tbody", "dash-store-tfoot", "dash-store-refresh-btn", "dash-store-at", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-opt-strip-jira", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-cv-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -9250,6 +9252,7 @@
     if (els.cvOcrPre) els.cvOcrPre.checked = app.cvSettings.ocrPre;
     cvShrinkSyncUi();
     if (els.editorCvCheck) els.editorCvCheck.checked = app.cvSettings.importCheck;
+    if (els.imagesCvCheck) els.imagesCvCheck.checked = app.cvSettings.importCheck;
     app.agent = agentNormalize(data.agent);
     app.rlRoleOverrides = rlNormalizeOverrides(data.rlRoleOverrides);
     app.crossx = crossxNormalize(data.crossx);
@@ -18961,7 +18964,7 @@
     }
     imgs.forEach(function (x) { x.cvDupDiff = null; });
     var groups = cvDuplicateGroups(imgs.filter(function (x) { return x.cvHash && thumbs[x.id]; }), thumbs);
-    return { done: done, failed: failed, groups: groups, blurry: imgs.filter(cvIsBlurry).length, flat: imgs.filter(cvIsFlat).length, bordered: imgs.filter(function (x) { return x.cvBorder; }).length };
+    return { done: done, failed: failed, groups: groups, thumbs: thumbs, blurry: imgs.filter(cvIsBlurry).length, flat: imgs.filter(cvIsFlat).length, bordered: imgs.filter(function (x) { return x.cvBorder; }).length };
   }
   async function cvAnalyzeAll() {
     var imgs = app.uploadedImages.filter(function (i) { return i.dataUrl; });
@@ -19164,7 +19167,8 @@
   function cvDupGroupList() {
     var by = {};
     app.uploadedImages.forEach(function (i) { if (i.cvDupGroup) (by[i.cvDupGroup] = by[i.cvDupGroup] || []).push(i); });
-    return Object.keys(by).map(Number).sort(function (a, b) { return a - b; }).filter(function (g) { return by[g].length > 1; }).map(function (g) { return { g: g, imgs: by[g] }; });
+    // Gruppen aus Register Bilder (1, 2 …) und Screens-Import ("I1" …): als Text fuehren, natuerlich sortieren
+    return Object.keys(by).sort(function (a, b) { return a.localeCompare(b, "de", { numeric: true }); }).filter(function (g) { return by[g].length > 1; }).map(function (g) { return { g: g, imgs: by[g] }; });
   }
   function cvDupDefaultKeep(imgs, refs) {
     return imgs.slice().sort(function (a, b) {
@@ -19182,7 +19186,7 @@
     els.cvDupList.innerHTML = groups.map(function (gr) {
       var keep = gr.imgs.filter(function (i) { return i.id === cvDupKeep[gr.g]; })[0] || cvDupDefaultKeep(gr.imgs, refs);
       cvDupKeep[gr.g] = keep.id;
-      return '<div class="cv-dup-group" data-cv-dup-group="' + gr.g + '"><b>Gruppe ' + gr.g + "</b> · " + gr.imgs.length + " Bilder" +
+      return '<div class="cv-dup-group" data-cv-dup-group="' + escapeHtml(gr.g) + '"><b>Gruppe ' + escapeHtml(gr.g) + "</b> · " + gr.imgs.length + " Bilder" +
         '<div class="cv-dup-cards">' + gr.imgs.map(function (i) {
           var n = refs.count[i.id] || 0, w = Object.keys(refs.where[i.id] || {});
           return '<label class="cv-dup-card' + (i.id === keep.id ? " cv-dup-keep" : "") + '" data-cv-dup-img="' + i.id + '"><img src="' + escapeHtml(screenPreviewUrl(i)) + '" alt="">' +
@@ -19190,10 +19194,11 @@
             "<span>" + escapeHtml(truncate(i.filename || ("#" + i.id), 32)) + "</span><span>" + ((i.width || i.cvW) ? (i.width || i.cvW) + " × " + (i.height || i.cvH) + " · " : "") + dashFmtBytes(i.sizeBytes || cvDataUrlBytes(i.dataUrl)) + "</span>" +
             '<span class="desc">' + (n ? n + " Verwendung(en): " + escapeHtml(w.join(", ")) : "nicht verwendet") + "</span></label>";
         }).join("") + "</div>" +
-        '<button class="btn ghost btn-tiny" type="button" data-cv-dup-merge="' + gr.g + '">Andere entfernen (' + (gr.imgs.length - 1) + ")</button></div>";
+        '<button class="btn ghost btn-tiny" type="button" data-cv-dup-merge="' + escapeHtml(gr.g) + '">Andere entfernen (' + (gr.imgs.length - 1) + ")</button></div>";
     }).join("");
   }
   async function cvMergeDupGroup(g) {
+    g = String(g);
     var gr = cvDupGroupList().filter(function (x) { return x.g === g; })[0];
     if (!gr) return null;
     var keep = gr.imgs.filter(function (i) { return i.id === cvDupKeep[g]; })[0] || cvDupDefaultKeep(gr.imgs, cvImageRefs());
@@ -19264,7 +19269,7 @@
     try { return await cvPrepareOcr(small); } catch (e) { return small; } // ohne OpenCV: unveraendert weiter
   }
   if (els.editorCvCheck) {
-    els.editorCvCheck.addEventListener("change", function () { app.cvSettings = app.cvSettings || {}; app.cvSettings.importCheck = els.editorCvCheck.checked; });
+    els.editorCvCheck.addEventListener("change", function () { app.cvSettings = app.cvSettings || {}; app.cvSettings.importCheck = els.editorCvCheck.checked; if (els.imagesCvCheck) els.imagesCvCheck.checked = els.editorCvCheck.checked; });
     els.editorCvNote.addEventListener("click", function (e) { if (e.target.closest("[data-editor-cv-goto]")) showView("bilder"); });
   }
   if (els.cvAnalyzeBtn) {
@@ -19274,12 +19279,12 @@
     els.cvDupList.addEventListener("change", function (e) {
       var r = e.target.closest('input[type="radio"]'), gEl = r && r.closest("[data-cv-dup-group]");
       if (!gEl) return;
-      cvDupKeep[parseInt(gEl.getAttribute("data-cv-dup-group"), 10)] = parseInt(r.value, 10);
+      cvDupKeep[gEl.getAttribute("data-cv-dup-group")] = parseInt(r.value, 10);
       renderCvDups();
     });
     els.cvDupList.addEventListener("click", function (e) {
       var b = e.target.closest("[data-cv-dup-merge]");
-      if (b && !cvBusy) cvMergeDupGroup(parseInt(b.getAttribute("data-cv-dup-merge"), 10));
+      if (b && !cvBusy) cvMergeDupGroup(b.getAttribute("data-cv-dup-merge"));
     });
     [els.cvShrinkEdge, els.cvShrinkJpeg, els.cvShrinkDropOrig].forEach(function (el) {
       el.addEventListener("change", function () {
@@ -19702,6 +19707,7 @@
   async function handleImageFiles(fileList) {
     var files = Array.prototype.filter.call(fileList || [], function (f) { return f.type && f.type.indexOf("image/") === 0; });
     if (!files.length) { showToast("Kein Bild", "Bitte eine Bilddatei auswählen (PNG/JPG/GIF/SVG/…).", true); return; }
+    var fresh = [];
     for (var i = 0; i < files.length; i++) {
       var file = files[i];
       try {
@@ -19712,6 +19718,7 @@
           width: null, height: null, avgColor: null, brightnessPct: null, metadataComputed: false, metadataError: null,
           ocrText: null, ocrError: null, ocrRanAt: null
         });
+        fresh.push(app.uploadedImages[0]);
         addLog("Bild „" + (file.name || "Bild") + "“ hochgeladen (" + formatBytes(file.size || 0) + ").");
       } catch (err) {
         showToast("Fehler beim Hochladen", (err && err.message) || "Unbekannter Fehler.", true);
@@ -19719,6 +19726,57 @@
     }
     renderGallery();
     showToast("Bild(er) hochgeladen", files.length + " Bild(er) zur Galerie hinzugefügt.");
+    var svgFree = fresh.filter(function (x) { return !/^data:image\/svg/i.test(x.dataUrl || ""); });
+    if (svgFree.length && els.imagesCvCheck && els.imagesCvCheck.checked) await imagesCvUploadCheck(svgFree);
+  }
+  // v2.162: OpenCV-Pruefung beim Hochladen im Register Bilder – Qualitaet wie beim Screens-Import und Abgleich mit dem
+  // Bildarchiv: ist ein neues Bild einem vorhandenen sehr aehnlich, landen beide in einer Gruppe („Sehr ähnliche Bilder bereinigen“).
+  async function imagesCvUploadCheck(fresh) {
+    var note = els.imagesCvNote;
+    note.hidden = false; note.textContent = "OpenCV prüft " + fresh.length + " neue(s) Bild(er) …";
+    try {
+      var res = await cvAnalyzeImages(fresh, function (i, n) { note.textContent = "OpenCV prüft … " + i + " von " + n; });
+      var cv = (await loadOpenCv()).cv, thumbs = res.thumbs || {};
+      var nextG = 1;
+      app.uploadedImages.forEach(function (x) { var n = parseInt(x.cvDupGroup, 10); if (String(n) === String(x.cvDupGroup) && n >= nextG) nextG = n + 1; });
+      res.groups.forEach(function (g) { var id = String(nextG++); g.forEach(function (x) { x.cvDupGroup = id; }); });
+      var archive = app.uploadedImages.filter(function (x) { return fresh.indexOf(x) === -1 && x.cvHash && x.dataUrl; });
+      var known = [], unchecked = app.uploadedImages.filter(function (x) { return fresh.indexOf(x) === -1 && !x.cvHash && x.dataUrl; }).length;
+      for (var i = 0; i < fresh.length; i++) {
+        var img = fresh[i], best = null;
+        if (!img.cvHash || !thumbs[img.id]) continue;
+        for (var j = 0; j < archive.length; j++) {
+          var old = archive[j];
+          if (cvHamming(old.cvHash, img.cvHash) > CV_DUP_MAX_BITS) continue;
+          if (!thumbs[old.id]) { try { thumbs[old.id] = cvAnalyzePixels(cv, await cvImageData(old.dataUrl, CV_MAX_EDGE)).thumb; } catch (e) { continue; } }
+          var sh = cvDiffShare(thumbs[old.id], thumbs[img.id]);
+          if (sh <= CV_DUP_MAX_DIFF && (!best || sh < best.sh)) best = { old: old, sh: sh };
+        }
+        if (best) {
+          var gid = best.old.cvDupGroup ? String(best.old.cvDupGroup) : String(nextG++);
+          best.old.cvDupGroup = gid; img.cvDupGroup = gid; img.cvDupDiff = best.sh;
+          known.push({ img: img, old: best.old, sh: best.sh });
+        }
+      }
+      var bad = fresh.filter(function (x) { return cvIsBlurry(x) || cvIsFlat(x); });
+      var pct = function (v) { return v * 100 < 0.01 ? "< 0,01" : (v * 100).toFixed(2).replace(".", ","); };
+      note.innerHTML = "OpenCV-Prüfung: " + res.done + " Bild(er) – <b>" + res.blurry + " unscharf</b>, " + res.flat + " kontrastarm, " + res.bordered + " mit leerem Rand" +
+        (bad.length ? " (" + bad.slice(0, 5).map(function (x) { return escapeHtml(truncate(x.filename || "", 30)); }).join(", ") + (bad.length > 5 ? " …" : "") + ")" : "") +
+        "; <b>" + known.length + " schon im Archiv</b>" + (known.length ? " (" + known.slice(0, 5).map(function (k) { return escapeHtml(truncate(k.img.filename || "", 30)) + " ≈ " + escapeHtml(truncate(k.old.filename || "#" + k.old.id, 30)) + ", Abweichung " + pct(k.sh) + " %"; }).join("; ") + (known.length > 5 ? " …" : "") + ")" : "") +
+        (res.groups.length ? "; " + res.groups.length + " Gruppe(n) sehr ähnlicher Bilder unter den neuen" : "") +
+        (unchecked ? "; " + unchecked + " Bild(er) im Archiv noch nicht analysiert – für den vollständigen Abgleich „Alle Bilder mit OpenCV analysieren“" : "") + "." +
+        (known.length || res.groups.length ? ' <button class="btn ghost btn-tiny" type="button" data-images-cv-dups="1">→ Sehr ähnliche Bilder bereinigen</button>' : "");
+      addLog("Bilder: OpenCV-Prüfung beim Hochladen – " + res.done + " Bild(er), " + res.blurry + " unscharf, " + res.flat + " kontrastarm, " + res.bordered + " mit leerem Rand, " + known.length + " schon im Archiv.");
+      renderCvTable();
+      return { res: res, known: known };
+    } catch (err) {
+      note.textContent = "OpenCV-Prüfung nicht möglich (" + ((err && err.message) || "Unbekannter Fehler") + ") – später unten mit „Alle Bilder mit OpenCV analysieren“ nachholen.";
+      return null;
+    }
+  }
+  if (els.imagesCvCheck) {
+    els.imagesCvCheck.addEventListener("change", function () { app.cvSettings = app.cvSettings || {}; app.cvSettings.importCheck = els.imagesCvCheck.checked; if (els.editorCvCheck) els.editorCvCheck.checked = els.imagesCvCheck.checked; });
+    els.imagesCvNote.addEventListener("click", function (e) { if (e.target.closest("[data-images-cv-dups]") && els.cvDupWrap && els.cvDupWrap.scrollIntoView) els.cvDupWrap.scrollIntoView({ block: "start" }); });
   }
   els.imageDropzone.addEventListener("click", function () { els.imageFileInput.click(); });
   els.imageDropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.imageFileInput.click(); } });
@@ -36068,7 +36126,7 @@
   var NAV_GROUPS = ["Input", "Operation", "Output"];
   // Neue Funktionen (Label "Neu" mit Hinweis)
   var NAV_NEW = {
-    bilder: "Neu in v2.153/2.158/2.159: Bildverarbeitung mit OpenCV (Schärfe, Kontrast, leere Ränder, sehr ähnliche Bilder, OCR-Vorverarbeitung); Speicher sparen; sehr ähnliche Bilder bereinigen",
+    bilder: "Neu in v2.153–2.162: Bildverarbeitung mit OpenCV (Schärfe, Kontrast, leere Ränder, sehr ähnliche Bilder, OCR-Vorverarbeitung); Speicher sparen; sehr ähnliche Bilder bereinigen; Prüfung beim Hochladen",
     variante: "Neu in v2.152/2.155: Dokument-Review – Bilder mit KI auswählen, Bildqualität mit OpenCV prüfen",
     final: "Neu in v2.148–2.151: Listen, eingebettete Bilder und Tabellen aus dem Handbuch; PowerPoint überarbeitet",
     dashboard: "Neu in v2.147: Einträge und Speicherplatz je Register",

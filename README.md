@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.161.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.162.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,14 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Bilder: OpenCV-Prüfung beim Hochladen (v2.162.0)**: Auch im Register Bilder prüft OpenCV neu hochgeladene Bilder
+  (Schalter „Beim Hochladen mit OpenCV prüfen“, standardmäßig an, gemeinsam mit dem Screens-Import und in der Sitzung
+  gespeichert): unscharf, kontrastarm, leerer Rand – und **„schon im Archiv“**: Ist ein neues Bild einem vorhandenen
+  (analysierten) Bild sehr ähnlich, nennt der Hinweis beide mit Abweichung in % und legt sie in eine gemeinsame Gruppe;
+  der Knopf „→ Sehr ähnliche Bilder bereinigen“ führt direkt dorthin. Noch nicht analysierte Archivbilder werden gezählt.
+  SVG-Bilder werden nicht geprüft. **Behoben**: Gruppen aus der Prüfung im Screens-Import („I1“ …) brachten die
+  Bereinigung (v2.159) zum Absturz, weil die Gruppennummer als Zahl gelesen wurde.
 
 - **Bild löschen räumt Verweise auf (v2.161.0)**: Wird im Register Bilder ein Bild gelöscht, das noch verwendet wird,
   nennt die Bestätigung jetzt die Verwendungen („Es wird 4× verwendet (FINAL, Screens-Import, Dokument-Review)“).
