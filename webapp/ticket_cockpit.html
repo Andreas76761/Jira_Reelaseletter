@@ -644,6 +644,8 @@
   .doc-notes-body { padding: 0 12px 12px; }
   .dashboard-notes-due-list { margin: 0; padding-left: 18px; font-size: 13px; }
   .dash-store { padding: 10px 14px; margin: 14px 0; }
+  .cv-table td { vertical-align: middle; } .cv-table img { max-width: 64px; max-height: 40px; border: 1px solid var(--border); border-radius: 3px; }
+  .cv-bad { color: #b91c1c; font-weight: 600; } .cv-ok { color: #15803d; } .cv-warn { color: #b45309; font-weight: 600; }
   .dash-store summary { cursor: pointer; }
   .dash-store-desc { font-size: 13px; }
   .dash-store-head { font-size: 12.5px; color: var(--text-faint); margin-left: 6px; }
@@ -3560,6 +3562,30 @@
             </button>
           </div>
           <p class="step-note" id="images-ocr-batch-status-note"></p>
+        </section>
+
+        <section id="cv-section">
+          <p class="section-label">Bildverarbeitung mit OpenCV</p>
+          <div class="callout">
+            Analysiert alle Bilder mit <b>OpenCV</b> (OpenCV.js, läuft im Browser per WebAssembly, wird beim ersten Klick
+            geladen – ca. 11 MB): <b>Schärfe</b> (unscharfe Screenshots), <b>Kontrast</b>, <b>leere Ränder</b> und
+            <b>sehr ähnliche Bilder</b> (mögliche Dubletten: dasselbe Bild mehrfach, auch neu gespeichert oder verkleinert – aber
+            auch Screens, die sich nur in einer Zahl oder einem Wort unterscheiden; die Abweichung in % hilft bei der Entscheidung). Leere Ränder lassen sich zuschneiden (rückgängig machbar). Optional
+            bereitet OpenCV Bilder vor der Texterkennung auf (Graustufen, kleine Bilder vergrößern, Binarisierung) – das
+            verbessert die OCR bei kleinen oder kontrastarmen Screenshots.
+          </div>
+          <div class="controls" style="flex-wrap:wrap;">
+            <button class="btn primary" id="cv-analyze-btn" type="button"><span class="btn-spinner" id="cv-spinner" hidden></span>Alle Bilder mit OpenCV analysieren</button>
+            <button class="btn ghost" id="cv-crop-all-btn" type="button" disabled>Leere Ränder zuschneiden</button>
+            <label class="variante-inline-check"><input type="checkbox" id="cv-ocr-pre"> OCR mit OpenCV-Vorverarbeitung</label>
+          </div>
+          <p class="step-note" id="cv-status"></p>
+          <div class="panel table-wrap" id="cv-table-wrap" hidden style="max-height:360px; overflow:auto;">
+            <table class="simple-table cv-table">
+              <thead><tr><th>Bild</th><th>Größe</th><th>Schärfe</th><th>Kontrast</th><th>Leerer Rand</th><th>Sehr ähnliche Bilder</th><th>Aktion</th></tr></thead>
+              <tbody id="cv-tbody"></tbody>
+            </table>
+          </div>
         </section>
 
         <section>
@@ -6513,7 +6539,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.152.0";
+  var APP_VERSION = "2.153.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8136,7 +8162,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "dash-store", "dash-store-head", "dash-store-tiles", "dash-store-warn", "dash-store-tbody", "dash-store-tfoot", "dash-store-refresh-btn", "dash-store-at", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "cv-section", "cv-analyze-btn", "cv-spinner", "cv-crop-all-btn", "cv-ocr-pre", "cv-status", "cv-table-wrap", "cv-tbody", "dash-store", "dash-store-head", "dash-store-tiles", "dash-store-warn", "dash-store-tbody", "dash-store-tfoot", "dash-store-refresh-btn", "dash-store-at", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -8276,6 +8302,7 @@
     docNotes: { releaseletter: [], benutzerhandbuch: [], prozessbild: [], clickanweisung: [] },
     variante: null,
     vrev: null,
+    cvSettings: { ocrPre: false },
     agent: null,
     rlRoleOverrides: {},
     crossx: null,
@@ -9027,6 +9054,7 @@
       docNotes: app.docNotes,
       variante: app.variante,
       vrev: app.vrev,
+      cvSettings: app.cvSettings,
       agent: agentForSession(),
       rlRoleOverrides: app.rlRoleOverrides,
       crossx: app.crossx,
@@ -9140,6 +9168,8 @@
     app.docNotes = docNotesNormalize(data.docNotes);
     app.variante = varianteNormalize(data.variante);
     app.vrev = vrevNormalize(data.vrev);
+    app.cvSettings = { ocrPre: !!(data.cvSettings && data.cvSettings.ocrPre) };
+    if (els.cvOcrPre) els.cvOcrPre.checked = app.cvSettings.ocrPre;
     app.agent = agentNormalize(data.agent);
     app.rlRoleOverrides = rlNormalizeOverrides(data.rlRoleOverrides);
     app.crossx = crossxNormalize(data.crossx);
@@ -18656,6 +18686,254 @@
       el.src = dataUrl;
     });
   }
+  // ===================== v2.153: Bildverarbeitung mit OpenCV (OpenCV.js, bei Bedarf geladen) =====================
+  var CV_SRC = ["https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.11.0-release.1/dist/opencv.js", "https://unpkg.com/@techstark/opencv-js@4.11.0-release.1/dist/opencv.js"];
+  var CV_BLUR_THRESHOLD = 60, CV_CONTRAST_MIN = 20, CV_DUP_MAX_BITS = 32, CV_DUP_MAX_DIFF = 0.002, CV_BORDER_MIN = 0.04, CV_MAX_EDGE = 1200;
+  var cvLoadPromise = null;
+  // Liefert { cv } (Wrapper, weil das Emscripten-Modul selbst ein "then" hat und ein Promise sonst endlos aufloest).
+  function cvWhenReady(c) {
+    return new Promise(function (resolve, reject) {
+      if (!c) { reject(new Error("OpenCV nicht vorhanden.")); return; }
+      if (typeof c.Mat === "function") { resolve({ cv: c }); return; }
+      if (typeof Promise !== "undefined" && c instanceof Promise) { c.then(function (m) { resolve({ cv: m }); }, reject); return; }
+      var prev = c.onRuntimeInitialized;
+      c.onRuntimeInitialized = function () { if (typeof prev === "function") try { prev(); } catch (e) { /* egal */ } resolve({ cv: c }); };
+    });
+  }
+  function loadOpenCv() {
+    if (cvLoadPromise) return cvLoadPromise;
+    cvLoadPromise = new Promise(function (resolve, reject) {
+      if (window.cv) { cvWhenReady(window.cv).then(resolve, reject); return; }
+      var i = 0, timer = null;
+      function attempt() {
+        if (i >= CV_SRC.length) { reject(new Error("OpenCV.js konnte nicht geladen werden – Internetzugriff auf cdn.jsdelivr.net bzw. unpkg.com erforderlich.")); return; }
+        var sc = document.createElement("script");
+        sc.src = CV_SRC[i++]; sc.async = true;
+        sc.onload = function () { clearTimeout(timer); cvWhenReady(window.cv).then(resolve, function () { attempt(); }); };
+        sc.onerror = function () { clearTimeout(timer); attempt(); };
+        timer = setTimeout(function () { sc.onload = sc.onerror = null; attempt(); }, 90000);
+        document.head.appendChild(sc);
+      }
+      attempt();
+    }).catch(function (err) { cvLoadPromise = null; throw err; });
+    return cvLoadPromise;
+  }
+  // Bild -> RGBA-Pixel (optional verkleinert auf maxEdge) ueber ein Canvas
+  function cvImageData(dataUrl, maxEdge) {
+    return new Promise(function (resolve, reject) {
+      var el = new Image();
+      el.onload = function () {
+        try {
+          var w = el.naturalWidth || el.width, h = el.naturalHeight || el.height;
+          if (!w || !h) throw new Error("Bild ohne Größe.");
+          var sc = maxEdge && Math.max(w, h) > maxEdge ? maxEdge / Math.max(w, h) : 1;
+          var c = document.createElement("canvas");
+          c.width = Math.max(1, Math.round(w * sc)); c.height = Math.max(1, Math.round(h * sc));
+          var ctx = c.getContext("2d");
+          ctx.drawImage(el, 0, 0, c.width, c.height);
+          resolve({ data: ctx.getImageData(0, 0, c.width, c.height), w: w, h: h, scale: sc });
+        } catch (e) { reject(e); }
+      };
+      el.onerror = function () { reject(new Error("Bild konnte nicht geladen werden.")); };
+      el.src = dataUrl;
+    });
+  }
+  function cvMatToDataUrl(cv, mat) {
+    var rgba = new cv.Mat();
+    try {
+      if (mat.channels() === 1) cv.cvtColor(mat, rgba, cv.COLOR_GRAY2RGBA); else mat.copyTo(rgba);
+      var c = document.createElement("canvas"); c.width = rgba.cols; c.height = rgba.rows;
+      var ctx = c.getContext("2d"), id = ctx.createImageData(rgba.cols, rgba.rows);
+      id.data.set(new Uint8ClampedArray(rgba.data));
+      ctx.putImageData(id, 0, 0);
+      return c.toDataURL("image/png");
+    } finally { rgba.delete(); }
+  }
+  // Analyse eines Bildes: Schaerfe (Varianz des Laplace-Operators), Kontrast (Standardabweichung der Grauwerte),
+  // leerer Rand (Inhaltsrechteck gegenueber der Randfarbe), Fingerabdruck (dHash 64 Bit) fuer Dubletten.
+  function cvAnalyzePixels(cv, px) {
+    var src = cv.matFromImageData(px.data), gray = new cv.Mat(), lap = new cv.Mat(), m = new cv.Mat(), sd = new cv.Mat(), m2 = new cv.Mat(), sd2 = new cv.Mat();
+    var bg = null, diff = new cv.Mat(), bin = new cv.Mat(), small = new cv.Mat(), thumb = new cv.Mat();
+    try {
+      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+      cv.Laplacian(gray, lap, cv.CV_64F);
+      cv.meanStdDev(lap, m, sd);
+      cv.meanStdDev(gray, m2, sd2);
+      var sharp = Math.pow(sd.doubleAt(0, 0), 2), contrast = sd2.doubleAt(0, 0);
+      var W = gray.cols, H = gray.rows;
+      var corners = [gray.ucharAt(0, 0), gray.ucharAt(0, W - 1), gray.ucharAt(H - 1, 0), gray.ucharAt(H - 1, W - 1)].sort(function (a, b) { return a - b; });
+      bg = new cv.Mat(H, W, gray.type(), new cv.Scalar(Math.round((corners[1] + corners[2]) / 2)));
+      cv.absdiff(gray, bg, diff);
+      cv.threshold(diff, bin, 12, 255, cv.THRESH_BINARY);
+      // Inhaltsrechteck aus der Binaermaske (findNonZero fehlt in OpenCV.js)
+      var bd = bin.data, minX = W, minY = H, maxX = -1, maxY = -1;
+      for (var py = 0; py < H; py++) {
+        var off = py * W;
+        for (var pxx = 0; pxx < W; pxx++) if (bd[off + pxx]) { if (pxx < minX) minX = pxx; if (pxx > maxX) maxX = pxx; if (py < minY) minY = py; maxY = py; }
+      }
+      var border = null, empty = maxX < 0;
+      if (!empty) {
+        var r = { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 }, pad = 2;
+        var x = Math.max(0, r.x - pad), y = Math.max(0, r.y - pad), x2 = Math.min(W, r.x + r.width + pad), y2 = Math.min(H, r.y + r.height + pad);
+        if ((W - (x2 - x)) + (H - (y2 - y)) > CV_BORDER_MIN * (W + H)) {
+          border = { x: Math.round(x / px.scale), y: Math.round(y / px.scale), w: Math.min(px.w, Math.round((x2 - x) / px.scale)), h: Math.min(px.h, Math.round((y2 - y) / px.scale)), pct: Math.round((1 - ((x2 - x) * (y2 - y)) / (W * H)) * 100) };
+        }
+      }
+      // dHash 16x16 (256 Bit): fein genug, dass Screenshots mit gleichem Layout (Kopfzeile, Menue) nicht als Dubletten gelten
+      cv.resize(gray, small, new cv.Size(17, 16), 0, 0, cv.INTER_AREA);
+      var bits = "";
+      for (var yy = 0; yy < 16; yy++) for (var xx = 0; xx < 16; xx++) bits += small.ucharAt(yy, xx) > small.ucharAt(yy, xx + 1) + 3 ? "1" : "0"; // +3: einfarbige Flaechen stabil (Kompressionsrauschen)
+      // 80x50-Graustufen fuer den Pixelvergleich (Toleranz 32 Stufen). Gemessen: Kopien (neu kodiert, auf 75/50/33 %
+      // verkleinert) 0,00 %, kleine Markierung 0,03 %, gleicher Screen mit anderer Zahl im Titel 0,00 %, anderes Thema
+      // 0,47 % – Grenze 0,2 %. "Gleicher Screen, andere Zahl" ist von einer Kopie nicht zu trennen, daher "sehr aehnlich
+      // (moegliche Dublette)" mit angezeigter Abweichung, Entscheidung beim Menschen.
+      cv.resize(gray, thumb, new cv.Size(80, 50), 0, 0, cv.INTER_AREA);
+      return { sharp: Math.round(sharp * 10) / 10, contrast: Math.round(contrast * 10) / 10, border: border, empty: empty, hash: bits, thumb: new Uint8Array(thumb.data) };
+    } finally {
+      [src, gray, lap, m, sd, m2, sd2, diff, bin, small, thumb].forEach(function (x) { x.delete(); });
+      if (bg) bg.delete();
+    }
+  }
+  function cvHamming(a, b) { var n = 0; for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) n++; return n; }
+  // Anteil deutlich abweichender Pixel (mehr als 32 Graustufen)
+  function cvDiffShare(a, b) { if (!a || !b || a.length !== b.length) return 1; var n = 0; for (var i = 0; i < a.length; i++) if (Math.abs(a[i] - b[i]) > 32) n++; return n / a.length; }
+  // Sehr aehnliche Bilder: aehnlicher Fingerabdruck UND hoechstens 0,2 % deutlich abweichende Pixel; jede Gruppe wird
+  // am ersten Bild gemessen (keine Ketten A~B~C), damit Screens mit gleichem Layout, aber anderem Inhalt getrennt bleiben.
+  function cvDuplicateGroups(imgs, thumbs) {
+    var groups = [];
+    imgs.forEach(function (img) {
+      var share = 1, g = null;
+      for (var gi = 0; gi < groups.length && !g; gi++) {
+        var lead = groups[gi][0];
+        if (cvHamming(lead.cvHash, img.cvHash) > CV_DUP_MAX_BITS) continue;
+        var sh = cvDiffShare(thumbs[lead.id], thumbs[img.id]);
+        if (sh <= CV_DUP_MAX_DIFF) { g = groups[gi]; share = sh; }
+      }
+      if (g) { img.cvDupDiff = share; g.push(img); } else { img.cvDupDiff = null; groups.push([img]); }
+    });
+    return groups.filter(function (g) { return g.length > 1; });
+  }
+  var cvBusy = false;
+  async function cvAnalyzeAll() {
+    var imgs = app.uploadedImages.filter(function (i) { return i.dataUrl; });
+    if (!imgs.length) { els.cvStatus.textContent = "Keine Bilder vorhanden."; return; }
+    cvBusy = true; els.cvAnalyzeBtn.disabled = true; els.cvSpinner.hidden = false;
+    els.cvStatus.textContent = "OpenCV wird geladen …";
+    try {
+      var cv = (await loadOpenCv()).cv, done = 0, failed = 0, thumbs = {};
+      for (var i = 0; i < imgs.length; i++) {
+        var img = imgs[i];
+        try {
+          var pxd = await cvImageData(img.dataUrl, CV_MAX_EDGE), r = cvAnalyzePixels(cv, pxd);
+          img.cvW = pxd.w; img.cvH = pxd.h;
+          thumbs[img.id] = r.thumb;
+          img.cvSharp = r.sharp; img.cvContrast = r.contrast; img.cvBorder = r.border; img.cvEmpty = r.empty; img.cvHash = r.hash; img.cvAt = nowLabel(); img.cvError = null;
+          done++;
+        } catch (e) { img.cvError = (e && e.message) || "Analyse fehlgeschlagen."; failed++; }
+        if (i % 5 === 4) { els.cvStatus.textContent = "Analysiere … " + (i + 1) + " von " + imgs.length; await new Promise(function (r) { setTimeout(r, 0); }); }
+      }
+      imgs.forEach(function (x) { x.cvDupGroup = null; x.cvDupDiff = null; });
+      var dups = cvDuplicateGroups(imgs.filter(function (x) { return x.cvHash && thumbs[x.id]; }), thumbs);
+      dups.forEach(function (g, gi) { g.forEach(function (x) { x.cvDupGroup = gi + 1; }); });
+      var blurry = imgs.filter(function (x) { return x.cvSharp != null && x.cvSharp < CV_BLUR_THRESHOLD && !x.cvEmpty; }).length;
+      var flat = imgs.filter(function (x) { return x.cvContrast != null && x.cvContrast < CV_CONTRAST_MIN && !x.cvEmpty; }).length;
+      var bordered = imgs.filter(function (x) { return x.cvBorder; }).length;
+      els.cvStatus.textContent = done + " Bild(er) analysiert: " + blurry + " unscharf, " + flat + " kontrastarm, " + bordered + " mit leerem Rand, " + dups.length + " Gruppe(n) sehr ähnlicher Bilder (mögliche Dubletten – bitte prüfen)" + (failed ? ", " + failed + " nicht lesbar" : "") + ".";
+      addLog("Bilder: OpenCV-Analyse von " + done + " Bild(ern) – " + blurry + " unscharf, " + bordered + " mit leerem Rand, " + dups.length + " Gruppe(n) sehr ähnlicher Bilder.");
+    } catch (err) {
+      els.cvStatus.textContent = "OpenCV-Analyse fehlgeschlagen: " + ((err && err.message) || "Unbekannter Fehler.");
+    } finally {
+      cvBusy = false; els.cvAnalyzeBtn.disabled = false; els.cvSpinner.hidden = true;
+      renderCvTable();
+    }
+  }
+  // Leeren Rand abschneiden (Original bleibt fuer "Original wiederherstellen" erhalten)
+  async function cvCropImage(img) {
+    if (!img || !img.cvBorder) return false;
+    var px = await cvImageData(img.dataUrl, 0), b = img.cvBorder;
+    var c = document.createElement("canvas"); c.width = b.w; c.height = b.h;
+    var src = document.createElement("canvas"); src.width = px.w; src.height = px.h;
+    src.getContext("2d").putImageData(px.data, 0, 0);
+    c.getContext("2d").drawImage(src, b.x, b.y, b.w, b.h, 0, 0, b.w, b.h);
+    var jpeg = /^data:image\/jpe?g/i.test(img.dataUrl), url = jpeg ? c.toDataURL("image/jpeg", 0.92) : c.toDataURL("image/png");
+    if (!img.cvUncropped) img.cvUncropped = img.dataUrl;
+    cvReplaceDataUrl(img, url);
+    img.cvW = b.w; img.cvH = b.h;
+    img.cvBorder = null; img.cvCroppedAt = nowLabel();
+    return true;
+  }
+  function cvReplaceDataUrl(img, url) {
+    var old = screenPreviewUrls[img.id];
+    if (old) { try { URL.revokeObjectURL(old.url); } catch (e) { /* egal */ } delete screenPreviewUrls[img.id]; }
+    img.dataUrl = url;
+    img.sizeBytes = Math.round((url.length - url.indexOf(",") - 1) * 0.75);
+    img.mimeType = (/^data:([^;]+);/.exec(url) || [])[1] || img.mimeType;
+    img.metadataComputed = false; img.width = null; img.height = null;
+  }
+  async function cvCropAll() {
+    var list = app.uploadedImages.filter(function (i) { return i.cvBorder; }), n = 0;
+    for (var i = 0; i < list.length; i++) { try { if (await cvCropImage(list[i])) n++; } catch (e) { list[i].cvError = (e && e.message) || "Zuschneiden fehlgeschlagen."; } }
+    els.cvStatus.textContent = n + " Bild(er) zugeschnitten – „Original wiederherstellen“ macht es je Bild rückgängig.";
+    addLog("Bilder: " + n + " Bild(er) mit OpenCV auf den Inhalt zugeschnitten.");
+    renderCvTable(); renderGallery();
+  }
+  function renderCvTable() {
+    if (!els.cvTbody) return;
+    var imgs = app.uploadedImages.filter(function (i) { return i.cvAt || i.cvUncropped || i.cvError; });
+    els.cvTableWrap.hidden = !imgs.length;
+    var nb = app.uploadedImages.filter(function (i) { return i.cvBorder; }).length;
+    els.cvCropAllBtn.disabled = !nb || cvBusy;
+    els.cvCropAllBtn.textContent = "Leere Ränder zuschneiden" + (nb ? " (" + nb + ")" : "");
+    var byGroup = {};
+    imgs.forEach(function (i) { if (i.cvDupGroup) (byGroup[i.cvDupGroup] = byGroup[i.cvDupGroup] || []).push(i); });
+    els.cvTbody.innerHTML = imgs.map(function (i) {
+      var others = i.cvDupGroup ? byGroup[i.cvDupGroup].filter(function (x) { return x !== i; }) : [];
+      var sharp = i.cvSharp == null ? "–" : i.cvEmpty ? '<span class="cv-warn">leeres Bild</span>' : i.cvSharp < CV_BLUR_THRESHOLD ? '<span class="cv-bad">unscharf</span> (' + i.cvSharp + ")" : '<span class="cv-ok">scharf</span> (' + Math.round(i.cvSharp) + ")";
+      var contr = i.cvContrast == null ? "–" : i.cvContrast < CV_CONTRAST_MIN && !i.cvEmpty ? '<span class="cv-warn">kontrastarm</span> (' + i.cvContrast + ")" : String(Math.round(i.cvContrast));
+      return '<tr data-cv-row="' + i.id + '"><td><img src="' + escapeHtml(screenPreviewUrl(i)) + '" alt=""> ' + escapeHtml(truncate(i.filename || "", 40)) + "</td><td>" + ((i.width || i.cvW) && (i.height || i.cvH) ? (i.width || i.cvW) + " × " + (i.height || i.cvH) : "–") + "</td><td>" + sharp + "</td><td>" + contr +
+        "</td><td>" + (i.cvBorder ? '<span class="cv-warn">' + i.cvBorder.pct + " % Rand</span>" : i.cvCroppedAt ? "zugeschnitten" : "–") + "</td><td>" +
+        (others.length ? '<span class="cv-warn">Gruppe ' + i.cvDupGroup + "</span>" + (i.cvDupDiff != null ? " (Abweichung " + (i.cvDupDiff * 100 < 0.01 ? "< 0,01" : (i.cvDupDiff * 100).toFixed(2).replace(".", ",")) + " %)" : "") + ": " + others.slice(0, 3).map(function (x) { return escapeHtml(truncate(x.filename || ("#" + x.id), 30)); }).join(", ") + (others.length > 3 ? " + " + (others.length - 3) + " weitere" : "") : "–") +
+        (i.cvError ? '<div class="cv-bad">' + escapeHtml(i.cvError) + "</div>" : "") + "</td><td>" +
+        (i.cvBorder ? '<button class="btn ghost btn-tiny" type="button" data-cv-crop="' + i.id + '">Zuschneiden</button> ' : "") +
+        (i.cvUncropped ? '<button class="btn ghost btn-tiny" type="button" data-cv-restore="' + i.id + '">Original wiederherstellen</button>' : "") + "</td></tr>";
+    }).join("");
+  }
+  // OCR-Vorverarbeitung: Graustufen, kleine Bilder x2 vergroessern, Otsu-Binarisierung (dunkle Schrift auf hell)
+  async function cvPrepareOcr(dataUrl) {
+    var cv = (await loadOpenCv()).cv, px = await cvImageData(dataUrl, 0);
+    var src = cv.matFromImageData(px.data), gray = new cv.Mat(), big = new cv.Mat(), bin = new cv.Mat(), m = new cv.Mat(), sd = new cv.Mat();
+    try {
+      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+      var up = Math.max(gray.cols, gray.rows) < 1000 ? 2 : 1;
+      if (up > 1) cv.resize(gray, big, new cv.Size(gray.cols * up, gray.rows * up), 0, 0, cv.INTER_CUBIC); else gray.copyTo(big);
+      cv.threshold(big, bin, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+      cv.meanStdDev(bin, m, sd);
+      if (m.doubleAt(0, 0) < 128) cv.bitwise_not(bin, bin); // helle Schrift auf dunklem Grund umkehren
+      return cvMatToDataUrl(cv, bin);
+    } finally { [src, gray, big, bin, m, sd].forEach(function (x) { x.delete(); }); }
+  }
+  async function ocrInputFor(dataUrl) {
+    var small = await downscaleDataUrlForOcr(dataUrl);
+    if (!(app.cvSettings && app.cvSettings.ocrPre)) return small;
+    try { return await cvPrepareOcr(small); } catch (e) { return small; } // ohne OpenCV: unveraendert weiter
+  }
+  if (els.cvAnalyzeBtn) {
+    els.cvAnalyzeBtn.addEventListener("click", function () { if (!cvBusy) cvAnalyzeAll(); });
+    els.cvCropAllBtn.addEventListener("click", function () { if (!cvBusy) cvCropAll(); });
+    els.cvOcrPre.addEventListener("change", function () {
+      app.cvSettings = app.cvSettings || {}; app.cvSettings.ocrPre = els.cvOcrPre.checked;
+      if (els.cvOcrPre.checked) loadOpenCv().then(function () { els.cvStatus.textContent = "OpenCV bereit – die OCR bereitet Bilder ab jetzt auf."; }, function (err) { els.cvStatus.textContent = (err && err.message) || "OpenCV nicht verfügbar."; });
+    });
+    els.cvTbody.addEventListener("click", async function (e) {
+      var c = e.target.closest("[data-cv-crop]"), r = e.target.closest("[data-cv-restore]");
+      var id = parseInt((c || r || { getAttribute: function () { return ""; } }).getAttribute(c ? "data-cv-crop" : "data-cv-restore"), 10);
+      var img = app.uploadedImages.filter(function (i) { return i.id === id; })[0];
+      if (!img) return;
+      if (c) { try { await cvCropImage(img); addLog("Bilder: „" + img.filename + "“ zugeschnitten."); } catch (err) { img.cvError = (err && err.message) || "Zuschneiden fehlgeschlagen."; } }
+      if (r && img.cvUncropped) { img.cvW = null; img.cvH = null; cvReplaceDataUrl(img, img.cvUncropped); img.cvUncropped = null; img.cvCroppedAt = null; img.cvAt = null; els.cvStatus.textContent = "Original von „" + img.filename + "“ wiederhergestellt – erneut analysieren, um den Rand wieder anzuzeigen."; }
+      renderCvTable(); renderGallery();
+    });
+  }
   var ocrWorkerPoolPromise = null;
   function getOcrWorkerPool() {
     if (!ocrWorkerPoolPromise) {
@@ -18694,7 +18972,7 @@
     if (btn) { btn.disabled = true; btn.textContent = "Erkenne Text …"; }
     try {
       var pool = await getOcrWorkerPool();
-      var ocrInput = await downscaleDataUrlForOcr(img.dataUrl);
+      var ocrInput = await ocrInputFor(img.dataUrl);
       var result = await pool[0].recognize(ocrInput);
       img.ocrText = ((result && result.data && result.data.text) || "").trim();
       img.ocrError = null;
@@ -18777,7 +19055,7 @@
     }
     await mapWithWorkerPool(targets, pool, async function (img, worker) {
       try {
-        var ocrInput = await downscaleDataUrlForOcr(img.dataUrl);
+        var ocrInput = await ocrInputFor(img.dataUrl);
         var result = await worker.recognize(ocrInput);
         img.ocrText = ((result && result.data && result.data.text) || "").trim();
         img.ocrError = null;
@@ -19427,7 +19705,7 @@
     }
     await mapWithWorkerPool(targets, pool, async function (img, worker) {
       try {
-        var ocrInput = await downscaleDataUrlForOcr(img.dataUrl);
+        var ocrInput = await ocrInputFor(img.dataUrl);
         var result = await worker.recognize(ocrInput);
         img.ocrText = ((result && result.data && result.data.text) || "").trim();
         img.ocrError = null;
@@ -29351,7 +29629,7 @@
     { label: "Mitteilungen", view: "mitteilungen", unit: "Mitteilungen", fields: ["docNotes"], items: function (d) { var n = d.docNotes || {}; return dashSum(Object.keys(n).map(function (k) { return dashCount(n[k]); })); } },
     { label: "CROSS_X", view: "crossx", unit: "Fragen/Antworten", fields: ["crossx"], items: function (d) { return dashCount(d.crossx && d.crossx.history); } },
     { label: "AGENT", view: "agent", unit: "Uploads/Wissensobjekte", fields: ["agent"], items: function (d) { var a = d.agent || {}; return dashCount(a.uploads) + dashCount(a.knowledge && a.knowledge.items); } },
-    { label: "Bilder", view: "bilder", unit: "Bilder", fields: ["uploadedImages", "generatedImages"], items: function (d) { return dashCount(d.uploadedImages) + dashCount(d.generatedImages); } },
+    { label: "Bilder", view: "bilder", unit: "Bilder", fields: ["uploadedImages", "generatedImages", "cvSettings"], items: function (d) { return dashCount(d.uploadedImages) + dashCount(d.generatedImages); } },
     { label: "Tabelle", view: "tabellen", unit: "Tabellen", fields: ["rovoTables"], items: function (d) { return dashCount(d.rovoTables); } },
     { label: "Glossar, Synonyme, Abkürzungen", view: "glossar", unit: "Begriffe", fields: ["labels", "synonyms", "glossaryTranslations", "abbrevTranslations", "extracted"], items: function (d) { return dashCount(d.labels) + dashCount(d.synonyms) + dashCount(d.glossaryTranslations) + dashCount(d.abbrevTranslations); } },
     { label: "Einstellungen & Protokoll", view: "einstellungen", unit: "Protokolleinträge", fields: ["log", "ragPrompts", "languageStyle", "negativeWordsRaw", "view", "sessionFileFormat", "savedAt", "appVersion"], items: function (d) { return dashCount(d.log); } }
@@ -32644,7 +32922,7 @@
     els.screenphStatus.textContent = "OCR: 0 von " + targets.length + " Screens …";
     await mapWithWorkerPool(targets, pool, async function (img, worker) {
       try {
-        var result = await worker.recognize(await downscaleDataUrlForOcr(img.dataUrl));
+        var result = await worker.recognize(await ocrInputFor(img.dataUrl));
         img.ocrText = ((result && result.data && result.data.text) || "").trim();
         img.ocrError = null;
         img.ocrRanAt = nowLabel();
@@ -35252,6 +35530,7 @@
     if (typeof DOC_NOTE_HOSTS !== "undefined" && DOC_NOTE_HOSTS[name]) renderDocNotes(name);
     if (name === "dashboard" && typeof renderDashboardNotesDue === "function" && els.dashboardNotesDue) renderDashboardNotesDue();
     if (name === "dashboard" && typeof scheduleDashStore === "function") scheduleDashStore();
+    if (name === "bilder" && typeof renderCvTable === "function") renderCvTable();
     if (name === "output-md" || name === "output-pdf") renderOutputCounts();
     if (name === "editor") { renderEditorDomainSelect(); renderEditorFiles(); renderEditorScreens(); renderBildband(); renderScreenPh(); }
     if (name === "bildband") renderBildband();

@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.152.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.153.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,20 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Bildverarbeitung mit OpenCV (v2.153.0)**: neuer Abschnitt „Bildverarbeitung mit OpenCV“ im Register **Bilder**.
+  OpenCV.js (`@techstark/opencv-js@4.11.0-release.1`, WebAssembly, ca. 11 MB, von jsDelivr bzw. unpkg) wird erst beim
+  ersten Klick geladen. **Alle Bilder analysieren**: Schärfe (Varianz des Laplace-Operators – „unscharf“ unter 60),
+  Kontrast (Standardabweichung der Grauwerte – „kontrastarm“ unter 20), **leerer Rand** (Inhaltsrechteck gegenüber
+  der Randfarbe, ab 4 % Rand) und **sehr ähnliche Bilder** (mögliche Dubletten: 256-Bit-Fingerabdruck als Vorfilter,
+  dann Pixelvergleich 80×50 – höchstens 0,2 % deutlich abweichende Pixel; Kopien, auch neu gespeichert oder verkleinert,
+  liegen bei 0,00 %, ein anderes Thema bei ~0,5 %; Screens, die sich nur in einer Zahl unterscheiden, sind von einer
+  Kopie nicht zu trennen und erscheinen daher ebenfalls – mit angezeigter Abweichung „bitte prüfen“). Ergebnis als
+  Tabelle (Vorschau, Größe, Schärfe, Kontrast, Rand, Gruppe) und je Bild in der Sitzung. **Leere Ränder zuschneiden**
+  (je Bild oder alle) mit **„Original wiederherstellen“**. **OCR mit OpenCV-Vorverarbeitung** (abschaltbar, in der
+  Sitzung gespeichert): Graustufen, Bilder unter 1000 px Kantenlänge doppelt so groß, Otsu-Binarisierung (dunkle Schrift
+  auf hellem Grund) – gilt für Einzel-OCR, OCR-Stapel und die OCR im Screens-Import. Im Browser gemessen: 80 Screens
+  (1280×800) in ca. 3 s inkl. Laden von OpenCV, längste Blockade der Oberfläche ca. 0,1 s.
 
 - **Dokument-Review: Bilder mit KI auswählen (v2.152.0)**: Stufe 3 hat neben „Bildvorschläge übernehmen“
   (Textähnlichkeit) den Knopf **„Bilder mit KI auswählen“**: für jeden leeren Platzhalter (bis zu 40 je Lauf) bekommt
