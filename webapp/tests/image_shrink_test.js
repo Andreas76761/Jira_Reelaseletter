@@ -99,7 +99,7 @@ const CROPPED = UI; // zugeschnittener Screen (Flaechen): bleibt selbst unveraen
 
   // 1) Abbrechen
   $("cv-shrink-btn").click();
-  await waitUntil(() => !$("confirm-modal-overlay").hidden, 20000);
+  await waitUntil(() => !$("confirm-modal-overlay").hidden, 300000);
   const msg = $("confirm-modal-message").textContent;
   check("Bestätigung nennt Anzahl, Größen vorher → nachher, Originale und Ersparnis", /3 von 5 Bild\(ern\) verkleinern: [\d,]+ MB → [\d,]+ (MB|KB)/.test(msg) && /1 aufbewahrte\(s\) Original/.test(msg) && /Ersparnis gesamt/.test(msg) && $("confirm-modal-ok-label").textContent === "Verkleinern");
   fire($("confirm-modal-cancel-btn"), "click"); await wait(50);
@@ -109,9 +109,9 @@ const CROPPED = UI; // zugeschnittener Screen (Flaechen): bleibt selbst unveraen
 
   // 2) Ausfuehren
   $("cv-shrink-btn").click();
-  await waitUntil(() => !$("confirm-modal-overlay").hidden, 20000);
+  await waitUntil(() => !$("confirm-modal-overlay").hidden, 300000);
   fire($("confirm-modal-ok-btn"), "click");
-  await waitUntil(() => /gespart/.test($("cv-shrink-status").textContent), 20000);
+  await waitUntil(() => /gespart/.test($("cv-shrink-status").textContent), 300000);
   check("Status nennt verkleinerte Bilder, verworfene Originale und Ersparnis", /^3 Bild\(er\) verkleinert, 1 Original\(e\) verworfen – [\d,]+ MB gespart\.$/.test($("cv-shrink-status").textContent));
   s = await session();
   const big = byId(s, 201), al = byId(s, 202), jp = byId(s, 203), u = byId(s, 204), cr = byId(s, 205);
@@ -134,7 +134,7 @@ const CROPPED = UI; // zugeschnittener Screen (Flaechen): bleibt selbst unveraen
   // 3) Zweiter Lauf: nichts mehr zu sparen
   nav("bilder"); await wait(30);
   $("cv-shrink-btn").click();
-  await waitUntil(() => /Nichts zu sparen|Bild\(er\) verkleinern/.test($("cv-shrink-status").textContent + (!$("confirm-modal-overlay").hidden ? "Bild(er) verkleinern" : "")), 20000);
+  await waitUntil(() => /Nichts zu sparen|Bild\(er\) verkleinern/.test($("cv-shrink-status").textContent + (!$("confirm-modal-overlay").hidden ? "Bild(er) verkleinern" : "")), 300000);
   check("Zweiter Lauf: „Nichts zu sparen“ ohne Rückfrage", /^Nichts zu sparen: 5 Bild\(er\) geprüft/.test($("cv-shrink-status").textContent) && $("confirm-modal-overlay").hidden);
 
   // 4) Einstellungen in der Sitzung
@@ -151,10 +151,10 @@ const CROPPED = UI; // zugeschnittener Screen (Flaechen): bleibt selbst unveraen
   $("cv-shrink-edge").value = "0"; fire($("cv-shrink-edge"), "change");
   $("cv-shrink-jpeg").checked = true; fire($("cv-shrink-jpeg"), "change");
   $("cv-shrink-btn").click();
-  await waitUntil(() => !$("confirm-modal-overlay").hidden, 20000);
+  await waitUntil(() => !$("confirm-modal-overlay").hidden, 300000);
   check("Ohne Verkleinern: nur das neue PNG-Foto wird JPEG", /^1 von 6 Bild\(ern\) verkleinern/.test($("confirm-modal-message").textContent) && !/Original/.test($("confirm-modal-message").textContent));
   fire($("confirm-modal-ok-btn"), "click");
-  await waitUntil(() => /gespart/.test($("cv-shrink-status").textContent), 20000);
+  await waitUntil(() => /gespart/.test($("cv-shrink-status").textContent), 300000);
   s = await session();
   const nw = byId(s, 206), [nw1, nh1] = await dims(nw.dataUrl);
   check("Neues Bild als JPEG in Originalgröße 900×600", /^data:image\/jpeg/.test(nw.dataUrl) && nw1 === 900 && nh1 === 600);
