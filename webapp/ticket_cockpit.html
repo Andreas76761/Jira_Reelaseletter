@@ -673,6 +673,8 @@
   .dashboard-notes-due-list { margin: 0; padding-left: 18px; font-size: 13px; }
   .dash-store { padding: 10px 14px; margin: 14px 0; }
   .cv-table td { vertical-align: middle; } .cv-table img { max-width: 64px; max-height: 40px; border: 1px solid var(--border); border-radius: 3px; }
+  .cv-badges { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; }
+  .cv-badge { font-size: 10px; font-weight: 700; border-radius: 100px; padding: 0 6px; background: var(--surface-2); border: 1px solid var(--border); }
   .cv-bad { color: #b91c1c; font-weight: 600; } .cv-ok { color: #15803d; } .cv-warn { color: #b45309; font-weight: 600; }
   .dash-store summary { cursor: pointer; }
   .dash-store-desc { font-size: 13px; }
@@ -6572,7 +6574,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.154.0";
+  var APP_VERSION = "2.155.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -18847,32 +18849,37 @@
     return groups.filter(function (g) { return g.length > 1; });
   }
   var cvBusy = false;
+  function cvIsBlurry(x) { return x.cvSharp != null && x.cvSharp < CV_BLUR_THRESHOLD && !x.cvEmpty; }
+  function cvIsFlat(x) { return x.cvContrast != null && x.cvContrast < CV_CONTRAST_MIN && !x.cvEmpty; }
+  // Analysiert die Bilder (Werte je Bild), liefert Gruppen sehr aehnlicher Bilder innerhalb dieser Menge und Zaehler
+  async function cvAnalyzeImages(imgs, onProgress) {
+    var cv = (await loadOpenCv()).cv, done = 0, failed = 0, thumbs = {};
+    for (var i = 0; i < imgs.length; i++) {
+      var img = imgs[i];
+      try {
+        var pxd = await cvImageData(img.dataUrl, CV_MAX_EDGE), r = cvAnalyzePixels(cv, pxd);
+        img.cvW = pxd.w; img.cvH = pxd.h;
+        thumbs[img.id] = r.thumb;
+        img.cvSharp = r.sharp; img.cvContrast = r.contrast; img.cvBorder = r.border; img.cvEmpty = r.empty; img.cvHash = r.hash; img.cvAt = nowLabel(); img.cvError = null;
+        done++;
+      } catch (e) { img.cvError = (e && e.message) || "Analyse fehlgeschlagen."; failed++; }
+      if (i % 5 === 4) { if (onProgress) onProgress(i + 1, imgs.length); await new Promise(function (r) { setTimeout(r, 0); }); }
+    }
+    imgs.forEach(function (x) { x.cvDupDiff = null; });
+    var groups = cvDuplicateGroups(imgs.filter(function (x) { return x.cvHash && thumbs[x.id]; }), thumbs);
+    return { done: done, failed: failed, groups: groups, blurry: imgs.filter(cvIsBlurry).length, flat: imgs.filter(cvIsFlat).length, bordered: imgs.filter(function (x) { return x.cvBorder; }).length };
+  }
   async function cvAnalyzeAll() {
     var imgs = app.uploadedImages.filter(function (i) { return i.dataUrl; });
     if (!imgs.length) { els.cvStatus.textContent = "Keine Bilder vorhanden."; return; }
     cvBusy = true; els.cvAnalyzeBtn.disabled = true; els.cvSpinner.hidden = false;
     els.cvStatus.textContent = "OpenCV wird geladen …";
     try {
-      var cv = (await loadOpenCv()).cv, done = 0, failed = 0, thumbs = {};
-      for (var i = 0; i < imgs.length; i++) {
-        var img = imgs[i];
-        try {
-          var pxd = await cvImageData(img.dataUrl, CV_MAX_EDGE), r = cvAnalyzePixels(cv, pxd);
-          img.cvW = pxd.w; img.cvH = pxd.h;
-          thumbs[img.id] = r.thumb;
-          img.cvSharp = r.sharp; img.cvContrast = r.contrast; img.cvBorder = r.border; img.cvEmpty = r.empty; img.cvHash = r.hash; img.cvAt = nowLabel(); img.cvError = null;
-          done++;
-        } catch (e) { img.cvError = (e && e.message) || "Analyse fehlgeschlagen."; failed++; }
-        if (i % 5 === 4) { els.cvStatus.textContent = "Analysiere … " + (i + 1) + " von " + imgs.length; await new Promise(function (r) { setTimeout(r, 0); }); }
-      }
-      imgs.forEach(function (x) { x.cvDupGroup = null; x.cvDupDiff = null; });
-      var dups = cvDuplicateGroups(imgs.filter(function (x) { return x.cvHash && thumbs[x.id]; }), thumbs);
-      dups.forEach(function (g, gi) { g.forEach(function (x) { x.cvDupGroup = gi + 1; }); });
-      var blurry = imgs.filter(function (x) { return x.cvSharp != null && x.cvSharp < CV_BLUR_THRESHOLD && !x.cvEmpty; }).length;
-      var flat = imgs.filter(function (x) { return x.cvContrast != null && x.cvContrast < CV_CONTRAST_MIN && !x.cvEmpty; }).length;
-      var bordered = imgs.filter(function (x) { return x.cvBorder; }).length;
-      els.cvStatus.textContent = done + " Bild(er) analysiert: " + blurry + " unscharf, " + flat + " kontrastarm, " + bordered + " mit leerem Rand, " + dups.length + " Gruppe(n) sehr ähnlicher Bilder (mögliche Dubletten – bitte prüfen)" + (failed ? ", " + failed + " nicht lesbar" : "") + ".";
-      addLog("Bilder: OpenCV-Analyse von " + done + " Bild(ern) – " + blurry + " unscharf, " + bordered + " mit leerem Rand, " + dups.length + " Gruppe(n) sehr ähnlicher Bilder.");
+      var res = await cvAnalyzeImages(imgs, function (i, n) { els.cvStatus.textContent = "Analysiere … " + i + " von " + n; });
+      res.groups.forEach(function (g, gi) { g.forEach(function (x) { x.cvDupGroup = gi + 1; }); });
+      imgs.forEach(function (x) { if (!res.groups.some(function (g) { return g.indexOf(x) !== -1; })) { x.cvDupGroup = null; x.cvDupDiff = null; } });
+      els.cvStatus.textContent = res.done + " Bild(er) analysiert: " + res.blurry + " unscharf, " + res.flat + " kontrastarm, " + res.bordered + " mit leerem Rand, " + res.groups.length + " Gruppe(n) sehr ähnlicher Bilder (mögliche Dubletten – bitte prüfen)" + (res.failed ? ", " + res.failed + " nicht lesbar" : "") + ".";
+      addLog("Bilder: OpenCV-Analyse von " + res.done + " Bild(ern) – " + res.blurry + " unscharf, " + res.bordered + " mit leerem Rand, " + res.groups.length + " Gruppe(n) sehr ähnlicher Bilder.");
     } catch (err) {
       els.cvStatus.textContent = "OpenCV-Analyse fehlgeschlagen: " + ((err && err.message) || "Unbekannter Fehler.");
     } finally {
@@ -33838,13 +33845,16 @@
       var phs = vrevAllPlaceholders(doc), pool = vrevImagePool(doc), ix = pool.length ? screenPhIndex(pool) : null;
       h += '<div class="controls" style="flex-wrap:wrap;"><button class="btn ghost" type="button" data-vrev-act="ph-suggest"' + (phs.length && pool.length ? "" : " disabled") + ">Bildvorschläge für leere Platzhalter übernehmen</button>" +
         '<button class="btn ghost" type="button" data-vrev-act="ph-ai"' + (phs.length && pool.length && !vrevBusy ? "" : " disabled") + ' title="Die KI wählt je leerem Platzhalter aus den 8 besten Kandidaten des Bildarchivs höchstens 3 passende Bilder – im Zweifel keines.">Bilder mit KI auswählen</button>' +
+        '<button class="btn ghost" type="button" data-vrev-act="ph-cv"' + (vrevDocImageIds(doc).length && !vrevBusy ? "" : " disabled") + ' title="Prüft die im Dokument verwendeten Bilder mit OpenCV: Schärfe, Kontrast, leerer Rand, sehr ähnliche Bilder.">Bildqualität mit OpenCV prüfen</button>' +
         '<span class="step-note" style="margin:0;">Bildarchiv: ' + pool.length + " Bild(er) (Register Screens-Import/Bilder)" + "</span></div>";
+      if (doc.cvCheck) h += '<p class="step-note vrev-cv-sum">Bildqualität (OpenCV, ' + escapeHtml(doc.cvCheck.at) + "): " + doc.cvCheck.n + " Bild(er) geprüft – " + doc.cvCheck.blurry + " unscharf, " + doc.cvCheck.flat + " kontrastarm, " + doc.cvCheck.bordered + " mit leerem Rand, " + doc.cvCheck.similar + " sehr ähnliche(s) Bild(er)" +
+        (doc.cvCheck.blurry + doc.cvCheck.flat + doc.cvCheck.bordered + doc.cvCheck.similar ? ' – Ränder zuschneiden oder Bilder ersetzen im Register <button class="btn ghost btn-tiny" type="button" data-vrev-act="goto-bilder">→ Bilder</button>' : " – keine Auffälligkeiten") + "</p>";
       h += phs.length ? '<table class="simple-table vrev-ph-table"><thead><tr><th>Kapitel</th><th>Platzhalter</th><th>Bilder (max. 3)</th><th>Vorschlag</th></tr></thead><tbody>' + phs.map(function (p) {
         var ids = doc.ph[p.key] || [];
         var thumbs = ids.map(function (id) {
           var img = screenPhImgById(id); if (!img) return "";
-          return '<div class="screenph-thumb" title="' + escapeHtml(img.description || img.filename || "") + '"><img src="' + screenPreviewUrl(img) + '" loading="lazy" decoding="async" alt="Bild"><span class="screenph-score">' + escapeHtml(truncate(img.description || img.filename || "", 28)) +
-            '</span><button class="variante-x" type="button" data-vrev-act="ph-remove" data-key="' + p.key + '" data-img="' + id + '" title="Bild entfernen" aria-label="Bild entfernen">×</button></div>';
+          return '<div class="screenph-thumb" title="' + escapeHtml(img.description || img.filename || "") + '"><img src="' + screenPreviewUrl(img) + '" loading="lazy" decoding="async" alt="Bild"><span class="screenph-score">' + escapeHtml(truncate(img.description || img.filename || "", 28)) + "</span>" + vrevCvBadges(doc, img) +
+            '<button class="variante-x" type="button" data-vrev-act="ph-remove" data-key="' + p.key + '" data-img="' + id + '" title="Bild entfernen" aria-label="Bild entfernen">×</button></div>';
         }).join("");
         var cands = ix ? vrevRank(p, pool, ix).filter(function (x) { return ids.indexOf(x.img.id) === -1; }).slice(0, 10) : [];
         var sel = ids.length < 3 && cands.length ? '<select data-vrev-ph-add="' + p.key + '" aria-label="Bild hinzufügen"><option value="">+ Bild …</option>' + cands.map(function (x) { return '<option value="' + x.img.id + '">' + x.pct + " % – " + escapeHtml(truncate(x.img.description || x.img.filename || "", 45)) + "</option>"; }).join("") + "</select>" : "";
@@ -34152,6 +34162,37 @@
     var n = 0;
     doc.chapters.forEach(function (c) { var t = fn(c.text); if (t !== c.text) { c.text = t; n++; } });
     return n;
+  }
+  // v2.155: Bildqualitaet der im Dokument verwendeten Bilder mit OpenCV pruefen (Stufe 3)
+  function vrevDocImageIds(doc) {
+    var seen = {}, out = [];
+    Object.keys(doc.ph || {}).forEach(function (k) { (doc.ph[k] || []).forEach(function (id) { if (!seen[id] && screenPhImgById(id)) { seen[id] = true; out.push(id); } }); });
+    return out;
+  }
+  function vrevCvBadges(doc, img) {
+    if (!doc.cvCheck || !img.cvAt) return "";
+    var b = [];
+    if (cvIsBlurry(img)) b.push('<span class="cv-badge cv-bad">unscharf</span>');
+    if (cvIsFlat(img)) b.push('<span class="cv-badge cv-warn">kontrastarm</span>');
+    if (img.cvBorder) b.push('<span class="cv-badge cv-warn">' + img.cvBorder.pct + " % Rand</span>");
+    if (doc.cvCheck.sim && doc.cvCheck.sim[img.id]) b.push('<span class="cv-badge cv-warn" title="sehr ähnlich zu einem anderen Bild in diesem Dokument">ähnlich ' + doc.cvCheck.sim[img.id] + "</span>");
+    return b.length ? '<span class="cv-badges">' + b.join("") + "</span>" : "";
+  }
+  async function vrevCvCheck(doc) {
+    var imgs = vrevDocImageIds(doc).map(screenPhImgById).filter(Boolean);
+    if (!imgs.length) return;
+    vrevBusy = true; renderVrev();
+    els.vrevStatus.textContent = "OpenCV prüft " + imgs.length + " Bild(er) …";
+    try {
+      var res = await cvAnalyzeImages(imgs, function (i, n) { els.vrevStatus.textContent = "OpenCV prüft … " + i + " von " + n; });
+      var sim = {};
+      res.groups.forEach(function (g, gi) { g.forEach(function (x) { sim[x.id] = String.fromCharCode(65 + (gi % 26)); }); });
+      doc.cvCheck = { at: nowLabel(), n: res.done, blurry: res.blurry, flat: res.flat, bordered: res.bordered, similar: Object.keys(sim).length, sim: sim };
+      vrevLog(doc, 3, "Bildqualität mit OpenCV geprüft", res.done);
+      els.vrevStatus.textContent = "Bildqualität geprüft: " + res.blurry + " unscharf, " + res.flat + " kontrastarm, " + res.bordered + " mit leerem Rand, " + Object.keys(sim).length + " sehr ähnliche(s) Bild(er)" + (res.failed ? ", " + res.failed + " nicht lesbar" : "") + ".";
+    } catch (err) {
+      els.vrevStatus.textContent = "Bildqualität konnte nicht geprüft werden: " + ((err && err.message) || "Unbekannter Fehler.");
+    } finally { vrevBusy = false; renderVrev(); }
   }
   // v2.152: KI waehlt Bilder fuer leere Platzhalter (Stufe 3) – Kandidaten aus der Textaehnlichkeit, nur deren IDs erlaubt
   async function vrevAiImages(doc) {
@@ -34704,6 +34745,8 @@
     }
     if (act === "ai-quality") { vrevAiQuality(doc); return; }
     if (act === "ph-ai") { vrevAiImages(doc); return; }
+    if (act === "ph-cv") { vrevCvCheck(doc); return; }
+    if (act === "goto-bilder") { showView("bilder"); return; }
     if (act === "ai-consistency") { vrevAiConsistency(doc); return; }
     if (act === "cons-done") { var cf = doc.aiConsistency && doc.aiConsistency.findings[parseInt(b.getAttribute("data-i"), 10)]; if (cf) { cf.done = true; vrevLog(doc, 6, "KI-Widerspruch erledigt", 1); vrevRunChecks(doc); renderVrev(); } return; }
     if (act === "ai-adopt" || act === "ai-dismiss") {
@@ -35606,7 +35649,7 @@
   // Neue Funktionen (Label "Neu" mit Hinweis)
   var NAV_NEW = {
     bilder: "Neu in v2.153: Bildverarbeitung mit OpenCV (Schärfe, Kontrast, leere Ränder, sehr ähnliche Bilder, OCR-Vorverarbeitung)",
-    variante: "Neu in v2.152: Dokument-Review – Bilder mit KI auswählen",
+    variante: "Neu in v2.152/2.155: Dokument-Review – Bilder mit KI auswählen, Bildqualität mit OpenCV prüfen",
     final: "Neu in v2.148–2.151: Listen, eingebettete Bilder und Tabellen aus dem Handbuch; PowerPoint überarbeitet",
     dashboard: "Neu in v2.147: Einträge und Speicherplatz je Register",
     crossx: "Neu in v2.145: Chat mit allen Registern, Quellen nach jeder Antwort",

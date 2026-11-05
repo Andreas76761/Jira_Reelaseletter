@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.154.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.155.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,14 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Dokument-Review: Bildqualität mit OpenCV prüfen (v2.155.0)**: Stufe 3 (Bilder) hat den Knopf **„Bildqualität mit
+  OpenCV prüfen“**. Er prüft nur die im Dokument verwendeten Bilder (gleiche Analyse wie im Register Bilder, v2.153):
+  unscharf, kontrastarm, leerer Rand und **sehr ähnliche Bilder innerhalb des Dokuments** (z. B. dasselbe Bild an zwei
+  Stellen oder eine verkleinerte Kopie). Jedes betroffene Vorschaubild trägt einen Hinweis („unscharf“, „kontrastarm“,
+  „12 % Rand“, „ähnlich A“ – gleiche Buchstaben = gleiche Gruppe), darüber steht eine Zusammenfassung mit Sprung ins
+  Register **Bilder** (dort Ränder zuschneiden oder Bilder ersetzen). Ergebnis und Zeitpunkt werden beim Dokument
+  gespeichert und im Verlauf (Stufe 3) protokolliert.
 
 - **Navigation nach Workflow: Input · Operation · Output (v2.154.0)**: die Navigation ist nach den drei Gruppen
   **Input**, **Operation**, **Output** und darin nach den 9 Stufen geordnet: 1 Quellen (Import, Dateiverwaltung,
