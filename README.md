@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.159.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.160.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,15 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Warnung, wenn das automatische Speichern fehlschlägt (v2.160.0)**: Bisher stand ein Fehlschlag nur als Statuszeile in
+  den Einstellungen – bei vollem Browser-Speicher ging die Arbeit beim nächsten Absturz verloren, ohne dass es auffiel.
+  Jetzt erscheint oben eine **rote Warnleiste** mit Grund („Browser-Speicher ist voll“ bzw. Fehlername), Größe der
+  Sitzung, freiem Speicher laut Browser, Zeitpunkt des letzten erfolgreichen Speicherns und Anzahl der Fehlversuche,
+  dazu die Knöpfe **„Sitzung als Datei speichern“**, **„Speicher sparen (Bilder)“**, **„Speicher je Register
+  (Dashboard)“**, **„Erneut versuchen“** und **„Ausblenden“** (gilt bis zum nächsten Erfolg). Je Fehlerserie einmal
+  ein Hinweis und ein Protokolleintrag; klappt das Speichern wieder, verschwindet die Leiste („funktioniert wieder“).
+  Im Dashboard zeigt die neue Kachel **„Automatisch gespeichert“** ok/fehlgeschlagen.
 
 - **Bilder: sehr ähnliche Bilder bereinigen (v2.159.0)**: Nach der OpenCV-Analyse zeigt das Register Bilder je Gruppe sehr
   ähnlicher Bilder Vorschau, Auflösung, Größe und **Verwendungen mit Register** (FINAL, Screens-Import, Dokument-Review …).

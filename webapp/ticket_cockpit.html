@@ -683,6 +683,8 @@
   .dash-store-bar { display: inline-block; vertical-align: middle; width: 120px; height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; margin-right: 6px; }
   .dash-store-bar > i { display: block; height: 100%; background: #0e7490; }
   .dash-store-bar.free > i { background: #15803d; } .dash-store-bar.low > i { background: #b91c1c; }
+  .autosave-fail { border: 1px solid #b91c1c; border-left: 6px solid #b91c1c; background: var(--surface); border-radius: 8px; padding: 10px 12px; margin: 0 0 12px; font-size: 13px; }
+  .autosave-fail b { color: #b91c1c; }
   .cv-dup-group { border-top: 1px solid var(--border); padding: 8px 0; }
   .cv-dup-cards { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0; }
   .cv-dup-card { display: flex; flex-direction: column; gap: 2px; width: 170px; font-size: 12px; padding: 6px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
@@ -993,6 +995,16 @@
 
   <main class="content">
     <div class="content-inner">
+      <div class="autosave-fail" id="autosave-fail" role="alert" hidden>
+        <b>Automatisches Speichern fehlgeschlagen.</b> <span id="autosave-fail-msg"></span>
+        <div class="controls" style="margin-top:6px; flex-wrap:wrap;">
+          <button class="btn primary btn-tiny" id="autosave-fail-export-btn" type="button">Sitzung als Datei speichern</button>
+          <button class="btn ghost btn-tiny" id="autosave-fail-shrink-btn" type="button">Speicher sparen (Bilder)</button>
+          <button class="btn ghost btn-tiny" id="autosave-fail-dash-btn" type="button">Speicher je Register (Dashboard)</button>
+          <button class="btn ghost btn-tiny" id="autosave-fail-retry-btn" type="button">Erneut versuchen</button>
+          <button class="btn ghost btn-tiny" id="autosave-fail-close-btn" type="button">Ausblenden</button>
+        </div>
+      </div>
 
       <header class="app-header">
         <div class="app-header-left">
@@ -6605,7 +6617,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.159.0";
+  var APP_VERSION = "2.160.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8228,7 +8240,7 @@
     "final-design-version-select", "final-design-version-status", "final-review-version-select", "final-review-version-status", "final-review-merge-btn", "final-review-merge-spinner", "final-review-merge-note", "final-review-merge-section", "final-review-docx-btn", "final-review-pdf-btn", "final-review-merge-preview", "final-review-agents", "final-review-run-btn", "final-review-run-spinner", "final-review-stop-btn", "final-review-select-all-btn", "final-review-status", "final-review-results", "final-review-findings", "final-review-findings-count", "final-review-findings-all", "final-review-findings-tbody", "final-review-adopt-imp-btn", "final-review-adopt-note-btn", "final-review-findings-note", "final-review-report-actions", "final-review-attach-btn", "final-review-report-docx-btn", "final-review-report-md-btn", "final-review-editor-btn", "final-build-improvements-inline-cb", "final-reviewer-input", "edito-base-doc-select", "edito-base-doc-note", "final-reviewer-signed-note", "final-compare-a-select", "final-compare-b-select", "final-compare-btn", "final-compare-ai-btn", "final-compare-ai-spinner",
     "final-compare-summary", "final-compare-table-wrap", "final-compare-tbody", "final-compare-diff", "final-compare-diff-title", "final-compare-diff-body",
     "final-compare-ai-wrap", "final-compare-ai-output", "edito-final-report-attach-btn", "edito-final-report-docx-btn", "edito-final-report-md-btn", "edito-final-report-note", "final-team-block", "final-team-status-note", "final-team-table-wrap", "final-team-tbody", "final-team-empty",
-    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "editor-cv-check", "editor-cv-note", "cv-section", "cv-analyze-btn", "cv-spinner", "cv-crop-all-btn", "cv-ocr-pre", "cv-status", "cv-table-wrap", "cv-tbody", "cv-dup-wrap", "cv-dup-count", "cv-dup-list", "cv-shrink", "cv-shrink-edge", "cv-shrink-jpeg", "cv-shrink-drop-orig", "cv-shrink-btn", "cv-shrink-spinner", "cv-shrink-status", "dash-store", "dash-store-head", "dash-store-tiles", "dash-store-warn", "dash-store-tbody", "dash-store-tfoot", "dash-store-refresh-btn", "dash-store-at", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-opt-strip-jira", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-cv-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
+    "final-team-comments", "final-team-comments-title", "final-team-comments-list", "final-team-comment-input", "final-team-comment-send-btn", "dashboard-notes-due", "editor-cv-check", "editor-cv-note", "cv-section", "cv-analyze-btn", "cv-spinner", "cv-crop-all-btn", "cv-ocr-pre", "cv-status", "cv-table-wrap", "cv-tbody", "autosave-fail", "autosave-fail-msg", "autosave-fail-export-btn", "autosave-fail-shrink-btn", "autosave-fail-dash-btn", "autosave-fail-retry-btn", "autosave-fail-close-btn", "cv-dup-wrap", "cv-dup-count", "cv-dup-list", "cv-shrink", "cv-shrink-edge", "cv-shrink-jpeg", "cv-shrink-drop-orig", "cv-shrink-btn", "cv-shrink-spinner", "cv-shrink-status", "dash-store", "dash-store-head", "dash-store-tiles", "dash-store-warn", "dash-store-tbody", "dash-store-tfoot", "dash-store-refresh-btn", "dash-store-at", "dashboard-notes-due-count", "dashboard-notes-due-list", "nav-badge-notes", "variante-base-select", "variante-base-lang-select", "variante-base-info", "variante-domains-import-btn", "variante-domain-new-input", "variante-domain-add-btn", "variante-domains-list", "variante-automap-btn", "variante-automap-note", "variante-chapters-tbody", "variante-matrix-show-chapters", "variante-role-new-input", "variante-role-add-btn", "variante-matrix-thead", "variante-matrix-tbody", "variante-matrix-tfoot", "variante-new-role", "variante-new-lang", "variante-new-name", "variante-add-btn", "variante-bulk-roles", "variante-bulk-langs", "variante-bulk-add-btn", "variante-opt-renumber", "variante-opt-ref-inline", "variante-opt-ref-chapter", "variante-opt-strip-jira", "variante-table-wrap", "variante-tbody", "variante-empty", "variante-generate-all-btn", "variante-spinner", "variante-stop-btn", "variante-status", "variante-preview", "variante-preview-title", "variante-preview-close-btn", "variante-preview-toc", "variante-matrix-xlsx-btn", "variante-matrix-import-btn", "variante-matrix-import-input", "variante-matrix-note", "variante-update-stale-btn", "variante-rebase-btn", "variante-zip-btn", "variante-overview-xlsx-btn", "variante-glossary-wrap", "variante-glossary-count", "variante-gloss-src", "variante-gloss-lang", "variante-gloss-target", "variante-gloss-add-btn", "variante-gloss-xlsx-btn", "variante-gloss-import-btn", "variante-gloss-import-input", "variante-gloss-note", "variante-glossary-tbody", "variante-tm-info", "variante-tm-clear-btn", "variante-preview-fulltext-btn", "rl-roles-section", "editor-meta-rolle", "editor-meta-sprache", "screenph-section", "screenph-upload-btn", "screenph-file-input", "screenph-file-note", "screenph-paste", "screenph-paste-btn", "screenph-rolle", "screenph-sprache", "screenph-max", "screenph-match-btn", "screenph-ai-btn", "screenph-ai-spinner", "screenph-docx-btn", "screenph-ocr-first", "screenph-xlsx-btn", "screenph-missing-md-btn", "screenph-missing-note", "screenph-status", "screenph-table-wrap", "screenph-tbody", "crossx-srcs", "agent-panel", "agent-tbody", "agent-use-ai", "agent-run-btn", "agent-spinner", "agent-stop-btn", "agent-report-md-btn", "agent-xlsx-btn", "agent-status", "agent-log", "agent-upload-btn", "agent-file-input", "agent-sources", "agent-rules", "agent-rule-term", "agent-rule-add-btn", "agent-markets", "agent-tr-source", "agent-tr-lang", "agent-imp-a", "agent-imp-b", "agent-pub-source", "agent-pub-word", "agent-pub-pdf", "agent-pub-intern", "agent-tabs", "agent-output", "crossx-stands", "crossx-include-intern", "crossx-kb-btn", "crossx-kb-summary", "crossx-kb-list", "crossx-check-btn", "crossx-sev-filter", "crossx-check-summary", "crossx-findings-wrap", "crossx-findings-tbody", "crossx-question", "crossx-ask-btn", "crossx-spinner", "crossx-ai-check-btn", "crossx-stop-btn", "crossx-clear-btn", "crossx-agent-status", "crossx-answers", "crossx-report-md-btn", "crossx-report-docx-btn", "paket-step", "vrev-step", "vrev-upload-btn", "vrev-file-input", "vrev-existing-select", "vrev-existing-btn", "vrev-import-note", "vrev-docs-wrap", "vrev-limits", "vrev-limits-reset-btn", "vrev-team", "vrev-team-wrap", "vrev-team-tbody", "vrev-team-empty", "vrev-xlsx-btn", "vrev-docs-tbody", "vrev-docs-empty", "vrev-work", "vrev-doc-title", "vrev-run-btn", "vrev-report-docx-btn", "vrev-report-md-btn", "vrev-dash", "vrev-stepper", "vrev-stage", "vrev-status", "vrev-text-chapter", "vrev-hide-jira", "vrev-text-view", "vrev-text-edit", "vrev-text-save-btn", "paket-name", "paket-group", "paket-inc-rl", "paket-inc-rl-md", "paket-rl-count", "paket-inc-variants", "paket-variant-count", "paket-inc-overview", "paket-inc-review", "paket-review-count", "paket-preview-btn", "paket-cv-btn", "paket-build-btn", "paket-spinner", "paket-status", "paket-list-wrap", "paket-list-tbody", "rl-assign-wrap", "rl-assign-count", "rl-assign-load-btn", "rl-assign-only-untagged", "rl-assign-ai-btn", "rl-assign-ai-spinner", "rl-assign-accept-all-btn", "rl-assign-note", "rl-assign-table-wrap", "rl-assign-thead", "rl-assign-tbody", "rl-roles-roles", "rl-roles-lang-de", "rl-roles-lang-en", "rl-roles-untagged", "rl-roles-others", "rl-roles-generate-btn", "rl-roles-zip-btn", "rl-roles-xlsx-btn", "rl-roles-status", "rl-roles-table-wrap", "rl-roles-tbody", "rl-roles-preview-wrap", "rl-roles-preview-title", "rl-roles-preview-close-btn", "rl-roles-preview", "final-result-role-wrap", "final-result-role-select", "final-result-role-hide", "final-result-role-note", "variante-preview-full", "notes-ov-where", "notes-ov-category", "notes-ov-due", "notes-ov-search", "notes-ov-xlsx-btn", "notes-ov-md-btn", "notes-ov-confirm-due-btn", "notes-ov-summary", "notes-ov-table-wrap", "notes-ov-tbody", "notes-ov-empty", "final-notes-due-summary", "final-notes-panel", "final-notes-title", "final-notes-list", "final-note-new-category", "final-note-new-title",
     "final-note-new-interval", "final-note-new-text", "final-note-add-btn", "final-note-copy-select", "final-note-copy-btn", "final-notes-close-btn",
     "edito-final-docs-tbody", "edito-final-docs-empty", "edito-final-work", "edito-final-selected-note",
     "edito-final-agent-improve-btn", "edito-final-agent-style-btn", "edito-final-agent-review-btn", "edito-final-agent-stop-btn",
@@ -9461,9 +9473,10 @@
         var tx = db.transaction(AUTOSAVE_STORE, "readwrite");
         tx.objectStore(AUTOSAVE_STORE).put(data, AUTOSAVE_KEY);
         tx.oncomplete = function () { resolve(true); };
-        tx.onerror = function () { resolve(false); };
-        tx.onabort = function () { resolve(false); };
-      } catch (e) { resolve(false); }
+        // v2.160: Fehlergrund weitergeben (z. B. QuotaExceededError = Browser-Speicher voll)
+        tx.onerror = function () { resolve((tx.error && tx.error.name) || "Fehler"); };
+        tx.onabort = function () { resolve((tx.error && tx.error.name) || "Abbruch"); };
+      } catch (e) { resolve((e && e.name) || "Fehler"); }
     });
   }
   function autoSaveRead(db) {
@@ -9486,6 +9499,39 @@
       } catch (e) { resolve(false); }
     });
   }
+  // v2.160: fehlgeschlagenes automatisches Speichern sichtbar machen (Warnleiste oben, einmal je Fehlerserie ein Hinweis)
+  var autoSaveState = { lastOkAt: "", failing: false, failCount: 0, lastError: "", dismissed: false };
+  function autoSaveOk() {
+    var was = autoSaveState.failing;
+    autoSaveState.lastOkAt = nowLabel(); autoSaveState.failing = false; autoSaveState.failCount = 0; autoSaveState.lastError = ""; autoSaveState.dismissed = false;
+    if (els.autosaveFail) els.autosaveFail.hidden = true;
+    if (was) { showToast("Wieder gespeichert", "Das automatische Speichern funktioniert wieder."); addLog("Automatisches Speichern wieder erfolgreich."); }
+  }
+  async function autoSaveFailed(err, data) {
+    var first = !autoSaveState.failing;
+    autoSaveState.failing = true; autoSaveState.failCount++; autoSaveState.lastError = err;
+    var size = 0;
+    try { size = dashUtf8Len(JSON.stringify(data)); } catch (e) { size = 0; }
+    var est = await dashBrowserEstimate();
+    var quota = err === "QuotaExceededError";
+    var msg = (quota ? "Der Browser-Speicher ist voll" : "Grund: " + err) + " – die Sitzung (" + dashFmtBytes(size) + (est ? ", frei laut Browser " + dashFmtBytes(est.free) : "") + ") ist nur noch in diesem Fenster. " +
+      (autoSaveState.lastOkAt ? "Zuletzt erfolgreich gespeichert: " + autoSaveState.lastOkAt + ". " : "In dieser Sitzung noch nicht automatisch gespeichert. ") +
+      "Sitzung als Datei speichern" + (quota ? " und Speicher freigeben (z. B. Bilder verkleinern oder nicht mehr benötigte Stände löschen)." : ".") +
+      (autoSaveState.failCount > 1 ? " (" + autoSaveState.failCount + " Versuche fehlgeschlagen)" : "");
+    if (els.autosaveFail) { els.autosaveFailMsg.textContent = msg; els.autosaveFail.hidden = autoSaveState.dismissed; }
+    if (first) {
+      showToast("Automatisches Speichern fehlgeschlagen", quota ? "Browser-Speicher voll – Sitzung als Datei speichern." : "Sitzung als Datei speichern.", true);
+      addLog("Automatisches Speichern fehlgeschlagen (" + (quota ? "Browser-Speicher voll" : err) + ", Sitzung " + dashFmtBytes(size) + ").");
+    }
+    if (typeof scheduleDashStore === "function") scheduleDashStore();
+  }
+  if (els.autosaveFail) {
+    els.autosaveFailExportBtn.addEventListener("click", function () { els.sessionExportBtn.click(); });
+    els.autosaveFailShrinkBtn.addEventListener("click", function () { showView("bilder"); if (els.cvShrink && els.cvShrink.scrollIntoView) els.cvShrink.scrollIntoView({ block: "start" }); });
+    els.autosaveFailDashBtn.addEventListener("click", function () { showView("dashboard"); if (els.dashStore && els.dashStore.scrollIntoView) els.dashStore.scrollIntoView({ block: "start" }); });
+    els.autosaveFailRetryBtn.addEventListener("click", function () { autoSaveNow(); });
+    els.autosaveFailCloseBtn.addEventListener("click", function () { autoSaveState.dismissed = true; els.autosaveFail.hidden = true; });
+  }
   async function autoSaveNow() {
     if (!autoSaveEnabled) return;
     if (autoSaveInFlight) { autoSavePendingAgain = true; return; }
@@ -9497,10 +9543,14 @@
       // Im Autosave nur die juengste Massenverarbeitungs-Zwischenversion -
       // jede ist eine vollstaendige Kopie aller Eintraege.
       if (Array.isArray(data.massCheckpoints) && data.massCheckpoints.length > 1) data.massCheckpoints = data.massCheckpoints.slice(-1);
-      var ok = await autoSaveWrite(db, data);
-      els.autosaveStatus.textContent = ok
-        ? "Zuletzt automatisch gespeichert: " + nowLabel() + " (" + app.tickets.length + " Tickets)."
-        : "Automatisches Speichern fehlgeschlagen.";
+      var res = await autoSaveWrite(db, data);
+      if (res === true) {
+        els.autosaveStatus.textContent = "Zuletzt automatisch gespeichert: " + nowLabel() + " (" + app.tickets.length + " Tickets).";
+        autoSaveOk();
+      } else {
+        els.autosaveStatus.textContent = "Automatisches Speichern fehlgeschlagen" + (res === "QuotaExceededError" ? " – Browser-Speicher voll." : " (" + res + ").");
+        await autoSaveFailed(res, data);
+      }
     } finally {
       autoSaveInFlight = false;
       if (autoSavePendingAgain) { autoSavePendingAgain = false; autoSaveNow(); }
@@ -30005,7 +30055,10 @@
       tile("Register mit Inhalt", String(stats.rows.filter(function (r) { return r.items > 0; }).length) + " von " + stats.rows.length, items.toLocaleString("de-DE") + " Einträge") +
       tile("Belegt (Sitzung)", dashFmtBytes(total), "Größe der Sitzungsdatei bzw. des automatischen Speicherns") +
       tile("Browser-Speicher belegt", est ? dashFmtBytes(est.usage) : "unbekannt", est ? String(Math.round(est.usage / est.quota * 1000) / 10).replace(".", ",") + " % von " + dashFmtBytes(est.quota) : "Browser liefert keine Angabe") +
-      tile("Frei", est ? dashFmtBytes(free) : "unbekannt", est ? "noch verfügbar für alle Register" : "Sitzung regelmäßig als Datei speichern", est ? (low ? "vrev-tile-fail" : "vrev-tile-ok") : "");
+      tile("Frei", est ? dashFmtBytes(free) : "unbekannt", est ? "noch verfügbar für alle Register" : "Sitzung regelmäßig als Datei speichern", est ? (low ? "vrev-tile-fail" : "vrev-tile-ok") : "") +
+      tile("Automatisch gespeichert", autoSaveState.failing ? "fehlgeschlagen" : autoSaveState.lastOkAt ? "ok" : "–",
+        autoSaveState.failing ? (autoSaveState.lastError === "QuotaExceededError" ? "Browser-Speicher voll" : autoSaveState.lastError) + (autoSaveState.lastOkAt ? " · zuletzt ok " + autoSaveState.lastOkAt : "") : autoSaveState.lastOkAt ? "zuletzt " + autoSaveState.lastOkAt : "noch nicht in dieser Sitzung",
+        autoSaveState.failing ? "vrev-tile-fail" : autoSaveState.lastOkAt ? "vrev-tile-ok" : "");
     els.dashStoreHead.textContent = "· " + items.toLocaleString("de-DE") + " Einträge · belegt " + dashFmtBytes(total) + (est ? " · frei " + dashFmtBytes(free) : "");
     els.dashStoreWarn.hidden = !low;
     if (low) els.dashStoreWarn.textContent = "Wenig freier Speicher: frei " + dashFmtBytes(free) + " bei einer Sitzung von " + dashFmtBytes(total) + ". Das automatische Speichern kann fehlschlagen – Sitzung als Datei speichern, unter Bilder → „Speicher sparen“ übergroße Bilder verkleinern und nicht mehr benötigte Bilder, Dateien oder Stände löschen (größte Register oben).";
