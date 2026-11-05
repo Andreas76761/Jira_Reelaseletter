@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.166.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.167.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,12 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **OpenCV und SVG (v2.167.0)**: SVG-Grafiken werden jetzt auch geprüft (beim Hochladen in Bilder und bei „Alle Bilder
+  analysieren“): sehr ähnliche Bilder / schon im Archiv und Kontrast. SVGs ohne width/height bekommen für die Analyse
+  die Größe aus der viewBox. Als Vektorgrafik gelten sie nie als „unscharf“ und werden nie zugeschnitten.
+  **Behoben**: „Speicher sparen“ (v2.158) konnte eine große SVG durch ein PNG/JPEG ersetzen, wenn das Rasterbild
+  kleiner war – Vektorgrafiken bleiben jetzt immer unverändert.
 
 - **Dashboard: alte FINAL-Stände archivieren (v2.166.0)**: Varianten und Review-Übernahmen werden als FINAL-Stände
   gespeichert – nach den Bildern meist der größte Posten. „Aufräumen“ zeigt jetzt **„FINAL – nicht mehr benötigte

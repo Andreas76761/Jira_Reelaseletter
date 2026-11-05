@@ -3663,7 +3663,7 @@
             <p class="section-label" style="margin-top:0;">Speicher sparen</p>
             <p class="desc">Verkleinert übergroße Bilder auf eine maximale Kantenlänge und speichert sie – falls deutlich kleiner – als JPEG
               (nur Bilder ohne Transparenz). Ersetzt wird ein Bild nur, wenn es mindestens 15 % kleiner wird; Bild-IDs und Zuordnungen bleiben erhalten.
-              Optional werden die beim Zuschneiden aufbewahrten Originale verworfen. Läuft ohne OpenCV-Download.</p>
+              Optional werden die beim Zuschneiden aufbewahrten Originale verworfen. Vektorgrafiken (SVG) bleiben unverändert. Läuft ohne OpenCV-Download.</p>
             <div class="controls" style="flex-wrap:wrap;">
               <label>Max. Kantenlänge <select id="cv-shrink-edge" aria-label="Maximale Kantenlänge">
                 <option value="1280">1280 px</option><option value="1600">1600 px</option><option value="1920" selected>1920 px</option><option value="2560">2560 px</option><option value="0">nicht verkleinern</option>
@@ -6629,7 +6629,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.166.0";
+  var APP_VERSION = "2.167.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -18861,7 +18861,25 @@
     return cvLoadPromise;
   }
   // Bild -> RGBA-Pixel (optional verkleinert auf maxEdge) ueber ein Canvas
+  // v2.167: SVG ohne width/height bekommt die Groesse aus der viewBox (sonst 0×0 bzw. je Browser verschieden)
+  function cvIsSvgUrl(u) { return /^data:image\/svg/i.test(u || ""); }
+  function cvSvgSized(dataUrl) {
+    if (!cvIsSvgUrl(dataUrl)) return dataUrl;
+    try {
+      var comma = dataUrl.indexOf(","), meta = dataUrl.slice(0, comma), body = dataUrl.slice(comma + 1);
+      var text = /;base64/i.test(meta) ? decodeURIComponent(escape(atob(body))) : decodeURIComponent(body);
+      var m = /<svg\b[^>]*>/i.exec(text);
+      if (!m) return dataUrl;
+      var tag = m[0], num = function (name) { var r = new RegExp("\\s" + name + "\\s*=\\s*[\"']\\s*([\\d.]+)(px)?\\s*[\"']", "i").exec(tag); return r ? parseFloat(r[1]) : 0; };
+      if (num("width") > 0 && num("height") > 0) return dataUrl;
+      var vb = /viewBox\s*=\s*["']\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([\d.]+)[\s,]+([\d.]+)/i.exec(tag);
+      var w = vb ? parseFloat(vb[1]) : 1200, h = vb ? parseFloat(vb[2]) : 900;
+      var newTag = tag.replace(/\s(width|height)\s*=\s*["'][^"']*["']/gi, "").replace(/^<svg/i, '<svg width="' + w + '" height="' + h + '"');
+      return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(text.replace(tag, newTag))));
+    } catch (e) { return dataUrl; }
+  }
   function cvImageData(dataUrl, maxEdge) {
+    dataUrl = cvSvgSized(dataUrl);
     return new Promise(function (resolve, reject) {
       var el = new Image();
       el.onload = function () {
@@ -18956,7 +18974,7 @@
     return groups.filter(function (g) { return g.length > 1; });
   }
   var cvBusy = false;
-  function cvIsBlurry(x) { return x.cvSharp != null && x.cvSharp < CV_BLUR_THRESHOLD && !x.cvEmpty; }
+  function cvIsBlurry(x) { return x.cvSharp != null && x.cvSharp < CV_BLUR_THRESHOLD && !x.cvEmpty && !x.cvVector; }
   function cvIsFlat(x) { return x.cvContrast != null && x.cvContrast < CV_CONTRAST_MIN && !x.cvEmpty; }
   // Analysiert die Bilder (Werte je Bild), liefert Gruppen sehr aehnlicher Bilder innerhalb dieser Menge und Zaehler
   async function cvAnalyzeImages(imgs, onProgress) {
@@ -18968,6 +18986,9 @@
         img.cvW = pxd.w; img.cvH = pxd.h;
         thumbs[img.id] = r.thumb;
         img.cvSharp = r.sharp; img.cvContrast = r.contrast; img.cvBorder = r.border; img.cvEmpty = r.empty; img.cvHash = r.hash; img.cvAt = nowLabel(); img.cvError = null;
+        // Vektorgrafik: nie „unscharf“, kein Zuschneiden (das wuerde sie in ein Rasterbild umwandeln)
+        img.cvVector = cvIsSvgUrl(img.dataUrl);
+        if (img.cvVector) img.cvBorder = null;
         done++;
       } catch (e) { img.cvError = (e && e.message) || "Analyse fehlgeschlagen."; failed++; }
       if (i % 5 === 4) { if (onProgress) onProgress(i + 1, imgs.length); await new Promise(function (r) { setTimeout(r, 0); }); }
@@ -18996,7 +19017,7 @@
   }
   // Leeren Rand abschneiden (Original bleibt fuer "Original wiederherstellen" erhalten)
   async function cvCropImage(img) {
-    if (!img || !img.cvBorder) return false;
+    if (!img || !img.cvBorder || cvIsSvgUrl(img.dataUrl)) return false;
     var px = await cvImageData(img.dataUrl, 0), b = img.cvBorder;
     var c = document.createElement("canvas"); c.width = b.w; c.height = b.h;
     var src = document.createElement("canvas"); src.width = px.w; src.height = px.h;
@@ -19048,7 +19069,7 @@
   // Ergebnis fuer ein Bild (ohne es zu aendern): kleinste Variante, falls mindestens 15 % gespart werden
   async function cvShrinkPlan(img, opts) {
     var before = cvDataUrlBytes(img.dataUrl);
-    if (!before) return null;
+    if (!before || cvIsSvgUrl(img.dataUrl)) return null; // Vektorgrafiken nie rastern
     var el = await cvLoadImageEl(img.dataUrl);
     var w = el.naturalWidth || el.width, h = el.naturalHeight || el.height;
     if (!w || !h) return null;
@@ -19736,8 +19757,7 @@
     }
     renderGallery();
     showToast("Bild(er) hochgeladen", files.length + " Bild(er) zur Galerie hinzugefügt.");
-    var svgFree = fresh.filter(function (x) { return !/^data:image\/svg/i.test(x.dataUrl || ""); });
-    if (svgFree.length && els.imagesCvCheck && els.imagesCvCheck.checked) await imagesCvUploadCheck(svgFree);
+    if (fresh.length && els.imagesCvCheck && els.imagesCvCheck.checked) await imagesCvUploadCheck(fresh);
   }
   // v2.162: OpenCV-Pruefung beim Hochladen im Register Bilder – Qualitaet wie beim Screens-Import und Abgleich mit dem
   // Bildarchiv: ist ein neues Bild einem vorhandenen sehr aehnlich, landen beide in einer Gruppe („Sehr ähnliche Bilder bereinigen“).
