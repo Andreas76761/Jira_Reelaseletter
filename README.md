@@ -2031,6 +2031,14 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **Testdaten: synthetischer Jira-XML-Export**: `python3 webapp/tests/tools/gen_jira_test_export.py [Anzahl] [Datei]`
+  erzeugt einen Export im Format eines echten Jira-Server-10.x-XML-Exports (wie `fixtures/real_jira_export_sample.xml`:
+  Epics, Stories, Bugs, Tasks, Unteraufgaben mit `<parent>`/`<subtasks>`, Status/Statuskategorie, Prioritäten,
+  Komponenten, Labels, Fix-Versionen, Kommentare, Verknüpfungen „relates/blocks/is tested by“, Anhänge sowie die
+  Custom Fields Domain, Affected Services/Domains, INT Tag, Responsible PO, Sprint, Epic Link) – alle Inhalte erfunden,
+  Personen als Platzhalter, deterministisch. Lasttest mit 500 Tickets (1,7 MB) im echten Browser: Import 0,7 s,
+  Registerwechsel unter 0,1 s, automatisches Speichern 2,6 s, Sitzungsdatei 1,2 MB; CLI-Import 0,9 s.
+
 - **Fehlerbehebungen aus dem Code-Review v2.153–2.171 (v2.172.0)**: Drei unabhängige Prüfdurchgänge, jeder Befund am Code
   bestätigt und mit Test abgesichert:
   - **Texterkennung hing für immer**, wenn Sprachdaten nicht ladbar waren (Tesseract.js v5 lässt das Worker-Promise dann
