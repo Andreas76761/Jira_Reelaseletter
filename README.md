@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.181.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.182.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,14 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Code-Review v2.179–2.181 (v2.182.0)**: Regel-Import: „Höchstens N Wörter“ ohne gültige Zahl wurde aus Dateien
+  übernommen und dann stillschweigend nie geprüft – jetzt ignoriert; „250 Wörter“ wird zu 250, Geltungsbereich und Wert
+  werden getrimmt (gilt auch für gespeicherte Sitzungen). Geprüft ohne Befund: Positionsnachführung beim Vormerken/
+  Zurückholen, Rückfrage vor dem Veröffentlichen, Fehlermeldung beim Word-Export. Bekannte Grenze: wird zuerst ein Teil
+  aus der Mitte eines Absatzes und danach ein größerer, ihn umschließender Abschnitt vorgemerkt, landet der innere Teil
+  beim Zurückholen am Ende des größeren statt an seiner genauen Stelle; Team-Stände (geteilte Ablage) fragen beim
+  Veröffentlichen nicht nach Regelverstößen.
 
 - **Lasttest FINAL mit 300 Kapiteln und 20 Regeln (v2.181.0)**: Im echten Browser (Chromium): Sitzung (1,9 MB) laden
   0,8 s, Gesamtdokument mit Regelwerk-Hinweis 0,2 s, Regelwerk prüfen (300 Kapitel × 20 Regeln) 0,1 s, 100 Abschnitte

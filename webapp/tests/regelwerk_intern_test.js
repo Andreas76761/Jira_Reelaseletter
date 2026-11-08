@@ -313,9 +313,12 @@ const prompts = [];
   check("v2.180: Import derselben Datei – nichts doppelt", $("rules-count").textContent === "4" && /0 Regel\(n\) übernommen, 4 bereits vorhanden/.test($("rules-io-note").textContent));
   await importRules({ items: [{ scope: "", kind: "forbid", value: "Beta-Version" }, { scope: "x", kind: "unbekannt", value: "y" }] }, "neu.json");
   check("v2.180: Import ergänzt neue Regel, ungültige werden ignoriert", $("rules-count").textContent === "5" && /1 Regel\(n\) übernommen/.test($("rules-io-note").textContent));
+  await importRules({ items: [{ scope: "", kind: "maxWords", value: "abc" }, { scope: "  1 Vertrag ", kind: "maxWords", value: "250 Wörter" }] }, "zahlen.json");
+  s = await session();
+  check("v2.182: Import – „Höchstens N Wörter“ ohne gültige Zahl ignoriert, „250 Wörter“ als 250 übernommen", $("rules-count").textContent === "6" && s.rules.items.some((r) => r.kind === "maxWords" && r.value === "250" && r.scope === "1 Vertrag") && !s.rules.items.some((r) => r.value === "abc"));
   $("rules-io-note").textContent = "";
   await importRules({ foo: 1 }, "kaputt.json");
-  check("v2.180: ungültige Datei -> Fehlermeldung", /Import fehlgeschlagen/.test($("rules-io-note").textContent) && $("rules-count").textContent === "5");
+  check("v2.180: ungültige Datei -> Fehlermeldung", /Import fehlgeschlagen/.test($("rules-io-note").textContent) && $("rules-count").textContent === "6");
 
   // v2.180: Veröffentlichen eines Stands mit Regelwerk-Verstößen erst nach Rückfrage
   nav("final"); await wait(100);

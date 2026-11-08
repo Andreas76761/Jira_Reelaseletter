@@ -6694,7 +6694,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.181.0";
+  var APP_VERSION = "2.182.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -36961,8 +36961,9 @@
   function rulesNormalize(d) {
     d = d && typeof d === "object" ? d : {};
     var kinds = RULE_KINDS.map(function (k) { return k.key; });
-    var items = (Array.isArray(d.items) ? d.items : []).filter(function (r) { return r && kinds.indexOf(r.kind) !== -1 && String(r.value || "").trim(); }).map(function (r, i) {
-      return { id: typeof r.id === "number" ? r.id : i + 1, scope: String(r.scope || ""), kind: r.kind, value: String(r.value), active: r.active !== false };
+    // v2.182: „Höchstens N Wörter“ nur mit gueltiger Zahl (aus Dateien sonst stillschweigend nie geprueft), Zahl normalisiert
+    var items = (Array.isArray(d.items) ? d.items : []).filter(function (r) { return r && kinds.indexOf(r.kind) !== -1 && String(r.value || "").trim() && (r.kind !== "maxWords" || parseInt(r.value, 10) > 0); }).map(function (r, i) {
+      return { id: typeof r.id === "number" ? r.id : i + 1, scope: String(r.scope || "").trim(), kind: r.kind, value: r.kind === "maxWords" ? String(parseInt(r.value, 10)) : String(r.value).trim(), active: r.active !== false };
     });
     var maxId = items.reduce(function (m, r) { return Math.max(m, r.id); }, 0);
     return { items: items, nextId: Math.max(typeof d.nextId === "number" ? d.nextId : 1, maxId + 1), lastCheck: d.lastCheck && Array.isArray(d.lastCheck.results) ? d.lastCheck : null };
