@@ -419,6 +419,52 @@ const prompts = [];
   const exp2 = JSON.parse(typeof savedFiles[0].data === "string" ? savedFiles[0].data : await savedFiles[0].data.text());
   check("v2.184: Export enthält den Ersatz", exp2.items.some((r) => r.value === "Altbegriff" && r.replace === "Neubegriff"));
 
+  // ===================== v2.185: Ersatz ohne den Begriff selbst; Verankerung über Umgebungstext =====================
+  nav("regelwerk"); await wait(40);
+  $("rules-scope-select").value = ""; fire($("rules-scope-select"), "change");
+  $("rules-kind-select").value = "forbid"; fire($("rules-kind-select"), "change");
+  const cntBefore = $("rules-count").textContent;
+  $("rules-value-input").value = "Test"; $("rules-replace-input").value = "Testumgebung"; fire($("rules-add-btn"), "click"); await wait(20);
+  check("v2.185: Ersatz, der den Begriff enthält, wird abgewiesen", /darf den verbotenen Begriff nicht enthalten/.test($("rules-add-note").textContent) && $("rules-count").textContent === cntBefore);
+  $("rules-value-input").value = "Uraltwort"; $("rules-replace-input").value = "Ganz neues Wort"; fire($("rules-add-btn"), "click"); await wait(20);
+  s = await session();
+  const av7 = s.final.versions.find((v) => v.id === s.final.activeVersionId);
+  const CH7 = "Uraltwort steht vorn. Mitte bleibt hier stehen.\nZweite Zeile endet hier.";
+  av7.chapters.push({ title: "7 Anker", level: 1, text: CH7, markedText: CH7, screenIds: [] });
+  av7.chapters.push({ title: "8 Umbau", level: 1, text: "Alpha Beta Gamma. Delta Epsilon.\nZeta Eta.", markedText: "Alpha Beta Gamma. Delta Epsilon.\nZeta Eta.", screenIds: [] });
+  await load(s);
+  nav("final"); await wait(80);
+  const c7 = $("final-result-chapter-select"); c7.value = "7 Anker"; fire(c7, "change"); await wait(20);
+  selectInMaster("Mitte bleibt hier stehen."); fire($("final-reserve-plan-btn"), "click"); await wait(30);
+  if (!$("confirm-modal-overlay").hidden) await confirmModal();
+  c7.value = "7 Anker"; fire(c7, "change"); await wait(20);
+  const fx7 = $("final-rules-note").querySelector("[data-rules-fix]");
+  if (fx7) { fire(fx7, "click"); await confirmModal(); await wait(30); }
+  s = await session();
+  let t7 = s.final.versions.find((v) => v.id === s.final.activeVersionId).chapters.find((c) => c.title === "7 Anker").text;
+  check("v2.185: Begriff vor der Verankerung ersetzt (Text wird länger)", t7.startsWith("Ganz neues Wort steht vorn.") && !t7.includes("Mitte"));
+  c7.value = "__final_planung__"; fire(c7, "change"); await wait(20);
+  const r7 = Array.from($("final-result-master-output").querySelectorAll("[data-final-reserve-id]")).find((x) => x.textContent.includes("Aus „7 Anker“"));
+  fire(r7.querySelector("[data-final-reserve-restore]"), "click"); await wait(30);
+  s = await session();
+  t7 = s.final.versions.find((v) => v.id === s.final.activeVersionId).chapters.find((c) => c.title === "7 Anker").text;
+  check("v2.185: nach dem Ersetzen an der richtigen Stelle zurückgeholt", t7 === "Ganz neues Wort steht vorn. Mitte bleibt hier stehen.\nZweite Zeile endet hier.");
+  // Kapitel danach völlig umgeschrieben -> Stelle nicht mehr eindeutig -> Kapitelende mit Hinweis
+  const c8 = $("final-result-chapter-select"); c8.value = "8 Umbau"; fire(c8, "change"); await wait(20);
+  selectInMaster("Delta Epsilon."); fire($("final-reserve-intern-btn"), "click"); await wait(30);
+  if (!$("confirm-modal-overlay").hidden) await confirmModal();
+  s = await session();
+  const ch8 = s.final.versions.find((v) => v.id === s.final.activeVersionId).chapters.find((c) => c.title === "8 Umbau");
+  ch8.text = ch8.markedText = "Völlig neuer Text ohne alten Zusammenhang.\nNoch eine Zeile.";
+  await load(s);
+  nav("final"); await wait(60);
+  const c8b = $("final-result-chapter-select"); c8b.value = "__final_intern__"; fire(c8b, "change"); await wait(20);
+  const r8 = Array.from($("final-result-master-output").querySelectorAll("[data-final-reserve-id]")).find((x) => x.textContent.includes("Aus „8 Umbau“"));
+  fire(r8.querySelector("[data-final-reserve-restore]"), "click"); await wait(30);
+  s = await session();
+  const t8 = s.final.versions.find((v) => v.id === s.final.activeVersionId).chapters.find((c) => c.title === "8 Umbau").text;
+  check("v2.185: Stelle nicht mehr eindeutig -> am Kapitelende mit Hinweis", t8 === "Völlig neuer Text ohne alten Zusammenhang.\nNoch eine Zeile.\nDelta Epsilon." && /Am Kapitelende eingefügt/.test($("toast").textContent));
+
   check("Keine Skriptfehler", errors.length === 0);
   if (errors.length) console.log(errors.slice(0, 5));
   const failed = checks.filter((c) => !c[1]);

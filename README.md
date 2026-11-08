@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.184.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.185.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,16 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Code-Review v2.183–2.184 (v2.185.0)**: (1) Ein Ersatz, der den verbotenen Begriff selbst enthält („Test“ →
+  „Testumgebung“), wurde angenommen – „Verbotene Begriffe ersetzen“ blieb dann aktiv und ein zweiter Klick ergab
+  „Testumgebungumgebung“. Jetzt wird ein solcher Ersatz beim Anlegen abgewiesen und beim Laden/Import ignoriert.
+  (2) Vorgemerkte Abschnitte („Intern“/„In Planung“) merken sich ihre Stelle als Position; wurde der Kapiteltext danach
+  anders geändert (z. B. durch „Verbotene Begriffe ersetzen“ vor der Stelle), landete der Abschnitt beim Zurückholen
+  versetzt, ggf. mitten im Wort. Jetzt wird zusätzlich der Umgebungstext (je 30 Zeichen) gespeichert: nach dem Ersetzen
+  werden die Stellen neu bestimmt, beim Zurückholen geprüft und bei Bedarf über den Umgebungstext wiedergefunden; ist
+  die Stelle nicht mehr eindeutig, kommt der Abschnitt mit Hinweis ans Kapitelende. Geprüft ohne Befund: verschachtelte
+  Abschnitte, Rückfrage bei Team-Ständen, Ersetzen mit internen Markierungen. Test erweitert.
 
 - **Lasttest Editor mit 200 Kapiteln (zu v2.184.0)**: Im echten Browser (Chromium), KI simuliert mit 50 ms je Antwort:
   Sitzung laden 0,7 s, Editor mit 200 Kapiteln 0,3 s, KI-Sammel-Lauf über alle 200 Kapitel inkl. Word/PDF je Kapitel

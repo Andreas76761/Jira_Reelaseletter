@@ -6695,7 +6695,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.184.0";
+  var APP_VERSION = "2.185.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -29041,6 +29041,44 @@
       if (sCnt && (y.screenIdx > sIdx || (y.screenIdx === sIdx && finalReserveOrig(y) > finalReserveOrig(x)))) y.screenIdx += sCnt;
     });
   }
+  // v2.185: Umgebungstext der Verankerung (je 30 Zeichen davor/danach) – wurde das Kapitel danach anders geaendert
+  // (z. B. „Verbotene Begriffe ersetzen“), findet das Zurueckholen die Stelle ueber den Umgebungstext wieder
+  function finalReserveRefreshCtx(v, chapterTitle) {
+    var ch = (v.chapters || []).filter(function (c) { return c.title === chapterTitle; })[0];
+    if (!ch) return;
+    var marked = typeof ch.markedText === "string" ? ch.markedText : String(ch.text || "");
+    finalReserved().forEach(function (e) {
+      if (e.versionId !== v.id || e.chapter !== chapterTitle || e.parentId) return;
+      var p = Math.max(0, Math.min(e.mOffset, marked.length));
+      e.ctxB = marked.slice(Math.max(0, p - 30), p); e.ctxA = marked.slice(p, p + 30);
+    });
+  }
+  function finalReserveLocate(e, marked) {
+    var p = Math.max(0, Math.min(e.mOffset, marked.length));
+    if (!e.ctxB && !e.ctxA) return p;
+    if ((e.ctxB && marked.slice(Math.max(0, p - e.ctxB.length), p) === e.ctxB) || (e.ctxA && marked.substr(p, e.ctxA.length) === e.ctxA)) return p;
+    function uniq(t) { if (!t) return -1; var i = marked.indexOf(t); return i !== -1 && marked.indexOf(t, i + 1) === -1 ? i : -1; }
+    var lens = [30, 15], i;
+    for (var k = 0; k < lens.length; k++) {
+      var b = (e.ctxB || "").slice(-lens[k]), a = (e.ctxA || "").slice(0, lens[k]);
+      if (b && a && (i = uniq(b + a)) !== -1) return i + b.length;
+      if (a && (i = uniq(a)) !== -1) return i;
+      if (b && (i = uniq(b)) !== -1) return i + b.length;
+    }
+    return null;
+  }
+  // nach einer Text-Aenderung im Kapitel (Ersetzen) alle Verankerungen neu bestimmen
+  function finalReserveRelocateChapter(v, chapterTitle) {
+    var ch = (v.chapters || []).filter(function (c) { return c.title === chapterTitle; })[0];
+    if (!ch) return;
+    var marked = typeof ch.markedText === "string" ? ch.markedText : String(ch.text || "");
+    finalReserved().forEach(function (e) {
+      if (e.versionId !== v.id || e.chapter !== chapterTitle || e.parentId) return;
+      var loc = finalReserveLocate(e, marked);
+      if (loc !== null) e.mOffset = loc;
+    });
+    finalReserveRefreshCtx(v, chapterTitle);
+  }
   function finalReserveChildren(p) { return finalReserved().filter(function (y) { return y.parentId === p.id; }); }
   // Kind zurueckholen, solange der umschliessende Abschnitt noch vorgemerkt ist: in dessen Text einsetzen
   function finalReserveRestoreIntoParent(e, P) {
@@ -29118,6 +29156,7 @@
     entry.origStart = cut.mOffset + finalReserveSiblings(entry).filter(function (y) { return y.mOffset <= cut.mOffset; }).reduce(function (n, y) { return n + finalReserveLen(y); }, 0);
     finalReserveAfterCut(entry, cut.end);
     finalReserved().push(entry);
+    finalReserveRefreshCtx(v, sel.chapter);
     finalReserveSel = null;
     try { window.getSelection().removeAllRanges(); } catch (e) { /* egal */ }
     var short = truncate(cut.piece.replace(FINAL_MARK_RE, "").replace(/\s+/g, " ").trim(), 60);
@@ -29138,7 +29177,9 @@
     if (!ch) { showToast("Nicht möglich", "Das Kapitel „" + e.chapter + "“ gibt es im aktiven Stand „" + v.name + "“ nicht.", true); return; }
     var marked = typeof ch.markedText === "string" ? ch.markedText : String(ch.text || "");
     var textWasPlain = String(ch.text || "") === marked.replace(FINAL_MARK_RE, "");
-    var same = e.versionId === v.id, at = same ? Math.min(e.mOffset, marked.length) : marked.length, piece = e.piece, jointRemoved = 0;
+    var same = e.versionId === v.id, moved = false;
+    if (same) { var loc = finalReserveLocate(e, marked); if (loc === null) { same = false; moved = true; } else e.mOffset = loc; }
+    var at = same ? Math.min(e.mOffset, marked.length) : marked.length, piece = e.piece, jointRemoved = 0;
     if (same && e.joint && marked.substr(at, e.joint.length) === e.joint) { marked = marked.slice(0, at) + marked.slice(at + e.joint.length); jointRemoved = e.joint.length; }
     if (same && e.dropped) piece += "\n";
     var lead = 0;
@@ -29157,7 +29198,9 @@
       if (same) { c.mOffset = at + lead + (c.innerOffset || 0); c.screenIdx = idx + (c.innerScreen || 0); } else { c.mOffset = e.mOffset; c.screenIdx = e.screenIdx; }
     });
     app.final.reserved = finalReserved().filter(function (x) { return x !== e; });
-    addLog("FINAL: Abschnitt aus „" + FINAL_RESERVE_KINDS[e.kind] + "“ in „" + e.chapter + "“ (Stand „" + v.name + "“) zurückgeholt.");
+    if (e.versionId === v.id) finalReserveRefreshCtx(v, e.chapter);
+    if (moved) showToast("Am Kapitelende eingefügt", "Die ursprüngliche Stelle in „" + e.chapter + "“ ließ sich nach Änderungen am Text nicht mehr eindeutig finden – der Abschnitt steht jetzt am Kapitelende.", false);
+    addLog("FINAL: Abschnitt aus „" + FINAL_RESERVE_KINDS[e.kind] + "“ in „" + e.chapter + "“ (Stand „" + v.name + "“) zurückgeholt" + (moved ? " (Stelle nicht mehr eindeutig – am Kapitelende)" : "") + ".");
     renderFinalResultChapterOptions();
     updateFinalResult();
   }
@@ -29230,6 +29273,7 @@
       var textWasPlain = String(c.text || "") === String(typeof c.markedText === "string" ? c.markedText : c.text).replace(FINAL_MARK_RE, "");
       c.markedText = rulesApplyFixes([c.title], typeof c.markedText === "string" ? c.markedText : c.text).text;
       c.text = textWasPlain ? c.markedText.replace(FINAL_MARK_RE, "") : ft.text;
+      finalReserveRelocateChapter(v, c.title); // v2.185: vorgemerkte Abschnitte neu verankern
     });
     addLog("FINAL: Stand „" + v.name + "“ – " + total + " verbotene(r) Begriff(e) ersetzt (" + done.join(", ") + ").");
     updateFinalResult();
@@ -37058,7 +37102,7 @@
     // v2.182: „Höchstens N Wörter“ nur mit gueltiger Zahl (aus Dateien sonst stillschweigend nie geprueft), Zahl normalisiert
     var items = (Array.isArray(d.items) ? d.items : []).filter(function (r) { return r && kinds.indexOf(r.kind) !== -1 && String(r.value || "").trim() && (r.kind !== "maxWords" || parseInt(r.value, 10) > 0); }).map(function (r, i) {
       var o = { id: typeof r.id === "number" ? r.id : i + 1, scope: String(r.scope || "").trim(), kind: r.kind, value: r.kind === "maxWords" ? String(parseInt(r.value, 10)) : String(r.value).trim(), active: r.active !== false };
-      if (r.kind === "forbid" && String(r.replace || "").trim()) o.replace = String(r.replace).trim(); // v2.184: Ersatz
+      if (r.kind === "forbid" && String(r.replace || "").trim() && !rulesReplaceContainsTerm(o.value, r.replace)) o.replace = String(r.replace).trim(); // v2.184: Ersatz (v2.185: nicht, wenn er den Begriff selbst enthaelt)
       return o;
     });
     var maxId = items.reduce(function (m, r) { return Math.max(m, r.id); }, 0);
@@ -37108,6 +37152,8 @@
   }
   // v2.184: verbotene Begriffe mit hinterlegtem Ersatz ersetzen (gleiche Fundstellen wie die Pruefung, Gross-/Kleinschreibung
   // des Originals am Wortanfang bzw. komplett gross wird uebernommen)
+  // v2.185: ein Ersatz, der den verbotenen Begriff selbst enthaelt („Test“ → „Testumgebung“), wuerde bei jedem Klick erneut ersetzen
+  function rulesReplaceContainsTerm(term, rep) { return rulesCountTerm(String(rep || "").toLowerCase(), term) > 0; }
   function rulesMatchCase(orig, rep) {
     if (orig.length > 1 && orig === orig.toUpperCase() && /[A-ZÄÖÜ]/.test(orig)) return rep.toUpperCase();
     if (/^[A-ZÄÖÜ]/.test(orig)) return rep.charAt(0).toUpperCase() + rep.slice(1);
@@ -37198,6 +37244,7 @@
     if (!value) { els.rulesAddNote.textContent = "Bitte die Regel eingeben."; return; }
     if (kind === "maxWords" && !(parseInt(value, 10) > 0)) { els.rulesAddNote.textContent = "Bitte eine Zahl größer 0 eingeben."; return; }
     if (kind === "maxWords") value = String(parseInt(value, 10));
+    if (kind === "forbid" && els.rulesReplaceInput.value.trim() && rulesReplaceContainsTerm(value, els.rulesReplaceInput.value)) { els.rulesAddNote.textContent = "Der Ersatz darf den verbotenen Begriff nicht enthalten."; return; }
     var newRule = { id: app.rules.nextId++, scope: scope, kind: kind, value: value, active: true };
     if (kind === "forbid" && els.rulesReplaceInput.value.trim()) newRule.replace = els.rulesReplaceInput.value.trim();
     app.rules.items.push(newRule);
