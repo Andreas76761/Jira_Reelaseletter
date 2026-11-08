@@ -6649,7 +6649,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.173.0";
+  var APP_VERSION = "2.174.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -6888,11 +6888,34 @@
     return links;
   }
   var JIRA_STATUS_CATEGORY_LABELS_DE = { new: "Neu", indeterminate: "In Arbeit", done: "Erledigt" };
+  // v2.174: Index aller Elemente eines <item> nach Namen – EIN Durchlauf je Ticket statt einer Suche durch den ganzen
+  // Teilbaum je Feld (bei 2.000 Tickets ~50.000 Suchen, gut 0,4 s Blockade). Bietet querySelector/querySelectorAll fuer
+  // die hier verwendeten Formen „name“ und „vorfahr name“ mit demselben Ergebnis wie das DOM (erstes Element bzw. alle
+  // in Dokumentreihenfolge); andere Selektoren gehen unveraendert an das Element.
+  function xmlItemIndex(item) {
+    var by = {}, all = item.getElementsByTagName("*");
+    for (var i = 0; i < all.length; i++) { var n = all[i].localName; (by[n] || (by[n] = [])).push(all[i]); }
+    function sel(s) {
+      var parts = String(s).trim().split(/\s+/);
+      if (parts.length > 2 || /[^A-Za-z0-9_-]/.test(parts.join(""))) return null;
+      var list = by[parts[parts.length - 1]] || [];
+      if (parts.length === 1) return list;
+      return list.filter(function (el) {
+        for (var p = el.parentNode; p && p.nodeType === 1; p = p.parentNode) if (p.localName === parts[0]) return true;
+        return false;
+      });
+    }
+    return {
+      querySelector: function (s) { var r = sel(s); return r ? r[0] || null : item.querySelector(s); },
+      querySelectorAll: function (s) { var r = sel(s); return r ? r.slice() : Array.prototype.slice.call(item.querySelectorAll(s)); }
+    };
+  }
   function parseJiraXml(doc) {
     var items = doc.querySelectorAll("item");
     if (!items.length) return null;
     var tickets = [];
-    items.forEach(function (item) {
+    items.forEach(function (itemEl) {
+      var item = xmlItemIndex(itemEl);
       var keyEl = item.querySelector("key");
       var key = keyEl ? keyEl.textContent.trim() : null;
       if (!key) {
@@ -11667,12 +11690,17 @@
   // Begriffe (auch deutsche Komposita) behalten den reinen Substring-
   // Abgleich, da dort eine Wortgrenzen-Pruefung echte, gewollte Treffer in
   // zusammengesetzten Woertern verhindern wuerde.
+  // v2.174: Ausdruck je Kurzbegriff nur einmal erzeugen (vorher je Ticket × Begriff neu – beim Import von 2.000 Tickets ~0,2 s)
+  var labelTermReCache = {};
   function labelTermMatchesText(haystack, term) {
     if (!term) return false;
     var t = term.toLowerCase();
     if (t.length > 3) return haystack.indexOf(t) !== -1;
-    var escaped = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    var re = new RegExp("(^|[^a-z0-9äöüß])" + escaped + "($|[^a-z0-9äöüß])");
+    var re = labelTermReCache[t];
+    if (!re) {
+      var escaped = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      re = labelTermReCache[t] = new RegExp("(^|[^a-z0-9äöüß])" + escaped + "($|[^a-z0-9äöüß])");
+    }
     return re.test(haystack);
   }
   // Labels: reiner Text-Abgleich (keine KI) der in Einstellungen gepflegten

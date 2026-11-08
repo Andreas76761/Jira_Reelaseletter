@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.173.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.174.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,14 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Schnellerer Jira-XML-Import großer Exporte (v2.174.0)**: Messung im echten Browser zeigte, dass beim Import von
+  2.000 Tickets nicht der XML-Parser des Browsers (~0,4 s, nicht vermeidbar) den größten Anteil hatte, sondern rund
+  50.000 Einzelsuchen (je Ticket und Feld eine Suche durch den ganzen Ticket-Teilbaum, ~0,4 s) und das wiederholte
+  Erzeugen der Suchausdrücke für kurze Label-Begriffe (~0,1 s). Jetzt ein einziger Durchlauf je Ticket, der alle
+  Elemente nach Namen vorsortiert, und ein Ausdruck je Kurzbegriff. Längste Blockade beim Import von 2.000 Tickets
+  1,27 s → 0,94 s. Nachgewiesen gleich: importierte Ticketdaten (Sitzungsexport ohne Zeitstempel) für 5 XML-Dateien
+  (2.000 und 500 synthetische Tickets, drei Test-Exporte inkl. echtem Jira-Muster) mit alter und neuer Fassung identisch.
 
 - **Sehr ähnliche Bilder: keine Sammelgruppe mehr bei Screens mit gleichem Layout (v2.173.0)**: Im Lasttest (2.000 Tickets,
   500 Masken à 1280×800, 45 MB Sitzung) steckte die OpenCV-Analyse alle 500 verschiedenen Masken in EINE Gruppe „sehr
