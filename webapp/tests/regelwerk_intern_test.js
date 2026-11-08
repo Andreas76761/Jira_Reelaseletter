@@ -67,7 +67,8 @@ const prompts = [];
   s.labels = (s.labels || []).concat([{ category: "Sparte", de: "Bus", en: "Bus" }, { category: "Sparte", de: "Truck", en: "Truck" }]);
   s.uploadedImages = [{ id: 301, filename: "maske.png", dataUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", mimeType: "image/png", description: "Maske Vertrag" }];
   s.final.versions = [{ id: 1, name: "Basis", createdAt: "1.11.2026, 10:00:00", status: "Entwurf", statusChangedAt: "1.11.2026, 10:00:00", history: [], config: {}, origin: "FINAL", improvements: {}, improvementStatus: {}, reviews: [], notes: [],
-    chapters: [{ title: "1 Vertrag", level: 1, text: CH1, markedText: CH1, screenIds: [301] }, { title: "2 Liste", level: 1, text: "Liste ansehen.\n\u0001Interner Hinweis zur Liste\u0002", markedText: "Liste ansehen.\n\u0001Interner Hinweis zur Liste\u0002", screenIds: [] }] }];
+    chapters: [{ title: "1 Vertrag", level: 1, text: CH1, markedText: CH1, screenIds: [301] }, { title: "2 Liste", level: 1, text: "Liste ansehen.\n\u0001Interner Hinweis zur Liste\u0002", markedText: "Liste ansehen.\n\u0001Interner Hinweis zur Liste\u0002", screenIds: [] },
+      { title: "3 Doppelt", level: 1, text: "Hinweis beachten.\nErster Schritt ausführen.\nHinweis beachten.\nZweiter Schritt ausführen.", markedText: "Hinweis beachten.\nErster Schritt ausführen.\nHinweis beachten.\nZweiter Schritt ausführen.", screenIds: [] }] }];
   s.final.activeVersionId = 1;
   s.vrev = { docs: [{ id: 1, name: "Handbuch", version: "1.0", status: "Entwurf", source: "Upload", lang: "DE", chapters: [{ title: "1 Vertrag", level: 1, text: "Vertrag im Testsystem anlegen." }], ph: {}, checks: {}, steps: {}, history: [] }], activeId: null };
   await load(s);
@@ -152,9 +153,24 @@ const prompts = [];
   csel.value = "2 Liste"; fire(csel, "change"); await wait(20);
   check("Interner Vermerk markiert", selectInMaster("Interner Hinweis zur Liste"));
   fire($("final-reserve-intern-btn"), "click"); await wait(30);
+  // v2.178: Markierung über 60 % des Kapitels -> Rückfrage
+  check("v2.178: große Markierung (über 60 % des Kapitels) erst nach Rückfrage", !$("confirm-modal-overlay").hidden && /% des Kapitels „2 Liste“/.test($("confirm-modal-message").textContent));
+  await confirmModal();
   s = await session();
   const ch2 = s.final.versions[0].chapters[1];
   check("Markierter interner Vermerk vorgemerkt, Markierungen bleiben ausgeglichen", !ch2.text.includes("Interner Hinweis") && (ch2.markedText.match(/\u0001/g) || []).length === (ch2.markedText.match(/\u0002/g) || []).length);
+
+  // v2.178: mehrdeutige Markierung wird nicht geraten; aufgehobene Markierung zählt nicht mehr
+  csel.value = "3 Doppelt"; fire(csel, "change"); await wait(20);
+  selectInMaster("Hinweis beachten.");
+  fire($("final-reserve-intern-btn"), "click"); await wait(30);
+  s = await session();
+  check("v2.178: Text kommt mehrfach vor -> Hinweis, nichts entfernt", /mehrfach vor/.test($("final-reserve-note").textContent) && s.final.versions[0].chapters[2].text.split("Hinweis beachten.").length === 3);
+  selectInMaster("Zweiter Schritt ausführen.");
+  win.getSelection().removeAllRanges(); fire(doc, "selectionchange"); await wait(20);
+  fire($("final-reserve-intern-btn"), "click"); await wait(30);
+  s = await session();
+  check("v2.178: aufgehobene Markierung wird nicht nachträglich vorgemerkt", /zuerst .* markieren/.test($("final-reserve-note").textContent) && s.final.versions[0].chapters[2].text.includes("Zweiter Schritt"));
 
   // Kapitel „Intern“ ansehen, als Word exportieren
   csel.value = "__final_intern__"; fire(csel, "change"); await wait(30);
@@ -191,6 +207,7 @@ const prompts = [];
   s = await session();
   const r1 = s.vrev.docs[0].checks.R1;
   check("Dokument-Review: Prüfung R1 Regelwerk meldet Verstöße (Pflichtbegriff fehlt)", r1 && r1.s === "fail" && /Pflichtbegriff „Servicevertrag“ fehlt/.test(r1.d));
+  check("v2.178: Regelwerk-Verstoß blockiert „Bereit für die Verteilung“ (F1 nennt R1)", s.vrev.docs[0].checks.F1 && /Offene Fehler: .*R1/.test(s.vrev.docs[0].checks.F1.d));
   check("Dokument-Review: 21 Prüfungen", Object.keys(s.vrev.docs[0].checks).length === 21 && /^21 Prüfungen ausgeführt/.test($("vrev-status").textContent));
   fire(doc.querySelector('.vrev-stage-btn[data-stage="7"]'), "click"); await wait(50);
   const toFinal = doc.querySelector('[data-vrev-act="to-final"]');

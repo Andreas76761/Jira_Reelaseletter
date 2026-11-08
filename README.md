@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.177.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.178.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,15 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Code-Review v2.176–2.177 (v2.178.0)**: Vormerken für „Intern“/„In Planung“ abgesichert: (1) eine aufgehobene
+  Markierung wurde gemerkt und konnte später noch vorgemerkt werden – jetzt zählt nur die aktuelle Markierung; (2) kommt
+  der markierte Text im Kapitel mehrfach vor, wird nicht mehr die erste Fundstelle entfernt, sondern um eine längere,
+  eindeutige Markierung gebeten; (3) umfasst die Markierung mehr als 60 % des Kapitels (z. B. versehentlich alles
+  markiert), fragt die App vorher nach. Dokument-Review: Verstöße gegen feste Regeln (R1) gelten bei „Bereit für die
+  Verteilung“ (F1) als offener Fehler. Geprüft ohne Befund: Bilder in vorgemerkten Abschnitten zählen beim Bereinigen/
+  Löschen von Bildern als verwendet und werden mit umgestellt (generische Verweis-Suche). Test erweitert, Vormerken mit
+  Rückfrage im echten Browser (Chromium, Mausauswahl) geprüft.
 
 - **Regelwerk-Hinweise direkt am Kapitel (v2.177.0)**: Im Editor steht unter der Kapitel-Vorschau, ob die festen Regeln
   (allgemein + Kapitel) eingehalten sind bzw. welche verletzt werden – live auch beim Bearbeiten des Textes; die

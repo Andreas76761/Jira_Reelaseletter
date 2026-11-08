@@ -6688,7 +6688,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.177.0";
+  var APP_VERSION = "2.178.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -29008,18 +29008,25 @@
     return { text: range.toString(), chapter: finalReserveChapterForNode(range.startContainer.nodeType === 1 && range.startContainer === out ? (out.firstChild || out) : range.startContainer) };
   }
   // Auswahl merken (falls der Klick auf den Knopf sie im Browser aufhebt)
-  document.addEventListener("selectionchange", function () { var s = finalReserveCurrentSel(); if (s && s.text.trim()) finalReserveSel = s; });
+  // v2.178: aufgehobene/andere Auswahl verwirft die gemerkte (sonst wuerde spaeter ein alter Abschnitt vorgemerkt)
+  document.addEventListener("selectionchange", function () { var s = finalReserveCurrentSel(); finalReserveSel = s && s.text.trim() ? s : null; });
   function finalReserveLocked(v) {
     if (v && v.status === "Veröffentlicht") { showToast("Gesperrt", "Stand „" + v.name + "“ ist veröffentlicht – zuerst den Status zurücksetzen.", true); return true; }
     return false;
   }
-  function finalReserveMark(kind) {
+  async function finalReserveMark(kind) {
     var v = finalActiveVersion();
     if (!v || finalReserveLocked(v)) return;
     var sel = finalReserveCurrentSel() || finalReserveSel;
     if (!sel || !sel.text.trim()) { els.finalReserveNote.textContent = "Bitte zuerst in „Neue Zusammenführung“ den Text markieren."; return; }
     if (!sel.chapter) { els.finalReserveNote.textContent = "Kapitel nicht erkannt – bitte ein einzelnes Kapitel wählen und dort markieren."; return; }
     var ch = v.chapters.filter(function (c) { return c.title === sel.chapter; })[0];
+    // v2.178: mehrdeutige Auswahl (Text kommt im Kapitel mehrfach vor) nicht raten
+    var reAll = finalReservePattern(sel.text), chPlain = ch ? String(typeof ch.markedText === "string" ? ch.markedText : ch.text || "").replace(FINAL_MARK_RE, "") : "";
+    if (reAll && (chPlain.match(new RegExp(reAll.source, "g")) || []).length > 1) { els.finalReserveNote.textContent = "Der markierte Text kommt im Kapitel „" + sel.chapter + "“ mehrfach vor – bitte mehr Text markieren, damit die Stelle eindeutig ist."; return; }
+    // v2.178: grosse Auswahl (z. B. versehentlich das ganze Kapitel) erst nach Rueckfrage
+    var selLen = sel.text.replace(/\s+/g, "").length, chLen = chPlain.replace(/\s+/g, "").length;
+    if (chLen && selLen > chLen * 0.6 && !(await confirmDialog("Die Markierung umfasst " + Math.round(100 * Math.min(1, selLen / chLen)) + " % des Kapitels „" + sel.chapter + "“. Wirklich als „" + FINAL_RESERVE_KINDS[kind] + "“ vormerken und aus dem Benutzerhandbuch entfernen?", "Vormerken"))) return;
     var cut = finalReserveCut(ch, sel.text);
     if (!cut) { els.finalReserveNote.textContent = "Der markierte Text wurde im Kapitel „" + sel.chapter + "“ nicht gefunden – bitte nur Fließtext markieren (ohne Rollen-Markierungen und ROVO-Verbesserungen)."; return; }
     var id = finalReserved().reduce(function (mx, e) { return Math.max(mx, e.id || 0); }, 0) + 1;
@@ -34846,7 +34853,7 @@
     var score = vrevScore(ch, scoreIds);
     put("A2", score == null ? "open" : score >= vrevLimit("scoreOk") ? "ok" : score >= vrevLimit("scoreWarn") ? "warn" : "fail", "Qualität " + (score == null ? "–" : score + " von 100") + (doc.scoreInitial != null ? " (beim ersten Prüflauf " + doc.scoreInitial + ")" : "") + ".", score);
     // Stufe 7 – Finalisierung
-    var blockers = scoreIds.concat(["A2"]).filter(function (id) { return ch[id] && ch[id].s === "fail"; });
+    var blockers = scoreIds.concat(["A2", "R1"]).filter( /* v2.178: Regelwerk-Verstoesse blockieren die Verteilung */function (id) { return ch[id] && ch[id].s === "fail"; });
     var openStages = [1, 2, 3, 4, 5, 6].filter(function (n) { return !doc.steps[n]; });
     put("F1", !blockers.length && !openStages.length ? "ok" : "warn", (blockers.length ? "Offene Fehler: " + blockers.join(", ") + ". " : "") + (openStages.length ? "Nicht abgeschlossene Stufen: " + openStages.join(", ") + ". " : "") +
       (!blockers.length && !openStages.length ? "Alle Stufen abgeschlossen, keine Fehler – die Verteilfassung enthält keine internen Vermerke und keine Jira-Nummern." : "Die Verteilfassung entfernt interne Vermerke und Jira-Nummern trotzdem automatisch."), blockers.length + openStages.length);
