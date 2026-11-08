@@ -87,6 +87,7 @@ async function blobBuf(d) { return Buffer.from(await d.arrayBuffer()); }
   await load(ses);
   nav("final"); await wait(50);
   setVal("final-result-chapter-select", "Kapitel 1: Verträge");
+  { const cb = doc.getElementById("final-result-images-cb"); if (cb.checked) { cb.checked = false; fire(cb, "change"); } } // v2.186: Text-Ansicht der Bild-Hinweise prüfen
   const out = () => $("final-result-master-output");
   check("Steuerung 'Ansicht als Rolle' sichtbar (Dokument hat Markierungen)", !$("final-result-role-wrap").hidden && Array.from($("final-result-role-select").options).map((o) => o.value).join(",") === ",Markt,MO,Retail,IT,HQ" && $("final-result-role-hide").disabled);
   const badges = () => Array.from(out().querySelectorAll(".final-role-badge")).map((b) => b.textContent);

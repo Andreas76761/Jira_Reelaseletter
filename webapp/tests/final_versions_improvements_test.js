@@ -261,6 +261,7 @@ const EN1 = "Chapter 1: Contracts", EN2 = "Chapter 2: Termination";
   await wait(100);
   check("FINAL: 3 Stände, optimierter Stand aktiv", versionRows().length === 3 && versionRows()[2].classList.contains("final-version-active"));
   doc.getElementById("final-result-chapter-select").value = DE1; fire(doc.getElementById("final-result-chapter-select"), "change");
+  { const cb = doc.getElementById("final-result-images-cb"); if (cb.checked) { cb.checked = false; fire(cb, "change"); } } // v2.186: Text-Ansicht der Bild-Hinweise prüfen
   check("Ergebnis des neuen Stands enthält die eingearbeitete Verbesserung und den Screen", resMaster().textContent.includes("Neu: Vertragsdaten werden vor dem Speichern geprüft.") && resMaster().textContent.includes("[Bild: DE > Vertrag]"));
   doc.getElementById("final-result-chapter-select").value = DE2; fire(doc.getElementById("final-result-chapter-select"), "change");
   check("Verworfenes Kapitel bleibt unverändert (mit Screen)", resMaster().textContent.includes("Kündigungen werden erfasst.") && resMaster().textContent.includes("[Bild: DE > Kündigung]") && !resMaster().textContent.includes("Ohne Bild."));

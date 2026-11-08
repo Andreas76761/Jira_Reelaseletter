@@ -129,6 +129,7 @@ async function buildXlsx(rows) {
   await waitUntil(() => note.textContent.includes("Mit Vermerken"), 10000);
   const resSel = doc.getElementById("final-result-chapter-select");
   resSel.value = K1; fire(resSel, "change");
+  { const cb = doc.getElementById("final-result-images-cb"); if (cb.checked) { cb.checked = false; fire(cb, "change"); } } // v2.186: Text-Ansicht der Bild-Hinweise prüfen
   const master = () => doc.getElementById("final-result-master-output");
   const marks = Array.from(master().querySelectorAll("mark.final-mark-internal")).map((m) => m.textContent);
   check("Verbesserungen ohne Agent als interner Vermerk (gelb) im Kapiteltext", marks.some((t) => t.includes("Verbesserung (ROVO): Speicherhinweis ergänzen") && t.includes("Verbesserung (ROVO): Screenshot erklären")));
