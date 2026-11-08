@@ -6649,7 +6649,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.174.0";
+  var APP_VERSION = "2.175.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -18905,7 +18905,7 @@
   var CV_SRC = [CV_LOCAL_SRC, "https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.11.0-release.1/dist/opencv.js", "https://unpkg.com/@techstark/opencv-js@4.11.0-release.1/dist/opencv.js"];
   var cvLoadedFrom = "";
   var CV_THUMB_W = 80, CV_THUMB_H = 50, CV_MID_W = 160, CV_MID_H = 100, CV_FINE_W = 320, CV_FINE_H = 200;
-  var CV_BLUR_THRESHOLD = 60, CV_CONTRAST_MIN = 20, CV_DUP_MAX_BITS = 32, CV_DUP_MAX_DIFF = 0.002, CV_DUP_TOL = 32, CV_MID_TOL = 12, CV_MID_MAX_DIFF = 0.0004, CV_FINE_TOL = 24, CV_FINE_MAX_DIFF = 0.0003, CV_DETAIL_W = 640, CV_DETAIL_TOL = 24, CV_DETAIL_MAX_DIFF = 0.0008, CV_BORDER_MIN = 0.04, CV_MAX_EDGE = 1200;
+  var CV_BLUR_THRESHOLD = 60, CV_CONTRAST_MIN = 20, CV_DUP_MAX_BITS = 32, CV_DUP_MAX_DIFF = 0.002, CV_DUP_TOL = 32, CV_MID_TOL = 12, CV_MID_MAX_DIFF = 0.0004, CV_FINE_TOL = 24, CV_FINE_MAX_DIFF = 0.0003, CV_DETAIL_W = 640, CV_DETAIL_TOL = 24, CV_DETAIL_MAX_DIFF = 0.0008, CV_DETAIL_MAX_CANDS = 6, CV_DETAIL_CACHE_BYTES = 48 * 1024 * 1024, CV_BORDER_MIN = 0.04, CV_MAX_EDGE = 1200;
   var cvLoadPromise = null;
   // Liefert { cv } (Wrapper, weil das Emscripten-Modul selbst ein "then" hat und ein Promise sonst endlos aufloest).
   function cvWhenReady(c) {
@@ -19059,6 +19059,14 @@
   // Vergleich zweier Vergleichsbilder ({ c: grob 80×50, m: mittel 160×100, f: fein 320×200 – m/f null bei kleinen
   // Bildern}): Anteil abweichender Pixel im groben Bild (mehr als 32 Graustufen), oder 1, wenn eine Stufe die Grenze fuer
   // „sehr aehnlich“ ueberschreitet. Fein, wenn beide gross sind; mittel, wenn nur eines gross ist (s. cvAnalyzePixels).
+  // v2.175: Summe der Grauwert-Abweichungen (mittlere Stufe, sonst grob) – ordnet Kandidaten auch dann, wenn viele Screens
+  // mit gleichem Layout im groben Vergleich gleich „0 %“ zeigen; echte Kopien liegen deutlich vorn
+  function cvSad(a, b) {
+    var x = a && b && a.m && b.m ? a.m : a && a.c, y = a && b && a.m && b.m ? b.m : b && b.c, n = 0;
+    if (!x || !y || x.length !== y.length) return Infinity;
+    for (var i = 0; i < x.length; i++) n += Math.abs(x[i] - y[i]);
+    return n / x.length;
+  }
   function cvDiffShare(a, b) {
     if (!a || !b) return 1;
     var sh = cvShareWithin(a.c, b.c, CV_DUP_TOL, CV_DUP_MAX_DIFF);
@@ -19081,9 +19089,12 @@
         var lead = groups[gi][0];
         if (cvHamming(lead.cvHash, img.cvHash) > CV_DUP_MAX_BITS) continue;
         var sh = cvDiffShare(thumbs[lead.id], thumbs[img.id]);
-        if (sh <= CV_DUP_MAX_DIFF) cands.push({ g: groups[gi], sh: sh });
+        if (sh <= CV_DUP_MAX_DIFF) cands.push({ g: groups[gi], sh: sh, sad: cvSad(thumbs[lead.id], thumbs[img.id]) });
       }
-      cands.sort(function (x, y) { return x.sh - y.sh; });
+      // v2.175: aehnlichste zuerst und hoechstens 6 Detailpruefungen je Bild – sonst bei vielen kleinen Screens mit gleichem
+      // Layout (keine mittlere/feine Stufe) eine Detailpruefung gegen fast jede Gruppe (quadratisch viele Bilddekodierungen)
+      cands.sort(function (x, y) { return x.sad - y.sad || x.sh - y.sh; });
+      if (match) cands = cands.slice(0, CV_DETAIL_MAX_CANDS);
       for (var ci = 0; ci < cands.length && !g; ci++) { if (!match || await match(cands[ci].g[0], img)) { g = cands[ci].g; share = cands[ci].sh; } }
       if (g) { if (!keepDiff) img.cvDupDiff = share; g.push(img); } else { if (!keepDiff) img.cvDupDiff = null; groups.push([img]); }
     }
@@ -19095,7 +19106,7 @@
   // Bildes, hoechstens 640 px, leicht geglaettet, Toleranz 24 Stufen, hoechstens 0,08 % abweichend. Gemessen: Kopien
   // (100–20 % Groesse, JPEG q0,5–0,8) 0,00 %; kleine Markierung 0,01 % (1280×800) bzw. 0,05 % (4×4 auf 300×200);
   // andere Ziffern bei gleichem Layout 0,20–0,26 %, gegen eine kleine Vorschau (256×160) 0,11 %. Nur fuer Kandidaten –
-  // so bleibt der Speicher klein (hoechstens 40 Detailbilder gleichzeitig zwischengespeichert).
+  // so bleibt der Speicher klein (zwischengespeicherte Detailbilder hoechstens 48 MB).
   function cvEffDims(x) {
     var w = x.cvW || x.width, h = x.cvH || x.height;
     if (!(w > 0 && h > 0)) return null;
@@ -19128,7 +19139,9 @@
       var t = null;
       try { t = await cvDetailThumb(cv, x, W, H); } catch (e) { t = null; }
       cache.set(k, t);
-      if (cache.size > 40) cache.delete(cache.keys().next().value);
+      // v2.175: Speicherbudget statt fester Anzahl (640×400 ≈ 256 KB, kleine Bilder viel weniger), aelteste zuerst raus
+      cache.bytes = (cache.bytes || 0) + (t ? t.length : 0);
+      while (cache.bytes > CV_DETAIL_CACHE_BYTES && cache.size > 2) { var old = cache.keys().next().value, ot = cache.get(old); cache.delete(old); cache.bytes -= ot ? ot.length : 0; }
       return t;
     }
     var ta = await get(a), tb = await get(b);
@@ -20031,10 +20044,11 @@
           if (cvHamming(old.cvHash, img.cvHash) > CV_DUP_MAX_BITS) continue;
           if (!thumbs[old.id]) { try { thumbs[old.id] = cvAnalyzePixels(cv, await cvImageData(old.dataUrl, CV_MAX_EDGE)).thumb; } catch (e) { continue; } }
           var sh = cvDiffShare(thumbs[old.id], thumbs[img.id]);
-          if (sh <= CV_DUP_MAX_DIFF) cands.push({ old: old, sh: sh });
+          if (sh <= CV_DUP_MAX_DIFF) cands.push({ old: old, sh: sh, sad: cvSad(thumbs[old.id], thumbs[img.id]) });
         }
-        // v2.173: aehnlichster Kandidat, der auch die Detailpruefung besteht
-        cands.sort(function (x, y) { return x.sh - y.sh; });
+        // v2.173: aehnlichster Kandidat, der auch die Detailpruefung besteht (v2.175: nach Grauwert-Summe, hoechstens 6)
+        cands.sort(function (x, y) { return x.sad - y.sad || x.sh - y.sh; });
+        cands = cands.slice(0, CV_DETAIL_MAX_CANDS);
         for (var ci = 0; ci < cands.length && !best; ci++) { if (await cvDetailMatch(cv, cands[ci].old, img, detailCache)) best = cands[ci]; }
         if (best) {
           var gid = best.old.cvDupGroup ? String(best.old.cvDupGroup) : String(nextG++);
