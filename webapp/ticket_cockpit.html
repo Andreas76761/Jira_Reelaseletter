@@ -961,6 +961,9 @@
     .app-stats { gap: 10px; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  /* v2.190: auf schmalen Bildschirmen umbrechen statt die Seite zu verbreitern (lange Beschriftungen, Knöpfe, Zähler) –
+     bewusst am Ende, damit diese Regeln die allgemeinen nowrap-Regeln überschreiben */
+  @media (max-width: 900px) { .checkbox-label { white-space: normal; max-width: 100%; } .checkbox-label input { flex: none; } .btn, .result-count { white-space: normal; max-width: 100%; } }
 </style>
 
 <div class="app-shell">
@@ -6766,7 +6769,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.190.0";
+  var APP_VERSION = "2.191.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 

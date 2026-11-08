@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.190.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.191.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,12 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Handy-Ansicht ohne seitliches Scrollen (v2.191.0)**: Auf schmalen Bildschirmen (bis 900 px) brechen Beschriftungen von
+  Kontrollkästchen, Knopftexte und Zähler jetzt um, statt die Seite zu verbreitern. Vorher waren bei 390 px Breite 6 von 36
+  Registern zu breit (FINAL um 663 px – durch eine lange Beschriftung in Schritt 6 –, Glossar/Synonyme/Abkürzungen,
+  Massenverarbeitung, Ticket Graph), jetzt keines; die Desktop-Ansicht ist unverändert (im Browser über alle Register
+  gemessen).
 
 - **FINAL: Bilder mit Claude zuordnen, Prozessbilder übernehmen (v2.190.0)**: (1) In Schritt 5 schickt „Mit Claude
   zuordnen (sieht die Bilder an)“ die noch offenen Bilder aus dem Register „Bilder“ zusammen mit der Kapitel-Liste,
