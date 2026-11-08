@@ -124,6 +124,11 @@
   .nav-lexnew { font-size: 9.5px; font-weight: 800; color: #fff; background: var(--accent); border-radius: 100px; padding: 1px 6px; }
   .nav-lexnew::before { content: attr(data-n); }
   .lex-auto-panel { padding: 14px 16px; margin-bottom: 14px; }
+  /* v2.193: Blätterfunktion für Glossar, Synonyme, Abkürzungen */
+  .lex-pager { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 4px; font-size: 12.5px; color: var(--text-muted); }
+  .lex-pager .btn { min-width: 32px; justify-content: center; }
+  .lex-pager select { width: auto; }
+  .lex-pager-info { margin-right: auto; }
   .lex-auto-panel .lex-new-table td { vertical-align: top; }
   .lex-auto-panel .lex-example { font-size: 12px; color: var(--text-muted); max-width: 300px; }
   .lex-auto-panel .lex-new-table td:last-child { white-space: nowrap; }
@@ -6769,7 +6774,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.192.0";
+  var APP_VERSION = "2.193.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -10669,11 +10674,58 @@
       ' <button type="button" class="btn danger btn-tiny" data-action="delete">Löschen</button>';
     return '<tr data-idx="' + idx + '"' + (entry.isNew || entry.lexUnseen ? ' class="lex-row-new"' : "") + ">" + cells + "<td>" + actions + "</td></tr>";
   }
+  // v2.193: Blätterfunktion – Zustand je Liste (Seite, Einträge je Seite; 0 = alle), nur in dieser Ansicht gemerkt
+  var lexPagerState = {}, lexPagerRender = {};
+  var LEX_PAGE_SIZES = [25, 50, 100, 0];
+  function lexPage(key, total, defSize) {
+    var st = lexPagerState[key] = lexPagerState[key] || { page: 1, size: defSize || 25 };
+    var pages = st.size ? Math.max(1, Math.ceil(total / st.size)) : 1;
+    if (!(st.page >= 1)) st.page = 1;
+    if (st.page > pages) st.page = pages;
+    var start = st.size ? (st.page - 1) * st.size : 0, end = st.size ? Math.min(total, start + st.size) : total;
+    return { key: key, start: start, end: end, page: st.page, pages: pages, size: st.size, total: total };
+  }
+  function lexPagerHtml(p) {
+    if (p.total <= LEX_PAGE_SIZES[0]) return "";
+    function btn(go, label, title, dis) { return '<button class="btn ghost btn-tiny" type="button" data-pager-key="' + p.key + '" data-pager-go="' + go + '" title="' + title + '"' + (dis ? " disabled" : "") + ">" + label + "</button>"; }
+    return '<div class="lex-pager" data-pager-for="' + p.key + '"><span class="lex-pager-info" data-pager-info>Einträge ' + (p.start + 1).toLocaleString("de-DE") + "–" + p.end.toLocaleString("de-DE") + " von " + p.total.toLocaleString("de-DE") + "</span>" +
+      btn("first", "«", "Erste Seite", p.page <= 1) + btn("prev", "‹", "Vorherige Seite", p.page <= 1) +
+      '<span data-pager-page>Seite ' + p.page + " von " + p.pages + "</span>" +
+      btn("next", "›", "Nächste Seite", p.page >= p.pages) + btn("last", "»", "Letzte Seite", p.page >= p.pages) +
+      '<label style="margin:0 0 0 8px;">je Seite <select data-pager-key="' + p.key + '" data-pager-size aria-label="Einträge je Seite">' +
+      LEX_PAGE_SIZES.map(function (n) { return '<option value="' + n + '"' + (n === p.size ? " selected" : "") + ">" + (n || "alle") + "</option>"; }).join("") + "</select></label></div>";
+  }
+  function lexPagerGoLast(key) { (lexPagerState[key] = lexPagerState[key] || { page: 1, size: 25 }).page = Infinity; }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-pager-go]");
+    if (!b || b.disabled) return;
+    var key = b.getAttribute("data-pager-key"), st = lexPagerState[key] = lexPagerState[key] || { page: 1, size: 25 }, go = b.getAttribute("data-pager-go");
+    st.page = go === "first" ? 1 : go === "prev" ? st.page - 1 : go === "next" ? st.page + 1 : Infinity;
+    if (lexPagerRender[key]) lexPagerRender[key]();
+  });
+  document.addEventListener("change", function (e) {
+    var sel = e.target.closest("[data-pager-size]");
+    if (!sel) return;
+    var key = sel.getAttribute("data-pager-key"), st = lexPagerState[key] = lexPagerState[key] || { page: 1, size: 25 };
+    var first = st.size ? (st.page - 1) * st.size : 0;
+    st.size = parseInt(sel.value, 10) || 0;
+    st.page = st.size ? Math.floor(first / st.size) + 1 : 1; // erster sichtbarer Eintrag bleibt sichtbar
+    if (lexPagerRender[key]) lexPagerRender[key]();
+  });
   function renderTerminologyList(key) {
     var cfg = TERMINOLOGY_LISTS[key];
     var list = app[cfg.stateKey];
-    els[cfg.tbody].innerHTML = list.map(function (entry, idx) { return terminologyRowHtml(cfg, entry, idx); }).join("");
+    var pk = "term:" + key, p = lexPage(pk, list.length, 25);
+    lexPagerRender[pk] = function () { renderTerminologyList(key); };
+    var html = [];
+    for (var idx = p.start; idx < p.end; idx++) html.push(terminologyRowHtml(cfg, list[idx], idx));
+    els[cfg.tbody].innerHTML = html.join("");
     if (els[cfg.empty]) els[cfg.empty].hidden = list.length > 0;
+    // Blätterleiste unter der Tabelle (einmal angelegt, je Darstellung aktualisiert)
+    var wrap = els[cfg.tbody].closest(".table-wrap") || els[cfg.tbody].closest("table").parentNode;
+    var host = document.getElementById("term-pager-" + key);
+    if (!host && wrap && wrap.parentNode) { host = document.createElement("div"); host.id = "term-pager-" + key; wrap.parentNode.insertBefore(host, wrap.nextSibling); }
+    if (host) host.innerHTML = lexPagerHtml(p);
   }
   function bindTerminologyList(key) {
     var cfg = TERMINOLOGY_LISTS[key];
@@ -10727,6 +10779,7 @@
       if (cfg.hasSynonymsField) entry.synonyms = synonyms;
       if (cfg.hasDeMeaningField) entry.de = de;
       app[cfg.stateKey].push(entry);
+      lexPagerGoLast("term:" + key);
       addLog(cfg.logLabel + " „" + term + "“ angelegt.");
       els[cfg.newTerm].value = ""; els[cfg.newEn].value = ""; els[cfg.newSk].value = ""; els[cfg.newHi].value = ""; els[cfg.newFr].value = "";
       if (cfg.hasSynonymsField) els[cfg.newSynonyms].value = "";
@@ -38040,11 +38093,14 @@
     return (e.de ? "<b>" + escapeHtml(e.de) + "</b><br>" : "") + escapeHtml(e.lexNote || "") + lexTransHtml(e);
   }
   function renderLexAutoPanels() {
+    Object.keys(LEX_STATE_OF_KIND).forEach(function (kind) { lexPagerRender["new:" + kind] = renderLexAutoPanels; });
     Object.keys(LEX_STATE_OF_KIND).forEach(function (kind) {
       var host = els["lexAuto" + kind.charAt(0).toUpperCase() + kind.slice(1)];
       if (!host) return;
       var st = lexState(), list = lexNewEntries(kind), lr = st.lastRun;
       var status = lr ? "Zuletzt geprüft " + lr.at + " – " + lr.texts.toLocaleString("de-DE") + " Text(e) aus Tickets, FINAL, Editor, Unterkapitel, Dokument-Review und ROVO." : "Noch nicht geprüft.";
+      var openAll = lexAiTargets(kind, false).length, openAuto = lexAiTargets(kind, true).length;
+      if (openAll) status += " · " + openAll + " Eintrag/Einträge mit leerer Bedeutung/Übersetzung" + (st.autoAi && openAuto ? " – " + openAuto + " werden automatisch von Claude ergänzt" : openAll > openAuto && st.autoAi ? " (Claude hat sie schon gesehen – „KI-Vorschläge“ fragt erneut)" : "");
       host.innerHTML = '<p class="section-label" style="margin-top:0;">Automatisch aus den Inhalten erweitern</p>' +
         '<div class="controls" style="flex-wrap:wrap;"><label class="checkbox-label" style="margin:0;"><input type="checkbox" data-lex-enabled' + (st.enabled ? " checked" : "") + "> automatisch, sobald sich Inhalte ändern</label>" +
         '<label class="checkbox-label" style="margin:0;"><input type="checkbox" data-lex-autoaccept' + (st.autoAccept ? " checked" : "") + "> neue Begriffe direkt übernehmen</label>" +
@@ -38056,11 +38112,11 @@
         '<p class="step-note" data-lex-ai-note style="margin:4px 0 0;">' + escapeHtml(lexAiNote[kind] || "") + "</p>" +
         (list.length ? '<p class="section-label">Neu erkannt / zu prüfen (' + list.length + ')</p><div class="controls"><button class="btn primary btn-tiny" type="button" data-lex-accept-all>Alle übernehmen</button><button class="btn ghost btn-tiny" type="button" data-lex-reject-all>Alle verwerfen</button></div>' +
           '<div class="table-wrap"><table class="simple-table lex-new-table"><thead><tr><th>' + (kind === "syn" ? "Hauptbegriff" : kind === "abbrev" ? "Kürzel" : "Begriff") + "</th><th>" + (kind === "abbrev" ? "Bedeutung" : kind === "syn" ? "Varianten" : "Hinweis") + "</th><th>Gefunden in</th><th>Beispiel</th><th></th></tr></thead><tbody>" +
-          list.map(function (e) {
+          list.slice(lexPage("new:" + kind, list.length, 25).start, lexPage("new:" + kind, list.length, 25).end).map(function (e) {
             var idx = app[LEX_STATE_OF_KIND[kind]].indexOf(e);
             return '<tr data-lex-idx="' + idx + '"><td><b>' + escapeHtml(e.term) + '</b><br><small class="step-note">' + escapeHtml(e.foundAt || "") + "</small></td><td>" + lexDetailHtml(kind, e) + "</td><td>" + escapeHtml(e.lexSrc || "–") + '</td><td class="lex-example">' + escapeHtml(e.lexExample || "–") + "</td>" +
               '<td><div class="final-row-actions"><button class="btn ghost btn-tiny" type="button" data-lex-accept>Übernehmen</button><button class="btn ghost btn-tiny final-btn-danger" type="button" data-lex-reject>Verwerfen</button></div></td></tr>';
-          }).join("") + "</tbody></table></div>"
+          }).join("") + "</tbody></table></div>" + lexPagerHtml(lexPage("new:" + kind, list.length, 25))
           : '<p class="step-note" data-lex-none>' + (st.autoAccept ? "Nichts zu prüfen – neue " + LEX_LABEL[kind] + " werden direkt übernommen." : "Keine neuen " + LEX_LABEL[kind] + " seit der letzten Prüfung.") + "</p>") +
         lexRecentHtml(kind);
     });
@@ -38079,10 +38135,11 @@
   };
   var LEX_AI_BATCH = 40;
   function lexAiFieldsFor(kind) { return kind === "syn" ? ["en", "sk", "hi", "fr"] : ["de", "en", "sk", "hi", "fr"]; }
-  // auto: nur neu erkannte Eintraege, die Claude noch nicht gesehen hat (sonst wuerde jeder Lauf dieselben offenen Felder erneut anfragen)
+  // auto (v2.193): alle nicht fixierten Eintraege mit leeren Feldern – neue wie bestehende –, die Claude noch nicht gesehen
+  // hat (lexAiTried; sonst wuerde jeder Lauf dieselben bewusst offenen Felder erneut anfragen)
   function lexAiTargets(kind, auto) {
     var fields = lexAiFieldsFor(kind);
-    return (app[LEX_STATE_OF_KIND[kind]] || []).filter(function (e) { return e && e.term && !e.fixed && (!auto || (e.isNew && !e.lexAiTried)) && fields.some(function (f) { return !String(e[f] || "").trim(); }); })
+    return (app[LEX_STATE_OF_KIND[kind]] || []).filter(function (e) { return e && e.term && !e.fixed && (!auto || !e.lexAiTried) && fields.some(function (f) { return !String(e[f] || "").trim(); }); })
       .sort(function (a, b) { return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0); });
   }
   function lexAiFillPrompt(kind, list) {
@@ -38101,7 +38158,7 @@
     (app.glossaryTranslations || []).forEach(function (e) { add(e.term); });
     return out.slice(0, 300);
   }
-  var LEX_AI_AUTO_BATCHES = 3;
+  var LEX_AI_AUTO_BATCHES = 5; // je Register und Durchgang höchstens 200 Einträge; der Rest folgt beim nächsten Durchgang
   async function lexAiRun(kind, opts) {
     opts = opts || {};
     if (lexAiBusy) return;
@@ -38170,7 +38227,9 @@
   function lexRecentHtml(kind) {
     var all = lexRecentEntries(kind);
     if (!all.length) return "";
-    var shown = all.slice(-60).reverse();
+    var rev = all.slice().reverse(), rp = lexPage("recent:" + kind, rev.length, 25);
+    lexPagerRender["recent:" + kind] = renderLexAutoPanels;
+    var shown = rev.slice(rp.start, rp.end);
     return '<p class="section-label">Zuletzt automatisch ergänzt (' + all.length + ')</p><div class="controls"><button class="btn ghost btn-tiny" type="button" data-lex-recent-clear>Liste leeren</button>' +
       '<span class="step-note" style="margin:0;">Die Einträge stehen bereits in der Tabelle unten; „Entfernen“ nimmt einen automatisch ergänzten Eintrag zurück.</span></div>' +
       '<div class="table-wrap"><table class="simple-table lex-new-table lex-recent-table"><thead><tr><th>' + (kind === "syn" ? "Hauptbegriff" : kind === "abbrev" ? "Kürzel" : "Begriff") + "</th><th>" + (kind === "abbrev" ? "Bedeutung" : kind === "syn" ? "Varianten" : "Bedeutung") + "</th><th>Gefunden in</th><th>Ergänzt</th><th></th></tr></thead><tbody>" +
@@ -38180,7 +38239,7 @@
           (e.lexAiDone && e.lexAiDone.length ? '<br><span class="pill progress" title="von Claude ergänzt">von Claude: ' + escapeHtml(e.lexAiDone.map(function (f) { return LEX_FIELD_LABEL[f] || f; }).join(", ")) + "</span>" : "") +
           "</td><td>" + escapeHtml(e.lexSrc || "–") + '</td><td class="mono" style="white-space:nowrap;">' + escapeHtml(e.lexRecent || "") + "</td>" +
           '<td><button class="btn ghost btn-tiny final-btn-danger" type="button" data-lex-recent-remove>Entfernen</button></td></tr>';
-      }).join("") + "</tbody></table></div>";
+      }).join("") + "</tbody></table></div>" + lexPagerHtml(rp);
   }
   function lexAccept(kind, e) { delete e.isNew; delete e.lexAiFields; if (kind === "syn") delete e.lexAddedSynonyms; }
   function lexReject(kind, e) {

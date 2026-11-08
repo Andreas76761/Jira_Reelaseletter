@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.192.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.193.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,17 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Blättern in Glossar, Synonyme, Abkürzungen; auch offene Begriffe übersetzen (v2.193.0)**: (1) Die Tabellen der drei
+  Register sowie die Listen „Neu erkannt / zu prüfen“ und „Zuletzt automatisch ergänzt“ blättern ab 26 Einträgen:
+  „Einträge 26–50 von 312“, erste/vorherige/nächste/letzte Seite und 25/50/100/alle je Seite (beim Umstellen bleibt der
+  erste sichtbare Eintrag sichtbar). Bearbeiten, Fixieren, Löschen und „Entfernen“ wirken auf jeder Seite auf den
+  richtigen Eintrag; ein neu angelegter Eintrag springt auf die letzte Seite. (2) Die automatische Ergänzung durch
+  Claude übersetzt jetzt auch **bereits vorhandene Begriffe, die noch offen sind** (leere Bedeutung oder Übersetzung) –
+  nicht nur neu erkannte; fixierte Einträge bleiben unberührt, jeder Eintrag wird einmal angefragt (bis zu 200 je
+  Register und Durchgang, der Rest beim nächsten Öffnen des Registers). Ergänzte Felder stehen unter „Zuletzt
+  automatisch ergänzt“ (mit „von Claude: …“) und lassen sich dort zurücknehmen. Die Kopfzeile nennt, wie viele Einträge
+  noch offen sind. Tests: `lexikon_pager_test.js` (15 Prüfungen), `lexikon_autoaccept_test.js` angepasst.
 
 - **Korrektur zu v2.190 (v2.192.0)**: v2.190 hatte eine Hilfsfunktion (Datei → Daten-URL) unter einem bereits
   vorhandenen Namen neu angelegt und damit die bisherige ersetzt. Folge: Im Editor wurden nach dem Erzeugen eines Kapitels

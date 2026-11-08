@@ -72,7 +72,7 @@ function fakeClaude(input) {
     ch("1 Vertrag", "In der Vertragsübersicht prüft die Market Operation (MO) den Servicevertrag. Die XYZ-Nummer steht oben."),
     ch("2 Liste", "Die Vertragsübersicht zeigt den Service-Vertrag. Die MO gibt frei. Kennung XYZ beachten."),
     ch("3 Ende", "Über die Vertragsübersicht wird der Servicevertrag beendet.") ] }];
-  s.glossaryTranslations = [{ term: "Altbegriff", en: "", sk: "", hi: "", fr: "", fixed: false }];
+  s.glossaryTranslations = [{ term: "Altbegriff", en: "", sk: "", hi: "", fr: "", fixed: false }, { term: "Fixbegriff", en: "", sk: "", hi: "", fr: "", fixed: true }];
   s.abbrevTranslations = [{ term: "OLD", de: "", en: "", sk: "", hi: "", fr: "", fixed: false, auto: true, isNew: true, foundAt: "1.11.2026" }]; // offener Eintrag aus älterer Sitzung
   s.synonyms = [];
   delete s.lexAuto; // Standard-Einstellungen
@@ -91,7 +91,9 @@ function fakeClaude(input) {
   check("Unsicheres Kürzel trotzdem übernommen, Bedeutung bleibt offen", !!xyz && !xyz.isNew && xyz.de === "" && !!xyz.lexAiTried);
   check("Offener Eintrag aus älterer Sitzung ebenfalls übernommen", !!old && !old.isNew && old.en === "EN OLD");
   const allPrompts = prompts.join("\n");
-  check("Claude nur für neu erkannte Einträge gefragt (eigener alter Eintrag nicht)", !allPrompts.includes("- Altbegriff") && s.glossaryTranslations.find((e) => e.term === "Altbegriff").de === undefined);
+  const alt = s.glossaryTranslations.find((e) => e.term === "Altbegriff"), fix = s.glossaryTranslations.find((e) => e.term === "Fixbegriff");
+  check("v2.193: auch bestehende, noch offene Einträge übersetzt (als „von Claude“ vermerkt)", allPrompts.includes("- Altbegriff") && alt.de === "Bedeutung Altbegriff" && alt.en === "EN Altbegriff" && alt.lexAiDone.length === 5 && !!alt.lexRecent);
+  check("Fixierte Einträge werden nicht übersetzt", !allPrompts.includes("Fixbegriff") && fix.en === "" && fix.de === undefined);
   check("Automatischer Lauf schlägt keine KI-Synonym-Gruppen vor (nur Füllen)", !allPrompts.includes("WÖRTER:"));
   check("Navigation zeigt die Neuerungen (+n)", /^\+\d+$/.test(lexBadge("abkuerzungen")) && /^\+\d+$/.test(lexBadge("glossar")) && /^\+\d+$/.test(lexBadge("synonyme")));
 
