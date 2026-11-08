@@ -137,7 +137,7 @@ const img = (rId) => '<w:p><w:r><w:drawing><a:blip r:embed="' + rId + '"/></w:dr
   await waitUntil(() => teamRows(B).length === 1, 3000);
   const key = [...fakeDb.store.keys()].find((k) => k.startsWith("teamreviews/"));
   const stored = fakeDb.store.get(key);
-  check("Team-Dokument gespeichert: Text, Prüfergebnisse, Bild-Referenz ohne Bilddaten", stored && stored.chapters.length === 2 && Object.keys(stored.checks).length === 20 &&
+  check("Team-Dokument gespeichert: Text, Prüfergebnisse, Bild-Referenz ohne Bilddaten", stored && stored.chapters.length === 2 && Object.keys(stored.checks).length === 21 &&
     JSON.stringify(stored.images).includes("Abbildung 1: Vertragsübersicht") && !JSON.stringify(stored).includes("data:image") && stored.sharedById === "u_anna");
   check("Ben sieht das geteilte Dokument live (Name, Version, Anna als Teilende)", teamRows(B)[0].children[0].textContent === "Handbuch" && teamRows(B)[0].children[1].textContent === "1.0" && teamRows(B)[0].children[5].textContent.includes("Anna Autorin"));
   check("Anna: Hinweis „im Team geteilt“ und Knopf „Team aktualisieren“", rows(A)[0].textContent.includes("im Team geteilt") && rows(A)[0].querySelector('[data-vrev-act="team-share"]').textContent === "Team aktualisieren");

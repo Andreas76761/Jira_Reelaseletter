@@ -83,13 +83,13 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("'IT'-Checkbox im Rollen-Filter vorhanden (neue Rolle)", !!doc.querySelector('input[name^="active-scope-filter-"][value="role:IT"]'));
 
   const genBtn = doc.getElementById("outline-versions-generate-btn");
-  check("Button '6 Versionen + Matrix erzeugen' vorhanden", !!genBtn);
+  check("Button '7 Versionen + Matrix erzeugen' vorhanden", !!genBtn);
   check("Matrix/Export-Bereich vor Klick versteckt", doc.getElementById("outline-versions-wrap").hidden === true);
 
   fire(genBtn, "click");
   await wait(50);
   check("Matrix/Export-Bereich nach Klick sichtbar", doc.getElementById("outline-versions-wrap").hidden === false);
-  check("Statushinweis bestätigt Erzeugung", doc.getElementById("outline-versions-status-note").textContent.includes("6 Versionen"));
+  check("Statushinweis bestätigt Erzeugung", doc.getElementById("outline-versions-status-note").textContent.includes("7 Versionen"));
 
   function rowFor(chapterSubstring) {
     return Array.prototype.filter.call(doc.querySelectorAll("#outline-versions-matrix-tbody tr"), function (tr) {
@@ -138,12 +138,12 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("Matrix-Zeile für Kapitel 1 (keine Tickets zugeordnet) vorhanden", !!row1);
   if (row1) {
     const cells = cellTexts(row1);
-    check("Kapitel 1 (ohne Tickets): alle 6 Versionen markiert (kein Ausschlussgrund)", cells.slice(1).every(function (c) { return c.indexOf("✓") === 0; }));
+    check("Kapitel 1 (ohne Tickets): alle 7 Versionen markiert (kein Ausschlussgrund)", cells.slice(1).every(function (c) { return c.indexOf("✓") === 0; }));
   }
 
   // ===================== Export je Version =====================
   const exportRow = doc.getElementById("outline-versions-export-row");
-  check("6 Export-Buttons (je Version) vorhanden", exportRow.querySelectorAll("[data-outline-version-export]").length === 6);
+  check("7 Export-Buttons (je Version, v2.176 inkl. „Pkw und Van (beide)“) vorhanden", exportRow.querySelectorAll("[data-outline-version-export]").length === 7);
 
   savedFiles.length = 0;
   fire(exportRow.querySelector('[data-outline-version-export="dealer"]'), "click");

@@ -978,6 +978,7 @@
       <li><button class="nav-item" data-view="mitteilungen" type="button">Mitteilungen<span class="count-badge" id="nav-badge-notes" hidden title="fällige interne Mitteilungen">0</span></button></li>
       <li><button class="nav-item" data-view="crossx" type="button">CROSS_X</button></li>
       <li><button class="nav-item" data-view="agent" type="button">AGENT</button></li>
+      <li><button class="nav-item" data-view="regelwerk" type="button">Regelwerk</button></li>
       <li><button class="nav-item" data-view="bilder" type="button">Bilder</button></li>
       <li><button class="nav-item" data-view="tabellen" type="button">Tabelle</button></li>
       <li class="nav-sep">Output</li>
@@ -2952,7 +2953,7 @@
         <section>
           <p class="section-label">1. Rolle/Sparte wählen</p>
           <div class="callout">
-            Nutzt dieselben 6 Gliederungsversionen wie "Verarbeitung → Gliederung-Versionen" (Markt/MO/Dealer/IT/Van/Pkw). Nur Kapitel, die für die gewählte Version zutreffen, werden unten angeboten – zusätzlich werden je Kapitel nur die TICKETS berücksichtigt, deren Sparte-/Rollen-Tags zur gewählten Version passen (Kapitel bzw. Tickets ohne jedes Tag-Signal gelten für alle Versionen). RAG-Bibliothek, Rovo-Textschnipsel, bestehender Handbuchtext und Bilder tragen keine Sparte-/Rollen-Tags und werden daher für jedes Kapitel der gewählten Version vollständig einbezogen.
+            Nutzt dieselben 7 Gliederungsversionen wie "Verarbeitung → Gliederung-Versionen" (Markt/MO/Dealer/IT/Van/Pkw/Pkw und Van). Nur Kapitel, die für die gewählte Version zutreffen, werden unten angeboten – zusätzlich werden je Kapitel nur die TICKETS berücksichtigt, deren Sparte-/Rollen-Tags zur gewählten Version passen (Kapitel bzw. Tickets ohne jedes Tag-Signal gelten für alle Versionen). RAG-Bibliothek, Rovo-Textschnipsel, bestehender Handbuchtext und Bilder tragen keine Sparte-/Rollen-Tags und werden daher für jedes Kapitel der gewählten Version vollständig einbezogen.
           </div>
           <select id="edito-version-select">
             <option value="">– Rolle/Sparte wählen –</option>
@@ -3368,7 +3369,7 @@
           <label class="checkbox-label"><input type="checkbox" id="final-build-improvements-inline-cb"> Verbesserungen ohne Agent direkt als interne Vermerke (gelb) ans Kapitelende übernehmen – sie erscheinen im Export, solange interne Vermerke eingeblendet sind</label>
           <div class="controls" style="flex-wrap:wrap;">
             <div><label for="final-filter-rolle-select">Rolle</label><select id="final-filter-rolle-select" aria-label="Rolle-Filter"><option value="">– egal –</option></select></div>
-            <div><label for="final-filter-sparte-select">Sparte</label><select id="final-filter-sparte-select" aria-label="Sparte-Filter"><option value="">– egal –</option></select></div>
+            <div><label for="final-filter-sparte-select">Sparte</label><select id="final-filter-sparte-select" aria-label="Sparte-Filter"><option value="">Pkw und Van (beide)</option></select></div>
             <div><label for="final-filter-sprache-input">Sprache</label><input class="text-input" id="final-filter-sprache-input" type="text" placeholder="z. B. DE"></div>
             <div><label for="final-filter-markt-input">Markt</label><input class="text-input" id="final-filter-markt-input" type="text" placeholder="z. B. Deutschland"></div>
           </div>
@@ -3488,6 +3489,13 @@
             <select id="final-result-role-select" aria-label="Neue Zusammenführung als Rolle ansehen"></select>
             <label class="variante-inline-check"><input type="checkbox" id="final-result-role-hide"> ausgeblendete Absätze weglassen</label>
             <span class="step-note" id="final-result-role-note" style="margin:0;"></span></div>
+          <div class="controls" id="final-reserve-bar" style="flex-wrap:wrap; margin-top:6px;">
+            <span class="step-note" style="margin:0;">Abschnitte für die Kapitel „Intern“ und „In Planung“ vormerken: Text in „Neue Zusammenführung“ markieren, dann</span>
+            <button class="btn ghost btn-tiny" id="final-reserve-intern-btn" type="button" title="Markierten Text aus dem aktuellen Benutzerhandbuch entfernen und im Kapitel „Intern“ ablegen">Als „Intern“ vormerken</button>
+            <button class="btn ghost btn-tiny" id="final-reserve-plan-btn" type="button" title="Markierten Text aus dem aktuellen Benutzerhandbuch entfernen und im Kapitel „In Planung“ ablegen">Als „In Planung“ vormerken</button>
+            <span class="step-note" id="final-reserve-note" style="margin:0;"></span>
+          </div>
+          <p class="step-note" id="final-rules-note" hidden></p>
           <div class="rovo-detail-cols" style="margin-top:10px;">
             <div class="rovo-detail-col">
               <div class="final-result-col-head"><h3>Quellversion</h3><button class="btn ghost btn-tiny" type="button" data-final-result-fullscreen="source" title="Quellversion im Vollbild öffnen (Zoom, Blättern)"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Vollbild</button></div>
@@ -3811,8 +3819,8 @@
         </section>
 
         <section class="panel variante-step" id="vrev-step">
-          <p class="section-label">6. Dokument-Review – 20 Prüfungen in 7 Stufen</p>
-          <p class="desc" style="margin-top:0;">Entwürfe als Word (.docx) hochladen oder bestehende Stände (FINAL/Varianten) übernehmen. Jedes Dokument wird nach 20 Prüfungen bewertet (Dashboard und Reviewbericht) und Schritt für Schritt geprüft: 1 Design · 2 Inhalt · 3 Bilder · 4 Qualität · 5 Übersetzung · 6 Abschluss · 7 Finalisierung. Alle Dokumente liegen mit Version, Status und Reviewbericht in der Ablage.</p>
+          <p class="section-label">6. Dokument-Review – 21 Prüfungen in 7 Stufen</p>
+          <p class="desc" style="margin-top:0;">Entwürfe als Word (.docx) hochladen oder bestehende Stände (FINAL/Varianten) übernehmen. Jedes Dokument wird nach 21 Prüfungen bewertet (Dashboard und Reviewbericht) und Schritt für Schritt geprüft: 1 Design · 2 Inhalt · 3 Bilder · 4 Qualität · 5 Übersetzung · 6 Abschluss · 7 Finalisierung. Alle Dokumente liegen mit Version, Status und Reviewbericht in der Ablage.</p>
           <div class="controls" style="flex-wrap:wrap; align-items:flex-end;">
             <button class="btn primary" id="vrev-upload-btn" type="button">Entwurf hochladen (.docx)</button>
             <input type="file" id="vrev-file-input" accept=".docx" multiple hidden>
@@ -3837,7 +3845,7 @@
           <div id="vrev-work" hidden>
             <div class="controls" style="justify-content:space-between; flex-wrap:wrap; margin-top:12px;">
               <p class="section-label" id="vrev-doc-title" style="margin:0;"></p>
-              <span class="controls" style="margin:0; flex-wrap:wrap;"><button class="btn primary" id="vrev-run-btn" type="button">Alle 20 Prüfungen ausführen</button><button class="btn ghost" id="vrev-report-docx-btn" type="button">Reviewbericht (Word)</button><button class="btn ghost" id="vrev-report-md-btn" type="button">Reviewbericht (Markdown)</button></span>
+              <span class="controls" style="margin:0; flex-wrap:wrap;"><button class="btn primary" id="vrev-run-btn" type="button">Alle 21 Prüfungen ausführen</button><button class="btn ghost" id="vrev-report-docx-btn" type="button">Reviewbericht (Word)</button><button class="btn ghost" id="vrev-report-md-btn" type="button">Reviewbericht (Markdown)</button></span>
             </div>
             <div id="vrev-dash"></div>
             <div class="vrev-stepper" id="vrev-stepper"></div>
@@ -3982,6 +3990,35 @@
           <div id="rovo-tables-list"></div>
           <div class="empty-hint" id="rovo-tables-empty">Noch keine Tabellen extrahiert &ndash; bei Rovo Knowledge eine .docx-, .pptx- oder .md-Datei mit Tabelle(n) hochladen.</div>
         </section>
+      </section>
+
+      <!-- ================= v2.176: Regelwerk ================= -->
+      <section class="view-panel" data-view-panel="regelwerk" hidden>
+        <div class="view-head"><h2>Regelwerk</h2><p class="desc">Regeln für das Benutzerhandbuch – allgemein (alle Kapitel) oder je Kapitel. <b>KI-Regeln</b> (Freitext) gehen bei jeder Erzeugung an Claude (Editor, Unterkapitel) und in die KI-Prüfung des Dokument-Reviews; <b>feste Regeln</b> (verbotener Begriff, Pflichtbegriff, höchstens N Wörter) prüft die App selbst – im FINAL-Ergebnis, nach jeder Erzeugung im Editor und in der Unterkapitel-Werkstatt sowie als Prüfung R1 im Dokument-Review.</p></div>
+        <div class="panel" style="padding:18px;">
+          <section>
+            <p class="section-label">1. Regel hinzufügen</p>
+            <div class="controls" style="flex-wrap:wrap; align-items:flex-end;">
+              <div><label for="rules-scope-select">Gilt für</label><select id="rules-scope-select" aria-label="Geltungsbereich der Regel"></select></div>
+              <div id="rules-scope-custom-wrap" hidden><label for="rules-scope-custom">Kapitel (Titel)</label><input id="rules-scope-custom" type="text" placeholder="z. B. Kapitel 4: Servicevertrag anlegen"></div>
+              <div><label for="rules-kind-select">Art</label><select id="rules-kind-select" aria-label="Art der Regel"></select></div>
+            </div>
+            <label for="rules-value-input" style="margin-top:8px;">Regel</label>
+            <textarea id="rules-value-input" rows="2" placeholder=""></textarea>
+            <div class="controls" style="margin-top:8px;"><button class="btn primary" id="rules-add-btn" type="button">Regel hinzufügen</button><span class="step-note" id="rules-add-note" style="margin:0;"></span></div>
+          </section>
+          <section>
+            <p class="section-label">2. Regeln (<span id="rules-count">0</span>)</p>
+            <div class="table-wrap" id="rules-table-wrap" hidden><table><thead><tr><th>Gilt für</th><th>Art</th><th>Regel</th><th>Aktiv</th><th></th></tr></thead><tbody id="rules-tbody"></tbody></table></div>
+            <div class="empty-hint" id="rules-empty">Noch keine Regeln – oben eine allgemeine oder eine Kapitel-Regel anlegen.</div>
+          </section>
+          <section>
+            <p class="section-label">3. Feste Regeln prüfen</p>
+            <p class="step-note" style="margin-top:0;">Prüft den aktiven FINAL-Stand, alle Editor-Kapitel, alle Unterkapitel-Entwürfe und alle Dokumente des Dokument-Reviews. KI-Regeln prüft Claude bei der Erzeugung bzw. in der KI-Prüfung des Dokument-Reviews.</p>
+            <div class="controls"><button class="btn primary" id="rules-check-btn" type="button">Jetzt prüfen</button><span class="step-note" id="rules-check-status" style="margin:0;"></span></div>
+            <div class="table-wrap" id="rules-result-wrap" hidden><table><thead><tr><th>Register</th><th>Dokument/Stand</th><th>Kapitel</th><th>Regel</th><th>Befund</th></tr></thead><tbody id="rules-result-tbody"></tbody></table></div>
+          </section>
+        </div>
       </section>
 
       <!-- ================= Output MD ================= -->
@@ -4345,7 +4382,7 @@
         </section>
 
         <section data-esub-panel="gliederung" hidden>
-          <p class="section-label">6 Gliederungs-Versionen (Markt/MO/Dealer/IT/Van/Pkw)</p>
+          <p class="section-label">7 Gliederungs-Versionen (Markt/MO/Dealer/IT/Van/Pkw/Pkw und Van)</p>
           <div class="callout">
             Erzeugt aus der Gesamtgliederung oben 6 rollen-/spartenspezifische Teilgliederungen sowie eine
             Kapitel×Versionen-Matrix &ndash; rein deterministisch aus dem bereits vorhandenen Sparte-/Rollen-Filter
@@ -4356,7 +4393,7 @@
             Versionen (kein Signal zum Ausschließen) &ndash; in der Matrix mit einem Hinweis gekennzeichnet.
           </div>
           <div class="paste-actions" style="align-items:center;">
-            <button class="btn primary" id="outline-versions-generate-btn" type="button">6 Versionen + Matrix erzeugen</button>
+            <button class="btn primary" id="outline-versions-generate-btn" type="button">7 Versionen + Matrix erzeugen</button>
           </div>
           <p class="step-note" id="outline-versions-status-note"></p>
           <div id="outline-versions-wrap" hidden>
@@ -6649,7 +6686,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.175.0";
+  var APP_VERSION = "2.176.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8286,7 +8323,7 @@
     "final-filter-rolle-select", "final-filter-sparte-select", "final-filter-sprache-input", "final-filter-markt-input",
     "final-build-master-btn", "final-build-master-spinner", "final-build-master-status-note",
     "final-master-export-section", "final-master-download-docx-btn", "final-master-download-pdf-btn",
-    "final-result-section", "final-result-chapter-select", "final-result-source-output", "final-result-master-output", "final-result-fullscreen-both-btn", "final-viewer", "final-viewer-panes", "final-viewer-close-btn", "final-viewer-toggle-btn", "final-manual-rolle-select", "final-manual-sparte-select", "final-manual-sprache-input", "final-manual-markt-input",
+    "final-result-section", "final-reserve-intern-btn", "final-reserve-plan-btn", "final-reserve-note", "final-rules-note", "final-result-chapter-select", "final-result-source-output", "final-result-master-output", "final-result-fullscreen-both-btn", "final-viewer", "final-viewer-panes", "final-viewer-close-btn", "final-viewer-toggle-btn", "final-manual-rolle-select", "final-manual-sparte-select", "final-manual-sprache-input", "final-manual-markt-input",
     "final-improvements-upload-btn", "final-improvements-file-input", "final-improvements-files-tbody", "final-improvements-files-empty",
     "final-improvements-mapping", "final-improvements-view-select", "final-improvements-summary", "final-improvements-tbody",
     "final-preview-manual-select", "final-preview-improvements-select", "final-preview-improvements", "final-screens-file-filter-select",
@@ -8303,6 +8340,8 @@
     "edito-final-compare-old", "edito-final-compare-new", "edito-final-report-wrap", "edito-final-report",
     "edito-final-save-name-input", "edito-final-save-btn", "edito-final-discard-btn",
     "rovo-tables-count", "rovo-tables-list", "rovo-tables-empty",
+    "rules-scope-select", "rules-scope-custom-wrap", "rules-scope-custom", "rules-kind-select", "rules-value-input", "rules-add-btn", "rules-add-note",
+    "rules-count", "rules-table-wrap", "rules-tbody", "rules-empty", "rules-check-btn", "rules-check-status", "rules-result-wrap", "rules-result-tbody",
     "bildband-table", "bildband-tbody", "bildband-empty",
     "edito-version-select", "edito-chapters-section", "edito-chapters-count",
     "edito-generate-all-btn", "edito-generate-all-spinner", "edito-generate-all-status-note",
@@ -8376,6 +8415,8 @@
     // Kapitel/Unterkapitel. Extrahierte Bilder landen dagegen direkt in
     // uploadedImages (s. o.) - dieselbe Datenstruktur wie bei Screens-Import.
     rovoTables: [],
+    // v2.176: Regelwerk – { items: [{ id, scope ("" = allgemein, sonst Kapiteltitel), kind (ai|forbid|require|maxWords), value, active }], nextId, lastCheck }
+    rules: { items: [], nextId: 1, lastCheck: null },
     // EDITO: neue Fassung des Benutzerhandbuchs je Rolle/Sparte (eine der 6
     // bestehenden Gliederungsversionen, s. OUTLINE_VERSIONS), synthetisiert
     // aus Tickets, RAG-Bibliothek, bestehendem Benutzerhandbuch-Text, Rovo
@@ -8972,6 +9013,7 @@
     app.rovoEntries = [];
     app.rovoChapterSummaries = {};
     app.rovoTables = [];
+    app.rules = rulesNormalize(null);
     app.rovoSummary = { sources: [], mergedDoc: "", mergedAt: "", comparisonResult: "", comparisonAt: "" };
     renderRovoSummary();
     app.final = finalNormalizeState(null);
@@ -9089,6 +9131,7 @@
     app.rovoEntries = [];
     app.rovoChapterSummaries = {};
     app.rovoTables = [];
+    app.rules = rulesNormalize(null);
     app.rovoSummary = { sources: [], mergedDoc: "", mergedAt: "", comparisonResult: "", comparisonAt: "" };
     renderRovoSummary();
     app.final = finalNormalizeState(null);
@@ -9177,6 +9220,7 @@
       rovoEntries: app.rovoEntries,
       rovoChapterSummaries: app.rovoChapterSummaries,
       rovoTables: app.rovoTables,
+      rules: app.rules,
       editoVersionKey: app.editoVersionKey,
       editoChapters: app.editoChapters,
       subchapterDrafts: app.subchapterDrafts,
@@ -9287,6 +9331,7 @@
     app.rovoEntries = data.rovoEntries || [];
     app.rovoChapterSummaries = (data.rovoChapterSummaries && typeof data.rovoChapterSummaries === "object") ? data.rovoChapterSummaries : {};
     app.rovoTables = data.rovoTables || [];
+    app.rules = rulesNormalize(data.rules);
     if (typeof data.editoVersionKey === "string") app.editoVersionKey = data.editoVersionKey;
     if (data.editoChapters && typeof data.editoChapters === "object") app.editoChapters = data.editoChapters;
     if (data.subchapterDrafts && typeof data.subchapterDrafts === "object") app.subchapterDrafts = data.subchapterDrafts;
@@ -9323,7 +9368,7 @@
     };
     app.activeImportIds = data.activeImportIds || {};
     app.activeListIds = data.activeListIds || {};
-    app.activeSparteFilter = Array.isArray(data.activeSparteFilter) ? data.activeSparteFilter : [];
+    app.activeSparteFilter = normalizeSparteFilter(data.activeSparteFilter);
     app.activeRoleFilter = Array.isArray(data.activeRoleFilter) ? data.activeRoleFilter : [];
     app.inactiveImportIds = data.inactiveImportIds || {};
     app.appliedInactiveImportIds = data.appliedInactiveImportIds || {};
@@ -9936,7 +9981,6 @@
       // (Zusammenfassung/Beschreibung/Domäne) vorkommt.
       ["Sparte", "Pkw", "Pkw"],
       ["Sparte", "Van", "Van"],
-      ["Sparte", "Markt", "Markt"],
       ["Rolle", "Retail", "Retail"],
       ["Rolle", "Markt", "Markt"],
       ["Rolle", "MO", "MO"],
@@ -9967,7 +10011,11 @@
     if (!Array.isArray(labels)) return labelSeedData();
     var existingCategories = {};
     labels.forEach(function (l) { if (l && l.category) existingCategories[l.category] = true; });
-    var merged = labels.slice();
+    // v2.176: Sparten sind nur noch Pkw und Van – Bus/Truck aus der Kategorie „Sparte“ entfernen
+    var merged = labels.filter(function (l) {
+      if (!l || l.category !== "Sparte") return true;
+      return !["bus", "truck"].some(function (x) { return String(l.de || "").trim().toLowerCase() === x || String(l.en || "").trim().toLowerCase() === x; });
+    });
     labelSeedData().forEach(function (seed) {
       if (!existingCategories[seed.category]) merged.push(seed);
     });
@@ -11369,12 +11417,14 @@
   // inhaltlich um dieselbe Rolle handelt; "IT" ist eine neue Rolle (s.
   // ROLE_FILTER_VALUES oben).
   var OUTLINE_VERSIONS = [
-    { key: "markt", label: "Markt", sparte: ["Markt"], role: ["Markt"] },
+    { key: "markt", label: "Markt", sparte: [], role: ["Markt"] },
     { key: "mo", label: "MO", sparte: [], role: ["MO"] },
     { key: "dealer", label: "Dealer", sparte: [], role: ["Retail"] },
     { key: "it", label: "IT", sparte: [], role: ["IT"] },
     { key: "van", label: "Van", sparte: ["Van"], role: [] },
-    { key: "pkw", label: "Pkw", sparte: ["Pkw"], role: [] }
+    { key: "pkw", label: "Pkw", sparte: ["Pkw"], role: [] },
+    // v2.176: beide Sparten zusammen
+    { key: "beide", label: "Pkw und Van (beide)", sparte: ["Pkw", "Van"], role: [] }
   ];
   // Fuer ein Gliederungskapitel: welche der 6 Versionen treffen zu, auf
   // Basis der Sparte-/Rollen-Tags der ihm ueber die Domaenen-Zuordnung
@@ -11453,8 +11503,8 @@
     if (!app.outline.length) { showToast("Keine Gliederung", "Es ist keine Gliederung vorhanden.", true); return; }
     app.outlineVersionsGenerated = true;
     renderOutlineVersions();
-    els.outlineVersionsStatusNote.textContent = "6 Versionen (Markt/MO/Dealer/IT/Van/Pkw) + Matrix erzeugt – " + app.outline.length + " Kapitel geprüft.";
-    addLog("Benutzerhandbuch-Gliederung: 6 Versionen (Markt/MO/Dealer/IT/Van/Pkw) + Kapitel×Versionen-Matrix erzeugt.");
+    els.outlineVersionsStatusNote.textContent = "7 Versionen (Markt/MO/Dealer/IT/Van/Pkw/Pkw und Van) + Matrix erzeugt – " + app.outline.length + " Kapitel geprüft.";
+    addLog("Benutzerhandbuch-Gliederung: 7 Versionen (Markt/MO/Dealer/IT/Van/Pkw/Pkw und Van) + Kapitel×Versionen-Matrix erzeugt.");
   });
   els.outlineVersionsExportRow.addEventListener("click", async function (e) {
     var btn = e.target.closest("[data-outline-version-export]");
@@ -15583,7 +15633,14 @@
   // (Zusammenfassung/Beschreibung/Domäne) vorkommt, auch ohne woertliches
   // Jira-Label. Vereinigung beider Quellen - kein erfundenes Mapping: ein
   // Ticket ohne Treffer in beiden liefert weiterhin ein leeres Array.
-  var SPARTE_FILTER_VALUES = ["Pkw", "Van", "Markt"];
+  // v2.176: Sparten sind Pkw und Van, „beide“ (= keine Einschraenkung) ist die Voreinstellung; „Markt“ ist nur noch Rolle
+  var SPARTE_FILTER_VALUES = ["Pkw", "Van"];
+  var SPARTE_BOTH_LABEL = "Pkw und Van (beide)";
+  // gespeicherter Filter: nur Pkw/Van; beide gewaehlt (oder alte Werte wie „Markt“) = „beide“ (leer)
+  function normalizeSparteFilter(arr) {
+    var v = (Array.isArray(arr) ? arr : []).filter(function (x) { return SPARTE_FILTER_VALUES.indexOf(x) !== -1; });
+    return v.length === 1 ? v : [];
+  }
   // "IT" ergaenzt (s. Einstellungen -> 6 Gliederungs-Versionen): neue Rolle,
   // die es vor diesem Filter noch nicht gab - matcht wie die anderen 3-
   // oder weniger Zeichen langen Werte ueber Wortgrenzen (s.
@@ -17024,8 +17081,16 @@
         }).join("") +
         "</div>";
     }
-    return '<p class="step-sub-label" style="margin-top:8px;">Sparte-/Rollen-Filter (Labels, Mehrfachauswahl, leer = alle Tickets)</p>' +
-      optionsRow("Sparte", SPARTE_FILTER_VALUES.map(function (v) { return { kind: "sparte", value: v }; }), app.activeSparteFilter) +
+    // v2.176: Sparte als Einfachauswahl „beide“ (voreingestellt) / Pkw / Van
+    var sparteRow = '<div class="step-file-option-row" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:4px;">' +
+      '<span style="font-weight:600;">Sparte:</span>' +
+      [{ value: "", label: SPARTE_BOTH_LABEL }].concat(SPARTE_FILTER_VALUES.map(function (v) { return { value: v, label: v }; })).map(function (o) {
+        var on = o.value ? app.activeSparteFilter.length === 1 && app.activeSparteFilter[0] === o.value : !app.activeSparteFilter.length;
+        return '<label class="step-file-option" style="display:inline-flex; align-items:center; gap:4px;">' +
+          '<input type="radio" name="' + groupName + '-sparte" value="sparte:' + escapeHtml(o.value) + '"' + (on ? " checked" : "") + '><span>' + escapeHtml(o.label) + "</span></label>";
+      }).join("") + "</div>";
+    return '<p class="step-sub-label" style="margin-top:8px;">Sparte-/Rollen-Filter (Labels; Sparte: „beide“ = alle Tickets, Rolle: Mehrfachauswahl, leer = alle Tickets)</p>' +
+      sparteRow +
       optionsRow("Rolle", ROLE_FILTER_VALUES.map(function (v) { return { kind: "role", value: v }; }), app.activeRoleFilter);
   }
   function activeScopeLabel() {
@@ -17080,7 +17145,8 @@
         var val = checkbox.value;
         var sep = val.indexOf(":");
         var kind = val.slice(0, sep), v = val.slice(sep + 1);
-        var arr = kind === "sparte" ? app.activeSparteFilter : app.activeRoleFilter;
+        if (kind === "sparte") { if (checkbox.checked) app.activeSparteFilter = v ? [v] : []; onActiveImportChanged(); return; }
+        var arr = app.activeRoleFilter;
         var idx = arr.indexOf(v);
         if (checkbox.checked) { if (idx === -1) arr.push(v); } else if (idx !== -1) { arr.splice(idx, 1); }
         onActiveImportChanged();
@@ -26907,6 +26973,7 @@
       (images.length ? " (" + images.map(function (i) { return i.description || i.sourceFile; }).join(", ") + ") – höchstens so viele [Bild]-Platzhalter einfügen" : " (keine – keine [Bild]-Platzhalter einfügen)"));
     parts.push("\n\nQUELLE 6 – Zugeordnete Tabellen (aus Rovo Knowledge): " + tables.length +
       (tables.length ? " (" + tables.map(function (t) { return "Tabelle " + t.tableNumber + " aus " + t.sourceFile + " (" + t.rows.length + " Zeilen x " + (t.rows[0] ? t.rows[0].length : 0) + " Spalten)"; }).join(", ") + ") – höchstens so viele [Tabelle]-Platzhalter einfügen, an der inhaltlich passenden Stelle" : " (keine – keine [Tabelle]-Platzhalter einfügen)"));
+    parts.push(rulesPromptBlock([chapterTitle])); // v2.176
     return parts.join("");
   }
   async function editoGenerateChapter(chapterTitle) {
@@ -26917,6 +26984,10 @@
     try {
       var result = await sampleApi(editoBuildChapterPrompt(chapterTitle), { modelTier: "default", cache: false });
       app.editoChapters[chapterTitle] = { de: result.text || "", generatedAt: nowLabel(), versionKey: app.editoVersionKey, agent1: null, agent2: null };
+      // v2.176: feste Regeln gleich nach der Erzeugung pruefen
+      var ruleIssues = rulesCheckText([chapterTitle], result.text || "");
+      app.editoChapters[chapterTitle].ruleIssues = ruleIssues.map(function (f) { return f.msg; });
+      if (ruleIssues.length) addLog("Regelwerk: Editor-Kapitel „" + chapterTitle + "“ – " + ruleIssues.map(function (f) { return f.msg; }).join(" "));
       await editoSaveChapterFiles(chapterTitle);
       return true;
     } catch (err) {
@@ -27549,6 +27620,7 @@
       (images.length ? " (" + images.map(function (i) { return i.description || i.sourceFile; }).join(", ") + ") – höchstens so viele [Bild]-Platzhalter einfügen" : " (keine – keine [Bild]-Platzhalter einfügen)"));
     parts.push("\n\nQUELLE 7 – Zugeordnete Tabellen: " + tables.length +
       (tables.length ? " (" + tables.map(function (t) { return "Tabelle " + t.tableNumber + " aus " + t.sourceFile; }).join(", ") + ") – höchstens so viele [Tabelle]-Platzhalter einfügen" : " (keine – keine [Tabelle]-Platzhalter einfügen)"));
+    parts.push(rulesPromptBlock([chapterTitle, subchapterTitle])); // v2.176
     return parts.join("");
   }
 
@@ -27788,7 +27860,10 @@
       renderSubchapterStatusOverview();
       var versionLabel = (editoVersionDef() || {}).label || app.editoVersionKey;
       addLog("Unterkapitel „" + subchapterTitle + "“ (Kapitel „" + chapterTitle + "“, " + versionLabel + ") erzeugt/aktualisiert.");
-      showToast("Erzeugt", "Unterkapitel-Fassung erzeugt" + (previousText ? " - Vergleich zur vorherigen Fassung unten sichtbar." : "."));
+      var subIssues = rulesCheckText([chapterTitle, subchapterTitle], entry.text); // v2.176
+      entry.ruleIssues = subIssues.map(function (f) { return f.msg; });
+      if (subIssues.length) addLog("Regelwerk: Unterkapitel „" + subchapterTitle + "“ – " + entry.ruleIssues.join(" "));
+      showToast("Erzeugt", "Unterkapitel-Fassung erzeugt" + (previousText ? " - Vergleich zur vorherigen Fassung unten sichtbar." : ".") + (subIssues.length ? " Regelwerk: " + subIssues.length + " Verstoß/Verstöße – " + entry.ruleIssues.join(" ") : ""));
     } catch (err) {
       showToast("Fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true);
     } finally {
@@ -28222,7 +28297,9 @@
       improvementsViewFileId: idOrNull(d.improvementsViewFileId),
       screensFileFilter: idOrNull(d.screensFileFilter),
       buildManualId: idOrNull(d.buildManualId), buildImprovementFileId: idOrNull(d.buildImprovementFileId), buildScreensFileId: idOrNull(d.buildScreensFileId),
-      buildInlineImprovements: !!d.buildInlineImprovements, reviewerName: str(d.reviewerName)
+      buildInlineImprovements: !!d.buildInlineImprovements, reviewerName: str(d.reviewerName),
+      // v2.176: vorgemerkte Abschnitte fuer die Kapitel „Intern“/„In Planung“ (aus dem Handbuch entfernt)
+      reserved: arr(d.reserved).filter(function (e) { return e && (e.kind === "intern" || e.kind === "planung") && typeof e.piece === "string"; })
     };
     if (!st.versions.length && st.master.chapters.length) {
       st.versions.push({
@@ -28647,7 +28724,7 @@
       pair[0].innerHTML = '<option value="">' + pair[1] + "</option>" + roleOpts;
       pair[0].value = prev;
     });
-    [[els.finalScreensSparteSelect, "Pkw und Van (beide)"], [els.finalFilterSparteSelect, "– egal –"], [els.finalManualSparteSelect, "Pkw und Van (beide)"]].forEach(function (pair) {
+    [[els.finalScreensSparteSelect, SPARTE_BOTH_LABEL], [els.finalFilterSparteSelect, SPARTE_BOTH_LABEL], [els.finalManualSparteSelect, SPARTE_BOTH_LABEL]].forEach(function (pair) {
       var prev = pair[0].value;
       pair[0].innerHTML = '<option value="">' + pair[1] + "</option>" + sparteOpts;
       pair[0].value = prev;
@@ -28743,13 +28820,15 @@
   function finalResultTitles() { return app.final.master.chapters.map(function (c) { return c.title; }); }
   function finalResultOptionsHtml(selected) {
     return '<option value="' + FINAL_RESULT_ALL + '"' + (selected === FINAL_RESULT_ALL ? " selected" : "") + ">— Gesamtes Dokument —</option>" +
-      finalResultTitles().map(function (t) { return '<option value="' + escapeHtml(t) + '"' + (t === selected ? " selected" : "") + ">" + escapeHtml(t) + "</option>"; }).join("");
+      finalResultTitles().map(function (t) { return '<option value="' + escapeHtml(t) + '"' + (t === selected ? " selected" : "") + ">" + escapeHtml(t) + "</option>"; }).join("") +
+      // v2.176: die beiden Kapitel mit vorgemerkten Abschnitten (nicht Teil des Handbuchs)
+      ["intern", "planung"].map(function (k) { var n = finalReserved().filter(function (e) { return e.kind === k; }).length; return '<option value="' + FINAL_RESERVE_VALUE[k] + '"' + (selected === FINAL_RESERVE_VALUE[k] ? " selected" : "") + ">" + FINAL_RESERVE_KINDS[k] + " (" + n + " vorgemerkt)</option>"; }).join("");
   }
   function renderFinalResultChapterOptions() {
     var titles = finalResultTitles();
     els.finalResultSection.hidden = titles.length === 0;
     var prev = els.finalResultChapterSelect.value;
-    var keep = prev === FINAL_RESULT_ALL || titles.indexOf(prev) !== -1 ? prev : (titles[0] || "");
+    var keep = prev === FINAL_RESULT_ALL || finalReserveKindOfValue(prev) || titles.indexOf(prev) !== -1 ? prev : (titles[0] || "");
     els.finalResultChapterSelect.innerHTML = titles.length ? finalResultOptionsHtml(keep) : "";
     if (titles.length) els.finalResultChapterSelect.value = keep;
     if (!titles.length) finalViewerClose();
@@ -28838,12 +28917,184 @@
     finalResultRoleState.hidden = 0;
     var value = els.finalResultChapterSelect.value;
     if (!value) { els.finalResultSourceOutput.textContent = ""; els.finalResultMasterOutput.textContent = ""; return; }
+    finalReserveSel = null;
+    var rk = finalReserveKindOfValue(value);
+    if (rk) { // v2.176: Kapitel „Intern“ / „In Planung“
+      els.finalResultSourceOutput.innerHTML = '<p class="step-note">Kapitel „' + FINAL_RESERVE_KINDS[rk] + '“: vorgemerkte Abschnitte, die aus dem aktuellen Benutzerhandbuch entfernt wurden. Sie sind nicht Teil des Handbuchs (Word/PDF/PowerPoint) und lassen sich zurückholen oder separat als Word exportieren.</p>';
+      els.finalResultMasterOutput.innerHTML = finalReserveListHtml(rk);
+      els.finalRulesNote.hidden = true;
+      els.finalResultRoleNote.textContent = "";
+      return;
+    }
+    finalRenderRulesNote(value);
     els.finalResultSourceOutput.innerHTML = finalResultHtml("source", value, false);
     els.finalResultMasterOutput.innerHTML = finalResultHtml("master", value, false);
     els.finalResultRoleNote.textContent = finalResultRoleState.role ? finalResultRoleState.hidden + " Absatz/Absätze für „" + finalResultRoleState.role + "“ " + (finalResultRoleState.hide ? "weggelassen" : "ausgeblendet (durchgestrichen)") + "." : "";
   }
   els.finalResultRoleSelect.addEventListener("change", function () { finalResultRoleState.role = els.finalResultRoleSelect.value; updateFinalResult(); });
   els.finalResultRoleHide.addEventListener("change", function () { finalResultRoleState.hide = els.finalResultRoleHide.checked; updateFinalResult(); });
+
+  // ===================== v2.176: Kapitel „Intern“ und „In Planung“ =====================
+  // Im Ergebnis (neue Zusammenfuehrung) markierter Text wird aus dem Kapitel des aktiven Stands entfernt und als Eintrag
+  // gespeichert (app.final.reserved). Die beiden Kapitel erscheinen in der Kapitelauswahl, gehoeren aber nicht zum Handbuch.
+  // Zurueckholen setzt den Abschnitt an der alten Stelle wieder ein; neue Staende entfernen vorgemerkte Abschnitte erneut.
+  var FINAL_RESERVE_KINDS = { intern: "Intern", planung: "In Planung" };
+  var FINAL_RESERVE_VALUE = { intern: "__final_intern__", planung: "__final_planung__" };
+  function finalReserveKindOfValue(v) { return v === FINAL_RESERVE_VALUE.intern ? "intern" : v === FINAL_RESERVE_VALUE.planung ? "planung" : null; }
+  function finalReserved() { if (!Array.isArray(app.final.reserved)) app.final.reserved = []; return app.final.reserved; }
+  function finalReservePattern(text) {
+    var toks = String(text || "").replace(/[\u0001\u0002]/g, "").replace(/\[Bild: [^\]\n]*\]/g, "[Bild]").split(/\s+/).filter(Boolean);
+    if (!toks.length) return null;
+    return new RegExp(toks.map(function (t) { return t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("\\s+"));
+  }
+  // Schneidet den (ersten) Abschnitt, der zum Text passt, aus dem Kapitel; null, wenn nicht gefunden
+  function finalReserveCut(ch, text) {
+    var re = finalReservePattern(text);
+    if (!re || !ch) return null;
+    var marked = typeof ch.markedText === "string" ? ch.markedText : String(ch.text || ""), plain = "", map = [];
+    for (var i = 0; i < marked.length; i++) { var c = marked.charAt(i); if (c === "\u0001" || c === "\u0002") continue; map.push(i); plain += c; }
+    var m = re.exec(plain);
+    if (!m || !m[0].length) return null;
+    var start = map[m.index], end = map[m.index + m[0].length - 1] + 1;
+    var lines = marked.split("\n"), pos = 0, before = 0, inside = 0;
+    lines.forEach(function (l) { var ls = pos, le = pos + l.length; if (l.trim() === "[Bild]") { if (le <= start) before++; else if (ls >= start && le <= end) inside++; } pos = le + 1; });
+    var piece = marked.slice(start, end), depth = 0, closes = 0;
+    for (var k = 0; k < piece.length; k++) { var pc = piece.charAt(k); if (pc === "\u0001") depth++; else if (pc === "\u0002") { if (depth) depth--; else closes++; } }
+    // Markierung interner Abschnitte, die in den Ausschnitt hinein- oder aus ihm herausreicht, an der Schnittstelle schliessen/oeffnen
+    var joint = new Array(closes + 1).join("\u0002") + new Array(depth + 1).join("\u0001");
+    var left = marked.slice(0, start), right = marked.slice(end), dropped = 0;
+    // ganze Zeile(n) vorgemerkt: keine Leerzeile zuruecklassen (beim Zurueckholen wieder eingesetzt)
+    if ((!left || /\n$/.test(left)) && /^\n/.test(right)) { right = right.slice(1); dropped = 1; }
+    var textWasPlain = String(ch.text || "") === marked.replace(FINAL_MARK_RE, "");
+    ch.markedText = left + joint + right;
+    if (textWasPlain) ch.text = ch.markedText.replace(FINAL_MARK_RE, "");
+    else { var m2 = re.exec(String(ch.text || "")); if (m2) ch.text = ch.text.slice(0, m2.index) + ch.text.slice(m2.index + m2[0].length); }
+    var screenIds = inside && Array.isArray(ch.screenIds) ? ch.screenIds.splice(before, inside) : [];
+    return { piece: piece, joint: joint, dropped: dropped, mOffset: start, screenIdx: before, screenIds: screenIds };
+  }
+  function finalReserveReapply(v) {
+    var n = 0;
+    finalReserved().forEach(function (e) {
+      var ch = (v.chapters || []).filter(function (c) { return c.title === e.chapter; })[0];
+      if (ch && finalReserveCut(ch, e.piece)) n++;
+    });
+    if (n) addLog("FINAL: " + n + " vorgemerkte(r) Abschnitt(e) (Intern/In Planung) auch aus dem neuen Stand „" + v.name + "“ entfernt.");
+  }
+  var finalReserveSel = null;
+  function finalReserveChapterForNode(node) {
+    var v = els.finalResultChapterSelect.value;
+    if (v !== FINAL_RESULT_ALL) return finalResultTitles().indexOf(v) !== -1 ? v : null;
+    var found = null;
+    Array.prototype.forEach.call(els.finalResultMasterOutput.querySelectorAll("[data-final-chapter-anchor]"), function (h) {
+      if (h === node || h.contains(node) || (h.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING)) found = h;
+    });
+    return found ? finalResultTitles()[parseInt(found.getAttribute("data-final-chapter-anchor"), 10)] || null : null;
+  }
+  function finalReserveCurrentSel() {
+    var sel = window.getSelection ? window.getSelection() : null;
+    if (!sel || sel.isCollapsed || !sel.rangeCount) return null;
+    var node = sel.getRangeAt(0).startContainer;
+    if (!els.finalResultMasterOutput.contains(node)) return null;
+    return { text: sel.toString(), chapter: finalReserveChapterForNode(node) };
+  }
+  // Auswahl merken (falls der Klick auf den Knopf sie im Browser aufhebt)
+  document.addEventListener("selectionchange", function () { var s = finalReserveCurrentSel(); if (s && s.text.trim()) finalReserveSel = s; });
+  function finalReserveLocked(v) {
+    if (v && v.status === "Veröffentlicht") { showToast("Gesperrt", "Stand „" + v.name + "“ ist veröffentlicht – zuerst den Status zurücksetzen.", true); return true; }
+    return false;
+  }
+  function finalReserveMark(kind) {
+    var v = finalActiveVersion();
+    if (!v || finalReserveLocked(v)) return;
+    var sel = finalReserveCurrentSel() || finalReserveSel;
+    if (!sel || !sel.text.trim()) { els.finalReserveNote.textContent = "Bitte zuerst in „Neue Zusammenführung“ den Text markieren."; return; }
+    if (!sel.chapter) { els.finalReserveNote.textContent = "Kapitel nicht erkannt – bitte ein einzelnes Kapitel wählen und dort markieren."; return; }
+    var ch = v.chapters.filter(function (c) { return c.title === sel.chapter; })[0];
+    var cut = finalReserveCut(ch, sel.text);
+    if (!cut) { els.finalReserveNote.textContent = "Der markierte Text wurde im Kapitel „" + sel.chapter + "“ nicht gefunden – bitte nur Fließtext markieren (ohne Rollen-Markierungen und ROVO-Verbesserungen)."; return; }
+    var id = finalReserved().reduce(function (mx, e) { return Math.max(mx, e.id || 0); }, 0) + 1;
+    finalReserved().push({ id: id, kind: kind, chapter: sel.chapter, versionId: v.id, versionName: v.name, piece: cut.piece, joint: cut.joint, dropped: cut.dropped, mOffset: cut.mOffset, screenIdx: cut.screenIdx, screenIds: cut.screenIds, at: nowLabel() });
+    finalReserveSel = null;
+    try { window.getSelection().removeAllRanges(); } catch (e) { /* egal */ }
+    var short = truncate(cut.piece.replace(FINAL_MARK_RE, "").replace(/\s+/g, " ").trim(), 60);
+    els.finalReserveNote.textContent = "„" + short + "“ als „" + FINAL_RESERVE_KINDS[kind] + "“ vorgemerkt und aus „" + sel.chapter + "“ entfernt.";
+    addLog("FINAL: Abschnitt „" + short + "“ aus „" + sel.chapter + "“ (Stand „" + v.name + "“) als „" + FINAL_RESERVE_KINDS[kind] + "“ vorgemerkt und aus dem Benutzerhandbuch entfernt.");
+    renderFinalResultChapterOptions();
+    updateFinalResult();
+  }
+  function finalReserveRestore(id) {
+    var e = finalReserved().filter(function (x) { return x.id === id; })[0], v = finalActiveVersion();
+    if (!e || !v || finalReserveLocked(v)) return;
+    var ch = v.chapters.filter(function (c) { return c.title === e.chapter; })[0];
+    if (!ch) { showToast("Nicht möglich", "Das Kapitel „" + e.chapter + "“ gibt es im aktiven Stand „" + v.name + "“ nicht.", true); return; }
+    var marked = typeof ch.markedText === "string" ? ch.markedText : String(ch.text || "");
+    var textWasPlain = String(ch.text || "") === marked.replace(FINAL_MARK_RE, "");
+    var same = e.versionId === v.id, at = same ? Math.min(e.mOffset, marked.length) : marked.length, piece = e.piece;
+    if (same && e.joint && marked.substr(at, e.joint.length) === e.joint) marked = marked.slice(0, at) + marked.slice(at + e.joint.length);
+    if (same && e.dropped) piece += "\n";
+    if (at === marked.length && marked && !/\n$/.test(marked)) piece = "\n" + piece;
+    ch.markedText = marked.slice(0, at) + piece + marked.slice(at);
+    ch.text = textWasPlain ? ch.markedText.replace(FINAL_MARK_RE, "") : String(ch.text || "") + "\n" + piece.replace(FINAL_MARK_RE, "");
+    if (e.screenIds && e.screenIds.length) {
+      if (!Array.isArray(ch.screenIds)) ch.screenIds = [];
+      var idx = same ? Math.min(e.screenIdx, ch.screenIds.length) : ch.screenIds.length;
+      Array.prototype.splice.apply(ch.screenIds, [idx, 0].concat(e.screenIds));
+    }
+    app.final.reserved = finalReserved().filter(function (x) { return x !== e; });
+    addLog("FINAL: Abschnitt aus „" + FINAL_RESERVE_KINDS[e.kind] + "“ in „" + e.chapter + "“ (Stand „" + v.name + "“) zurückgeholt.");
+    renderFinalResultChapterOptions();
+    updateFinalResult();
+  }
+  function finalReserveListHtml(kind) {
+    var list = finalReserved().filter(function (e) { return e.kind === kind; });
+    if (!list.length) return '<p class="step-note">Noch keine Abschnitte als „' + FINAL_RESERVE_KINDS[kind] + '“ vorgemerkt – im Kapitel Text markieren und „Als „' + FINAL_RESERVE_KINDS[kind] + '“ vormerken“ wählen.</p>';
+    return '<div class="controls" style="margin-bottom:8px;"><button class="btn ghost btn-tiny" type="button" data-final-reserve-export="' + kind + '">Kapitel „' + FINAL_RESERVE_KINDS[kind] + '“ als Word exportieren</button></div>' +
+      list.map(function (e) {
+        return '<div class="final-reserve-entry" data-final-reserve-id="' + e.id + '" style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; margin-bottom:8px;">' +
+          '<div class="step-note" style="margin:0 0 4px;">Aus „' + escapeHtml(e.chapter) + "“ · Stand „" + escapeHtml(e.versionName || "") + "“ · vorgemerkt am " + escapeHtml(e.at || "") + (e.screenIds && e.screenIds.length ? " · " + e.screenIds.length + " Bild(er)" : "") + "</div>" +
+          '<div style="white-space:pre-wrap;">' + finalMarkedTextToHtml(e.piece.replace(/^\n+|\n+$/g, "")) + "</div>" +
+          '<div class="controls" style="margin-top:6px;"><button class="btn ghost btn-tiny" type="button" data-final-reserve-restore="' + e.id + '">Zurückholen</button>' +
+          '<button class="btn ghost btn-tiny final-btn-danger" type="button" data-final-reserve-drop="' + e.id + '">Endgültig verwerfen</button></div></div>';
+      }).join("");
+  }
+  async function finalReserveExport(kind) {
+    var list = finalReserved().filter(function (e) { return e.kind === kind; });
+    if (!list.length) return;
+    var text = list.map(function (e) {
+      return "Aus „" + e.chapter + "“ (Stand „" + (e.versionName || "") + "“, vorgemerkt am " + (e.at || "") + "):\n" +
+        e.piece.replace(FINAL_MARK_RE, "").split("\n").filter(function (l) { return l.trim() !== "[Bild]"; }).join("\n").trim();
+    }).join("\n\n");
+    var media = await manualPrepareMediaForScreens([]);
+    var blob = await buildDocxBlobFromBodyAndMedia(manualChapterBodyXml(FINAL_RESERVE_KINDS[kind], text, media, []), media);
+    var fn = "FINAL_" + (kind === "intern" ? "Intern" : "In_Planung") + "_" + new Date().toISOString().slice(0, 10) + ".docx";
+    if (await saveOrWarn(fn, blob)) addLog("FINAL: Kapitel „" + FINAL_RESERVE_KINDS[kind] + "“ (" + list.length + " Abschnitt(e)) als Word exportiert.");
+  }
+  els.finalReserveInternBtn.addEventListener("mousedown", function (e) { e.preventDefault(); }); // Auswahl beim Klick behalten
+  els.finalReservePlanBtn.addEventListener("mousedown", function (e) { e.preventDefault(); });
+  els.finalReserveInternBtn.addEventListener("click", function () { finalReserveMark("intern"); });
+  els.finalReservePlanBtn.addEventListener("click", function () { finalReserveMark("planung"); });
+  els.finalResultMasterOutput.addEventListener("click", async function (e) {
+    var r = e.target.closest("[data-final-reserve-restore]"), d = e.target.closest("[data-final-reserve-drop]"), x = e.target.closest("[data-final-reserve-export]");
+    if (r) finalReserveRestore(parseInt(r.getAttribute("data-final-reserve-restore"), 10));
+    else if (x) await finalReserveExport(x.getAttribute("data-final-reserve-export"));
+    else if (d) {
+      var id = parseInt(d.getAttribute("data-final-reserve-drop"), 10), en = finalReserved().filter(function (y) { return y.id === id; })[0];
+      if (!en || !(await confirmDialog("Vorgemerkten Abschnitt endgültig verwerfen? Er bleibt aus dem Benutzerhandbuch entfernt und kann nicht mehr zurückgeholt werden.", "Verwerfen"))) return;
+      app.final.reserved = finalReserved().filter(function (y) { return y !== en; });
+      addLog("FINAL: vorgemerkter Abschnitt aus „" + en.chapter + "“ (" + FINAL_RESERVE_KINDS[en.kind] + ") verworfen.");
+      renderFinalResultChapterOptions();
+      updateFinalResult();
+    }
+  });
+  // v2.176: Regelwerk im FINAL-Ergebnis (feste Regeln des gewaehlten Kapitels bzw. des ganzen Dokuments)
+  function finalRenderRulesNote(value) {
+    var v = finalActiveVersion();
+    if (!v || !rulesHasFixed()) { els.finalRulesNote.hidden = true; return; }
+    var chs = v.chapters.filter(function (c) { return value === FINAL_RESULT_ALL || c.title === value; }), issues = [];
+    chs.forEach(function (c) { rulesCheckText([c.title], c.text).forEach(function (f) { issues.push((value === FINAL_RESULT_ALL ? c.title + ": " : "") + f.msg); }); });
+    els.finalRulesNote.hidden = false;
+    els.finalRulesNote.innerHTML = issues.length ? '<span class="cv-warn">Regelwerk: ' + issues.length + " Verstoß/Verstöße</span> – " + escapeHtml(issues.slice(0, 6).join(" · ")) + (issues.length > 6 ? " …" : "") : "Regelwerk: alle festen Regeln eingehalten.";
+  }
 
   // Vollbild-Ansicht fuer Schritt 7: ein oder zwei Fenster (Quellversion /
   // neue Zusammenfuehrung), jedes mit eigener Kapitelauswahl, Blaettern
@@ -28857,6 +29108,7 @@
   var FINAL_VIEWER_LABELS = { source: "Quellversion", master: "Neue Zusammenführung" };
   function finalViewerOpen(kinds) {
     var start = els.finalResultChapterSelect.value || finalResultTitles()[0] || FINAL_RESULT_ALL;
+    if (finalReserveKindOfValue(start)) start = FINAL_RESULT_ALL;
     finalViewerState = { panes: kinds.map(function (k) { return { kind: k, value: start, zoom: 1, anchor: 0 }; }), active: 0 };
     els.finalViewer.hidden = false;
     renderFinalViewer();
@@ -29362,6 +29614,7 @@
       improvementStatus: opts.improvementStatus || finalImprovementStatusAll(opts.improvements || {}, "offen")
     };
     app.final.versions.push(v);
+    finalReserveReapply(v); // v2.176: vorgemerkte Abschnitte bleiben auch in neuen Staenden entfernt
     finalSetActiveVersion(v.id);
     return v;
   }
@@ -30498,6 +30751,7 @@
     { label: "AGENT", view: "agent", unit: "Uploads/Wissensobjekte", fields: ["agent"], items: function (d) { var a = d.agent || {}; return dashCount(a.uploads) + dashCount(a.knowledge && a.knowledge.items); } },
     { label: "Bilder", view: "bilder", unit: "Bilder", fields: ["uploadedImages", "generatedImages", "cvSettings"], items: function (d) { return dashCount(d.uploadedImages) + dashCount(d.generatedImages); } },
     { label: "Tabelle", view: "tabellen", unit: "Tabellen", fields: ["rovoTables"], items: function (d) { return dashCount(d.rovoTables); } },
+    { label: "Regelwerk", view: "regelwerk", unit: "Regeln", fields: ["rules"], items: function (d) { return dashCount(d.rules && d.rules.items); } },
     { label: "Glossar, Synonyme, Abkürzungen", view: "glossar", unit: "Begriffe", fields: ["labels", "synonyms", "glossaryTranslations", "abbrevTranslations", "extracted"], items: function (d) { return dashCount(d.labels) + dashCount(d.synonyms) + dashCount(d.glossaryTranslations) + dashCount(d.abbrevTranslations); } },
     { label: "Einstellungen & Protokoll", view: "einstellungen", unit: "Protokolleinträge", fields: ["log", "ragPrompts", "languageStyle", "negativeWordsRaw", "view", "sessionFileFormat", "savedAt", "appVersion"], items: function (d) { return dashCount(d.log); } }
   ];
@@ -34206,6 +34460,7 @@
     { id: "Q2", stage: 4, label: "Grammatik & Stil (KI)" },
     { id: "Q3", stage: 4, label: "Lücken & leere Kapitel" },
     { id: "Q4", stage: 4, label: "Lesbarkeit (Satzlänge)" },
+    { id: "R1", stage: 4, label: "Regelwerk (feste Regeln)" },
     { id: "T1", stage: 5, label: "Übersetzung" },
     { id: "A1", stage: 6, label: "Konsistenz (Begriffe, Nummerierung)" },
     { id: "A2", stage: 6, label: "Qualitätsmessung" },
@@ -34557,6 +34812,10 @@
     doc.chapters.forEach(function (c) { vrevPlain(c.text).split(/[.!?]+(?:\s+|$)/).forEach(function (s) { var n = (s.match(/\S+/g) || []).length; if (n >= 3) { sentences.push(n); if (n > vrevLimit("sentWords")) longS++; } }); });
     var share = sentences.length ? Math.round(100 * longS / sentences.length) : 0, avg = sentences.length ? Math.round(sentences.reduce(function (a, b) { return a + b; }, 0) / sentences.length) : 0;
     put("Q4", share >= vrevLimit("sentFailPct") ? "fail" : share >= vrevLimit("sentWarnPct") ? "warn" : "ok", sentences.length ? "Ø " + avg + " Wörter je Satz, " + longS + " Satz/Sätze mit mehr als " + vrevLimit("sentWords") + " Wörtern (" + share + " %)." : "Kein Fließtext.", longS);
+    // v2.176: Regelwerk – feste Regeln je Kapitel (allgemeine + Kapitel-Regeln); KI-Regeln prueft die KI-Pruefung (Q2)
+    var rIssues = [];
+    doc.chapters.forEach(function (c) { rulesCheckText([c.title], vrevPlain(c.text)).forEach(function (f) { rIssues.push(c.title + ": " + f.msg); }); });
+    put("R1", !rulesHasFixed() ? "ok" : rIssues.length ? "fail" : "ok", !rulesHasFixed() ? "Keine festen Regeln im Regelwerk." : rIssues.length ? rIssues.length + " Verstoß/Verstöße: " + rIssues.slice(0, 3).join(" | ") + (rIssues.length > 3 ? " …" : "") : "Alle festen Regeln eingehalten.", rIssues.length);
     // Stufe 5 – Uebersetzung
     var base = doc.baseDocId ? vrevDoc(doc.baseDocId) : null;
     var trs = (doc.translations || []).map(vrevDoc).filter(Boolean);
@@ -34573,7 +34832,7 @@
     var a1 = variants.length >= vrevLimit("consFail") || aiCons.length > vrevLimit("aiConsWarn") ? "fail" : variants.length || mixed || aiCons.length ? "warn" : "ok";
     put("A1", a1, (variants.length ? variants.length + " uneinheitliche Schreibweise(n): " + variants.slice(0, 4).map(function (v) { return v.join(" / "); }).join("; ") : "Begriffe einheitlich geschrieben") + (mixed ? " · Kapitelnummerierung uneinheitlich (" + numbered + " nummeriert)" : "") +
       (doc.aiConsistency ? " · KI-Konsistenz: " + aiCons.length + " offene(r) Widerspruch/Widersprüche zwischen Kapiteln" : "") + ".", variants.length + (mixed ? 1 : 0) + aiCons.length);
-    var scoreIds = VREV_CHECKS.map(function (c) { return c.id; }).filter(function (id) { return id !== "A2" && id !== "F1"; });
+    var scoreIds = VREV_CHECKS.map(function (c) { return c.id; }).filter(function (id) { return id !== "A2" && id !== "F1" && id !== "R1"; }) /* v2.176: R1 (Regelwerk) zaehlt nicht in die Qualitaetsnote */;
     var score = vrevScore(ch, scoreIds);
     put("A2", score == null ? "open" : score >= vrevLimit("scoreOk") ? "ok" : score >= vrevLimit("scoreWarn") ? "warn" : "fail", "Qualität " + (score == null ? "–" : score + " von 100") + (doc.scoreInitial != null ? " (beim ersten Prüflauf " + doc.scoreInitial + ")" : "") + ".", score);
     // Stufe 7 – Finalisierung
@@ -34809,7 +35068,7 @@
     renderVrevText(doc);
   }
   function renderVrevDash(doc) {
-    if (!doc.checkedAt) { els.vrevDash.innerHTML = '<p class="step-note">Noch nicht geprüft – „Alle 20 Prüfungen ausführen“.</p>'; return; }
+    if (!doc.checkedAt) { els.vrevDash.innerHTML = '<p class="step-note">Noch nicht geprüft – „Alle 21 Prüfungen ausführen“.</p>'; return; }
     var c = vrevCounts(doc), phs = vrevAllPlaceholders(doc), filled = phs.filter(function (p) { return (doc.ph[p.key] || []).length; }).length;
     var tile = function (label, value, sub, cls) { return '<div class="vrev-tile' + (cls ? " vrev-tile-" + cls : "") + '"><span class="vrev-tile-label">' + label + '</span><b class="vrev-tile-value">' + value + "</b>" + (sub ? '<span class="vrev-tile-sub">' + sub + "</span>" : "") + "</div>"; };
     var sc = doc.score;
@@ -35272,7 +35531,7 @@
       var per = await mapWithConcurrency(chs, VREV_AI_PARALLEL, async function (ch) {
         if (vrevAbort.signal.aborted) return [];
         try {
-          var res = await sampleApi(ragPromptFor("vrevQuality") + "\n\nKAPITEL: " + ch.title + "\n\nTEXT:\n" + truncate(vrevPlain(ch.text), 15000), { modelTier: "default", cache: false, signal: vrevAbort.signal });
+          var res = await sampleApi(ragPromptFor("vrevQuality") + rulesPromptBlock([ch.title], true) + "\n\nKAPITEL: " + ch.title + "\n\nTEXT:\n" + truncate(vrevPlain(ch.text), 15000), { modelTier: "default", cache: false, signal: vrevAbort.signal });
           var t = String((res && res.text) || ""), a = t.indexOf("["), b = t.lastIndexOf("]"), arr = null;
           try { arr = a >= 0 && b > a ? JSON.parse(t.slice(a, b + 1)) : null; } catch (e) { arr = null; }
           if (!Array.isArray(arr)) { failed++; return []; }
@@ -35630,7 +35889,7 @@
     var doc = vrevActive(); if (!doc) return;
     vrevRunChecks(doc);
     var c = vrevCounts(doc);
-    els.vrevStatus.textContent = "20 Prüfungen ausgeführt: " + c.ok + " OK, " + c.warn + " Hinweise, " + c.fail + " Fehler, " + c.open + " offen – Qualität " + (doc.score == null ? "–" : doc.score) + ".";
+    els.vrevStatus.textContent = "21 Prüfungen ausgeführt: " + c.ok + " OK, " + c.warn + " Hinweise, " + c.fail + " Fehler, " + c.open + " offen – Qualität " + (doc.score == null ? "–" : doc.score) + ".";
     addLog("VARIANTE Review: „" + doc.name + "“ geprüft – Qualität " + doc.score + ".");
     renderVrev();
   });
@@ -36631,6 +36890,151 @@
     }
   });
 
+  /* ============ v2.176: Regelwerk ============ */
+  // Regeln gelten allgemein (scope "") oder fuer ein Kapitel (scope = Kapiteltitel; Vergleich ohne Nummerierung/„Kapitel N:“
+  // und ohne Gross-/Kleinschreibung, damit dieselbe Regel in FINAL, Editor, Unterkapitel und Dokument-Review greift).
+  var RULE_KINDS = [
+    { key: "ai", label: "KI-Regel (Freitext)", placeholder: "z. B. Leser immer mit „Sie“ ansprechen; keine internen Systemnamen nennen" },
+    { key: "forbid", label: "Begriff verboten", placeholder: "Begriff oder Wortgruppe, die nicht vorkommen darf, z. B. Testsystem" },
+    { key: "require", label: "Begriff Pflicht", placeholder: "Begriff, der im Kapitel vorkommen muss, z. B. Servicevertrag" },
+    { key: "maxWords", label: "Höchstens N Wörter je Kapitel", placeholder: "Zahl, z. B. 400" }
+  ];
+  var RULES_CUSTOM_SCOPE = "__rules_custom__";
+  function rulesNormalize(d) {
+    d = d && typeof d === "object" ? d : {};
+    var kinds = RULE_KINDS.map(function (k) { return k.key; });
+    var items = (Array.isArray(d.items) ? d.items : []).filter(function (r) { return r && kinds.indexOf(r.kind) !== -1 && String(r.value || "").trim(); }).map(function (r, i) {
+      return { id: typeof r.id === "number" ? r.id : i + 1, scope: String(r.scope || ""), kind: r.kind, value: String(r.value), active: r.active !== false };
+    });
+    var maxId = items.reduce(function (m, r) { return Math.max(m, r.id); }, 0);
+    return { items: items, nextId: Math.max(typeof d.nextId === "number" ? d.nextId : 1, maxId + 1), lastCheck: d.lastCheck && Array.isArray(d.lastCheck.results) ? d.lastCheck : null };
+  }
+  function ruleKindLabel(k) { var x = RULE_KINDS.filter(function (r) { return r.key === k; })[0]; return x ? x.label : k; }
+  function rulesNormTitle(t) {
+    return String(t || "").toLowerCase().replace(/^\s*kapitel\s+\d+[a-z]?\s*[:.\-–]?\s*/, "").replace(/^\s*\d+(\.\d+)*\.?\s+/, "").replace(/\s+/g, " ").trim();
+  }
+  // aktive Regeln fuer ein Kapitel (titles: Kapitel und ggf. Unterkapitel)
+  function rulesFor(titles) {
+    var norm = (titles || []).map(rulesNormTitle).filter(Boolean);
+    return ((app.rules && app.rules.items) || []).filter(function (r) { return r.active && (!r.scope || norm.indexOf(rulesNormTitle(r.scope)) !== -1); });
+  }
+  function ruleAsInstruction(r) {
+    if (r.kind === "forbid") return "Den Begriff „" + r.value.trim() + "“ nicht verwenden.";
+    if (r.kind === "require") return "Der Begriff „" + r.value.trim() + "“ muss vorkommen.";
+    if (r.kind === "maxWords") return "Höchstens " + parseInt(r.value, 10) + " Wörter.";
+    return r.value.trim();
+  }
+  // Abschnitt fuer KI-Prompts (leer ohne Regeln)
+  function rulesPromptBlock(titles, forReview) {
+    var rs = rulesFor(titles);
+    if (!rs.length) return "";
+    return "\n\nREGELWERK (vom Nutzer festgelegt, verbindlich" + (forReview ? "; jeden Verstoß als eigenen Befund mit typ \"Fehler\" und hinweis \"Regelwerk: <Regel>\" melden" : "; beim Schreiben einhalten") + "):\n" +
+      rs.map(function (r) { return "- " + (r.scope ? "[Kapitel „" + r.scope + "“] " : "[allgemein] ") + ruleAsInstruction(r); }).join("\n");
+  }
+  function rulesCountTerm(lower, term) {
+    var t = String(term || "").trim().toLowerCase();
+    if (!t) return 0;
+    var esc = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    var re = t.length > 3 ? new RegExp(esc, "g") : new RegExp("(^|[^a-z0-9äöüß])" + esc + "(?=$|[^a-z0-9äöüß])", "g");
+    return (lower.match(re) || []).length;
+  }
+  // feste Regeln gegen einen Kapiteltext: [{ rule, msg }]
+  function rulesCheckText(titles, text) {
+    var plain = String(text || "").replace(/[\u0001\u0002]/g, ""), lower = plain.toLowerCase(), out = [];
+    rulesFor(titles).forEach(function (r) {
+      if (r.kind === "forbid") { var n = rulesCountTerm(lower, r.value); if (n) out.push({ rule: r, msg: "Verbotener Begriff „" + r.value.trim() + "“ " + n + "× im Text." }); }
+      else if (r.kind === "require") { if (!rulesCountTerm(lower, r.value)) out.push({ rule: r, msg: "Pflichtbegriff „" + r.value.trim() + "“ fehlt." }); }
+      else if (r.kind === "maxWords") {
+        var max = parseInt(r.value, 10), words = (plain.split("\n").filter(function (l) { return !/^\s*\[(Bild|Tabelle)[^\]]*\]\s*$/.test(l); }).join(" ").match(/\S+/g) || []).length;
+        if (max > 0 && words > max) out.push({ rule: r, msg: words + " Wörter – erlaubt sind höchstens " + max + "." });
+      }
+    });
+    return out;
+  }
+  function rulesHasFixed() { return ((app.rules && app.rules.items) || []).some(function (r) { return r.active && r.kind !== "ai"; }); }
+  // alle pruefbaren Texte: aktiver FINAL-Stand, Editor, Unterkapitel, Dokument-Review
+  function rulesCollectTargets() {
+    var out = [];
+    var v = typeof finalActiveVersion === "function" ? finalActiveVersion() : null;
+    if (v) (v.chapters || []).forEach(function (c) { out.push({ register: "FINAL", doc: v.name, chapter: c.title, titles: [c.title], text: c.text }); });
+    Object.keys(app.editoChapters || {}).forEach(function (t) { var e = app.editoChapters[t]; if (e && e.de) out.push({ register: "Editor", doc: ((OUTLINE_VERSIONS.filter(function (x) { return x.key === e.versionKey; })[0] || {}).label) || "", chapter: t, titles: [t], text: e.de }); });
+    Object.keys(app.subchapterDrafts || {}).forEach(function (k) { var e = app.subchapterDrafts[k]; if (e && e.text) out.push({ register: "Unterkapitel", doc: ((OUTLINE_VERSIONS.filter(function (x) { return x.key === e.versionKey; })[0] || {}).label) || "", chapter: e.chapterTitle + " › " + e.subchapterTitle, titles: [e.chapterTitle, e.subchapterTitle], text: e.text }); });
+    ((app.vrev && app.vrev.docs) || []).forEach(function (d) { (d.chapters || []).forEach(function (c) { out.push({ register: "Dokument-Review", doc: d.name + (d.version ? " " + d.version : ""), chapter: c.title, titles: [c.title], text: c.text }); }); });
+    return out;
+  }
+  function rulesRunCheck() {
+    var targets = rulesCollectTargets(), results = [];
+    targets.forEach(function (t) { rulesCheckText(t.titles, t.text).forEach(function (f) { results.push({ register: t.register, doc: t.doc, chapter: t.chapter, rule: (f.rule.scope ? "[" + f.rule.scope + "] " : "[allgemein] ") + ruleKindLabel(f.rule.kind) + ": " + f.rule.value, msg: f.msg }); }); });
+    app.rules.lastCheck = { at: nowLabel(), checked: targets.length, results: results };
+    addLog("Regelwerk: " + targets.length + " Kapiteltext(e) geprüft, " + results.length + " Verstoß/Verstöße.");
+    return app.rules.lastCheck;
+  }
+  // bekannte Kapitel fuer die Auswahl: Gliederung (mit Unterkapiteln), aktiver FINAL-Stand, Editor
+  function rulesKnownChapterTitles() {
+    var seen = {}, out = [];
+    function add(t) { var k = rulesNormTitle(t); if (t && k && !seen[k]) { seen[k] = true; out.push(t); } }
+    (app.outline || []).forEach(function (c) { add(c.title); (c.subs || []).forEach(function (sb) { add(sb.title); }); });
+    var v = typeof finalActiveVersion === "function" ? finalActiveVersion() : null;
+    if (v) (v.chapters || []).forEach(function (c) { add(c.title); });
+    Object.keys(app.editoChapters || {}).forEach(add);
+    return out.slice(0, 400);
+  }
+  function renderRules() {
+    if (!els.rulesScopeSelect) return;
+    var prevScope = els.rulesScopeSelect.value, prevKind = els.rulesKindSelect.value || "ai";
+    var titles = rulesKnownChapterTitles();
+    els.rulesScopeSelect.innerHTML = '<option value="">Allgemein (alle Kapitel)</option>' + titles.map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + "</option>"; }).join("") +
+      '<option value="' + RULES_CUSTOM_SCOPE + '">Anderes Kapitel (Titel eingeben) …</option>';
+    els.rulesScopeSelect.value = prevScope && (prevScope === RULES_CUSTOM_SCOPE || titles.indexOf(prevScope) !== -1) ? prevScope : "";
+    els.rulesScopeCustomWrap.hidden = els.rulesScopeSelect.value !== RULES_CUSTOM_SCOPE;
+    els.rulesKindSelect.innerHTML = RULE_KINDS.map(function (k) { return '<option value="' + k.key + '"' + (k.key === prevKind ? " selected" : "") + ">" + escapeHtml(k.label) + "</option>"; }).join("");
+    els.rulesValueInput.placeholder = (RULE_KINDS.filter(function (k) { return k.key === els.rulesKindSelect.value; })[0] || RULE_KINDS[0]).placeholder;
+    var items = app.rules.items.slice().sort(function (a, b) { return (a.scope ? 1 : 0) - (b.scope ? 1 : 0) || a.scope.localeCompare(b.scope) || a.id - b.id; });
+    els.rulesCount.textContent = String(items.length);
+    els.rulesTableWrap.hidden = !items.length;
+    els.rulesEmpty.hidden = items.length > 0;
+    els.rulesTbody.innerHTML = items.map(function (r) {
+      return '<tr data-rule-row="' + r.id + '"><td>' + (r.scope ? escapeHtml(r.scope) : "<b>Allgemein</b>") + "</td><td>" + escapeHtml(ruleKindLabel(r.kind)) + "</td><td>" + escapeHtml(r.value) + "</td>" +
+        '<td><input type="checkbox" data-rule-active="' + r.id + '"' + (r.active ? " checked" : "") + ' aria-label="Regel aktiv"></td>' +
+        '<td><button class="btn ghost btn-tiny" type="button" data-rule-delete="' + r.id + '">Löschen</button></td></tr>';
+    }).join("");
+    var lc = app.rules.lastCheck;
+    els.rulesResultWrap.hidden = !(lc && lc.results.length);
+    els.rulesCheckStatus.textContent = lc ? "Geprüft am " + lc.at + ": " + lc.checked + " Kapiteltext(e), " + lc.results.length + " Verstoß/Verstöße." : "";
+    els.rulesResultTbody.innerHTML = lc ? lc.results.map(function (x) { return "<tr><td>" + escapeHtml(x.register) + "</td><td>" + escapeHtml(x.doc || "–") + "</td><td>" + escapeHtml(x.chapter) + "</td><td>" + escapeHtml(x.rule) + '</td><td class="cv-warn">' + escapeHtml(x.msg) + "</td></tr>"; }).join("") : "";
+  }
+  els.rulesScopeSelect.addEventListener("change", function () { els.rulesScopeCustomWrap.hidden = els.rulesScopeSelect.value !== RULES_CUSTOM_SCOPE; });
+  els.rulesKindSelect.addEventListener("change", function () { els.rulesValueInput.placeholder = (RULE_KINDS.filter(function (k) { return k.key === els.rulesKindSelect.value; })[0] || RULE_KINDS[0]).placeholder; });
+  els.rulesAddBtn.addEventListener("click", function () {
+    var scope = els.rulesScopeSelect.value === RULES_CUSTOM_SCOPE ? els.rulesScopeCustom.value.trim() : els.rulesScopeSelect.value;
+    var kind = els.rulesKindSelect.value, value = els.rulesValueInput.value.trim();
+    if (els.rulesScopeSelect.value === RULES_CUSTOM_SCOPE && !scope) { els.rulesAddNote.textContent = "Bitte den Kapiteltitel eingeben."; return; }
+    if (!value) { els.rulesAddNote.textContent = "Bitte die Regel eingeben."; return; }
+    if (kind === "maxWords" && !(parseInt(value, 10) > 0)) { els.rulesAddNote.textContent = "Bitte eine Zahl größer 0 eingeben."; return; }
+    if (kind === "maxWords") value = String(parseInt(value, 10));
+    app.rules.items.push({ id: app.rules.nextId++, scope: scope, kind: kind, value: value, active: true });
+    els.rulesValueInput.value = ""; els.rulesScopeCustom.value = "";
+    els.rulesAddNote.textContent = "Regel hinzugefügt (" + (scope ? "Kapitel „" + scope + "“" : "allgemein") + ").";
+    addLog("Regelwerk: Regel hinzugefügt – " + (scope ? "Kapitel „" + scope + "“" : "allgemein") + ", " + ruleKindLabel(kind) + ": " + value);
+    renderRules();
+  });
+  els.rulesTbody.addEventListener("change", function (e) {
+    var cb = e.target.closest("[data-rule-active]");
+    if (!cb) return;
+    var r = app.rules.items.filter(function (x) { return x.id === parseInt(cb.getAttribute("data-rule-active"), 10); })[0];
+    if (r) { r.active = cb.checked; addLog("Regelwerk: Regel „" + r.value + "“ " + (r.active ? "aktiviert" : "deaktiviert") + "."); }
+  });
+  els.rulesTbody.addEventListener("click", async function (e) {
+    var b = e.target.closest("[data-rule-delete]");
+    if (!b) return;
+    var id = parseInt(b.getAttribute("data-rule-delete"), 10), r = app.rules.items.filter(function (x) { return x.id === id; })[0];
+    if (!r || !(await confirmDialog("Regel „" + truncate(r.value, 80) + "“ löschen?", "Löschen"))) return;
+    app.rules.items = app.rules.items.filter(function (x) { return x.id !== id; });
+    addLog("Regelwerk: Regel „" + r.value + "“ gelöscht.");
+    renderRules();
+  });
+  els.rulesCheckBtn.addEventListener("click", function () { rulesRunCheck(); renderRules(); });
+
   /* ============ Teil 10: Navigation ============ */
 
   var viewPanels = document.querySelectorAll("[data-view-panel]");
@@ -36658,6 +37062,7 @@
     if (name === "crossx") renderCrossx();
     if (name === "agent") renderAgent();
     if (name === "tabellen") renderRovoTables();
+    if (name === "regelwerk") renderRules();
     if (window.innerWidth <= 900) setSidebar(false);
   }
   navItems.forEach(function (btn) { btn.addEventListener("click", function () { showView(btn.getAttribute("data-view")); }); });
@@ -36676,7 +37081,7 @@
     { key: "extraktion", label: "Extraktion", group: "Input", views: ["verarbeitung", "rovosummary", "massenverarbeitung", "listenauswahl"] },
     { key: "normalisierung", label: "Normalisierung", group: "Operation", views: ["gliederung", "glossar", "synonyme", "abkuerzungen"] },
     { key: "traceability", label: "Traceability", group: "Operation", views: ["ticketgraph", "trend", "mitteilungen"] },
-    { key: "validierung", label: "Validierung", group: "Operation", views: ["crossx", "agent"] },
+    { key: "validierung", label: "Validierung", group: "Operation", views: ["crossx", "agent", "regelwerk"] },
     { key: "generierung", label: "Generierung", group: "Operation", views: ["releaseletter", "benutzerhandbuch", "prozessbild", "clickanweisung", "edito", "unterkapitel", "bildband"] },
     { key: "e2eqa", label: "E2E-QA", group: "Output", views: ["final", "variante"] },
     { key: "testing", label: "Testing", group: "Output", views: ["dataquality", "ergebnisse"] },
@@ -36685,6 +37090,7 @@
   var NAV_GROUPS = ["Input", "Operation", "Output"];
   // Neue Funktionen (Label "Neu" mit Hinweis)
   var NAV_NEW = {
+    regelwerk: "Neu in v2.176: Regelwerk – allgemeine und Kapitel-Regeln (KI-Regeln für die Erzeugung, feste Prüfungen in FINAL, Editor, Unterkapitel und Dokument-Review)",
     einstellungen: "Neu in v2.171: Selbsttest der Umgebung (Bibliotheken, OpenCV, Texterkennung, KI, Browser-Speicher, Downloads)",
     bilder: "Neu in v2.153–2.162: Bildverarbeitung mit OpenCV (Schärfe, Kontrast, leere Ränder, sehr ähnliche Bilder, OCR-Vorverarbeitung); Speicher sparen; sehr ähnliche Bilder bereinigen; Prüfung beim Hochladen",
     variante: "Neu in v2.152/2.155: Dokument-Review – Bilder mit KI auswählen, Bildqualität mit OpenCV prüfen",

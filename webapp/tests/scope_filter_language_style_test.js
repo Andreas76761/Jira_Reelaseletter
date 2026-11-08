@@ -94,9 +94,11 @@ const xml = `<?xml version="1.0"?><rss><channel>
   fire(toggleBtn, "click");
   await wait(30);
 
+  // v2.176: Sparte als Einfachauswahl (Radio „beide“/Pkw/Van, eigener Gruppenname), Rolle weiter Mehrfachauswahl
   function scopeCheckbox(jobNum, kind, value) {
-    return doc.querySelector('#steps-job-' + jobNum + ' input[name="active-scope-filter-' + jobNum + '"][value="' + kind + ':' + value + '"]');
+    return doc.querySelector('#steps-job-' + jobNum + ' input[name="active-scope-filter-' + jobNum + (kind === "sparte" ? "-sparte" : "") + '"][value="' + kind + ':' + value + '"]');
   }
+  function sparteBoth(jobNum) { const r = scopeCheckbox(jobNum, "sparte", ""); r.checked = true; fire(r, "change"); }
   check("(1) Sparte-Filter-Checkbox 'Pkw' vorhanden", !!scopeCheckbox(4, "sparte", "Pkw"));
   check("(1) Rolle-Filter-Checkbox 'Retail' vorhanden", !!scopeCheckbox(4, "role", "Retail"));
 
@@ -107,18 +109,11 @@ const xml = `<?xml version="1.0"?><rss><channel>
   check("(1) Sparte-Filter 'Pkw': nur SCOPE-1 (1 Ticket)", doc.getElementById("releaseversion-total").textContent === "1");
   check("(1) Gefilterte Tabelle zeigt SCOPE-1", doc.getElementById("releaseversion-tbody").textContent.includes("SCOPE-1"));
 
-  pkwCb.checked = false;
-  fire(pkwCb, "change");
+  sparteBoth(4);
   await wait(30);
-  const marktSparteCb = scopeCheckbox(4, "sparte", "Markt");
-  marktSparteCb.checked = true;
-  fire(marktSparteCb, "change");
-  await wait(50);
-  check("(1) Sparte-Filter 'Markt': nur SCOPE-3 (1 Ticket)", doc.getElementById("releaseversion-total").textContent === "1");
-  check("(1) Gefilterte Tabelle zeigt SCOPE-3", doc.getElementById("releaseversion-tbody").textContent.includes("SCOPE-3"));
-  marktSparteCb.checked = false;
-  fire(marktSparteCb, "change");
-  await wait(30);
+  // v2.176: Sparten sind nur noch Pkw/Van/beide – „Markt“ ist Rolle, keine Sparte mehr
+  check("(1) v2.176: Sparte 'Markt' gibt es nicht mehr, „beide“ ist wieder gewählt, alle 4 Tickets",
+    !scopeCheckbox(4, "sparte", "Markt") && scopeCheckbox(4, "sparte", "").checked && doc.getElementById("releaseversion-total").textContent === "4");
 
   const retailCb = scopeCheckbox(4, "role", "Retail");
   retailCb.checked = true;
@@ -154,7 +149,8 @@ const xml = `<?xml version="1.0"?><rss><channel>
   await wait(30);
   const vanCb2 = scopeCheckbox(4, "sparte", "Van");
   const moCb2 = scopeCheckbox(4, "role", "MO");
-  vanCb2.checked = false; fire(vanCb2, "change"); await wait(20);
+  check("(1) v2.176: Sparte 'Van' gewählt", vanCb2.checked);
+  sparteBoth(4); await wait(20);
   moCb2.checked = false; fire(moCb2, "change"); await wait(30);
   check("(1) Nach Zurücksetzen: wieder alle 4 Tickets", doc.getElementById("releaseversion-total").textContent === "4");
 

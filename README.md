@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.175.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.176.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,28 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Sparten Pkw/Van/beide, Register Regelwerk, Kapitel „Intern“ und „In Planung“ (v2.176.0)**:
+  - **Sparten**: überall nur noch Pkw, Van und „Pkw und Van (beide)“, „beide“ ist voreingestellt. Der Sparte-Filter der
+    Verarbeitung/Massenverarbeitung ist eine Einfachauswahl (beide = keine Einschränkung); „Markt“ ist nur noch Rolle.
+    FINAL-Filter „Pkw und Van (beide)“ statt „– egal –“; Editor/Unterkapitel/Gliederungs-Versionen haben die siebte
+    Version „Pkw und Van (beide)“. Beim Laden einer Sitzung werden „Bus“ und „Truck“ aus der Stammdaten-Kategorie
+    „Sparte“ entfernt; gespeicherte Filter mit alten Werten werden zu „beide“.
+  - **Register Regelwerk** (Validierung): Regeln allgemein oder je Kapitel (Kapiteltitel ohne Nummerierung verglichen, so
+    greift „Kapitel 2: Liste“ auch für „2 Liste“). Arten: KI-Regel (Freitext), Begriff verboten, Begriff Pflicht,
+    höchstens N Wörter; je Regel aktiv/inaktiv, löschen. KI-Regeln und feste Regeln gehen als Abschnitt „REGELWERK“ in
+    die Prompts von Editor und Unterkapitel-Werkstatt sowie in die KI-Prüfung des Dokument-Reviews (Verstöße als
+    Befund). Feste Regeln prüft die App selbst: nach jeder Erzeugung im Editor/Unterkapitel, im FINAL-Ergebnis (Hinweis
+    je Kapitel bzw. Gesamtdokument), als neue Prüfung **R1** im Dokument-Review (jetzt 21 Prüfungen; R1 zählt nicht in
+    die Qualitätsnote) und auf Knopfdruck für alles zusammen (aktiver FINAL-Stand, Editor, Unterkapitel, Dokument-Review).
+  - **FINAL – Kapitel „Intern“ und „In Planung“**: im Ergebnis („Neue Zusammenführung“) Text markieren und „Als „Intern“
+    vormerken“ bzw. „Als „In Planung“ vormerken“ wählen – der Abschnitt wird aus dem aktuellen Benutzerhandbuch
+    (aktiver Stand, Text und markierter Text; mitmarkierte Bilder samt Screen) entfernt und im jeweiligen Kapitel
+    abgelegt (Kapitelauswahl „Intern (n vorgemerkt)“/„In Planung (n vorgemerkt)“, mit Herkunftskapitel, Stand, Datum).
+    Die beiden Kapitel gehören nicht zum Handbuch (Word/PDF/PowerPoint), lassen sich als eigenes Word exportieren;
+    Abschnitte können zurückgeholt (an alter Stelle) oder endgültig verworfen werden. Neue Stände (Zusammenführung,
+    Varianten, Übernahme aus dem Dokument-Review) entfernen vorgemerkte Abschnitte automatisch erneut. Veröffentlichte
+    Stände sind gesperrt. Neuer Test `regelwerk_intern_test.js`.
 
 - **Code-Review v2.173–2.174: Detailprüfung der Bild-Dubletten begrenzt (v2.175.0)**: Bei vielen kleinen Screens
   (unter 320×200, also ohne mittlere/feine Vergleichsstufe) konnte jedes Bild gegen fast jede Gruppe in den teuren

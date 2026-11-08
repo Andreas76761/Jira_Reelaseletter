@@ -155,15 +155,16 @@ const xmlMassenupload = `<?xml version="1.0"?><rss><channel>
   const toggleBtn = doc.querySelector("#steps-job-4 .step-toggle");
   fire(toggleBtn, "click");
   await wait(30);
-  const vanSparteCb = doc.querySelector('#steps-job-4 input[name="active-scope-filter-4"][value="sparte:Van"]');
+  const vanSparteCb = doc.querySelector('#steps-job-4 input[name="active-scope-filter-4-sparte"][value="sparte:Van"]'); // v2.176: Einfachauswahl
   check("(6) Sparte-Filter-Checkbox 'Van' vorhanden", !!vanSparteCb);
   vanSparteCb.checked = true;
   fire(vanSparteCb, "change");
   await wait(50);
   check("(6) Sparte-Filter 'Van' (inhaltsbasiert) liefert genau SD-2", doc.getElementById("releaseversion-total").textContent === "1" &&
     doc.getElementById("releaseversion-tbody").textContent.includes("SD-2"));
-  vanSparteCb.checked = false;
-  fire(vanSparteCb, "change");
+  const bothCb = doc.querySelector('#steps-job-4 input[name="active-scope-filter-4-sparte"][value="sparte:"]');
+  bothCb.checked = true;
+  fire(bothCb, "change");
   await wait(30);
 
   // ===================== (7) "Suche weitere Labels" (Job 3): Label-Kandidaten =====================

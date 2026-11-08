@@ -113,13 +113,13 @@ async function docText(data) {
   await waitUntil(() => $("editor-screens-count").textContent === "3" && !/Wartet|Wird verarbeitet/.test($("editor-files-tbody").textContent), 8000);
 
   nav("variante"); await wait(30);
-  check("Abschnitt 6 Dokument-Review vorhanden, Ablage leer", !!$("vrev-step") && $("vrev-step").querySelector(".section-label").textContent.includes("20 Prüfungen in 7 Stufen") && !$("vrev-docs-empty").hidden && $("vrev-work").hidden);
+  check("Abschnitt 6 Dokument-Review vorhanden, Ablage leer", !!$("vrev-step") && $("vrev-step").querySelector(".section-label").textContent.includes("21 Prüfungen in 7 Stufen") && !$("vrev-docs-empty").hidden && $("vrev-work").hidden);
   check("Ohne FINAL-Stand: Übernehmen gesperrt", $("vrev-existing-btn").disabled);
 
   setFiles($("vrev-file-input"), [new win.File([await draftDocx()], "Entwurf_Handbuch.docx")]);
   await waitUntil(() => rows().length === 1 && !$("vrev-work").hidden, 8000);
   check("Entwurf hochgeladen: in der Ablage mit Version 1.0, Status 'In Review', Quelle Upload", rows().length === 1 && rows()[0].children[1].textContent === "1.0" && rows()[0].children[2].textContent.startsWith("In Review") && rows()[0].children[3].textContent.startsWith("Upload"));
-  check("Dashboard: Kacheln und 20 Prüf-Chips", doc.querySelectorAll("#vrev-dash .vrev-chip").length === 20 && !!tile("Qualität") && tile("Stufen").querySelector("b").textContent === "0 / 7");
+  check("Dashboard: Kacheln und 21 Prüf-Chips (v2.176 inkl. R1 Regelwerk)", doc.querySelectorAll("#vrev-dash .vrev-chip").length === 21 && !!tile("Qualität") && tile("Stufen").querySelector("b").textContent === "0 / 7");
   check("Stepper mit 7 Stufen, Stufe 1 Design aktiv", doc.querySelectorAll("#vrev-stepper .vrev-stage-btn").length === 7 && $("vrev-stage").textContent.includes("Stufe 1 – Review Design"));
 
   // Stufe 1 Design
@@ -234,7 +234,7 @@ async function docText(data) {
   $("vrev-report-md-btn").click();
   await waitUntil(() => savedFiles.length === 1, 5000);
   const md = await savedFiles[0].data.text();
-  check("Reviewbericht (Markdown): Dashboard, 7 Stufen, 20 Prüfungen, Status, Änderungen, Verlauf", md.startsWith("# Reviewbericht – Entwurf_Handbuch") && md.includes("## Dashboard") && (md.match(/^- \[(OK|Hinweis|Fehler|offen)\] [A-Z]\d /gm) || []).length === 20 &&
+  check("Reviewbericht (Markdown): Dashboard, 7 Stufen, 21 Prüfungen, Status, Änderungen, Verlauf", md.startsWith("# Reviewbericht – Entwurf_Handbuch") && md.includes("## Dashboard") && (md.match(/^- \[(OK|Hinweis|Fehler|offen)\] [A-Z]\d /gm) || []).length === 21 &&
     md.includes("## Stufe 7 – Finalisierung") && md.includes("## Statusangaben im Text") && md.includes("WIDERSPRUCH") && md.includes("Jira-Nummern gelöscht") && md.includes("## Verlauf") && md.includes("Verteilt"));
   savedFiles.length = 0;
   $("vrev-report-docx-btn").click();
@@ -276,7 +276,7 @@ async function docText(data) {
   fire($("session-export-btn"), "click");
   await waitUntil(() => savedFiles.length > 0, 5000);
   const sess = JSON.parse(savedFiles[0].data);
-  check("Sitzung: Ablage mit 3 Dokumenten, Prüfungen, Stufen und Verlauf", sess.vrev && sess.vrev.docs.length === 3 && Object.keys(sess.vrev.docs[0].checks).length === 20 && Object.keys(sess.vrev.docs[0].steps).length === 7 && sess.vrev.docs[0].history.length > 3);
+  check("Sitzung: Ablage mit 3 Dokumenten, Prüfungen, Stufen und Verlauf", sess.vrev && sess.vrev.docs.length === 3 && Object.keys(sess.vrev.docs[0].checks).length === 21 && Object.keys(sess.vrev.docs[0].steps).length === 7 && sess.vrev.docs[0].history.length > 3);
   const raw = JSON.stringify(sess);
   savedFiles.length = 0;
   doc.querySelector("#reset-btn") && 0;

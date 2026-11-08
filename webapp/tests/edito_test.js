@@ -106,7 +106,7 @@ const ticketXml = `<?xml version="1.0"?><rss><channel>
   // ===================== EDITO vor Rolle/Sparte-Auswahl =====================
   doc.querySelector('.nav-item[data-view="edito"]').click();
   await wait(100);
-  check("Rolle/Sparte-Auswahl vorhanden mit 6 Versionen", doc.getElementById("edito-version-select").options.length === 7); // 1 Platzhalter + 6 Versionen
+  check("Rolle/Sparte-Auswahl vorhanden mit 7 Versionen (v2.176 inkl. „Pkw und Van (beide)“)", doc.getElementById("edito-version-select").options.length === 8); // 1 Platzhalter + 7 Versionen
   check("Kapitel-Bereich vor Auswahl versteckt", doc.getElementById("edito-chapters-section").hidden === true);
   check("Übersicht aller Dokumente vor jeder Erzeugung leer", doc.getElementById("edito-files-count").textContent === "0" && doc.getElementById("edito-files-empty").hidden === false);
 

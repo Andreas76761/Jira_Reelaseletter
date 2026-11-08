@@ -113,8 +113,8 @@ async function sheetRows(zip, n) {
   const wb = await zip.file("xl/workbook.xml").async("string");
   check("Blätter Ablage, Befunde, Verlauf", /name="Ablage".*name="Befunde".*name="Verlauf"/.test(wb));
   const s1 = await sheetRows(zip, 1), s2 = await sheetRows(zip, 2), s3 = await sheetRows(zip, 3);
-  check("Ablage: 2 Dokumente (v1.0, v1.1) mit 14 Kennzahlen + 20 Prüfungen", s1.length === 3 && s1[0].length === 34 && s1[1][1] === "1.0" && s1[2][1] === "1.1" && s1[0][14] === "D1 Schriftarten einheitlich" && s1[0][33] === "F1 Bereit für die Verteilung");
-  check("Befunde: 20 je Dokument mit Stufe", s2.length === 41 && s2[1][2] === "Stufe 1 – Design" && s2.some((r) => r[3] === "B1 Bild-Platzhalter belegt" && r[5].includes("3 von 4")));
+  check("Ablage: 2 Dokumente (v1.0, v1.1) mit 14 Kennzahlen + 21 Prüfungen", s1.length === 3 && s1[0].length === 35 && s1[1][1] === "1.0" && s1[2][1] === "1.1" && s1[0][14] === "D1 Schriftarten einheitlich" && s1[0][34] === "F1 Bereit für die Verteilung");
+  check("Befunde: 21 je Dokument mit Stufe", s2.length === 43 && s2[1][2] === "Stufe 1 – Design" && s2.some((r) => r[3] === "B1 Bild-Platzhalter belegt" && r[5].includes("3 von 4")));
   check("Verlauf: Bildübernahme und Legende protokolliert", s3.some((r) => r[4].includes("3 eingebettete(s) Bild(er)")) && s3.some((r) => r[4] === "Status-Legende eingefügt"));
 
   // Sitzung
