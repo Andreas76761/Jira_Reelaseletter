@@ -6694,7 +6694,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.180.0";
+  var APP_VERSION = "2.181.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -29112,10 +29112,13 @@
       return "Aus „" + e.chapter + "“ (Stand „" + (e.versionName || "") + "“, vorgemerkt am " + (e.at || "") + "):\n" +
         e.piece.replace(FINAL_MARK_RE, "").split("\n").filter(function (l) { return l.trim() !== "[Bild]"; }).join("\n").trim();
     }).join("\n\n");
-    var media = await manualPrepareMediaForScreens([]);
-    var blob = await buildDocxBlobFromBodyAndMedia(manualChapterBodyXml(FINAL_RESERVE_KINDS[kind], text, media, []), media);
-    var fn = "FINAL_" + (kind === "intern" ? "Intern" : "In_Planung") + "_" + new Date().toISOString().slice(0, 10) + ".docx";
-    if (await saveOrWarn(fn, blob)) addLog("FINAL: Kapitel „" + FINAL_RESERVE_KINDS[kind] + "“ (" + list.length + " Abschnitt(e)) als Word exportiert.");
+    // v2.181: Fehler (z. B. Word-Bibliothek nicht ladbar) melden statt still zu scheitern
+    try {
+      var media = await manualPrepareMediaForScreens([]);
+      var blob = await buildDocxBlobFromBodyAndMedia(manualChapterBodyXml(FINAL_RESERVE_KINDS[kind], text, media, []), media);
+      var fn = "FINAL_" + (kind === "intern" ? "Intern" : "In_Planung") + "_" + new Date().toISOString().slice(0, 10) + ".docx";
+      if (await saveOrWarn(fn, blob)) addLog("FINAL: Kapitel „" + FINAL_RESERVE_KINDS[kind] + "“ (" + list.length + " Abschnitt(e)) als Word exportiert.");
+    } catch (err) { showToast("Word-Export fehlgeschlagen", (err && err.message) || "Unbekannter Fehler.", true); }
   }
   els.finalReserveInternBtn.addEventListener("mousedown", function (e) { e.preventDefault(); }); // Auswahl beim Klick behalten
   els.finalReservePlanBtn.addEventListener("mousedown", function (e) { e.preventDefault(); });

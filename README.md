@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.180.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.181.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,14 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Lasttest FINAL mit 300 Kapiteln und 20 Regeln (v2.181.0)**: Im echten Browser (Chromium): Sitzung (1,9 MB) laden
+  0,8 s, Gesamtdokument mit Regelwerk-Hinweis 0,2 s, Regelwerk prüfen (300 Kapitel × 20 Regeln) 0,1 s, 100 Abschnitte
+  vormerken je ca. 76 ms, 50 zurückholen je ca. 100 ms, „In Planung“ (100 Einträge) anzeigen/als Word 0,07 s – keine
+  Blockade über 100 ms, keine Seitenfehler, Zählungen stimmen (104 Verstöße vorher, 4 nach dem Vormerken der
+  „Testsystem“-Zeilen). Gefunden und behoben: Ließ sich die Word-Bibliothek nicht laden (z. B. Proxy), scheiterte der
+  Word-Export von „Intern“/„In Planung“ ohne Meldung – jetzt erscheint „Word-Export fehlgeschlagen“ mit Grund (im Browser
+  mit gesperrter Bibliothek geprüft).
 
 - **Regelwerk als Datei, Warnung vor dem Veröffentlichen (v2.180.0)**: Im Register Regelwerk lassen sich die Regeln als
   JSON exportieren und importieren (z. B. für Kolleginnen/Kollegen oder eine neue Sitzung). Der Import ergänzt – bereits
