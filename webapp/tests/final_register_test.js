@@ -292,7 +292,11 @@ const FASSUNG_B_SATZ = "Fassung B: Der Dealer kann den Vertrag jederzeit online 
   fire(resultSelect, "change");
   await wait(50);
   check("Ergebnis Quellversion zeigt Fassung B (vollständig, unbereinigt)", doc.getElementById("final-result-source-output").textContent.includes(FASSUNG_B_SATZ));
-  check("Ergebnis Master-Vorschau zeigt lesbaren Bild-Hinweis statt [Bild]", doc.getElementById("final-result-master-output").textContent.includes("[Bild:"));
+  // v2.186: finales Dokument zeigt Screens standardmäßig als Bild (ohne Bilder: lesbarer Hinweis)
+  check("Ergebnis Master-Vorschau zeigt Screen als Bild statt [Bild]", !!doc.querySelector("#final-result-master-output figure.final-viewer-figure img") && !/^\s*\[Bild\]\s*$/m.test(doc.getElementById("final-result-master-output").textContent));
+  doc.getElementById("final-result-images-cb").checked = false; fire(doc.getElementById("final-result-images-cb"), "change"); await wait(20);
+  check("Ohne „Bilder anzeigen“: lesbarer Bild-Hinweis statt [Bild]", doc.getElementById("final-result-master-output").textContent.includes("[Bild:"));
+  doc.getElementById("final-result-images-cb").checked = true; fire(doc.getElementById("final-result-images-cb"), "change"); await wait(20);
 
   // ===================== Reset bei "Alle Daten löschen" =====================
   doc.querySelector('.nav-item[data-view="einstellungen"]').click();

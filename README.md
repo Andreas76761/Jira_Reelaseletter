@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.185.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.186.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,25 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **FINAL: Ablauf, Bilder aus dem Register „Bilder“, Original vs. finales Dokument (v2.186.0)**: (1) Links neben
+  FINAL steht eine senkrechte **Ablaufleiste** mit den 9 Schritten und den Daten, die jeder Schritt gerade verarbeitet
+  (z. B. „2 .docx-Datei(en) · 48 Kapitel erkannt · 3 eingebettete Bild(er)“, „15/20 Screens zugeordnet · 4/6 Bilder aus
+  Register „Bilder““, „aktiv: Stand 3 (Entwurf) · 48 Kapitel · 19 Bild(er)“, „links: Handbuch_A.docx · rechts: Stand 3
+  mit Bildern“) und dem Zustand erledigt/offen/optional/wartet; ein Klick springt zum Schritt (unter 900 px Breite
+  steht die Leiste über dem Inhalt). (2) In Schritt 5 listet „Bilder aus dem Register „Bilder““ alle hochgeladenen
+  Bilder (ohne Screens-Dateien und ohne im Handbuch eingebettete Bilder) mit einem **Zuordnungsvorschlag**: das im
+  Register „Bilder“ eingetragene Kapitel/Unterkapitel (100 %), sonst die Übereinstimmung von Beschreibung, OCR-Text und
+  Dateiname mit Kapitelüberschrift (doppelt gewichtet) und Kapiteltext (höchstens 90 %, mit den Treffer-Begriffen).
+  „Vorschläge übernehmen“ setzt alle offenen Bilder, je Zeile ist das Kapitel frei wählbar oder „nicht verwenden“
+  (bleibt beim erneuten Übernehmen abgelehnt). „Master zusammenführen“ setzt die Bilder ins Kapitel – auf freie
+  [Bild]-Stellen, sonst ans Kapitelende; sie landen damit auch im Word/PDF/PowerPoint. (3) Schritt 7 heißt jetzt
+  „Originaldatei vs. finales Dokument“: links ist die **Originaldatei wählbar** (Quelle des Stands oder jede
+  hochgeladene Handbuch-Datei, mit ihren eingebetteten Bildern an der Stelle), rechts steht das **finale Dokument mit
+  Bildern** und Bildunterschriften (abschaltbar über „Bilder anzeigen“; Auswahl und Schalter werden in der Sitzung
+  gespeichert). Vormerken für „Intern“/„In Planung“ funktioniert auch, wenn die Markierung über ein Bild reicht – das
+  Bild wandert mit und kommt beim Zurückholen an seine Stelle zurück. Test: `final_flow_bilder_test.js` (32 Prüfungen);
+  angepasst wurden Tests, die im Ergebnis den Text „[Bild: …]“ erwarteten.
 
 - **Code-Review v2.183–2.184 (v2.185.0)**: (1) Ein Ersatz, der den verbotenen Begriff selbst enthält („Test“ →
   „Testumgebung“), wurde angenommen – „Verbotene Begriffe ersetzen“ blieb dann aktiv und ein zweiter Klick ergab

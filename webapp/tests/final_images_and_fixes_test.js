@@ -213,7 +213,7 @@ async function buildDocx(bodyXml, imageCount) {
   const resultSel = doc.getElementById("final-result-chapter-select");
   resultSel.value = KAP1;
   fire(resultSel, "change");
-  check("Master-Vorschau: Untertitel + oneSCM-Navigation als Bildunterschrift", doc.getElementById("final-result-master-output").textContent.includes("[Bild: Vertragsmaske (bearbeitet) – Navigation: Verträge > Vertrag ändern]"));
+  check("Master-Vorschau: Untertitel + oneSCM-Navigation als Bildunterschrift", Array.from(doc.querySelectorAll("#final-result-master-output figcaption")).some((f) => f.textContent === "Vertragsmaske (bearbeitet) – Navigation: Verträge > Vertrag ändern"));
   savedFiles.length = 0;
   fire(doc.getElementById("final-master-download-docx-btn"), "click");
   await waitUntil(() => savedFiles.length === 1, 5000);

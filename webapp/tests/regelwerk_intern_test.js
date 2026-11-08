@@ -40,6 +40,7 @@ const prompts = [];
   const checks = [];
   function check(l, ok) { checks.push([l, ok]); console.log((ok ? "OK  " : "FAIL") + " - " + l); }
   const $ = (id) => doc.getElementById(id);
+  const noImgs = () => { const cb = $("final-result-images-cb"); if (cb.checked) { cb.checked = false; fire(cb, "change"); } };
   const nav = (v) => doc.querySelector('.nav-item[data-view="' + v + '"]').click();
   async function session() { savedFiles.length = 0; fire($("session-export-btn"), "click"); await waitUntil(() => savedFiles.length === 1, 8000); return JSON.parse(savedFiles[0].data); }
   async function load(s) {
@@ -143,6 +144,7 @@ const prompts = [];
   check("Ergebnis-Ansicht ohne den Abschnitt, Kapitelauswahl zählt 1", !$("final-result-master-output").textContent.includes("Geplant für Q3") && Array.from(csel.options).some((o) => o.textContent === "In Planung (1 vorgemerkt)"));
   // mit Bild: Abschnitt über das Bild hinweg
   csel.value = "1 Vertrag"; fire(csel, "change"); await wait(20);
+  noImgs(); // v2.186: Textansicht (Bild als Hinweis); Markieren über Abbildungen prüft final_flow_bilder_test
   const bildText = Array.from($("final-result-master-output").childNodes).map((n) => n.textContent).join("").match(/\[Bild: [^\]]*\]/);
   check("Bild als Hinweis im Ergebnis", !!bildText);
   check("Abschnitt mit Bild markiert", selectInMaster(bildText[0] + "\nWeitere Schritte"));
@@ -207,7 +209,7 @@ const prompts = [];
     if (!$("confirm-modal-overlay").hidden) await confirmModal();
     return true;
   }
-  const bildIn4 = () => { const m = $("final-result-master-output").textContent.match(/\[Bild: [^\]]*\]/); return m ? m[0] : ""; };
+  const bildIn4 = () => { noImgs(); const m = $("final-result-master-output").textContent.match(/\[Bild: [^\]]*\]/); return m ? m[0] : ""; };
   await markIn4("B zweite Zeile.", "intern");
   await markIn4("C dritte Zeile.", "intern");      // direkt anschließend (gleiche Verankerung wie B)
   const cs4 = $("final-result-chapter-select"); cs4.value = "4 Reihenfolge"; fire(cs4, "change"); await wait(20);

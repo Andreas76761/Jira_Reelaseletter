@@ -270,6 +270,28 @@
   /* FINAL: Schritt-Icons, Markierungen (intern = gelb, Jira = blau, bewusst
      feste Farben fuer Hell-/Dunkelmodus), Design-Karten (Schritt 8). */
   .final-step-label { display: flex; align-items: center; gap: 8px; }
+  /* v2.186: FINAL-Ablaufleiste links (vertikaler Prozess mit den Daten je Schritt) */
+  .final-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 20px; align-items: start; }
+  .final-main { min-width: 0; }
+  .final-flow { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 12px 8px; }
+  .final-flow h3 { margin: 0 0 2px; font-size: 14px; }
+  .final-flow-sub { margin: 0 0 10px; font-size: 12px; color: var(--text-muted); }
+  .final-flow ol { list-style: none; margin: 0; padding: 0; }
+  .final-flow-step { position: relative; display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 8px; padding: 0 0 12px; }
+  .final-flow-step:not(:last-child)::before { content: ""; position: absolute; left: 12px; top: 26px; bottom: 0; width: 2px; background: var(--border); }
+  .final-flow-step.is-done:not(:last-child)::before { background: var(--accent); }
+  .final-flow-dot { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; border: 2px solid var(--border-strong, var(--border)); background: var(--surface); color: var(--text-muted); position: relative; z-index: 1; }
+  .final-flow-step.is-done .final-flow-dot { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .final-flow-step.is-open .final-flow-dot { border-color: var(--accent); color: var(--accent-text); }
+  .final-flow-btn { all: unset; cursor: pointer; display: block; border-radius: 6px; padding: 2px 4px; margin: -2px -4px; }
+  .final-flow-btn:hover, .final-flow-btn:focus-visible { background: var(--accent-soft); outline: none; }
+  .final-flow-title { font-size: 13px; font-weight: 600; line-height: 1.3; display: block; }
+  .final-flow-state { font-size: 11px; color: var(--text-muted); font-weight: 400; margin-left: 4px; }
+  .final-flow-data { margin: 3px 0 0; padding: 0; list-style: none; font-size: 12px; color: var(--text-muted); line-height: 1.35; }
+  .final-flow-data li { overflow-wrap: anywhere; }
+  .final-flow-data b { color: var(--text); font-weight: 600; }
+  @media (max-width: 900px) { .final-layout { grid-template-columns: minmax(0, 1fr); } .final-flow { position: static; max-height: none; } }
+  .final-result-compare-bar { flex-wrap: wrap; margin-top: 6px; }
   .final-step-badge { display: inline-flex; width: 24px; height: 24px; border-radius: 7px; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent-text); flex: none; }
   .btn .final-ico { flex: none; }
   mark.final-mark-internal { background: #fff3a3; color: #3a2d00; border-radius: 2px; padding: 0 2px; }
@@ -3230,6 +3252,13 @@
       <section class="view-panel" data-view-panel="final" hidden>
         <div class="view-head"><h2>FINAL</h2><p class="desc">Letzter Schritt vor der Ablieferung: mehrere Benutzerhandbuch-.docx-Dateien hochladen (mit oder ohne interne Vermerke/Jira-Nummern), die bereinigte Fassung ansehen, Screens aus einer separaten Datei je Rolle/Sparte/Sprache/Markt den Kapiteln/Unterkapiteln zuordnen, alles zu einem Master-Dokument zusammenführen und im gewünschten Design (Original-Design der Handbuch-Datei, eigene Vorlage oder App-Design) als Word, PDF oder PowerPoint ausgeben.</p></div>
 
+        <div class="final-layout">
+        <aside class="final-flow" id="final-flow" aria-label="Ablauf FINAL mit den Daten je Schritt">
+          <h3>Ablauf</h3>
+          <p class="final-flow-sub">Welche Daten in welchem Schritt verarbeitet werden. Klick springt zum Schritt.</p>
+          <ol id="final-flow-list"></ol>
+        </aside>
+        <div class="final-main">
         <section>
           <p class="section-label final-step-label"><span class="final-step-badge"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg></span><span>1. Benutzerhandbuch-Dateien hochladen</span></p>
           <p class="desc">Echte .docx-Dateien, Kapitel werden anhand der Word-Formatvorlagen (Überschrift 1/2/…) erkannt. Interne Vermerke müssen dafür als ECHTE Word-Kommentare (Überprüfen → Kommentar) auf den betroffenen Textstellen angebracht sein – der kommentierte Bereich gilt dann als intern. Das Design der Datei (Formatvorlagen, Schriften, Farben, Seitenformat) wird mitgespeichert und ist für den Word-Export voreingestellt – änderbar in Schritt 8.</p>
@@ -3357,6 +3386,22 @@
             </table>
             <div class="empty-hint" id="final-screens-empty">Noch keine Screens aus einer Screens-Datei extrahiert.</div>
           </div>
+          <div id="final-bilder-block" style="margin-top:16px;">
+            <p class="section-label">Bilder aus dem Register „Bilder“ (<span id="final-bilder-count">0</span>)</p>
+            <p class="desc">Hochgeladene Bilder aus dem Register „Bilder“ (ohne Screens-Dateien und ohne die im Handbuch eingebetteten Bilder) lassen sich ebenfalls ins Master-Handbuch übernehmen. Vorschlag: das im Register „Bilder“ eingetragene Kapitel/Unterkapitel (100 %), sonst die Übereinstimmung von Bildbeschreibung, OCR-Text und Dateiname mit den Kapitelüberschriften (doppelt gewichtet) und dem Kapiteltext. „Vorschläge übernehmen“ setzt alle offenen Bilder auf ihren Vorschlag; je Zeile frei änderbar oder „nicht verwenden“. Übernommene Bilder kommen beim nächsten „Master zusammenführen“ (Schritt 6) ins Kapitel – auf freie [Bild]-Stellen, sonst ans Kapitelende.</p>
+            <div class="controls">
+              <button class="btn primary btn-tiny" id="final-bilder-apply-btn" type="button">Vorschläge übernehmen</button>
+              <button class="btn ghost btn-tiny" id="final-bilder-clear-btn" type="button">Alle Zuordnungen lösen</button>
+              <span class="step-note" id="final-bilder-note" style="margin:0;"></span>
+            </div>
+            <div class="table-wrap">
+              <table class="simple-table" id="final-bilder-table">
+                <thead><tr><th>Vorschau</th><th>Bild</th><th>Vorschlag</th><th>Treffer</th><th>Kapitel im Master</th><th>Status</th></tr></thead>
+                <tbody id="final-bilder-tbody"></tbody>
+              </table>
+              <div class="empty-hint" id="final-bilder-empty">Im Register „Bilder“ sind keine weiteren Bilder vorhanden.</div>
+            </div>
+          </div>
         </section>
 
         <section>
@@ -3475,7 +3520,7 @@
         </section>
 
         <section id="final-result-section" hidden>
-          <p class="section-label final-step-label"><span class="final-step-badge"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg></span><span>7. Ergebnis: Quellversion vs. neue Zusammenführung</span></p>
+          <p class="section-label final-step-label"><span class="final-step-badge"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg></span><span>7. Ergebnis: Originaldatei vs. finales Dokument</span></p>
           <div class="controls">
             <label for="final-result-version-select">Stand</label>
             <select id="final-result-version-select" aria-label="Stand für den Ergebnis-Vergleich"></select>
@@ -3486,13 +3531,18 @@
             <select id="final-result-chapter-select" aria-label="Kapitel für Ergebnis-Vergleich"></select>
             <button class="btn ghost btn-tiny" id="final-result-fullscreen-both-btn" type="button" title="Beide Fenster nebeneinander im Vollbild öffnen"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path d="M12 7v10"/></svg>Beide im Vollbild</button>
           </div>
+          <div class="controls final-result-compare-bar" id="final-result-compare-bar">
+            <label for="final-result-source-file-select">Originaldatei (links)</label>
+            <select id="final-result-source-file-select" aria-label="Originaldatei für den Vergleich"></select>
+            <label class="variante-inline-check"><input type="checkbox" id="final-result-images-cb" checked> Bilder anzeigen (Original und finales Dokument)</label>
+          </div>
           <div class="controls final-role-view" id="final-result-role-wrap" hidden>
             <label for="final-result-role-select">Ansicht als Rolle</label>
             <select id="final-result-role-select" aria-label="Neue Zusammenführung als Rolle ansehen"></select>
             <label class="variante-inline-check"><input type="checkbox" id="final-result-role-hide"> ausgeblendete Absätze weglassen</label>
             <span class="step-note" id="final-result-role-note" style="margin:0;"></span></div>
           <div class="controls" id="final-reserve-bar" style="flex-wrap:wrap; margin-top:6px;">
-            <span class="step-note" style="margin:0;">Abschnitte für die Kapitel „Intern“ und „In Planung“ vormerken: Text in „Neue Zusammenführung“ markieren, dann</span>
+            <span class="step-note" style="margin:0;">Abschnitte für die Kapitel „Intern“ und „In Planung“ vormerken: Text im finalen Dokument (rechts) markieren – auch über Bilder hinweg –, dann</span>
             <button class="btn ghost btn-tiny" id="final-reserve-intern-btn" type="button" title="Markierten Text aus dem aktuellen Benutzerhandbuch entfernen und im Kapitel „Intern“ ablegen">Als „Intern“ vormerken</button>
             <button class="btn ghost btn-tiny" id="final-reserve-plan-btn" type="button" title="Markierten Text aus dem aktuellen Benutzerhandbuch entfernen und im Kapitel „In Planung“ ablegen">Als „In Planung“ vormerken</button>
             <span class="step-note" id="final-reserve-note" style="margin:0;"></span>
@@ -3500,11 +3550,11 @@
           <p class="step-note" id="final-rules-note" hidden></p>
           <div class="rovo-detail-cols" style="margin-top:10px;">
             <div class="rovo-detail-col">
-              <div class="final-result-col-head"><h3>Quellversion</h3><button class="btn ghost btn-tiny" type="button" data-final-result-fullscreen="source" title="Quellversion im Vollbild öffnen (Zoom, Blättern)"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Vollbild</button></div>
+              <div class="final-result-col-head"><h3 id="final-result-source-head">Originaldatei</h3><button class="btn ghost btn-tiny" type="button" data-final-result-fullscreen="source" title="Quellversion im Vollbild öffnen (Zoom, Blättern)"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Vollbild</button></div>
               <div class="rovo-detail-col-text" id="final-result-source-output"></div>
             </div>
             <div class="rovo-detail-col">
-              <div class="final-result-col-head"><h3>Neue Zusammenführung (Master, inkl. Screens)</h3><button class="btn ghost btn-tiny" type="button" data-final-result-fullscreen="master" title="Neue Zusammenführung im Vollbild öffnen (Zoom, Blättern, Screens als Bilder)"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Vollbild</button></div>
+              <div class="final-result-col-head"><h3 id="final-result-master-head">Finales Dokument (neue Zusammenführung, mit Bildern)</h3><button class="btn ghost btn-tiny" type="button" data-final-result-fullscreen="master" title="Neue Zusammenführung im Vollbild öffnen (Zoom, Blättern, Screens als Bilder)"><svg class="final-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Vollbild</button></div>
               <div class="rovo-detail-col-text" id="final-result-master-output"></div>
             </div>
           </div>
@@ -3600,6 +3650,8 @@
             <button class="btn ghost btn-tiny" id="final-review-editor-btn" type="button">Stand im Editor optimieren</button>
           </div>
         </section>
+        </div>
+        </div>
       </section>
 
       <!-- ================= Bilder ================= -->
@@ -6695,7 +6747,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.185.0";
+  var APP_VERSION = "2.186.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8332,7 +8384,7 @@
     "final-filter-rolle-select", "final-filter-sparte-select", "final-filter-sprache-input", "final-filter-markt-input",
     "final-build-master-btn", "final-build-master-spinner", "final-build-master-status-note",
     "final-master-export-section", "final-master-download-docx-btn", "final-master-download-pdf-btn",
-    "final-result-section", "final-reserve-intern-btn", "final-reserve-plan-btn", "final-reserve-note", "final-rules-note", "final-result-chapter-select", "final-result-source-output", "final-result-master-output", "final-result-fullscreen-both-btn", "final-viewer", "final-viewer-panes", "final-viewer-close-btn", "final-viewer-toggle-btn", "final-manual-rolle-select", "final-manual-sparte-select", "final-manual-sprache-input", "final-manual-markt-input",
+    "final-result-section", "final-flow-list", "final-bilder-block", "final-bilder-count", "final-bilder-apply-btn", "final-bilder-clear-btn", "final-bilder-note", "final-bilder-tbody", "final-bilder-empty", "final-result-source-file-select", "final-result-images-cb", "final-result-source-head", "final-result-master-head", "final-reserve-intern-btn", "final-reserve-plan-btn", "final-reserve-note", "final-rules-note", "final-result-chapter-select", "final-result-source-output", "final-result-master-output", "final-result-fullscreen-both-btn", "final-viewer", "final-viewer-panes", "final-viewer-close-btn", "final-viewer-toggle-btn", "final-manual-rolle-select", "final-manual-sparte-select", "final-manual-sprache-input", "final-manual-markt-input",
     "final-improvements-upload-btn", "final-improvements-file-input", "final-improvements-files-tbody", "final-improvements-files-empty",
     "final-improvements-mapping", "final-improvements-view-select", "final-improvements-summary", "final-improvements-tbody",
     "final-preview-manual-select", "final-preview-improvements-select", "final-preview-improvements", "final-screens-file-filter-select",
@@ -18781,6 +18833,7 @@
     return '<span class="thumb-placeholder">Mermaid</span>';
   }
   function renderImagesTable() {
+    renderWhenVisible("final", "finalBilder", function () { renderFinalBilder(); renderFinalFlow(); });
     var combined = app.generatedImages.map(function (img) { return { sortKey: img.id, kind: "generated", data: img }; })
       .concat(app.uploadedImages.map(function (img) { return { sortKey: img.id, kind: "uploaded", data: img }; }));
     combined.sort(function (a, b) { return b.sortKey - a.sortKey; });
@@ -28341,7 +28394,9 @@
       buildManualId: idOrNull(d.buildManualId), buildImprovementFileId: idOrNull(d.buildImprovementFileId), buildScreensFileId: idOrNull(d.buildScreensFileId),
       buildInlineImprovements: !!d.buildInlineImprovements, reviewerName: str(d.reviewerName),
       // v2.176: vorgemerkte Abschnitte fuer die Kapitel „Intern“/„In Planung“ (aus dem Handbuch entfernt)
-      reserved: arr(d.reserved).filter(function (e) { return e && (e.kind === "intern" || e.kind === "planung") && typeof e.piece === "string"; })
+      reserved: arr(d.reserved).filter(function (e) { return e && (e.kind === "intern" || e.kind === "planung") && typeof e.piece === "string"; }),
+      // v2.186: Schritt 7 – Originaldatei links (null = Quelle des Stands), Bilder anzeigen
+      resultSourceManualId: idOrNull(d.resultSourceManualId), resultImages: d.resultImages !== false
     };
     if (!st.versions.length && st.master.chapters.length) {
       st.versions.push({
@@ -28424,9 +28479,10 @@
   function finalScreensForChapter(title, screensFileId) {
     // In Seitenreihenfolge der Quelle (finalAllScreens sortiert); optional nur
     // die Screens EINER Screens-Datei.
+    // v2.186: danach die fuer dieses Kapitel uebernommenen Bilder aus dem Register „Bilder“
     return finalAllScreens().filter(function (img) {
       return img.chapter === title && finalScreenMatchesFilter(img) && (!screensFileId || img.finalScreensFileId === screensFileId);
-    });
+    }).concat(finalBilderCandidates().filter(function (img) { return img.finalUseChapter === title && finalScreenMatchesFilter(img); }));
   }
   // Screens in der Reihenfolge der Originalquelle: Screens-Dateien in
   // Upload-Reihenfolge, darin nach Seite und Position (Bildnummer).
@@ -28774,6 +28830,7 @@
   }
 
   function renderFinalManuals() {
+    finalFlowSoon();
     var manuals = app.final.manuals;
     els.finalManualsEmpty.hidden = manuals.length > 0;
     els.finalManualsTbody.innerHTML = manuals.map(function (m) {
@@ -28828,6 +28885,7 @@
     return f ? finalAllScreens().filter(function (img) { return img.finalScreensFileId === f; }) : finalAllScreens();
   }
   function renderFinalScreensTable() {
+    finalFlowSoon();
     var screens = finalVisibleScreens();
     els.finalScreensCount.textContent = screens.length;
     els.finalScreensEmpty.hidden = screens.length > 0;
@@ -28876,11 +28934,40 @@
     if (!titles.length) finalViewerClose();
     else if (!els.finalViewer.hidden) renderFinalViewer();
   }
-  function finalResultSourceHtml(title) {
+  // v2.186: Originaldatei links frei waehlbar (Standard: Quelle des aktiven Stands); mit Bildern werden die im
+  // Handbuch eingebetteten Bilder an ihrer Stelle gezeigt.
+  function finalResultSourceManualId() {
+    var sel = app.final.resultSourceManualId;
+    if (sel && finalManualById(sel)) return sel;
     var active = finalActiveVersion();
-    var entry = finalChapterEntryFor(title, active && active.config ? active.config.manualId : null);
-    if (!entry) return escapeHtml("(Quelle nicht mehr vorhanden)");
-    return finalMarkedTextToHtml(typeof entry.markedText === "string" ? entry.markedText : entry.fullText);
+    return active && active.config ? active.config.manualId || null : null;
+  }
+  function finalFigureHtml(img, caption) {
+    return '<figure class="final-viewer-figure"><img src="' + screenPreviewUrl(img) + '" alt="' + escapeHtml(caption) + '"><figcaption>' + escapeHtml(caption) + "</figcaption></figure>";
+  }
+  function finalResultSourceHtml(title, withImages) {
+    var mid = finalResultSourceManualId();
+    var entry = finalChapterEntryFor(title, mid);
+    if (!entry) {
+      var m = app.final.resultSourceManualId ? finalManualById(app.final.resultSourceManualId) : null;
+      return m ? '<span class="step-note">Kapitel „' + escapeHtml(title) + "“ kommt in „" + escapeHtml(m.filename) + "“ nicht vor.</span>" : escapeHtml("(Quelle nicht mehr vorhanden)");
+    }
+    var text = typeof entry.markedText === "string" ? entry.markedText : entry.fullText;
+    var emb = withImages ? (entry.embedded || []) : [];
+    if (!emb.length) return finalMarkedTextToHtml(text);
+    var ei = 0, parts = [], buf = [];
+    String(text || "").split("\n").forEach(function (line) {
+      var plain = line.replace(FINAL_MARK_RE, "").trim(), img = null;
+      for (var j = ei; j < emb.length; j++) {
+        if (emb[j].ph === plain) { img = app.uploadedImages.filter(function (x) { return x.id === emb[j].id; })[0] || null; if (img) ei = j + 1; break; }
+      }
+      if (!img) { buf.push(line); return; }
+      parts.push(finalMarkedTextToHtml(buf.join("\n")));
+      buf = [];
+      parts.push(finalFigureHtml(img, img.description || img.filename || ""));
+    });
+    parts.push(finalMarkedTextToHtml(buf.join("\n")));
+    return parts.join("");
   }
   // Master-Text eines Kapitels; "[Bild]"-Zeilen werden zu lesbaren Hinweisen
   // bzw. (withImages) zum eingebetteten Screen mit Bildunterschrift.
@@ -28904,7 +28991,7 @@
         var screen = screenObjs[bildCount];
         bildCount++;
         var caption = screen ? finalScreenCaption(screen) : "?";
-        html = withImages && screen ? '<figure class="final-viewer-figure"><img src="' + screen.dataUrl + '" alt="' + escapeHtml(caption) + '"><figcaption>' + escapeHtml(caption) + "</figcaption></figure>" : escapeHtml("[Bild: " + caption + "]");
+        html = withImages && screen ? finalFigureHtml(screen, caption) : escapeHtml("[Bild: " + caption + "]");
       } else html = finalMarkedTextToHtml(line);
       if (cond) html = finalRoleBadge(cond) + html;
       if (!visible) { finalResultRoleState.hidden++; if (hide) return; html = '<span class="final-role-hidden">' + html + "</span>"; }
@@ -28927,17 +29014,18 @@
       if (withImages && screen) {
         parts.push(finalMarkedTextToHtml(buf.join("\n")));
         buf = [];
-        parts.push('<figure class="final-viewer-figure"><img src="' + screen.dataUrl + '" alt="' + escapeHtml(caption) + '"><figcaption>' + escapeHtml(caption) + "</figcaption></figure>");
+        parts.push(finalFigureHtml(screen, caption));
       } else buf.push("[Bild: " + caption + "]");
     });
     parts.push(finalMarkedTextToHtml(buf.join("\n")));
     return parts.join("");
   }
-  function finalResultHtml(kind, value, withImages) {
+  function finalResultHtml(kind, value, withImages, interactive) {
     var active = finalActiveVersion();
+    if (interactive === undefined) interactive = !withImages;
     function one(title) {
-      if (kind === "source") return finalResultSourceHtml(title);
-      return finalResultMasterHtml(title, withImages) + finalImprovementsBoxHtml(active && active.improvements ? active.improvements[title] : null, "Verbesserungen aus ROVO", { version: active, title: title, interactive: !withImages });
+      if (kind === "source") return finalResultSourceHtml(title, withImages);
+      return finalResultMasterHtml(title, withImages) + finalImprovementsBoxHtml(active && active.improvements ? active.improvements[title] : null, "Verbesserungen aus ROVO", { version: active, title: title, interactive: interactive });
     }
     if (value !== FINAL_RESULT_ALL) return one(value);
     return finalResultTitles().map(function (t, i) {
@@ -28954,7 +29042,19 @@
     els.finalResultRoleHide.checked = finalResultRoleState.hide;
     els.finalResultRoleHide.disabled = !finalResultRoleState.role;
   }
+  function renderFinalResultCompareBar() {
+    var manuals = app.final.manuals, sel = app.final.resultSourceManualId && finalManualById(app.final.resultSourceManualId) ? app.final.resultSourceManualId : null;
+    var active = finalActiveVersion(), defId = active && active.config ? active.config.manualId || null : null, def = defId ? finalManualById(defId) : null;
+    els.finalResultSourceFileSelect.innerHTML = '<option value="">Quelle des Stands' + (def ? " (" + escapeHtml(def.filename) + ")" : " (Konflikt-Auswahl)") + "</option>" +
+      manuals.map(function (m) { return '<option value="' + m.id + '"' + (m.id === sel ? " selected" : "") + ">" + escapeHtml(m.filename) + "</option>"; }).join("");
+    els.finalResultSourceFileSelect.value = sel ? String(sel) : "";
+    els.finalResultImagesCb.checked = app.final.resultImages !== false;
+    var shown = sel ? finalManualById(sel) : def;
+    els.finalResultSourceHead.textContent = "Originaldatei" + (shown ? ": " + shown.filename : "");
+    els.finalResultMasterHead.textContent = "Finales Dokument" + (active ? " („" + active.name + "“)" : "") + (app.final.resultImages !== false ? ", mit Bildern" : "");
+  }
   function updateFinalResult() {
+    renderFinalResultCompareBar();
     renderFinalResultRoleControls();
     finalResultRoleState.hidden = 0;
     var value = els.finalResultChapterSelect.value;
@@ -28969,11 +29069,14 @@
       return;
     }
     finalRenderRulesNote(value);
-    els.finalResultSourceOutput.innerHTML = finalResultHtml("source", value, false);
-    els.finalResultMasterOutput.innerHTML = finalResultHtml("master", value, false);
+    var withImgs = app.final.resultImages !== false;
+    els.finalResultSourceOutput.innerHTML = finalResultHtml("source", value, withImgs);
+    els.finalResultMasterOutput.innerHTML = finalResultHtml("master", value, withImgs, true);
     els.finalResultRoleNote.textContent = finalResultRoleState.role ? finalResultRoleState.hidden + " Absatz/Absätze für „" + finalResultRoleState.role + "“ " + (finalResultRoleState.hide ? "weggelassen" : "ausgeblendet (durchgestrichen)") + "." : "";
   }
   els.finalResultRoleSelect.addEventListener("change", function () { finalResultRoleState.role = els.finalResultRoleSelect.value; updateFinalResult(); });
+  els.finalResultSourceFileSelect.addEventListener("change", function () { app.final.resultSourceManualId = parseInt(els.finalResultSourceFileSelect.value, 10) || null; updateFinalResult(); renderFinalFlow(); });
+  els.finalResultImagesCb.addEventListener("change", function () { app.final.resultImages = els.finalResultImagesCb.checked; updateFinalResult(); if (!els.finalViewer.hidden) renderFinalViewer(); });
   els.finalResultRoleHide.addEventListener("change", function () { finalResultRoleState.hide = els.finalResultRoleHide.checked; updateFinalResult(); });
 
   // ===================== v2.176: Kapitel „Intern“ und „In Planung“ =====================
@@ -29118,6 +29221,14 @@
     });
     return found ? finalResultTitles()[parseInt(found.getAttribute("data-final-chapter-anchor"), 10)] || null : null;
   }
+  // v2.186: im finalen Dokument mit Bildern steht eine Abbildung fuer die Zeile "[Bild]" (sonst wuerde ihre Unterschrift als Text gesucht)
+  function finalReserveRangeText(range) {
+    var frag = range.cloneContents();
+    var figs = frag.querySelectorAll ? frag.querySelectorAll("figure") : [];
+    if (!figs.length) return range.toString();
+    Array.prototype.forEach.call(figs, function (f) { f.parentNode.replaceChild(document.createTextNode("\n[Bild]\n"), f); });
+    return frag.textContent;
+  }
   function finalReserveCurrentSel() {
     var sel = window.getSelection ? window.getSelection() : null;
     if (!sel || sel.isCollapsed || !sel.rangeCount) return null;
@@ -29127,7 +29238,7 @@
     // Auswahl, die ueber das Ergebnisfenster hinausreicht (Maus zu weit gezogen), auf das Fenster begrenzen
     if (!inEnd) range.setEnd(out, out.childNodes.length);
     if (!inStart) range.setStart(out, 0);
-    return { text: range.toString(), chapter: finalReserveChapterForNode(range.startContainer.nodeType === 1 && range.startContainer === out ? (out.firstChild || out) : range.startContainer) };
+    return { text: finalReserveRangeText(range), chapter: finalReserveChapterForNode(range.startContainer.nodeType === 1 && range.startContainer === out ? (out.firstChild || out) : range.startContainer) };
   }
   // Auswahl merken (falls der Klick auf den Knopf sie im Browser aufhebt)
   // v2.178: aufgehobene/andere Auswahl verwirft die gemerkte (sonst wuerde spaeter ein alter Abschnitt vorgemerkt)
@@ -29140,7 +29251,7 @@
     var v = finalActiveVersion();
     if (!v || finalReserveLocked(v)) return;
     var sel = finalReserveCurrentSel() || finalReserveSel;
-    if (!sel || !sel.text.trim()) { els.finalReserveNote.textContent = "Bitte zuerst in „Neue Zusammenführung“ den Text markieren."; return; }
+    if (!sel || !sel.text.trim()) { els.finalReserveNote.textContent = "Bitte zuerst im finalen Dokument (rechts) den Text markieren."; return; }
     if (!sel.chapter) { els.finalReserveNote.textContent = "Kapitel nicht erkannt – bitte ein einzelnes Kapitel wählen und dort markieren."; return; }
     var ch = v.chapters.filter(function (c) { return c.title === sel.chapter; })[0];
     // v2.178: mehrdeutige Auswahl (Text kommt im Kapitel mehrfach vor) nicht raten
@@ -29343,7 +29454,7 @@
     var pane = finalViewerState.panes[idx], el = finalViewerPaneEl(idx);
     if (!pane || !el) return;
     var content = el.querySelector("[data-fv-content]");
-    content.innerHTML = finalResultHtml(pane.kind, pane.value, pane.kind === "master") || '<span class="step-note">(leer)</span>';
+    content.innerHTML = finalResultHtml(pane.kind, pane.value, pane.kind === "master" || app.final.resultImages !== false) || '<span class="step-note">(leer)</span>';
     if (!keepScroll) { el.querySelector("[data-fv-scroll]").scrollTop = 0; pane.anchor = 0; }
     el.querySelector("[data-fv-chapter]").value = pane.value;
     finalViewerApplyZoom(idx);
@@ -29802,6 +29913,7 @@
     return v;
   }
   function renderFinalVersions() {
+    finalFlowSoon();
     var versions = app.final.versions;
     if (document.activeElement !== els.finalReviewerInput) els.finalReviewerInput.value = app.final.reviewerName || "";
     els.finalBuildImprovementsInlineCb.checked = !!app.final.buildInlineImprovements;
@@ -31349,6 +31461,181 @@
     renderDashboardNotesDue();
   });
 
+
+  // ===================== v2.186: Bilder aus dem Register „Bilder“ fuer den Master =====================
+  // Kandidaten: hochgeladene Bilder ohne Screens-Datei und ohne eingebettete Handbuch-Bilder. img.finalUseChapter = Kapitel
+  // im Master (leer = nicht verwenden), img.finalUseDeclined = bewusst abgelehnt (Vorschlaege uebernehmen ueberspringt es).
+  function finalBilderCandidates() {
+    return app.uploadedImages.filter(function (img) { return img && !img.finalScreensFileId && !img.finalManualId && img.dataUrl; })
+      .sort(function (a, b) { return a.id - b.id; });
+  }
+  var FINAL_BILDER_STOP = { bild: 1, bilder: 1, screen: 1, screenshot: 1, image: 1, kapitel: 1, unterkapitel: 1, eine: 1, einen: 1, einer: 1, eines: 1, sind: 1, wird: 1, werden: 1, wurde: 1,
+    nach: 1, über: 1, unter: 1, oder: 1, und: 1, dann: 1, auch: 1, dies: 1, diese: 1, dieser: 1, dieses: 1, sich: 1, nicht: 1, kann: 1, können: 1, muss: 1, beim: 1, sowie: 1,
+    with: 1, from: 1, this: 1, that: 1, jpeg: 1, datei: 1, seite: 1 };
+  function finalBilderTokens(s) {
+    var out = {};
+    String(s || "").toLowerCase().replace(/[\u0001\u0002]/g, " ").split(/[^0-9a-zäöüß]+/).forEach(function (w) {
+      if (w.length >= 4 && !FINAL_BILDER_STOP[w] && !/^\d+$/.test(w)) out[w] = 1;
+    });
+    return out;
+  }
+  var finalBilderIndexCache = { key: null, list: [] };
+  function finalBilderIndex() {
+    var key = app.final.manuals.map(function (m) { return m.id + ":" + m.chapters.length; }).join(",") + "|" + JSON.stringify(app.final.manualChapterSource || {});
+    if (finalBilderIndexCache.key === key) return finalBilderIndexCache.list;
+    var list = finalMasterChapterTitles().map(function (t) {
+      var e = finalChapterEntry(t), txt = e ? String(e.cleanText || e.fullText || "").slice(0, 20000) : "";
+      return { title: t, norm: rulesNormTitle(t), tt: finalBilderTokens(t), xt: finalBilderTokens(txt) };
+    });
+    finalBilderIndexCache = { key: key, list: list };
+    return list;
+  }
+  function finalBilderSuggest(img) {
+    var idx = finalBilderIndex();
+    if (!idx.length || !img) return null;
+    var reg = [img.subchapter, img.chapter].filter(function (v) { return v && String(v).trim(); });
+    for (var r = 0; r < reg.length; r++) {
+      var n = rulesNormTitle(reg[r]);
+      if (!n) continue;
+      var hit = idx.filter(function (c) { return c.norm === n; })[0] ||
+        idx.filter(function (c) { return n.length >= 4 && c.norm.length >= 4 && (c.norm.indexOf(n) !== -1 || n.indexOf(c.norm) !== -1); })[0];
+      if (hit) return { title: hit.title, score: 100, reason: "Kapitel im Register „Bilder“: " + reg[r] };
+    }
+    var toks = Object.keys(finalBilderTokens([img.description, img.ocrText, String(img.filename || "").replace(/\.[a-z0-9]{2,5}$/i, ""), img.domain, img.processStep].join(" ")));
+    if (!toks.length) return null;
+    var best = null;
+    idx.forEach(function (c) {
+      var th = [], xh = [];
+      toks.forEach(function (w) { if (c.tt[w]) th.push(w); else if (c.xt[w]) xh.push(w); });
+      var raw = 2 * th.length + xh.length;
+      if (raw >= 2 && (!best || raw > best.raw || (raw === best.raw && th.length > best.th))) best = { title: c.title, raw: raw, th: th.length, words: th.concat(xh) };
+    });
+    if (!best) return null;
+    var score = Math.min(90, Math.round(100 * best.raw / (2 * Math.max(2, Math.min(toks.length, 6)))));
+    return { title: best.title, score: score, reason: "Begriffe: " + best.words.slice(0, 5).join(", ") };
+  }
+  function finalBilderImgById(id) { id = parseInt(id, 10); return finalBilderCandidates().filter(function (i) { return i.id === id; })[0] || null; }
+  function renderFinalBilder() {
+    if (!els.finalBilderTbody) return;
+    var imgs = finalBilderCandidates(), titles = finalMasterChapterTitles(), used = 0, open = 0;
+    els.finalBilderCount.textContent = imgs.length;
+    els.finalBilderEmpty.hidden = imgs.length > 0;
+    els.finalBilderTbody.innerHTML = imgs.map(function (img) {
+      var sug = titles.length ? finalBilderSuggest(img) : null;
+      var cur = img.finalUseChapter && titles.indexOf(img.finalUseChapter) !== -1 ? img.finalUseChapter : "";
+      if (cur) used++;
+      if (sug && !cur && !img.finalUseDeclined) open++;
+      var status = cur ? '<span class="pill done">' + (sug && sug.title === cur ? "übernommen" : "manuell") + "</span>"
+        : img.finalUseDeclined ? '<span class="step-note">nicht verwenden</span>' : '<span class="step-note">offen</span>';
+      var opts = '<option value="">– nicht verwenden –</option>' + titles.map(function (t) { return '<option value="' + escapeHtml(t) + '"' + (t === cur ? " selected" : "") + ">" + escapeHtml(t) + "</option>"; }).join("");
+      var desc = (img.description || "").trim();
+      return '<tr data-final-bilder-row="' + img.id + '"><td><img src="' + screenPreviewUrl(img) + '" loading="lazy" title="' + escapeHtml(img.filename || "") + '" style="width:60px;height:60px;object-fit:cover;border-radius:6px;" alt=""></td>' +
+        "<td>" + escapeHtml(img.filename || "Bild") + (desc ? '<br><small class="step-note">' + escapeHtml(desc.length > 90 ? desc.slice(0, 90) + "…" : desc) + "</small>" : "") + "</td>" +
+        "<td>" + (sug ? escapeHtml(sug.title) + '<br><small class="step-note">' + escapeHtml(sug.reason) + "</small>" : '<span class="step-note">' + (titles.length ? "kein Vorschlag" : "zuerst Handbuch hochladen") + "</span>") + "</td>" +
+        '<td class="mono" data-final-bilder-score="' + img.id + '">' + (sug ? sug.score + " %" : "–") + "</td>" +
+        '<td><select data-final-bilder-chapter="' + img.id + '" aria-label="Kapitel im Master für ' + escapeHtml(img.filename || "Bild") + '"' + (titles.length ? "" : " disabled") + ">" + opts + "</select></td>" +
+        '<td data-final-bilder-status="' + img.id + '">' + status + "</td></tr>";
+    }).join("");
+    els.finalBilderApplyBtn.disabled = !open;
+    els.finalBilderClearBtn.disabled = !imgs.some(function (i) { return i.finalUseChapter || i.finalUseDeclined; });
+    els.finalBilderNote.textContent = imgs.length ? used + " von " + imgs.length + " Bild(ern) für den Master vorgesehen" + (open ? " · " + open + " Vorschlag/Vorschläge offen" : "") + "." : "";
+  }
+  els.finalBilderTbody.addEventListener("change", function (e) {
+    var sel = e.target.closest("[data-final-bilder-chapter]");
+    if (!sel) return;
+    var img = finalBilderImgById(sel.getAttribute("data-final-bilder-chapter"));
+    if (!img) return;
+    img.finalUseChapter = sel.value;
+    img.finalUseDeclined = !sel.value;
+    renderFinalBilder();
+    renderFinalFlow();
+  });
+  els.finalBilderApplyBtn.addEventListener("click", function () {
+    var n = 0;
+    finalBilderCandidates().forEach(function (img) {
+      if (img.finalUseChapter || img.finalUseDeclined) return;
+      var sug = finalBilderSuggest(img);
+      if (sug) { img.finalUseChapter = sug.title; n++; }
+    });
+    renderFinalBilder();
+    renderFinalFlow();
+    addLog("FINAL: " + n + " Bild(er) aus dem Register „Bilder“ per Vorschlag Kapiteln zugeordnet.");
+    showToast("Vorschläge übernommen", n + " Bild(er) zugeordnet – wirksam mit dem nächsten „Master zusammenführen“.");
+  });
+  els.finalBilderClearBtn.addEventListener("click", function () {
+    finalBilderCandidates().forEach(function (img) { delete img.finalUseChapter; delete img.finalUseDeclined; });
+    renderFinalBilder();
+    renderFinalFlow();
+  });
+
+  // ===================== v2.186: Ablaufleiste (vertikaler Prozess mit den Daten je Schritt) =====================
+  var finalFlowTimer = null;
+  function finalFlowSoon() {
+    if (finalFlowTimer) return;
+    finalFlowTimer = setTimeout(function () { finalFlowTimer = null; renderFinalFlow(); }, 0);
+  }
+  function finalFlowSections() {
+    var panel = document.querySelector('[data-view-panel="final"]');
+    return panel ? Array.prototype.map.call(panel.querySelectorAll(".final-step-label"), function (l) { return l.closest("section"); }) : [];
+  }
+  function finalFlowSteps() {
+    var f = app.final, manuals = f.manuals, chapters = manuals.reduce(function (n, m) { return n + m.chapters.length; }, 0);
+    var embedded = manuals.reduce(function (n, m) { return n + (m.embeddedImages || 0); }, 0);
+    var dup = finalMasterChapterTitles().filter(function (t) { return finalManualsForChapter(t).length > 1; });
+    var screens = finalAllScreens(), assigned = screens.filter(function (i) { return !!i.chapter; }).length;
+    var bilder = finalBilderCandidates(), bilderUsed = bilder.filter(function (i) { return !!i.finalUseChapter; }).length;
+    var active = finalActiveVersion(), vScreens = active ? active.chapters.reduce(function (n, c) { return n + (c.screenIds || []).length; }, 0) : 0;
+    var reserved = finalReserved(), rIntern = reserved.filter(function (e) { return e.kind === "intern"; }).length, rPlan = reserved.length - rIntern;
+    var srcId = finalResultSourceManualId(), src = srcId ? finalManualById(srcId) : null;
+    var wordLabel = "", pptLabel = "";
+    try {
+      var wo = finalWordDesignOptions(), wk = finalEffectiveWordDesignKey(wo); wordLabel = (wo.filter(function (o) { return o.key === wk; })[0] || {}).label || "";
+      var po = finalPptDesignOptions(), pk = finalEffectivePptDesignKey(po); pptLabel = (po.filter(function (o) { return o.key === pk; })[0] || {}).label || "";
+    } catch (e) { /* Design-Optionen noch nicht bereit */ }
+    var reviewMerged = typeof finalReviewState !== "undefined" && finalReviewState && finalReviewState.merged;
+    function b(v) { return "<b>" + escapeHtml(String(v)) + "</b>"; }
+    return [
+      { title: "Benutzerhandbuch-Dateien", state: manuals.length ? "done" : "open",
+        data: manuals.length ? [b(manuals.length) + " .docx-Datei(en)", b(chapters) + " Kapitel erkannt", embedded ? b(embedded) + " eingebettete Bild(er)" : null] : ["Eingang: .docx mit Überschriften (und Word-Kommentaren für Interna)"] },
+      { title: "Mehrfach vorkommende Kapitel", state: !manuals.length ? "wait" : dup.length ? "done" : "skip",
+        data: !manuals.length ? ["wartet auf Schritt 1"] : dup.length ? [b(dup.length) + " Kapitel in mehreren Dateien", "Quelle je Kapitel gewählt"] : ["keine Mehrfach-Kapitel – nichts zu tun"] },
+      { title: "Anzeige-Optionen & Vorschau", state: manuals.length ? "done" : "wait",
+        data: ["Interne Vermerke: " + b(f.showInternal ? "sichtbar" : "entfernt"), "Jira-Nummern: " + b(f.hideJira ? "entfernt" : "sichtbar")] },
+      { title: "Screens-Datei", state: f.screensFiles.length ? "done" : "skip",
+        data: f.screensFiles.length ? [b(f.screensFiles.length) + " Screens-Datei(en)", b(screens.length) + " Screens extrahiert"] : ["optional: Screens je Rolle/Sparte/Sprache/Markt"] },
+      { title: "Screens & Bilder zuordnen", state: assigned || bilderUsed ? "done" : (screens.length || bilder.length) && manuals.length ? "open" : "skip",
+        data: [b(assigned + "/" + screens.length) + " Screens zugeordnet", b(bilderUsed + "/" + bilder.length) + " Bilder aus Register „Bilder“"] },
+      { title: "Master zusammenführen", state: f.versions.length ? "done" : manuals.length ? "open" : "wait",
+        data: active ? [b(f.versions.length) + " Stand/Stände", "aktiv: " + b(active.name) + " (" + escapeHtml(active.status || "Entwurf") + ")", b(active.chapters.length) + " Kapitel · " + b(vScreens) + " Bild(er)"] : ["Ausgang: Stand aus Quelle + Verbesserungen + Bildern"] },
+      { title: "Original vs. finales Dokument", state: active ? "done" : "wait",
+        data: active ? ["links: " + b(src ? src.filename : "Konflikt-Auswahl"), "rechts: " + b(active.name) + (f.resultImages !== false ? " mit Bildern" : " ohne Bilder"), (rIntern || rPlan) ? "Intern " + b(rIntern) + " · In Planung " + b(rPlan) : null] : ["wartet auf Schritt 6"] },
+      { title: "Design", state: active ? "done" : "wait",
+        data: [wordLabel ? "Word: " + b(wordLabel) : null, pptLabel ? "PowerPoint: " + b(pptLabel) : null] },
+      { title: "Gesamtdokument & Review", state: reviewMerged ? "done" : active ? "open" : "wait",
+        data: [reviewMerged ? "Gesamtdokument zusammengeführt" : "Ausgang: Word/PDF/PowerPoint + Agenten-Review"] }
+    ];
+  }
+  var FINAL_FLOW_STATE_LABEL = { done: "erledigt", open: "offen", skip: "optional", wait: "wartet" };
+  function renderFinalFlow() {
+    if (!els.finalFlowList) return;
+    var steps = finalFlowSteps(), sections = finalFlowSections();
+    els.finalFlowList.innerHTML = steps.map(function (st, i) {
+      var cls = st.state === "done" ? "is-done" : st.state === "open" ? "is-open" : "";
+      var hiddenSec = sections[i] && sections[i].hidden;
+      return '<li class="final-flow-step ' + cls + '" data-final-flow-step="' + (i + 1) + '" data-final-flow-state="' + st.state + '">' +
+        '<span class="final-flow-dot" aria-hidden="true">' + (st.state === "done" ? "✓" : i + 1) + "</span>" +
+        '<button class="final-flow-btn" type="button" data-final-flow-goto="' + i + '"' + (hiddenSec ? ' title="Schritt erscheint, sobald Daten vorliegen"' : "") + '><span class="final-flow-title">' + (i + 1) + ". " + escapeHtml(st.title) +
+        '<span class="final-flow-state">' + FINAL_FLOW_STATE_LABEL[st.state] + "</span></span>" +
+        '<ul class="final-flow-data">' + st.data.filter(Boolean).map(function (d) { return "<li>" + d + "</li>"; }).join("") + "</ul></button></li>";
+    }).join("");
+  }
+  els.finalFlowList.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-final-flow-goto]");
+    if (!btn) return;
+    var sec = finalFlowSections()[parseInt(btn.getAttribute("data-final-flow-goto"), 10)];
+    if (sec && !sec.hidden && sec.scrollIntoView) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
   function renderFinal() {
     finalPopulateRolleSparteSelects();
     els.finalHideInternalCb.checked = !app.final.showInternal;
@@ -31365,6 +31652,7 @@
     updateFinalPreview();
     renderFinalScreensFilesTable();
     renderFinalScreensTable();
+    renderFinalBilder();
     renderFinalBulkBar();
     renderFinalMasterExportState();
     renderFinalVersions();
@@ -31378,6 +31666,7 @@
     updateFinalResult();
     renderFinalDesign();
     renderFinalReview();
+    renderFinalFlow();
     renderWhenVisible("edito", "finalDocs", renderEditoFinalDocs);
   }
 
@@ -31388,7 +31677,7 @@
     return finalTitlesForManual(config.manualId).map(function (title) {
       var marked = finalChapterMarkedText(title, config.manualId);
       var entry = finalChapterEntryFor(title, config.manualId);
-      var fileScreens = finalScreensForChapter(title, config.screensFileId).map(function (img) { return Object.assign({}, img, { description: finalScreenCaption(img) }); });
+      var fileScreens = finalScreensForChapter(title, config.screensFileId).map(function (img) { return Object.assign({}, img, { description: finalScreenCaption(img) || img.filename || "" }); });
       // v2.149: eingebettete Bilder des Handbuchs an ihrer Stelle; "[Bild]" aus dem Text bekommt (wie bisher) die
       // naechsten Screens der Screens-Datei, die uebrigen Screens folgen am Kapitelende.
       var emb = (entry && entry.embedded) || [], ei = 0, fi = 0, screens = [];
@@ -31849,6 +32138,7 @@
     }
   }
   function renderFinalDesign() {
+    finalFlowSoon();
     var wordOpts = finalWordDesignOptions(), wordKey = finalEffectiveWordDesignKey(wordOpts);
     els.finalWordDesignSelect.innerHTML = wordOpts.map(function (o) { return '<option value="' + escapeHtml(o.key) + '"' + (o.key === wordKey ? " selected" : "") + ">" + escapeHtml(o.label) + "</option>"; }).join("");
     els.finalWordDesignNote.textContent = (wordOpts.filter(function (o) { return o.key === wordKey; })[0] || {}).note || "";

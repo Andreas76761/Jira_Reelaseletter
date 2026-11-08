@@ -128,7 +128,8 @@ const K1 = "Kapitel 1: Verträge", K2 = "Kapitel 2: Kündigung", K3 = "Kapitel 3
   const masterAll = doc.getElementById("final-result-master-output");
   check("Gesamtes Dokument: Quellversion enthält alle 3 Kapitelüberschriften", srcAll.querySelectorAll("h2.final-doc-chapter").length === 3 && [K1, K2, K3].every((k) => srcAll.textContent.includes(k)));
   check("Gesamtes Dokument: Quellversion enthält Text aller Kapitel", ["Verträge werden online", "Kündigungen werden erfasst", "Händlerdaten pflegen"].every((t) => srcAll.textContent.includes(t)));
-  check("Gesamtes Dokument: neue Zusammenführung mit allen Kapiteln und Bild-Hinweisen", masterAll.querySelectorAll("h2.final-doc-chapter").length === 3 && (masterAll.textContent.match(/\[Bild:/g) || []).length === 4);
+  // v2.186: finales Dokument zeigt Screens standardmäßig als Bilder (Hinweis „[Bild: …]“ nur ohne Bild-Daten)
+  check("Gesamtes Dokument: neue Zusammenführung mit allen Kapiteln und Bildern", masterAll.querySelectorAll("h2.final-doc-chapter").length === 3 && masterAll.querySelectorAll("figure").length + (masterAll.textContent.match(/\[Bild:/g) || []).length === 4);
 
   // ===================== Vollbild: einzelnes Fenster =====================
   const viewer = doc.getElementById("final-viewer");
