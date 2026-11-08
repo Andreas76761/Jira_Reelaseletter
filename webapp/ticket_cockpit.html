@@ -6649,7 +6649,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.172.0";
+  var APP_VERSION = "2.173.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -18876,7 +18876,8 @@
   var CV_LOCAL_SRC = "vendor/opencv-4.11.0.js";
   var CV_SRC = [CV_LOCAL_SRC, "https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.11.0-release.1/dist/opencv.js", "https://unpkg.com/@techstark/opencv-js@4.11.0-release.1/dist/opencv.js"];
   var cvLoadedFrom = "";
-  var CV_BLUR_THRESHOLD = 60, CV_CONTRAST_MIN = 20, CV_DUP_MAX_BITS = 32, CV_DUP_MAX_DIFF = 0.002, CV_BORDER_MIN = 0.04, CV_MAX_EDGE = 1200;
+  var CV_THUMB_W = 80, CV_THUMB_H = 50, CV_MID_W = 160, CV_MID_H = 100, CV_FINE_W = 320, CV_FINE_H = 200;
+  var CV_BLUR_THRESHOLD = 60, CV_CONTRAST_MIN = 20, CV_DUP_MAX_BITS = 32, CV_DUP_MAX_DIFF = 0.002, CV_DUP_TOL = 32, CV_MID_TOL = 12, CV_MID_MAX_DIFF = 0.0004, CV_FINE_TOL = 24, CV_FINE_MAX_DIFF = 0.0003, CV_DETAIL_W = 640, CV_DETAIL_TOL = 24, CV_DETAIL_MAX_DIFF = 0.0008, CV_BORDER_MIN = 0.04, CV_MAX_EDGE = 1200;
   var cvLoadPromise = null;
   // Liefert { cv } (Wrapper, weil das Emscripten-Modul selbst ein "then" hat und ein Promise sonst endlos aufloest).
   function cvWhenReady(c) {
@@ -18961,7 +18962,7 @@
   // leerer Rand (Inhaltsrechteck gegenueber der Randfarbe), Fingerabdruck (dHash 64 Bit) fuer Dubletten.
   function cvAnalyzePixels(cv, px) {
     var src = cv.matFromImageData(px.data), gray = new cv.Mat(), lap = new cv.Mat(), m = new cv.Mat(), sd = new cv.Mat(), m2 = new cv.Mat(), sd2 = new cv.Mat();
-    var bg = null, diff = new cv.Mat(), bin = new cv.Mat(), small = new cv.Mat(), thumb = new cv.Mat();
+    var bg = null, diff = new cv.Mat(), bin = new cv.Mat(), small = new cv.Mat(), thumb = new cv.Mat(), mid = new cv.Mat(), fine = new cv.Mat();
     try {
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
       cv.Laplacian(gray, lap, cv.CV_64F);
@@ -18995,31 +18996,115 @@
       // verkleinert) 0,00 %, kleine Markierung 0,03 %, gleicher Screen mit anderer Zahl im Titel 0,00 %, anderes Thema
       // 0,47 % – Grenze 0,2 %. "Gleicher Screen, andere Zahl" ist von einer Kopie nicht zu trennen, daher "sehr aehnlich
       // (moegliche Dublette)" mit angezeigter Abweichung, Entscheidung beim Menschen.
-      cv.resize(gray, thumb, new cv.Size(80, 50), 0, 0, cv.INTER_AREA);
-      return { sharp: Math.round(sharp * 10) / 10, contrast: Math.round(contrast * 10) / 10, border: border, empty: empty, hash: bits, thumb: new Uint8Array(thumb.data) };
+      // v2.173: zweite, feine Stufe fuer grosse Bilder. Das grobe 80×50-Bild verwischt Text, sodass Screens mit gleichem
+      // Layout, aber anderem Inhalt als „sehr ähnlich“ galten (Lasttest: 500 verschiedene Masken in EINER Gruppe). Sind
+      // beide Bilder mindestens 320×200 Pixel gross, muss zusaetzlich das feine Vergleichsbild (320×200, leicht geglaettet
+      // gegen Kompressions-/Skalierungsrauschen, Toleranz 24 Stufen) passen: hoechstens 0,03 % (19 Pixel) abweichend.
+      // Gemessen an 1280×800-Masken: Kopien 100/75/50/33 %, JPEG q0,5–0,8: 0 Pixel; kleine Markierung 6 Pixel; andere
+      // Zahl im Titel 8 Pixel; anderer Inhalt bei gleichem Layout (nur andere Werte in den Feldern) 54–178 Pixel.
+      // Ist nur EINES der Bilder so gross (z. B. Maske gegen kleine Vorschau 256×160), vergleicht die mittlere Stufe
+      // (160×100, geglaettet, Toleranz 12, hoechstens 6 Pixel): Kopien bis 15 % Groesse 0 Pixel, kleine Markierung
+      // 3 Pixel, anderer Inhalt 12–67 Pixel. Zwei kleine Bilder (beide unter 320×200) vergleicht nur die grobe Stufe.
+      cv.resize(gray, thumb, new cv.Size(CV_THUMB_W, CV_THUMB_H), 0, 0, cv.INTER_AREA);
+      if (W >= CV_MID_W && H >= CV_MID_H) {
+        cv.resize(gray, mid, new cv.Size(CV_MID_W, CV_MID_H), 0, 0, cv.INTER_AREA);
+        cv.GaussianBlur(mid, mid, new cv.Size(3, 3), 0, 0, cv.BORDER_REPLICATE);
+      }
+      if (W >= CV_FINE_W && H >= CV_FINE_H) {
+        cv.resize(gray, fine, new cv.Size(CV_FINE_W, CV_FINE_H), 0, 0, cv.INTER_AREA);
+        cv.GaussianBlur(fine, fine, new cv.Size(3, 3), 0, 0, cv.BORDER_REPLICATE);
+      }
+      return { sharp: Math.round(sharp * 10) / 10, contrast: Math.round(contrast * 10) / 10, border: border, empty: empty, hash: bits, thumb: { c: new Uint8Array(thumb.data), m: mid.rows ? new Uint8Array(mid.data) : null, f: fine.rows ? new Uint8Array(fine.data) : null } };
     } finally {
-      [src, gray, lap, m, sd, m2, sd2, diff, bin, small, thumb].forEach(function (x) { x.delete(); });
+      [src, gray, lap, m, sd, m2, sd2, diff, bin, small, thumb, mid, fine].forEach(function (x) { x.delete(); });
       if (bg) bg.delete();
     }
   }
   function cvHamming(a, b) { var n = 0; for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) n++; return n; }
-  // Anteil deutlich abweichender Pixel (mehr als 32 Graustufen)
-  function cvDiffShare(a, b) { if (!a || !b || a.length !== b.length) return 1; var n = 0; for (var i = 0; i < a.length; i++) if (Math.abs(a[i] - b[i]) > 32) n++; return n / a.length; }
-  // Sehr aehnliche Bilder: aehnlicher Fingerabdruck UND hoechstens 0,2 % deutlich abweichende Pixel; jede Gruppe wird
+  // Anteil deutlich abweichender Pixel; bricht ab, sobald die Grenze sicher ueberschritten ist (dann 1)
+  function cvShareWithin(a, b, tol, maxShare) {
+    if (!a || !b || a.length !== b.length) return 1;
+    var n = 0, limit = Math.floor(a.length * maxShare) + 1;
+    for (var i = 0; i < a.length; i++) if (Math.abs(a[i] - b[i]) > tol && ++n >= limit) return 1;
+    return n / a.length;
+  }
+  // Vergleich zweier Vergleichsbilder ({ c: grob 80×50, m: mittel 160×100, f: fein 320×200 – m/f null bei kleinen
+  // Bildern}): Anteil abweichender Pixel im groben Bild (mehr als 32 Graustufen), oder 1, wenn eine Stufe die Grenze fuer
+  // „sehr aehnlich“ ueberschreitet. Fein, wenn beide gross sind; mittel, wenn nur eines gross ist (s. cvAnalyzePixels).
+  function cvDiffShare(a, b) {
+    if (!a || !b) return 1;
+    var sh = cvShareWithin(a.c, b.c, CV_DUP_TOL, CV_DUP_MAX_DIFF);
+    if (sh > CV_DUP_MAX_DIFF) return 1;
+    if ((a.f || b.f) && a.m && b.m && cvShareWithin(a.m, b.m, CV_MID_TOL, CV_MID_MAX_DIFF) > CV_MID_MAX_DIFF) return 1;
+    if (a.f && b.f && cvShareWithin(a.f, b.f, CV_FINE_TOL, CV_FINE_MAX_DIFF) > CV_FINE_MAX_DIFF) return 1;
+    return sh;
+  }
+  // Sehr aehnliche Bilder: aehnlicher Fingerabdruck UND hoechstens 0,2 % deutlich abweichende Pixel (grosse Bilder auch
+  // fein, s. cvAnalyzePixels); jede Gruppe wird
   // am ersten Bild gemessen (keine Ketten A~B~C), damit Screens mit gleichem Layout, aber anderem Inhalt getrennt bleiben.
-  function cvDuplicateGroups(imgs, thumbs, keepDiff) {
+  // v2.173: jedes Bild prueft alle passenden Gruppen (aehnlichste zuerst) und kommt in die erste, deren erstes Bild auch
+  // die Detailpruefung besteht (match: async (erstes Bild, Bild) → true/false; ohne match nur die gespeicherten Stufen)
+  async function cvDuplicateGroups(imgs, thumbs, keepDiff, match) {
     var groups = [];
-    imgs.forEach(function (img) {
-      var share = 1, g = null;
-      for (var gi = 0; gi < groups.length && !g; gi++) {
+    for (var ii = 0; ii < imgs.length; ii++) {
+      var img = imgs[ii], cands = [], g = null, share = 1;
+      if (ii % 25 === 24) await new Promise(function (r) { setTimeout(r, 0); });
+      for (var gi = 0; gi < groups.length; gi++) {
         var lead = groups[gi][0];
         if (cvHamming(lead.cvHash, img.cvHash) > CV_DUP_MAX_BITS) continue;
         var sh = cvDiffShare(thumbs[lead.id], thumbs[img.id]);
-        if (sh <= CV_DUP_MAX_DIFF) { g = groups[gi]; share = sh; }
+        if (sh <= CV_DUP_MAX_DIFF) cands.push({ g: groups[gi], sh: sh });
       }
+      cands.sort(function (x, y) { return x.sh - y.sh; });
+      for (var ci = 0; ci < cands.length && !g; ci++) { if (!match || await match(cands[ci].g[0], img)) { g = cands[ci].g; share = cands[ci].sh; } }
       if (g) { if (!keepDiff) img.cvDupDiff = share; g.push(img); } else { if (!keepDiff) img.cvDupDiff = null; groups.push([img]); }
-    });
+    }
     return groups.filter(function (g) { return g.length > 1; });
+  }
+  // v2.173: Detailpruefung der Kandidaten. Die gespeicherten Vergleichsbilder (hoechstens 320×200) verwischen kleine Schrift:
+  // Masken, die sich nur in einzelnen Ziffern unterscheiden („Wert 182“ / „Wert 252“), blieben „sehr ähnlich“. Darum werden
+  // Kandidaten (Bild gegen erstes Bild einer Gruppe) noch einmal in groesserer, gemeinsamer Aufloesung verglichen – Breite des kleinsten
+  // Bildes, hoechstens 640 px, leicht geglaettet, Toleranz 24 Stufen, hoechstens 0,08 % abweichend. Gemessen: Kopien
+  // (100–20 % Groesse, JPEG q0,5–0,8) 0,00 %; kleine Markierung 0,01 % (1280×800) bzw. 0,05 % (4×4 auf 300×200);
+  // andere Ziffern bei gleichem Layout 0,20–0,26 %, gegen eine kleine Vorschau (256×160) 0,11 %. Nur fuer Kandidaten –
+  // so bleibt der Speicher klein (hoechstens 40 Detailbilder gleichzeitig zwischengespeichert).
+  function cvEffDims(x) {
+    var w = x.cvW || x.width, h = x.cvH || x.height;
+    if (!(w > 0 && h > 0)) return null;
+    var sc = Math.max(w, h) > CV_MAX_EDGE ? CV_MAX_EDGE / Math.max(w, h) : 1;
+    return { w: Math.max(1, Math.round(w * sc)), h: Math.max(1, Math.round(h * sc)) };
+  }
+  async function cvDetailThumb(cv, x, W, H) {
+    var px = await cvImageData(x.dataUrl, CV_MAX_EDGE);
+    var src = cv.matFromImageData(px.data), gray = new cv.Mat(), t = new cv.Mat();
+    try {
+      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+      cv.resize(gray, t, new cv.Size(W, H), 0, 0, cv.INTER_AREA);
+      cv.GaussianBlur(t, t, new cv.Size(3, 3), 0, 0, cv.BORDER_REPLICATE);
+      return new Uint8Array(t.data);
+    } finally { src.delete(); gray.delete(); t.delete(); }
+  }
+  // Detailvergleich zweier Bilder in gemeinsamer Groesse; Vergleichsbilder werden zwischengespeichert (hoechstens 40)
+  async function cvDetailDims(x) {
+    var d = cvEffDims(x);
+    if (d) return d;
+    try { var p0 = await cvImageData(x.dataUrl, CV_MAX_EDGE); return { w: p0.data.width, h: p0.data.height }; } catch (e) { return null; }
+  }
+  async function cvDetailMatch(cv, a, b, cache) {
+    var da = await cvDetailDims(a), db = await cvDetailDims(b);
+    if (!da || !db) return false;
+    var W = Math.min(CV_DETAIL_W, da.w, db.w), H = Math.max(1, Math.min(da.h, db.h, Math.round(W * da.h / da.w)));
+    async function get(x) {
+      var k = x.id + ":" + W + "x" + H;
+      if (cache.has(k)) { var hit = cache.get(k); cache.delete(k); cache.set(k, hit); return hit; } // zuletzt benutzt nach hinten
+      var t = null;
+      try { t = await cvDetailThumb(cv, x, W, H); } catch (e) { t = null; }
+      cache.set(k, t);
+      if (cache.size > 40) cache.delete(cache.keys().next().value);
+      return t;
+    }
+    var ta = await get(a), tb = await get(b);
+    return !!(ta && tb) && cvShareWithin(ta, tb, CV_DETAIL_TOL, CV_DETAIL_MAX_DIFF) <= CV_DETAIL_MAX_DIFF;
   }
   var cvBusy = false;
   // v2.172: naechste freie Gruppennummer ueber alle Bilder (auch „I1“ aus aelteren Screens-Imports) – Gruppen aus
@@ -19061,7 +19146,8 @@
       if (i % 5 === 4) { if (onProgress) onProgress(i + 1, imgs.length); await new Promise(function (r) { setTimeout(r, 0); }); }
     }
     if (!opts.keepDup) imgs.forEach(function (x) { x.cvDupDiff = null; });
-    var groups = cvDuplicateGroups(imgs.filter(function (x) { return x.cvHash && thumbs[x.id]; }), thumbs, !!opts.keepDup);
+    var detailCache = new Map();
+    var groups = await cvDuplicateGroups(imgs.filter(function (x) { return x.cvHash && thumbs[x.id]; }), thumbs, !!opts.keepDup, function (a, b) { return cvDetailMatch(cv, a, b, detailCache); });
     return { done: done, failed: failed, groups: groups, thumbs: thumbs, blurry: imgs.filter(cvIsBlurry).length, flat: imgs.filter(cvIsFlat).length, bordered: imgs.filter(function (x) { return x.cvBorder; }).length };
   }
   async function cvAnalyzeAll() {
@@ -19904,21 +19990,24 @@
     note.hidden = false; note.textContent = "OpenCV prüft " + fresh.length + " neue(s) Bild(er) …";
     try {
       var res = await cvAnalyzeImages(fresh, function (i, n) { note.textContent = "OpenCV prüft … " + i + " von " + n; });
-      var cv = (await loadOpenCv()).cv, thumbs = res.thumbs || {};
+      var cv = (await loadOpenCv()).cv, thumbs = res.thumbs || {}, detailCache = new Map();
       var nextG = cvNextGroupNo();
       res.groups.forEach(function (g) { var id = String(nextG++); g.forEach(function (x) { x.cvDupGroup = id; }); });
       var archive = app.uploadedImages.filter(function (x) { return fresh.indexOf(x) === -1 && x.cvHash && x.dataUrl; });
       var known = [], unchecked = app.uploadedImages.filter(function (x) { return fresh.indexOf(x) === -1 && !x.cvHash && x.dataUrl; }).length;
       for (var i = 0; i < fresh.length; i++) {
-        var img = fresh[i], best = null;
+        var img = fresh[i], best = null, cands = [];
         if (!img.cvHash || !thumbs[img.id]) continue;
         for (var j = 0; j < archive.length; j++) {
           var old = archive[j];
           if (cvHamming(old.cvHash, img.cvHash) > CV_DUP_MAX_BITS) continue;
           if (!thumbs[old.id]) { try { thumbs[old.id] = cvAnalyzePixels(cv, await cvImageData(old.dataUrl, CV_MAX_EDGE)).thumb; } catch (e) { continue; } }
           var sh = cvDiffShare(thumbs[old.id], thumbs[img.id]);
-          if (sh <= CV_DUP_MAX_DIFF && (!best || sh < best.sh)) best = { old: old, sh: sh };
+          if (sh <= CV_DUP_MAX_DIFF) cands.push({ old: old, sh: sh });
         }
+        // v2.173: aehnlichster Kandidat, der auch die Detailpruefung besteht
+        cands.sort(function (x, y) { return x.sh - y.sh; });
+        for (var ci = 0; ci < cands.length && !best; ci++) { if (await cvDetailMatch(cv, cands[ci].old, img, detailCache)) best = cands[ci]; }
         if (best) {
           var gid = best.old.cvDupGroup ? String(best.old.cvDupGroup) : String(nextG++);
           var prevG = img.cvDupGroup;

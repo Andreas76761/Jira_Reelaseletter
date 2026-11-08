@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.172.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.173.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,17 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Sehr ähnliche Bilder: keine Sammelgruppe mehr bei Screens mit gleichem Layout (v2.173.0)**: Im Lasttest (2.000 Tickets,
+  500 Masken à 1280×800, 45 MB Sitzung) steckte die OpenCV-Analyse alle 500 verschiedenen Masken in EINE Gruppe „sehr
+  ähnlicher Bilder“ – das grobe 80×50-Vergleichsbild verwischt Text, Masken mit gleichem Layout und anderen Werten sahen
+  gleich aus. Jetzt mehrstufig: grob 80×50 wie bisher (findet Kopien jeder Größe), bei großen Bildern zusätzlich mittel
+  (160×100) und fein (320×200), danach für jeden Kandidaten ein Detailvergleich beider Bilder in gemeinsamer Größe (Breite
+  des kleineren, höchstens 640 px, leicht geglättet, Grenze 0,08 % abweichende Pixel). Jedes Bild prüft alle passenden
+  Gruppen, die ähnlichste zuerst. Gemessen: Kopien (100–20 % Größe, JPEG-Qualität 0,5–0,8) 0,00 %, kleine Markierung
+  0,01–0,05 %, Masken, die sich nur in einzelnen Ziffern unterscheiden, 0,11–0,26 %. Ergebnis im Lasttest (echter
+  Browser): genau die 50 echten Paare, keine Fehlgruppe, längste Blockade 140 ms, Dauer 40 s (vorher 25 s). Die
+  Upload-Prüfung gegen das Bildarchiv nutzt denselben Detailvergleich. Neuer Test `opencv_dup_large_test.js`.
 
 - **Testdaten: synthetischer Jira-XML-Export**: `python3 webapp/tests/tools/gen_jira_test_export.py [Anzahl] [Datei]`
   erzeugt einen Export im Format eines echten Jira-Server-10.x-XML-Exports (wie `fixtures/real_jira_export_sample.xml`:
