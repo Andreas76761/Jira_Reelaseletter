@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.193.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.194.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,12 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Automatische Begriffs-Erweiterung ohne eigene Meldung (v2.194.0)**: Der automatische Lauf (nach Import, Upload,
+  neuen ROVO-Einträgen …) zeigt keine eigene Meldung mehr – sie überdeckte die Meldung der auslösenden Aktion (gefunden
+  in der Regression: nach einem ROVO-Import stand statt „2 Einträge importiert“ „Begriffe erweitert …“). Neuerungen
+  zeigen weiterhin „+n“ in der Navigation, die Liste „Zuletzt automatisch ergänzt“ und das Protokoll; „Jetzt prüfen“
+  meldet sich wie bisher.
 
 - **Blättern in Glossar, Synonyme, Abkürzungen; auch offene Begriffe übersetzen (v2.193.0)**: (1) Die Tabellen der drei
   Register sowie die Listen „Neu erkannt / zu prüfen“ und „Zuletzt automatisch ergänzt“ blättern ab 26 Einträgen:

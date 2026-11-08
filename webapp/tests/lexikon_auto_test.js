@@ -74,6 +74,7 @@ const savedFiles = [];
   s = await session();
   const ab = s.abbrevTranslations, syn = s.synonyms, gl = s.glossaryTranslations;
   check("Automatischer Lauf nach Inhaltsänderung (Zeitpunkt + Anzahl Texte gespeichert)", !!s.lexAuto && s.lexAuto.enabled === true && s.lexAuto.lastRun && s.lexAuto.lastRun.texts === 6);
+  check("v2.194: automatischer Lauf ohne eigene Meldung (überdeckt nicht die Meldung der auslösenden Aktion)", !/Begriffe erweitert/.test($("toast").textContent));
   const mo = ab.find((e) => e.term === "MO");
   check("Abkürzung MO neu mit Bedeutung aus dem Text („Market Operation (MO)“)", !!mo && mo.de === "Market Operation" && mo.isNew === true && mo.auto === true && /Tickets/.test(mo.lexSrc));
   check("Bereits vorhandene Abkürzung (FIN, fixiert) unverändert, nicht doppelt", ab.filter((e) => e.term === "FIN").length === 1 && ab.find((e) => e.term === "FIN").de === "Fahrzeug-Identifizierungsnummer" && !ab.find((e) => e.term === "FIN").isNew);

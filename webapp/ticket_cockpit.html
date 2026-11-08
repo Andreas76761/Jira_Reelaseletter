@@ -6774,7 +6774,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.193.0";
+  var APP_VERSION = "2.194.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -38007,7 +38007,9 @@
       lexAutoTimer = null;
       var st = lexState();
       var texts = st.enabled ? lexContentTexts() : [];
-      if (st.enabled && texts.length && lexFingerprint(texts) !== st.fingerprint) { lexAutoRun({}); return; }
+      // still: die Neuerungen zeigen „+n“ in der Navigation und das Protokoll – eine Meldung wuerde die Meldung der
+      // ausloesenden Aktion (Import, Upload …) ueberdecken
+      if (st.enabled && texts.length && lexFingerprint(texts) !== st.fingerprint) { lexAutoRun({ silent: true }); return; }
       lexAutoProcessSoon(); // offene Eintraege (z. B. aus aelteren Sitzungen) uebernehmen bzw. ergaenzen
     }, 1200);
   }
