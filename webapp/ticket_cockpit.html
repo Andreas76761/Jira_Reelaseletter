@@ -4007,6 +4007,7 @@
             </div>
             <label for="rules-value-input" style="margin-top:8px;">Regel</label>
             <textarea id="rules-value-input" rows="2" placeholder=""></textarea>
+            <div id="rules-replace-wrap" hidden style="margin-top:8px;"><label for="rules-replace-input">Ersatz (optional) – dann bietet die App „Verbotene Begriffe ersetzen“ an</label><input id="rules-replace-input" type="text" placeholder="z. B. Schulungsumgebung"></div>
             <div class="controls" style="margin-top:8px;"><button class="btn primary" id="rules-add-btn" type="button">Regel hinzufügen</button><span class="step-note" id="rules-add-note" style="margin:0;"></span></div>
           </section>
           <section>
@@ -6694,7 +6695,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.183.0";
+  var APP_VERSION = "2.184.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8350,7 +8351,7 @@
     "rovo-tables-count", "rovo-tables-list", "rovo-tables-empty",
     "edito-rules-note", "subchapter-rules-note",
     "rules-scope-select", "rules-scope-custom-wrap", "rules-scope-custom", "rules-kind-select", "rules-value-input", "rules-add-btn", "rules-add-note",
-    "rules-export-btn", "rules-import-input", "rules-io-note",
+    "rules-export-btn", "rules-import-input", "rules-io-note", "rules-replace-wrap", "rules-replace-input",
     "rules-count", "rules-table-wrap", "rules-tbody", "rules-empty", "rules-check-btn", "rules-check-status", "rules-result-wrap", "rules-result-tbody",
     "bildband-table", "bildband-tbody", "bildband-empty",
     "edito-version-select", "edito-chapters-section", "edito-chapters-count",
@@ -27360,6 +27361,20 @@
     if (entry) entry.de = els.editoPreviewOutput.value;
     if (entry) { entry.ruleIssues = rulesCheckText([editoActiveChapterTitle], entry.de).map(function (f) { return f.msg; }); rulesRenderNote(els.editoRulesNote, [editoActiveChapterTitle], entry.de); }
   });
+  // v2.184: verbotene Begriffe in der Editor-Vorschau ersetzen
+  els.editoRulesNote.addEventListener("click", async function (e) {
+    if (!e.target.closest("[data-rules-fix]")) return;
+    var entry = editoActiveChapterTitle && app.editoChapters[editoActiveChapterTitle];
+    if (!entry) return;
+    var fix = rulesApplyFixes([editoActiveChapterTitle], entry.de);
+    if (!fix.count || !(await rulesConfirmFix(fix, "Kapitel „" + editoActiveChapterTitle + "“"))) return;
+    entry.de = fix.text;
+    els.editoPreviewOutput.value = entry.de;
+    entry.ruleIssues = rulesCheckText([editoActiveChapterTitle], entry.de).map(function (f) { return f.msg; });
+    rulesRenderNote(els.editoRulesNote, [editoActiveChapterTitle], entry.de);
+    addLog("Editor: Kapitel „" + editoActiveChapterTitle + "“ – " + fix.count + " verbotene(r) Begriff(e) ersetzt (" + fix.done.join(", ") + ").");
+    if (typeof renderEditoChapters === "function") renderEditoChapters();
+  });
   els.editoChaptersTbody.addEventListener("change", function (e) {
     var cb = e.target.closest(".edito-chapter-select");
     if (!cb) return;
@@ -27885,6 +27900,20 @@
     }
   });
 
+  // v2.184: verbotene Begriffe in der aktuellen Unterkapitel-Fassung ersetzen (vorherige Fassung bleibt im Verlauf)
+  els.subchapterRulesNote.addEventListener("click", async function (e) {
+    if (!e.target.closest("[data-rules-fix]")) return;
+    var chapterTitle = els.subchapterChapterSelect.value, subchapterTitle = els.subchapterSelect.value;
+    var entry = app.editoVersionKey && subchapterEntry(chapterTitle, subchapterTitle, app.editoVersionKey, false);
+    if (!entry || !entry.text) return;
+    var fix = rulesApplyFixes([chapterTitle, subchapterTitle], entry.text);
+    if (!fix.count || !(await rulesConfirmFix(fix, "Unterkapitel „" + subchapterTitle + "“"))) return;
+    entry.history.push({ text: entry.text, generatedAt: entry.generatedAt });
+    entry.text = fix.text; entry.generatedAt = nowLabel();
+    entry.ruleIssues = rulesCheckText([chapterTitle, subchapterTitle], entry.text).map(function (f) { return f.msg; });
+    addLog("Unterkapitel „" + subchapterTitle + "“: " + fix.count + " verbotene(r) Begriff(e) ersetzt (" + fix.done.join(", ") + ").");
+    renderSubchapterDetail();
+  });
   els.subchapterStatusSelect.addEventListener("change", function () {
     var chapterTitle = els.subchapterChapterSelect.value, subchapterTitle = els.subchapterSelect.value;
     if (!chapterTitle || !subchapterTitle || !app.editoVersionKey) return;
@@ -29184,8 +29213,27 @@
     var chs = v.chapters.filter(function (c) { return value === FINAL_RESULT_ALL || c.title === value; }), issues = [];
     chs.forEach(function (c) { rulesCheckText([c.title], c.text).forEach(function (f) { issues.push((value === FINAL_RESULT_ALL ? c.title + ": " : "") + f.msg); }); });
     els.finalRulesNote.hidden = false;
-    els.finalRulesNote.innerHTML = issues.length ? '<span class="cv-warn">Regelwerk: ' + issues.length + " Verstoß/Verstöße</span> – " + escapeHtml(issues.slice(0, 6).join(" · ")) + (issues.length > 6 ? " …" : "") : "Regelwerk: alle festen Regeln eingehalten.";
+    var fixN = chs.reduce(function (n, c) { return n + rulesApplyFixes([c.title], c.text).count; }, 0);
+    els.finalRulesNote.innerHTML = issues.length ? '<span class="cv-warn">Regelwerk: ' + issues.length + " Verstoß/Verstöße</span> – " + escapeHtml(issues.slice(0, 6).join(" · ")) + (issues.length > 6 ? " …" : "") + rulesFixButtonHtml(fixN) : "Regelwerk: alle festen Regeln eingehalten.";
   }
+  // v2.184: verbotene Begriffe im aktiven Stand ersetzen (gewaehltes Kapitel bzw. ganzes Dokument)
+  els.finalRulesNote.addEventListener("click", async function (e) {
+    if (!e.target.closest("[data-rules-fix]")) return;
+    var v = finalActiveVersion(), value = els.finalResultChapterSelect.value;
+    if (!v || finalReserveLocked(v)) return;
+    var chs = v.chapters.filter(function (c) { return value === FINAL_RESULT_ALL || c.title === value; }), done = [], total = 0;
+    chs.forEach(function (c) { var f = rulesApplyFixes([c.title], c.text); if (f.count) { total += f.count; f.done.forEach(function (d) { if (done.indexOf(d) === -1) done.push(d); }); } });
+    if (!total || !(await rulesConfirmFix({ done: done }, "Stand „" + v.name + "“" + (value === FINAL_RESULT_ALL ? "" : ", Kapitel „" + value + "“")))) return;
+    chs.forEach(function (c) {
+      var ft = rulesApplyFixes([c.title], c.text);
+      if (!ft.count) return;
+      var textWasPlain = String(c.text || "") === String(typeof c.markedText === "string" ? c.markedText : c.text).replace(FINAL_MARK_RE, "");
+      c.markedText = rulesApplyFixes([c.title], typeof c.markedText === "string" ? c.markedText : c.text).text;
+      c.text = textWasPlain ? c.markedText.replace(FINAL_MARK_RE, "") : ft.text;
+    });
+    addLog("FINAL: Stand „" + v.name + "“ – " + total + " verbotene(r) Begriff(e) ersetzt (" + done.join(", ") + ").");
+    updateFinalResult();
+  });
 
   // Vollbild-Ansicht fuer Schritt 7: ein oder zwei Fenster (Quellversion /
   // neue Zusammenfuehrung), jedes mit eigener Kapitelauswahl, Blaettern
@@ -37009,7 +37057,9 @@
     var kinds = RULE_KINDS.map(function (k) { return k.key; });
     // v2.182: „Höchstens N Wörter“ nur mit gueltiger Zahl (aus Dateien sonst stillschweigend nie geprueft), Zahl normalisiert
     var items = (Array.isArray(d.items) ? d.items : []).filter(function (r) { return r && kinds.indexOf(r.kind) !== -1 && String(r.value || "").trim() && (r.kind !== "maxWords" || parseInt(r.value, 10) > 0); }).map(function (r, i) {
-      return { id: typeof r.id === "number" ? r.id : i + 1, scope: String(r.scope || "").trim(), kind: r.kind, value: r.kind === "maxWords" ? String(parseInt(r.value, 10)) : String(r.value).trim(), active: r.active !== false };
+      var o = { id: typeof r.id === "number" ? r.id : i + 1, scope: String(r.scope || "").trim(), kind: r.kind, value: r.kind === "maxWords" ? String(parseInt(r.value, 10)) : String(r.value).trim(), active: r.active !== false };
+      if (r.kind === "forbid" && String(r.replace || "").trim()) o.replace = String(r.replace).trim(); // v2.184: Ersatz
+      return o;
     });
     var maxId = items.reduce(function (m, r) { return Math.max(m, r.id); }, 0);
     return { items: items, nextId: Math.max(typeof d.nextId === "number" ? d.nextId : 1, maxId + 1), lastCheck: d.lastCheck && Array.isArray(d.lastCheck.results) ? d.lastCheck : null };
@@ -37024,7 +37074,7 @@
     return ((app.rules && app.rules.items) || []).filter(function (r) { return r.active && (!r.scope || norm.indexOf(rulesNormTitle(r.scope)) !== -1); });
   }
   function ruleAsInstruction(r) {
-    if (r.kind === "forbid") return "Den Begriff „" + r.value.trim() + "“ nicht verwenden.";
+    if (r.kind === "forbid") return "Den Begriff „" + r.value.trim() + "“ nicht verwenden." + (r.replace ? " Stattdessen „" + r.replace + "“ verwenden." : "");
     if (r.kind === "require") return "Der Begriff „" + r.value.trim() + "“ muss vorkommen.";
     if (r.kind === "maxWords") return "Höchstens " + parseInt(r.value, 10) + " Wörter.";
     return r.value.trim();
@@ -37056,13 +37106,35 @@
     });
     return out;
   }
+  // v2.184: verbotene Begriffe mit hinterlegtem Ersatz ersetzen (gleiche Fundstellen wie die Pruefung, Gross-/Kleinschreibung
+  // des Originals am Wortanfang bzw. komplett gross wird uebernommen)
+  function rulesMatchCase(orig, rep) {
+    if (orig.length > 1 && orig === orig.toUpperCase() && /[A-ZÄÖÜ]/.test(orig)) return rep.toUpperCase();
+    if (/^[A-ZÄÖÜ]/.test(orig)) return rep.charAt(0).toUpperCase() + rep.slice(1);
+    return rep;
+  }
+  function rulesApplyFixes(titles, text) {
+    var out = String(text || ""), n = 0, done = [];
+    rulesFor(titles).forEach(function (r) {
+      if (r.kind !== "forbid" || !r.replace) return;
+      var t = r.value.trim(), esc = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), c = 0;
+      if (t.length > 3) out = out.replace(new RegExp(esc, "gi"), function (m) { c++; return rulesMatchCase(m, r.replace); });
+      else out = out.replace(new RegExp("(^|[^a-zA-Z0-9äöüßÄÖÜ])(" + esc + ")(?=$|[^a-zA-Z0-9äöüßÄÖÜ])", "gi"), function (m, pre, w) { c++; return pre + rulesMatchCase(w, r.replace); });
+      if (c) { n += c; done.push("„" + t + "“ → „" + r.replace + "“ (" + c + "×)"); }
+    });
+    return { text: out, count: n, done: done };
+  }
+  function rulesFixButtonHtml(n) { return n ? ' <button class="btn ghost btn-tiny" type="button" data-rules-fix>Verbotene Begriffe ersetzen (' + n + ")</button>" : ""; }
+  async function rulesConfirmFix(fix, where) {
+    return confirmDialog("In " + where + " ersetzen: " + fix.done.join(", ") + "?", "Ersetzen");
+  }
   // v2.177: Hinweis „Regelwerk“ fuer ein Element (Editor-Vorschau, Unterkapitel) – live aus dem aktuellen Text
   function rulesRenderNote(el, titles, text) {
     if (!el) return;
     if (!rulesHasFixed() || !String(text || "").trim()) { el.hidden = true; el.innerHTML = ""; return; }
     var issues = rulesCheckText(titles, text);
     el.hidden = false;
-    el.innerHTML = issues.length ? '<span class="cv-warn">Regelwerk: ' + issues.length + " Verstoß/Verstöße</span> – " + escapeHtml(issues.map(function (f) { return f.msg; }).join(" · ")) : "Regelwerk: alle festen Regeln eingehalten.";
+    el.innerHTML = issues.length ? '<span class="cv-warn">Regelwerk: ' + issues.length + " Verstoß/Verstöße</span> – " + escapeHtml(issues.map(function (f) { return f.msg; }).join(" · ")) + rulesFixButtonHtml(rulesApplyFixes(titles, text).count) : "Regelwerk: alle festen Regeln eingehalten.";
   }
   function rulesHasFixed() { return ((app.rules && app.rules.items) || []).some(function (r) { return r.active && r.kind !== "ai"; }); }
   // alle pruefbaren Texte: aktiver FINAL-Stand, Editor, Unterkapitel, Dokument-Review
@@ -37102,12 +37174,13 @@
     els.rulesScopeCustomWrap.hidden = els.rulesScopeSelect.value !== RULES_CUSTOM_SCOPE;
     els.rulesKindSelect.innerHTML = RULE_KINDS.map(function (k) { return '<option value="' + k.key + '"' + (k.key === prevKind ? " selected" : "") + ">" + escapeHtml(k.label) + "</option>"; }).join("");
     els.rulesValueInput.placeholder = (RULE_KINDS.filter(function (k) { return k.key === els.rulesKindSelect.value; })[0] || RULE_KINDS[0]).placeholder;
+    els.rulesReplaceWrap.hidden = els.rulesKindSelect.value !== "forbid";
     var items = app.rules.items.slice().sort(function (a, b) { return (a.scope ? 1 : 0) - (b.scope ? 1 : 0) || a.scope.localeCompare(b.scope) || a.id - b.id; });
     els.rulesCount.textContent = String(items.length);
     els.rulesTableWrap.hidden = !items.length;
     els.rulesEmpty.hidden = items.length > 0;
     els.rulesTbody.innerHTML = items.map(function (r) {
-      return '<tr data-rule-row="' + r.id + '"><td>' + (r.scope ? escapeHtml(r.scope) : "<b>Allgemein</b>") + "</td><td>" + escapeHtml(ruleKindLabel(r.kind)) + "</td><td>" + escapeHtml(r.value) + "</td>" +
+      return '<tr data-rule-row="' + r.id + '"><td>' + (r.scope ? escapeHtml(r.scope) : "<b>Allgemein</b>") + "</td><td>" + escapeHtml(ruleKindLabel(r.kind)) + "</td><td>" + escapeHtml(r.value) + (r.replace ? " → " + escapeHtml(r.replace) : "") + "</td>" +
         '<td><input type="checkbox" data-rule-active="' + r.id + '"' + (r.active ? " checked" : "") + ' aria-label="Regel aktiv"></td>' +
         '<td><button class="btn ghost btn-tiny" type="button" data-rule-delete="' + r.id + '">Löschen</button></td></tr>';
     }).join("");
@@ -37117,7 +37190,7 @@
     els.rulesResultTbody.innerHTML = lc ? lc.results.map(function (x) { return "<tr><td>" + escapeHtml(x.register) + "</td><td>" + escapeHtml(x.doc || "–") + "</td><td>" + escapeHtml(x.chapter) + "</td><td>" + escapeHtml(x.rule) + '</td><td class="cv-warn">' + escapeHtml(x.msg) + "</td></tr>"; }).join("") : "";
   }
   els.rulesScopeSelect.addEventListener("change", function () { els.rulesScopeCustomWrap.hidden = els.rulesScopeSelect.value !== RULES_CUSTOM_SCOPE; });
-  els.rulesKindSelect.addEventListener("change", function () { els.rulesValueInput.placeholder = (RULE_KINDS.filter(function (k) { return k.key === els.rulesKindSelect.value; })[0] || RULE_KINDS[0]).placeholder; });
+  els.rulesKindSelect.addEventListener("change", function () { els.rulesValueInput.placeholder = (RULE_KINDS.filter(function (k) { return k.key === els.rulesKindSelect.value; })[0] || RULE_KINDS[0]).placeholder; els.rulesReplaceWrap.hidden = els.rulesKindSelect.value !== "forbid"; });
   els.rulesAddBtn.addEventListener("click", function () {
     var scope = els.rulesScopeSelect.value === RULES_CUSTOM_SCOPE ? els.rulesScopeCustom.value.trim() : els.rulesScopeSelect.value;
     var kind = els.rulesKindSelect.value, value = els.rulesValueInput.value.trim();
@@ -37125,8 +37198,10 @@
     if (!value) { els.rulesAddNote.textContent = "Bitte die Regel eingeben."; return; }
     if (kind === "maxWords" && !(parseInt(value, 10) > 0)) { els.rulesAddNote.textContent = "Bitte eine Zahl größer 0 eingeben."; return; }
     if (kind === "maxWords") value = String(parseInt(value, 10));
-    app.rules.items.push({ id: app.rules.nextId++, scope: scope, kind: kind, value: value, active: true });
-    els.rulesValueInput.value = ""; els.rulesScopeCustom.value = "";
+    var newRule = { id: app.rules.nextId++, scope: scope, kind: kind, value: value, active: true };
+    if (kind === "forbid" && els.rulesReplaceInput.value.trim()) newRule.replace = els.rulesReplaceInput.value.trim();
+    app.rules.items.push(newRule);
+    els.rulesValueInput.value = ""; els.rulesScopeCustom.value = ""; els.rulesReplaceInput.value = "";
     els.rulesAddNote.textContent = "Regel hinzugefügt (" + (scope ? "Kapitel „" + scope + "“" : "allgemein") + ").";
     addLog("Regelwerk: Regel hinzugefügt – " + (scope ? "Kapitel „" + scope + "“" : "allgemein") + ", " + ruleKindLabel(kind) + ": " + value);
     renderRules();
@@ -37150,7 +37225,7 @@
   // v2.180: Regelwerk als Datei weitergeben/wiederverwenden (Import ergaenzt, doppelte Regeln werden uebersprungen)
   els.rulesExportBtn.addEventListener("click", async function () {
     if (!app.rules.items.length) { els.rulesIoNote.textContent = "Keine Regeln zum Exportieren."; return; }
-    var data = { format: "ticket-cockpit-regelwerk", version: 1, exportedAt: nowLabel(), items: app.rules.items.map(function (r) { return { scope: r.scope, kind: r.kind, value: r.value, active: r.active }; }) };
+    var data = { format: "ticket-cockpit-regelwerk", version: 1, exportedAt: nowLabel(), items: app.rules.items.map(function (r) { var o = { scope: r.scope, kind: r.kind, value: r.value, active: r.active }; if (r.replace) o.replace = r.replace; return o; }) };
     var fn = "Regelwerk_" + new Date().toISOString().slice(0, 10) + ".json";
     if (await saveOrWarn(fn, new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }))) { els.rulesIoNote.textContent = app.rules.items.length + " Regel(n) als „" + fn + "“ exportiert."; addLog("Regelwerk: " + app.rules.items.length + " Regel(n) exportiert."); }
   });
@@ -37165,7 +37240,7 @@
       var key = function (r) { return rulesNormTitle(r.scope) + "|" + r.kind + "|" + String(r.value).trim().toLowerCase(); };
       var have = {}; app.rules.items.forEach(function (r) { have[key(r)] = true; });
       var added = 0, skipped = 0;
-      list.forEach(function (r) { if (have[key(r)]) { skipped++; return; } have[key(r)] = true; app.rules.items.push({ id: app.rules.nextId++, scope: r.scope, kind: r.kind, value: r.value, active: r.active }); added++; });
+      list.forEach(function (r) { if (have[key(r)]) { skipped++; return; } have[key(r)] = true; var nr = { id: app.rules.nextId++, scope: r.scope, kind: r.kind, value: r.value, active: r.active }; if (r.replace) nr.replace = r.replace; app.rules.items.push(nr); added++; });
       els.rulesIoNote.textContent = "„" + f.name + "“: " + added + " Regel(n) übernommen" + (skipped ? ", " + skipped + " bereits vorhanden" : "") + ".";
       addLog("Regelwerk: " + added + " Regel(n) aus „" + f.name + "“ importiert" + (skipped ? " (" + skipped + " doppelt, übersprungen)" : "") + ".");
       renderRules();

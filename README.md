@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.183.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.184.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,15 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Verbotene Begriffe automatisch ersetzen (v2.184.0)**: Eine Regel „Begriff verboten“ kann einen Ersatz haben (z. B.
+  „Testsystem → Schulungsumgebung“, im Register Regelwerk als „Ersatz (optional)“). Wo Regelwerk-Verstöße angezeigt
+  werden – Editor-Vorschau, Unterkapitel-Werkstatt, FINAL-Ergebnis (Kapitel oder Gesamtdokument) – erscheint dann
+  „Verbotene Begriffe ersetzen (n)“; nach Rückfrage mit allen Ersetzungen („Testsystem“ → „Schulungsumgebung“ (3×))
+  wird ersetzt: gleiche Fundstellen wie die Prüfung, Großschreibung am Wortanfang bzw. komplett groß wird übernommen. In
+  FINAL werden Text und markierter Text ersetzt (interne Markierungen bleiben), veröffentlichte Stände sind gesperrt; in
+  der Unterkapitel-Werkstatt bleibt die vorherige Fassung im Verlauf. Der Ersatz steht auch im KI-Prompt („Stattdessen …
+  verwenden“) und wird mit exportiert/importiert.
 
 - **Verschachtelte vorgemerkte Abschnitte exakt, Rückfrage auch bei Team-Ständen (v2.183.0)**: Die beiden bekannten
   Grenzen aus v2.182 sind behoben. Liegt ein früher vorgemerkter Abschnitt innerhalb eines später vorgemerkten größeren,

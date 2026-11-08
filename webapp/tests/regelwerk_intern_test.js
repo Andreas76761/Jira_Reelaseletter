@@ -364,6 +364,61 @@ const prompts = [];
   s = await session();
   check("v2.180: abgebrochen -> Stand bleibt unveröffentlicht", s.final.versions.every((v) => v.status !== "Veröffentlicht"));
 
+  // ===================== v2.184: Verbotene Begriffe mit Ersatz automatisch ersetzen =====================
+  nav("regelwerk"); await wait(50);
+  $("rules-kind-select").value = "require"; fire($("rules-kind-select"), "change");
+  check("v2.184: Ersatz-Feld nur bei „Begriff verboten“", $("rules-replace-wrap").hidden);
+  $("rules-scope-select").value = ""; fire($("rules-scope-select"), "change");
+  $("rules-kind-select").value = "forbid"; fire($("rules-kind-select"), "change");
+  check("v2.184: Ersatz-Feld bei „Begriff verboten“ sichtbar", !$("rules-replace-wrap").hidden);
+  $("rules-value-input").value = "Altbegriff"; $("rules-replace-input").value = "Neubegriff"; fire($("rules-add-btn"), "click"); await wait(20);
+  $("rules-value-input").value = "Kapiteltext"; $("rules-replace-input").value = "Abschnittstext"; fire($("rules-add-btn"), "click"); await wait(20);
+  check("v2.184: Regel zeigt „Altbegriff → Neubegriff“", $("rules-tbody").textContent.includes("Altbegriff → Neubegriff"));
+  // Editor
+  nav("edito"); await wait(80);
+  $("edito-version-select").value = "beide"; fire($("edito-version-select"), "change"); await wait(80);
+  const vb = $("edito-chapters-tbody").querySelector('[data-edito-view="' + genTitle + '"]');
+  if (vb) { fire(vb, "click"); await wait(30); }
+  $("edito-preview-output").value = "Der Altbegriff, ALTBEGRIFF und altbegriff."; fire($("edito-preview-output"), "input"); await wait(20);
+  const fixBtn = $("edito-rules-note").querySelector("[data-rules-fix]");
+  check("v2.184: Editor bietet „Verbotene Begriffe ersetzen (3)“ an", !!fixBtn && fixBtn.textContent.includes("(3)"));
+  fire(fixBtn, "click"); await waitUntil(() => !$("confirm-modal-overlay").hidden, 2000);
+  check("v2.184: Rückfrage nennt die Ersetzung", /„Altbegriff“ → „Neubegriff“ \(3×\)/.test($("confirm-modal-message").textContent));
+  await confirmModal(); await wait(30);
+  // Großschreibung am Anfang bzw. komplett groß wird übernommen; sonst gilt der Ersatz wie eingegeben
+  check("v2.184: Editor-Text ersetzt, Groß-/Kleinschreibung übernommen", $("edito-preview-output").value === "Der Neubegriff, NEUBEGRIFF und Neubegriff." && !$("edito-rules-note").querySelector("[data-rules-fix]"));
+  // Unterkapitel
+  nav("unterkapitel"); await wait(100);
+  $("subchapter-version-select").value = "beide"; fire($("subchapter-version-select"), "change"); await wait(80);
+  $("subchapter-chapter-select").value = "Kapitel 4: Servicevertrag anlegen"; fire($("subchapter-chapter-select"), "change"); await wait(50);
+  $("subchapter-select").value = "4.1 Vertragsarten"; fire($("subchapter-select"), "change"); await wait(50);
+  const before184 = prompts.length;
+  fire($("subchapter-edit-btn"), "click"); await waitUntil(() => prompts.length > before184, 3000); await wait(150);
+  const subFix = $("subchapter-rules-note").querySelector("[data-rules-fix]");
+  check("v2.184: Unterkapitel bietet Ersetzen an („Kapiteltext“)", !!subFix);
+  if (subFix) { fire(subFix, "click"); await confirmModal(); await wait(30); }
+  s = await session();
+  const subE = Object.values(s.subchapterDrafts).find((e) => e.subchapterTitle === "4.1 Vertragsarten");
+  check("v2.184: Unterkapitel-Text ersetzt, vorherige Fassung im Verlauf", subE && subE.text.includes("Abschnittstext") && !subE.text.includes("Kapiteltext") && subE.history.some((h) => h.text.includes("Kapiteltext")));
+  // FINAL (Text und markierter Text, interne Markierung bleibt)
+  s = await session();
+  const av = s.final.versions.find((v) => v.id === s.final.activeVersionId);
+  av.chapters.push({ title: "6 Ersatz", level: 1, text: "Altbegriff hier.\nInterner Altbegriff", markedText: "Altbegriff hier.\n\u0001Interner Altbegriff\u0002", screenIds: [] });
+  await load(s);
+  nav("final"); await wait(80);
+  const c6 = $("final-result-chapter-select"); c6.value = "6 Ersatz"; fire(c6, "change"); await wait(30);
+  const finFix = $("final-rules-note").querySelector("[data-rules-fix]");
+  check("v2.184: FINAL-Ergebnis bietet „Verbotene Begriffe ersetzen (2)“ an", !!finFix && finFix.textContent.includes("(2)"));
+  if (finFix) { fire(finFix, "click"); await confirmModal(); await wait(30); }
+  s = await session();
+  const e6 = s.final.versions.find((v) => v.id === s.final.activeVersionId).chapters.find((c) => c.title === "6 Ersatz");
+  check("v2.184: FINAL – Text und markierter Text ersetzt, Markierung erhalten", e6.text === "Neubegriff hier.\nInterner Neubegriff" && e6.markedText === "Neubegriff hier.\n\u0001Interner Neubegriff\u0002");
+  check("v2.184: Ersatz wird in der Sitzung gespeichert und exportiert", s.rules.items.some((r) => r.value === "Altbegriff" && r.replace === "Neubegriff"));
+  savedFiles.length = 0; nav("regelwerk"); await wait(30);
+  fire($("rules-export-btn"), "click"); await waitUntil(() => savedFiles.length === 1, 5000);
+  const exp2 = JSON.parse(typeof savedFiles[0].data === "string" ? savedFiles[0].data : await savedFiles[0].data.text());
+  check("v2.184: Export enthält den Ersatz", exp2.items.some((r) => r.value === "Altbegriff" && r.replace === "Neubegriff"));
+
   check("Keine Skriptfehler", errors.length === 0);
   if (errors.length) console.log(errors.slice(0, 5));
   const failed = checks.filter((c) => !c[1]);
