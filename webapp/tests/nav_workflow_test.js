@@ -29,7 +29,7 @@ const STAGES = [
   ["Extraktion", ["verarbeitung", "rovosummary", "massenverarbeitung", "listenauswahl"]],
   ["Normalisierung", ["gliederung", "glossar", "synonyme", "abkuerzungen"]],
   ["Traceability", ["ticketgraph", "trend", "mitteilungen"]],
-  ["Validierung", ["crossx", "agent"]],
+  ["Validierung", ["crossx", "agent", "regelwerk"]], // v2.176: Regelwerk
   ["Generierung", ["releaseletter", "benutzerhandbuch", "prozessbild", "clickanweisung", "edito", "unterkapitel", "bildband"]],
   ["E2E-QA", ["final", "variante"]],
   ["Testing", ["dataquality", "ergebnisse"]],
