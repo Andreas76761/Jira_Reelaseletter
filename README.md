@@ -2037,7 +2037,8 @@ RAG-Kontext anreichern").
   Grauwert-Abweichungen geordnet – echte Kopien liegen damit auch dann vorn, wenn viele Screens mit gleichem Layout im
   groben Vergleich gleich „0 %“ zeigen – und je Bild höchstens 6 im Detail geprüft; der Zwischenspeicher der
   Detailbilder hat ein Speicherbudget (48 MB) statt einer festen Anzahl. Gemessen im echten Browser mit 500 kleinen
-  Screens (gleiches Layout, 50 markierte Kopien): weiterhin genau die 50 Paare, 7,1 s → 5,6 s. Der Jira-XML-Import aus v2.174 wurde ohne Befund geprüft.
+  Screens (gleiches Layout, 50 markierte Kopien): weiterhin genau die 50 Paare, 7,1 s → 5,6 s; der große Lasttest
+  (500 Masken à 1280×800) bleibt bei genau 50 Paaren (längste Blockade 124 ms). Der Jira-XML-Import aus v2.174 wurde ohne Befund geprüft.
 
 - **Schnellerer Jira-XML-Import großer Exporte (v2.174.0)**: Messung im echten Browser zeigte, dass beim Import von
   2.000 Tickets nicht der XML-Parser des Browsers (~0,4 s, nicht vermeidbar) den größten Anteil hatte, sondern rund
