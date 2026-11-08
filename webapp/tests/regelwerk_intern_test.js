@@ -209,8 +209,25 @@ const prompts = [];
   const pr = prompts[prompts.length - 1] || "";
   check("Editor-Prompt enthält das Regelwerk (allgemeine KI-Regel und verbotenen Begriff)", /REGELWERK \(vom Nutzer festgelegt, verbindlich; beim Schreiben einhalten\)/.test(pr) && pr.includes("[allgemein] Leser immer mit „Sie“ ansprechen.") && pr.includes("Den Begriff „Testsystem“ nicht verwenden."));
   check("Editor-Prompt ohne Kapitel-Regeln fremder Kapitel", !pr.includes("Servicevertrag") || /Vertrag/.test(genTitle || ""));
+  // v2.177: Hinweis unter der Vorschau und in der Kapitelliste, live beim Bearbeiten
+  check("v2.177: Editor-Vorschau zeigt Regelwerk-Verstoß", !$("edito-rules-note").hidden && /Regelwerk: \d+ Verstoß/.test($("edito-rules-note").textContent) && $("edito-rules-note").textContent.includes("Testsystem"));
+  check("v2.177: Kapitelliste markiert das Kapitel mit „Regelwerk: n“", !!$("edito-chapters-tbody").querySelector('[data-edito-rules="' + genTitle + '"]'));
+  $("edito-preview-output").value = "Neuer Kapiteltext ohne verbotene Begriffe."; fire($("edito-preview-output"), "input"); await wait(20);
+  check("v2.177: nach dem Bearbeiten live neu geprüft", /alle festen Regeln eingehalten/.test($("edito-rules-note").textContent));
+  $("edito-preview-output").value = "Neuer Kapiteltext im Testsystem."; fire($("edito-preview-output"), "input"); await wait(20);
   s = await session();
   check("Editor: Regelverstoß gleich nach der Erzeugung vermerkt", s.editoChapters[genTitle] && (s.editoChapters[genTitle].ruleIssues || []).some((m) => /Testsystem/.test(m)));
+
+  // v2.177: Unterkapitel-Werkstatt – Hinweis unter der aktuellen Fassung (Regeln des Kapitels und allgemeine)
+  nav("unterkapitel"); await wait(100);
+  $("subchapter-version-select").value = "beide"; fire($("subchapter-version-select"), "change"); await wait(80);
+  $("subchapter-chapter-select").value = "Kapitel 4: Servicevertrag anlegen"; fire($("subchapter-chapter-select"), "change"); await wait(50);
+  $("subchapter-select").value = "4.1 Vertragsarten"; fire($("subchapter-select"), "change"); await wait(50);
+  check("v2.177: Unterkapitel ohne Fassung – kein Regelwerk-Hinweis", $("subchapter-rules-note").hidden);
+  const before = prompts.length;
+  fire($("subchapter-edit-btn"), "click"); await waitUntil(() => prompts.length > before, 3000); await wait(150);
+  check("v2.177: Unterkapitel-Prompt enthält das Regelwerk", /REGELWERK/.test(prompts[prompts.length - 1]) && prompts[prompts.length - 1].includes("Den Begriff „Testsystem“ nicht verwenden."));
+  check("v2.177: Unterkapitel zeigt Regelwerk-Verstoß unter der aktuellen Fassung", !$("subchapter-rules-note").hidden && $("subchapter-rules-note").textContent.includes("Testsystem"));
 
   // Sitzung: Regeln gespeichert und nach dem Laden wieder da; Löschen
   check("Sitzung speichert die Regeln", s.rules && s.rules.items.length === 5 && s.rules.items.some((r) => r.kind === "ai") && s.rules.lastCheck && s.rules.lastCheck.results.length > 0);

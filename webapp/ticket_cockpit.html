@@ -2986,6 +2986,7 @@
         <section id="edito-preview-section" hidden>
           <p class="section-label">4. Vorschau, Export &amp; Prüfung: <span id="edito-preview-title"></span></p>
           <textarea id="edito-preview-output" class="text-input" style="width:100%; min-height:320px; font-family:'IBM Plex Mono', monospace; font-size:12.5px; resize:vertical;"></textarea>
+          <p class="step-note" id="edito-rules-note" hidden></p>
           <div class="controls">
             <button class="btn ghost" id="edito-export-docx-btn" type="button">Als DOCX exportieren</button>
             <button class="btn ghost" id="edito-export-pdf-btn" type="button">Als PDF exportieren</button>
@@ -3122,6 +3123,7 @@
             <div class="stat-line" id="subchapter-sources-output"></div>
             <p class="section-label" style="margin-top:14px;">Aktueller Entwurf (letzte erzeugte Fassung)</p>
             <div class="panel gen-preview" id="subchapter-current-draft-output" style="padding:12px 14px; max-height:260px; overflow:auto; white-space:pre-wrap;"></div>
+            <p class="step-note" id="subchapter-rules-note" hidden></p>
           </section>
 
           <section>
@@ -6686,7 +6688,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.176.0";
+  var APP_VERSION = "2.177.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8340,6 +8342,7 @@
     "edito-final-compare-old", "edito-final-compare-new", "edito-final-report-wrap", "edito-final-report",
     "edito-final-save-name-input", "edito-final-save-btn", "edito-final-discard-btn",
     "rovo-tables-count", "rovo-tables-list", "rovo-tables-empty",
+    "edito-rules-note", "subchapter-rules-note",
     "rules-scope-select", "rules-scope-custom-wrap", "rules-scope-custom", "rules-kind-select", "rules-value-input", "rules-add-btn", "rules-add-note",
     "rules-count", "rules-table-wrap", "rules-tbody", "rules-empty", "rules-check-btn", "rules-check-status", "rules-result-wrap", "rules-result-tbody",
     "bildband-table", "bildband-tbody", "bildband-empty",
@@ -26936,7 +26939,7 @@
         '<td class="mono">' + counts.rovo + "</td>" +
         '<td class="mono">' + counts.images + "</td>" +
         '<td class="mono">' + counts.tables + "</td>" +
-        "<td>" + (hasText ? "Erzeugt (" + escapeHtml(entry.generatedAt) + ")" : "Noch nicht erzeugt") + "</td>" +
+        "<td>" + (hasText ? "Erzeugt (" + escapeHtml(entry.generatedAt) + ")" : "Noch nicht erzeugt") + (function () { var n = hasText ? rulesCheckText([c.title], entry.de).length : 0; return n ? ' <span class="cv-warn" data-edito-rules="' + escapeHtml(c.title) + '" title="Verstöße gegen feste Regeln (Register Regelwerk)">Regelwerk: ' + n + "</span>" : ""; })() + "</td>" +
         '<td><button type="button" class="btn ghost btn-tiny" data-edito-generate="' + escapeHtml(c.title) + '">' + (hasText ? "Neu erzeugen" : "Erzeugen") + "</button>" +
         (hasText ? ' <button type="button" class="btn ghost btn-tiny" data-edito-view="' + escapeHtml(c.title) + '">Anzeigen</button>' : "") +
         "</td></tr>";
@@ -27339,6 +27342,7 @@
     els.editoPreviewSection.hidden = false;
     els.editoPreviewTitle.textContent = title;
     els.editoPreviewOutput.value = entry ? entry.de : "";
+    rulesRenderNote(els.editoRulesNote, [title], entry ? entry.de : "");
     els.editoAgent1Result.hidden = !(entry && entry.agent1);
     els.editoAgent2Result.hidden = !(entry && entry.agent2);
     els.editoAgent1Output.textContent = (entry && entry.agent1) ? entry.agent1.text : "";
@@ -27347,6 +27351,7 @@
   els.editoPreviewOutput.addEventListener("input", function () {
     var entry = editoActiveChapterTitle && app.editoChapters[editoActiveChapterTitle];
     if (entry) entry.de = els.editoPreviewOutput.value;
+    if (entry) { entry.ruleIssues = rulesCheckText([editoActiveChapterTitle], entry.de).map(function (f) { return f.msg; }); rulesRenderNote(els.editoRulesNote, [editoActiveChapterTitle], entry.de); }
   });
   els.editoChaptersTbody.addEventListener("change", function (e) {
     var cb = e.target.closest(".edito-chapter-select");
@@ -27769,6 +27774,7 @@
       '<div class="chip"><b class="mono">' + images.length + "</b> Bilder</div>" +
       '<div class="chip"><b class="mono">' + tables.length + "</b> Tabellen</div>";
     els.subchapterCurrentDraftOutput.textContent = (entry && entry.text) ? entry.text : "Noch keine Fassung erzeugt.";
+    rulesRenderNote(els.subchapterRulesNote, [chapterTitle, subchapterTitle], entry && entry.text);
     var spec = (entry && entry.spec) || { kurzbeschreibung: "", keywords: "", excludeKeywords: "", formatRules: "" };
     els.subchapterSpecKurzbeschreibung.value = spec.kurzbeschreibung || "";
     els.subchapterSpecKeywords.value = spec.keywords || "";
@@ -36954,6 +36960,14 @@
       }
     });
     return out;
+  }
+  // v2.177: Hinweis „Regelwerk“ fuer ein Element (Editor-Vorschau, Unterkapitel) – live aus dem aktuellen Text
+  function rulesRenderNote(el, titles, text) {
+    if (!el) return;
+    if (!rulesHasFixed() || !String(text || "").trim()) { el.hidden = true; el.innerHTML = ""; return; }
+    var issues = rulesCheckText(titles, text);
+    el.hidden = false;
+    el.innerHTML = issues.length ? '<span class="cv-warn">Regelwerk: ' + issues.length + " Verstoß/Verstöße</span> – " + escapeHtml(issues.map(function (f) { return f.msg; }).join(" · ")) : "Regelwerk: alle festen Regeln eingehalten.";
   }
   function rulesHasFixed() { return ((app.rules && app.rules.items) || []).some(function (r) { return r.active && r.kind !== "ai"; }); }
   // alle pruefbaren Texte: aktiver FINAL-Stand, Editor, Unterkapitel, Dokument-Review

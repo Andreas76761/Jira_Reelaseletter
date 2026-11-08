@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.176.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.177.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,12 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Regelwerk-Hinweise direkt am Kapitel (v2.177.0)**: Im Editor steht unter der Kapitel-Vorschau, ob die festen Regeln
+  (allgemein + Kapitel) eingehalten sind bzw. welche verletzt werden – live auch beim Bearbeiten des Textes; die
+  Kapitelliste markiert betroffene Kapitel mit „Regelwerk: n“. In der Unterkapitel-Werkstatt steht derselbe Hinweis unter
+  der aktuellen Fassung (Regeln des Kapitels, des Unterkapitels und allgemeine). Test `regelwerk_intern_test.js` erweitert
+  (auch Regelwerk im Unterkapitel-Prompt).
 
 - **Sparten Pkw/Van/beide, Register Regelwerk, Kapitel „Intern“ und „In Planung“ (v2.176.0)**:
   - **Sparten**: überall nur noch Pkw, Van und „Pkw und Van (beide)“, „beide“ ist voreingestellt. Der Sparte-Filter der
