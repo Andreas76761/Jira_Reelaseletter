@@ -6769,7 +6769,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.191.0";
+  var APP_VERSION = "2.192.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -31682,9 +31682,6 @@
         : '<span class="step-note">Mermaid-Diagramm – im Register „Prozessbild“ als PNG speichern und im Register „Bilder“ hochladen</span>';
       return "<tr><td>" + escapeHtml(g.title || "Prozessbild") + '</td><td class="mono" style="white-space:nowrap;">' + escapeHtml(g.when || "") + "</td><td>" + action + "</td></tr>";
     }).join("");
-  }
-  function blobToDataUrl(blob) {
-    return new Promise(function (resolve, reject) { var r = new FileReader(); r.onload = function () { resolve(r.result); }; r.onerror = function () { reject(r.error || new Error("Lesefehler")); }; r.readAsDataURL(blob); });
   }
   els.finalDiagramsTbody.addEventListener("click", async function (e) {
     var b = e.target.closest("[data-final-diagram-take]");

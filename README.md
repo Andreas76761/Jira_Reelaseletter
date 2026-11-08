@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.191.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.192.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,11 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Korrektur zu v2.190 (v2.192.0)**: v2.190 hatte eine Hilfsfunktion (Datei → Daten-URL) unter einem bereits
+  vorhandenen Namen neu angelegt und damit die bisherige ersetzt. Folge: Im Editor wurden nach dem Erzeugen eines Kapitels
+  Word/PDF nicht mehr automatisch abgelegt (Übersicht „Alle erzeugten Dokumente“ blieb leer). Die doppelte Funktion ist
+  entfernt; Editor, Tabellen-Einbettung und Prozessbild-Übernahme sind wieder bzw. weiterhin geprüft.
 
 - **Handy-Ansicht ohne seitliches Scrollen (v2.191.0)**: Auf schmalen Bildschirmen (bis 900 px) brechen Beschriftungen von
   Kontrollkästchen, Knopftexte und Zähler jetzt um, statt die Seite zu verbreitern. Vorher waren bei 390 px Breite 6 von 36
