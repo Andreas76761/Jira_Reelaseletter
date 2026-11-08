@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.182.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.183.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,14 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Verschachtelte vorgemerkte Abschnitte exakt, Rückfrage auch bei Team-Ständen (v2.183.0)**: Die beiden bekannten
+  Grenzen aus v2.182 sind behoben. Liegt ein früher vorgemerkter Abschnitt innerhalb eines später vorgemerkten größeren,
+  wird er relativ zu diesem geführt: Zurückholen in beliebiger Reihenfolge ist exakt – wird der innere zuerst
+  zurückgeholt, solange der äußere noch vorgemerkt ist, steckt er wieder an seiner Stelle in diesem; wird der äußere
+  verworfen, wird der innere an dessen Stelle im Kapitel verankert. Team-Stände (geteilte Ablage) fragen beim
+  Veröffentlichen ebenfalls nach, wenn feste Regeln verletzt sind. Tests: verschachtelt in beiden Reihenfolgen,
+  Team-Stand mit Regelverstoß (Abbrechen lässt den Status unverändert).
 
 - **Code-Review v2.179–2.181 (v2.182.0)**: Regel-Import: „Höchstens N Wörter“ ohne gültige Zahl wurde aus Dateien
   übernommen und dann stillschweigend nie geprüft – jetzt ignoriert; „250 Wörter“ wird zu 250, Geltungsbereich und Wert

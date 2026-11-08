@@ -239,6 +239,40 @@ const prompts = [];
     check("v2.179: Reihenfolge " + order.map((x) => x[0]).join("-") + " – Kapitel exakt wie vorher", ch4.text === CH4 && ch4.screenIds.join() === "301");
   }
 
+  // v2.183: verschachtelt – erst ein Teil aus der Mitte, dann ein größerer, umschließender Abschnitt
+  const CH5 = "Satz eins steht hier.\nSatz zwei mit Detail Xyz und mehr Text. Satz drei folgt.\nZeile vier bleibt.\nZeile fünf bleibt auch.";
+  s = await session();
+  s.final.versions[0].chapters.push({ title: "5 Nest", level: 1, text: CH5, markedText: CH5, screenIds: [] });
+  await load(s);
+  nav("final"); await wait(80);
+  async function mark5(text, kind) {
+    const cs = $("final-result-chapter-select"); cs.value = "5 Nest"; fire(cs, "change"); await wait(20);
+    const ok = selectInMaster(text);
+    fire($(kind === "intern" ? "final-reserve-intern-btn" : "final-reserve-plan-btn"), "click"); await wait(30);
+    if (!$("confirm-modal-overlay").hidden) await confirmModal();
+    return ok;
+  }
+  async function restore5(prefix) {
+    for (const k of ["__final_intern__", "__final_planung__"]) {
+      const cs = $("final-result-chapter-select"); cs.value = k; fire(cs, "change"); await wait(20);
+      const e = Array.from($("final-result-master-output").querySelectorAll("[data-final-reserve-id]")).find((x) => x.textContent.includes("Aus „5 Nest“") && x.textContent.includes(prefix));
+      if (e) { fire(e.querySelector("[data-final-reserve-restore]"), "click"); await wait(30); return true; }
+    }
+    return false;
+  }
+  const ch5 = async () => { const ss = await session(); return ss.final.versions[0].chapters.filter((c) => c.title === "5 Nest")[0]; };
+  for (const order of [["Detail", "Satz zwei"], ["Satz zwei", "Detail"]]) {
+    const m1 = await mark5("Detail Xyz", "intern");
+    const m2 = await mark5("Satz zwei mit  und mehr Text. Satz drei folgt.", "planung");
+    const mid = await ch5();
+    check("v2.183: verschachtelt vorgemerkt (" + order.join(" → ") + ")", m1 && m2 && mid.text === "Satz eins steht hier.\nZeile vier bleibt.\nZeile fünf bleibt auch.");
+    await restore5(order[0]);
+    if (order[0] === "Detail") { const cs = $("final-result-chapter-select"); cs.value = "__final_planung__"; fire(cs, "change"); await wait(20);
+      check("v2.183: inneren Teil zuerst zurückgeholt -> steckt wieder im noch vorgemerkten Abschnitt", (await ch5()).text === mid.text && $("final-result-master-output").textContent.includes("Satz zwei mit Detail Xyz und mehr Text")); }
+    await restore5(order[1]);
+    check("v2.183: Reihenfolge " + order.join(" → ") + " – Kapitel exakt wie vorher", (await ch5()).text === CH5);
+  }
+
   // Erneut vormerken und neuen Stand anlegen (Dokument-Review -> FINAL): Abschnitt bleibt entfernt
   csel.value = "1 Vertrag"; fire(csel, "change"); await wait(20);
   selectInMaster("Geplant für Q3: Export nach SAP.");

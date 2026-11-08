@@ -169,6 +169,23 @@ const img = (rId) => '<w:p><w:r><w:drawing><a:blip r:embed="' + rId + '"/></w:dr
   check("Bens Status 'Geprüft' live bei Anna, mit 'von Ben Prüfer'", teamRows(A)[0].querySelector(".final-status-pill").textContent === "Geprüft" && teamRows(A)[0].textContent.includes("von Ben Prüfer"));
   check("Status-Historie mit Konto-ID im Team-Dokument", [...fakeDb.store.values()][0].history.some((h) => h.status === "Geprüft" && h.byId === "u_ben"));
 
+  // v2.183: Team-Stand mit Regelwerk-Verstoß erst nach Rückfrage veröffentlichen
+  d(B).querySelector('.nav-item[data-view="regelwerk"]').click(); await wait(50);
+  d(B).getElementById("rules-kind-select").value = "forbid"; fire(B, d(B).getElementById("rules-kind-select"), "change");
+  d(B).getElementById("rules-value-input").value = "online"; fire(B, d(B).getElementById("rules-add-btn"), "click"); await wait(30);
+  d(B).querySelector('.nav-item[data-view="final"]').click(); await wait(80);
+  const bSel2 = teamRows(B)[0].querySelector("[data-team-status]");
+  bSel2.value = "Veröffentlicht"; fire(B, bSel2, "change");
+  await waitUntil(() => !d(B).getElementById("confirm-modal-overlay").hidden, 2000);
+  check("v2.183: Team-Stand mit Regelverstoß -> Rückfrage vor dem Veröffentlichen", /Team-Stand .* verletzt 1 feste Regel/.test(d(B).getElementById("confirm-modal-message").textContent) && d(B).getElementById("confirm-modal-message").textContent.includes("online"));
+  fire(B, d(B).getElementById("confirm-modal-cancel-btn"), "click"); await wait(150);
+  check("v2.183: abgebrochen -> Team-Stand bleibt „Geprüft“", [...fakeDb.store.values()][0].status === "Geprüft");
+  d(B).querySelector('.nav-item[data-view="regelwerk"]').click(); await wait(30);
+  fire(B, d(B).getElementById("rules-tbody").querySelector("[data-rule-delete]"), "click");
+  await waitUntil(() => !d(B).getElementById("confirm-modal-overlay").hidden, 2000); fire(B, d(B).getElementById("confirm-modal-ok-btn"), "click");
+  await waitUntil(() => d(B).getElementById("confirm-modal-overlay").hidden, 2000);
+  d(B).querySelector('.nav-item[data-view="final"]').click(); await wait(50);
+
   // ===================== Kommentare =====================
   fire(B, teamRows(B)[0].querySelector("[data-team-comments]"), "click");
   d(B).getElementById("final-team-comment-input").value = "Kapitel 2 bitte noch prüfen.";

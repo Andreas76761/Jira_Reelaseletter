@@ -6694,7 +6694,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.182.0";
+  var APP_VERSION = "2.183.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -28991,18 +28991,47 @@
   function finalReserveLen(e) { return e.piece.length + (e.dropped || 0) - (e.joint || "").length; }
   function finalReserveSiblings(e) { return finalReserved().filter(function (y) { return y !== e && y.versionId === e.versionId && y.chapter === e.chapter; }); }
   function finalReserveOrig(y) { return typeof y.origStart === "number" ? y.origStart : y.mOffset; }
+  // v2.183: liegt die Verankerung eines frueher vorgemerkten Abschnitts INNERHALB eines spaeter vorgemerkten groesseren
+  // Abschnitts, wird er relativ zu diesem gefuehrt (parentId, innerOffset, innerScreen) – exakt beim Zurueckholen,
+  // egal in welcher Reihenfolge. Verschachtelte Eintraege nehmen an Kapitel-Verschiebungen nicht teil.
   function finalReserveAfterCut(n, end) {
     var delta = (n.joint || "").length - (end - n.mOffset) - (n.dropped || 0), stop = end + (n.dropped || 0), k = n.screenIdx, cnt = (n.screenIds || []).length;
     finalReserveSiblings(n).forEach(function (y) {
-      if (y.mOffset >= stop) y.mOffset += delta; else if (y.mOffset > n.mOffset) y.mOffset = n.mOffset;
+      if (y.parentId) return;
+      if (y.mOffset > n.mOffset && y.mOffset < end) {
+        y.parentId = n.id; y.innerOffset = y.mOffset - n.mOffset; y.innerScreen = Math.max(0, Math.min(cnt, y.screenIdx - k)); return;
+      }
+      if (y.mOffset >= stop) y.mOffset += delta; else if (y.mOffset >= end) y.mOffset = n.mOffset + (n.joint || "").length;
       if (cnt) { if (y.screenIdx >= k + cnt) y.screenIdx -= cnt; else if (y.screenIdx > k) y.screenIdx = k; }
     });
   }
   function finalReserveAfterRestore(x, at, delta, sIdx, sCnt) {
     finalReserveSiblings(x).forEach(function (y) {
+      if (y.parentId) return;
       if (y.mOffset > at || (y.mOffset === at && finalReserveOrig(y) > finalReserveOrig(x))) y.mOffset += delta;
       if (sCnt && (y.screenIdx > sIdx || (y.screenIdx === sIdx && finalReserveOrig(y) > finalReserveOrig(x)))) y.screenIdx += sCnt;
     });
+  }
+  function finalReserveChildren(p) { return finalReserved().filter(function (y) { return y.parentId === p.id; }); }
+  // Kind zurueckholen, solange der umschliessende Abschnitt noch vorgemerkt ist: in dessen Text einsetzen
+  function finalReserveRestoreIntoParent(e, P) {
+    var pc = P.piece, at = Math.min(e.innerOffset || 0, pc.length), piece = e.piece, jr = 0;
+    if (e.joint && pc.substr(at, e.joint.length) === e.joint) { pc = pc.slice(0, at) + pc.slice(at + e.joint.length); jr = e.joint.length; }
+    if (e.dropped) piece += "\n";
+    P.piece = pc.slice(0, at) + piece + pc.slice(at);
+    var sIdx = Math.min(e.innerScreen || 0, (P.screenIds || []).length), sCnt = (e.screenIds || []).length;
+    if (sCnt) { P.screenIds = P.screenIds || []; Array.prototype.splice.apply(P.screenIds, [sIdx, 0].concat(e.screenIds)); }
+    finalReserveChildren(P).forEach(function (y) {
+      if (y === e) return;
+      if (y.innerOffset > at || (y.innerOffset === at && finalReserveOrig(y) > finalReserveOrig(e))) y.innerOffset += piece.length - jr;
+      if (sCnt && (y.innerScreen > sIdx || (y.innerScreen === sIdx && finalReserveOrig(y) > finalReserveOrig(e)))) y.innerScreen += sCnt;
+    });
+    // eigene Kinder von e wandern mit in P
+    finalReserveChildren(e).forEach(function (c) { c.parentId = P.id; c.innerOffset = at + (c.innerOffset || 0); c.innerScreen = sIdx + (c.innerScreen || 0); });
+    app.final.reserved = finalReserved().filter(function (x) { return x !== e; });
+    addLog("FINAL: Abschnitt aus „" + FINAL_RESERVE_KINDS[e.kind] + "“ in den umschließenden, noch vorgemerkten Abschnitt („" + FINAL_RESERVE_KINDS[P.kind] + "“) zurückgeholt.");
+    renderFinalResultChapterOptions();
+    updateFinalResult();
   }
   function finalReserveReapply(v) {
     var n = 0;
@@ -29071,6 +29100,11 @@
   function finalReserveRestore(id) {
     var e = finalReserved().filter(function (x) { return x.id === id; })[0], v = finalActiveVersion();
     if (!e || !v || finalReserveLocked(v)) return;
+    if (e.parentId) {
+      var P = finalReserved().filter(function (x) { return x.id === e.parentId; })[0];
+      if (P) { finalReserveRestoreIntoParent(e, P); return; }
+      e.parentId = null;
+    }
     var ch = v.chapters.filter(function (c) { return c.title === e.chapter; })[0];
     if (!ch) { showToast("Nicht möglich", "Das Kapitel „" + e.chapter + "“ gibt es im aktiven Stand „" + v.name + "“ nicht.", true); return; }
     var marked = typeof ch.markedText === "string" ? ch.markedText : String(ch.text || "");
@@ -29078,7 +29112,8 @@
     var same = e.versionId === v.id, at = same ? Math.min(e.mOffset, marked.length) : marked.length, piece = e.piece, jointRemoved = 0;
     if (same && e.joint && marked.substr(at, e.joint.length) === e.joint) { marked = marked.slice(0, at) + marked.slice(at + e.joint.length); jointRemoved = e.joint.length; }
     if (same && e.dropped) piece += "\n";
-    if (at === marked.length && marked && !/\n$/.test(marked)) piece = "\n" + piece;
+    var lead = 0;
+    if (at === marked.length && marked && !/\n$/.test(marked)) { piece = "\n" + piece; lead = 1; }
     ch.markedText = marked.slice(0, at) + piece + marked.slice(at);
     ch.text = textWasPlain ? ch.markedText.replace(FINAL_MARK_RE, "") : String(ch.text || "") + "\n" + piece.replace(FINAL_MARK_RE, "");
     var idx = 0;
@@ -29088,6 +29123,10 @@
       Array.prototype.splice.apply(ch.screenIds, [idx, 0].concat(e.screenIds));
     }
     if (same) finalReserveAfterRestore(e, at, piece.length - jointRemoved, idx, (e.screenIds || []).length);
+    finalReserveChildren(e).forEach(function (c) {
+      c.parentId = null;
+      if (same) { c.mOffset = at + lead + (c.innerOffset || 0); c.screenIdx = idx + (c.innerScreen || 0); } else { c.mOffset = e.mOffset; c.screenIdx = e.screenIdx; }
+    });
     app.final.reserved = finalReserved().filter(function (x) { return x !== e; });
     addLog("FINAL: Abschnitt aus „" + FINAL_RESERVE_KINDS[e.kind] + "“ in „" + e.chapter + "“ (Stand „" + v.name + "“) zurückgeholt.");
     renderFinalResultChapterOptions();
@@ -29131,6 +29170,7 @@
     else if (d) {
       var id = parseInt(d.getAttribute("data-final-reserve-drop"), 10), en = finalReserved().filter(function (y) { return y.id === id; })[0];
       if (!en || !(await confirmDialog("Vorgemerkten Abschnitt endgültig verwerfen? Er bleibt aus dem Benutzerhandbuch entfernt und kann nicht mehr zurückgeholt werden.", "Verwerfen"))) return;
+      finalReserveChildren(en).forEach(function (c) { c.parentId = en.parentId || null; if (en.parentId) { c.innerOffset = en.innerOffset || 0; c.innerScreen = en.innerScreen || 0; } else { c.mOffset = en.mOffset; c.screenIdx = en.screenIdx; } });
       app.final.reserved = finalReserved().filter(function (y) { return y !== en; });
       addLog("FINAL: vorgemerkter Abschnitt aus „" + en.chapter + "“ (" + FINAL_RESERVE_KINDS[en.kind] + ") verworfen.");
       renderFinalResultChapterOptions();
@@ -29706,6 +29746,16 @@
   }
   // Statuswechsel: "Geprueft"/"Veroeffentlicht" nur mit Bearbeiter-Namen;
   // einen veroeffentlichten Stand zuruecksetzen nur nach Bestaetigung.
+  // v2.183: gemeinsame Rueckfrage fuer lokale und Team-Staende
+  async function finalRulesConfirmPublish(label, name, chapters) {
+    if (!rulesHasFixed()) return true;
+    var rIss = [];
+    (chapters || []).forEach(function (c) { rulesCheckText([c.title], c.text).forEach(function (f) { rIss.push(c.title + ": " + f.msg); }); });
+    if (!rIss.length) return true;
+    if (!(await confirmDialog(label + " „" + name + "“ verletzt " + rIss.length + " feste Regel(n) des Regelwerks: " + rIss.slice(0, 3).join(" · ") + (rIss.length > 3 ? " …" : "") + " – trotzdem veröffentlichen?", "Trotzdem veröffentlichen"))) return false;
+    addLog("FINAL: " + label + " „" + name + "“ trotz " + rIss.length + " Regelwerk-Verstoß/Verstößen veröffentlicht.");
+    return true;
+  }
   async function finalSetVersionStatus(v, status) {
     if (!v || v.status === status || FINAL_VERSION_STATUSES.indexOf(status) === -1) return false;
     var by = finalReviewerName();
@@ -29723,12 +29773,7 @@
       if (!ok) return false;
     }
     // v2.180: vor dem Veroeffentlichen auf Verstoesse gegen feste Regeln des Regelwerks hinweisen
-    if (status === "Veröffentlicht" && rulesHasFixed()) {
-      var rIss = [];
-      (v.chapters || []).forEach(function (c) { rulesCheckText([c.title], c.text).forEach(function (f) { rIss.push(c.title + ": " + f.msg); }); });
-      if (rIss.length && !(await confirmDialog("Stand „" + v.name + "“ verletzt " + rIss.length + " feste Regel(n) des Regelwerks: " + rIss.slice(0, 3).join(" · ") + (rIss.length > 3 ? " …" : "") + " – trotzdem veröffentlichen?", "Trotzdem veröffentlichen"))) return false;
-      if (rIss.length) addLog("FINAL: Stand „" + v.name + "“ trotz " + rIss.length + " Regelwerk-Verstoß/Verstößen veröffentlicht.");
-    }
+    if (status === "Veröffentlicht" && !(await finalRulesConfirmPublish("Stand", v.name, v.chapters))) return false;
     v.status = status;
     v.statusChangedAt = nowLabel();
     v.statusBy = by;
@@ -30324,6 +30369,7 @@
     if (status !== "Entwurf" && !finalReviewerName()) { showToast("Bearbeiter fehlt", "Für „" + status + "“ bitte zuerst den Bearbeiter eintragen.", true); return false; }
     if (finalUser && status === "Veröffentlicht" && !finalUser.canEdit) { showToast("Keine Berechtigung", "Veröffentlichen dürfen nur Personen mit Bearbeitungsrecht an dieser App.", true); return false; }
     if (d.status === "Veröffentlicht" && !(await confirmDialog("Team-Stand „" + d.name + "“ ist veröffentlicht. Status wirklich auf „" + status + "“ zurücksetzen?", "Zurücksetzen"))) return false;
+    if (status === "Veröffentlicht" && !(await finalRulesConfirmPublish("Team-Stand", d.name, d.chapters))) return false; // v2.183
     // Ganze Historie wird ersetzt (Arrays mergen nicht) - bei gleichzeitigen
     // Statuswechseln gewinnt der letzte; die Lease oben stimmt Bearbeiter ab.
     var history = (d.history || []).concat([{ status: status, when: nowLabel(), byId: teamMyId() }]).slice(-50);
