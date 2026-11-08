@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.174.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.175.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,14 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Code-Review v2.173–2.174: Detailprüfung der Bild-Dubletten begrenzt (v2.175.0)**: Bei vielen kleinen Screens
+  (unter 320×200, also ohne mittlere/feine Vergleichsstufe) konnte jedes Bild gegen fast jede Gruppe in den teuren
+  Detailvergleich gehen (quadratisch viele Bilddekodierungen). Jetzt werden die Kandidaten nach der Summe der
+  Grauwert-Abweichungen geordnet – echte Kopien liegen damit auch dann vorn, wenn viele Screens mit gleichem Layout im
+  groben Vergleich gleich „0 %“ zeigen – und je Bild höchstens 6 im Detail geprüft; der Zwischenspeicher der
+  Detailbilder hat ein Speicherbudget (48 MB) statt einer festen Anzahl. Gemessen im echten Browser mit 500 kleinen
+  Screens (gleiches Layout, 50 markierte Kopien): weiterhin genau die 50 Paare, 7,1 s → 5,6 s. Der Jira-XML-Import aus v2.174 wurde ohne Befund geprüft.
 
 - **Schnellerer Jira-XML-Import großer Exporte (v2.174.0)**: Messung im echten Browser zeigte, dass beim Import von
   2.000 Tickets nicht der XML-Parser des Browsers (~0,4 s, nicht vermeidbar) den größten Anteil hatte, sondern rund
