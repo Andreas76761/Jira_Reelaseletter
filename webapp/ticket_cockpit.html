@@ -28993,9 +28993,13 @@
   function finalReserveCurrentSel() {
     var sel = window.getSelection ? window.getSelection() : null;
     if (!sel || sel.isCollapsed || !sel.rangeCount) return null;
-    var node = sel.getRangeAt(0).startContainer;
-    if (!els.finalResultMasterOutput.contains(node)) return null;
-    return { text: sel.toString(), chapter: finalReserveChapterForNode(node) };
+    var out = els.finalResultMasterOutput, range = sel.getRangeAt(0).cloneRange();
+    var inStart = out.contains(range.startContainer), inEnd = out.contains(range.endContainer);
+    if (!inStart && !inEnd) { if (!range.intersectsNode || !range.intersectsNode(out)) return null; range.selectNodeContents(out); }
+    // Auswahl, die ueber das Ergebnisfenster hinausreicht (Maus zu weit gezogen), auf das Fenster begrenzen
+    if (!inEnd) range.setEnd(out, out.childNodes.length);
+    if (!inStart) range.setStart(out, 0);
+    return { text: range.toString(), chapter: finalReserveChapterForNode(range.startContainer.nodeType === 1 && range.startContainer === out ? (out.firstChild || out) : range.startContainer) };
   }
   // Auswahl merken (falls der Klick auf den Knopf sie im Browser aufhebt)
   document.addEventListener("selectionchange", function () { var s = finalReserveCurrentSel(); if (s && s.text.trim()) finalReserveSel = s; });
