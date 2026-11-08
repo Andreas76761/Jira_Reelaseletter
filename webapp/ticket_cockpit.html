@@ -125,7 +125,8 @@
   .nav-lexnew::before { content: attr(data-n); }
   .lex-auto-panel { padding: 14px 16px; margin-bottom: 14px; }
   .lex-auto-panel .lex-new-table td { vertical-align: top; }
-  .lex-auto-panel .lex-example { font-size: 12px; color: var(--text-muted); max-width: 420px; }
+  .lex-auto-panel .lex-example { font-size: 12px; color: var(--text-muted); max-width: 300px; }
+  .lex-auto-panel .lex-new-table td:last-child { white-space: nowrap; }
   tr.lex-row-new > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
   .nav-new { font-size: 9.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; background: #db2777; border-radius: 100px; padding: 1px 6px; }
   .nav-item .nav-count + .count-badge { margin-left: 4px; }
@@ -37834,7 +37835,7 @@
     if (typeof scheduleNavRefresh === "function") scheduleNavRefresh();
   }
   function lexDetailHtml(kind, e) {
-    if (kind === "abbrev") return (e.de ? "<b>" + escapeHtml(e.de) + "</b>" : '<span class="step-note">Bedeutung offen</span>') + (e.en ? " · EN: " + escapeHtml(e.en) : "") + '<br><small class="step-note">' + escapeHtml(e.lexNote || "") + "</small>";
+    if (kind === "abbrev") return (e.de ? "<b>" + escapeHtml(e.de) + "</b>" : '<span class="step-note">Bedeutung offen – bitte in der Tabelle ergänzen</span>') + (e.en ? " · EN: " + escapeHtml(e.en) : "") + (e.de && e.lexNote ? '<br><small class="step-note">' + escapeHtml(e.lexNote) + "</small>" : "");
     if (kind === "syn") return "<b>" + escapeHtml(e.term) + "</b> = " + escapeHtml(e.synonyms || "") + '<br><small class="step-note">' + escapeHtml(e.lexNote || "") + "</small>";
     return escapeHtml(e.lexNote || "");
   }
