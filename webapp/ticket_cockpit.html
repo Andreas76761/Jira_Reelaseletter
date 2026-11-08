@@ -31079,7 +31079,7 @@
     { label: "Bilder", view: "bilder", unit: "Bilder", fields: ["uploadedImages", "generatedImages", "cvSettings"], items: function (d) { return dashCount(d.uploadedImages) + dashCount(d.generatedImages); } },
     { label: "Tabelle", view: "tabellen", unit: "Tabellen", fields: ["rovoTables"], items: function (d) { return dashCount(d.rovoTables); } },
     { label: "Regelwerk", view: "regelwerk", unit: "Regeln", fields: ["rules"], items: function (d) { return dashCount(d.rules && d.rules.items); } },
-    { label: "Glossar, Synonyme, Abkürzungen", view: "glossar", unit: "Begriffe", fields: ["labels", "synonyms", "glossaryTranslations", "abbrevTranslations", "extracted"], items: function (d) { return dashCount(d.labels) + dashCount(d.synonyms) + dashCount(d.glossaryTranslations) + dashCount(d.abbrevTranslations); } },
+    { label: "Glossar, Synonyme, Abkürzungen", view: "glossar", unit: "Begriffe", fields: ["labels", "synonyms", "glossaryTranslations", "abbrevTranslations", "extracted", "lexAuto"], items: function (d) { return dashCount(d.labels) + dashCount(d.synonyms) + dashCount(d.glossaryTranslations) + dashCount(d.abbrevTranslations); } },
     { label: "Einstellungen & Protokoll", view: "einstellungen", unit: "Protokolleinträge", fields: ["log", "ragPrompts", "languageStyle", "negativeWordsRaw", "view", "sessionFileFormat", "savedAt", "appVersion"], items: function (d) { return dashCount(d.log); } }
   ];
   // UTF-8-Bytes (so gross wird der Teil in der Sitzungsdatei), ohne den String zu kopieren
