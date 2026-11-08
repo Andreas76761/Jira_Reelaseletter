@@ -3400,7 +3400,14 @@
             <div class="controls">
               <button class="btn primary btn-tiny" id="final-bilder-apply-btn" type="button">Vorschläge übernehmen</button>
               <button class="btn ghost btn-tiny" id="final-bilder-clear-btn" type="button">Alle Zuordnungen lösen</button>
+              <button class="btn ghost btn-tiny" id="final-bilder-ai-btn" type="button" title="Claude sieht sich die offenen Bilder an und schlägt das passende Kapitel vor"><span class="btn-spinner" id="final-bilder-ai-spinner" hidden></span>Mit Claude zuordnen (sieht die Bilder an)</button>
               <span class="step-note" id="final-bilder-note" style="margin:0;"></span>
+            </div>
+            <p class="step-note" id="final-bilder-ai-note" style="margin:4px 0 0;"></p>
+            <div id="final-diagrams-wrap" hidden style="margin-top:10px;">
+              <p class="section-label" style="margin-top:0;">Prozessbilder (<span id="final-diagrams-count">0</span>)</p>
+              <p class="step-note" style="margin-top:0;">Im Register „Prozessbild“ erzeugte Diagramme lassen sich als Bild (PNG) übernehmen – sie erscheinen dann in der Liste oben und können wie jedes andere Bild einem Kapitel zugeordnet werden.</p>
+              <div class="table-wrap"><table class="simple-table"><thead><tr><th>Prozessbild</th><th>Erstellt</th><th></th></tr></thead><tbody id="final-diagrams-tbody"></tbody></table></div>
             </div>
             <div class="table-wrap">
               <table class="simple-table" id="final-bilder-table">
@@ -6759,7 +6766,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.189.0";
+  var APP_VERSION = "2.190.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8396,7 +8403,7 @@
     "final-filter-rolle-select", "final-filter-sparte-select", "final-filter-sprache-input", "final-filter-markt-input",
     "final-build-master-btn", "final-build-master-spinner", "final-build-master-status-note",
     "final-master-export-section", "final-master-download-docx-btn", "final-master-download-pdf-btn",
-    "final-result-section", "final-flow-list", "final-bilder-block", "final-bilder-count", "final-bilder-apply-btn", "final-bilder-clear-btn", "final-bilder-note", "final-bilder-tbody", "final-bilder-empty", "final-result-source-file-select", "final-result-images-cb", "final-result-source-head", "final-result-master-head", "final-reserve-intern-btn", "final-reserve-plan-btn", "final-reserve-note", "final-rules-note", "final-result-chapter-select", "final-result-source-output", "final-result-master-output", "final-result-fullscreen-both-btn", "final-viewer", "final-viewer-panes", "final-viewer-close-btn", "final-viewer-toggle-btn", "final-manual-rolle-select", "final-manual-sparte-select", "final-manual-sprache-input", "final-manual-markt-input",
+    "final-result-section", "final-flow-list", "final-bilder-block", "final-bilder-count", "final-bilder-apply-btn", "final-bilder-clear-btn", "final-bilder-note", "final-bilder-tbody", "final-bilder-empty", "final-bilder-ai-btn", "final-bilder-ai-spinner", "final-bilder-ai-note", "final-diagrams-wrap", "final-diagrams-count", "final-diagrams-tbody", "final-result-source-file-select", "final-result-images-cb", "final-result-source-head", "final-result-master-head", "final-reserve-intern-btn", "final-reserve-plan-btn", "final-reserve-note", "final-rules-note", "final-result-chapter-select", "final-result-source-output", "final-result-master-output", "final-result-fullscreen-both-btn", "final-viewer", "final-viewer-panes", "final-viewer-close-btn", "final-viewer-toggle-btn", "final-manual-rolle-select", "final-manual-sparte-select", "final-manual-sprache-input", "final-manual-markt-input",
     "final-improvements-upload-btn", "final-improvements-file-input", "final-improvements-files-tbody", "final-improvements-files-empty",
     "final-improvements-mapping", "final-improvements-view-select", "final-improvements-summary", "final-improvements-tbody",
     "final-preview-manual-select", "final-preview-improvements-select", "final-preview-improvements", "final-screens-file-filter-select",
@@ -18853,7 +18860,7 @@
     return '<span class="thumb-placeholder">Mermaid</span>';
   }
   function renderImagesTable() {
-    renderWhenVisible("final", "finalBilder", function () { renderFinalBilder(); renderFinalFlow(); });
+    renderWhenVisible("final", "finalBilder", function () { renderFinalBilder(); renderFinalDiagrams(); renderFinalFlow(); });
     var combined = app.generatedImages.map(function (img) { return { sortKey: img.id, kind: "generated", data: img }; })
       .concat(app.uploadedImages.map(function (img) { return { sortKey: img.id, kind: "uploaded", data: img }; }));
     combined.sort(function (a, b) { return b.sortKey - a.sortKey; });
@@ -21716,6 +21723,7 @@
     subchapterAgent5: "Du bist Qualitätsprüfer für das Benutzerhandbuch eines Fuhrpark-/Vertragsmanagement-Systems (oneSCM). Unten stehen ALLE genehmigten Unterkapitel der aktuellen Rolle/Sparte-Version, je Unterkapitel mit den ihm zugeordneten Quellen (Jira-Tickets des übergeordneten Kapitels, RAG-Bibliothek-Einträge und Rovo-Knowledge-Notizen, jeweils diesem Unterkapitel zugeordnet) und dem Unterkapiteltext. Prüfe JE UNTERKAPITEL, ob der Inhalt der zugeordneten Quellen im Unterkapiteltext erkennbar aufgegriffen wird. Gib AUSSCHLIESSLICH den folgenden Abschnitt aus, in genau diesem Format:\n\n### Nicht abgedeckte Quellen\n- (ein Stichpunkt je Unterkapitel MIT mindestens einer zugeordneten Quelle, deren Inhalt im Unterkapiteltext nicht erkennbar aufgegriffen wird - Unterkapitel nennen, betroffene Quelle(n) kurz beschreiben)\n\nIst die Liste leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
     rovoSummaryMerge: "Du bist Redakteur für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Unten stehen mehrere, voneinander unabhängige Quelldokumente unterschiedlicher Herkunft (Word-Dateien, HTML-Seiten, aus der Zwischenablage eingefügte Texte). Ordne und verschmelze ihre Inhalte zu EINEM einzigen, gut strukturierten, zusammenhängenden Gesamtdokument auf Deutsch, DURCHGÄNGIG IM PRÄSENS: fasse thematisch zusammengehörige Inhalte unter eigenen, sinnvoll gewählten Zwischenüberschriften (\"## \") zusammen, entferne Redundanzen zwischen den Quellen, löse erkennbare Widersprüche zwischen den Quellen nicht selbst auf, sondern weise an der betreffenden Stelle mit \"[Widerspruch zwischen Quellen]\" darauf hin. Die Struktur/Gliederung des Ergebnisses bestimmst du selbst anhand der tatsächlichen Inhalte - es gibt keine vorgegebene Kapitelstruktur. Nutze AUSSCHLIESSLICH Informationen aus den Quelldokumenten unten, erfinde nichts hinzu. Gib ausschließlich das neue Gesamtdokument aus, keine Erklärungen dazu:",
     rovoSummaryCompare: "Du bist Wissensanalyst für ein IT-Release-Team bei einem Fuhrpark-/Vertragsmanagement-System (oneSCM). Oben steht ein neu erstelltes Gesamtdokument aus mehreren Quelldokumenten, danach alle BEREITS VORHANDENEN Informationen des Systems (Jira-Tickets, RAG-Bibliothek, Rovo-Wissens-Notizen, bestehender Benutzerhandbuch-Text). Vergleiche das neue Gesamtdokument inhaltlich mit den bereits vorhandenen Informationen und gib AUSSCHLIESSLICH die folgenden zwei Abschnitte aus, in genau diesem Format:\n\n### Neue Informationen\n- (ein Stichpunkt je Aussage im neuen Gesamtdokument, die in KEINER der vorhandenen Quellen erkennbar enthalten ist)\n\n### Widersprüche zu bestehenden Quellen\n- (ein Stichpunkt je Aussage im neuen Gesamtdokument, die einer vorhandenen Quelle inhaltlich widerspricht oder sie erkennbar überholt - betroffene Quelle(n) kurz benennen)\n\nIst eine der beiden Listen leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme, die nicht wirklich vorliegen:",
+    finalBilderAssign: "Du ordnest Bilder aus dem Bildarchiv (Screenshots, Fotos, Diagramme) den Kapiteln eines Benutzerhandbuchs der Anwendung oneSCM (Fuhrpark-/Servicevertrags-Management) zu. Sieh dir jedes beigefügte Bild an (Reihenfolge wie in der Liste) und nutze zusätzlich Dateiname, Beschreibung und erkannten Text (OCR). Wähle je Bild das Kapitel, in dem es dem Leser am meisten hilft – ausschließlich einen exakten Titel aus der Kapitel-Liste. Passt kein Kapitel wirklich, lass „kapitel“ leer statt zu raten. „sicher“ ist deine Sicherheit in Prozent (0–100), „grund“ eine kurze Begründung (was auf dem Bild zu sehen ist).",
     finalImageAssign: "Du ordnest Bildschirm-Screenshots (Screens) der Anwendung oneSCM den Kapiteln und Unterkapiteln eines Benutzerhandbuchs zu. Zu jedem Screen bekommst du (falls vorhanden) den Navigationspfad in oneSCM aus der Screens-Datei, die Überschrift, unter der der Screen in der Datei stand, und den bisherigen Untertitel, außerdem die Seite in der Quelle sowie die Überschriften dieser Seite und der Vorseite. Die Screens stehen in Aufnahme-Reihenfolge (Seitenreihenfolge der Quelle) und können sich auf die Vorseite beziehen - steht auf ihrer Seite keine eigene Überschrift, gilt die Überschrift der Vorseite; sind Bilder beigefügt, stehen sie in derselben Reihenfolge wie die Screen-Liste. Interpretiere, was der Screen zeigt, und wähle das inhaltlich passendste Kapitel bzw. Unterkapitel AUSSCHLIESSLICH aus der Kapitel-Liste (Titel exakt übernehmen; passt keines, gib einen leeren Text zurück). Formuliere je Screen einen kurzen deutschen Untertitel (höchstens 12 Wörter), der beschreibt, was der Screen zeigt - ohne den Navigationspfad zu wiederholen und ohne etwas zu erfinden, das weder im Bild noch in den Angaben steht.",
     finalAgentImprove: "Du bist Technischer Redakteur für das Benutzerhandbuch der Anwendung oneSCM. Arbeite die unten aufgeführten Verbesserungen (aus ROVO) in den Kapiteltext ein. Ändere nur, was die Verbesserungen verlangen oder was für einen stimmigen Text dadurch nötig wird; der übrige Text bleibt wörtlich erhalten. Erfinde keine Inhalte, die weder im Text noch in den Verbesserungen stehen. Jede Zeile, die nur [Bild] enthält, ist ein Bild-Platzhalter: übernimm ALLE diese Zeilen unverändert, in derselben Anzahl und an der inhaltlich passenden Stelle. Behalte Sprache, Absatzstruktur und Zwischenüberschriften bei. Antworte ausschließlich mit dem vollständigen überarbeiteten Kapiteltext - ohne Kapitelüberschrift, ohne Einleitung, ohne Kommentar.",
     finalAgentStyle: "Du bist Lektor für das Benutzerhandbuch der Anwendung oneSCM. Überarbeite den Kapiteltext sprachlich: klare, aktive Sätze im Präsens, einheitliche Begriffe, korrekte Rechtschreibung und Grammatik, roter Faden. Der fachliche Inhalt bleibt vollständig und unverändert, nichts hinzuerfinden, nichts weglassen. Jede Zeile, die nur [Bild] enthält, ist ein Bild-Platzhalter: übernimm ALLE diese Zeilen unverändert und in derselben Anzahl. Behalte die Sprache des Textes bei. Antworte ausschließlich mit dem vollständigen überarbeiteten Kapiteltext - ohne Kapitelüberschrift, ohne Einleitung, ohne Kommentar.",
@@ -21770,6 +21778,7 @@
     subchapterAgent5: "Unterkapitel-Werkstatt Agent 5: Vollständigkeit & Abdeckung prüfen",
     rovoSummaryMerge: "Rovo Summary: Quelldokumente zu einem Gesamtdokument ordnen",
     rovoSummaryCompare: "Rovo Summary: Mit vorhandenen Informationen vergleichen",
+    finalBilderAssign: "FINAL: Bilder aus dem Register Bilder ansehen und Kapiteln zuordnen",
     finalImageAssign: "FINAL: Bilder interpretieren und Kapiteln zuordnen",
     finalAgentImprove: "Editor (interne Dokumente): Verbesserungen aus ROVO in ein Kapitel einarbeiten",
     finalAgentStyle: "Editor (interne Dokumente): Sprache und Stil eines Kapitels optimieren",
@@ -31525,6 +31534,8 @@
         idx.filter(function (c) { return n.length >= 4 && c.norm.length >= 4 && (c.norm.indexOf(n) !== -1 || n.indexOf(c.norm) !== -1); })[0];
       if (hit) return { title: hit.title, score: 100, reason: "Kapitel im Register „Bilder“: " + reg[r] };
     }
+    var ai = img.finalAiSuggest;
+    if (ai && ai.title && idx.some(function (c) { return c.title === ai.title; })) return { title: ai.title, score: ai.score, reason: (ai.withImage ? "Claude (Bild angesehen)" : "Claude (ohne Bild)") + (ai.reason ? ": " + ai.reason : ""), ai: true };
     var toks = Object.keys(finalBilderTokens([img.description, img.ocrText, String(img.filename || "").replace(/\.[a-z0-9]{2,5}$/i, ""), img.domain, img.processStep].join(" ")));
     if (!toks.length) return null;
     var best = null;
@@ -31592,6 +31603,116 @@
     renderFinalFlow();
   });
 
+
+  // ===================== v2.190: Bilder aus dem Register mit Claude zuordnen (Claude sieht die Bilder) + Prozessbilder =====================
+  function finalBilderAiPrompt(batch, titles, withImages) {
+    return ragPromptFor("finalBilderAssign") +
+      "\n\nKAPITEL-LISTE:\n" + titles.map(function (t, i) { return (i + 1) + ". " + t; }).join("\n") +
+      "\n\nBILDER" + (withImages ? " (in derselben Reihenfolge beigefügt)" : " (keine Bilder beigefügt – nur anhand der Angaben zuordnen)") + ":\n" +
+      batch.map(function (img, i) {
+        return "[" + (i + 1) + "] Datei: " + (img.filename || "–") + " | Beschreibung: " + (img.description || "–") +
+          (img.ocrText ? " | Text im Bild (OCR): " + truncate(String(img.ocrText).replace(/\s+/g, " "), 300) : "") +
+          (img.chapter ? " | Kapitel im Bildarchiv: " + img.chapter : "");
+      }).join("\n") +
+      '\n\nAntworte nur mit einem JSON-Array, ein Objekt je Bild: [{"nr": 1, "kapitel": "<exakter Titel aus der Kapitel-Liste oder leer>", "sicher": 80, "grund": "<kurz>"}]';
+  }
+  var finalBilderAiBusy = false;
+  els.finalBilderAiBtn.addEventListener("click", async function () {
+    if (finalBilderAiBusy) return;
+    var titles = finalMasterChapterTitles();
+    var todo = finalBilderCandidates().filter(function (img) { return !img.finalUseChapter && !img.finalUseDeclined; });
+    if (!titles.length) { showToast("Keine Kapitel", "Bitte zuerst mindestens eine Benutzerhandbuch-Datei hochladen (Schritt 1).", true); return; }
+    if (!todo.length) { showToast("Keine offenen Bilder", "Alle Bilder aus dem Register „Bilder“ sind bereits zugeordnet oder ausgeschlossen.", true); return; }
+    var sample = window.claude && window.claude.use ? await window.claude.use("sample") : null;
+    if (!sample) { showToast("Nicht verfügbar", "Claude steht hier nicht zur Verfügung - das Zuordnen funktioniert nur in der veröffentlichten App.", true); return; }
+    var limits = null;
+    try { limits = sample.limits ? await sample.limits() : null; } catch (e) { limits = null; }
+    var imageLimits = limits && limits.images, batchSize = imageLimits ? Math.max(1, Math.min(imageLimits.maxCount || 1, 5)) : 25;
+    finalBilderAiBusy = true; els.finalBilderAiBtn.disabled = true; els.finalBilderAiSpinner.hidden = false;
+    var done = 0, suggested = 0, textOnly = !imageLimits;
+    try {
+      for (var start = 0; start < todo.length; start += batchSize) {
+        var batch = todo.slice(start, start + batchSize);
+        els.finalBilderAiNote.textContent = "Claude sieht sich Bild " + (start + 1) + "–" + (start + batch.length) + " von " + todo.length + " an …";
+        var withImages = !!imageLimits && batch.every(function (img) { return /^data:image\/(png|jpe?g|gif|webp)/i.test(img.dataUrl || ""); });
+        var opts = { modelTier: "default" };
+        if (withImages) opts.images = batch.map(function (img) { return dataUrlToBlob(img.dataUrl); });
+        var result;
+        try { result = await sample.json(finalBilderAiPrompt(batch, titles, withImages), opts); }
+        catch (err) {
+          if (!withImages || !err || (err.code !== "images_unavailable" && err.code !== "image_rejected")) throw err;
+          textOnly = true; withImages = false;
+          result = await sample.json(finalBilderAiPrompt(batch, titles, false), { modelTier: "default" });
+        }
+        (Array.isArray(result) ? result : []).forEach(function (row) {
+          var img = batch[(parseInt(row && row.nr, 10) || 0) - 1];
+          if (!img) return;
+          var title = finalMatchChapterTitle(row.kapitel, titles);
+          var sc = Math.max(0, Math.min(99, parseInt(row.sicher, 10) || 0)) || 70;
+          img.finalAiSuggest = title ? { title: title, score: sc, reason: String(row.grund || "").trim().slice(0, 160), withImage: withImages, at: nowLabel() } : null;
+          if (title) suggested++;
+        });
+        done += batch.length;
+        renderFinalBilder();
+      }
+      els.finalBilderAiNote.textContent = "Claude hat " + done + " Bild(er) angesehen und für " + suggested + " ein Kapitel vorgeschlagen – „Vorschläge übernehmen“ setzt sie." +
+        (textOnly ? " Hinweis: Bilder konnten nicht an Claude gesendet werden – Vorschlag nur anhand von Dateiname, Beschreibung und OCR-Text." : "");
+      addLog("FINAL: " + done + " Bild(er) aus dem Register „Bilder“ von Claude angesehen, " + suggested + " Kapitel vorgeschlagen.");
+    } catch (err) {
+      els.finalBilderAiNote.textContent = "Zuordnung mit Claude fehlgeschlagen" + (done ? " nach " + done + " Bild(ern)" : "") + ": " + ((err && (err.message || err.code)) || "unbekannter Fehler") + ".";
+      showToast("Zuordnung fehlgeschlagen", els.finalBilderAiNote.textContent, true);
+    } finally {
+      finalBilderAiBusy = false; els.finalBilderAiBtn.disabled = false; els.finalBilderAiSpinner.hidden = true;
+      renderFinalBilder(); renderFinalFlow();
+    }
+  });
+  // Prozessbilder (Register Prozessbild, SVG) als PNG ins Bildarchiv uebernehmen
+  function renderFinalDiagrams() {
+    if (!els.finalDiagramsTbody) return;
+    var list = (app.generatedImages || []).filter(function (g) { return g && (g.kind === "svg" || g.kind === "mermaid"); });
+    els.finalDiagramsWrap.hidden = !list.length;
+    els.finalDiagramsCount.textContent = list.length;
+    els.finalDiagramsTbody.innerHTML = list.map(function (g) {
+      var taken = g.finalImageId && app.uploadedImages.some(function (i) { return i.id === g.finalImageId; });
+      var action = taken ? '<span class="pill done">übernommen</span>'
+        : g.kind === "svg" ? '<button class="btn ghost btn-tiny" type="button" data-final-diagram-take="' + g.id + '">Als Bild übernehmen</button>'
+        : '<span class="step-note">Mermaid-Diagramm – im Register „Prozessbild“ als PNG speichern und im Register „Bilder“ hochladen</span>';
+      return "<tr><td>" + escapeHtml(g.title || "Prozessbild") + '</td><td class="mono" style="white-space:nowrap;">' + escapeHtml(g.when || "") + "</td><td>" + action + "</td></tr>";
+    }).join("");
+  }
+  function blobToDataUrl(blob) {
+    return new Promise(function (resolve, reject) { var r = new FileReader(); r.onload = function () { resolve(r.result); }; r.onerror = function () { reject(r.error || new Error("Lesefehler")); }; r.readAsDataURL(blob); });
+  }
+  els.finalDiagramsTbody.addEventListener("click", async function (e) {
+    var b = e.target.closest("[data-final-diagram-take]");
+    if (!b) return;
+    var id = parseInt(b.getAttribute("data-final-diagram-take"), 10), g = (app.generatedImages || []).filter(function (x) { return x.id === id; })[0];
+    if (!g || !g.svg) return;
+    b.disabled = true;
+    try {
+      var svgEl = new DOMParser().parseFromString(g.svg, "image/svg+xml").documentElement;
+      if (!svgEl || svgEl.nodeName.toLowerCase() !== "svg") throw new Error("Diagramm konnte nicht gelesen werden.");
+      var holder = document.createElement("div");
+      holder.style.cssText = "position:absolute;left:-10000px;top:0;";
+      holder.appendChild(document.importNode(svgEl, true));
+      document.body.appendChild(holder);
+      var blob;
+      try { blob = await svgToPngBlob(holder.firstChild, 2); } finally { document.body.removeChild(holder); }
+      var dataUrl = await blobToDataUrl(blob);
+      var img = { id: nextImageId++, filename: (g.title || "Prozessbild") + ".png", dataUrl: dataUrl, mimeType: "image/png", sizeBytes: blob.size || 0, when: nowLabel(),
+        domain: "", processStep: "", chapter: "", subchapter: "", description: g.title || "Prozessbild", width: null, height: null, avgColor: null, brightnessPct: null,
+        metadataComputed: false, metadataError: null, ocrText: null, ocrError: null, ocrRanAt: null, sourceFile: "Prozessbild", finalFromDiagramId: g.id };
+      app.uploadedImages.unshift(img);
+      g.finalImageId = img.id;
+      addLog("FINAL: Prozessbild „" + (g.title || "") + "“ als Bild übernommen.");
+      showToast("Übernommen", "Prozessbild als Bild übernommen – oben in der Liste einem Kapitel zuordnen.");
+      if (typeof renderImagesTable === "function") renderImagesTable();
+    } catch (err) {
+      showToast("Übernahme fehlgeschlagen", (err && err.message) || "Das Prozessbild konnte nicht in ein Bild umgewandelt werden.", true);
+    } finally {
+      renderFinalDiagrams(); renderFinalBilder(); renderFinalFlow();
+    }
+  });
   // ===================== v2.186: Ablaufleiste (vertikaler Prozess mit den Daten je Schritt) =====================
   var finalFlowTimer = null;
   function finalFlowSoon() {
@@ -31678,6 +31799,7 @@
     renderFinalScreensFilesTable();
     renderFinalScreensTable();
     renderFinalBilder();
+    renderFinalDiagrams();
     renderFinalBulkBar();
     renderFinalMasterExportState();
     renderFinalVersions();

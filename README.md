@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.189.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.190.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,18 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **FINAL: Bilder mit Claude zuordnen, Prozessbilder übernehmen (v2.190.0)**: (1) In Schritt 5 schickt „Mit Claude
+  zuordnen (sieht die Bilder an)“ die noch offenen Bilder aus dem Register „Bilder“ zusammen mit der Kapitel-Liste,
+  Dateiname, Beschreibung und OCR-Text an Claude (bis zu 5 Bilder je Aufruf); Claude nennt je Bild das Kapitel (nur exakte
+  Titel aus der Liste, sonst kein Vorschlag), seine Sicherheit in Prozent und eine kurze Begründung. Können Bilder nicht
+  gesendet werden, fragt die App automatisch nur mit den Textangaben nach und sagt das. Reihenfolge der Vorschläge:
+  Kapitel aus dem Register „Bilder“ (100 %) vor Claude („Claude (Bild angesehen)“ bzw. „ohne Bild“) vor dem
+  Begriffs-Vergleich; „Vorschläge übernehmen“ übernimmt sie. Claudes Vorschläge werden in der Sitzung gespeichert. Prompt
+  unter Einstellungen anpassbar. (2) Im Register „Prozessbild“ erzeugte Diagramme stehen in Schritt 5 unter
+  „Prozessbilder“; „Als Bild übernehmen“ wandelt sie in ein PNG um und legt es im Bildarchiv ab – danach wie jedes Bild
+  zuordnen, es landet im finalen Dokument und im Word/PDF. Mermaid-Diagramme vorher im Register „Prozessbild“ als PNG
+  speichern und hochladen. Tests: `final_bilder_ki_test.js` (16 Prüfungen) + Browser-Prüfung der PNG-Umwandlung.
 
 - **Begriffe automatisch übernehmen und befüllen (v2.189.0)**: Neu erkannte Abkürzungen, Glossar-Begriffe und
   Synonym-Gruppen werden jetzt standardmäßig **direkt übernommen**, und Claude **ergänzt Bedeutung und Übersetzungen
