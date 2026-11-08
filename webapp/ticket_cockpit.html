@@ -6688,7 +6688,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.178.0";
+  var APP_VERSION = "2.179.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -28976,7 +28976,26 @@
     if (textWasPlain) ch.text = ch.markedText.replace(FINAL_MARK_RE, "");
     else { var m2 = re.exec(String(ch.text || "")); if (m2) ch.text = ch.text.slice(0, m2.index) + ch.text.slice(m2.index + m2[0].length); }
     var screenIds = inside && Array.isArray(ch.screenIds) ? ch.screenIds.splice(before, inside) : [];
-    return { piece: piece, joint: joint, dropped: dropped, mOffset: start, screenIdx: before, screenIds: screenIds };
+    return { piece: piece, joint: joint, dropped: dropped, mOffset: start, end: end, screenIdx: before, screenIds: screenIds };
+  }
+  // v2.179: Positionen der uebrigen vorgemerkten Abschnitte desselben Kapitels/Stands nachfuehren, damit das Zurueckholen
+  // in beliebiger Reihenfolge exakt ist. origStart = Position im vollstaendigen Text (alle Abschnitte zurueckgeholt) – legt
+  // die Reihenfolge fest, wenn mehrere Abschnitte an derselben Stelle verankert sind.
+  function finalReserveLen(e) { return e.piece.length + (e.dropped || 0) - (e.joint || "").length; }
+  function finalReserveSiblings(e) { return finalReserved().filter(function (y) { return y !== e && y.versionId === e.versionId && y.chapter === e.chapter; }); }
+  function finalReserveOrig(y) { return typeof y.origStart === "number" ? y.origStart : y.mOffset; }
+  function finalReserveAfterCut(n, end) {
+    var delta = (n.joint || "").length - (end - n.mOffset) - (n.dropped || 0), stop = end + (n.dropped || 0), k = n.screenIdx, cnt = (n.screenIds || []).length;
+    finalReserveSiblings(n).forEach(function (y) {
+      if (y.mOffset >= stop) y.mOffset += delta; else if (y.mOffset > n.mOffset) y.mOffset = n.mOffset;
+      if (cnt) { if (y.screenIdx >= k + cnt) y.screenIdx -= cnt; else if (y.screenIdx > k) y.screenIdx = k; }
+    });
+  }
+  function finalReserveAfterRestore(x, at, delta, sIdx, sCnt) {
+    finalReserveSiblings(x).forEach(function (y) {
+      if (y.mOffset > at || (y.mOffset === at && finalReserveOrig(y) > finalReserveOrig(x))) y.mOffset += delta;
+      if (sCnt && (y.screenIdx > sIdx || (y.screenIdx === sIdx && finalReserveOrig(y) > finalReserveOrig(x)))) y.screenIdx += sCnt;
+    });
   }
   function finalReserveReapply(v) {
     var n = 0;
@@ -29030,7 +29049,10 @@
     var cut = finalReserveCut(ch, sel.text);
     if (!cut) { els.finalReserveNote.textContent = "Der markierte Text wurde im Kapitel „" + sel.chapter + "“ nicht gefunden – bitte nur Fließtext markieren (ohne Rollen-Markierungen und ROVO-Verbesserungen)."; return; }
     var id = finalReserved().reduce(function (mx, e) { return Math.max(mx, e.id || 0); }, 0) + 1;
-    finalReserved().push({ id: id, kind: kind, chapter: sel.chapter, versionId: v.id, versionName: v.name, piece: cut.piece, joint: cut.joint, dropped: cut.dropped, mOffset: cut.mOffset, screenIdx: cut.screenIdx, screenIds: cut.screenIds, at: nowLabel() });
+    var entry = { id: id, kind: kind, chapter: sel.chapter, versionId: v.id, versionName: v.name, piece: cut.piece, joint: cut.joint, dropped: cut.dropped, mOffset: cut.mOffset, screenIdx: cut.screenIdx, screenIds: cut.screenIds, at: nowLabel() };
+    entry.origStart = cut.mOffset + finalReserveSiblings(entry).filter(function (y) { return y.mOffset <= cut.mOffset; }).reduce(function (n, y) { return n + finalReserveLen(y); }, 0);
+    finalReserveAfterCut(entry, cut.end);
+    finalReserved().push(entry);
     finalReserveSel = null;
     try { window.getSelection().removeAllRanges(); } catch (e) { /* egal */ }
     var short = truncate(cut.piece.replace(FINAL_MARK_RE, "").replace(/\s+/g, " ").trim(), 60);
@@ -29046,17 +29068,19 @@
     if (!ch) { showToast("Nicht möglich", "Das Kapitel „" + e.chapter + "“ gibt es im aktiven Stand „" + v.name + "“ nicht.", true); return; }
     var marked = typeof ch.markedText === "string" ? ch.markedText : String(ch.text || "");
     var textWasPlain = String(ch.text || "") === marked.replace(FINAL_MARK_RE, "");
-    var same = e.versionId === v.id, at = same ? Math.min(e.mOffset, marked.length) : marked.length, piece = e.piece;
-    if (same && e.joint && marked.substr(at, e.joint.length) === e.joint) marked = marked.slice(0, at) + marked.slice(at + e.joint.length);
+    var same = e.versionId === v.id, at = same ? Math.min(e.mOffset, marked.length) : marked.length, piece = e.piece, jointRemoved = 0;
+    if (same && e.joint && marked.substr(at, e.joint.length) === e.joint) { marked = marked.slice(0, at) + marked.slice(at + e.joint.length); jointRemoved = e.joint.length; }
     if (same && e.dropped) piece += "\n";
     if (at === marked.length && marked && !/\n$/.test(marked)) piece = "\n" + piece;
     ch.markedText = marked.slice(0, at) + piece + marked.slice(at);
     ch.text = textWasPlain ? ch.markedText.replace(FINAL_MARK_RE, "") : String(ch.text || "") + "\n" + piece.replace(FINAL_MARK_RE, "");
+    var idx = 0;
     if (e.screenIds && e.screenIds.length) {
       if (!Array.isArray(ch.screenIds)) ch.screenIds = [];
-      var idx = same ? Math.min(e.screenIdx, ch.screenIds.length) : ch.screenIds.length;
+      idx = same ? Math.min(e.screenIdx, ch.screenIds.length) : ch.screenIds.length;
       Array.prototype.splice.apply(ch.screenIds, [idx, 0].concat(e.screenIds));
     }
+    if (same) finalReserveAfterRestore(e, at, piece.length - jointRemoved, idx, (e.screenIds || []).length);
     app.final.reserved = finalReserved().filter(function (x) { return x !== e; });
     addLog("FINAL: Abschnitt aus „" + FINAL_RESERVE_KINDS[e.kind] + "“ in „" + e.chapter + "“ (Stand „" + v.name + "“) zurückgeholt.");
     renderFinalResultChapterOptions();

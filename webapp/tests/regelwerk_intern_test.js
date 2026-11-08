@@ -194,6 +194,51 @@ const prompts = [];
   s = await session(); ch1 = s.final.versions[0].chapters[0];
   check("Beide zurückgeholt: Kapitel 1 wieder exakt wie vorher", ch1.text === CH1 && ch1.markedText === CH1);
 
+  // v2.179: mehrere Abschnitte (auch benachbarte und mit Bild) vormerken und in beliebiger Reihenfolge zurückholen -> exakt
+  const CH4 = "A erste Zeile.\nB zweite Zeile.\nC dritte Zeile.\n[Bild]\nD vierte Zeile.\nE fünfte Zeile.";
+  s = await session();
+  s.final.versions[0].chapters.push({ title: "4 Reihenfolge", level: 1, text: CH4, markedText: CH4, screenIds: [301] });
+  await load(s);
+  nav("final"); await wait(80);
+  async function markIn4(text, kind) {
+    const cs = $("final-result-chapter-select"); cs.value = "4 Reihenfolge"; fire(cs, "change"); await wait(20);
+    if (!selectInMaster(text)) return false;
+    fire($(kind === "intern" ? "final-reserve-intern-btn" : "final-reserve-plan-btn"), "click"); await wait(30);
+    if (!$("confirm-modal-overlay").hidden) await confirmModal();
+    return true;
+  }
+  const bildIn4 = () => { const m = $("final-result-master-output").textContent.match(/\[Bild: [^\]]*\]/); return m ? m[0] : ""; };
+  await markIn4("B zweite Zeile.", "intern");
+  await markIn4("C dritte Zeile.", "intern");      // direkt anschließend (gleiche Verankerung wie B)
+  const cs4 = $("final-result-chapter-select"); cs4.value = "4 Reihenfolge"; fire(cs4, "change"); await wait(20);
+  await markIn4(bildIn4() + "\nD vierte Zeile.", "planung");
+  await markIn4("A erste Zeile.", "planung");
+  s = await session();
+  let ch4 = s.final.versions[0].chapters.filter((c) => c.title === "4 Reihenfolge")[0];
+  check("v2.179: vier Abschnitte vorgemerkt, Rest „E fünfte Zeile.“, Screen mit entfernt", ch4.text === "E fünfte Zeile." && ch4.screenIds.length === 0);
+  async function restore4(prefix) {
+    for (const k of ["__final_intern__", "__final_planung__"]) {
+      const cs = $("final-result-chapter-select"); cs.value = k; fire(cs, "change"); await wait(20);
+      const e = Array.from($("final-result-master-output").querySelectorAll("[data-final-reserve-id]")).find((x) => x.textContent.includes("Aus „4 Reihenfolge“") && x.textContent.includes(prefix));
+      if (e) { fire(e.querySelector("[data-final-reserve-restore]"), "click"); await wait(30); return true; }
+    }
+    return false;
+  }
+  // Reihenfolge bewusst durcheinander: C, A, D(+Bild), B
+  await restore4("C dritte"); await restore4("A erste"); await restore4("D vierte"); await restore4("B zweite");
+  s = await session();
+  ch4 = s.final.versions[0].chapters.filter((c) => c.title === "4 Reihenfolge")[0];
+  check("v2.179: in beliebiger Reihenfolge zurückgeholt – Kapitel wieder exakt wie vorher (Text, Bild, Screen)", ch4.text === CH4 && ch4.markedText === CH4 && ch4.screenIds.join() === "301");
+  for (const order of [["D vierte", "C dritte", "B zweite", "A erste"], ["B zweite", "D vierte", "A erste", "C dritte"]]) {
+    await markIn4("B zweite Zeile.", "intern"); await markIn4("C dritte Zeile.", "intern");
+    const c4 = $("final-result-chapter-select"); c4.value = "4 Reihenfolge"; fire(c4, "change"); await wait(20);
+    await markIn4(bildIn4() + "\nD vierte Zeile.", "planung"); await markIn4("A erste Zeile.", "planung");
+    for (const p of order) await restore4(p);
+    s = await session();
+    ch4 = s.final.versions[0].chapters.filter((c) => c.title === "4 Reihenfolge")[0];
+    check("v2.179: Reihenfolge " + order.map((x) => x[0]).join("-") + " – Kapitel exakt wie vorher", ch4.text === CH4 && ch4.screenIds.join() === "301");
+  }
+
   // Erneut vormerken und neuen Stand anlegen (Dokument-Review -> FINAL): Abschnitt bleibt entfernt
   csel.value = "1 Vertrag"; fire(csel, "change"); await wait(20);
   selectInMaster("Geplant für Q3: Export nach SAP.");
