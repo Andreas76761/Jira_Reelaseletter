@@ -62,9 +62,9 @@ const savedFiles = [];
   let s = await session();
   const ch = (title, text) => ({ title, level: 1, fullText: text, cleanText: text, markedText: text });
   s.final.manuals = [{ id: 1, filename: "Handbuch.docx", addedAt: "8.11.2026", pageCount: 2, design: null, chapters: [
-    ch("1 Vertrag", "In der Vertragsübersicht öffnen Sie den Servicevertrag. Die E-Mail-Adresse steht im Kundenstamm. Kurzbezeichnung siehe Glossar. Rückfragen bitte per E-Mail."),
-    ch("2 Kunden", "Der Kundenstamm enthält alle Kunden. Die Vertragsübersicht verlinkt den Kundenstamm.") ] }];
-  s.rovoEntries = [{ id: 1, when: "8.11.2026", chatText: "Wie funktioniert der Kundenstamm?", answerText: "Der Kundenstamm wird über die Email-Adresse gefunden.", chapter: "", subchapter: "", labels: ["ROVO"], jiraKeys: [], jiraVisible: false }];
+    ch("1 Vertrag", "Anschließend weiter. In der Vertragsübersicht öffnen Sie den Servicevertrag. Die E-Mail-Adresse steht im Kundenstamm. Kurzbezeichnung siehe Glossar. Rückfragen bitte per E-Mail."),
+    ch("2 Kunden", "Der Kundenstamm enthält alle Kunden. Die Vertragsübersicht verlinkt den Kundenstamm. Anschließend speichern.\nAnschließend prüfen. Rückfragen klären.") ] }];
+  s.rovoEntries = [{ id: 1, when: "8.11.2026", chatText: "Wie funktioniert der Kundenstamm?", answerText: "Anschließend suchen. Der Kundenstamm wird über die Email-Adresse gefunden.", chapter: "", subchapter: "", labels: ["ROVO"], jiraKeys: [], jiraVisible: false }];
   s.synonyms = [{ term: "Kündigung", synonyms: "Vertragskündigung", en: "Termination", sk: "", hi: "", fr: "", fixed: false }];
   s.abbrevTranslations = [{ term: "FIN", de: "Fahrzeug-Identifizierungsnummer", en: "VIN", sk: "", hi: "", fr: "", fixed: true }];
   delete s.lexAuto;
@@ -87,6 +87,7 @@ const savedFiles = [];
   check("Glossar: häufiger Fachbegriff Vertragsübersicht (in ≥ 3 Texten) neu, mit Fundstellen und Beispiel", !!vu && vu.isNew && vu.lexCount >= 3 && /Tickets/.test(vu.lexSrc) && /FINAL/.test(vu.lexSrc) && vu.lexExample.includes("Vertragsübersicht"));
   check("Glossar: Kundenstamm aus Handbuch und ROVO", !!ks && /ROVO/.test(ks.lexSrc));
   check("Glossar: seltener Begriff (nur 1 Text) wird nicht aufgenommen", !gl.some((e) => e.term === "Kurzbezeichnung"));
+  check("Glossar: Wort nur am Satzanfang groß (z. B. „Anschließend“) zählt nicht", !gl.some((e) => /^(Anschließend|Rückfragen)$/.test(e.term)));
 
   // ===================== Neuerungen sichtbar =====================
   await wait(500);
@@ -131,7 +132,7 @@ const savedFiles = [];
   // automatisch aus
   const cb = $("lex-auto-syn").querySelector("[data-lex-enabled]"); cb.checked = false; fire(cb, "change"); await wait(20);
   s = await session();
-  s.final.manuals[0].chapters.push(ch("6 Neu", "Die Rechnungsprüfung prüft Rechnungen. Rechnungsprüfung und Rechnungsprüfung."), ch("7 Neu", "Rechnungsprüfung erneut."), ch("8 Neu", "Rechnungsprüfung zuletzt."));
+  s.final.manuals[0].chapters.push(ch("6 Neu", "Die Rechnungsprüfung prüft Rechnungen. Rechnungsprüfung und Rechnungsprüfung."), ch("7 Neu", "Erneut die Rechnungsprüfung."), ch("8 Neu", "Zuletzt die Rechnungsprüfung."));
   await load(s); await wait(1600);
   s = await session();
   check("Automatik aus: keine neuen Begriffe bei Inhaltsänderung", s.lexAuto.enabled === false && !s.glossaryTranslations.some((e) => e.term === "Rechnungsprüfung"));

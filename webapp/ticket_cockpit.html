@@ -37635,7 +37635,8 @@
   var LEX_LIMIT = { gloss: 25, syn: 20, abbrev: 30 };
   var LEX_ABBREV_STOP = { OK: 1, NEU: 1, NUR: 1, UND: 1, ODER: 1, NICHT: 1, ACHTUNG: 1, HINWEIS: 1, WICHTIG: 1, TIPP: 1, INFO: 1, II: 1, III: 1, IV: 1, VI: 1, VII: 1, VIII: 1, IX: 1, XI: 1, XII: 1, AM: 1, PM: 1, ZB: 1 };
   var LEX_GLOSS_STOP = { beschreibung: 1, zusammenfassung: 1, anforderung: 1, anforderungen: 1, akzeptanzkriterien: 1, voraussetzung: 1, voraussetzungen: 1, information: 1, informationen: 1, möglichkeit: 1, möglichkeiten: 1,
-    verfügung: 1, zusätzlich: 1, zusätzliche: 1, entsprechend: 1, entsprechende: 1, entsprechenden: 1, anschließend: 1, außerdem: 1, beispielsweise: 1, grundsätzlich: 1, insbesondere: 1, description: 1, requirements: 1, acceptance: 1, criteria: 1 };
+    verfügung: 1, änderung: 1, änderungen: 1, ergebnis: 1, ergebnisse: 1, erwartetes: 1, tatsächlich: 1, tatsächliches: 1, screenshot: 1, screenshots: 1, management: 1, administration: 1,
+    reproduktion: 1, schrittfolge: 1, durchführung: 1, umsetzung: 1, bearbeitung: 1, darstellung: 1, verwendung: 1, berücksichtigung: 1, zusätzlich: 1, zusätzliche: 1, entsprechend: 1, entsprechende: 1, entsprechenden: 1, anschließend: 1, außerdem: 1, beispielsweise: 1, grundsätzlich: 1, insbesondere: 1, description: 1, requirements: 1, acceptance: 1, criteria: 1 };
   function lexAutoNormalize(d) {
     d = d && typeof d === "object" ? d : {};
     var ig = d.ignored && typeof d.ignored === "object" ? d.ignored : {};
@@ -37716,7 +37717,8 @@
         seenA[a] = 1;
         var ea = abbr[a] = abbr[a] || { n: 0, src: {} }; ea.n++; ea.src[t.src] = (ea.src[t.src] || 0) + 1;
       }
-      (text.match(/[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß0-9]*(?:-[A-Za-zÄÖÜäöüß0-9]+)+|[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß0-9]{3,}/g) || []).forEach(function (w) {
+      var wre = /[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß0-9]*(?:-[A-Za-zÄÖÜäöüß0-9]+)+|[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß0-9]{3,}/g, wm;
+      while ((wm = wre.exec(text))) (function (w, at) {
         var k = lexKey(w);
         if (k.length >= 5) {
           var lf = w.toLowerCase(), f = forms[k] = forms[k] || {};
@@ -37724,12 +37726,14 @@
           e.n++; e.surf[w] = (e.surf[w] || 0) + 1;
           if (!seenF[k + "|" + lf]) { seenF[k + "|" + lf] = 1; e.src[t.src] = (e.src[t.src] || 0) + 1; }
         }
-        // Glossar: lange Hauptwoerter (gross geschrieben, nicht komplett in Grossbuchstaben)
-        var plain = w.replace(/-/g, "");
-        if (/^[A-ZÄÖÜ]/.test(w) && /[a-zäöüß]/.test(w) && (plain.length >= 10 || (w.indexOf("-") !== -1 && plain.length >= 7)) && !GL_STOPWORDS[w.toLowerCase()] && !LEX_GLOSS_STOP[w.toLowerCase()]) {
+        // Glossar: lange Hauptwoerter (gross geschrieben, nicht komplett in Grossbuchstaben); am Satz-/Zeilenanfang ist
+        // jedes Wort gross – dort zaehlt ein Vorkommen nicht (sonst landen „Tatsächlich“, „Anschließend“ … im Glossar)
+        var plain = w.replace(/-/g, ""), before = text.slice(Math.max(0, at - 3), at).replace(/[\s„"'(\[*#\-–]+$/, "");
+        var sentenceStart = !before || /[.!?:;\n]$/.test(before) || at === 0;
+        if (!sentenceStart && /^[A-ZÄÖÜ]/.test(w) && /[a-zäöüß]/.test(w) && (plain.length >= 10 || (w.indexOf("-") !== -1 && plain.length >= 7)) && !GL_STOPWORDS[w.toLowerCase()] && !LEX_GLOSS_STOP[w.toLowerCase()]) {
           if (!seenG[w]) { seenG[w] = 1; var eg = gloss[w] = gloss[w] || { n: 0, src: {} }; eg.n++; eg.src[t.src] = (eg.src[t.src] || 0) + 1; }
         }
-      });
+      })(wm[0], wm.index);
     });
     return { abbr: abbr, forms: forms, gloss: gloss };
   }
