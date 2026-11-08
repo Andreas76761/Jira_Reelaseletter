@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.186.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.187.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,27 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Glossar, Synonyme, Abkürzungen erweitern sich automatisch; Regeln bearbeiten (v2.187.0)**: (1) Sobald sich Inhalte
+  ändern (Ticket-Import, FINAL-Handbuchdateien, aktiver FINAL-Stand, Editor, Unterkapitel, Dokument-Review, ROVO-Wissen),
+  sucht die App nach neuen Begriffen und trägt sie ein – nur, was tatsächlich in den Texten steht: **Abkürzungen**
+  (Großbuchstaben-Kürzel in mindestens 2 Texten oder mit Erklärung im Text; die Bedeutung kommt aus dem Text selbst,
+  z. B. „Market Operation (MO)“ oder „MO (Market Operation)“, sonst aus der Liste bekannter Kürzel, sonst bleibt sie
+  offen; Jira-Schlüssel wie ONESCM-1234 zählen nicht), **Synonyme** (Schreibvarianten desselben Begriffs mit/ohne
+  Bindestrich, z. B. „Servicevertrag = Service-Vertrag“, mindestens 3 Fundstellen; neue Schreibweisen werden an eine
+  vorhandene Gruppe angehängt, fixierte Einträge bleiben unberührt) und **Glossar** (lange Fachbegriffe, die in mindestens
+  3 Texten vorkommen). Je Lauf höchstens 30 Abkürzungen, 20 Synonym-Gruppen, 25 Glossar-Begriffe. (2) **Neuerungen** sind
+  sichtbar: „+n“ an Glossar/Synonyme/Abkürzungen in der Navigation, oben im Register die Liste „Neu erkannt“ mit
+  Bedeutung bzw. Varianten, Fundstellen je Quelle („Tickets 12× · FINAL 3×“), Beispielsatz und Zeitpunkt, in der Tabelle
+  die Markierung „neu“. „Übernehmen“/„Alle übernehmen“ bestätigt, „Verwerfen“/„Alle verwerfen“ entfernt den Eintrag (bei
+  einer vorhandenen Synonym-Gruppe nur die ergänzte Schreibweise) und merkt ihn sich – er wird nicht erneut
+  vorgeschlagen; ebenso, wenn ein automatisch erkannter Eintrag in der Tabelle gelöscht wird. Die Automatik lässt sich
+  je Register abschalten, „Jetzt prüfen“ startet einen Lauf von Hand. Einstellung, verworfene Begriffe und letzter Lauf
+  werden in der Sitzung gespeichert. (3) **Regelwerk** (Navigation: Operation → Validierung): Regeln lassen sich jetzt
+  zusätzlich zu Anlegen, Aktivieren und Löschen auch **bearbeiten** – „Bearbeiten“ lädt die Regel ins Formular
+  (Geltungsbereich allgemein oder Kapitel, Art, Text, Ersatz), „Änderung speichern“ übernimmt sie mit denselben Prüfungen
+  wie beim Anlegen, „Abbrechen“ lässt sie unverändert; die Änderung steht mit altem und neuem Stand im Protokoll. Test:
+  `lexikon_auto_test.js` (35 Prüfungen).
 
 - **FINAL: Ablauf, Bilder aus dem Register „Bilder“, Original vs. finales Dokument (v2.186.0)**: (1) Links neben
   FINAL steht eine senkrechte **Ablaufleiste** mit den 9 Schritten und den Daten, die jeder Schritt gerade verarbeitet

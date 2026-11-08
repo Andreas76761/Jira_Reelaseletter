@@ -120,6 +120,13 @@
   .nav-count.zero { opacity: 0.45; }
   .nav-count::before { content: attr(data-n); }
   .nav-new::before { content: "Neu"; }
+  /* v2.187: neu erkannte Begriffe (Glossar/Synonyme/Abkuerzungen) – Zahl per CSS, der Text des Eintrags bleibt der Registername */
+  .nav-lexnew { font-size: 9.5px; font-weight: 800; color: #fff; background: var(--accent); border-radius: 100px; padding: 1px 6px; }
+  .nav-lexnew::before { content: attr(data-n); }
+  .lex-auto-panel { padding: 14px 16px; margin-bottom: 14px; }
+  .lex-auto-panel .lex-new-table td { vertical-align: top; }
+  .lex-auto-panel .lex-example { font-size: 12px; color: var(--text-muted); max-width: 420px; }
+  tr.lex-row-new > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
   .nav-new { font-size: 9.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; background: #db2777; border-radius: 100px; padding: 1px 6px; }
   .nav-item .nav-count + .count-badge { margin-left: 4px; }
   .flow-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0 0 12px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
@@ -4051,7 +4058,7 @@
         <div class="view-head"><h2>Regelwerk</h2><p class="desc">Regeln für das Benutzerhandbuch – allgemein (alle Kapitel) oder je Kapitel. <b>KI-Regeln</b> (Freitext) gehen bei jeder Erzeugung an Claude (Editor, Unterkapitel) und in die KI-Prüfung des Dokument-Reviews; <b>feste Regeln</b> (verbotener Begriff, Pflichtbegriff, höchstens N Wörter) prüft die App selbst – im FINAL-Ergebnis, nach jeder Erzeugung im Editor und in der Unterkapitel-Werkstatt sowie als Prüfung R1 im Dokument-Review.</p></div>
         <div class="panel" style="padding:18px;">
           <section>
-            <p class="section-label">1. Regel hinzufügen</p>
+            <p class="section-label" id="rules-form-label">1. Regel hinzufügen</p>
             <div class="controls" style="flex-wrap:wrap; align-items:flex-end;">
               <div><label for="rules-scope-select">Gilt für</label><select id="rules-scope-select" aria-label="Geltungsbereich der Regel"></select></div>
               <div id="rules-scope-custom-wrap" hidden><label for="rules-scope-custom">Kapitel (Titel)</label><input id="rules-scope-custom" type="text" placeholder="z. B. Kapitel 4: Servicevertrag anlegen"></div>
@@ -4060,7 +4067,7 @@
             <label for="rules-value-input" style="margin-top:8px;">Regel</label>
             <textarea id="rules-value-input" rows="2" placeholder=""></textarea>
             <div id="rules-replace-wrap" hidden style="margin-top:8px;"><label for="rules-replace-input">Ersatz (optional) – dann bietet die App „Verbotene Begriffe ersetzen“ an</label><input id="rules-replace-input" type="text" placeholder="z. B. Schulungsumgebung"></div>
-            <div class="controls" style="margin-top:8px;"><button class="btn primary" id="rules-add-btn" type="button">Regel hinzufügen</button><span class="step-note" id="rules-add-note" style="margin:0;"></span></div>
+            <div class="controls" style="margin-top:8px;"><button class="btn primary" id="rules-add-btn" type="button">Regel hinzufügen</button><button class="btn ghost" id="rules-edit-cancel-btn" type="button" hidden>Abbrechen</button><span class="step-note" id="rules-add-note" style="margin:0;"></span></div>
           </section>
           <section>
             <p class="section-label">2. Regeln (<span id="rules-count">0</span>)</p>
@@ -4133,6 +4140,7 @@
       <!-- ================= Glossar ================= -->
       <section class="view-panel" data-view-panel="glossar" hidden>
         <div class="view-head"><h2>Glossar</h2></div>
+        <div class="panel lex-auto-panel" id="lex-auto-gloss" data-lex-kind="gloss"></div>
         <div class="panel table-wrap">
           <table class="simple-table">
             <thead><tr><th>Begriff</th><th>Bedeutung</th></tr></thead>
@@ -4190,6 +4198,7 @@
       <!-- ================= Synonyme ================= -->
       <section class="view-panel" data-view-panel="synonyme" hidden>
         <div class="view-head"><h2>Synonyme</h2><p class="desc">Mehrere deutsche Begriffe mit derselben Bedeutung bekommen hier EINE verbindliche Übersetzung je Sprache &ndash; damit Generatoren/Handbuch nicht je nach verwendetem Synonym unterschiedliche Übersetzungen erzeugen. Mit <b>Fixieren</b> markierst du einen Eintrag als redaktionell geprüft/final.</p></div>
+        <div class="panel lex-auto-panel" id="lex-auto-syn" data-lex-kind="syn"></div>
         <div class="panel table-wrap" id="synonyms-wrap">
           <table class="simple-table" id="synonyms-table">
             <thead><tr><th>Hauptbegriff (DE)</th><th>Synonyme (DE)</th><th>Englisch</th><th>Slowakisch</th><th>Hindi</th><th>Französisch</th><th>Aktion</th></tr></thead>
@@ -4211,6 +4220,7 @@
       <!-- ================= Abkürzungen ================= -->
       <section class="view-panel" data-view-panel="abkuerzungen" hidden>
         <div class="view-head"><h2>Abkürzungen</h2><p class="desc">Großbuchstaben-Kürzel, die in Zusammenfassung, Beschreibung oder Custom-Feldern der geladenen Tickets vorkommen. Wird über <b>Verarbeitung → 3. Glossar &amp; Abkürzungen extrahieren</b> befüllt. Die Spalten "Vorschlag Deutsch"/"Vorschlag Englisch" sind unverbindliche Vorschläge für bekannte Kürzel und ersetzen keine redaktionelle Prüfung; bei firmenspezifischen/uneindeutigen Kürzeln steht dort bewusst "&ndash;".</p></div>
+        <div class="panel lex-auto-panel" id="lex-auto-abbrev" data-lex-kind="abbrev"></div>
         <div class="panel table-wrap">
           <table class="simple-table" id="abbrev-table-register">
             <thead><tr><th>Kürzel</th><th>Häufigkeit</th><th>Beispiel-Tickets</th><th>Vorschlag Deutsch</th><th>Vorschlag Englisch</th><th></th></tr></thead>
@@ -6747,7 +6757,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.186.0";
+  var APP_VERSION = "2.187.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8403,7 +8413,7 @@
     "rovo-tables-count", "rovo-tables-list", "rovo-tables-empty",
     "edito-rules-note", "subchapter-rules-note",
     "rules-scope-select", "rules-scope-custom-wrap", "rules-scope-custom", "rules-kind-select", "rules-value-input", "rules-add-btn", "rules-add-note",
-    "rules-export-btn", "rules-import-input", "rules-io-note", "rules-replace-wrap", "rules-replace-input",
+    "rules-export-btn", "rules-import-input", "rules-io-note", "rules-form-label", "rules-edit-cancel-btn", "lex-auto-gloss", "lex-auto-syn", "lex-auto-abbrev", "rules-replace-wrap", "rules-replace-input",
     "rules-count", "rules-table-wrap", "rules-tbody", "rules-empty", "rules-check-btn", "rules-check-status", "rules-result-wrap", "rules-result-tbody",
     "bildband-table", "bildband-tbody", "bildband-empty",
     "edito-version-select", "edito-chapters-section", "edito-chapters-count",
@@ -8632,6 +8642,8 @@
     // ohne fachliche Startbefüllung, da uneindeutige Übersetzungen sonst
     // erfunden werden müssten statt sie vom Nutzer pflegen zu lassen).
     synonyms: [],
+    // v2.187: automatische Erweiterung von Glossar/Synonymen/Abkuerzungen aus den Inhalten
+    lexAuto: null,
     glossaryTranslations: [],
     abbrevTranslations: [],
     // Benutzerhandbuch-Gliederung (Einstellungen): Kapitel/Unterkapitel,
@@ -9318,6 +9330,7 @@
       synonyms: app.synonyms,
       glossaryTranslations: app.glossaryTranslations,
       abbrevTranslations: app.abbrevTranslations,
+      lexAuto: app.lexAuto,
       outline: app.outline,
       outlineTransitions: app.outlineTransitions,
       domainColors: app.domainColors,
@@ -9442,6 +9455,7 @@
     if (data.synonyms) app.synonyms = data.synonyms;
     if (data.glossaryTranslations) app.glossaryTranslations = data.glossaryTranslations;
     if (data.abbrevTranslations) app.abbrevTranslations = data.abbrevTranslations;
+    app.lexAuto = lexAutoNormalize(data.lexAuto);
     if (data.outline) app.outline = data.outline;
     if (data.outlineTransitions) app.outlineTransitions = data.outlineTransitions;
     if (data.domainColors) app.domainColors = data.domainColors;
@@ -10624,7 +10638,7 @@
       var val = entry.fixed
         ? escapeHtml(entry[f] || "")
         : '<input type="text" class="text-input terminology-field-input" data-field="' + f + '" value="' + escapeHtml(entry[f] || "") + '">';
-      var html = "<td>" + val + (f === "term" && entry.fixed ? ' <span class="pill done">Fixiert</span>' : "") + "</td>";
+      var html = "<td>" + val + (f === "term" && entry.fixed ? ' <span class="pill done">Fixiert</span>' : "") + (f === "term" && entry.isNew ? ' <span class="pill progress" title="automatisch aus den Inhalten erkannt (' + escapeHtml(entry.foundAt || "") + ')">neu</span>' : "") + "</td>";
       if (f === "term" && cfg.hasSynonymsField) {
         html += entry.fixed
           ? "<td>" + escapeHtml(entry.synonyms || "") + "</td>"
@@ -10641,7 +10655,7 @@
       ? '<button type="button" class="btn ghost btn-tiny" data-action="unfix">Entsperren</button>'
       : '<button type="button" class="btn ghost btn-tiny" data-action="fix">Fixieren</button>') +
       ' <button type="button" class="btn danger btn-tiny" data-action="delete">Löschen</button>';
-    return '<tr data-idx="' + idx + '">' + cells + "<td>" + actions + "</td></tr>";
+    return '<tr data-idx="' + idx + '"' + (entry.isNew ? ' class="lex-row-new"' : "") + ">" + cells + "<td>" + actions + "</td></tr>";
   }
   function renderTerminologyList(key) {
     var cfg = TERMINOLOGY_LISTS[key];
@@ -10659,10 +10673,13 @@
       if (!entry) return;
       if (e.target.closest('button[data-action="delete"]')) {
         app[cfg.stateKey].splice(idx, 1);
+        if (entry.auto) lexIgnore(LEX_KIND_OF_STATE[cfg.stateKey], entry);
+        lexAfterChange();
         addLog(cfg.logLabel + " „" + entry.term + "“ entfernt.");
         renderTerminologyList(key);
       } else if (e.target.closest('button[data-action="fix"]')) {
         entry.fixed = true;
+        if (entry.isNew) { delete entry.isNew; lexAfterChange(); }
         addLog(cfg.logLabel + " „" + entry.term + "“ fixiert.");
         renderTerminologyList(key);
       } else if (e.target.closest('button[data-action="unfix"]')) {
@@ -12011,6 +12028,7 @@
     Object.keys(pending).forEach(function (k) { pending[k](); });
   }
   function refreshDashboard(resetFilters) {
+    if (typeof lexAutoSoon === "function") lexAutoSoon();
     // Tickets ausschliesslich inaktiv gesetzter Importe (Dateiverwaltung,
     // app.appliedInactiveImportIds) werden hier - und damit ueberall, was
     // auf app.tickets aufbaut (Dashboard, Verarbeitung Jobs 1-7 inkl.
@@ -31637,6 +31655,7 @@
   });
 
   function renderFinal() {
+    lexAutoSoon();
     finalPopulateRolleSparteSelects();
     els.finalHideInternalCb.checked = !app.final.showInternal;
     els.finalHideJiraCb.checked = app.final.hideJira;
@@ -37518,7 +37537,7 @@
     els.rulesTbody.innerHTML = items.map(function (r) {
       return '<tr data-rule-row="' + r.id + '"><td>' + (r.scope ? escapeHtml(r.scope) : "<b>Allgemein</b>") + "</td><td>" + escapeHtml(ruleKindLabel(r.kind)) + "</td><td>" + escapeHtml(r.value) + (r.replace ? " → " + escapeHtml(r.replace) : "") + "</td>" +
         '<td><input type="checkbox" data-rule-active="' + r.id + '"' + (r.active ? " checked" : "") + ' aria-label="Regel aktiv"></td>' +
-        '<td><button class="btn ghost btn-tiny" type="button" data-rule-delete="' + r.id + '">Löschen</button></td></tr>';
+        '<td><div class="final-row-actions"><button class="btn ghost btn-tiny" type="button" data-rule-edit="' + r.id + '">Bearbeiten</button><button class="btn ghost btn-tiny" type="button" data-rule-delete="' + r.id + '">Löschen</button></div></td></tr>';
     }).join("");
     var lc = app.rules.lastCheck;
     els.rulesResultWrap.hidden = !(lc && lc.results.length);
@@ -37535,6 +37554,18 @@
     if (kind === "maxWords" && !(parseInt(value, 10) > 0)) { els.rulesAddNote.textContent = "Bitte eine Zahl größer 0 eingeben."; return; }
     if (kind === "maxWords") value = String(parseInt(value, 10));
     if (kind === "forbid" && els.rulesReplaceInput.value.trim() && rulesReplaceContainsTerm(value, els.rulesReplaceInput.value)) { els.rulesAddNote.textContent = "Der Ersatz darf den verbotenen Begriff nicht enthalten."; return; }
+    // v2.187: Bearbeiten – vorhandene Regel aendern statt neu anlegen
+    var editing = rulesEditId ? app.rules.items.filter(function (x) { return x.id === rulesEditId; })[0] : null;
+    if (editing) {
+      var before = (editing.scope ? "Kapitel „" + editing.scope + "“" : "allgemein") + ", " + ruleKindLabel(editing.kind) + ": " + editing.value + (editing.replace ? " → " + editing.replace : "");
+      editing.scope = scope; editing.kind = kind; editing.value = value;
+      if (kind === "forbid" && els.rulesReplaceInput.value.trim()) editing.replace = els.rulesReplaceInput.value.trim(); else delete editing.replace;
+      rulesEndEdit();
+      els.rulesAddNote.textContent = "Regel geändert (" + (scope ? "Kapitel „" + scope + "“" : "allgemein") + ").";
+      addLog("Regelwerk: Regel geändert – vorher " + before + "; jetzt " + (scope ? "Kapitel „" + scope + "“" : "allgemein") + ", " + ruleKindLabel(kind) + ": " + value + (editing.replace ? " → " + editing.replace : ""));
+      renderRules();
+      return;
+    }
     var newRule = { id: app.rules.nextId++, scope: scope, kind: kind, value: value, active: true };
     if (kind === "forbid" && els.rulesReplaceInput.value.trim()) newRule.replace = els.rulesReplaceInput.value.trim();
     app.rules.items.push(newRule);
@@ -37549,15 +37580,321 @@
     var r = app.rules.items.filter(function (x) { return x.id === parseInt(cb.getAttribute("data-rule-active"), 10); })[0];
     if (r) { r.active = cb.checked; addLog("Regelwerk: Regel „" + r.value + "“ " + (r.active ? "aktiviert" : "deaktiviert") + "."); }
   });
+  var rulesEditId = null;
+  function rulesEndEdit() {
+    rulesEditId = null;
+    els.rulesFormLabel.textContent = "1. Regel hinzufügen";
+    els.rulesAddBtn.textContent = "Regel hinzufügen";
+    els.rulesEditCancelBtn.hidden = true;
+    els.rulesValueInput.value = ""; els.rulesScopeCustom.value = ""; els.rulesReplaceInput.value = "";
+    Array.prototype.forEach.call(els.rulesTbody.querySelectorAll("tr.rule-editing"), function (tr) { tr.classList.remove("rule-editing"); });
+  }
+  function rulesStartEdit(r) {
+    renderRules();
+    rulesEditId = r.id;
+    var opts = Array.prototype.map.call(els.rulesScopeSelect.options, function (o) { return o.value; });
+    if (!r.scope) els.rulesScopeSelect.value = "";
+    else if (opts.indexOf(r.scope) !== -1) els.rulesScopeSelect.value = r.scope;
+    else { els.rulesScopeSelect.value = RULES_CUSTOM_SCOPE; els.rulesScopeCustom.value = r.scope; }
+    els.rulesScopeCustomWrap.hidden = els.rulesScopeSelect.value !== RULES_CUSTOM_SCOPE;
+    els.rulesKindSelect.value = r.kind;
+    els.rulesKindSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    els.rulesValueInput.value = r.value;
+    els.rulesReplaceInput.value = r.replace || "";
+    els.rulesFormLabel.textContent = "1. Regel bearbeiten";
+    els.rulesAddBtn.textContent = "Änderung speichern";
+    els.rulesEditCancelBtn.hidden = false;
+    els.rulesAddNote.textContent = "Regel ändern und „Änderung speichern“ klicken.";
+    var tr = els.rulesTbody.querySelector('[data-rule-row="' + r.id + '"]');
+    if (tr) tr.classList.add("rule-editing");
+    if (els.rulesValueInput.focus) els.rulesValueInput.focus();
+  }
+  els.rulesEditCancelBtn.addEventListener("click", function () { rulesEndEdit(); els.rulesAddNote.textContent = "Bearbeiten abgebrochen."; });
   els.rulesTbody.addEventListener("click", async function (e) {
+    var eb = e.target.closest("[data-rule-edit]");
+    if (eb) { var er = app.rules.items.filter(function (x) { return x.id === parseInt(eb.getAttribute("data-rule-edit"), 10); })[0]; if (er) rulesStartEdit(er); return; }
     var b = e.target.closest("[data-rule-delete]");
     if (!b) return;
     var id = parseInt(b.getAttribute("data-rule-delete"), 10), r = app.rules.items.filter(function (x) { return x.id === id; })[0];
     if (!r || !(await confirmDialog("Regel „" + truncate(r.value, 80) + "“ löschen?", "Löschen"))) return;
     app.rules.items = app.rules.items.filter(function (x) { return x.id !== id; });
+    if (rulesEditId === id) rulesEndEdit();
     addLog("Regelwerk: Regel „" + r.value + "“ gelöscht.");
     renderRules();
   });
+
+  // ===================== v2.187: Glossar, Synonyme, Abkürzungen automatisch aus den Inhalten erweitern =====================
+  // Quellen: Tickets (Zusammenfassung/Beschreibung), FINAL-Handbuchdateien, aktiver FINAL-Stand, Editor, Unterkapitel,
+  // Dokument-Review, ROVO-Wissen. Erkannt werden nur tatsaechlich vorkommende Begriffe – Bedeutungen nur, wenn der Text sie
+  // selbst nennt („Market Operation (MO)“) oder das Kuerzel allgemein bekannt ist. Neue Eintraege tragen isNew (Markierung
+  // „neu“ + Liste „Neu erkannt“ im Register + „+n“ in der Navigation), bis sie uebernommen oder verworfen werden.
+  var LEX_KIND_OF_STATE = { glossaryTranslations: "gloss", synonyms: "syn", abbrevTranslations: "abbrev" };
+  var LEX_STATE_OF_KIND = { gloss: "glossaryTranslations", syn: "synonyms", abbrev: "abbrevTranslations" };
+  var LEX_VIEW_OF_KIND = { gloss: "glossar", syn: "synonyme", abbrev: "abkuerzungen" };
+  var LEX_LABEL = { gloss: "Glossar-Begriffe", syn: "Synonym-Gruppen", abbrev: "Abkürzungen" };
+  var LEX_LIMIT = { gloss: 25, syn: 20, abbrev: 30 };
+  var LEX_ABBREV_STOP = { OK: 1, NEU: 1, NUR: 1, UND: 1, ODER: 1, NICHT: 1, ACHTUNG: 1, HINWEIS: 1, WICHTIG: 1, TIPP: 1, INFO: 1, II: 1, III: 1, IV: 1, VI: 1, VII: 1, VIII: 1, IX: 1, XI: 1, XII: 1, AM: 1, PM: 1, ZB: 1 };
+  var LEX_GLOSS_STOP = { beschreibung: 1, zusammenfassung: 1, anforderung: 1, anforderungen: 1, akzeptanzkriterien: 1, voraussetzung: 1, voraussetzungen: 1, information: 1, informationen: 1, möglichkeit: 1, möglichkeiten: 1,
+    verfügung: 1, zusätzlich: 1, zusätzliche: 1, entsprechend: 1, entsprechende: 1, entsprechenden: 1, anschließend: 1, außerdem: 1, beispielsweise: 1, grundsätzlich: 1, insbesondere: 1, description: 1, requirements: 1, acceptance: 1, criteria: 1 };
+  function lexAutoNormalize(d) {
+    d = d && typeof d === "object" ? d : {};
+    var ig = d.ignored && typeof d.ignored === "object" ? d.ignored : {};
+    var arr = function (v) { return Array.isArray(v) ? v.filter(function (x) { return typeof x === "string"; }) : []; };
+    return { enabled: d.enabled !== false, ignored: { gloss: arr(ig.gloss), syn: arr(ig.syn), abbrev: arr(ig.abbrev) },
+      fingerprint: typeof d.fingerprint === "string" ? d.fingerprint : "", lastRun: d.lastRun && typeof d.lastRun === "object" ? d.lastRun : null };
+  }
+  function lexState() { if (!app.lexAuto || !app.lexAuto.ignored) app.lexAuto = lexAutoNormalize(app.lexAuto); return app.lexAuto; }
+  function lexKey(t) { return String(t || "").toLowerCase().replace(/[\s\-_]+/g, ""); }
+  function lexIgnore(kind, entry) {
+    if (!kind || !entry) return;
+    var st = lexState(), keys = [lexKey(entry.term)];
+    if (kind === "syn" && entry.lexAddedSynonyms) keys = keys.concat(entry.lexAddedSynonyms.map(lexKey));
+    keys.forEach(function (k) { if (k && st.ignored[kind].indexOf(k) === -1) st.ignored[kind].push(k); });
+  }
+  function lexContentTexts() {
+    var out = [];
+    (app.tickets || []).forEach(function (t) { var x = [t.summary, t.description].filter(Boolean).join("\n"); if (x) out.push({ src: "Tickets", text: x }); });
+    ((app.final && app.final.manuals) || []).forEach(function (m) { (m.chapters || []).forEach(function (c) { var x = String(c.cleanText || c.fullText || ""); if (x.trim()) out.push({ src: "FINAL", text: x }); }); });
+    try { rulesCollectTargets().forEach(function (t) { if (t.text && String(t.text).trim()) out.push({ src: t.register, text: String(t.text) }); }); } catch (e) { /* Register noch nicht bereit */ }
+    (app.rovoEntries || []).forEach(function (e) { var x = [e.chatText, e.answerText].filter(Boolean).join("\n"); if (x) out.push({ src: "ROVO", text: x }); });
+    return out;
+  }
+  function lexFingerprint(texts) { var n = 0; texts.forEach(function (t) { n += t.text.length; }); return texts.length + ":" + n; }
+  function lexSrcLabel(srcCount) {
+    return Object.keys(srcCount).sort(function (a, b) { return srcCount[b] - srcCount[a]; }).map(function (k) { return k + " " + srcCount[k] + "×"; }).join(" · ");
+  }
+  function lexExample(texts, re) {
+    for (var i = 0; i < texts.length; i++) {
+      var m = re.exec(texts[i].text);
+      if (!m) continue;
+      var t = texts[i].text, a = Math.max(t.lastIndexOf("\n", m.index), t.lastIndexOf(". ", m.index)) + 1, b = t.indexOf("\n", m.index);
+      var line = t.slice(a, b === -1 ? t.length : b).trim();
+      return line.length > 180 ? line.slice(0, 177) + "…" : line;
+    }
+    return "";
+  }
+  function lexEsc(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+  // Abkuerzungs-Buchstaben der Reihe nach in der Langform, erster Buchstabe passt
+  function lexAbbrevFits(abbr, long) {
+    var a = abbr.toLowerCase(), l = long.toLowerCase();
+    if (!a || l.charAt(0) !== a.charAt(0)) return false;
+    var p = 0;
+    for (var i = 0; i < l.length && p < a.length; i++) if (l.charAt(i) === a.charAt(p)) p++;
+    return p === a.length;
+  }
+  function lexFindDefinitions(texts) {
+    var defs = {};
+    var reLongFirst = /([A-ZÄÖÜa-zäöüß][A-Za-zÄÖÜäöüß\-]*(?:\s+[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß\-]*){0,5})\s*\(\s*([A-ZÄÖÜ][A-ZÄÖÜ0-9]{1,5})\s*\)/g;
+    var reAbbrFirst = /(?<![A-Za-zÄÖÜäöüß])([A-ZÄÖÜ][A-ZÄÖÜ0-9]{1,5})\s*\(\s*([A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß\- ]{2,60})\s*\)/g;
+    texts.forEach(function (t) {
+      var m;
+      reLongFirst.lastIndex = 0;
+      while ((m = reLongFirst.exec(t.text))) {
+        var words = m[1].split(/\s+/), abbr = m[2];
+        for (var k = 1; k <= words.length; k++) {
+          var cand = words.slice(words.length - k).join(" ");
+          if (lexAbbrevFits(abbr, cand.replace(/[\s\-]/g, ""))) { if (!defs[abbr]) defs[abbr] = cand; break; }
+        }
+      }
+      reAbbrFirst.lastIndex = 0;
+      while ((m = reAbbrFirst.exec(t.text))) {
+        var long = m[2].trim();
+        if (!defs[m[1]] && lexAbbrevFits(m[1], long.replace(/[\s\-]/g, ""))) defs[m[1]] = long;
+      }
+    });
+    return defs;
+  }
+  function lexCollect(texts) {
+    var abbr = {}, forms = {}, gloss = {};
+    texts.forEach(function (t, ti) {
+      var text = t.text.replace(/\b[A-Z][A-Z0-9]+-\d+\b/g, " ");
+      var seenA = {}, seenF = {}, seenG = {}, m;
+      ABBREV_RE.lastIndex = 0;
+      while ((m = ABBREV_RE.exec(text))) {
+        var a = m[0];
+        if (seenA[a] || LEX_ABBREV_STOP[a]) continue;
+        seenA[a] = 1;
+        var ea = abbr[a] = abbr[a] || { n: 0, src: {} }; ea.n++; ea.src[t.src] = (ea.src[t.src] || 0) + 1;
+      }
+      (text.match(/[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß0-9]*(?:-[A-Za-zÄÖÜäöüß0-9]+)+|[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß0-9]{3,}/g) || []).forEach(function (w) {
+        var k = lexKey(w);
+        if (k.length >= 5) {
+          var lf = w.toLowerCase(), f = forms[k] = forms[k] || {};
+          var e = f[lf] = f[lf] || { n: 0, surf: {}, src: {} };
+          e.n++; e.surf[w] = (e.surf[w] || 0) + 1;
+          if (!seenF[k + "|" + lf]) { seenF[k + "|" + lf] = 1; e.src[t.src] = (e.src[t.src] || 0) + 1; }
+        }
+        // Glossar: lange Hauptwoerter (gross geschrieben, nicht komplett in Grossbuchstaben)
+        var plain = w.replace(/-/g, "");
+        if (/^[A-ZÄÖÜ]/.test(w) && /[a-zäöüß]/.test(w) && (plain.length >= 10 || (w.indexOf("-") !== -1 && plain.length >= 7)) && !GL_STOPWORDS[w.toLowerCase()] && !LEX_GLOSS_STOP[w.toLowerCase()]) {
+          if (!seenG[w]) { seenG[w] = 1; var eg = gloss[w] = gloss[w] || { n: 0, src: {} }; eg.n++; eg.src[t.src] = (eg.src[t.src] || 0) + 1; }
+        }
+      });
+    });
+    return { abbr: abbr, forms: forms, gloss: gloss };
+  }
+  function lexPreferred(surfCount) { return Object.keys(surfCount).sort(function (a, b) { return surfCount[b] - surfCount[a] || a.localeCompare(b); })[0]; }
+  // Lauf: neue Eintraege anlegen; liefert { gloss, syn, abbrev } = Anzahl neu
+  function lexAutoRun(opts) {
+    opts = opts || {};
+    var st = lexState(), texts = lexContentTexts(), fp = lexFingerprint(texts);
+    var added = { gloss: 0, syn: 0, abbrev: 0 };
+    st.fingerprint = fp;
+    if (!texts.length) { st.lastRun = { at: nowLabel(), texts: 0, added: added, manual: !!opts.manual }; return added; }
+    var c = lexCollect(texts), defs = lexFindDefinitions(texts), when = nowLabel();
+    // bekannte Begriffe (alle drei Listen, inkl. Synonyme) + verworfene
+    var known = {};
+    ["glossaryTranslations", "synonyms", "abbrevTranslations"].forEach(function (sk) {
+      (app[sk] || []).forEach(function (e) { known[lexKey(e.term)] = 1; String(e.synonyms || "").split(",").forEach(function (x) { if (x.trim()) known[lexKey(x)] = 1; }); });
+    });
+    function ignored(kind, term) { return st.ignored[kind].indexOf(lexKey(term)) !== -1; }
+    // --- Abkuerzungen ---
+    Object.keys(c.abbr).filter(function (a) { return (c.abbr[a].n >= 2 || defs[a]) && !known[lexKey(a)] && !ignored("abbrev", a); })
+      .sort(function (a, b) { return (defs[b] ? 1 : 0) - (defs[a] ? 1 : 0) || c.abbr[b].n - c.abbr[a].n || a.localeCompare(b); })
+      .slice(0, LEX_LIMIT.abbrev).forEach(function (a) {
+        var sug = ABBREV_MEANING_SUGGESTIONS[a];
+        app.abbrevTranslations.push({ term: a, de: defs[a] || (sug ? sug.de : ""), en: sug ? sug.en : "", sk: "", hi: "", fr: "", fixed: false,
+          auto: true, isNew: true, foundAt: when, lexCount: c.abbr[a].n, lexSrc: lexSrcLabel(c.abbr[a].src),
+          lexNote: defs[a] ? "Bedeutung aus dem Text" : sug ? "bekanntes Kürzel" : "Bedeutung offen",
+          lexExample: lexExample(texts, new RegExp("(?<![A-Za-zÄÖÜäöüß])" + lexEsc(a) + "(?![A-Za-zÄÖÜäöüß])")) });
+        known[lexKey(a)] = 1; added.abbrev++;
+      });
+    // --- Synonyme: Schreibvarianten desselben Begriffs (mit/ohne Bindestrich) ---
+    var groups = [];
+    Object.keys(c.forms).forEach(function (k) {
+      var f = c.forms[k], lfs = Object.keys(f);
+      if (lfs.length < 2) return;
+      var total = lfs.reduce(function (n, lf) { return n + f[lf].n; }, 0);
+      if (total < 3) return;
+      lfs.sort(function (a, b) { return f[b].n - f[a].n || a.localeCompare(b); });
+      var src = {};
+      lfs.forEach(function (lf) { Object.keys(f[lf].src).forEach(function (s) { src[s] = (src[s] || 0) + f[lf].src[s]; }); });
+      groups.push({ key: k, main: lexPreferred(f[lfs[0]].surf), variants: lfs.slice(1).map(function (lf) { return lexPreferred(f[lf].surf); }), total: total, src: src });
+    });
+    groups.sort(function (a, b) { return b.total - a.total || a.key.localeCompare(b.key); });
+    var synAdded = 0;
+    groups.forEach(function (g) {
+      if (synAdded >= LEX_LIMIT.syn || ignored("syn", g.main)) return;
+      var hit = app.synonyms.filter(function (e) {
+        return lexKey(e.term) === g.key || String(e.synonyms || "").split(",").some(function (x) { return lexKey(x) === g.key; });
+      })[0];
+      if (hit) {
+        if (hit.fixed) return;
+        var have = [hit.term].concat(String(hit.synonyms || "").split(",")).map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+        var miss = [g.main].concat(g.variants).filter(function (v) { return have.indexOf(v.toLowerCase()) === -1; });
+        if (!miss.length) return;
+        hit.synonyms = [String(hit.synonyms || "").trim()].concat(miss).filter(Boolean).join(", ");
+        hit.isNew = true; hit.foundAt = when; hit.lexAddedSynonyms = (hit.lexAddedSynonyms || []).concat(miss);
+        hit.lexSrc = lexSrcLabel(g.src); hit.lexNote = "neue Schreibweise(n): " + miss.join(", ");
+      } else {
+        if (known[g.key]) return;
+        app.synonyms.push({ term: g.main, synonyms: g.variants.join(", "), en: "", sk: "", hi: "", fr: "", fixed: false,
+          auto: true, isNew: true, foundAt: when, lexCount: g.total, lexSrc: lexSrcLabel(g.src), lexNote: "Schreibvarianten: " + [g.main].concat(g.variants).join(" / "),
+          lexExample: lexExample(texts, new RegExp(lexEsc(g.variants[0]))) });
+        known[g.key] = 1;
+      }
+      synAdded++; added.syn++;
+    });
+    // --- Glossar: haeufige Fachbegriffe (in mindestens 3 Texten) ---
+    Object.keys(c.gloss).filter(function (w) { return c.gloss[w].n >= 3 && !known[lexKey(w)] && !ignored("gloss", w); })
+      .sort(function (a, b) { return c.gloss[b].n - c.gloss[a].n || a.localeCompare(b); })
+      .slice(0, LEX_LIMIT.gloss).forEach(function (w) {
+        app.glossaryTranslations.push({ term: w, en: "", sk: "", hi: "", fr: "", fixed: false, auto: true, isNew: true, foundAt: when,
+          lexCount: c.gloss[w].n, lexSrc: lexSrcLabel(c.gloss[w].src), lexNote: "Fachbegriff in " + c.gloss[w].n + " Texten",
+          lexExample: lexExample(texts, new RegExp("(?<![A-Za-zÄÖÜäöüß])" + lexEsc(w) + "(?![A-Za-zÄÖÜäöüß])")) });
+        known[lexKey(w)] = 1; added.gloss++;
+      });
+    st.lastRun = { at: when, texts: texts.length, added: added, manual: !!opts.manual };
+    var sum = added.gloss + added.syn + added.abbrev;
+    if (sum) addLog("Begriffe automatisch erweitert (" + texts.length + " Texte): " + added.abbrev + " Abkürzung(en), " + added.syn + " Synonym-Gruppe(n), " + added.gloss + " Glossar-Begriff(e) – als „neu“ markiert.");
+    lexAfterChange();
+    if (sum && !opts.silent) showToast("Begriffe erweitert", added.abbrev + " Abkürzung(en), " + added.syn + " Synonym-Gruppe(n), " + added.gloss + " Glossar-Begriff(e) neu erkannt – in den Registern als „neu“ markiert.");
+    return added;
+  }
+  var lexAutoTimer = null;
+  function lexAutoSoon() {
+    if (lexAutoTimer) return;
+    lexAutoTimer = setTimeout(function () {
+      lexAutoTimer = null;
+      var st = lexState();
+      if (!st.enabled) return;
+      var texts = lexContentTexts();
+      if (!texts.length || lexFingerprint(texts) === st.fingerprint) return;
+      lexAutoRun({});
+    }, 1200);
+  }
+  function lexNewEntries(kind) { return (app[LEX_STATE_OF_KIND[kind]] || []).filter(function (e) { return e && e.isNew; }); }
+  function lexAfterChange() {
+    Object.keys(TERMINOLOGY_LISTS).forEach(renderTerminologyList);
+    renderLexAutoPanels();
+    if (typeof scheduleNavRefresh === "function") scheduleNavRefresh();
+  }
+  function lexDetailHtml(kind, e) {
+    if (kind === "abbrev") return (e.de ? "<b>" + escapeHtml(e.de) + "</b>" : '<span class="step-note">Bedeutung offen</span>') + (e.en ? " · EN: " + escapeHtml(e.en) : "") + '<br><small class="step-note">' + escapeHtml(e.lexNote || "") + "</small>";
+    if (kind === "syn") return "<b>" + escapeHtml(e.term) + "</b> = " + escapeHtml(e.synonyms || "") + '<br><small class="step-note">' + escapeHtml(e.lexNote || "") + "</small>";
+    return escapeHtml(e.lexNote || "");
+  }
+  function renderLexAutoPanels() {
+    Object.keys(LEX_STATE_OF_KIND).forEach(function (kind) {
+      var host = els["lexAuto" + kind.charAt(0).toUpperCase() + kind.slice(1)];
+      if (!host) return;
+      var st = lexState(), list = lexNewEntries(kind), lr = st.lastRun;
+      var status = lr ? "Zuletzt geprüft " + lr.at + " – " + lr.texts.toLocaleString("de-DE") + " Text(e) aus Tickets, FINAL, Editor, Unterkapitel, Dokument-Review und ROVO." : "Noch nicht geprüft.";
+      host.innerHTML = '<p class="section-label" style="margin-top:0;">Automatisch aus den Inhalten erweitern</p>' +
+        '<div class="controls" style="flex-wrap:wrap;"><label class="checkbox-label" style="margin:0;"><input type="checkbox" data-lex-enabled' + (st.enabled ? " checked" : "") + "> automatisch, sobald sich Inhalte ändern</label>" +
+        '<button class="btn ghost btn-tiny" type="button" data-lex-run>Jetzt prüfen</button><span class="step-note" data-lex-status style="margin:0;">' + escapeHtml(status) + "</span></div>" +
+        (list.length ? '<p class="section-label">Neu erkannt (' + list.length + ')</p><div class="controls"><button class="btn primary btn-tiny" type="button" data-lex-accept-all>Alle übernehmen</button><button class="btn ghost btn-tiny" type="button" data-lex-reject-all>Alle verwerfen</button></div>' +
+          '<div class="table-wrap"><table class="simple-table lex-new-table"><thead><tr><th>' + (kind === "syn" ? "Hauptbegriff" : kind === "abbrev" ? "Kürzel" : "Begriff") + "</th><th>" + (kind === "abbrev" ? "Bedeutung" : kind === "syn" ? "Varianten" : "Hinweis") + "</th><th>Gefunden in</th><th>Beispiel</th><th></th></tr></thead><tbody>" +
+          list.map(function (e) {
+            var idx = app[LEX_STATE_OF_KIND[kind]].indexOf(e);
+            return '<tr data-lex-idx="' + idx + '"><td><b>' + escapeHtml(e.term) + '</b><br><small class="step-note">' + escapeHtml(e.foundAt || "") + "</small></td><td>" + lexDetailHtml(kind, e) + "</td><td>" + escapeHtml(e.lexSrc || "–") + '</td><td class="lex-example">' + escapeHtml(e.lexExample || "–") + "</td>" +
+              '<td><div class="final-row-actions"><button class="btn ghost btn-tiny" type="button" data-lex-accept>Übernehmen</button><button class="btn ghost btn-tiny final-btn-danger" type="button" data-lex-reject>Verwerfen</button></div></td></tr>';
+          }).join("") + "</tbody></table></div>"
+          : '<p class="step-note" data-lex-none>Keine neuen ' + LEX_LABEL[kind] + " seit der letzten Prüfung.</p>");
+    });
+  }
+  function lexAccept(kind, e) { delete e.isNew; if (kind === "syn") delete e.lexAddedSynonyms; }
+  function lexReject(kind, e) {
+    var arr = app[LEX_STATE_OF_KIND[kind]];
+    lexIgnore(kind, e);
+    if (kind === "syn" && !e.auto && e.lexAddedSynonyms) {
+      // nur die automatisch ergaenzten Schreibweisen wieder entfernen
+      var drop = e.lexAddedSynonyms.map(function (x) { return x.toLowerCase(); });
+      e.synonyms = String(e.synonyms || "").split(",").map(function (x) { return x.trim(); }).filter(function (x) { return x && drop.indexOf(x.toLowerCase()) === -1; }).join(", ");
+      delete e.lexAddedSynonyms; delete e.isNew;
+      return;
+    }
+    var i = arr.indexOf(e);
+    if (i !== -1) arr.splice(i, 1);
+  }
+  Object.keys(LEX_STATE_OF_KIND).forEach(function (kind) {
+    var host = els["lexAuto" + kind.charAt(0).toUpperCase() + kind.slice(1)];
+    if (!host) return;
+    host.addEventListener("change", function (ev) {
+      if (!ev.target.closest("[data-lex-enabled]")) return;
+      lexState().enabled = ev.target.checked;
+      addLog("Begriffe automatisch erweitern: " + (ev.target.checked ? "an" : "aus") + ".");
+      renderLexAutoPanels();
+      if (ev.target.checked) lexAutoSoon();
+    });
+    host.addEventListener("click", function (ev) {
+      if (ev.target.closest("[data-lex-run]")) {
+        var a = lexAutoRun({ manual: true });
+        if (!(a.gloss + a.syn + a.abbrev)) showToast("Keine neuen Begriffe", "Die Inhalte enthalten keine neuen Glossar-Begriffe, Synonyme oder Abkürzungen.");
+        return;
+      }
+      var list = lexNewEntries(kind);
+      if (ev.target.closest("[data-lex-accept-all]")) { list.forEach(function (e) { lexAccept(kind, e); }); addLog(LEX_LABEL[kind] + ": " + list.length + " neue Einträge übernommen."); lexAfterChange(); return; }
+      if (ev.target.closest("[data-lex-reject-all]")) { list.forEach(function (e) { lexReject(kind, e); }); addLog(LEX_LABEL[kind] + ": " + list.length + " neue Einträge verworfen."); lexAfterChange(); return; }
+      var row = ev.target.closest("[data-lex-idx]");
+      if (!row) return;
+      var e = app[LEX_STATE_OF_KIND[kind]][parseInt(row.getAttribute("data-lex-idx"), 10)];
+      if (!e) return;
+      if (ev.target.closest("[data-lex-accept]")) { lexAccept(kind, e); addLog(LEX_LABEL[kind] + ": „" + e.term + "“ übernommen."); lexAfterChange(); }
+      else if (ev.target.closest("[data-lex-reject]")) { lexReject(kind, e); addLog(LEX_LABEL[kind] + ": „" + e.term + "“ verworfen (wird nicht erneut vorgeschlagen)."); lexAfterChange(); }
+    });
+  });
+
   els.rulesCheckBtn.addEventListener("click", function () { rulesRunCheck(); renderRules(); });
   // v2.180: Regelwerk als Datei weitergeben/wiederverwenden (Import ergaenzt, doppelte Regeln werden uebersprungen)
   els.rulesExportBtn.addEventListener("click", async function () {
@@ -37596,6 +37933,7 @@
     if (name === "dashboard" && typeof renderDashboardNotesDue === "function" && els.dashboardNotesDue) renderDashboardNotesDue();
     if (name === "dashboard" && typeof scheduleDashStore === "function") scheduleDashStore();
     if (name === "bilder" && typeof renderCvTable === "function") renderCvTable();
+    if (name === "glossar" || name === "synonyme" || name === "abkuerzungen") { renderLexAutoPanels(); lexAutoSoon(); }
     if (typeof refreshNav === "function" && els.navList && els.navList.querySelector("[data-nav-count]")) { navApplyFolded(); refreshNav(); }
     if (typeof navMarkSeen === "function" && navStartupDone) navMarkSeen(name);
     if (name === "output-md" || name === "output-pdf") renderOutputCounts();
@@ -37771,6 +38109,16 @@
       c.setAttribute("data-n", n == null ? "" : n.toLocaleString("de-DE"));
       c.title = n == null ? "" : n.toLocaleString("de-DE") + " Einträge";
       c.classList.toggle("zero", n === 0);
+    });
+    // v2.187: neu erkannte Begriffe je Register als „+n“
+    Object.keys(typeof LEX_VIEW_OF_KIND === "object" && LEX_VIEW_OF_KIND ? LEX_VIEW_OF_KIND : {}).forEach(function (k) {
+      var btn = els.navList.querySelector('.nav-item[data-view="' + LEX_VIEW_OF_KIND[k] + '"]');
+      if (!btn) return;
+      var n = lexNewEntries(k).length, sp = btn.querySelector(".nav-lexnew");
+      if (!n) { if (sp) sp.parentNode.removeChild(sp); return; }
+      if (!sp) { sp = document.createElement("span"); sp.className = "nav-lexnew"; btn.insertBefore(sp, btn.querySelector(".nav-count") || null); }
+      sp.setAttribute("data-n", "+" + n);
+      sp.title = n + " neu erkannte(r) Begriff(e) – bitte prüfen";
     });
     NAV_FLOW.forEach(function (st) {
       var sd = navStageStand(st), el = els.navList.querySelector('[data-nav-stage-stand="' + st.key + '"]');
