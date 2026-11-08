@@ -299,6 +299,34 @@ const prompts = [];
   fire($("rules-tbody").querySelector("[data-rule-delete]"), "click"); await confirmModal();
   check("Regel löschen (nach Bestätigung)", $("rules-count").textContent === "4");
 
+  // v2.180: Regelwerk exportieren / importieren (doppelte werden übersprungen)
+  savedFiles.length = 0;
+  fire($("rules-export-btn"), "click"); await waitUntil(() => savedFiles.length === 1, 5000);
+  const exp = savedFiles[0] ? JSON.parse(typeof savedFiles[0].data === "string" ? savedFiles[0].data : await savedFiles[0].data.text()) : null;
+  check("v2.180: Export als JSON mit 4 Regeln", !!exp && /^Regelwerk_\d{4}-\d{2}-\d{2}\.json$/.test(savedFiles[0].filename) && exp.format === "ticket-cockpit-regelwerk" && exp.items.length === 4 && exp.items.some((r) => r.kind === "ai"));
+  async function importRules(obj, name) {
+    const inp = $("rules-import-input");
+    Object.defineProperty(inp, "files", { value: [new win.File([JSON.stringify(obj)], name, { type: "application/json" })], configurable: true });
+    fire(inp, "change"); await waitUntil(() => /übernommen|fehlgeschlagen/.test($("rules-io-note").textContent) && $("rules-io-note").textContent.includes(name.replace(".json", "")) || /fehlgeschlagen/.test($("rules-io-note").textContent), 3000); await wait(20);
+  }
+  await importRules(exp, "gleich.json");
+  check("v2.180: Import derselben Datei – nichts doppelt", $("rules-count").textContent === "4" && /0 Regel\(n\) übernommen, 4 bereits vorhanden/.test($("rules-io-note").textContent));
+  await importRules({ items: [{ scope: "", kind: "forbid", value: "Beta-Version" }, { scope: "x", kind: "unbekannt", value: "y" }] }, "neu.json");
+  check("v2.180: Import ergänzt neue Regel, ungültige werden ignoriert", $("rules-count").textContent === "5" && /1 Regel\(n\) übernommen/.test($("rules-io-note").textContent));
+  $("rules-io-note").textContent = "";
+  await importRules({ foo: 1 }, "kaputt.json");
+  check("v2.180: ungültige Datei -> Fehlermeldung", /Import fehlgeschlagen/.test($("rules-io-note").textContent) && $("rules-count").textContent === "5");
+
+  // v2.180: Veröffentlichen eines Stands mit Regelwerk-Verstößen erst nach Rückfrage
+  nav("final"); await wait(100);
+  $("final-reviewer-input").value = "A. Muster"; fire($("final-reviewer-input"), "input"); fire($("final-reviewer-input"), "change");
+  const stSel = doc.querySelector("#final-versions-tbody tr [data-final-version-status]");
+  stSel.value = "Veröffentlicht"; fire(stSel, "change"); await wait(50);
+  check("v2.180: Veröffentlichen mit Verstößen -> Rückfrage nennt die Verstöße", !$("confirm-modal-overlay").hidden && /verletzt \d+ feste Regel/.test($("confirm-modal-message").textContent));
+  fire($("confirm-modal-cancel-btn"), "click"); await wait(80);
+  s = await session();
+  check("v2.180: abgebrochen -> Stand bleibt unveröffentlicht", s.final.versions.every((v) => v.status !== "Veröffentlicht"));
+
   check("Keine Skriptfehler", errors.length === 0);
   if (errors.length) console.log(errors.slice(0, 5));
   const failed = checks.filter((c) => !c[1]);

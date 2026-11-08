@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.179.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.180.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,12 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Regelwerk als Datei, Warnung vor dem Veröffentlichen (v2.180.0)**: Im Register Regelwerk lassen sich die Regeln als
+  JSON exportieren und importieren (z. B. für Kolleginnen/Kollegen oder eine neue Sitzung). Der Import ergänzt – bereits
+  vorhandene Regeln (gleicher Geltungsbereich, gleiche Art, gleicher Wert) werden übersprungen, ungültige ignoriert, eine
+  ungültige Datei meldet einen Fehler. In FINAL fragt die App beim Statuswechsel auf „Veröffentlicht“ nach, wenn der
+  Stand feste Regeln verletzt (mit den ersten Verstößen); wird trotzdem veröffentlicht, steht das im Protokoll.
 
 - **Vorgemerkte Abschnitte in beliebiger Reihenfolge zurückholen (v2.179.0)**: Bisher war das Zurückholen nur in
   umgekehrter Reihenfolge exakt – bei anderer Reihenfolge konnte ein Abschnitt versetzt landen. Jetzt werden beim
