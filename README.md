@@ -2031,6 +2031,12 @@ RAG-Kontext anreichern").
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
 
+- **Lasttest Editor mit 200 Kapiteln (zu v2.184.0)**: Im echten Browser (Chromium), KI simuliert mit 50 ms je Antwort:
+  Sitzung laden 0,7 s, Editor mit 200 Kapiteln 0,3 s, KI-Sammel-Lauf über alle 200 Kapitel inkl. Word/PDF je Kapitel
+  14,5 s (≈ 70 ms je Kapitel zuzüglich der echten KI-Antwortzeit), längste Blockade 86 ms; Kapitelliste mit 200
+  Regelwerk-Markierungen 0,3 s, Regelwerk prüfen 0,1 s, Sitzung exportieren (1,8 MB) sofort – keine Seitenfehler. Kein
+  Handlungsbedarf.
+
 - **Verbotene Begriffe automatisch ersetzen (v2.184.0)**: Eine Regel „Begriff verboten“ kann einen Ersatz haben (z. B.
   „Testsystem → Schulungsumgebung“, im Register Regelwerk als „Ersatz (optional)“). Wo Regelwerk-Verstöße angezeigt
   werden – Editor-Vorschau, Unterkapitel-Werkstatt, FINAL-Ergebnis (Kapitel oder Gesamtdokument) – erscheint dann
