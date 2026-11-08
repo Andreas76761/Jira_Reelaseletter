@@ -67,7 +67,7 @@ const savedFiles = [];
   s.rovoEntries = [{ id: 1, when: "8.11.2026", chatText: "Wie funktioniert der Kundenstamm?", answerText: "Anschließend suchen. Der Kundenstamm wird über die Email-Adresse gefunden.", chapter: "", subchapter: "", labels: ["ROVO"], jiraKeys: [], jiraVisible: false }];
   s.synonyms = [{ term: "Kündigung", synonyms: "Vertragskündigung", en: "Termination", sk: "", hi: "", fr: "", fixed: false }];
   s.abbrevTranslations = [{ term: "FIN", de: "Fahrzeug-Identifizierungsnummer", en: "VIN", sk: "", hi: "", fr: "", fixed: true }];
-  delete s.lexAuto;
+  s.lexAuto = { autoAccept: false, autoAi: false }; // v2.189: Prüf-Ablauf (Übernehmen/Verwerfen) testen
   await load(s);
   await wait(1600); // automatischer Lauf (verzögert)
 

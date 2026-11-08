@@ -82,7 +82,7 @@ function fakeClaude(input) {
   s.final.manuals = [{ id: 1, filename: "Handbuch.docx", addedAt: "8.11.2026", pageCount: 2, design: null, chapters: [
     ch("1 Ende", "Die Kündigung beendet den Vertrag. Die Beendigung wird dem Kunde bestätigt."),
     ch("2 Ablauf", "Nach der Kündigung folgt die Beendigung. Der Kunde erhält den Vertrag zurück.") ] }];
-  s.lexAuto = { enabled: false, ignored: { gloss: [], syn: [], abbrev: [] } };
+  s.lexAuto = { enabled: false, autoAccept: false, autoAi: false, ignored: { gloss: [], syn: [], abbrev: [] } };
   s.glossaryTranslations = [
     { term: "Vertragsübersicht", en: "", sk: "", hi: "", fr: "", fixed: false, auto: true, isNew: true, foundAt: "8.11.2026", lexExample: "Die Vertragsübersicht zeigt alle Verträge." },
     { term: "Kundenstamm", en: "customer master", sk: "", hi: "", fr: "", fixed: false },

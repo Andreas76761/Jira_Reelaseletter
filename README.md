@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.188.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.189.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,19 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Begriffe automatisch übernehmen und befüllen (v2.189.0)**: Neu erkannte Abkürzungen, Glossar-Begriffe und
+  Synonym-Gruppen werden jetzt standardmäßig **direkt übernommen**, und Claude **ergänzt Bedeutung und Übersetzungen
+  (EN/SK/HI/FR) automatisch** – nur für neu erkannte Einträge, je Eintrag einmal (bis zu 120 Einträge je Register und
+  Lauf; eigene, ältere Einträge mit leeren Feldern nur über „KI-Vorschläge (Claude)“). Offene Einträge aus älteren
+  Sitzungen werden beim Laden ebenfalls übernommen. Echte Synonym-Gruppen (verschiedene Wörter) schlägt Claude weiterhin
+  nur auf Knopfdruck vor. Neuerungen bleiben sichtbar: „+n“ in der Navigation (bis das Register geöffnet wird), „neu“ in
+  der Tabelle und oben die Liste **„Zuletzt automatisch ergänzt“** mit Bedeutung, Fundstellen, Zeitpunkt und dem
+  Vermerk, welche Felder von Claude stammen; „Entfernen“ nimmt einen Eintrag zurück (automatisch erkannte werden nicht
+  erneut vorgeschlagen, bei eigenen Einträgen werden nur Claudes Felder geleert), „Liste leeren“ blendet die Liste aus.
+  Beide Automatiken lassen sich je Register abschalten („neue Begriffe direkt übernehmen“, „Bedeutung und Übersetzungen
+  automatisch von Claude ergänzen“) – dann gilt wieder der Prüf-Ablauf aus v2.187. Ohne Claude (lokal geöffnet) werden
+  die Begriffe ohne Ergänzung übernommen. Test: `lexikon_autoaccept_test.js` (19 Prüfungen).
 
 - **KI-Vorschläge für Glossar, Synonyme, Abkürzungen (v2.188.0)**: In allen drei Registern startet „KI-Vorschläge
   (Claude)“ einen bewusst ausgelösten KI-Schritt: (1) Claude ergänzt **nur leere Felder** nicht fixierter Einträge –

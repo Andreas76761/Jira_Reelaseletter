@@ -6759,7 +6759,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.188.0";
+  var APP_VERSION = "2.189.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -10640,7 +10640,7 @@
       var val = entry.fixed
         ? escapeHtml(entry[f] || "")
         : '<input type="text" class="text-input terminology-field-input" data-field="' + f + '" value="' + escapeHtml(entry[f] || "") + '">';
-      var html = "<td>" + val + (f === "term" && entry.fixed ? ' <span class="pill done">Fixiert</span>' : "") + (f === "term" && entry.isNew ? ' <span class="pill progress" title="automatisch aus den Inhalten erkannt (' + escapeHtml(entry.foundAt || "") + ')">neu</span>' : "") + "</td>";
+      var html = "<td>" + val + (f === "term" && entry.fixed ? ' <span class="pill done">Fixiert</span>' : "") + (f === "term" && (entry.isNew || entry.lexUnseen) ? ' <span class="pill progress" title="automatisch aus den Inhalten erkannt (' + escapeHtml(entry.foundAt || entry.lexRecent || "") + ')">neu</span>' : "") + "</td>";
       if (f === "term" && cfg.hasSynonymsField) {
         html += entry.fixed
           ? "<td>" + escapeHtml(entry.synonyms || "") + "</td>"
@@ -10657,7 +10657,7 @@
       ? '<button type="button" class="btn ghost btn-tiny" data-action="unfix">Entsperren</button>'
       : '<button type="button" class="btn ghost btn-tiny" data-action="fix">Fixieren</button>') +
       ' <button type="button" class="btn danger btn-tiny" data-action="delete">Löschen</button>';
-    return '<tr data-idx="' + idx + '"' + (entry.isNew ? ' class="lex-row-new"' : "") + ">" + cells + "<td>" + actions + "</td></tr>";
+    return '<tr data-idx="' + idx + '"' + (entry.isNew || entry.lexUnseen ? ' class="lex-row-new"' : "") + ">" + cells + "<td>" + actions + "</td></tr>";
   }
   function renderTerminologyList(key) {
     var cfg = TERMINOLOGY_LISTS[key];
@@ -37647,7 +37647,8 @@
     d = d && typeof d === "object" ? d : {};
     var ig = d.ignored && typeof d.ignored === "object" ? d.ignored : {};
     var arr = function (v) { return Array.isArray(v) ? v.filter(function (x) { return typeof x === "string"; }) : []; };
-    return { enabled: d.enabled !== false, ignored: { gloss: arr(ig.gloss), syn: arr(ig.syn), abbrev: arr(ig.abbrev) },
+    // v2.189: autoAccept = neue Begriffe direkt uebernehmen, autoAi = Bedeutung/Uebersetzungen automatisch von Claude ergaenzen
+    return { enabled: d.enabled !== false, autoAccept: d.autoAccept !== false, autoAi: d.autoAi !== false, ignored: { gloss: arr(ig.gloss), syn: arr(ig.syn), abbrev: arr(ig.abbrev) },
       fingerprint: typeof d.fingerprint === "string" ? d.fingerprint : "", lastRun: d.lastRun && typeof d.lastRun === "object" ? d.lastRun : null };
   }
   function lexState() { if (!app.lexAuto || !app.lexAuto.ignored) app.lexAuto = lexAutoNormalize(app.lexAuto); return app.lexAuto; }
@@ -37817,9 +37818,11 @@
       });
     st.lastRun = { at: when, texts: texts.length, added: added, manual: !!opts.manual };
     var sum = added.gloss + added.syn + added.abbrev;
-    if (sum) addLog("Begriffe automatisch erweitert (" + texts.length + " Texte): " + added.abbrev + " Abkürzung(en), " + added.syn + " Synonym-Gruppe(n), " + added.gloss + " Glossar-Begriff(e) – als „neu“ markiert.");
+    var how = st.autoAccept ? "übernommen" + (st.autoAi ? ", Bedeutung/Übersetzungen ergänzt Claude" : "") : "als „neu“ markiert";
+    if (sum) addLog("Begriffe automatisch erweitert (" + texts.length + " Texte): " + added.abbrev + " Abkürzung(en), " + added.syn + " Synonym-Gruppe(n), " + added.gloss + " Glossar-Begriff(e) – " + how + ".");
     lexAfterChange();
-    if (sum && !opts.silent) showToast("Begriffe erweitert", added.abbrev + " Abkürzung(en), " + added.syn + " Synonym-Gruppe(n), " + added.gloss + " Glossar-Begriff(e) neu erkannt – in den Registern als „neu“ markiert.");
+    if (sum && !opts.silent) showToast("Begriffe erweitert", added.abbrev + " Abkürzung(en), " + added.syn + " Synonym-Gruppe(n), " + added.gloss + " Glossar-Begriff(e) neu erkannt – " + how + ".");
+    lexAutoProcessSoon();
     return added;
   }
   var lexAutoTimer = null;
@@ -37828,13 +37831,71 @@
     lexAutoTimer = setTimeout(function () {
       lexAutoTimer = null;
       var st = lexState();
-      if (!st.enabled) return;
-      var texts = lexContentTexts();
-      if (!texts.length || lexFingerprint(texts) === st.fingerprint) return;
-      lexAutoRun({});
+      var texts = st.enabled ? lexContentTexts() : [];
+      if (st.enabled && texts.length && lexFingerprint(texts) !== st.fingerprint) { lexAutoRun({}); return; }
+      lexAutoProcessSoon(); // offene Eintraege (z. B. aus aelteren Sitzungen) uebernehmen bzw. ergaenzen
     }, 1200);
   }
   function lexNewEntries(kind) { return (app[LEX_STATE_OF_KIND[kind]] || []).filter(function (e) { return e && e.isNew; }); }
+  // v2.189: automatisch uebernommene Eintraege bleiben als „zuletzt ergänzt“ sichtbar (lexRecent = Zeitpunkt, lexUnseen bis
+  // das Register geoeffnet wurde – zaehlt fuer das „+n“ in der Navigation)
+  function lexRecentEntries(kind) { return (app[LEX_STATE_OF_KIND[kind]] || []).filter(function (e) { return e && e.lexRecent; }); }
+  function lexUnseenCount(kind) { return lexNewEntries(kind).length + lexRecentEntries(kind).filter(function (e) { return e.lexUnseen; }).length; }
+  function lexMarkSeen(view) {
+    Object.keys(LEX_VIEW_OF_KIND).forEach(function (k) {
+      if (LEX_VIEW_OF_KIND[k] !== view) return;
+      var any = false;
+      lexRecentEntries(k).forEach(function (e) { if (e.lexUnseen) { delete e.lexUnseen; any = true; } });
+      if (any && typeof scheduleNavRefresh === "function") scheduleNavRefresh();
+    });
+  }
+  function lexAutoAcceptAll() {
+    var n = 0, when = nowLabel();
+    Object.keys(LEX_STATE_OF_KIND).forEach(function (kind) {
+      lexNewEntries(kind).forEach(function (e) {
+        e.lexRecent = when; e.lexUnseen = true;
+        if (e.lexAiFields) e.lexAiDone = (e.lexAiDone || []).concat(e.lexAiFields.filter(function (f) { return (e.lexAiDone || []).indexOf(f) === -1; }));
+        if (e.lexAddedSynonyms) e.lexRecentSyn = (e.lexRecentSyn || []).concat(e.lexAddedSynonyms);
+        lexAccept(kind, e); n++;
+      });
+    });
+    if (n) addLog("Begriffe: " + n + " neue(r) Eintrag/Einträge automatisch übernommen.");
+    return n;
+  }
+  // Rueckgaengig fuer einen automatisch uebernommenen Eintrag: automatisch erkannte entfernen (und nicht erneut vorschlagen),
+  // bei eigenen Eintraegen nur die von Claude ergaenzten Felder bzw. ergaenzten Schreibweisen zuruecknehmen
+  function lexRecentRemove(kind, e) {
+    var arr = app[LEX_STATE_OF_KIND[kind]];
+    if (e.auto) { lexIgnore(kind, e); var i = arr.indexOf(e); if (i !== -1) arr.splice(i, 1); return; }
+    (e.lexAiDone || []).forEach(function (f) { if (f !== "Synonyme") e[f] = ""; });
+    if (e.lexRecentSyn) {
+      var drop = e.lexRecentSyn.map(function (x) { return x.toLowerCase(); });
+      e.synonyms = String(e.synonyms || "").split(",").map(function (x) { return x.trim(); }).filter(function (x) { return x && drop.indexOf(x.toLowerCase()) === -1; }).join(", ");
+      e.lexAddedSynonyms = e.lexRecentSyn; lexIgnore(kind, e); delete e.lexAddedSynonyms;
+    }
+    ["lexRecent", "lexUnseen", "lexAiDone", "lexRecentSyn"].forEach(function (k) { delete e[k]; });
+  }
+  // Verarbeitung nach einem Lauf: (1) leere Bedeutung/Uebersetzungen neuer Eintraege von Claude ergaenzen lassen,
+  // (2) alles Neue uebernehmen – je nach Einstellung
+  var lexProcessTimer = null, lexProcessBusy = false;
+  function lexAutoProcessSoon() {
+    if (lexProcessTimer) return;
+    lexProcessTimer = setTimeout(function () { lexProcessTimer = null; lexAutoProcess(); }, 50);
+  }
+  async function lexAutoProcess() {
+    if (lexProcessBusy || lexAiBusy) return;
+    var st = lexState();
+    lexProcessBusy = true;
+    try {
+      if (st.autoAi && sampleApi) {
+        var kinds = Object.keys(LEX_STATE_OF_KIND);
+        for (var i = 0; i < kinds.length; i++) {
+          if (lexAiTargets(kinds[i], true).length) await lexAiRun(kinds[i], { auto: true });
+        }
+      }
+      if (st.autoAccept && lexAutoAcceptAll()) lexAfterChange();
+    } finally { lexProcessBusy = false; }
+  }
   function lexAfterChange() {
     Object.keys(TERMINOLOGY_LISTS).forEach(renderTerminologyList);
     renderLexAutoPanels();
@@ -37864,6 +37925,9 @@
       var status = lr ? "Zuletzt geprüft " + lr.at + " – " + lr.texts.toLocaleString("de-DE") + " Text(e) aus Tickets, FINAL, Editor, Unterkapitel, Dokument-Review und ROVO." : "Noch nicht geprüft.";
       host.innerHTML = '<p class="section-label" style="margin-top:0;">Automatisch aus den Inhalten erweitern</p>' +
         '<div class="controls" style="flex-wrap:wrap;"><label class="checkbox-label" style="margin:0;"><input type="checkbox" data-lex-enabled' + (st.enabled ? " checked" : "") + "> automatisch, sobald sich Inhalte ändern</label>" +
+        '<label class="checkbox-label" style="margin:0;"><input type="checkbox" data-lex-autoaccept' + (st.autoAccept ? " checked" : "") + "> neue Begriffe direkt übernehmen</label>" +
+        '<label class="checkbox-label" style="margin:0;"><input type="checkbox" data-lex-autoai' + (st.autoAi ? " checked" : "") + "> Bedeutung und Übersetzungen automatisch von Claude ergänzen</label></div>" +
+        '<div class="controls" style="flex-wrap:wrap;">' +
         '<button class="btn ghost btn-tiny" type="button" data-lex-run>Jetzt prüfen</button>' +
         '<button class="btn ghost btn-tiny" type="button" data-lex-ai' + (lexAiBusy ? " disabled" : "") + ' title="' + escapeHtml(LEX_AI_HINT[kind]) + '"><span class="btn-spinner"' + (lexAiBusy === kind ? "" : " hidden") + "></span>KI-Vorschläge (Claude)</button>" +
         '<span class="step-note" data-lex-status style="margin:0;">' + escapeHtml(status) + "</span></div>" +
@@ -37875,7 +37939,8 @@
             return '<tr data-lex-idx="' + idx + '"><td><b>' + escapeHtml(e.term) + '</b><br><small class="step-note">' + escapeHtml(e.foundAt || "") + "</small></td><td>" + lexDetailHtml(kind, e) + "</td><td>" + escapeHtml(e.lexSrc || "–") + '</td><td class="lex-example">' + escapeHtml(e.lexExample || "–") + "</td>" +
               '<td><div class="final-row-actions"><button class="btn ghost btn-tiny" type="button" data-lex-accept>Übernehmen</button><button class="btn ghost btn-tiny final-btn-danger" type="button" data-lex-reject>Verwerfen</button></div></td></tr>';
           }).join("") + "</tbody></table></div>"
-          : '<p class="step-note" data-lex-none>Keine neuen ' + LEX_LABEL[kind] + " seit der letzten Prüfung.</p>");
+          : '<p class="step-note" data-lex-none>' + (st.autoAccept ? "Nichts zu prüfen – neue " + LEX_LABEL[kind] + " werden direkt übernommen." : "Keine neuen " + LEX_LABEL[kind] + " seit der letzten Prüfung.") + "</p>") +
+        lexRecentHtml(kind);
     });
   }
 
@@ -37892,9 +37957,10 @@
   };
   var LEX_AI_BATCH = 40;
   function lexAiFieldsFor(kind) { return kind === "syn" ? ["en", "sk", "hi", "fr"] : ["de", "en", "sk", "hi", "fr"]; }
-  function lexAiTargets(kind) {
+  // auto: nur neu erkannte Eintraege, die Claude noch nicht gesehen hat (sonst wuerde jeder Lauf dieselben offenen Felder erneut anfragen)
+  function lexAiTargets(kind, auto) {
     var fields = lexAiFieldsFor(kind);
-    return (app[LEX_STATE_OF_KIND[kind]] || []).filter(function (e) { return e && e.term && !e.fixed && fields.some(function (f) { return !String(e[f] || "").trim(); }); })
+    return (app[LEX_STATE_OF_KIND[kind]] || []).filter(function (e) { return e && e.term && !e.fixed && (!auto || (e.isNew && !e.lexAiTried)) && fields.some(function (f) { return !String(e[f] || "").trim(); }); })
       .sort(function (a, b) { return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0); });
   }
   function lexAiFillPrompt(kind, list) {
@@ -37913,15 +37979,19 @@
     (app.glossaryTranslations || []).forEach(function (e) { add(e.term); });
     return out.slice(0, 300);
   }
-  async function lexAiRun(kind) {
+  var LEX_AI_AUTO_BATCHES = 3;
+  async function lexAiRun(kind, opts) {
+    opts = opts || {};
     if (lexAiBusy) return;
-    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
+    if (!sampleApi) { if (!opts.auto) showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
     lexAiBusy = kind; lexAiNote[kind] = "Claude arbeitet …"; renderLexAutoPanels();
     var filled = 0, entries = 0, groups = 0, dropped = 0, failed = 0, when = nowLabel();
     try {
-      var targets = lexAiTargets(kind);
+      var targets = lexAiTargets(kind, !!opts.auto);
+      if (opts.auto) targets = targets.slice(0, LEX_AI_BATCH * LEX_AI_AUTO_BATCHES);
       for (var i = 0; i < targets.length; i += LEX_AI_BATCH) {
         var batch = targets.slice(i, i + LEX_AI_BATCH);
+        batch.forEach(function (e) { e.lexAiTried = when; });
         var res = await sampleApi(lexAiFillPrompt(kind, batch), { modelTier: "default", cache: false });
         var obj = rlParseJsonObject(res && res.text);
         if (!obj) { failed++; continue; }
@@ -37938,7 +38008,7 @@
           if (got.length) { e.lexAiFields = (e.lexAiFields || []).concat(got.filter(function (f) { return (e.lexAiFields || []).indexOf(f) === -1; })); e.isNew = true; e.foundAt = e.foundAt || when; filled += got.length; entries++; }
         });
       }
-      if (kind === "syn") {
+      if (kind === "syn" && !opts.auto) {
         var cands = lexAiSynCandidates();
         if (cands.length >= 2) {
           var res2 = await sampleApi(ragPromptFor("lexAiSynonyms") + "\n\nWÖRTER:\n" + cands.join(", "), { modelTier: "default", cache: false });
@@ -37965,15 +38035,30 @@
         }
       }
       lexAiNote[kind] = "KI-Vorschläge (" + when + "): " + filled + " Feld(er) in " + entries + " Eintrag/Einträgen ergänzt" + (kind === "syn" ? ", " + groups + " neue Synonym-Gruppe(n)" + (dropped ? ", " + dropped + " Vorschlag/Vorschläge verworfen (Wörter nicht in den Inhalten oder schon vergeben)" : "") : "") +
-        (failed ? " – " + failed + " Antwort(en) nicht lesbar" : "") + ". Bitte prüfen und übernehmen.";
+        (failed ? " – " + failed + " Antwort(en) nicht lesbar" : "") + (opts.auto ? " (automatisch)" : "") + "." + (lexState().autoAccept ? "" : " Bitte prüfen und übernehmen.");
       addLog(LEX_LABEL[kind] + ": KI-Vorschläge – " + filled + " Feld(er) ergänzt" + (kind === "syn" ? ", " + groups + " Synonym-Gruppe(n)" : "") + ".");
     } catch (err) {
       lexAiNote[kind] = "KI-Vorschläge fehlgeschlagen: " + ((err && (err.message || err.code)) || "unbekannter Fehler");
-      showToast("KI-Vorschläge fehlgeschlagen", lexAiNote[kind], true);
+      if (!opts.auto) showToast("KI-Vorschläge fehlgeschlagen", lexAiNote[kind], true);
     } finally {
       lexAiBusy = null;
       lexAfterChange();
     }
+  }
+  function lexRecentHtml(kind) {
+    var all = lexRecentEntries(kind);
+    if (!all.length) return "";
+    var shown = all.slice(-60).reverse();
+    return '<p class="section-label">Zuletzt automatisch ergänzt (' + all.length + ')</p><div class="controls"><button class="btn ghost btn-tiny" type="button" data-lex-recent-clear>Liste leeren</button>' +
+      '<span class="step-note" style="margin:0;">Die Einträge stehen bereits in der Tabelle unten; „Entfernen“ nimmt einen automatisch ergänzten Eintrag zurück.</span></div>' +
+      '<div class="table-wrap"><table class="simple-table lex-new-table lex-recent-table"><thead><tr><th>' + (kind === "syn" ? "Hauptbegriff" : kind === "abbrev" ? "Kürzel" : "Begriff") + "</th><th>" + (kind === "abbrev" ? "Bedeutung" : kind === "syn" ? "Varianten" : "Bedeutung") + "</th><th>Gefunden in</th><th>Ergänzt</th><th></th></tr></thead><tbody>" +
+      shown.map(function (e) {
+        var idx = app[LEX_STATE_OF_KIND[kind]].indexOf(e);
+        return '<tr data-lex-recent-idx="' + idx + '"' + (e.lexUnseen ? ' class="lex-row-new"' : "") + "><td><b>" + escapeHtml(e.term) + "</b>" + (e.lexUnseen ? ' <span class="pill progress">neu</span>' : "") + "</td><td>" + lexDetailBaseHtml(kind, e) +
+          (e.lexAiDone && e.lexAiDone.length ? '<br><span class="pill progress" title="von Claude ergänzt">von Claude: ' + escapeHtml(e.lexAiDone.map(function (f) { return LEX_FIELD_LABEL[f] || f; }).join(", ")) + "</span>" : "") +
+          "</td><td>" + escapeHtml(e.lexSrc || "–") + '</td><td class="mono" style="white-space:nowrap;">' + escapeHtml(e.lexRecent || "") + "</td>" +
+          '<td><button class="btn ghost btn-tiny final-btn-danger" type="button" data-lex-recent-remove>Entfernen</button></td></tr>';
+      }).join("") + "</tbody></table></div>";
   }
   function lexAccept(kind, e) { delete e.isNew; delete e.lexAiFields; if (kind === "syn") delete e.lexAddedSynonyms; }
   function lexReject(kind, e) {
@@ -37998,6 +38083,14 @@
     var host = els["lexAuto" + kind.charAt(0).toUpperCase() + kind.slice(1)];
     if (!host) return;
     host.addEventListener("change", function (ev) {
+      if (ev.target.closest("[data-lex-autoaccept]") || ev.target.closest("[data-lex-autoai]")) {
+        var stx = lexState(), isAcc = !!ev.target.closest("[data-lex-autoaccept]");
+        stx[isAcc ? "autoAccept" : "autoAi"] = ev.target.checked;
+        addLog("Begriffe: " + (isAcc ? "neue Begriffe direkt übernehmen" : "Bedeutung/Übersetzungen automatisch von Claude") + " " + (ev.target.checked ? "an" : "aus") + ".");
+        renderLexAutoPanels();
+        if (ev.target.checked) lexAutoProcessSoon();
+        return;
+      }
       if (!ev.target.closest("[data-lex-enabled]")) return;
       lexState().enabled = ev.target.checked;
       addLog("Begriffe automatisch erweitern: " + (ev.target.checked ? "an" : "aus") + ".");
@@ -38005,7 +38098,14 @@
       if (ev.target.checked) lexAutoSoon();
     });
     host.addEventListener("click", function (ev) {
-      if (ev.target.closest("[data-lex-ai]")) { lexAiRun(kind); return; }
+      if (ev.target.closest("[data-lex-ai]")) { lexAiRun(kind).then(function () { if (lexState().autoAccept && lexAutoAcceptAll()) lexAfterChange(); }); return; }
+      if (ev.target.closest("[data-lex-recent-clear]")) { lexRecentEntries(kind).forEach(function (e) { ["lexRecent", "lexUnseen", "lexAiDone", "lexRecentSyn"].forEach(function (k) { delete e[k]; }); }); lexAfterChange(); return; }
+      var rr = ev.target.closest("[data-lex-recent-remove]") && ev.target.closest("[data-lex-recent-idx]");
+      if (rr) {
+        var re = app[LEX_STATE_OF_KIND[kind]][parseInt(rr.getAttribute("data-lex-recent-idx"), 10)];
+        if (re) { lexRecentRemove(kind, re); addLog(LEX_LABEL[kind] + ": automatisch ergänzten Eintrag „" + re.term + "“ zurückgenommen (wird nicht erneut vorgeschlagen)."); lexAfterChange(); }
+        return;
+      }
       if (ev.target.closest("[data-lex-run]")) {
         var a = lexAutoRun({ manual: true });
         if (!(a.gloss + a.syn + a.abbrev)) showToast("Keine neuen Begriffe", "Die Inhalte enthalten keine neuen Glossar-Begriffe, Synonyme oder Abkürzungen.");
@@ -38061,7 +38161,7 @@
     if (name === "dashboard" && typeof renderDashboardNotesDue === "function" && els.dashboardNotesDue) renderDashboardNotesDue();
     if (name === "dashboard" && typeof scheduleDashStore === "function") scheduleDashStore();
     if (name === "bilder" && typeof renderCvTable === "function") renderCvTable();
-    if (name === "glossar" || name === "synonyme" || name === "abkuerzungen") { renderLexAutoPanels(); lexAutoSoon(); }
+    if (name === "glossar" || name === "synonyme" || name === "abkuerzungen") { renderLexAutoPanels(); lexAutoSoon(); lexMarkSeen(name); }
     if (typeof refreshNav === "function" && els.navList && els.navList.querySelector("[data-nav-count]")) { navApplyFolded(); refreshNav(); }
     if (typeof navMarkSeen === "function" && navStartupDone) navMarkSeen(name);
     if (name === "output-md" || name === "output-pdf") renderOutputCounts();
@@ -38242,11 +38342,11 @@
     Object.keys(typeof LEX_VIEW_OF_KIND === "object" && LEX_VIEW_OF_KIND ? LEX_VIEW_OF_KIND : {}).forEach(function (k) {
       var btn = els.navList.querySelector('.nav-item[data-view="' + LEX_VIEW_OF_KIND[k] + '"]');
       if (!btn) return;
-      var n = lexNewEntries(k).length, sp = btn.querySelector(".nav-lexnew");
+      var n = lexUnseenCount(k), sp = btn.querySelector(".nav-lexnew");
       if (!n) { if (sp) sp.parentNode.removeChild(sp); return; }
       if (!sp) { sp = document.createElement("span"); sp.className = "nav-lexnew"; btn.insertBefore(sp, btn.querySelector(".nav-count") || null); }
       sp.setAttribute("data-n", "+" + n);
-      sp.title = n + " neu erkannte(r) Begriff(e) – bitte prüfen";
+      sp.title = n + " neu erkannte(r) bzw. automatisch ergänzte(r) Begriff(e)";
     });
     NAV_FLOW.forEach(function (st) {
       var sd = navStageStand(st), el = els.navList.querySelector('[data-nav-stage-stand="' + st.key + '"]');
