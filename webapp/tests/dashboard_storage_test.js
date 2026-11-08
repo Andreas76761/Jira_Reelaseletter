@@ -41,7 +41,7 @@ const toBytes = (t) => { const m = /([\d.,]+)\s*(B|KB|MB|GB)/.exec(t); if (!m) r
   async function dash() { nav("crossx"); await wait(10); nav("dashboard"); await wait(150); }
 
   await dash();
-  check("Tabelle mit allen 23 Registern, alle Sitzungsfelder zugeordnet (kein „Sonstiges“)", doc.querySelectorAll("#dash-store-tbody tr").length === 23 && !row("Sonstiges"));
+  check("Tabelle mit allen 24 Registern (v2.176 inkl. Regelwerk), alle Sitzungsfelder zugeordnet (kein „Sonstiges“)", doc.querySelectorAll("#dash-store-tbody tr").length === 24 && !row("Sonstiges"));
   check("Freier Speicher aus dem Browser (48 MB von 50 MB)", tile(3).querySelector("b").textContent === "48,0 MB" && tile(2).querySelector("b").textContent === "2,00 MB" && tile(2).textContent.includes("4 % von 50,0 MB"));
 
   // Sitzung mit Daten in mehreren Registern
