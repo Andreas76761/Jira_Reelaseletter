@@ -4176,17 +4176,18 @@
         <section>
           <p class="section-label">Manuell gepflegte Übersetzungen</p>
           <div class="callout">
-            Eigene Glossar-Einträge mit eindeutiger Übersetzung in Englisch, Slowakisch, Hindi und Französisch. Mit <b>Fixieren</b> markierst du einen Begriff als redaktionell geprüft/final (Felder werden dann gegen versehentliches Ändern gesperrt, über "Entsperren" wieder editierbar).
+            Eigene Glossar-Einträge mit Bedeutung und eindeutiger Übersetzung in Englisch, Slowakisch, Hindi und Französisch. Mit <b>Fixieren</b> markierst du einen Begriff als redaktionell geprüft/final (Felder werden dann gegen versehentliches Ändern gesperrt, über "Entsperren" wieder editierbar).
           </div>
           <div class="panel table-wrap" id="glossary-translations-wrap">
             <table class="simple-table" id="glossary-translations-table">
-              <thead><tr><th>Begriff (DE)</th><th>Englisch</th><th>Slowakisch</th><th>Hindi</th><th>Französisch</th><th>Aktion</th></tr></thead>
+              <thead><tr><th>Begriff (DE)</th><th>Bedeutung (Deutsch)</th><th>Englisch</th><th>Slowakisch</th><th>Hindi</th><th>Französisch</th><th>Aktion</th></tr></thead>
               <tbody id="glossary-translations-tbody"></tbody>
             </table>
             <div class="empty-hint" id="glossary-translations-empty">Noch keine manuellen Übersetzungen angelegt.</div>
           </div>
           <div class="paste-actions" style="margin-top:10px; align-items:center;">
             <input type="text" class="text-input" id="glossary-translations-new-term" placeholder="Begriff (DE)" style="max-width:160px;">
+            <input type="text" class="text-input" id="glossary-translations-new-de" placeholder="Bedeutung (Deutsch)" style="max-width:180px;">
             <input type="text" class="text-input" id="glossary-translations-new-en" placeholder="Englisch" style="max-width:140px;">
             <input type="text" class="text-input" id="glossary-translations-new-sk" placeholder="Slowakisch" style="max-width:140px;">
             <input type="text" class="text-input" id="glossary-translations-new-hi" placeholder="Hindi" style="max-width:140px;">
@@ -6758,7 +6759,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.187.0";
+  var APP_VERSION = "2.188.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8332,7 +8333,7 @@
     "labels-tbody", "labels-new-category", "labels-new-de", "labels-new-en", "labels-add-btn", "label-category-datalist",
     "synonyms-tbody", "synonyms-empty", "synonyms-new-term", "synonyms-new-synonyms", "synonyms-new-en",
     "synonyms-new-sk", "synonyms-new-hi", "synonyms-new-fr", "synonyms-add-btn",
-    "glossary-translations-tbody", "glossary-translations-empty", "glossary-translations-new-term",
+    "glossary-translations-tbody", "glossary-translations-empty", "glossary-translations-new-term", "glossary-translations-new-de",
     "glossary-translations-new-en", "glossary-translations-new-sk", "glossary-translations-new-hi",
     "glossary-translations-new-fr", "glossary-translations-add-btn",
     "abbrev-translations-tbody", "abbrev-translations-empty", "abbrev-translations-new-term", "abbrev-translations-new-de",
@@ -10618,9 +10619,9 @@
       addBtn: "synonymsAddBtn", logLabel: "Synonym-Eintrag"
     },
     glossaryTranslations: {
-      stateKey: "glossaryTranslations", hasSynonymsField: false,
+      stateKey: "glossaryTranslations", hasSynonymsField: false, hasDeMeaningField: true,
       tbody: "glossaryTranslationsTbody", empty: "glossaryTranslationsEmpty",
-      newTerm: "glossaryTranslationsNewTerm",
+      newTerm: "glossaryTranslationsNewTerm", newDe: "glossaryTranslationsNewDe",
       newEn: "glossaryTranslationsNewEn", newSk: "glossaryTranslationsNewSk",
       newHi: "glossaryTranslationsNewHi", newFr: "glossaryTranslationsNewFr",
       addBtn: "glossaryTranslationsAddBtn", logLabel: "Glossar-Übersetzung"
@@ -21722,6 +21723,8 @@
     finalReviewStyle: "Du bist Lektor für das Benutzerhandbuch der Anwendung oneSCM. Prüfe das unten stehende Gesamtdokument sprachlich, OHNE es umzuschreiben. Gib AUSSCHLIESSLICH die folgenden Abschnitte aus:\n\n### Rechtschreibung & Grammatik\n- (je Fundstelle: Kapitel, fehlerhafte Stelle wörtlich, Korrektur)\n\n### Verständlichkeit & Stil\n- (je Fundstelle: Kapitel, Problem – z. B. Schachtelsatz, Passiv, Füllwörter – und konkreter Verbesserungsvorschlag)\n\n### Einheitliche Begriffe\n- (Begriffe, die für dasselbe uneinheitlich verwendet werden, mit Empfehlung)\n\nIst ein Abschnitt leer, schreibe darunter \"Keine gefunden.\" Zeilen mit nur [Bild] sind Platzhalter für Screens und kein Fehler. Erfinde keine Probleme:",
     finalReviewCompleteness: "Du bist Qualitätsprüfer für das Benutzerhandbuch der Anwendung oneSCM. Unten stehen alle Kapitel des Gesamtdokuments, je Kapitel mit den Verbesserungen aus ROVO (mit Umsetzungsstatus), den zugeordneten Jira-Tickets (falls vorhanden), der Zahl der zugeordneten Screens und dem Kapiteltext. Gib AUSSCHLIESSLICH die folgenden Abschnitte aus:\n\n### Nicht umgesetzte Verbesserungen\n- (je Kapitel: Verbesserung aus ROVO, die im Kapiteltext nicht erkennbar umgesetzt ist)\n\n### Nicht abgedeckte Tickets\n- (je Kapitel: Ticket, dessen Inhalt im Kapiteltext nicht erkennbar aufgegriffen wird)\n\n### Lücken im Ablauf\n- (je Kapitel: fehlende Schritte, fehlende Voraussetzungen oder Beschreibungen ohne passenden Screen)\n\nIst ein Abschnitt leer, schreibe darunter \"Keine gefunden.\" Erfinde keine Probleme:",
     variantTranslate: "Du bist Fachübersetzer für das Benutzerhandbuch der Anwendung oneSCM. Übersetze das folgende Kapitel vollständig und sinngemäß in die angegebene Zielsprache, in klarer Anwender-Sprache. Regeln: Zeilen, die nur [Bild] enthalten, unverändert und in gleicher Anzahl und Reihenfolge übernehmen; Jira-Nummern (z. B. ONESCM-123), Menü-/Feldnamen in Anführungszeichen der Oberfläche und Produktnamen unverändert lassen; Absätze und Aufzählungen beibehalten; nichts hinzufügen oder weglassen. Antworte ausschließlich in diesem Format: erste Zeile \"TITEL: <übersetzter Kapiteltitel>\", danach eine Leerzeile, danach der übersetzte Kapiteltext.",
+    lexAiFill: "Du bist Terminologe für das Benutzerhandbuch der Anwendung oneSCM (Fuhrpark-/Servicevertrags-Management, Rollen Retail, Markt, MO = Market Operation, HQ). Unten stehen Begriffe aus den Inhalten (Tickets, Handbuch) mit Beispielsatz und den Feldern, die noch leer sind. Fülle NUR die genannten leeren Felder: de = kurze deutsche Erklärung bzw. bei Abkürzungen die ausgeschriebene Bedeutung (höchstens 15 Wörter), en = Englisch, sk = Slowakisch, hi = Hindi (in Devanagari), fr = Französisch – jeweils die fachlich passende, einheitliche Übersetzung des Begriffs (bei Abkürzungen die Übersetzung der Bedeutung bzw. das dort übliche Kürzel). Nutze den Beispielsatz als Kontext. Bist du dir bei einer Bedeutung nicht sicher (z. B. firmeninternes Kürzel ohne erklärenden Kontext), lass das Feld leer statt zu raten. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt der Form {\"Begriff\": {\"de\": \"…\", \"en\": \"…\", \"sk\": \"…\", \"hi\": \"…\", \"fr\": \"…\"}, …} mit genau den unten genannten Begriffen als Schlüssel und nur den angefragten Feldern.",
+    lexAiSynonyms: "Du bist Terminologe für das Benutzerhandbuch der Anwendung oneSCM (Fuhrpark-/Servicevertrags-Management). Unten steht eine Liste deutscher Wörter, die in den Inhalten (Tickets, Handbuch) vorkommen. Finde Gruppen von Wörtern AUS DIESER LISTE, die im Kontext der Anwendung dasselbe bedeuten (echte Synonyme, z. B. Kündigung/Beendigung, Kunde/Endkunde nur wenn wirklich gleichbedeutend) – keine Oberbegriffe, keine bloß verwandten Begriffe, keine Wörter, die nicht in der Liste stehen. Wähle je Gruppe als Hauptbegriff das im Handbuch empfohlene Wort (das verständlichste, eindeutigste). Antworte AUSSCHLIESSLICH mit einem JSON-Objekt der Form {\"gruppen\": [{\"haupt\": \"…\", \"synonyme\": [\"…\"], \"grund\": \"kurze Begründung\"}]}; gibt es keine echten Synonyme, antworte mit {\"gruppen\": []}.",
     rlRoleSuggest: "Du ordnest Jira-Tickets der Anwendung oneSCM (Fuhrpark-/Servicevertrags-Management) den Anwender-Rollen zu, für die die Änderung relevant ist. Rollen: Retail (Händler/Dealer: Verträge anlegen und verwalten, Kunden), Markt (Markt-/Ländergesellschaft: Produkte, Markteinstellungen, Vorlagen), MO (Market Operation: Prüfungen/MO-Checks, Freigaben, Finanzen), HQ (Headquarters: zentrale Steuerung, Auswertungen, Administration), IT (technische Änderungen ohne fachliche Oberfläche: Schnittstellen, Batch, Performance). Ein Ticket kann mehrere Rollen haben. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt der Form {\"TICKET-KEY\": [\"Rolle\", ...], ...} mit genau den unten genannten Ticket-Keys und nur den Rollennamen Retail, Markt, MO, HQ, IT. Ist keine Rolle erkennbar, gib eine leere Liste zurück. Erfinde nichts.",
     crossxChat: "Du bist der Chat-Assistent der App „ONESCM Ticket-Cockpit“ und beantwortest Fragen zu allen Registern der App (Jira-Tickets, Releaseletter, Benutzerhandbuch, FINAL-Stände, Varianten, Dokument-Review, AGENT, Rovo, Bilder, Tabellen, Glossar, Mitteilungen u. a.). Regeln: 1. Verwende AUSSCHLIESSLICH Informationen aus der WISSENSBASIS unten – kein Allgemeinwissen, keine Vermutungen, nichts hinzudichten. 2. Belege JEDE Aussage direkt dahinter mit der Eintragsnummer in eckigen Klammern, z. B. [#12]; nutze nur Nummern, die in der Wissensbasis vorkommen. 3. Steht die Antwort nicht in der Wissensbasis, antworte genau: „Dazu finde ich in den Registern keine Information.“ und nenne ggf., welche Information fehlt. 4. Kennzeichne Aussagen aus INTERN-Einträgen mit (intern). 5. Bei Folgefragen den BISHERIGEN VERLAUF berücksichtigen, aber Belege nur aus der Wissensbasis. 6. Keine Quellenliste am Ende – die App zeigt die Quellen selbst an. Antworte auf Deutsch, knapp und strukturiert.",
     crossxAgent: "Du bist der interne Wissensagent für das Benutzerhandbuch und die Releaseletter der Anwendung oneSCM. Du beantwortest Fragen AUSSCHLIESSLICH auf Basis der unten stehenden Wissensbasis. Jeder Eintrag beginnt mit [#Nummer], Quelle und ggf. INTERN. Arbeite kapitel- und rollenübergreifend: Vergleiche Aussagen zwischen Kapiteln, Rollen-Varianten, internen Mitteilungen, ROVO-Verbesserungen, Prüfberichten und Jira-Tickets. Belege jede Aussage mit den Eintragsnummern in eckigen Klammern, z. B. [#12]. Kennzeichne Aussagen, die nur auf INTERNEN Einträgen beruhen, mit (intern). Wenn die Wissensbasis die Frage nicht beantwortet, sag das deutlich. Erfinde nichts. Antworte auf Deutsch, knapp und strukturiert.",
@@ -21774,6 +21777,8 @@
     finalReviewStyle: "FINAL Review: Sprache & Stil des Gesamtdokuments prüfen (Bericht)",
     finalReviewCompleteness: "FINAL Review: Vollständigkeit (ROVO-Verbesserungen, Tickets, Ablauf) prüfen",
     variantTranslate: "VARIANTE: Kapitel in die Sprache der Variante übersetzen",
+    lexAiFill: "Glossar/Synonyme/Abkürzungen: Bedeutung und Übersetzungen vorschlagen",
+    lexAiSynonyms: "Synonyme: echte Synonyme (verschiedene Wörter, gleiche Bedeutung) vorschlagen",
     rlRoleSuggest: "Releaseletter je Rolle: Rollen für Tickets vorschlagen",
     crossxAgent: "CROSS_X: Wissensagent (Fragen über Kapitel und Rollen, inkl. interner Informationen)",
     crossxChat: "CROSS_X: Chat mit allen Registern (nur belegte Antworten mit Quellen)",
@@ -37707,10 +37712,10 @@
     return defs;
   }
   function lexCollect(texts) {
-    var abbr = {}, forms = {}, gloss = {};
+    var abbr = {}, forms = {}, gloss = {}, nouns = {};
     texts.forEach(function (t, ti) {
       var text = t.text.replace(/\b[A-Z][A-Z0-9]+-\d+\b/g, " ");
-      var seenA = {}, seenF = {}, seenG = {}, m;
+      var seenA = {}, seenF = {}, seenG = {}, seenN = {}, m;
       ABBREV_RE.lastIndex = 0;
       while ((m = ABBREV_RE.exec(text))) {
         var a = m[0];
@@ -37734,9 +37739,10 @@
         if (!sentenceStart && /^[A-ZÄÖÜ]/.test(w) && /[a-zäöüß]/.test(w) && (plain.length >= 10 || (w.indexOf("-") !== -1 && plain.length >= 7)) && !GL_STOPWORDS[w.toLowerCase()] && !LEX_GLOSS_STOP[w.toLowerCase()]) {
           if (!seenG[w]) { seenG[w] = 1; var eg = gloss[w] = gloss[w] || { n: 0, src: {} }; eg.n++; eg.src[t.src] = (eg.src[t.src] || 0) + 1; }
         }
+        if (!sentenceStart && /^[A-ZÄÖÜ][a-zäöüß]/.test(w) && plain.length >= 5 && !GL_STOPWORDS[w.toLowerCase()] && !LEX_GLOSS_STOP[w.toLowerCase()] && !seenN[w]) { seenN[w] = 1; nouns[w] = (nouns[w] || 0) + 1; }
       })(wm[0], wm.index);
     });
-    return { abbr: abbr, forms: forms, gloss: gloss };
+    return { abbr: abbr, forms: forms, gloss: gloss, nouns: nouns };
   }
   function lexPreferred(surfCount) { return Object.keys(surfCount).sort(function (a, b) { return surfCount[b] - surfCount[a] || a.localeCompare(b); })[0]; }
   // Lauf: neue Eintraege anlegen; liefert { gloss, syn, abbrev } = Anzahl neu
@@ -37834,10 +37840,21 @@
     renderLexAutoPanels();
     if (typeof scheduleNavRefresh === "function") scheduleNavRefresh();
   }
+  function lexAiBadge(e) {
+    return e.lexAiFields && e.lexAiFields.length ? '<br><span class="pill progress" title="von Claude vorgeschlagen – bitte prüfen">KI-Vorschlag: ' + escapeHtml(e.lexAiFields.map(function (f) { return LEX_FIELD_LABEL[f] || f; }).join(", ")) + "</span>" : "";
+  }
+  var LEX_FIELD_LABEL = { de: "Bedeutung", en: "EN", sk: "SK", hi: "HI", fr: "FR", Synonyme: "Synonym-Gruppe" };
+  function lexTransHtml(e) {
+    var t = ["en", "sk", "hi", "fr"].filter(function (f) { return e[f]; }).map(function (f) { return f.toUpperCase() + ": " + escapeHtml(e[f]); });
+    return t.length ? '<br><small class="step-note">' + t.join(" · ") + "</small>" : "";
+  }
   function lexDetailHtml(kind, e) {
-    if (kind === "abbrev") return (e.de ? "<b>" + escapeHtml(e.de) + "</b>" : '<span class="step-note">Bedeutung offen – bitte in der Tabelle ergänzen</span>') + (e.en ? " · EN: " + escapeHtml(e.en) : "") + (e.de && e.lexNote ? '<br><small class="step-note">' + escapeHtml(e.lexNote) + "</small>" : "");
-    if (kind === "syn") return "<b>" + escapeHtml(e.term) + "</b> = " + escapeHtml(e.synonyms || "") + '<br><small class="step-note">' + escapeHtml(e.lexNote || "") + "</small>";
-    return escapeHtml(e.lexNote || "");
+    return lexDetailBaseHtml(kind, e) + lexAiBadge(e);
+  }
+  function lexDetailBaseHtml(kind, e) {
+    if (kind === "abbrev") return (e.de ? "<b>" + escapeHtml(e.de) + "</b>" : '<span class="step-note">Bedeutung offen – bitte in der Tabelle ergänzen oder „KI-Vorschläge“</span>') + lexTransHtml(e) + (e.de && e.lexNote ? '<br><small class="step-note">' + escapeHtml(e.lexNote) + "</small>" : "");
+    if (kind === "syn") return "<b>" + escapeHtml(e.term) + "</b> = " + escapeHtml(e.synonyms || "") + lexTransHtml(e) + '<br><small class="step-note">' + escapeHtml(e.lexNote || "") + "</small>";
+    return (e.de ? "<b>" + escapeHtml(e.de) + "</b><br>" : "") + escapeHtml(e.lexNote || "") + lexTransHtml(e);
   }
   function renderLexAutoPanels() {
     Object.keys(LEX_STATE_OF_KIND).forEach(function (kind) {
@@ -37847,8 +37864,11 @@
       var status = lr ? "Zuletzt geprüft " + lr.at + " – " + lr.texts.toLocaleString("de-DE") + " Text(e) aus Tickets, FINAL, Editor, Unterkapitel, Dokument-Review und ROVO." : "Noch nicht geprüft.";
       host.innerHTML = '<p class="section-label" style="margin-top:0;">Automatisch aus den Inhalten erweitern</p>' +
         '<div class="controls" style="flex-wrap:wrap;"><label class="checkbox-label" style="margin:0;"><input type="checkbox" data-lex-enabled' + (st.enabled ? " checked" : "") + "> automatisch, sobald sich Inhalte ändern</label>" +
-        '<button class="btn ghost btn-tiny" type="button" data-lex-run>Jetzt prüfen</button><span class="step-note" data-lex-status style="margin:0;">' + escapeHtml(status) + "</span></div>" +
-        (list.length ? '<p class="section-label">Neu erkannt (' + list.length + ')</p><div class="controls"><button class="btn primary btn-tiny" type="button" data-lex-accept-all>Alle übernehmen</button><button class="btn ghost btn-tiny" type="button" data-lex-reject-all>Alle verwerfen</button></div>' +
+        '<button class="btn ghost btn-tiny" type="button" data-lex-run>Jetzt prüfen</button>' +
+        '<button class="btn ghost btn-tiny" type="button" data-lex-ai' + (lexAiBusy ? " disabled" : "") + ' title="' + escapeHtml(LEX_AI_HINT[kind]) + '"><span class="btn-spinner"' + (lexAiBusy === kind ? "" : " hidden") + "></span>KI-Vorschläge (Claude)</button>" +
+        '<span class="step-note" data-lex-status style="margin:0;">' + escapeHtml(status) + "</span></div>" +
+        '<p class="step-note" data-lex-ai-note style="margin:4px 0 0;">' + escapeHtml(lexAiNote[kind] || "") + "</p>" +
+        (list.length ? '<p class="section-label">Neu erkannt / zu prüfen (' + list.length + ')</p><div class="controls"><button class="btn primary btn-tiny" type="button" data-lex-accept-all>Alle übernehmen</button><button class="btn ghost btn-tiny" type="button" data-lex-reject-all>Alle verwerfen</button></div>' +
           '<div class="table-wrap"><table class="simple-table lex-new-table"><thead><tr><th>' + (kind === "syn" ? "Hauptbegriff" : kind === "abbrev" ? "Kürzel" : "Begriff") + "</th><th>" + (kind === "abbrev" ? "Bedeutung" : kind === "syn" ? "Varianten" : "Hinweis") + "</th><th>Gefunden in</th><th>Beispiel</th><th></th></tr></thead><tbody>" +
           list.map(function (e) {
             var idx = app[LEX_STATE_OF_KIND[kind]].indexOf(e);
@@ -37858,9 +37878,111 @@
           : '<p class="step-note" data-lex-none>Keine neuen ' + LEX_LABEL[kind] + " seit der letzten Prüfung.</p>");
     });
   }
-  function lexAccept(kind, e) { delete e.isNew; if (kind === "syn") delete e.lexAddedSynonyms; }
+
+  // ===================== v2.188: KI-Vorschläge für Glossar, Synonyme, Abkürzungen =====================
+  // (1) leere Felder (Bedeutung, EN/SK/HI/FR) nicht fixierter Eintraege fuellen – nur leere Felder, nie Vorhandenes
+  // ueberschreiben; (2) Synonyme: echte Synonym-Gruppen, aber nur aus Woertern, die in den Inhalten vorkommen (alles
+  // andere wird verworfen). Alles von Claude Gelieferte ist als „KI-Vorschlag“ markiert und steht unter „Neu erkannt /
+  // zu prüfen“, bis es übernommen oder verworfen wird.
+  var lexAiBusy = null, lexAiNote = {};
+  var LEX_AI_HINT = {
+    gloss: "Claude ergänzt Erklärung und Übersetzungen (EN/SK/HI/FR) für Glossar-Begriffe mit leeren Feldern.",
+    syn: "Claude schlägt echte Synonyme vor (nur Wörter aus den Inhalten) und ergänzt fehlende Übersetzungen.",
+    abbrev: "Claude ergänzt Bedeutung und Übersetzungen für Abkürzungen mit leeren Feldern."
+  };
+  var LEX_AI_BATCH = 40;
+  function lexAiFieldsFor(kind) { return kind === "syn" ? ["en", "sk", "hi", "fr"] : ["de", "en", "sk", "hi", "fr"]; }
+  function lexAiTargets(kind) {
+    var fields = lexAiFieldsFor(kind);
+    return (app[LEX_STATE_OF_KIND[kind]] || []).filter(function (e) { return e && e.term && !e.fixed && fields.some(function (f) { return !String(e[f] || "").trim(); }); })
+      .sort(function (a, b) { return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0); });
+  }
+  function lexAiFillPrompt(kind, list) {
+    var fields = lexAiFieldsFor(kind);
+    return ragPromptFor("lexAiFill") + "\n\nART: " + (kind === "abbrev" ? "Abkürzungen (de = ausgeschriebene Bedeutung)" : kind === "syn" ? "Synonym-Gruppen (Übersetzung des Hauptbegriffs)" : "Glossar-Begriffe (de = kurze Erklärung)") + "\n\nBEGRIFFE:\n" +
+      list.map(function (e) {
+        var empty = fields.filter(function (f) { return !String(e[f] || "").trim(); });
+        return "- " + e.term + (kind === "syn" && e.synonyms ? " (Synonyme: " + e.synonyms + ")" : "") + (kind === "abbrev" && e.de ? " (Bedeutung: " + e.de + ")" : "") +
+          " | leer: " + empty.join(", ") + (e.lexExample ? " | Beispiel: " + truncate(String(e.lexExample).replace(/\s+/g, " "), 200) : "");
+      }).join("\n");
+  }
+  function lexAiSynCandidates() {
+    var texts = lexContentTexts(), c = lexCollect(texts), seen = {}, out = [];
+    function add(w) { w = String(w || "").trim(); var k = w.toLowerCase(); if (w && !seen[k]) { seen[k] = 1; out.push(w); } }
+    Object.keys(c.nouns).filter(function (w) { return c.nouns[w] >= 2; }).sort(function (a, b) { return c.nouns[b] - c.nouns[a] || a.localeCompare(b); }).slice(0, 250).forEach(add);
+    (app.glossaryTranslations || []).forEach(function (e) { add(e.term); });
+    return out.slice(0, 300);
+  }
+  async function lexAiRun(kind) {
+    if (lexAiBusy) return;
+    if (!sampleApi) { showToast("Nicht verfügbar", "KI-Funktion (Claude) in dieser Ansicht nicht verfügbar - nur innerhalb der veröffentlichten Claude-Artifact-Version nutzbar.", true); return; }
+    lexAiBusy = kind; lexAiNote[kind] = "Claude arbeitet …"; renderLexAutoPanels();
+    var filled = 0, entries = 0, groups = 0, dropped = 0, failed = 0, when = nowLabel();
+    try {
+      var targets = lexAiTargets(kind);
+      for (var i = 0; i < targets.length; i += LEX_AI_BATCH) {
+        var batch = targets.slice(i, i + LEX_AI_BATCH);
+        var res = await sampleApi(lexAiFillPrompt(kind, batch), { modelTier: "default", cache: false });
+        var obj = rlParseJsonObject(res && res.text);
+        if (!obj) { failed++; continue; }
+        var byKey = {};
+        Object.keys(obj).forEach(function (k) { byKey[k.trim().toLowerCase()] = obj[k]; });
+        batch.forEach(function (e) {
+          var ans = byKey[String(e.term).trim().toLowerCase()];
+          if (!ans || typeof ans !== "object") return;
+          var got = [];
+          lexAiFieldsFor(kind).forEach(function (f) {
+            var v = typeof ans[f] === "string" ? ans[f].trim() : "";
+            if (v && !String(e[f] || "").trim()) { e[f] = v.slice(0, 200); got.push(f); }
+          });
+          if (got.length) { e.lexAiFields = (e.lexAiFields || []).concat(got.filter(function (f) { return (e.lexAiFields || []).indexOf(f) === -1; })); e.isNew = true; e.foundAt = e.foundAt || when; filled += got.length; entries++; }
+        });
+      }
+      if (kind === "syn") {
+        var cands = lexAiSynCandidates();
+        if (cands.length >= 2) {
+          var res2 = await sampleApi(ragPromptFor("lexAiSynonyms") + "\n\nWÖRTER:\n" + cands.join(", "), { modelTier: "default", cache: false });
+          var o2 = rlParseJsonObject(res2 && res2.text);
+          var allowed = {};
+          cands.forEach(function (w) { allowed[w.toLowerCase()] = w; });
+          var st = lexState(), taken = {};
+          app.synonyms.forEach(function (e) { taken[lexKey(e.term)] = 1; String(e.synonyms || "").split(",").forEach(function (x) { if (x.trim()) taken[lexKey(x)] = 1; }); });
+          if (!o2 || !Array.isArray(o2.gruppen)) failed++;
+          else o2.gruppen.forEach(function (g) {
+            if (!g || typeof g.haupt !== "string" || !Array.isArray(g.synonyme)) { dropped++; return; }
+            var words = [g.haupt].concat(g.synonyme).map(function (w) { return String(w || "").trim(); }).filter(Boolean);
+            // nur Woerter aus den Inhalten, keine Dubletten, keine bereits vergebenen/verworfenen Begriffe
+            if (words.length < 2 || words.some(function (w) { return !allowed[w.toLowerCase()]; })) { dropped++; return; }
+            words = words.map(function (w) { return allowed[w.toLowerCase()]; });
+            var uniq = words.filter(function (w, i) { return words.map(lexKey).indexOf(lexKey(w)) === i; });
+            if (uniq.length < 2 || uniq.some(function (w) { return taken[lexKey(w)] || st.ignored.syn.indexOf(lexKey(w)) !== -1; })) { dropped++; return; }
+            app.synonyms.push({ term: uniq[0], synonyms: uniq.slice(1).join(", "), en: "", sk: "", hi: "", fr: "", fixed: false,
+              auto: true, isNew: true, foundAt: when, lexAi: true, lexAiFields: ["Synonyme"], lexSrc: "KI-Vorschlag aus den Inhalten",
+              lexNote: "KI-Vorschlag" + (g.grund ? ": " + String(g.grund).slice(0, 160) : "") });
+            uniq.forEach(function (w) { taken[lexKey(w)] = 1; });
+            groups++;
+          });
+        }
+      }
+      lexAiNote[kind] = "KI-Vorschläge (" + when + "): " + filled + " Feld(er) in " + entries + " Eintrag/Einträgen ergänzt" + (kind === "syn" ? ", " + groups + " neue Synonym-Gruppe(n)" + (dropped ? ", " + dropped + " Vorschlag/Vorschläge verworfen (Wörter nicht in den Inhalten oder schon vergeben)" : "") : "") +
+        (failed ? " – " + failed + " Antwort(en) nicht lesbar" : "") + ". Bitte prüfen und übernehmen.";
+      addLog(LEX_LABEL[kind] + ": KI-Vorschläge – " + filled + " Feld(er) ergänzt" + (kind === "syn" ? ", " + groups + " Synonym-Gruppe(n)" : "") + ".");
+    } catch (err) {
+      lexAiNote[kind] = "KI-Vorschläge fehlgeschlagen: " + ((err && (err.message || err.code)) || "unbekannter Fehler");
+      showToast("KI-Vorschläge fehlgeschlagen", lexAiNote[kind], true);
+    } finally {
+      lexAiBusy = null;
+      lexAfterChange();
+    }
+  }
+  function lexAccept(kind, e) { delete e.isNew; delete e.lexAiFields; if (kind === "syn") delete e.lexAddedSynonyms; }
   function lexReject(kind, e) {
     var arr = app[LEX_STATE_OF_KIND[kind]];
+    if (!e.auto && e.lexAiFields && !e.lexAddedSynonyms) {
+      e.lexAiFields.forEach(function (f) { e[f] = ""; });
+      delete e.lexAiFields; delete e.isNew;
+      return;
+    }
     lexIgnore(kind, e);
     if (kind === "syn" && !e.auto && e.lexAddedSynonyms) {
       // nur die automatisch ergaenzten Schreibweisen wieder entfernen
@@ -37883,6 +38005,7 @@
       if (ev.target.checked) lexAutoSoon();
     });
     host.addEventListener("click", function (ev) {
+      if (ev.target.closest("[data-lex-ai]")) { lexAiRun(kind); return; }
       if (ev.target.closest("[data-lex-run]")) {
         var a = lexAutoRun({ manual: true });
         if (!(a.gloss + a.syn + a.abbrev)) showToast("Keine neuen Begriffe", "Die Inhalte enthalten keine neuen Glossar-Begriffe, Synonyme oder Abkürzungen.");

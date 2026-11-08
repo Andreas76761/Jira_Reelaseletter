@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.187.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.188.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,19 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **KI-Vorschläge für Glossar, Synonyme, Abkürzungen (v2.188.0)**: In allen drei Registern startet „KI-Vorschläge
+  (Claude)“ einen bewusst ausgelösten KI-Schritt: (1) Claude ergänzt **nur leere Felder** nicht fixierter Einträge –
+  Bedeutung (bei Abkürzungen die ausgeschriebene Form, im Glossar eine kurze Erklärung) und Übersetzungen EN/SK/HI/FR; der
+  Beispielsatz aus den Inhalten geht als Kontext mit, je Aufruf bis zu 40 Begriffe. Vorhandene Werte und fixierte
+  Einträge bleiben unangetastet; ist Claude unsicher (firmeninternes Kürzel ohne Kontext), bleibt das Feld leer.
+  (2) Synonyme: Claude schlägt **echte Synonyme** vor (verschiedene Wörter, gleiche Bedeutung, z. B. „Kündigung =
+  Beendigung“) – ausschließlich aus Wörtern, die in den Inhalten vorkommen; Gruppen mit anderen Wörtern oder mit schon
+  vergebenen/verworfenen Begriffen werden verworfen (der Hinweis nennt die Zahl). Alles von Claude Gelieferte steht als
+  „KI-Vorschlag“ (mit den betroffenen Feldern) unter „Neu erkannt / zu prüfen“: „Übernehmen“ bestätigt; „Verwerfen“
+  leert bei eigenen Einträgen nur die KI-Felder, automatisch erkannte Einträge werden entfernt und nicht erneut
+  vorgeschlagen. Unlesbare Antworten ändern nichts und werden gemeldet. Das Glossar hat dafür die Spalte „Bedeutung
+  (Deutsch)“. Beide Prompts sind unter Einstellungen anpassbar. Test: `lexikon_ki_test.js` (21 Prüfungen).
 
 - **Glossar, Synonyme, Abkürzungen erweitern sich automatisch; Regeln bearbeiten (v2.187.0)**: (1) Sobald sich Inhalte
   ändern (Ticket-Import, FINAL-Handbuchdateien, aktiver FINAL-Stand, Editor, Unterkapitel, Dokument-Review, ROVO-Wissen),
