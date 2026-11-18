@@ -115,14 +115,14 @@ const EN1 = "Chapter 1: Contracts", EN2 = "Chapter 2: Termination";
   await wait(100);
 
   // ===================== Schritt 1: zwei Quelldateien (DE/Retail, EN/HQ) =====================
-  setVal("final-manual-rolle-select", "Retail"); setVal("final-manual-sprache-input", "DE"); setVal("final-manual-markt-input", "Deutschland");
+  setVal("final-manual-rolle-select", "Retail"); setVal("final-manual-sprache-input", "DE"); setVal("final-manual-markt-select", "Deutschland");
   await upload("final-manual-file-input", await buildDocx(heading(DE1) + para("Verträge werden online geändert.") + heading(DE2) + para("Kündigungen werden erfasst.") + heading(DE3) + para("Händlerdaten pflegen.")), "handbuch_de.docx");
   await waitUntil(() => doc.getElementById("final-manuals-tbody").children.length === 1, 5000);
-  setVal("final-manual-rolle-select", "HQ"); setVal("final-manual-sprache-input", "EN"); setVal("final-manual-markt-input", "UK");
+  setVal("final-manual-rolle-select", "HQ"); setVal("final-manual-sprache-input", "EN"); setVal("final-manual-markt-select", "Österreich");
   await upload("final-manual-file-input", await buildDocx(heading(EN1) + para("Contracts are changed online.") + heading(EN2) + para("Terminations are recorded.")), "manual_en.docx");
   await waitUntil(() => doc.getElementById("final-manuals-tbody").children.length === 2, 5000);
   const manualRows = Array.from(doc.querySelectorAll("#final-manuals-tbody tr")).map((r) => r.textContent);
-  check("Quelldateien mit Rolle/Sprache/Markt in der Übersicht", manualRows[0].includes("Retail / DE / Deutschland") && manualRows[1].includes("HQ / EN / UK"));
+  check("Quelldateien mit Rolle/Sprache/Markt in der Übersicht", manualRows[0].includes("Retail / DE / Deutschland") && manualRows[1].includes("HQ / EN / Österreich"));
 
   // ===================== Excel: Verbesserungen aus ROVO =====================
   await upload("final-improvements-file-input", await buildXlsx([

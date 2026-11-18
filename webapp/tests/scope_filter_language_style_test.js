@@ -158,7 +158,7 @@ const xml = `<?xml version="1.0"?><rss><channel>
   doc.querySelector('.nav-item[data-view="massenverarbeitung"]').click();
   await wait(50);
   check("(2) Container 'Tickets aus Import übernehmen' vorhanden", !!doc.getElementById("mass-ticket-source-wrap"));
-  check("(2) Enthält dieselbe Sparte-/Rollen-Filter-UI", doc.getElementById("mass-ticket-source-wrap").textContent.includes("Sparte-/Rollen-Filter"));
+  check("(2) Enthält dieselbe Sparte-/Rollen-Filter-UI", /Sparte-\/(Markt-\/)?Rollen-Filter/.test(doc.getElementById("mass-ticket-source-wrap").textContent));
   check("(2) Ticketzahl-Hinweis zeigt 4 (kein Filter aktiv)", doc.getElementById("mass-ticket-source-note").textContent.startsWith("4 "));
 
   const massRetailCb = doc.querySelector('#mass-ticket-source-wrap input[name="active-scope-filter-mass"][value="role:Retail"]');

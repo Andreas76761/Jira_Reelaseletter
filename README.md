@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.195.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.196.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,18 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Markt als eigene Achse wie Sparte (v2.196.0)**: (1) Neue Stammdaten-Kategorie **„Markt“** (Einstellungen → Labels)
+  mit den Vorgaben Deutschland, Österreich, Schweiz – frei änderbar und erweiterbar; ältere Sitzungen bekommen die
+  Kategorie beim Laden ergänzt, eigene Markt-Einträge bleiben erhalten. (2) In der Verarbeitung (und Massenverarbeitung)
+  gibt es neben Sparte und Rolle den Filter **Markt** als Einfachauswahl „Alle Märkte“ (voreingestellt) bzw. ein Markt;
+  ein Ticket gehört zu einem Markt, wenn der Markt als Jira-Label oder im Ticket-Text vorkommt (dieselbe Erkennung wie bei
+  der Sparte). Die Auswahl wird in der Sitzung gespeichert und in „aktiv: … (n Tickets)“ angezeigt. (3) In FINAL ist
+  Markt (Handbuch-Datei, Screens-Datei, Filter) jetzt eine Auswahlliste aus den Stammdaten statt Freitext; bereits
+  verwendete ältere Freitext-Werte bleiben wählbar. Die **Rolle** „Markt“ (Anwender-Rolle neben Retail, MO, HQ, IT) bleibt
+  unverändert. Nicht enthalten: die Gliederungs-Versionen (Editor/VARIANTE) kombinieren weiterhin Rolle × Sparte – Markt
+  als dritte Dimension würde die Versionen vervielfachen. Test: `markt_axis_test.js` (13 Prüfungen); FINAL-Tests auf die
+  Auswahllisten umgestellt.
 
 - **Mermaid-Prozessbilder in FINAL übernehmen (v2.195.0)**: In FINAL Schritt 5 („Prozessbilder“) lassen sich jetzt auch
   Mermaid-Flussdiagramme aus dem Register „Prozessbild“ per „Als Bild übernehmen“ als PNG ins Bildarchiv übernehmen

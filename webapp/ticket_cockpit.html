@@ -3282,7 +3282,7 @@
             <div><label for="final-manual-rolle-select">Rolle</label><select id="final-manual-rolle-select" aria-label="Rolle der Quelldatei"><option value="">– unspezifisch –</option></select></div>
             <div><label for="final-manual-sparte-select">Sparte</label><select id="final-manual-sparte-select" aria-label="Sparte der Quelldatei"><option value="">Pkw und Van (beide)</option></select></div>
             <div><label for="final-manual-sprache-input">Sprache</label><input class="text-input" id="final-manual-sprache-input" type="text" placeholder="z. B. DE, EN"></div>
-            <div><label for="final-manual-markt-input">Markt</label><input class="text-input" id="final-manual-markt-input" type="text" placeholder="z. B. Deutschland"></div>
+            <div><label for="final-manual-markt-select">Markt</label><select id="final-manual-markt-select" aria-label="Markt der Quelldatei"><option value="">Alle Märkte</option></select></div>
           </div>
           <div class="dropzone" id="final-manual-dropzone" tabindex="0" role="button" aria-label="Benutzerhandbuch-Datei(en) auswählen">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
@@ -3361,7 +3361,7 @@
             <div><label for="final-screens-rolle-select">Rolle</label><select id="final-screens-rolle-select" aria-label="Rolle"><option value="">– unspezifisch –</option></select></div>
             <div><label for="final-screens-sparte-select">Sparte</label><select id="final-screens-sparte-select" aria-label="Sparte"><option value="">Pkw und Van (beide)</option></select></div>
             <div><label for="final-screens-sprache-input">Sprache</label><input class="text-input" id="final-screens-sprache-input" type="text" placeholder="z. B. DE, EN"></div>
-            <div><label for="final-screens-markt-input">Markt</label><input class="text-input" id="final-screens-markt-input" type="text" placeholder="z. B. Deutschland"></div>
+            <div><label for="final-screens-markt-select">Markt</label><select id="final-screens-markt-select" aria-label="Markt"><option value="">Alle Märkte</option></select></div>
           </div>
           <div class="dropzone" id="final-screens-dropzone" tabindex="0" role="button" aria-label="Screens-Datei auswählen" style="margin-top:10px;">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
@@ -3441,7 +3441,7 @@
             <div><label for="final-filter-rolle-select">Rolle</label><select id="final-filter-rolle-select" aria-label="Rolle-Filter"><option value="">– egal –</option></select></div>
             <div><label for="final-filter-sparte-select">Sparte</label><select id="final-filter-sparte-select" aria-label="Sparte-Filter"><option value="">Pkw und Van (beide)</option></select></div>
             <div><label for="final-filter-sprache-input">Sprache</label><input class="text-input" id="final-filter-sprache-input" type="text" placeholder="z. B. DE"></div>
-            <div><label for="final-filter-markt-input">Markt</label><input class="text-input" id="final-filter-markt-input" type="text" placeholder="z. B. Deutschland"></div>
+            <div><label for="final-filter-markt-select">Markt</label><select id="final-filter-markt-select" aria-label="Markt-Filter"><option value="">Alle Märkte</option></select></div>
           </div>
           <div class="controls" style="margin-top:10px;">
             <button class="btn primary" id="final-build-master-btn" type="button">
@@ -6774,7 +6774,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.195.0";
+  var APP_VERSION = "2.196.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -8405,13 +8405,13 @@
     "final-manual-dropzone", "final-manual-file-input", "final-manuals-table", "final-manuals-tbody", "final-manuals-empty",
     "final-conflicts-section", "final-conflicts-tbody",
     "final-preview-section", "final-hide-internal-cb", "final-hide-jira-cb", "final-preview-chapter-select", "final-preview-output", "final-preview-source-note",
-    "final-screens-rolle-select", "final-screens-sparte-select", "final-screens-sprache-input", "final-screens-markt-input",
+    "final-screens-rolle-select", "final-screens-sparte-select", "final-screens-sprache-input", "final-screens-markt-select",
     "final-screens-dropzone", "final-screens-file-input", "final-screens-files-tbody", "final-screens-files-empty",
     "final-screens-count", "final-screens-tbody", "final-screens-empty", "final-assign-images-btn", "final-assign-images-spinner", "final-assign-images-stop-btn", "final-assign-images-status-note", "final-selected-count", "final-bulk-chapter-select", "final-bulk-assign-btn", "final-bulk-delete-btn", "final-screens-select-all-cb", "final-word-design-select", "final-word-design-note", "final-word-template-btn", "final-word-template-input", "final-design-docx-btn", "final-ppt-design-select", "final-ppt-design-note", "final-ppt-template-btn", "final-ppt-template-input", "final-design-pptx-btn", "final-design-status-note",
-    "final-filter-rolle-select", "final-filter-sparte-select", "final-filter-sprache-input", "final-filter-markt-input",
+    "final-filter-rolle-select", "final-filter-sparte-select", "final-filter-sprache-input", "final-filter-markt-select",
     "final-build-master-btn", "final-build-master-spinner", "final-build-master-status-note",
     "final-master-export-section", "final-master-download-docx-btn", "final-master-download-pdf-btn",
-    "final-result-section", "final-flow-list", "final-bilder-block", "final-bilder-count", "final-bilder-apply-btn", "final-bilder-clear-btn", "final-bilder-note", "final-bilder-tbody", "final-bilder-empty", "final-bilder-ai-btn", "final-bilder-ai-spinner", "final-bilder-ai-note", "final-diagrams-wrap", "final-diagrams-count", "final-diagrams-tbody", "final-result-source-file-select", "final-result-images-cb", "final-result-source-head", "final-result-master-head", "final-reserve-intern-btn", "final-reserve-plan-btn", "final-reserve-note", "final-rules-note", "final-result-chapter-select", "final-result-source-output", "final-result-master-output", "final-result-fullscreen-both-btn", "final-viewer", "final-viewer-panes", "final-viewer-close-btn", "final-viewer-toggle-btn", "final-manual-rolle-select", "final-manual-sparte-select", "final-manual-sprache-input", "final-manual-markt-input",
+    "final-result-section", "final-flow-list", "final-bilder-block", "final-bilder-count", "final-bilder-apply-btn", "final-bilder-clear-btn", "final-bilder-note", "final-bilder-tbody", "final-bilder-empty", "final-bilder-ai-btn", "final-bilder-ai-spinner", "final-bilder-ai-note", "final-diagrams-wrap", "final-diagrams-count", "final-diagrams-tbody", "final-result-source-file-select", "final-result-images-cb", "final-result-source-head", "final-result-master-head", "final-reserve-intern-btn", "final-reserve-plan-btn", "final-reserve-note", "final-rules-note", "final-result-chapter-select", "final-result-source-output", "final-result-master-output", "final-result-fullscreen-both-btn", "final-viewer", "final-viewer-panes", "final-viewer-close-btn", "final-viewer-toggle-btn", "final-manual-rolle-select", "final-manual-sparte-select", "final-manual-sprache-input", "final-manual-markt-select",
     "final-improvements-upload-btn", "final-improvements-file-input", "final-improvements-files-tbody", "final-improvements-files-empty",
     "final-improvements-mapping", "final-improvements-view-select", "final-improvements-summary", "final-improvements-tbody",
     "final-preview-manual-select", "final-preview-improvements-select", "final-preview-improvements", "final-screens-file-filter-select",
@@ -8614,6 +8614,7 @@
     // die scopedTickets() nutzen) UND in der Massenverarbeitung (Grundlage
     // "Tickets aus Import uebernehmen").
     activeSparteFilter: [],
+    activeMarktFilter: [],
     activeRoleFilter: [],
     // Dateiverwaltung: persistenter Aktiv/Inaktiv-Status je Import (NICHT zu
     // verwechseln mit activeImportIds/activeListIds oben, der nur die
@@ -9051,7 +9052,7 @@
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     };
     app.activeImportIds = {}; app.activeListIds = {};
-    app.activeSparteFilter = []; app.activeRoleFilter = [];
+    app.activeSparteFilter = []; app.activeRoleFilter = []; app.activeMarktFilter = [];
     app.inactiveImportIds = {}; app.appliedInactiveImportIds = {};
     app.selectedKeys = {}; app.savedLists = []; app.nextSavedListId = 1;
     app.listPreviewFilter = { issueType: "", excludeTypes: {} };
@@ -9161,7 +9162,7 @@
       releaseversion: { matched: false, matchError: null, evaluated: false, evaluation: null, evaluateError: null }
     };
     app.activeImportIds = {}; app.activeListIds = {};
-    app.activeSparteFilter = []; app.activeRoleFilter = [];
+    app.activeSparteFilter = []; app.activeRoleFilter = []; app.activeMarktFilter = [];
     app.inactiveImportIds = {}; app.appliedInactiveImportIds = {};
     app.selectedKeys = {}; app.savedLists = []; app.nextSavedListId = 1;
     app.listPreviewFilter = { issueType: "", excludeTypes: {} };
@@ -9337,6 +9338,7 @@
       activeImportIds: app.activeImportIds,
       activeListIds: app.activeListIds,
       activeSparteFilter: app.activeSparteFilter,
+      activeMarktFilter: app.activeMarktFilter,
       activeRoleFilter: app.activeRoleFilter,
       inactiveImportIds: app.inactiveImportIds,
       appliedInactiveImportIds: app.appliedInactiveImportIds,
@@ -9462,6 +9464,7 @@
     app.activeImportIds = data.activeImportIds || {};
     app.activeListIds = data.activeListIds || {};
     app.activeSparteFilter = normalizeSparteFilter(data.activeSparteFilter);
+    app.activeMarktFilter = normalizeMarktFilter(data.activeMarktFilter);
     app.activeRoleFilter = Array.isArray(data.activeRoleFilter) ? data.activeRoleFilter : [];
     app.inactiveImportIds = data.inactiveImportIds || {};
     app.appliedInactiveImportIds = data.appliedInactiveImportIds || {};
@@ -10075,6 +10078,10 @@
       // (Zusammenfassung/Beschreibung/Domäne) vorkommt.
       ["Sparte", "Pkw", "Pkw"],
       ["Sparte", "Van", "Van"],
+      // v2.196: Markt als eigene Achse (wie Sparte) – Vorgabe, in Einstellungen → Labels anpassbar
+      ["Markt", "Deutschland", "Germany"],
+      ["Markt", "Österreich", "Austria"],
+      ["Markt", "Schweiz", "Switzerland"],
       ["Rolle", "Retail", "Retail"],
       ["Rolle", "Markt", "Markt"],
       ["Rolle", "MO", "MO"],
@@ -15805,6 +15812,25 @@
     });
   }
   function ticketSparteTags(t) { return ticketTagsFromValues(t, SPARTE_FILTER_VALUES); }
+  // v2.196: Markt als eigene Achse – Werte aus den Stammdaten (Kategorie „Markt“), Einfachauswahl, leer = alle Märkte
+  var MARKT_ALL_LABEL = "Alle Märkte";
+  function marktValues() {
+    var seen = {}, out = [];
+    (app.labels || []).forEach(function (l) {
+      var v = l && l.category === "Markt" ? String(l.de || "").trim() : "";
+      if (v && !seen[v.toLowerCase()]) { seen[v.toLowerCase()] = true; out.push(v); }
+    });
+    return out;
+  }
+  function normalizeMarktFilter(arr) {
+    var v = (Array.isArray(arr) ? arr : []).filter(function (x) { return typeof x === "string" && x.trim(); });
+    return v.length === 1 ? [v[0].trim()] : [];
+  }
+  function ticketMarktTags(t) { return ticketTagsFromValues(t, marktValues()); }
+  function ticketMatchesMarktFilter(t) {
+    var f = app.activeMarktFilter || [];
+    return !f.length || ticketMarktTags(t).some(function (v) { return v.toLowerCase() === f[0].toLowerCase(); });
+  }
   function ticketRoleTags(t) { return ticketTagsFromValues(t, ROLE_FILTER_VALUES); }
   function ticketMatchesSparteFilter(t) {
     return !app.activeSparteFilter.length || ticketSparteTags(t).some(function (v) { return app.activeSparteFilter.indexOf(v) !== -1; });
@@ -15813,7 +15839,7 @@
     return !app.activeRoleFilter.length || ticketRoleTags(t).some(function (v) { return app.activeRoleFilter.indexOf(v) !== -1; });
   }
   function hasActiveScopeFilter() {
-    return hasActiveScope() || app.activeSparteFilter.length > 0 || app.activeRoleFilter.length > 0;
+    return hasActiveScope() || app.activeSparteFilter.length > 0 || app.activeRoleFilter.length > 0 || (app.activeMarktFilter || []).length > 0;
   }
   function scopedTickets() {
     var base = app.tickets;
@@ -15828,8 +15854,8 @@
       });
       base = app.tickets.filter(function (t) { return keys[t.key]; });
     }
-    if (!app.activeSparteFilter.length && !app.activeRoleFilter.length) return base;
-    return base.filter(function (t) { return ticketMatchesSparteFilter(t) && ticketMatchesRoleFilter(t); });
+    if (!app.activeSparteFilter.length && !app.activeRoleFilter.length && !(app.activeMarktFilter || []).length) return base;
+    return base.filter(function (t) { return ticketMatchesSparteFilter(t) && ticketMatchesMarktFilter(t) && ticketMatchesRoleFilter(t); });
   }
 
   /* ============ Ticket-Index: gemeinsame Filter-Bausteine ============
@@ -17235,8 +17261,17 @@
         return '<label class="step-file-option" style="display:inline-flex; align-items:center; gap:4px;">' +
           '<input type="radio" name="' + groupName + '-sparte" value="sparte:' + escapeHtml(o.value) + '"' + (on ? " checked" : "") + '><span>' + escapeHtml(o.label) + "</span></label>";
       }).join("") + "</div>";
-    return '<p class="step-sub-label" style="margin-top:8px;">Sparte-/Rollen-Filter (Labels; Sparte: „beide“ = alle Tickets, Rolle: Mehrfachauswahl, leer = alle Tickets)</p>' +
-      sparteRow +
+    // v2.196: Markt als Einfachauswahl „Alle Märkte“ (voreingestellt) / Werte aus den Stammdaten
+    var mv = marktValues(), mf = app.activeMarktFilter || [];
+    var marktRow = mv.length ? '<div class="step-file-option-row" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:4px;">' +
+      '<span style="font-weight:600;">Markt:</span>' +
+      [{ value: "", label: MARKT_ALL_LABEL }].concat(mv.map(function (v) { return { value: v, label: v }; })).map(function (o) {
+        var on = o.value ? mf.length === 1 && mf[0].toLowerCase() === o.value.toLowerCase() : !mf.length;
+        return '<label class="step-file-option" style="display:inline-flex; align-items:center; gap:4px;">' +
+          '<input type="radio" name="' + groupName + '-markt" value="markt:' + escapeHtml(o.value) + '"' + (on ? " checked" : "") + '><span>' + escapeHtml(o.label) + "</span></label>";
+      }).join("") + "</div>" : "";
+    return '<p class="step-sub-label" style="margin-top:8px;">Sparte-/Markt-/Rollen-Filter (Labels; Sparte: „beide“ = alle Tickets, Markt: „Alle Märkte“ = alle Tickets, Rolle: Mehrfachauswahl, leer = alle Tickets)</p>' +
+      sparteRow + marktRow +
       optionsRow("Rolle", ROLE_FILTER_VALUES.map(function (v) { return { kind: "role", value: v }; }), app.activeRoleFilter);
   }
   function activeScopeLabel() {
@@ -17246,6 +17281,7 @@
     app.savedLists.forEach(function (list) { if (app.activeListIds[list.id]) parts.push("📋 „" + list.name + "“"); });
     if (!parts.length) parts.push("Alle Importe (zusammengeführt)");
     if (app.activeSparteFilter.length) parts.push("Sparte: " + app.activeSparteFilter.join("/"));
+    if ((app.activeMarktFilter || []).length) parts.push("Markt: " + app.activeMarktFilter.join("/"));
     if (app.activeRoleFilter.length) parts.push("Rolle: " + app.activeRoleFilter.join("/"));
     return parts.join(", ");
   }
@@ -17292,6 +17328,7 @@
         var sep = val.indexOf(":");
         var kind = val.slice(0, sep), v = val.slice(sep + 1);
         if (kind === "sparte") { if (checkbox.checked) app.activeSparteFilter = v ? [v] : []; onActiveImportChanged(); return; }
+        if (kind === "markt") { if (checkbox.checked) app.activeMarktFilter = v ? [v] : []; onActiveImportChanged(); return; }
         var arr = app.activeRoleFilter;
         var idx = arr.indexOf(v);
         if (checkbox.checked) { if (idx === -1) arr.push(v); } else if (idx !== -1) { arr.splice(idx, 1); }
@@ -28632,7 +28669,7 @@
         app.final.manuals.push({
           id: manualId, filename: file.name, chapters: chapters, design: design, pageCount: pageCount, addedAt: nowLabel(), embeddedImages: read.images.length,
           rolle: els.finalManualRolleSelect.value, sparte: els.finalManualSparteSelect.value,
-          sprache: els.finalManualSpracheInput.value.trim(), markt: els.finalManualMarktInput.value.trim()
+          sprache: els.finalManualSpracheInput.value.trim(), markt: els.finalManualMarktSelect.value.trim()
         });
         added++;
       } catch (err) {
@@ -28886,7 +28923,7 @@
   async function handleFinalScreensFile(file) {
     if (!file) return;
     var rolle = els.finalScreensRolleSelect.value, sparte = els.finalScreensSparteSelect.value;
-    var sprache = els.finalScreensSpracheInput.value.trim(), markt = els.finalScreensMarktInput.value.trim();
+    var sprache = els.finalScreensSpracheInput.value.trim(), markt = els.finalScreensMarktSelect.value.trim();
     try {
       var buf = await readFileAsArrayBuffer(file);
       var result = await finalExtractScreens(buf);
@@ -28915,6 +28952,15 @@
       var prev = pair[0].value;
       pair[0].innerHTML = '<option value="">' + pair[1] + "</option>" + sparteOpts;
       pair[0].value = prev;
+    });
+    // v2.196: Markt – Werte aus den Stammdaten; bereits verwendete, nicht (mehr) gelistete Werte bleiben waehlbar
+    var mv = marktValues(), used = [app.final.filterMarkt].concat(app.final.manuals.map(function (m) { return m.markt; }), app.final.screensFiles.map(function (f) { return f.markt; }));
+    used.forEach(function (u) { u = String(u || "").trim(); if (u && !mv.some(function (v) { return v.toLowerCase() === u.toLowerCase(); })) mv.push(u); });
+    var marktOpts = mv.map(function (v) { return '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + "</option>"; }).join("");
+    [els.finalScreensMarktSelect, els.finalFilterMarktSelect, els.finalManualMarktSelect].forEach(function (sel) {
+      var prev = sel.value;
+      sel.innerHTML = '<option value="">' + MARKT_ALL_LABEL + "</option>" + marktOpts;
+      sel.value = prev;
     });
   }
 
@@ -31127,7 +31173,7 @@
   function dashCount(v) { return Array.isArray(v) ? v.length : v && typeof v === "object" ? Object.keys(v).length : typeof v === "string" ? (v.trim() ? 1 : 0) : 0; }
   function dashSum(list) { return list.reduce(function (a, b) { return a + b; }, 0); }
   var DASH_STORE_REGS = [
-    { label: "Import / Tickets", view: "import", unit: "Tickets", fields: ["ticketStoreEntries", "imports", "changes", "ticketClassificationOverrides", "ticketRefSeq", "ticketRefIds", "priorityPoints", "statusColors", "domainColors", "domainAbbreviations", "importFormats", "activeImportIds", "inactiveImportIds", "appliedInactiveImportIds", "nextImportId", "selectedKeys", "activeSparteFilter", "activeRoleFilter"], items: function (d) { return dashCount(d.ticketStoreEntries); } },
+    { label: "Import / Tickets", view: "import", unit: "Tickets", fields: ["ticketStoreEntries", "imports", "changes", "ticketClassificationOverrides", "ticketRefSeq", "ticketRefIds", "priorityPoints", "statusColors", "domainColors", "domainAbbreviations", "importFormats", "activeImportIds", "inactiveImportIds", "appliedInactiveImportIds", "nextImportId", "selectedKeys", "activeSparteFilter", "activeMarktFilter", "activeRoleFilter"], items: function (d) { return dashCount(d.ticketStoreEntries); } },
     { label: "Rovo Knowledge", view: "rovoknowledge", unit: "Einträge", fields: ["rovoEntries", "rovoChapterSummaries"], items: function (d) { return dashCount(d.rovoEntries); } },
     { label: "Rovo Summary", view: "rovosummary", unit: "Quellen", fields: ["rovoSummary"], items: function (d) { return dashCount(d.rovoSummary && d.rovoSummary.sources); } },
     { label: "Dateiverwaltung", view: "dateiverwaltung", unit: "Übersetzungen/Zusammenfassungen", fields: ["fileviewTranslations", "fileviewSummaries"], items: function (d) { return dashCount(d.fileviewTranslations) + dashCount(d.fileviewSummaries); } },
@@ -31851,7 +31897,7 @@
     els.finalFilterRolleSelect.value = app.final.filterRolle;
     els.finalFilterSparteSelect.value = app.final.filterSparte;
     els.finalFilterSpracheInput.value = app.final.filterSprache;
-    els.finalFilterMarktInput.value = app.final.filterMarkt;
+    els.finalFilterMarktSelect.value = app.final.filterMarkt;
     renderFinalManuals();
     renderFinalSelections();
     renderFinalImprovements();
@@ -32569,7 +32615,7 @@
   els.finalFilterRolleSelect.addEventListener("change", function () { app.final.filterRolle = els.finalFilterRolleSelect.value; });
   els.finalFilterSparteSelect.addEventListener("change", function () { app.final.filterSparte = els.finalFilterSparteSelect.value; });
   els.finalFilterSpracheInput.addEventListener("input", function () { app.final.filterSprache = els.finalFilterSpracheInput.value.trim(); });
-  els.finalFilterMarktInput.addEventListener("input", function () { app.final.filterMarkt = els.finalFilterMarktInput.value.trim(); });
+  els.finalFilterMarktSelect.addEventListener("change", function () { app.final.filterMarkt = els.finalFilterMarktSelect.value.trim(); });
 
   var finalMasterPdfBlob = null, finalMasterPdfFilename = "";
   els.finalBuildMasterBtn.addEventListener("click", async function () {

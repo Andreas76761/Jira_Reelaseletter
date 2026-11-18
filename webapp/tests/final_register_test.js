@@ -238,8 +238,8 @@ const FASSUNG_B_SATZ = "Fassung B: Der Dealer kann den Vertrag jederzeit online 
   fire(doc.getElementById("final-screens-sparte-select"), "change");
   doc.getElementById("final-screens-sprache-input").value = "DE";
   fire(doc.getElementById("final-screens-sprache-input"), "input");
-  doc.getElementById("final-screens-markt-input").value = "Deutschland";
-  fire(doc.getElementById("final-screens-markt-input"), "input");
+  doc.getElementById("final-screens-markt-select").value = "Deutschland"; // v2.196: Auswahlliste aus den Stammdaten
+  fire(doc.getElementById("final-screens-markt-select"), "change");
 
   const screensBuf = await buildScreensDocx();
   const screensFile = new win.File([screensBuf], "screens_retail_pkw_de.docx", { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
