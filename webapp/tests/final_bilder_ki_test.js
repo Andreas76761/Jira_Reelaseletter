@@ -114,8 +114,8 @@ const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
   rejectImages = false;
 
   // Prozessbilder
-  check("Prozessbilder aufgelistet: SVG mit „Als Bild übernehmen“, Mermaid mit Hinweis", !$("final-diagrams-wrap").hidden && $("final-diagrams-count").textContent === "2" &&
-    !!$("final-diagrams-tbody").querySelector('[data-final-diagram-take="900"]') && /Mermaid-Diagramm/.test($("final-diagrams-tbody").textContent));
+  check("Prozessbilder aufgelistet: SVG und (v2.195) Mermaid mit „Als Bild übernehmen“", !$("final-diagrams-wrap").hidden && $("final-diagrams-count").textContent === "2" &&
+    !!$("final-diagrams-tbody").querySelector('[data-final-diagram-take="900"]') && !!$("final-diagrams-tbody").querySelector('[data-final-diagram-take="901"]'));
   fire($("final-diagrams-tbody").querySelector('[data-final-diagram-take="900"]'), "click");
   const settled = await waitUntil(() => /Übernahme fehlgeschlagen|Übernommen/.test($("toast").textContent), 4000);
   check("Übernehmen ohne Canvas (Testumgebung): verständliche Meldung statt Absturz", settled && !!$("final-diagrams-tbody").querySelector('[data-final-diagram-take="900"]') === /fehlgeschlagen/.test($("toast").textContent));

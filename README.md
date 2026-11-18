@@ -147,7 +147,7 @@ Grundlage entstehen aus denselben Tickets die vier Dokument-Generatoren
 `webapp/ticket_cockpit.html` ist eine eigenständige Single-Page-App (kein
 Server, kein Build-Schritt) mit ausklappbarer Navigationsleiste und
 folgenden Bereichen. Die Überschrift zeigt neben dem App-Namen ein
-Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.194.0"), das bei
+Versions-Badge (`APP_VERSION` in der `<script>`, aktuell "v2.195.0"), das bei
 jeder für Nutzer sichtbaren Funktionserweiterung erhöht wird, damit sich
 auf einen Blick erkennen lässt, ob eine aktuelle Version geöffnet ist.
 Alle Löschbestätigungen (Einstellungen, Dateiverwaltung, Bilder) laufen
@@ -2030,6 +2030,13 @@ RAG-Kontext anreichern").
   der gewählten Quelldatei) und neue Zusammenführung (bereinigter Master-Text inkl.
   lesbarer Bild-Hinweise) stehen für das zuletzt zusammengeführte Dokument nebeneinander
   zum Vergleich.
+
+- **Mermaid-Prozessbilder in FINAL übernehmen (v2.195.0)**: In FINAL Schritt 5 („Prozessbilder“) lassen sich jetzt auch
+  Mermaid-Flussdiagramme aus dem Register „Prozessbild“ per „Als Bild übernehmen“ als PNG ins Bildarchiv übernehmen
+  (bisher nur die SVG-Diagramme; Mermaid musste von Hand als PNG gespeichert und hochgeladen werden). Für die Umwandlung
+  zeichnet die App das Diagramm einmal mit SVG-Beschriftungen statt HTML-Beschriftungen, weil sich HTML in einem SVG
+  nicht auf ein Bild übertragen lässt; die Darstellung in der Galerie bleibt unverändert. Im Browser mit Mermaid 10.9.1
+  geprüft (Beschriftungen inkl. Umlaute lesbar, Bild im finalen Dokument).
 
 - **Automatische Begriffs-Erweiterung ohne eigene Meldung (v2.194.0)**: Der automatische Lauf (nach Import, Upload,
   neuen ROVO-Einträgen …) zeigt keine eigene Meldung mehr – sie überdeckte die Meldung der auslösenden Aktion (gefunden

@@ -3414,7 +3414,7 @@
             <p class="step-note" id="final-bilder-ai-note" style="margin:4px 0 0;"></p>
             <div id="final-diagrams-wrap" hidden style="margin-top:10px;">
               <p class="section-label" style="margin-top:0;">Prozessbilder (<span id="final-diagrams-count">0</span>)</p>
-              <p class="step-note" style="margin-top:0;">Im Register „Prozessbild“ erzeugte Diagramme lassen sich als Bild (PNG) übernehmen – sie erscheinen dann in der Liste oben und können wie jedes andere Bild einem Kapitel zugeordnet werden.</p>
+              <p class="step-note" style="margin-top:0;">Im Register „Prozessbild“ erzeugte Diagramme (auch Mermaid-Flussdiagramme) lassen sich als Bild (PNG) übernehmen – sie erscheinen dann in der Liste oben und können wie jedes andere Bild einem Kapitel zugeordnet werden.</p>
               <div class="table-wrap"><table class="simple-table"><thead><tr><th>Prozessbild</th><th>Erstellt</th><th></th></tr></thead><tbody id="final-diagrams-tbody"></tbody></table></div>
             </div>
             <div class="table-wrap">
@@ -6774,7 +6774,7 @@
   // Einfache, manuell gepflegte App-Version: wird bei jeder für Nutzer
   // sichtbaren Funktionserweiterung erhöht, damit in der Überschrift auf
   // einen Blick erkennbar ist, ob eine aktuelle Version geöffnet ist.
-  var APP_VERSION = "2.194.0";
+  var APP_VERSION = "2.195.0";
 
   /* ============ Teil 1: Parser + Bereinigung (Port von src/jira_releaseletter/*.py) ============ */
 
@@ -31731,8 +31731,8 @@
     els.finalDiagramsTbody.innerHTML = list.map(function (g) {
       var taken = g.finalImageId && app.uploadedImages.some(function (i) { return i.id === g.finalImageId; });
       var action = taken ? '<span class="pill done">übernommen</span>'
-        : g.kind === "svg" ? '<button class="btn ghost btn-tiny" type="button" data-final-diagram-take="' + g.id + '">Als Bild übernehmen</button>'
-        : '<span class="step-note">Mermaid-Diagramm – im Register „Prozessbild“ als PNG speichern und im Register „Bilder“ hochladen</span>';
+        : (g.kind === "svg" && g.svg) || (g.kind === "mermaid" && g.source) ? '<button class="btn ghost btn-tiny" type="button" data-final-diagram-take="' + g.id + '">Als Bild übernehmen</button>'
+        : '<span class="step-note">kein Diagramm-Inhalt gespeichert</span>';
       return "<tr><td>" + escapeHtml(g.title || "Prozessbild") + '</td><td class="mono" style="white-space:nowrap;">' + escapeHtml(g.when || "") + "</td><td>" + action + "</td></tr>";
     }).join("");
   }
@@ -31740,10 +31740,19 @@
     var b = e.target.closest("[data-final-diagram-take]");
     if (!b) return;
     var id = parseInt(b.getAttribute("data-final-diagram-take"), 10), g = (app.generatedImages || []).filter(function (x) { return x.id === id; })[0];
-    if (!g || !g.svg) return;
+    if (!g || !(g.svg || (g.kind === "mermaid" && g.source))) return;
     b.disabled = true;
     try {
-      var svgEl = new DOMParser().parseFromString(g.svg, "image/svg+xml").documentElement;
+      // v2.195: Mermaid-Diagramme erst zeichnen – mit SVG-Beschriftungen statt HTML (HTML-Beschriftungen in einem SVG
+      // lassen sich nicht auf eine Canvas uebertragen); gilt nur fuer diesen Aufruf, die Galerie bleibt unveraendert
+      var svgText = g.svg;
+      if (g.kind === "mermaid") {
+        var mm = await loadMermaid();
+        var rendered = await mm.render("final-mermaid-" + (++mermaidRenderSeq), '%%{init: {"flowchart": {"htmlLabels": false}}}%%\n' + g.source);
+        svgText = rendered && rendered.svg;
+        if (!svgText) throw new Error("Mermaid-Diagramm konnte nicht gezeichnet werden.");
+      }
+      var svgEl = new DOMParser().parseFromString(svgText, "image/svg+xml").documentElement;
       if (!svgEl || svgEl.nodeName.toLowerCase() !== "svg") throw new Error("Diagramm konnte nicht gelesen werden.");
       var holder = document.createElement("div");
       holder.style.cssText = "position:absolute;left:-10000px;top:0;";
